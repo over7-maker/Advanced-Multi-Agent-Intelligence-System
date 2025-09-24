@@ -4,7 +4,8 @@
 ### 📋 Overview
 
 This directory contains comprehensive development rules, standards, and best practices for the AMAS project. All team members must follow these guidelines to ensure code quality, security, and maintainability.
-<img width="7840" height="2430" alt="system_architecture" src="https://github.com/user-attachments/assets/1af35a5d-01d2-4ab1-a70b-0550550c8460" />
+
+
 <img width="2047" height="634" alt="1758758185032779906777345369786" src="https://github.com/user-attachments/assets/8c57fd52-f2e1-42ec-bfba-0ad73b1dd824" />
 
 
@@ -286,4 +287,5 @@ rules/
 ---
 
 **Remember: These rules exist to ensure AMAS remains the most advanced, secure, and maintainable AI system ever built. Following them is not optional - it's essential for the success of our project!** 🚀
+
 
