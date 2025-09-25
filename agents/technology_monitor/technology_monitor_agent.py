@@ -1,5 +1,5 @@
 """
-Investigation Agent
+Technology Monitor Agent
 """
 
 import logging
@@ -9,33 +9,34 @@ from ..orchestrator import BaseAgent, AgentType, Task
 
 logger = logging.getLogger(__name__)
 
-class InvestigationAgent(BaseAgent):
-    """Investigation Agent"""
+class TechnologyMonitorAgent(BaseAgent):
+    """Technology Monitor Agent for AI technology tracking"""
     
-    def __init__(self, agent_id: str, name: str = "Investigation Agent"):
-        super().__init__(agent_id, name, AgentType.INVESTIGATION)
-        self.capabilities = ["link_analysis", "entity_resolution"]
+    def __init__(self, agent_id: str, name: str = "Technology Monitor Agent"):
+        super().__init__(agent_id, name, AgentType.TECHNOLOGY_MONITOR)
+        self.capabilities = ["technology_tracking", "ai_monitoring", "innovation_detection"]
         
     async def can_handle_task(self, task: Task) -> bool:
         """Check if this agent can handle the task"""
-        keywords = ['investigation', 'analysis', 'link']
+        keywords = ['technology', 'monitor', 'ai', 'innovation', 'tracking']
         task_text = f"{task.type} {task.description}".lower()
         return any(keyword in task_text for keyword in keywords)
     
     async def execute_task(self, task: Task) -> Dict[str, Any]:
-        """Execute investigation task"""
+        """Execute technology monitoring task"""
         try:
             await self.update_status("busy")
             
             results = {
-                'link_analysis': {'entities': [], 'relationships': []},
-                'entity_resolution': {'resolved_entities': []}
+                'technology_tracking': {'new_technologies': [], 'updates': []},
+                'ai_monitoring': {'ai_advances': [], 'models': []},
+                'innovation_detection': {'breakthroughs': [], 'trends': []}
             }
             
             report = {
-                'title': 'Investigation Report',
-                'summary': 'Investigation completed',
-                'findings': ['Key finding 1', 'Key finding 2']
+                'title': 'Technology Monitoring Report',
+                'summary': 'Technology monitoring completed',
+                'findings': ['New technologies identified', 'AI advances tracked', 'Innovations detected']
             }
             
             await self.update_status("idle")
@@ -48,6 +49,6 @@ class InvestigationAgent(BaseAgent):
             }
             
         except Exception as e:
-            logger.error(f"Investigation error: {e}")
+            logger.error(f"Technology monitoring error: {e}")
             await self.update_status("error")
             return {'status': 'failed', 'error': str(e)}

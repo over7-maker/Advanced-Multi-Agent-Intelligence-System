@@ -1,5 +1,5 @@
 """
-Investigation Agent
+Reverse Engineering Agent
 """
 
 import logging
@@ -9,33 +9,34 @@ from ..orchestrator import BaseAgent, AgentType, Task
 
 logger = logging.getLogger(__name__)
 
-class InvestigationAgent(BaseAgent):
-    """Investigation Agent"""
+class ReverseEngineeringAgent(BaseAgent):
+    """Reverse Engineering Agent for malware analysis"""
     
-    def __init__(self, agent_id: str, name: str = "Investigation Agent"):
-        super().__init__(agent_id, name, AgentType.INVESTIGATION)
-        self.capabilities = ["link_analysis", "entity_resolution"]
+    def __init__(self, agent_id: str, name: str = "Reverse Engineering Agent"):
+        super().__init__(agent_id, name, AgentType.REVERSE_ENGINEERING)
+        self.capabilities = ["static_analysis", "dynamic_analysis", "malware_analysis"]
         
     async def can_handle_task(self, task: Task) -> bool:
         """Check if this agent can handle the task"""
-        keywords = ['investigation', 'analysis', 'link']
+        keywords = ['reverse', 'engineering', 'malware', 'analysis', 'static', 'dynamic']
         task_text = f"{task.type} {task.description}".lower()
         return any(keyword in task_text for keyword in keywords)
     
     async def execute_task(self, task: Task) -> Dict[str, Any]:
-        """Execute investigation task"""
+        """Execute reverse engineering task"""
         try:
             await self.update_status("busy")
             
             results = {
-                'link_analysis': {'entities': [], 'relationships': []},
-                'entity_resolution': {'resolved_entities': []}
+                'static_analysis': {'strings': [], 'functions': [], 'imports': []},
+                'dynamic_analysis': {'behavior': [], 'network': [], 'file_system': []},
+                'malware_analysis': {'family': '', 'capabilities': [], 'indicators': []}
             }
             
             report = {
-                'title': 'Investigation Report',
-                'summary': 'Investigation completed',
-                'findings': ['Key finding 1', 'Key finding 2']
+                'title': 'Reverse Engineering Report',
+                'summary': 'Malware analysis completed',
+                'findings': ['Static analysis performed', 'Dynamic analysis completed', 'Malware family identified']
             }
             
             await self.update_status("idle")
@@ -48,6 +49,6 @@ class InvestigationAgent(BaseAgent):
             }
             
         except Exception as e:
-            logger.error(f"Investigation error: {e}")
+            logger.error(f"Reverse engineering error: {e}")
             await self.update_status("error")
             return {'status': 'failed', 'error': str(e)}

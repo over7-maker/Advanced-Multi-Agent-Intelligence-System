@@ -1,0 +1,260 @@
+# AMAS Intelligence System Configuration
+
+# Core System Settings
+system:
+  name: "AMAS Intelligence System"
+  version: "1.0.0"
+  mode: "production"  # development, production
+  offline_mode: true
+  log_level: "INFO"  # DEBUG, INFO, WARNING, ERROR
+
+# Security Settings
+security:
+  encryption:
+    algorithm: "AES-GCM-256"
+    key_rotation_days: 30
+  authentication:
+    jwt_secret: "your_jwt_secret_here"
+    token_expiry_hours: 24
+  rbac:
+    enabled: true
+    default_role: "analyst"
+  audit:
+    enabled: true
+    log_level: "INFO"
+    retention_days: 90
+
+# Service Endpoints
+services:
+  llm:
+    host: "localhost"
+    port: 11434
+    url: "http://localhost:11434"
+    models:
+      - "llama3.1:8b"
+      - "codellama:7b"
+      - "mistral:7b"
+  
+  vector:
+    host: "localhost"
+    port: 8001
+    url: "http://localhost:8001"
+    index_path: "/app/faiss_index"
+    embedding_model: "sentence-transformers/all-MiniLM-L6-v2"
+  
+  graph:
+    host: "localhost"
+    port: 7474
+    url: "http://localhost:7474"
+    username: "neo4j"
+    password: "amas123"
+    database: "neo4j"
+  
+  redis:
+    host: "localhost"
+    port: 6379
+    url: "redis://localhost:6379"
+    db: 0
+  
+  postgres:
+    host: "localhost"
+    port: 5432
+    url: "postgresql://localhost:5432"
+    database: "amas"
+    username: "amas"
+    password: "amas123"
+  
+  n8n:
+    host: "localhost"
+    port: 5678
+    url: "http://localhost:5678"
+    username: "admin"
+    password: "amas123"
+
+# Agent Configuration
+agents:
+  osint:
+    enabled: true
+    max_concurrent_tasks: 5
+    timeout_seconds: 300
+    data_sources:
+      - "news"
+      - "social_media"
+      - "forums"
+      - "public_databases"
+  
+  investigation:
+    enabled: true
+    max_concurrent_tasks: 3
+    timeout_seconds: 600
+    capabilities:
+      - "link_analysis"
+      - "entity_resolution"
+      - "timeline_reconstruction"
+  
+  forensics:
+    enabled: true
+    max_concurrent_tasks: 2
+    timeout_seconds: 900
+    evidence_path: "/app/evidence"
+  
+  data_analysis:
+    enabled: true
+    max_concurrent_tasks: 4
+    timeout_seconds: 400
+    algorithms:
+      - "statistical_analysis"
+      - "predictive_modeling"
+      - "correlation_analysis"
+  
+  reverse_engineering:
+    enabled: true
+    max_concurrent_tasks: 2
+    timeout_seconds: 1200
+    sandbox_path: "/app/sandbox"
+  
+  metadata:
+    enabled: true
+    max_concurrent_tasks: 3
+    timeout_seconds: 200
+    extraction_formats:
+      - "exif"
+      - "pdf"
+      - "office"
+      - "image"
+  
+  reporting:
+    enabled: true
+    max_concurrent_tasks: 2
+    timeout_seconds: 300
+    output_formats:
+      - "pdf"
+      - "html"
+      - "json"
+  
+  technology_monitor:
+    enabled: true
+    max_concurrent_tasks: 1
+    timeout_seconds: 600
+    monitoring_sources:
+      - "academic_papers"
+      - "github_repos"
+      - "tech_news"
+
+# Workflow Configuration
+workflows:
+  osint_collection:
+    enabled: true
+    schedule: "0 */6 * * *"  # Every 6 hours
+    sources: ["news", "social_media", "forums"]
+  
+  threat_monitoring:
+    enabled: true
+    schedule: "0 */2 * * *"  # Every 2 hours
+    alert_threshold: 0.8
+  
+  investigation_pipeline:
+    enabled: true
+    auto_trigger: true
+    escalation_threshold: 0.9
+  
+  reporting_generation:
+    enabled: true
+    schedule: "0 0 * * *"  # Daily
+    recipients: ["analyst@company.com"]
+
+# Performance Settings
+performance:
+  max_concurrent_agents: 50
+  max_memory_usage: "32GB"
+  gpu_acceleration: true
+  cache_size: "4GB"
+  timeout_default: 300
+
+# Monitoring Settings
+monitoring:
+  prometheus:
+    enabled: true
+    port: 9090
+    metrics_path: "/metrics"
+  
+  grafana:
+    enabled: true
+    port: 3001
+    dashboards:
+      - "system_overview"
+      - "agent_performance"
+      - "security_metrics"
+  
+  health_check:
+    interval_seconds: 30
+    timeout_seconds: 10
+    retry_attempts: 3
+
+# Data Sources Configuration
+data_sources:
+  news:
+    - "https://www.bbc.com/news"
+    - "https://www.reuters.com"
+    - "https://www.cnn.com"
+    - "https://www.theguardian.com"
+  
+  social_media:
+    - "https://twitter.com"
+    - "https://www.reddit.com"
+    - "https://www.linkedin.com"
+  
+  forums:
+    - "https://www.hackernews.com"
+    - "https://www.securityfocus.com"
+  
+  threat_intel:
+    - "https://www.virustotal.com"
+    - "https://www.threatconnect.com"
+    - "https://www.misp-project.org"
+
+# API Configuration
+api:
+  host: "0.0.0.0"
+  port: 8000
+  cors:
+    enabled: true
+    origins: ["http://localhost:3000"]
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 100
+  authentication:
+    required: true
+    methods: ["jwt", "api_key"]
+
+# Logging Configuration
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  handlers:
+    - type: "file"
+      filename: "logs/amas.log"
+      max_bytes: 10485760  # 10MB
+      backup_count: 5
+    - type: "console"
+      level: "INFO"
+  
+  audit:
+    enabled: true
+    filename: "logs/audit.log"
+    format: "%(asctime)s - %(user)s - %(action)s - %(details)s"
+
+# Backup Configuration
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # Daily at 2 AM
+  retention_days: 30
+  destinations:
+    - "local:/app/backups"
+    - "s3://amas-backups"  # If configured
+  include:
+    - "database"
+    - "vector_index"
+    - "knowledge_graph"
+    - "models"
+    - "workflows"
