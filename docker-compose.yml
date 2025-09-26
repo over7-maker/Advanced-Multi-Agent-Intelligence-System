@@ -1,14 +1,14 @@
 version: '3.8'
 
 services:
-  # AMAS Intelligence System
+  # AMAS Intelligence System - Phase 1 Enhanced
   amas-core:
     build: .
     container_name: amas-core
     ports:
       - "8000:8000"
     environment:
-      - AMAS_MODE=production
+      - AMAS_MODE=development
       - AMAS_OFFLINE_MODE=true
       - AMAS_GPU_ENABLED=true
       - AMAS_LOG_LEVEL=INFO
@@ -17,17 +17,86 @@ services:
       - AMAS_GRAPH_HOST=neo4j:7474
       - AMAS_REDIS_HOST=redis:6379
       - AMAS_POSTGRES_HOST=postgres:5432
+      - AMAS_POSTGRES_USER=amas
+      - AMAS_POSTGRES_PASSWORD=amas123
+      - AMAS_POSTGRES_DB=amas
     depends_on:
-      - ollama
-      - vector-service
-      - neo4j
-      - redis
-      - postgres
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
+      - ./scripts:/app/scripts
     networks:
       - amas-network
+    restart: unless-stopped
+
+  # PostgreSQL Database with health check
+  postgres:
+    image: postgres:15-alpine
+    container_name: amas-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=amas
+      - POSTGRES_USER=amas
+      - POSTGRES_PASSWORD=amas123
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    networks:
+      - amas-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U amas -d amas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Redis Cache with health check
+  redis:
+    image: redis:7.2-alpine
+    container_name: amas-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - amas-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # Neo4j Knowledge Graph with health check
+  neo4j:
+    image: neo4j:5.15.0
+    container_name: amas-neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/amas123
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    networks:
+      - amas-network
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "amas123", "RETURN 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
 
   # Ollama LLM Service
   ollama:
@@ -48,131 +117,14 @@ services:
               capabilities: [gpu]
     networks:
       - amas-network
-
-  # Vector Service (FAISS)
-  vector-service:
-    build: ./services/vector
-    container_name: amas-vector
-    ports:
-      - "8001:8001"
-    environment:
-      - VECTOR_SERVICE_HOST=0.0.0.0
-      - VECTOR_SERVICE_PORT=8001
-      - FAISS_INDEX_PATH=/app/faiss_index
-    volumes:
-      - vector_data:/app/faiss_index
-    networks:
-      - amas-network
-
-  # Neo4j Knowledge Graph
-  neo4j:
-    image: neo4j:5.15.0
-    container_name: amas-neo4j
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    environment:
-      - NEO4J_AUTH=neo4j/amas123
-      - NEO4J_PLUGINS=["apoc"]
-    volumes:
-      - neo4j_data:/data
-      - neo4j_logs:/logs
-    networks:
-      - amas-network
-
-  # Redis Cache
-  redis:
-    image: redis:7.2-alpine
-    container_name: amas-redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - amas-network
-
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: amas-postgres
-    ports:
-      - "5432:5432"
-    environment:
-      - POSTGRES_DB=amas
-      - POSTGRES_USER=amas
-      - POSTGRES_PASSWORD=amas123
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - amas-network
-
-  # n8n Workflow Engine
-  n8n:
-    image: n8nio/n8n:latest
-    container_name: amas-n8n
-    ports:
-      - "5678:5678"
-    environment:
-      - N8N_BASIC_AUTH_ACTIVE=true
-      - N8N_BASIC_AUTH_USER=admin
-      - N8N_BASIC_AUTH_PASSWORD=amas123
-      - N8N_HOST=0.0.0.0
-      - N8N_PORT=5678
-    volumes:
-      - n8n_data:/home/node/.n8n
-    networks:
-      - amas-network
-
-  # Prometheus Monitoring
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: amas-prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    networks:
-      - amas-network
-
-  # Grafana Dashboard
-  grafana:
-    image: grafana/grafana:latest
-    container_name: amas-grafana
-    ports:
-      - "3001:3000"
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=amas123
-    volumes:
-      - grafana_data:/var/lib/grafana
-    networks:
-      - amas-network
-
-  # Nginx Load Balancer
-  nginx:
-    image: nginx:alpine
-    container_name: amas-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/nginx/ssl
-    depends_on:
-      - amas-core
-    networks:
-      - amas-network
+    restart: unless-stopped
 
 volumes:
-  ollama_data:
-  vector_data:
+  postgres_data:
+  redis_data:
   neo4j_data:
   neo4j_logs:
-  redis_data:
-  postgres_data:
-  n8n_data:
-  prometheus_data:
-  grafana_data:
+  ollama_data:
 
 networks:
   amas-network:
