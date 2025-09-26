@@ -35,7 +35,7 @@ pytesseract==0.3.10
 
 # Cryptography and Steganography
 stegano==0.10.1
-cryptography==41.0.8
+cryptography>=40.0.0,<44.0.0  # Fixed: Updated from ==41.0.8 to compatible version range
 pycryptodome==3.19.0
 
 # Network Analysis
