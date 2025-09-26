@@ -45,6 +45,36 @@ jobs:
         pip install openai aiohttp python-dotenv requests pyyaml PyGithub
         pip install groq google-generativeai cerebras-cloud-sdk
     
+    - name: Debug Auto Response System
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+        CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        ISSUE_NUMBER: ${{ github.event.issue.number || github.event.inputs.issue_number }}
+        ISSUE_TITLE: ${{ github.event.issue.title }}
+        ISSUE_BODY: ${{ github.event.issue.body }}
+        ISSUE_ACTION: ${{ github.event.action }}
+        ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+      run: |
+        echo "🐛 STARTING COMPREHENSIVE DEBUG WITH ULTIMATE FALLBACK"
+        echo "Repository: $GITHUB_REPOSITORY"
+        echo "Issue: #$ISSUE_NUMBER"
+        echo "Title: $ISSUE_TITLE"
+        echo "Author: $ISSUE_AUTHOR"
+        echo "Action: $ISSUE_ACTION"
+        echo ""
+        
+        # Debug the ultimate fallback system
+        python .github/scripts/debug_responder.py || echo "Debug completed with warnings"
+    
     - name: Ultimate AI Issue Analysis and Response
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -81,6 +111,27 @@ jobs:
           --action $ISSUE_ACTION || echo "Ultimate issue response completed with warnings"
         
         echo "✅ Ultimate AI Issue Response Complete!"
+    
+    - name: Guaranteed Auto Response
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+        CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        ISSUE_NUMBER: ${{ github.event.issue.number }}
+        ISSUE_TITLE: ${{ github.event.issue.title }}
+        ISSUE_BODY: ${{ github.event.issue.body }}
+        ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+      run: |
+        echo "🤖 STARTING GUARANTEED AUTO RESPONSE WITH ULTIMATE FALLBACK"
+        python .github/scripts/simple_working_responder.py || echo "Guaranteed response completed with warnings"
     
     - name: Generate Ultimate Response Summary
       run: |
