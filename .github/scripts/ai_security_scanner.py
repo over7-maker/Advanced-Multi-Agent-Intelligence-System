@@ -74,7 +74,7 @@ class AISecurityScanner:
         """Scan for common security vulnerabilities"""
         vulnerabilities = []
         
-        # Vulnerability patterns
+        # Vulnerability patterns (excluding security scanner patterns)
         vuln_patterns = {
             'sql_injection': {
                 'patterns': [r'execute\s*\([^)]*\+', r'query\s*\([^)]*\+', r'SELECT.*\+.*FROM'],
