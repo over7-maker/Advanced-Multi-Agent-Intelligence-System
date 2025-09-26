@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-09-26T14:16:43.653035",
+  "timestamp": "2025-09-26T14:24:53.248556",
   "workflow_tests": {
     "workflow_tests": {
       ".github/workflows/ai_development.yml": {
@@ -28,16 +28,54 @@
       },
       ".github/workflows/ai_complete_workflow.yml": {
         "exists": true,
-        "yaml_valid": false,
-        "error": "YAML parsing error: while parsing a block mapping\n  in \"<unicode string>\", line 373, column 7:\n        - name: AI Security Audit\n          ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 383, column 110:\n     ... ut security_report.md\\ || echo \"Script completed with warnings\"\n                                         ^"
+        "yaml_valid": true,
+        "component_tests": {
+          "ai_code_analysis": true,
+          "ai_code_improvement": true,
+          "ai_test_generation": true,
+          "ai_documentation": true,
+          "ai_security_audit": true,
+          "ai_performance_optimization": true,
+          "continuous_ai_development": true
+        },
+        "env_tests": {
+          "DEEPSEEK_API_KEY": true,
+          "GLM_API_KEY": true,
+          "GROK_API_KEY": true,
+          "KIMI_API_KEY": true,
+          "QWEN_API_KEY": true,
+          "GPTOSS_API_KEY": true
+        },
+        "workflow_size": 25430,
+        "total_jobs": 9,
+        "working_components": 7
       },
       ".github/workflows/ai_simple_workflow.yml": {
         "exists": true,
-        "yaml_valid": false,
-        "error": "YAML parsing error: while parsing a block mapping\n  in \"<unicode string>\", line 79, column 7:\n        - name: AI Documentation Generation\n          ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 87, column 128:\n     ... entation_generator.py\\ || echo \"Script completed with warnings\"\n                                         ^"
+        "yaml_valid": true,
+        "component_tests": {
+          "ai_code_analysis": true,
+          "ai_code_improvement": true,
+          "ai_test_generation": true,
+          "ai_documentation": true,
+          "ai_security_audit": true,
+          "ai_performance_optimization": true,
+          "continuous_ai_development": true
+        },
+        "env_tests": {
+          "DEEPSEEK_API_KEY": true,
+          "GLM_API_KEY": true,
+          "GROK_API_KEY": true,
+          "KIMI_API_KEY": true,
+          "QWEN_API_KEY": true,
+          "GPTOSS_API_KEY": true
+        },
+        "workflow_size": 19555,
+        "total_jobs": 7,
+        "working_components": 7
       }
     },
-    "timestamp": "2025-09-26T14:16:43.649780"
+    "timestamp": "2025-09-26T14:24:53.245182"
   },
   "script_tests": {
     "script_tests": {
@@ -173,7 +211,7 @@
     "total_scripts": 16,
     "existing_scripts": 16,
     "working_scripts": 16,
-    "timestamp": "2025-09-26T14:16:43.652781"
+    "timestamp": "2025-09-26T14:24:53.248289"
   },
   "environment_tests": {
     "env_validations": {
@@ -222,11 +260,11 @@
       "AI_INTEGRATION_README.md": true,
       "setup_ai_complete.sh": true
     },
-    "timestamp": "2025-09-26T14:16:43.653029"
+    "timestamp": "2025-09-26T14:24:53.248550"
   },
   "summary": {
     "total_workflows": 3,
-    "successful_workflows": 1,
+    "successful_workflows": 3,
     "total_scripts": 16,
     "working_scripts": 16,
     "total_env_vars": 6,
@@ -236,7 +274,6 @@
     "python_compatible": true,
     "overall_status": "complete",
     "recommendations": [
-      "Only 1 workflows are working. Complete all workflow configurations.",
       "Only 0 environment variables are set. Set all required API keys.",
       "Workflow testing is mostly complete! Address remaining issues.",
       "All components are working together successfully."

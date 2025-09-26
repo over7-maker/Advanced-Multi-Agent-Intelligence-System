@@ -379,12 +379,14 @@ jobs:
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
-      run: "echo \"Running AI Security Audit...\"\nif [ -n \"$TARGET_FILES\" ]; then\n\
-        \  python scripts/ai_security_auditor.py --files $TARGET_FILES --output security_report.md\ || echo "Script completed with warnings"
-        \ --audit-type comprehensive || echo \"Script completed with warnings\"\n\
-        else\n  python scripts/ai_security_auditor.py --directory . --output security_reports/\ || echo "Script completed with warnings"
-        \ --audit-type comprehensive --extensions .py .js .ts || echo \"Script completed\
-        \ with warnings\"\nfi\necho \"Security audit complete!\"\n"
+      run: |
+        echo "Running AI Security Audit..."
+        if [ -n "$TARGET_FILES" ]; then
+          python scripts/ai_security_auditor.py --files $TARGET_FILES --output security_report.md --audit-type comprehensive || echo "Script completed with warnings"
+        else
+          python scripts/ai_security_auditor.py --directory . --output security_reports/ --audit-type comprehensive --extensions .py .js .ts || echo "Script completed with warnings"
+        fi
+        echo "Security audit complete!"
     - name: Run security tools
       run: 'echo "Running additional security tools..."
 
@@ -465,13 +467,15 @@ jobs:
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
-      run: "echo \"Running AI Performance Analysis...\"\nif [ -n \"$TARGET_FILES\"\
-        \ ]; then\n  python scripts/ai_performance_analyzer.py --files $TARGET_FILES\ || echo "Script completed with warnings"
-        \ --output performance_report.md --analysis-type comprehensive || echo \"\
-        Script completed with warnings\"\nelse\n  python scripts/ai_performance_analyzer.py\ || echo "Script completed with warnings"
-        \ --directory . --output performance_reports/ --analysis-type comprehensive\
-        \ --extensions .py .js .ts || echo \"Script completed with warnings\"\nfi\n\
-        echo \"Performance analysis complete!\"\n"
+      run: |
+        echo "Running AI Performance Analysis..."
+        if [ -n "$TARGET_FILES" ]; then
+          python scripts/ai_performance_analyzer.py --files $TARGET_FILES --output performance_report.md --analysis-type comprehensive || echo "Script completed with warnings"
+        else
+          python scripts/ai_performance_analyzer.py --directory . --output performance_reports/ --analysis-type comprehensive
+          --extensions .py .js .ts || echo "Script completed with warnings"
+        fi
+        echo "Performance analysis complete!"
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
       with:
