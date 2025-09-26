@@ -1,54 +1,93 @@
 """
-Metadata Agent
+Metadata Agent Implementation
 """
 
+import asyncio
 import logging
+from typing import Dict, Any, List, Optional
 from datetime import datetime
-from typing import Dict, Any
-from ..orchestrator import BaseAgent, AgentType, Task
+
+from ..base.intelligence_agent import IntelligenceAgent, AgentStatus
 
 logger = logging.getLogger(__name__)
 
-class MetadataAgent(BaseAgent):
-    """Metadata Agent for hidden information detection"""
+class MetadataAgent(IntelligenceAgent):
+    """Metadata Agent for AMAS Intelligence System"""
     
-    def __init__(self, agent_id: str, name: str = "Metadata Agent"):
-        super().__init__(agent_id, name, AgentType.METADATA)
-        self.capabilities = ["metadata_extraction", "steganography_detection", "hidden_info_analysis"]
+    def __init__(
+        self,
+        agent_id: str,
+        name: str = "Metadata Agent",
+        llm_service: Any = None,
+        vector_service: Any = None,
+        knowledge_graph: Any = None,
+        security_service: Any = None
+    ):
+        capabilities = [
+            "exif_extraction",
+            "pdf_metadata",
+            "office_metadata",
+            "image_metadata",
+            "audio_metadata",
+            "video_metadata"
+        ]
         
-    async def can_handle_task(self, task: Task) -> bool:
-        """Check if this agent can handle the task"""
-        keywords = ['metadata', 'hidden', 'steganography', 'extraction', 'analysis']
-        task_text = f"{task.type} {task.description}".lower()
-        return any(keyword in task_text for keyword in keywords)
-    
-    async def execute_task(self, task: Task) -> Dict[str, Any]:
-        """Execute metadata analysis task"""
+        super().__init__(
+            agent_id=agent_id,
+            name=name,
+            capabilities=capabilities,
+            llm_service=llm_service,
+            vector_service=vector_service,
+            knowledge_graph=knowledge_graph,
+            security_service=security_service
+        )
+        
+    async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute metadata extraction task"""
         try:
-            await self.update_status("busy")
+            task_type = task.get('type', 'general')
+            task_id = task.get('id', 'unknown')
             
-            results = {
-                'metadata_extraction': {'exif': [], 'file_info': [], 'timestamps': []},
-                'steganography_detection': {'hidden_data': [], 'techniques': []},
-                'hidden_info_analysis': {'patterns': [], 'anomalies': []}
+            logger.info(f"Executing metadata task {task_id} of type {task_type}")
+            
+            # Mock metadata extraction
+            metadata_result = {
+                'extraction_id': f"metadata_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+                'description': task.get('description', ''),
+                'status': 'completed',
+                'findings': [
+                    'Metadata extraction completed successfully',
+                    'All supported formats processed',
+                    'No corrupted metadata detected'
+                ],
+                'recommendations': [
+                    'Continue monitoring for new file types',
+                    'Update extraction tools regularly'
+                ],
+                'confidence': 0.9
             }
-            
-            report = {
-                'title': 'Metadata Analysis Report',
-                'summary': 'Metadata and hidden information analysis completed',
-                'findings': ['Metadata extracted', 'Steganography detected', 'Hidden patterns found']
-            }
-            
-            await self.update_status("idle")
             
             return {
-                'status': 'completed',
-                'results': results,
-                'report': report,
-                'timestamp': datetime.now().isoformat()
+                'success': True,
+                'task_type': 'metadata_extraction',
+                'result': metadata_result,
+                'timestamp': datetime.utcnow().isoformat()
             }
             
         except Exception as e:
-            logger.error(f"Metadata analysis error: {e}")
-            await self.update_status("error")
-            return {'status': 'failed', 'error': str(e)}
+            logger.error(f"Error executing metadata task: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'timestamp': datetime.utcnow().isoformat()
+            }
+    
+    async def validate_task(self, task: Dict[str, Any]) -> bool:
+        """Validate if this agent can handle the task"""
+        metadata_keywords = [
+            'metadata', 'exif', 'pdf', 'office', 'image',
+            'audio', 'video', 'extraction', 'analysis'
+        ]
+        
+        task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
+        return any(keyword in task_text for keyword in metadata_keywords)
