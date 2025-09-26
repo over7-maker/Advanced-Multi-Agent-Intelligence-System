@@ -228,9 +228,25 @@ async def main():
         config = {
             'llm_service_url': 'http://localhost:11434',
             'vector_service_url': 'http://localhost:8001',
-            'graph_service_url': 'http://localhost:7474',
+            'graph_service_url': 'bolt://localhost:7687',
+            'postgres_host': 'localhost',
+            'postgres_port': 5432,
+            'postgres_user': 'amas',
+            'postgres_password': 'amas123',
+            'postgres_db': 'amas',
+            'redis_host': 'localhost',
+            'redis_port': 6379,
+            'redis_db': 0,
+            'neo4j_username': 'neo4j',
+            'neo4j_password': 'amas123',
+            'neo4j_database': 'neo4j',
+            'jwt_secret': 'amas_jwt_secret_key_2024_secure',
+            'encryption_key': 'amas_encryption_key_2024_secure_32_chars',
+            'deepseek_api_key': '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',
+            'glm_api_key': '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',
+            'grok_api_key': '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',
             'n8n_url': 'http://localhost:5678',
-            'n8n_api_key': 'your_api_key_here'
+            'n8n_api_key': 'your_n8n_api_key_here'
         }
         
         # Initialize system
