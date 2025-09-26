@@ -1,0 +1,141 @@
+name: Multi-API Auto Response
+
+on:
+  issues:
+    types: [opened, edited]
+  issue_comment:
+    types: [created]
+
+jobs:
+  ai-response:
+    runs-on: ubuntu-latest
+    if: github.event.issue.state == 'open'
+    
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install openai requests python-dotenv
+    
+    - name: Multi-API Auto Response
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        python -c "
+        import sys
+        sys.path.append('.')
+        from ai_service_manager import AIServiceManager
+        
+        import os
+        import requests
+        
+        # Initialize AI manager
+        manager = AIServiceManager()
+        
+        # Get issue details
+        issue_title = '${{ github.event.issue.title }}'
+        issue_body = '${{ github.event.issue.body }}'
+        issue_number = ${{ github.event.issue.number }}
+        repo = '${{ github.repository }}'
+        
+        print(f'🤖 Processing issue #{issue_number}: {issue_title}')
+        
+        # Generate AI response
+        response, provider, error = manager.generate_issue_response(issue_title, issue_body)
+        
+        if response:
+            print(f'✅ Generated response using {provider}')
+            
+            # Post comment to issue
+            comment_url = f'https://api.github.com/repos/{repo}/issues/{issue_number}/comments'
+            headers = {
+                'Authorization': f'Bearer {os.environ[\"GITHUB_TOKEN\"]}',
+                'Accept': 'application/vnd.github.v3+json'
+            }
+            
+            comment_data = {
+                'body': f'## 🤖 AI Assistant Response (via {provider})\n\n{response}\n\n---\n*This response was generated automatically using our multi-API AI system.*'
+            }
+            
+            try:
+                comment_response = requests.post(comment_url, headers=headers, json=comment_data)
+                if comment_response.status_code == 201:
+                    print('✅ Comment posted successfully')
+                else:
+                    print(f'❌ Failed to post comment: {comment_response.status_code}')
+            except Exception as e:
+                print(f'❌ Error posting comment: {e}')
+            
+            # Add AI-analyzed label
+            labels_url = f'https://api.github.com/repos/{repo}/issues/{issue_number}/labels'
+            label_data = {'labels': ['ai-analyzed', 'auto-response']}
+            
+            try:
+                label_response = requests.post(labels_url, headers=headers, json=label_data)
+                if label_response.status_code == 200:
+                    print('✅ Labels added successfully')
+                else:
+                    print(f'❌ Failed to add labels: {label_response.status_code}')
+            except Exception as e:
+                print(f'❌ Error adding labels: {e}')
+        else:
+            print(f'❌ Failed to generate response: {error}')
+            
+            # Post fallback comment
+            fallback_url = f'https://api.github.com/repos/{repo}/issues/{issue_number}/comments'
+            headers = {
+                'Authorization': f'Bearer {os.environ[\"GITHUB_TOKEN\"]}',
+                'Accept': 'application/vnd.github.v3+json'
+            }
+            
+            fallback_data = {
+                'body': '## 🤖 AI Assistant\n\nThank you for creating this issue! Our AI system is currently processing your request. We\'ll get back to you soon with a detailed analysis.\n\n---\n*This is an automated response from our multi-API AI system.*'
+            }
+            
+            try:
+                fallback_response = requests.post(fallback_url, headers=headers, json=fallback_data)
+                if fallback_response.status_code == 201:
+                    print('✅ Fallback comment posted')
+                else:
+                    print(f'❌ Failed to post fallback comment: {fallback_response.status_code}')
+            except Exception as e:
+                print(f'❌ Error posting fallback comment: {e}')
+        "
+    
+    - name: Show AI Provider Stats
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+      run: |
+        python -c "
+        from ai_service_manager import AIServiceManager
+        manager = AIServiceManager()
+        stats = manager.get_provider_stats()
+        
+        print('📊 AI Provider Statistics:')
+        for name, stat in stats.items():
+            status = '✅ Active' if stat['active'] and stat['has_key'] else '❌ Inactive'
+            print(f'  {name}: {status} (Success: {stat[\"success_rate\"]})')
+        "
