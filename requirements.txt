@@ -39,7 +39,7 @@ faiss-cpu==1.7.4
 sentence-transformers==2.2.2
 
 # Security and encryption
-cryptography>=40.0.0,<44.0.0
+cryptography>=40.0.0,<44.0.0  # Fixed: Updated from ==41.0.8 to compatible version range
 pyjwt==2.8.0
 bcrypt==4.1.2
 
@@ -53,7 +53,7 @@ python-dotenv==1.0.0
 pyyaml==6.0.1
 
 # Workflow automation
-n8n-python==0.1.2
+# n8n-python==0.1.2  # Commented out: No matching distribution found
 celery==5.3.4
 
 # Development and testing
