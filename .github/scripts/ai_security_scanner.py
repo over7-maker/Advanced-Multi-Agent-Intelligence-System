@@ -160,20 +160,43 @@ class AISecurityScanner:
     def _is_pattern_definition_file(self, content: str, file_path: str) -> bool:
         """Check if file contains only pattern definitions (not actual vulnerabilities)"""
         # Check if file is a security scanner or pattern definition file
-        if 'security_scanner' in file_path or 'ai_code_analyzer' in file_path:
+        if any(keyword in file_path.lower() for keyword in ['security_scanner', 'ai_code_analyzer', 'ai_security']):
             # Look for pattern definition indicators
             pattern_indicators = [
                 'vuln_patterns', 'security_patterns', 'detection_patterns',
                 'hardcoded_secrets', 'sql_injection', 'xss_vulnerabilities',
-                'weak_crypto', 'insecure_random', 'unsafe_deserialization'
+                'weak_crypto', 'insecure_random', 'unsafe_deserialization',
+                'patterns =', 'description =', 'vulnerability patterns'
             ]
             
             # Count pattern definition indicators vs actual code
             pattern_count = sum(1 for indicator in pattern_indicators if indicator in content)
             total_lines = len(content.split('\n'))
             
-            # If more than 30% of content contains pattern indicators, likely a pattern file
-            return pattern_count > (total_lines * 0.3)
+            # If more than 20% of content contains pattern indicators, likely a pattern file
+            return pattern_count > (total_lines * 0.2)
+        
+        return False
+    
+    def _is_pattern_definition_line(self, line: str, context_lines: list) -> bool:
+        """Check if a specific line is a pattern definition rather than actual vulnerable code"""
+        line_lower = line.lower().strip()
+        
+        # Check for pattern definition indicators
+        pattern_indicators = [
+            'patterns =', 'description =', 'vuln_patterns', 'security_patterns',
+            'hardcoded_secrets', 'sql_injection', 'xss_vulnerabilities',
+            'weak_crypto', 'insecure_random', 'unsafe_deserialization'
+        ]
+        
+        # If line contains pattern indicators, it's likely a pattern definition
+        if any(indicator in line_lower for indicator in pattern_indicators):
+            return True
+        
+        # Check if line is part of a dictionary definition for patterns
+        if any('{' in context_line and '}' in context_line for context_line in context_lines):
+            if ':' in line and ('[' in line or ']' in line):
+                return True
         
         return False
     
@@ -215,6 +238,18 @@ class AISecurityScanner:
                 matches = re.finditer(pattern, content, re.IGNORECASE)
                 for match in matches:
                     line_num = content[:match.start()].count('\n') + 1
+                    
+                    # Get context lines around the match
+                    lines = content.split('\n')
+                    start_line = max(0, line_num - 3)
+                    end_line = min(len(lines), line_num + 3)
+                    context_lines = lines[start_line:end_line]
+                    
+                    # Check if this is a pattern definition line
+                    if self._is_pattern_definition_line(lines[line_num - 1], context_lines):
+                        print(f"🔍 Skipping pattern definition line {line_num} in {file_path}")
+                        continue
+                    
                     vulnerabilities.append({
                         'type': vuln_type,
                         'file': file_path,
