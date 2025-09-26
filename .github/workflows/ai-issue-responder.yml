@@ -29,25 +29,36 @@ jobs:
     
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        python -m pip install openai requests
+        pip install openai requests python-dotenv
     
-    - name: AI Issue Analysis and Response
+    - name: Debug Auto Response System
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
-        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
-        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
-        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
-        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         ISSUE_TITLE: ${{ github.event.issue.title }}
         ISSUE_BODY: ${{ github.event.issue.body }}
         ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
-        REPO_NAME: ${{ github.repository }}
       run: |
-        python .github/scripts/ai_issue_responder.py
+        echo "🐛 STARTING COMPREHENSIVE DEBUG"
+        echo "Repository: $GITHUB_REPOSITORY"
+        echo "Issue: #$ISSUE_NUMBER"
+        echo "Title: $ISSUE_TITLE"
+        echo "Author: $ISSUE_AUTHOR"
+        echo ""
+        python .github/scripts/debug_responder.py
+    
+    - name: Guaranteed Auto Response
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        ISSUE_NUMBER: ${{ github.event.issue.number }}
+        ISSUE_TITLE: ${{ github.event.issue.title }}
+        ISSUE_BODY: ${{ github.event.issue.body }}
+        ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+      run: |
+        echo "🤖 STARTING GUARANTEED AUTO RESPONSE"
+        python .github/scripts/simple_working_responder.py
     
     - name: Add AI Analysis Label
       uses: actions/github-script@v7
