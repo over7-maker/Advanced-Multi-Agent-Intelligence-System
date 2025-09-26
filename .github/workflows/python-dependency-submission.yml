@@ -24,8 +24,3 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
-
-      - name: Submit dependencies to GitHub Dependency Graph
-        uses: github/dependency-submission-action@v2
-        with:
-          directory: '.'   
