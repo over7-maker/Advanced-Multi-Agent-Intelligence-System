@@ -30,7 +30,7 @@ jobs:
           python scripts/multi_agent_orchestrator.py
 
       - name: Upload report artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: multi-agent-report
           path: artifacts/multi_agent_report.md
