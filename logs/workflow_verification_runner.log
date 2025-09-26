@@ -1,0 +1,79 @@
+2025-09-26 10:14:36,952 - __main__ - INFO - Starting AMAS Workflow Verification Runner...
+2025-09-26 10:14:36,952 - __main__ - INFO - Running verify_workflows.py...
+2025-09-26 10:14:36,952 - __main__ - INFO - Running verify_workflows.py...
+2025-09-26 10:14:37,083 - __main__ - ERROR - ✗ verify_workflows.py failed with return code 1
+2025-09-26 10:14:37,083 - __main__ - ERROR - Error output: Traceback (most recent call last):
+  File "/workspace/verify_workflows.py", line 26, in <module>
+    from main_phase5_complete import AMASPhase5System
+  File "/workspace/main_phase5_complete.py", line 26, in <module>
+    from core.orchestrator import IntelligenceOrchestrator
+  File "/workspace/core/__init__.py", line 8, in <module>
+    from .orchestrator import IntelligenceOrchestrator
+  File "/workspace/core/orchestrator.py", line 16, in <module>
+    from agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
+  File "/workspace/agents/__init__.py", line 10, in <module>
+    from .osint.osint_agent import OSINTAgent
+  File "/workspace/agents/osint/__init__.py", line 5, in <module>
+    from .osint_agent import OSINTAgent, OSINTCollectionWorkflow
+  File "/workspace/agents/osint/osint_agent.py", line 11, in <module>
+    import aiohttp
+ModuleNotFoundError: No module named 'aiohttp'
+
+2025-09-26 10:14:37,083 - __main__ - ERROR - ✗ verify_workflows.py failed
+2025-09-26 10:14:37,083 - __main__ - INFO - Running check_workflow_configuration.py...
+2025-09-26 10:14:37,083 - __main__ - INFO - Running check_workflow_configuration.py...
+2025-09-26 10:14:37,152 - __main__ - INFO - ✓ check_workflow_configuration.py completed successfully
+2025-09-26 10:14:37,153 - __main__ - INFO - ✓ check_workflow_configuration.py passed
+2025-09-26 10:14:37,153 - __main__ - INFO - Running check_workflow_status.py...
+2025-09-26 10:14:37,153 - __main__ - INFO - Running check_workflow_status.py...
+2025-09-26 10:14:37,216 - __main__ - ERROR - ✗ check_workflow_status.py failed with return code 1
+2025-09-26 10:14:37,216 - __main__ - ERROR - Error output: Traceback (most recent call last):
+  File "/workspace/check_workflow_status.py", line 26, in <module>
+    from main_phase5_complete import AMASPhase5System
+  File "/workspace/main_phase5_complete.py", line 26, in <module>
+    from core.orchestrator import IntelligenceOrchestrator
+  File "/workspace/core/__init__.py", line 8, in <module>
+    from .orchestrator import IntelligenceOrchestrator
+  File "/workspace/core/orchestrator.py", line 16, in <module>
+    from agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
+  File "/workspace/agents/__init__.py", line 10, in <module>
+    from .osint.osint_agent import OSINTAgent
+  File "/workspace/agents/osint/__init__.py", line 5, in <module>
+    from .osint_agent import OSINTAgent, OSINTCollectionWorkflow
+  File "/workspace/agents/osint/osint_agent.py", line 11, in <module>
+    import aiohttp
+ModuleNotFoundError: No module named 'aiohttp'
+
+2025-09-26 10:14:37,216 - __main__ - ERROR - ✗ check_workflow_status.py failed
+2025-09-26 10:14:37,216 - __main__ - INFO - Running run_workflow_tests.py...
+2025-09-26 10:14:37,216 - __main__ - INFO - Running run_workflow_tests.py...
+2025-09-26 10:14:37,279 - __main__ - ERROR - ✗ run_workflow_tests.py failed with return code 1
+2025-09-26 10:14:37,279 - __main__ - ERROR - Error output: Traceback (most recent call last):
+  File "/workspace/run_workflow_tests.py", line 26, in <module>
+    from main_phase5_complete import AMASPhase5System
+  File "/workspace/main_phase5_complete.py", line 26, in <module>
+    from core.orchestrator import IntelligenceOrchestrator
+  File "/workspace/core/__init__.py", line 8, in <module>
+    from .orchestrator import IntelligenceOrchestrator
+  File "/workspace/core/orchestrator.py", line 16, in <module>
+    from agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
+  File "/workspace/agents/__init__.py", line 10, in <module>
+    from .osint.osint_agent import OSINTAgent
+  File "/workspace/agents/osint/__init__.py", line 5, in <module>
+    from .osint_agent import OSINTAgent, OSINTCollectionWorkflow
+  File "/workspace/agents/osint/osint_agent.py", line 11, in <module>
+    import aiohttp
+ModuleNotFoundError: No module named 'aiohttp'
+
+2025-09-26 10:14:37,279 - __main__ - ERROR - ✗ run_workflow_tests.py failed
+2025-09-26 10:14:37,279 - __main__ - INFO - 
+Workflow Verification Summary:
+2025-09-26 10:14:37,279 - __main__ - INFO -   Total Scripts: 4
+2025-09-26 10:14:37,279 - __main__ - INFO -   Passed: 1
+2025-09-26 10:14:37,279 - __main__ - INFO -   Failed: 3
+2025-09-26 10:14:37,279 - __main__ - INFO -   Success Rate: 25.0%
+2025-09-26 10:14:37,279 - __main__ - WARNING -   Failed Scripts:
+2025-09-26 10:14:37,279 - __main__ - WARNING -     - verify_workflows.py
+2025-09-26 10:14:37,279 - __main__ - WARNING -     - check_workflow_status.py
+2025-09-26 10:14:37,279 - __main__ - WARNING -     - run_workflow_tests.py
+2025-09-26 10:14:37,279 - __main__ - ERROR - ❌ 3 workflow verifications failed!
