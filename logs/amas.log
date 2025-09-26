@@ -1,0 +1,81 @@
+2025-09-26 14:36:51,304 - root - WARNING - FAISS not available, using fallback vector operations
+2025-09-26 14:36:51,311 - root - WARNING - Neo4j driver not available
+2025-09-26 14:36:51,315 - root - WARNING - Database drivers not available
+2025-09-26 14:36:57,904 - root - WARNING - FAISS not available, using fallback vector operations
+2025-09-26 14:36:57,905 - root - WARNING - Neo4j driver not available
+2025-09-26 14:36:57,907 - root - WARNING - Database drivers not available
+2025-09-26 14:37:05,711 - root - WARNING - FAISS not available, using fallback vector operations
+2025-09-26 14:37:05,713 - root - WARNING - Neo4j driver not available
+2025-09-26 14:37:05,714 - root - WARNING - Database drivers not available
+2025-09-26 14:37:11,782 - root - WARNING - FAISS not available, using fallback vector operations
+2025-09-26 14:37:11,784 - root - WARNING - Neo4j driver not available
+2025-09-26 14:37:11,786 - root - WARNING - Database drivers not available
+2025-09-26 14:38:16,786 - root - WARNING - FAISS not available, using fallback vector operations
+2025-09-26 14:38:16,787 - root - WARNING - Neo4j driver not available
+2025-09-26 14:38:16,788 - root - WARNING - Database drivers not available
+2025-09-26 14:38:16,814 - main - INFO - Initializing AMAS Intelligence System...
+2025-09-26 14:38:16,814 - services.service_manager - INFO - Initializing all services...
+2025-09-26 14:38:16,883 - services.llm_service - ERROR - Error loading models: All connection attempts failed
+2025-09-26 14:38:16,883 - services.llm_service - WARNING - No models available in LLM service
+2025-09-26 14:38:16,883 - services.service_manager - INFO - LLM service initialized
+2025-09-26 14:38:16,884 - services.vector_service - WARNING - FAISS not available, using fallback mode
+2025-09-26 14:38:16,884 - services.service_manager - INFO - Vector service initialized
+2025-09-26 14:38:16,884 - services.knowledge_graph_service - WARNING - Neo4j driver not available, using fallback mode
+2025-09-26 14:38:16,884 - services.service_manager - INFO - Knowledge Graph service initialized
+2025-09-26 14:38:16,884 - services.service_manager - INFO - All services initialized successfully
+2025-09-26 14:38:16,884 - services.database_service - WARNING - Database drivers not available, using mock mode
+2025-09-26 14:38:16,884 - services.security_service - INFO - Initializing security service...
+2025-09-26 14:38:16,884 - services.security_service - INFO - Access control system initialized
+2025-09-26 14:38:16,884 - services.security_service - INFO - Audit event logged: system_startup - initialize by system
+2025-09-26 14:38:16,884 - services.security_service - INFO - Audit logging system initialized
+2025-09-26 14:38:16,884 - services.security_service - INFO - Security service initialized successfully
+2025-09-26 14:38:16,886 - amas.orchestrator - INFO - Specialized agents registered successfully
+2025-09-26 14:38:16,886 - amas.orchestrator - INFO - Workflow templates initialized successfully
+2025-09-26 14:38:16,886 - amas.orchestrator - INFO - Intelligence orchestrator initialized successfully
+2025-09-26 14:38:16,886 - amas.intelligence.osint_001 - INFO - Starting agent osint_001
+2025-09-26 14:38:16,886 - amas.intelligence.osint_001 - INFO - Agent osint_001 started successfully
+2025-09-26 14:38:16,886 - amas.orchestrator - INFO - Agent osint_001 registered successfully
+2025-09-26 14:38:16,886 - services.database_service - ERROR - Error storing agent: 'NoneType' object has no attribute 'acquire'
+2025-09-26 14:38:16,886 - main - INFO - Registered OSINT Agent with ID osint_001
+2025-09-26 14:38:16,886 - amas.intelligence.investigation_001 - INFO - Starting agent investigation_001
+2025-09-26 14:38:16,886 - amas.intelligence.investigation_001 - INFO - Agent investigation_001 started successfully
+2025-09-26 14:38:16,886 - amas.orchestrator - INFO - Agent investigation_001 registered successfully
+2025-09-26 14:38:16,886 - services.database_service - ERROR - Error storing agent: 'NoneType' object has no attribute 'acquire'
+2025-09-26 14:38:16,886 - main - INFO - Registered Investigation Agent with ID investigation_001
+2025-09-26 14:38:16,886 - amas.intelligence.forensics_001 - INFO - Starting agent forensics_001
+2025-09-26 14:38:16,887 - amas.intelligence.forensics_001 - INFO - Agent forensics_001 started successfully
+2025-09-26 14:38:16,887 - amas.orchestrator - INFO - Agent forensics_001 registered successfully
+2025-09-26 14:38:16,887 - services.database_service - ERROR - Error storing agent: 'NoneType' object has no attribute 'acquire'
+2025-09-26 14:38:16,887 - main - INFO - Registered Forensics Agent with ID forensics_001
+2025-09-26 14:38:16,887 - amas.intelligence.data_analysis_001 - INFO - Starting agent data_analysis_001
+2025-09-26 14:38:16,887 - amas.intelligence.data_analysis_001 - INFO - Agent data_analysis_001 started successfully
+2025-09-26 14:38:16,887 - amas.orchestrator - INFO - Agent data_analysis_001 registered successfully
+2025-09-26 14:38:16,887 - services.database_service - ERROR - Error storing agent: 'NoneType' object has no attribute 'acquire'
+2025-09-26 14:38:16,887 - main - INFO - Registered Data Analysis Agent with ID data_analysis_001
+2025-09-26 14:38:16,887 - amas.intelligence.reverse_engineering_001 - INFO - Starting agent reverse_engineering_001
+2025-09-26 14:38:16,887 - amas.intelligence.reverse_engineering_001 - INFO - Agent reverse_engineering_001 started successfully
+2025-09-26 14:38:16,887 - amas.orchestrator - INFO - Agent reverse_engineering_001 registered successfully
+2025-09-26 14:38:16,887 - services.database_service - ERROR - Error storing agent: 'NoneType' object has no attribute 'acquire'
+2025-09-26 14:38:16,887 - main - INFO - Registered Reverse Engineering Agent with ID reverse_engineering_001
+2025-09-26 14:38:16,887 - amas.intelligence.metadata_001 - INFO - Starting agent metadata_001
+2025-09-26 14:38:16,887 - amas.intelligence.metadata_001 - INFO - Agent metadata_001 started successfully
+2025-09-26 14:38:16,887 - amas.orchestrator - INFO - Agent metadata_001 registered successfully
+2025-09-26 14:38:16,887 - services.database_service - ERROR - Error storing agent: 'NoneType' object has no attribute 'acquire'
+2025-09-26 14:38:16,887 - main - INFO - Registered Metadata Agent with ID metadata_001
+2025-09-26 14:38:16,887 - amas.intelligence.reporting_001 - INFO - Starting agent reporting_001
+2025-09-26 14:38:16,887 - amas.intelligence.reporting_001 - INFO - Agent reporting_001 started successfully
+2025-09-26 14:38:16,887 - amas.orchestrator - INFO - Agent reporting_001 registered successfully
+2025-09-26 14:38:16,887 - services.database_service - ERROR - Error storing agent: 'NoneType' object has no attribute 'acquire'
+2025-09-26 14:38:16,887 - main - INFO - Registered Reporting Agent with ID reporting_001
+2025-09-26 14:38:16,887 - amas.intelligence.technology_monitor_001 - INFO - Starting agent technology_monitor_001
+2025-09-26 14:38:16,887 - amas.intelligence.technology_monitor_001 - INFO - Agent technology_monitor_001 started successfully
+2025-09-26 14:38:16,888 - amas.orchestrator - INFO - Agent technology_monitor_001 registered successfully
+2025-09-26 14:38:16,888 - services.database_service - ERROR - Error storing agent: 'NoneType' object has no attribute 'acquire'
+2025-09-26 14:38:16,888 - main - INFO - Registered Technology Monitor Agent with ID technology_monitor_001
+2025-09-26 14:38:16,888 - agents.agentic_rag - INFO - Initializing Agentic RAG system
+2025-09-26 14:38:16,888 - agents.agentic_rag - INFO - Agentic RAG system initialized successfully
+2025-09-26 14:38:16,888 - agents.n8n_integration - INFO - Initializing N8N integration
+2025-09-26 14:38:16,888 - agents.n8n_integration - INFO - N8N integration initialized successfully
+2025-09-26 14:38:16,888 - main - INFO - AMAS Intelligence System initialized successfully
+2025-09-26 14:38:16,888 - main - INFO - Shutting down AMAS Intelligence System...
+2025-09-26 14:38:16,888 - main - INFO - AMAS Intelligence System shutdown complete
