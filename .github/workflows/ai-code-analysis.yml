@@ -47,8 +47,8 @@ jobs:
     - name: AI Code Analysis
       if: steps.changed-files.outputs.any_changed == 'true'
       env:
-        GITHUB_TOKEN: ${{ secrets.GLM_API_KEY}}
-        OPENROUTER_API_KEY: ${{ secrets.GROK_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -62,7 +62,9 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
+        REPO_NAME: ${{ github.repository }}
       run: |
         python .github/scripts/ai_security_scanner.py
