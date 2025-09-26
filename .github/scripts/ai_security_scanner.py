@@ -350,7 +350,7 @@ Detected Issues:
             
             # Get AI analysis if issues found
             ai_analysis = None
-            if (secrets or vulnerabilities) and self.ai_client:
+            if (secrets or vulnerabilities) and self.ai_clients:
                 ai_analysis = self.analyze_security_with_ai(file_path, content, secrets, vulnerabilities)
             
             if secrets or vulnerabilities or ai_analysis:
