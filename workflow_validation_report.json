@@ -513,7 +513,7 @@
   },
   "total_workflows": 3,
   "valid_workflows": 1,
-  "timestamp": "2025-09-26T14:00:15.644934",
+  "timestamp": "2025-09-26T14:16:39.522383",
   "fixes": [
     "Fix YAML syntax in .github/workflows/ai_complete_workflow.yml: YAML syntax error: while parsing a block mapping\n  in \"<unicode string>\", line 373, column 7:\n        - name: AI Security Audit\n          ^\nexpected <block end>, but found '<scalar>'\n  in \"<unicode string>\", line 383, column 110:\n     ... ut security_report.md\\ || echo \"Script completed with warnings\"\n                                         ^",
     "Create missing scripts for .github/workflows/ai_complete_workflow.yml: scripts/ai_performance_analyzer.py\\",

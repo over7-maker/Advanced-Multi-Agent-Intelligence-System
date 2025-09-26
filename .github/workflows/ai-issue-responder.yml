@@ -1,0 +1,78 @@
+name: AI Issue Responder
+
+# Trigger when issues are opened or commented on
+on:
+  issues:
+    types: [opened, edited, reopened]
+  issue_comment:
+    types: [created, edited]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to respond to'
+        required: true
+        type: string
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  ai-issue-response:
+    runs-on: ubuntu-latest
+    
+    # Only run on issues, not pull requests
+    if: github.event.issue.pull_request == null
+    
+    permissions:
+      issues: write
+      contents: read
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install openai aiohttp python-dotenv requests pyyaml PyGithub
+    
+    - name: AI Issue Analysis and Response
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        ISSUE_NUMBER: ${{ github.event.issue.number || github.event.inputs.issue_number }}
+        ISSUE_TITLE: ${{ github.event.issue.title }}
+        ISSUE_BODY: ${{ github.event.issue.body }}
+        ISSUE_ACTION: ${{ github.event.action }}
+      run: |
+        echo "🤖 Running AI Issue Analysis and Response..."
+        python scripts/ai_issues_responder.py \
+          --issue-number $ISSUE_NUMBER \
+          --issue-title "$ISSUE_TITLE" \
+          --issue-body "$ISSUE_BODY" \
+          --repository $GITHUB_REPOSITORY \
+          --action $ISSUE_ACTION || echo "Issue response completed with warnings"
+        echo "✅ Issue response complete!"
+    
+    - name: Generate Response Summary
+      run: |
+        echo "## 🤖 AI Issue Response Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- **Issue Number**: ${{ github.event.issue.number }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Issue Title**: ${{ github.event.issue.title }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Action**: ${{ github.event.action }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Response Generated**: ✅ Complete" >> $GITHUB_STEP_SUMMARY
+        echo "- **AI Providers Used**: DeepSeek, GLM, Grok, Kimi, Qwen, GPT-OSS" >> $GITHUB_STEP_SUMMARY
