@@ -1,0 +1,68 @@
+name: AI Code Analysis
+
+# Trigger on pull requests and pushes to main
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [ main ]
+
+jobs:
+  ai-code-review:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for better analysis
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install openai requests python-dotenv PyGithub gitpython
+    
+    - name: Get changed files
+      id: changed-files
+      uses: tj-actions/changed-files@v40
+      with:
+        files: |
+          **.py
+          **.js
+          **.ts
+          **.yaml
+          **.yml
+          **.json
+          **.md
+    
+    - name: AI Code Analysis
+      if: steps.changed-files.outputs.any_changed == 'true'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        REPO_NAME: ${{ github.repository }}
+        COMMIT_SHA: ${{ github.sha }}
+      run: |
+        python .github/scripts/ai_code_analyzer.py
+    
+    - name: Security Scan
+      if: steps.changed-files.outputs.any_changed == 'true'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+      run: |
+        python .github/scripts/ai_security_scanner.py
