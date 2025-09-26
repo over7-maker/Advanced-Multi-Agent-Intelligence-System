@@ -149,3 +149,7 @@ sphinx==7.2.6
 py-spy==0.3.14
 memory-profiler==0.61.0
 line-profiler==4.1.1
+
+
+anyio==4.1.0
+fastapi==0.104.1
