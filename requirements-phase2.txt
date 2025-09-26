@@ -81,4 +81,4 @@ psutil==5.9.6
 httpx==0.25.2
 
 # Async utilities
-anyio==4.1.0
+anyio>=3.7.1,<4.0.0
