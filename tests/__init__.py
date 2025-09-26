@@ -1,0 +1,3 @@
+"""
+AMAS Tests Package
+"""

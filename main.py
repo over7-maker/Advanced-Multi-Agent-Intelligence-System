@@ -22,6 +22,9 @@ logger = logging.getLogger(__name__)
 
 # Import core components
 from core.orchestrator import IntelligenceOrchestrator
+from services.service_manager import ServiceManager
+from services.database_service import DatabaseService
+from services.security_service import SecurityService
 from agents.osint.osint_agent import OSINTAgent
 from agents.investigation.investigation_agent import InvestigationAgent
 from agents.forensics.forensics_agent import ForensicsAgent
@@ -41,6 +44,9 @@ class AMASIntelligenceSystem:
         self.config = config
         self.orchestrator = None
         self.agents = {}
+        self.service_manager = None
+        self.database_service = None
+        self.security_service = None
         self.agentic_rag = None
         self.prompt_maker = None
         self.n8n_integration = None
@@ -50,12 +56,24 @@ class AMASIntelligenceSystem:
         try:
             logger.info("Initializing AMAS Intelligence System...")
             
-            # Initialize orchestrator
+            # Initialize service manager
+            self.service_manager = ServiceManager(self.config)
+            await self.service_manager.initialize_all_services()
+            
+            # Initialize database service
+            self.database_service = DatabaseService(self.config)
+            await self.database_service.initialize()
+            
+            # Initialize security service
+            self.security_service = SecurityService(self.config)
+            await self.security_service.initialize()
+            
+            # Initialize orchestrator with services
             self.orchestrator = IntelligenceOrchestrator(
-                llm_service=None,  # Will be initialized later
-                vector_service=None,
-                knowledge_graph=None,
-                security_service=None
+                llm_service=self.service_manager.get_llm_service(),
+                vector_service=self.service_manager.get_vector_service(),
+                knowledge_graph=self.service_manager.get_knowledge_graph_service(),
+                security_service=self.security_service
             )
             
             # Initialize specialized agents
@@ -97,13 +115,22 @@ class AMASIntelligenceSystem:
                 agent = agent_class(
                     agent_id=agent_id,
                     name=agent_name,
-                    llm_service=None,
-                    vector_service=None,
-                    knowledge_graph=None,
-                    security_service=None
+                    llm_service=self.service_manager.get_llm_service(),
+                    vector_service=self.service_manager.get_vector_service(),
+                    knowledge_graph=self.service_manager.get_knowledge_graph_service(),
+                    security_service=self.security_service
                 )
                 await self.orchestrator.register_agent(agent)
                 self.agents[agent_id] = agent
+                
+                # Store agent in database
+                await self.database_service.store_agent({
+                    'agent_id': agent_id,
+                    'name': agent_name,
+                    'capabilities': agent.capabilities,
+                    'status': 'active'
+                })
+                
                 logger.info(f"Registered {agent_name} with ID {agent_id}")
                 
         except Exception as e:
