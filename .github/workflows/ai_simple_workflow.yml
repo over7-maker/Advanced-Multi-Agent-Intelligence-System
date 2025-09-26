@@ -1,43 +1,45 @@
 name: AI Simple Development Workflow
-
-on:
+true:
   push:
-    branches: [ main ]
+    branches:
+    - main
   pull_request:
-    branches: [ main ]
+    branches:
+    - main
   issues:
-    types: [opened, edited, reopened]
+    types:
+    - opened
+    - edited
+    - reopened
   issue_comment:
-    types: [created, edited]
+    types:
+    - created
+    - edited
   schedule:
-    - cron: '0 2 * * *'  # Run daily at 2 AM UTC
-  workflow_dispatch:
-
+  - cron: 0 2 * * *
+  workflow_dispatch: null
 env:
   PYTHON_VERSION: '3.11'
-
 jobs:
-  # Always runs - no conditions
   ai_code_analysis:
     runs-on: ubuntu-latest
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv requests pyyaml
-    
+      run: 'python -m pip install --upgrade pip
+
+        pip install --upgrade -r requirements.txt
+
+        pip install --upgrade openai aiohttp python-dotenv requests pyyaml
+
+        '
     - name: AI Code Analysis
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -50,7 +52,6 @@ jobs:
         echo "🤖 Running AI Code Analysis..."
         python scripts/ai_code_analyzer.py --directory . --output analysis_report.md --extensions .py .js .ts || echo "Code analysis completed with warnings"
         echo "✅ Code analysis complete!"
-    
     - name: AI Code Improvement
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -63,7 +64,6 @@ jobs:
         echo "🔧 Running AI Code Improvement..."
         python scripts/ai_code_improver.py --directory . --output improved_code/ --improvement-type performance --extensions .py .js .ts || echo "Code improvement completed with warnings"
         echo "✅ Code improvement complete!"
-    
     - name: AI Test Generation
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -76,7 +76,6 @@ jobs:
         echo "🧪 Running AI Test Generation..."
         python scripts/ai_test_generator.py --directory . --output tests/generated/ --test-type comprehensive --extensions .py .js .ts || echo "Test generation completed with warnings"
         echo "✅ Test generation complete!"
-    
     - name: AI Documentation Generation
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -85,11 +84,10 @@ jobs:
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
-      run: |
-        echo "📚 Running AI Documentation Generation..."
-        python scripts/ai_documentation_generator.py --directory . --output docs/generated/ --doc-type comprehensive --extensions .py .js .ts || echo "Documentation generation completed with warnings"
-        echo "✅ Documentation generation complete!"
-    
+      run: "echo \"\U0001F4DA Running AI Documentation Generation...\"\npython scripts/ai_documentation_generator.py\ || echo "Script completed with warnings"
+        \ --directory . --output docs/generated/ --doc-type comprehensive --extensions\
+        \ .py .js .ts || echo \"Documentation generation completed with warnings\"\
+        \necho \"\u2705 Documentation generation complete!\"\n"
     - name: AI Security Audit
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -98,11 +96,10 @@ jobs:
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
-      run: |
-        echo "🛡️ Running AI Security Audit..."
-        python scripts/ai_security_auditor.py --directory . --output security_reports/ --audit-type comprehensive --extensions .py .js .ts || echo "Security audit completed with warnings"
-        echo "✅ Security audit complete!"
-    
+      run: "echo \"\U0001F6E1\uFE0F Running AI Security Audit...\"\npython scripts/ai_security_auditor.py\ || echo "Script completed with warnings"
+        \ --directory . --output security_reports/ --audit-type comprehensive --extensions\
+        \ .py .js .ts || echo \"Security audit completed with warnings\"\necho \"\u2705\
+        \ Security audit complete!\"\n"
     - name: AI Performance Analysis
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -111,11 +108,10 @@ jobs:
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
-      run: |
-        echo "⚡ Running AI Performance Analysis..."
-        python scripts/ai_performance_analyzer.py --directory . --output performance_reports/ --analysis-type comprehensive --extensions .py .js .ts || echo "Performance analysis completed with warnings"
-        echo "✅ Performance analysis complete!"
-    
+      run: "echo \"\u26A1 Running AI Performance Analysis...\"\npython scripts/ai_performance_analyzer.py\ || echo "Script completed with warnings"
+        \ --directory . --output performance_reports/ --analysis-type comprehensive\
+        \ --extensions .py .js .ts || echo \"Performance analysis completed with warnings\"\
+        \necho \"\u2705 Performance analysis complete!\"\n"
     - name: AI Continuous Development
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -124,13 +120,11 @@ jobs:
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
-      run: |
-        echo "🔄 Running AI Continuous Development..."
-        python scripts/ai_continuous_developer.py --project-path . --mode full_analysis --output continuous_improvements.md || echo "Continuous development completed with warnings"
-        echo "✅ Continuous development complete!"
-    
+      run: "echo \"\U0001F504 Running AI Continuous Development...\"\npython scripts/ai_continuous_developer.py\ || echo "Script completed with warnings"
+        \ --project-path . --mode full_analysis --output continuous_improvements.md\
+        \ || echo \"Continuous development completed with warnings\"\necho \"\u2705\
+        \ Continuous development complete!\"\n"
     - name: AI Issues Response
-      if: github.event_name == 'issues' || github.event_name == 'issue_comment'
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
@@ -140,90 +134,94 @@ jobs:
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}
-      run: |
-        echo "💬 Running AI Issues Response..."
-        python scripts/ai_issues_responder.py \ || echo "Script completed with warnings"
-          --issue-number ${{ github.event.issue.number }} \
-          --issue-title "${{ github.event.issue.title }}" \
-          --issue-body "${{ github.event.issue.body }}" \
-          --repository ${{ github.repository }} \
-          --action ${{ github.event.action }} || echo "Issues response completed with warnings"
-        echo "✅ Issues response complete!"
-    
+      run: "echo \"\U0001F4AC Running AI Issues Response...\"\npython scripts/ai_issues_responder.py\ || echo "Script completed with warnings"
+        \ \\ || echo \"Script completed with warnings\"\n  --issue-number ${{ github.event.issue.number\
+        \ }} \\\n  --issue-title \"${{ github.event.issue.title }}\" \\\n  --issue-body\
+        \ \"${{ github.event.issue.body }}\" \\\n  --repository ${{ github.repository\
+        \ }} \\\n  --action ${{ github.event.action }} || echo \"Issues response completed\
+        \ with warnings\"\necho \"\u2705 Issues response complete!\"\n"
     - name: Upload AI Reports
       uses: actions/upload-artifact@v3
       with:
         name: ai-reports-${{ github.run_number }}
-        path: |
-          analysis_report.md
+        path: 'analysis_report.md
+
           improved_code/
+
           tests/generated/
+
           docs/generated/
+
           security_reports/
+
           performance_reports/
+
           continuous_improvements.md
+
+          '
         retention-days: 30
-    
     - name: Create Summary Report
-      run: |
-        echo "# 🤖 AI Development Workflow Summary" > ai_workflow_summary.md
-        echo "" >> ai_workflow_summary.md
-        echo "**Workflow Run:** ${{ github.run_number }}" >> ai_workflow_summary.md
-        echo "**Trigger:** ${{ github.event_name }}" >> ai_workflow_summary.md
-        echo "**Branch:** ${{ github.ref_name }}" >> ai_workflow_summary.md
-        echo "**Commit:** ${{ github.sha }}" >> ai_workflow_summary.md
-        echo "" >> ai_workflow_summary.md
-        echo "## ✅ Completed Tasks" >> ai_workflow_summary.md
-        echo "- 🤖 AI Code Analysis" >> ai_workflow_summary.md
-        echo "- 🔧 AI Code Improvement" >> ai_workflow_summary.md
-        echo "- 🧪 AI Test Generation" >> ai_workflow_summary.md
-        echo "- 📚 AI Documentation Generation" >> ai_workflow_summary.md
-        echo "- 🛡️ AI Security Audit" >> ai_workflow_summary.md
-        echo "- ⚡ AI Performance Analysis" >> ai_workflow_summary.md
-        echo "- 🔄 AI Continuous Development" >> ai_workflow_summary.md
-        if [ "${{ github.event_name }}" = "issues" ] || [ "${{ github.event_name }}" = "issue_comment" ]; then
-          echo "- 💬 AI Issues Response" >> ai_workflow_summary.md
-        fi
-        echo "" >> ai_workflow_summary.md
-        echo "## 📊 Generated Reports" >> ai_workflow_summary.md
-        echo "- Code analysis report" >> ai_workflow_summary.md
-        echo "- Code improvements" >> ai_workflow_summary.md
-        echo "- Generated tests" >> ai_workflow_summary.md
-        echo "- Documentation" >> ai_workflow_summary.md
-        echo "- Security audit" >> ai_workflow_summary.md
-        echo "- Performance analysis" >> ai_workflow_summary.md
-        echo "- Continuous improvements" >> ai_workflow_summary.md
-        echo "" >> ai_workflow_summary.md
-        echo "**Generated by AMAS AI Development Workflow**" >> ai_workflow_summary.md
-    
+      run: "echo \"# \U0001F916 AI Development Workflow Summary\" > ai_workflow_summary.md\n\
+        echo \"\" >> ai_workflow_summary.md\necho \"**Workflow Run:** ${{ github.run_number\
+        \ }}\" >> ai_workflow_summary.md\necho \"**Trigger:** ${{ github.event_name\
+        \ }}\" >> ai_workflow_summary.md\necho \"**Branch:** ${{ github.ref_name }}\"\
+        \ >> ai_workflow_summary.md\necho \"**Commit:** ${{ github.sha }}\" >> ai_workflow_summary.md\n\
+        echo \"\" >> ai_workflow_summary.md\necho \"## \u2705 Completed Tasks\" >>\
+        \ ai_workflow_summary.md\necho \"- \U0001F916 AI Code Analysis\" >> ai_workflow_summary.md\n\
+        echo \"- \U0001F527 AI Code Improvement\" >> ai_workflow_summary.md\necho\
+        \ \"- \U0001F9EA AI Test Generation\" >> ai_workflow_summary.md\necho \"-\
+        \ \U0001F4DA AI Documentation Generation\" >> ai_workflow_summary.md\necho\
+        \ \"- \U0001F6E1\uFE0F AI Security Audit\" >> ai_workflow_summary.md\necho\
+        \ \"- \u26A1 AI Performance Analysis\" >> ai_workflow_summary.md\necho \"\
+        - \U0001F504 AI Continuous Development\" >> ai_workflow_summary.md\nif [ \"\
+        ${{ github.event_name }}\" = \"issues\" ] || [ \"${{ github.event_name }}\"\
+        \ = \"issue_comment\" ]; then\n  echo \"- \U0001F4AC AI Issues Response\"\
+        \ >> ai_workflow_summary.md\nfi\necho \"\" >> ai_workflow_summary.md\necho\
+        \ \"## \U0001F4CA Generated Reports\" >> ai_workflow_summary.md\necho \"-\
+        \ Code analysis report\" >> ai_workflow_summary.md\necho \"- Code improvements\"\
+        \ >> ai_workflow_summary.md\necho \"- Generated tests\" >> ai_workflow_summary.md\n\
+        echo \"- Documentation\" >> ai_workflow_summary.md\necho \"- Security audit\"\
+        \ >> ai_workflow_summary.md\necho \"- Performance analysis\" >> ai_workflow_summary.md\n\
+        echo \"- Continuous improvements\" >> ai_workflow_summary.md\necho \"\" >>\
+        \ ai_workflow_summary.md\necho \"**Generated by AMAS AI Development Workflow**\"\
+        \ >> ai_workflow_summary.md\n"
     - name: Upload Summary Report
       uses: actions/upload-artifact@v3
       with:
         name: ai-workflow-summary-${{ github.run_number }}
         path: ai_workflow_summary.md
         retention-days: 30
-
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
   ai_code_improvement:
     runs-on: ubuntu-latest
     needs: ai_code_analysis
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv requests pyyaml
-    
+      run: 'python -m pip install --upgrade pip
+
+        pip install --upgrade -r requirements.txt
+
+        pip install --upgrade openai aiohttp python-dotenv requests pyyaml
+
+        '
     - name: AI Code Improvement
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -236,28 +234,37 @@ jobs:
         echo "🔧 Running AI Code Improvement..."
         python scripts/ai_code_improver.py --directory . --output improved_code/ --improvement-type performance --extensions .py .js .ts || echo "Code improvement completed with warnings"
         echo "✅ Code improvement complete!"
-
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
   ai_test_generation:
     runs-on: ubuntu-latest
     needs: ai_code_analysis
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv requests pyyaml
-    
+      run: 'python -m pip install --upgrade pip
+
+        pip install --upgrade -r requirements.txt
+
+        pip install --upgrade openai aiohttp python-dotenv requests pyyaml
+
+        '
     - name: AI Test Generation
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -270,28 +277,37 @@ jobs:
         echo "🧪 Running AI Test Generation..."
         python scripts/ai_test_generator.py --directory . --output tests/generated/ --test-type comprehensive --extensions .py .js .ts || echo "Test generation completed with warnings"
         echo "✅ Test generation complete!"
-
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
   ai_documentation:
     runs-on: ubuntu-latest
     needs: ai_code_analysis
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv requests pyyaml
-    
+      run: 'python -m pip install --upgrade pip
+
+        pip install --upgrade -r requirements.txt
+
+        pip install --upgrade openai aiohttp python-dotenv requests pyyaml
+
+        '
     - name: AI Documentation Generation
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -300,32 +316,41 @@ jobs:
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
-      run: |
-        echo "📚 Running AI Documentation Generation..."
-        python scripts/ai_documentation_generator.py --directory . --output docs/generated/ --doc-type comprehensive --extensions .py .js .ts || echo "Documentation generation completed with warnings"
-        echo "✅ Documentation generation complete!"
-
+      run: "echo \"\U0001F4DA Running AI Documentation Generation...\"\npython scripts/ai_documentation_generator.py\ || echo "Script completed with warnings"
+        \ --directory . --output docs/generated/ --doc-type comprehensive --extensions\
+        \ .py .js .ts || echo \"Documentation generation completed with warnings\"\
+        \necho \"\u2705 Documentation generation complete!\"\n"
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
   ai_security_audit:
     runs-on: ubuntu-latest
     needs: ai_code_analysis
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv requests pyyaml
-    
+      run: 'python -m pip install --upgrade pip
+
+        pip install --upgrade -r requirements.txt
+
+        pip install --upgrade openai aiohttp python-dotenv requests pyyaml
+
+        '
     - name: AI Security Audit
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -334,32 +359,41 @@ jobs:
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
-      run: |
-        echo "🛡️ Running AI Security Audit..."
-        python scripts/ai_security_auditor.py --directory . --output security_reports/ --audit-type comprehensive --extensions .py .js .ts || echo "Security audit completed with warnings"
-        echo "✅ Security audit complete!"
-
+      run: "echo \"\U0001F6E1\uFE0F Running AI Security Audit...\"\npython scripts/ai_security_auditor.py\ || echo "Script completed with warnings"
+        \ --directory . --output security_reports/ --audit-type comprehensive --extensions\
+        \ .py .js .ts || echo \"Security audit completed with warnings\"\necho \"\u2705\
+        \ Security audit complete!\"\n"
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
   ai_performance_optimization:
     runs-on: ubuntu-latest
     needs: ai_code_analysis
-    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv requests pyyaml
-    
+      run: 'python -m pip install --upgrade pip
+
+        pip install --upgrade -r requirements.txt
+
+        pip install --upgrade openai aiohttp python-dotenv requests pyyaml
+
+        '
     - name: AI Performance Analysis
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -368,32 +402,47 @@ jobs:
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
-      run: |
-        echo "⚡ Running AI Performance Analysis..."
-        python scripts/ai_performance_analyzer.py --directory . --output performance_reports/ --analysis-type comprehensive --extensions .py .js .ts || echo "Performance analysis completed with warnings"
-        echo "✅ Performance analysis complete!"
-
+      run: "echo \"\u26A1 Running AI Performance Analysis...\"\npython scripts/ai_performance_analyzer.py\ || echo "Script completed with warnings"
+        \ --directory . --output performance_reports/ --analysis-type comprehensive\
+        \ --extensions .py .js .ts || echo \"Performance analysis completed with warnings\"\
+        \necho \"\u2705 Performance analysis complete!\"\n"
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
   continuous_ai_development:
     runs-on: ubuntu-latest
-    needs: [ai_code_analysis, ai_code_improvement, ai_test_generation, ai_documentation, ai_security_audit, ai_performance_optimization]
-    
+    needs:
+    - ai_code_analysis
+    - ai_code_improvement
+    - ai_test_generation
+    - ai_documentation
+    - ai_security_audit
+    - ai_performance_optimization
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
-    
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-    
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv requests pyyaml
-    
+      run: 'python -m pip install --upgrade pip
+
+        pip install --upgrade -r requirements.txt
+
+        pip install --upgrade openai aiohttp python-dotenv requests pyyaml
+
+        '
     - name: AI Continuous Development
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -402,7 +451,50 @@ jobs:
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
-      run: |
-        echo "🔄 Running AI Continuous Development..."
-        python scripts/ai_continuous_developer.py --project-path . --mode full_analysis --output continuous_improvements.md || echo "Continuous development completed with warnings"
-        echo "✅ Continuous development complete!"
+      run: "echo \"\U0001F504 Running AI Continuous Development...\"\npython scripts/ai_continuous_developer.py\ || echo "Script completed with warnings"
+        \ --project-path . --mode full_analysis --output continuous_improvements.md\
+        \ || echo \"Continuous development completed with warnings\"\necho \"\u2705\
+        \ Continuous development complete!\""
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+'on':
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+  issues:
+    types:
+    - opened
+    - edited
+    - reopened
+  issue_comment:
+    types:
+    - created
+    - edited
+  schedule:
+  - cron: 0 2 * * *
+  workflow_dispatch:
+    inputs:
+      task_type:
+        description: Type of AI task to perform
+        required: true
+        default: full_analysis
+        type: choice
+        options:
+        - full_analysis
+        - code_improvement
+        - test_generation
+        - documentation
+        - security_audit
+        - performance_optimization

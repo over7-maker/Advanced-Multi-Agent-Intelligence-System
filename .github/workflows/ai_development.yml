@@ -30,7 +30,6 @@ env:
 jobs:
   ai_code_analysis:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -43,9 +42,9 @@ jobs:
     - name: Install dependencies
       run: 'python -m pip install --upgrade pip
 
-        pip install -r requirements.txt
+        pip install --upgrade -r requirements.txt
 
-        pip install openai aiohttp python-dotenv requests pyyaml
+        pip install --upgrade openai aiohttp python-dotenv requests pyyaml
 
         '
     - name: AI Code Analysis
@@ -56,7 +55,7 @@ jobs:
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
-      run: 'python scripts/ai_code_analyzer.py --directory . --output analysis_report.md
+      run: 'python scripts/ai_code_analyzer.py --directory . --output analysis_report.md || echo "Script completed with warnings"
         --extensions .py .js .ts || echo "Code analysis completed with warnings"
 
         '
@@ -65,6 +64,17 @@ jobs:
       with:
         name: ai-analysis-report
         path: analysis_report.md
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
   ai_code_improvement:
     runs-on: ubuntu-latest
     steps:
@@ -77,9 +87,9 @@ jobs:
     - name: Install dependencies
       run: 'python -m pip install --upgrade pip
 
-        pip install -r requirements.txt
+        pip install --upgrade -r requirements.txt
 
-        pip install openai aiohttp python-dotenv requests pyyaml
+        pip install --upgrade openai aiohttp python-dotenv requests pyyaml
 
         '
     - name: AI Code Improvement
@@ -91,11 +101,12 @@ jobs:
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
-      run: "if [ -n \"$TARGET_FILES\" ]; then\n  python scripts/ai_code_improver.py\
-        \ --files $TARGET_FILES --output improved_code/ --improvement-type performance\
-        \ || echo \"Code improvement completed with warnings\"\nelse\n  python scripts/ai_code_improver.py\
-        \ --directory . --output improved_code/ --improvement-type performance --extensions\
-        \ .py .js .ts || echo \"Code improvement completed with warnings\"\nfi\n"
+      run: |
+        if [ -n "$TARGET_FILES" ]; then
+          python scripts/ai_code_improver.py --files $TARGET_FILES --output improved_code/ --improvement-type performance || echo "Code improvement completed with warnings"
+        else
+          python scripts/ai_code_improver.py --directory . --output improved_code/ --improvement-type performance --extensions .py .js .ts || echo "Code improvement completed with warnings"
+        fi
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
       with:
@@ -119,6 +130,17 @@ jobs:
           '
         branch: ai-improvements-${{ github.run_number }}
         delete-branch: true
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
   ai_test_generation:
     runs-on: ubuntu-latest
     steps:
@@ -131,9 +153,9 @@ jobs:
     - name: Install dependencies
       run: 'python -m pip install --upgrade pip
 
-        pip install -r requirements.txt
+        pip install --upgrade -r requirements.txt
 
-        pip install openai aiohttp python-dotenv requests pyyaml pytest
+        pip install --upgrade openai aiohttp python-dotenv requests pyyaml pytest
 
         '
     - name: AI Test Generation
@@ -145,15 +167,19 @@ jobs:
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
-      run: "if [ -n \"$TARGET_FILES\" ]; then\n  python scripts/ai_test_generator.py\
-        \ --files $TARGET_FILES --output tests/generated/ --test-type comprehensive\
-        \ || echo \"Test generation completed with warnings\"\nelse\n  python scripts/ai_test_generator.py\
-        \ --directory . --output tests/generated/ --test-type comprehensive --extensions\
-        \ .py .js .ts || echo \"Test generation completed with warnings\"\nfi\n"
+      run: |
+        if [ -n "$TARGET_FILES" ]; then
+          python scripts/ai_test_generator.py --files $TARGET_FILES --output tests/generated/ --test-type comprehensive || echo "Test generation completed with warnings"
+        else
+          python scripts/ai_test_generator.py --directory . --output tests/generated/ --test-type comprehensive --extensions .py .js .ts || echo "Test generation completed with warnings"
+        fi
     - name: Run generated tests
-      run: "if [ -d \"tests/generated\" ]; then\n  python -m pytest tests/generated/\
-        \ -v --tb=short || echo \"Some tests failed, but continuing...\"\nelse\n \
-        \ echo \"No generated tests found\"\nfi\n"
+      run: |
+        if [ -d "tests/generated" ]; then
+          python -m pytest tests/generated/ -v --tb=short || echo "Some tests failed, but continuing..."
+        else
+          echo "No generated tests found"
+        fi
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
       with:
@@ -177,6 +203,17 @@ jobs:
           '
         branch: ai-tests-${{ github.run_number }}
         delete-branch: true
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
   ai_documentation:
     runs-on: ubuntu-latest
     steps:
@@ -189,9 +226,9 @@ jobs:
     - name: Install dependencies
       run: 'python -m pip install --upgrade pip
 
-        pip install -r requirements.txt
+        pip install --upgrade -r requirements.txt
 
-        pip install openai aiohttp python-dotenv requests pyyaml sphinx
+        pip install --upgrade openai aiohttp python-dotenv requests pyyaml sphinx
 
         '
     - name: AI Documentation Generation
@@ -203,21 +240,36 @@ jobs:
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
-      run: "if [ -n \"$TARGET_FILES\" ]; then\n  python scripts/ai_documentation_generator.py\
-        \ --files $TARGET_FILES --output docs/generated/ || echo \"Script completed\
-        \ with warnings\"\nelse\n  python scripts/ai_documentation_generator.py --directory\
-        \ . --output docs/generated/ --extensions .py .js .ts || echo \"Script completed\
-        \ with warnings\"\nfi\n"
+      run: |
+        if [ -n "$TARGET_FILES" ]; then
+          python scripts/ai_documentation_generator.py --files $TARGET_FILES --output docs/generated/ || echo "Script completed with warnings"
+        else
+          python scripts/ai_documentation_generator.py --directory . --output docs/generated/ --extensions .py .js .ts || echo "Script completed with warnings"
+        fi
     - name: Build documentation
-      run: "if [ -d \"docs\" ]; then\n  cd docs && make html || echo \"Documentation\
-        \ build completed with warnings\"\nelse\n  echo \"No docs directory found\"\
-        \nfi\n"
+      run: |
+        if [ -d "docs" ]; then
+          cd docs && make html || echo "Documentation build completed with warnings"
+        else
+          echo "No docs directory found"
+        fi
     - name: Deploy documentation
       if: success() || failure()
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./docs/_build/html
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
   ai_security_audit:
     runs-on: ubuntu-latest
     steps:
@@ -230,9 +282,9 @@ jobs:
     - name: Install dependencies
       run: 'python -m pip install --upgrade pip
 
-        pip install -r requirements.txt
+        pip install --upgrade -r requirements.txt
 
-        pip install openai aiohttp python-dotenv requests pyyaml bandit safety
+        pip install --upgrade openai aiohttp python-dotenv requests pyyaml bandit safety
 
         '
     - name: AI Security Audit
@@ -244,11 +296,12 @@ jobs:
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
-      run: "if [ -n \"$TARGET_FILES\" ]; then\n  python scripts/ai_security_auditor.py\
-        \ --files $TARGET_FILES --output security_report.md || echo \"Script completed\
-        \ with warnings\"\nelse\n  python scripts/ai_security_auditor.py --directory\
-        \ . --output security_reports/ --extensions .py .js .ts || echo \"Script completed\
-        \ with warnings\"\nfi\n"
+      run: |
+        if [ -n "$TARGET_FILES" ]; then
+          python scripts/ai_security_auditor.py --files $TARGET_FILES --output security_report.md || echo "Script completed with warnings"
+        else
+          python scripts/ai_security_auditor.py --directory . --output security_reports/ --extensions .py .js .ts || echo "Script completed with warnings"
+        fi
     - name: Run security tools
       run: 'bandit -r . -f json -o bandit_report.json || echo "Bandit scan completed
         with issues"
@@ -268,6 +321,17 @@ jobs:
           safety_report.json
 
           '
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
   ai_performance_optimization:
     runs-on: ubuntu-latest
     steps:
@@ -280,9 +344,9 @@ jobs:
     - name: Install dependencies
       run: 'python -m pip install --upgrade pip
 
-        pip install -r requirements.txt
+        pip install --upgrade -r requirements.txt
 
-        pip install openai aiohttp python-dotenv requests pyyaml memory-profiler line-profiler
+        pip install --upgrade openai aiohttp python-dotenv requests pyyaml memory-profiler line-profiler
 
         '
     - name: AI Performance Analysis
@@ -294,11 +358,12 @@ jobs:
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
-      run: "if [ -n \"$TARGET_FILES\" ]; then\n  python scripts/ai_performance_analyzer.py\
-        \ --files $TARGET_FILES --output performance_report.md || echo \"Script completed\
-        \ with warnings\"\nelse\n  python scripts/ai_performance_analyzer.py --directory\
-        \ . --output performance_reports/ --extensions .py .js .ts || echo \"Script\
-        \ completed with warnings\"\nfi\n"
+      run: |
+        if [ -n "$TARGET_FILES" ]; then
+          python scripts/ai_performance_analyzer.py --files $TARGET_FILES --output performance_report.md || echo "Script completed with warnings"
+        else
+          python scripts/ai_performance_analyzer.py --directory . --output performance_reports/ --extensions .py .js .ts || echo "Script completed with warnings"
+        fi
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
       with:
@@ -322,9 +387,19 @@ jobs:
           '
         branch: ai-performance-${{ github.run_number }}
         delete-branch: true
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
   continuous_ai_development:
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -335,9 +410,9 @@ jobs:
     - name: Install dependencies
       run: 'python -m pip install --upgrade pip
 
-        pip install -r requirements.txt
+        pip install --upgrade -r requirements.txt
 
-        pip install openai aiohttp python-dotenv requests pyyaml
+        pip install --upgrade openai aiohttp python-dotenv requests pyyaml
 
         '
     - name: AI Continuous Development
@@ -348,7 +423,7 @@ jobs:
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
-      run: 'python scripts/ai_continuous_developer.py --project-path . --mode full_analysis
+      run: 'python scripts/ai_continuous_developer.py --project-path . --mode full_analysis || echo "Script completed with warnings"
         --output continuous_improvements.md || echo "Continuous development completed
         with warnings"
 
@@ -378,3 +453,46 @@ jobs:
           '
         branch: ai-continuous-${{ github.run_number }}
         delete-branch: true
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+'on':
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+  issues:
+    types:
+    - opened
+    - edited
+    - reopened
+  issue_comment:
+    types:
+    - created
+    - edited
+  schedule:
+  - cron: 0 2 * * *
+  workflow_dispatch:
+    inputs:
+      task_type:
+        description: Type of AI task to perform
+        required: true
+        default: full_analysis
+        type: choice
+        options:
+        - full_analysis
+        - code_improvement
+        - test_generation
+        - documentation
+        - security_audit
+        - performance_optimization
