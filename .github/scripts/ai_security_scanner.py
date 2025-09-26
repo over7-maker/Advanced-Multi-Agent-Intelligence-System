@@ -157,9 +157,34 @@ class AISecurityScanner:
         
         return secrets_found
     
+    def _is_pattern_definition_file(self, content: str, file_path: str) -> bool:
+        """Check if file contains only pattern definitions (not actual vulnerabilities)"""
+        # Check if file is a security scanner or pattern definition file
+        if 'security_scanner' in file_path or 'ai_code_analyzer' in file_path:
+            # Look for pattern definition indicators
+            pattern_indicators = [
+                'vuln_patterns', 'security_patterns', 'detection_patterns',
+                'hardcoded_secrets', 'sql_injection', 'xss_vulnerabilities',
+                'weak_crypto', 'insecure_random', 'unsafe_deserialization'
+            ]
+            
+            # Count pattern definition indicators vs actual code
+            pattern_count = sum(1 for indicator in pattern_indicators if indicator in content)
+            total_lines = len(content.split('\n'))
+            
+            # If more than 30% of content contains pattern indicators, likely a pattern file
+            return pattern_count > (total_lines * 0.3)
+        
+        return False
+    
     def scan_for_vulnerabilities(self, content: str, file_path: str) -> List[Dict[str, str]]:
-        """Scan for common security vulnerabilities"""
+        """Scan for common security vulnerabilities with context awareness"""
         vulnerabilities = []
+        
+        # Skip if this is a pattern definition file
+        if self._is_pattern_definition_file(content, file_path):
+            print(f"🔍 Skipping pattern definition file: {file_path}")
+            return vulnerabilities
         
         # Vulnerability patterns
         vuln_patterns = {
