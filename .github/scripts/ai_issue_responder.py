@@ -15,8 +15,9 @@ import time
 class AIIssueResponder:
     def __init__(self):
         self.github_token = os.environ.get('GITHUB_TOKEN')
-        self.openrouter_key = os.environ.get('OPENROUTER_API_KEY')
         self.deepseek_key = os.environ.get('DEEPSEEK_API_KEY')
+        self.glm_key = os.environ.get('GLM_API_KEY')
+        self.grok_key = os.environ.get('GROK_API_KEY')
         self.repo_name = os.environ.get('REPO_NAME')
         
         # Issue details
@@ -25,21 +26,51 @@ class AIIssueResponder:
         self.issue_body = os.environ.get('ISSUE_BODY', '')
         self.issue_author = os.environ.get('ISSUE_AUTHOR')
         
-        # Initialize AI clients
-        self.openrouter_client = None
-        self.deepseek_client = None
+        # Initialize AI clients with fallback priority
+        self.ai_clients = []
         
-        if self.openrouter_key:
-            self.openrouter_client = OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=self.openrouter_key,
-            )
-        
+        # Priority order: DeepSeek (most reliable), GLM, Grok
         if self.deepseek_key:
-            self.deepseek_client = OpenAI(
-                base_url="https://api.deepseek.com/v1",
-                api_key=self.deepseek_key,
-            )
+            try:
+                self.ai_clients.append({
+                    'name': 'DeepSeek',
+                    'client': OpenAI(
+                        base_url="https://api.deepseek.com/v1",
+                        api_key=self.deepseek_key,
+                    ),
+                    'model': 'deepseek-chat'
+                })
+            except Exception as e:
+                print(f"Failed to initialize DeepSeek client: {e}")
+        
+        if self.glm_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'GLM',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.glm_key,
+                    ),
+                    'model': 'z-ai/glm-4.5-air:free'
+                })
+            except Exception as e:
+                print(f"Failed to initialize GLM client: {e}")
+        
+        if self.grok_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Grok',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.grok_key,
+                    ),
+                    'model': 'x-ai/grok-4-fast:free'
+                })
+            except Exception as e:
+                print(f"Failed to initialize Grok client: {e}")
+        
+        if not self.ai_clients:
+            print("⚠️ No AI clients available - will use fallback response")
     
     def analyze_issue_type(self, title: str, body: str) -> str:
         """Analyze the type of issue based on content"""
@@ -116,7 +147,10 @@ For security issues:
         return base_prompt + type_specific_prompts.get(issue_type, type_specific_prompts['question'])
     
     def generate_ai_response(self, issue_type: str, title: str, body: str) -> Optional[str]:
-        """Generate AI response using available APIs"""
+        """Generate AI response using available APIs with fallback"""
+        if not self.ai_clients:
+            return None
+            
         system_prompt = self.create_system_prompt(issue_type)
         
         user_prompt = f"""
@@ -132,15 +166,21 @@ Please provide a helpful, professional response that addresses this issue.
 Be specific to the AMAS project context and provide actionable guidance.
 """
         
-        # Try OpenRouter first (with your free models)
-        if self.openrouter_client:
+        # Try each AI client in order of preference
+        for client_info in self.ai_clients:
             try:
-                response = self.openrouter_client.chat.completions.create(
-                    extra_headers={
+                print(f"🤖 Trying {client_info['name']} for issue response...")
+                
+                extra_headers = {}
+                if 'openrouter.ai' in str(client_info['client'].base_url):
+                    extra_headers = {
                         "HTTP-Referer": f"https://github.com/{self.repo_name}",
                         "X-Title": "AMAS Intelligence System",
-                    },
-                    model="deepseek/deepseek-chat-v3.1:free",  # Your free DeepSeek model
+                    }
+                
+                response = client_info['client'].chat.completions.create(
+                    extra_headers=extra_headers if extra_headers else None,
+                    model=client_info['model'],
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
@@ -148,26 +188,15 @@ Be specific to the AMAS project context and provide actionable guidance.
                     temperature=0.7,
                     max_tokens=1000
                 )
+                
+                print(f"✅ Successfully generated response with {client_info['name']}")
                 return response.choices[0].message.content
+                
             except Exception as e:
-                print(f"OpenRouter API failed: {e}")
+                print(f"❌ {client_info['name']} failed: {e}")
+                continue
         
-        # Fallback to DeepSeek direct API
-        if self.deepseek_client:
-            try:
-                response = self.deepseek_client.chat.completions.create(
-                    model="deepseek-chat",
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    temperature=0.7,
-                    max_tokens=1000
-                )
-                return response.choices[0].message.content
-            except Exception as e:
-                print(f"DeepSeek API failed: {e}")
-        
+        print("❌ All AI clients failed")
         return None
     
     def post_github_comment(self, comment: str) -> bool:

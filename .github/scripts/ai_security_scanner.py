@@ -14,8 +14,9 @@ from typing import Dict, List, Any, Optional
 class AISecurityScanner:
     def __init__(self):
         self.github_token = os.environ.get('GITHUB_TOKEN')
-        self.openrouter_key = os.environ.get('OPENROUTER_API_KEY')
         self.deepseek_key = os.environ.get('DEEPSEEK_API_KEY')
+        self.glm_key = os.environ.get('GLM_API_KEY')
+        self.grok_key = os.environ.get('GROK_API_KEY')
         self.repo_name = os.environ.get('REPO_NAME')
         self.pr_number = os.environ.get('PR_NUMBER')
         
@@ -23,18 +24,51 @@ class AISecurityScanner:
         changed_files_str = os.environ.get('CHANGED_FILES', '')
         self.changed_files = changed_files_str.split() if changed_files_str else []
         
-        # Initialize AI client
-        self.ai_client = None
-        if self.openrouter_key:
-            self.ai_client = OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=self.openrouter_key,
-            )
-        elif self.deepseek_key:
-            self.ai_client = OpenAI(
-                base_url="https://api.deepseek.com/v1",
-                api_key=self.deepseek_key,
-            )
+        # Initialize AI clients with fallback priority
+        self.ai_clients = []
+        
+        # Priority order: DeepSeek (most reliable), GLM, Grok
+        if self.deepseek_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'DeepSeek',
+                    'client': OpenAI(
+                        base_url="https://api.deepseek.com/v1",
+                        api_key=self.deepseek_key,
+                    ),
+                    'model': 'deepseek-chat'
+                })
+            except Exception as e:
+                print(f"Failed to initialize DeepSeek client: {e}")
+        
+        if self.glm_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'GLM',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.glm_key,
+                    ),
+                    'model': 'z-ai/glm-4.5-air:free'
+                })
+            except Exception as e:
+                print(f"Failed to initialize GLM client: {e}")
+        
+        if self.grok_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Grok',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.grok_key,
+                    ),
+                    'model': 'x-ai/grok-4-fast:free'
+                })
+            except Exception as e:
+                print(f"Failed to initialize Grok client: {e}")
+        
+        if not self.ai_clients:
+            print("⚠️ No AI clients available - security analysis will be limited")
     
     def scan_for_secrets(self, content: str, file_path: str) -> List[Dict[str, str]]:
         """Scan for potential secrets and API keys"""
@@ -128,8 +162,8 @@ class AISecurityScanner:
     
     def analyze_security_with_ai(self, file_path: str, content: str, 
                                  secrets: List[Dict], vulns: List[Dict]) -> Optional[str]:
-        """Get AI analysis of security issues"""
-        if not self.ai_client or (not secrets and not vulns):
+        """Get AI analysis of security issues with fallback"""
+        if not self.ai_clients or (not secrets and not vulns):
             return None
         
         system_prompt = """
@@ -164,33 +198,38 @@ Detected Issues:
         
         security_prompt += "\nPlease analyze these security issues and provide specific remediation guidance."
         
-        try:
-            # Use appropriate model based on availability
-            model = "deepseek/deepseek-chat-v3.1:free" if self.openrouter_key else "deepseek-chat"
-            
-            extra_headers = {}
-            if self.openrouter_key:
-                extra_headers = {
-                    "HTTP-Referer": f"https://github.com/{self.repo_name}",
-                    "X-Title": "AMAS Security Analysis",
-                }
-            
-            response = self.ai_client.chat.completions.create(
-                extra_headers=extra_headers if self.openrouter_key else None,
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": security_prompt}
-                ],
-                temperature=0.2,
-                max_tokens=1000
-            )
-            
-            return response.choices[0].message.content
-            
-        except Exception as e:
-            print(f"Error getting AI security analysis: {e}")
-            return None
+        # Try each AI client in order of preference
+        for client_info in self.ai_clients:
+            try:
+                print(f"🤖 Trying {client_info['name']} for security analysis...")
+                
+                extra_headers = {}
+                if 'openrouter.ai' in str(client_info['client'].base_url):
+                    extra_headers = {
+                        "HTTP-Referer": f"https://github.com/{self.repo_name}",
+                        "X-Title": "AMAS Security Analysis",
+                    }
+                
+                response = client_info['client'].chat.completions.create(
+                    extra_headers=extra_headers if extra_headers else None,
+                    model=client_info['model'],
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": security_prompt}
+                    ],
+                    temperature=0.2,
+                    max_tokens=1000
+                )
+                
+                print(f"✅ Successfully analyzed security with {client_info['name']}")
+                return response.choices[0].message.content
+                
+            except Exception as e:
+                print(f"❌ {client_info['name']} failed: {e}")
+                continue
+        
+        print("❌ All AI clients failed for security analysis")
+        return None
     
     def post_pr_comment(self, comment: str) -> bool:
         """Post security report to pull request"""

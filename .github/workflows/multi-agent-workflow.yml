@@ -32,7 +32,7 @@ jobs:
           GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         run: |
           mkdir -p artifacts
-          python scripts/multi_agent_orchestrator.py
+          python .github/scripts/multi_agent_orchestrator.py
 
       - name: Upload report artifact
         uses: actions/upload-artifact@v4
