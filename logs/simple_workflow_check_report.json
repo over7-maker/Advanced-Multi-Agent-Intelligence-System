@@ -1,0 +1,167 @@
+{
+  "workflow_check_suite": "AMAS Simple Workflow Check",
+  "timestamp": "2025-09-26T10:15:18.485035",
+  "summary": {
+    "total_checks": 31,
+    "passed_checks": 31,
+    "failed_checks": 0,
+    "success_rate": 100.0
+  },
+  "results": [
+    {
+      "file": "main_phase5_complete.py",
+      "exists": true,
+      "type": "core_file"
+    },
+    {
+      "file": "core/orchestrator.py",
+      "exists": true,
+      "type": "core_file"
+    },
+    {
+      "file": "services/security_service.py",
+      "exists": true,
+      "type": "core_file"
+    },
+    {
+      "file": "services/security_monitoring_service.py",
+      "exists": true,
+      "type": "core_file"
+    },
+    {
+      "file": "services/audit_logging_service.py",
+      "exists": true,
+      "type": "core_file"
+    },
+    {
+      "file": "services/incident_response_service.py",
+      "exists": true,
+      "type": "core_file"
+    },
+    {
+      "file": "services/monitoring_service.py",
+      "exists": true,
+      "type": "core_file"
+    },
+    {
+      "file": "services/performance_service.py",
+      "exists": true,
+      "type": "core_file"
+    },
+    {
+      "file": "agents/osint/osint_agent.py",
+      "exists": true,
+      "type": "agent_file"
+    },
+    {
+      "file": "agents/investigation/investigation_agent.py",
+      "exists": true,
+      "type": "agent_file"
+    },
+    {
+      "file": "agents/forensics/forensics_agent.py",
+      "exists": true,
+      "type": "agent_file"
+    },
+    {
+      "file": "agents/data_analysis/data_analysis_agent.py",
+      "exists": true,
+      "type": "agent_file"
+    },
+    {
+      "file": "agents/reverse_engineering/reverse_engineering_agent.py",
+      "exists": true,
+      "type": "agent_file"
+    },
+    {
+      "file": "agents/metadata/metadata_agent.py",
+      "exists": true,
+      "type": "agent_file"
+    },
+    {
+      "file": "agents/reporting/reporting_agent.py",
+      "exists": true,
+      "type": "agent_file"
+    },
+    {
+      "file": "agents/technology_monitor/technology_monitor_agent.py",
+      "exists": true,
+      "type": "agent_file"
+    },
+    {
+      "workflow": "osint_investigation",
+      "exists": true,
+      "type": "workflow_template"
+    },
+    {
+      "workflow": "digital_forensics",
+      "exists": true,
+      "type": "workflow_template"
+    },
+    {
+      "workflow": "threat_intelligence",
+      "exists": true,
+      "type": "workflow_template"
+    },
+    {
+      "workflow": "execute_security_workflow",
+      "exists": true,
+      "type": "security_workflow"
+    },
+    {
+      "workflow": "_execute_threat_hunting_workflow",
+      "exists": true,
+      "type": "security_workflow"
+    },
+    {
+      "workflow": "_execute_incident_response_workflow",
+      "exists": true,
+      "type": "security_workflow"
+    },
+    {
+      "workflow": "_execute_security_assessment_workflow",
+      "exists": true,
+      "type": "security_workflow"
+    },
+    {
+      "file": "docker-compose.yml",
+      "exists": true,
+      "type": "config_file"
+    },
+    {
+      "file": "requirements.txt",
+      "exists": true,
+      "type": "config_file"
+    },
+    {
+      "file": "README.md",
+      "exists": true,
+      "type": "config_file"
+    },
+    {
+      "file": "test_phase5_complete.py",
+      "exists": true,
+      "type": "test_file"
+    },
+    {
+      "file": "verify_workflows.py",
+      "exists": true,
+      "type": "test_file"
+    },
+    {
+      "file": "check_workflow_configuration.py",
+      "exists": true,
+      "type": "test_file"
+    },
+    {
+      "file": "check_workflow_status.py",
+      "exists": true,
+      "type": "test_file"
+    },
+    {
+      "file": "run_workflow_tests.py",
+      "exists": true,
+      "type": "test_file"
+    }
+  ]
+}
