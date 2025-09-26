@@ -61,3 +61,6 @@ async def main():
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
+    print("DEEPSEEK_API_KEY:", bool(os.getenv("DEEPSEEK_API_KEY")))
+    print("GLM_API_KEY:", bool(os.getenv("GLM_API_KEY")))
+    print("GROK_API_KEY:", bool(os.getenv("GROK_API_KEY")))
