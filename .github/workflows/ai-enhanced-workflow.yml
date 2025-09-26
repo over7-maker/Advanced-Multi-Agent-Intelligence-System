@@ -37,7 +37,8 @@ jobs:
     
     - name: Install dependencies
       run: |
-        pip install openai requests python-dotenv PyGithub gitpython
+        python -m pip install --upgrade pip
+        python -m pip install openai requests PyGithub gitpython
     
     - name: Get changed files
       id: changed-files
@@ -81,10 +82,7 @@ jobs:
 
   ai-issue-responder:
     runs-on: ubuntu-latest
-    if: github.event_name == 'issues' || github.event_name == 'issue_comment'
-    
-    # Only run on issues, not pull requests
-    if: github.event.issue.pull_request == null
+    if: (github.event_name == 'issues' || github.event_name == 'issue_comment') && github.event.issue.pull_request == null
     
     permissions:
       issues: write
@@ -101,7 +99,8 @@ jobs:
     
     - name: Install dependencies
       run: |
-        pip install openai requests python-dotenv
+        python -m pip install --upgrade pip
+        python -m pip install openai requests
     
     - name: AI Issue Analysis and Response
       env:

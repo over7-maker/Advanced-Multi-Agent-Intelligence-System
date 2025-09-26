@@ -29,7 +29,8 @@ jobs:
     
     - name: Install dependencies
       run: |
-        pip install openai requests python-dotenv PyGithub gitpython
+        python -m pip install --upgrade pip
+        python -m pip install openai requests
     
     - name: Get changed files
       id: changed-files

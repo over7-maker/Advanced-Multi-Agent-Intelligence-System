@@ -29,7 +29,8 @@ jobs:
     
     - name: Install dependencies
       run: |
-        pip install openai requests python-dotenv
+        python -m pip install --upgrade pip
+        python -m pip install openai requests
     
     - name: AI Issue Analysis and Response
       env:
