@@ -1,76 +1,31 @@
 name: Python Dependency Submission
 
-# This workflow replaces the problematic automatic dependency submission
-# with a fixed version that handles Python 3.12 compatibility
-
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
   pull_request:
-    branches: [ main ]
 
 jobs:
   submit-dependencies:
     runs-on: ubuntu-latest
-    
-    permissions:
-      contents: read
-      id-token: write
-    
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'  # Use 3.11 for compatibility
-    
-    - name: Upgrade build tools
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade setuptools wheel
-        python -m pip install --upgrade pip-tools
-    
-    - name: Validate requirements.txt
-      run: |
-        echo "Validating requirements.txt..."
-        pip-compile --dry-run --verbose requirements.txt
-    
-    - name: Install dependencies for submission
-      run: |
-        python -m pip install pip-requirements-parser
-    
-    - name: Create dependency snapshot
-      run: |
-        python -c "
-        import json
-        import subprocess
-        import sys
-        from datetime import datetime
-        
-        def parse_requirements():
-            try:
-                result = subprocess.run(['pip-compile', '--dry-run', '--quiet', 'requirements.txt'], 
-                                      capture_output=True, text=True, check=True)
-                print('Requirements validation successful')
-                return True
-            except subprocess.CalledProcessError as e:
-                print(f'Requirements validation failed: {e}')
-                return False
-        
-        # Validate requirements
-        if parse_requirements():
-            print('✅ Python dependencies validated successfully')
-            sys.exit(0)
-        else:
-            print('❌ Python dependencies validation failed')
-            sys.exit(1)
-        "
-    
-    - name: Submit to Dependency Graph (if validation passes)
-      if: success()
-      uses: advanced-security/python-dependency-submission@v1
-      with:
-        requirements-file: requirements.txt
-        requirements-file-2: requirements-intelligence.txt
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Upgrade pip, setuptools and wheel
+        run: |
+          python -m pip install --upgrade pip setuptools wheel pip-tools
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Submit dependencies to GitHub Dependency Graph
+        uses: github/dependency-submission-action@v2
+        with:
+          directory: '.'   
