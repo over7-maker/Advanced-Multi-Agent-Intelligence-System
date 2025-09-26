@@ -57,7 +57,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv requests
+        pip install openai aiohttp python-dotenv requests pyyaml requests
     
     - name: AI Issue Response
       env:
@@ -96,7 +96,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv
+        pip install openai aiohttp python-dotenv requests pyyaml
     
     - name: AI Code Analysis
       env:
@@ -156,7 +156,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv
+        pip install openai aiohttp python-dotenv requests pyyaml
     
     - name: AI Code Improvement
       env:
@@ -224,7 +224,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv pytest
+        pip install openai aiohttp python-dotenv requests pyyaml pytest
     
     - name: AI Test Generation
       env:
@@ -302,7 +302,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv sphinx
+        pip install openai aiohttp python-dotenv requests pyyaml sphinx
     
     - name: AI Documentation Generation
       env:
@@ -380,7 +380,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv bandit safety
+        pip install openai aiohttp python-dotenv requests pyyaml bandit safety
     
     - name: AI Security Audit
       env:
@@ -466,7 +466,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv memory-profiler line-profiler
+        pip install openai aiohttp python-dotenv requests pyyaml memory-profiler line-profiler
     
     - name: AI Performance Analysis
       env:
@@ -535,7 +535,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv
+        pip install openai aiohttp python-dotenv requests pyyaml
     
     - name: AI Continuous Development
       env:
@@ -601,7 +601,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv
+        pip install openai aiohttp python-dotenv requests pyyaml
     
     - name: AI Full Analysis Summary
       env:
