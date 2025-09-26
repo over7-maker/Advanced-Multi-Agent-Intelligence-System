@@ -21,15 +21,18 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import core components
-from agents.orchestrator import AgentOrchestrator, Agent, AgentType, Task, TaskPriority
-from agents.osint import OSINTAgent
-from agents.investigation import InvestigationAgent
-from agents.forensics import ForensicsAgent
-from agents.data_analysis import DataAnalysisAgent
-from agents.reverse_engineering import ReverseEngineeringAgent
-from agents.metadata import MetadataAgent
-from agents.reporting import ReportingAgent
-from agents.technology_monitor import TechnologyMonitorAgent
+from core.orchestrator import IntelligenceOrchestrator
+from services.service_manager import ServiceManager
+from services.database_service import DatabaseService
+from services.security_service import SecurityService
+from agents.osint.osint_agent import OSINTAgent
+from agents.investigation.investigation_agent import InvestigationAgent
+from agents.forensics.forensics_agent import ForensicsAgent
+from agents.data_analysis.data_analysis_agent import DataAnalysisAgent
+from agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
+from agents.metadata.metadata_agent import MetadataAgent
+from agents.reporting.reporting_agent import ReportingAgent
+from agents.technology_monitor.technology_monitor_agent import TechnologyMonitorAgent
 from agents.agentic_rag import AgenticRAG
 from agents.prompt_maker import PromptMaker
 from agents.n8n_integration import N8NIntegration
@@ -41,6 +44,9 @@ class AMASIntelligenceSystem:
         self.config = config
         self.orchestrator = None
         self.agents = {}
+        self.service_manager = None
+        self.database_service = None
+        self.security_service = None
         self.agentic_rag = None
         self.prompt_maker = None
         self.n8n_integration = None
@@ -50,8 +56,25 @@ class AMASIntelligenceSystem:
         try:
             logger.info("Initializing AMAS Intelligence System...")
             
-            # Initialize orchestrator
-            self.orchestrator = AgentOrchestrator(self.config)
+            # Initialize service manager
+            self.service_manager = ServiceManager(self.config)
+            await self.service_manager.initialize_all_services()
+            
+            # Initialize database service
+            self.database_service = DatabaseService(self.config)
+            await self.database_service.initialize()
+            
+            # Initialize security service
+            self.security_service = SecurityService(self.config)
+            await self.security_service.initialize()
+            
+            # Initialize orchestrator with services
+            self.orchestrator = IntelligenceOrchestrator(
+                llm_service=self.service_manager.get_llm_service(),
+                vector_service=self.service_manager.get_vector_service(),
+                knowledge_graph=self.service_manager.get_knowledge_graph_service(),
+                security_service=self.security_service
+            )
             
             # Initialize specialized agents
             await self._initialize_agents()
@@ -89,9 +112,25 @@ class AMASIntelligenceSystem:
             ]
             
             for agent_class, agent_id, agent_name in agents_config:
-                agent = agent_class(agent_id, agent_name)
+                agent = agent_class(
+                    agent_id=agent_id,
+                    name=agent_name,
+                    llm_service=self.service_manager.get_llm_service(),
+                    vector_service=self.service_manager.get_vector_service(),
+                    knowledge_graph=self.service_manager.get_knowledge_graph_service(),
+                    security_service=self.security_service
+                )
                 await self.orchestrator.register_agent(agent)
                 self.agents[agent_id] = agent
+                
+                # Store agent in database
+                await self.database_service.store_agent({
+                    'agent_id': agent_id,
+                    'name': agent_name,
+                    'capabilities': agent.capabilities,
+                    'status': 'active'
+                })
+                
                 logger.info(f"Registered {agent_name} with ID {agent_id}")
                 
         except Exception as e:
@@ -101,16 +140,14 @@ class AMASIntelligenceSystem:
     async def submit_intelligence_task(self, task_data: Dict[str, Any]) -> str:
         """Submit an intelligence task"""
         try:
-            task_id = await self.orchestrator.submit_task(task_data)
+            task_id = await self.orchestrator.submit_task(
+                task_type=task_data.get('type', 'general'),
+                description=task_data.get('description', ''),
+                parameters=task_data.get('parameters', {}),
+                priority=task_data.get('priority', 2)
+            )
             
-            # Find suitable agent
-            suitable_agent = await self._find_suitable_agent(task_data)
-            if suitable_agent:
-                await self.orchestrator.assign_task_to_agent(task_id, suitable_agent.agent_id)
-                logger.info(f"Task {task_id} assigned to {suitable_agent.name}")
-            else:
-                logger.warning(f"No suitable agent found for task {task_id}")
-            
+            logger.info(f"Task {task_id} submitted successfully")
             return task_id
             
         except Exception as e:
@@ -161,14 +198,13 @@ class AMASIntelligenceSystem:
     async def get_system_status(self) -> Dict[str, Any]:
         """Get system status"""
         try:
-            agents = await self.orchestrator.list_agents()
-            tasks = await self.orchestrator.list_tasks()
+            status = await self.orchestrator.get_system_status()
             
             return {
                 'status': 'operational',
-                'agents': len(agents),
-                'active_tasks': len([t for t in tasks if t['status'] == 'in_progress']),
-                'completed_tasks': len([t for t in tasks if t['status'] == 'completed']),
+                'agents': status.get('active_agents', 0),
+                'active_tasks': status.get('active_tasks', 0),
+                'total_tasks': status.get('total_tasks', 0),
                 'timestamp': datetime.now().isoformat()
             }
             
