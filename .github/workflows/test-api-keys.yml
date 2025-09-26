@@ -1,0 +1,59 @@
+name: Test API Keys
+
+# Manual trigger for testing
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+jobs:
+  test-apis:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      issues: write
+      contents: read
+      pull-requests: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install requests
+    
+    - name: Test API Keys
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        REPO_NAME: ${{ github.repository }}
+      run: |
+        python test_api_keys.py
+    
+    - name: Generate API Test Report
+      run: |
+        echo "# 🔑 API Key Test Report" > api-test-report.md
+        echo "Generated: $(date)" >> api-test-report.md
+        echo "" >> api-test-report.md
+        echo "## Test Results" >> api-test-report.md
+        echo "- GitHub Token: ${{ secrets.GITHUB_TOKEN != '' }}" >> api-test-report.md
+        echo "- OpenRouter API: ${{ secrets.OPENROUTER_API_KEY != '' }}" >> api-test-report.md
+        echo "- DeepSeek API: ${{ secrets.DEEPSEEK_API_KEY != '' }}" >> api-test-report.md
+        echo "" >> api-test-report.md
+        echo "## Next Steps" >> api-test-report.md
+        echo "1. Check the test results above" >> api-test-report.md
+        echo "2. Fix any failing API keys" >> api-test-report.md
+        echo "3. Re-run the test to verify fixes" >> api-test-report.md
+    
+    - name: Upload Test Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: api-test-report
+        path: api-test-report.md
