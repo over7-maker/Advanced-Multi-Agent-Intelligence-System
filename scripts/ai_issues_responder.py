@@ -18,7 +18,9 @@ import requests
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from services.ai_service_manager import AIServiceManager, AIProvider
+# Import ultimate fallback system
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'services'))
+from ultimate_fallback_system import generate_ai_response, get_fallback_stats, get_provider_health
 
 # Configure logging
 logging.basicConfig(
@@ -36,20 +38,25 @@ class AIIssuesResponder:
         self.repository = None
     
     async def initialize(self):
-        """Initialize the issues responder"""
+        """Initialize the issues responder with ultimate fallback"""
         try:
-            config = {
-                'deepseek_api_key': os.getenv('DEEPSEEK_API_KEY'),
-                'glm_api_key': os.getenv('GLM_API_KEY'),
-                'grok_api_key': os.getenv('GROK_API_KEY'),
-                'kimi_api_key': os.getenv('KIMI_API_KEY'),
-                'qwen_api_key': os.getenv('QWEN_API_KEY'),
-                'gptoss_api_key': os.getenv('GPTOSS_API_KEY')
-            }
+            # Ultimate fallback system is already initialized globally
+            logger.info("🚀 Initializing Ultimate AI Issues Responder with 9-Provider Fallback...")
             
-            self.ai_service = AIServiceManager(config)
-            await self.ai_service.initialize()
+            # Check provider health
+            health = get_provider_health()
+            active_providers = [p for p, info in health.items() if info['status'] == 'active']
+            logger.info(f"✅ Active providers: {len(active_providers)}")
             
+            for provider_id, info in health.items():
+                if info['status'] == 'active':
+                    logger.info(f"  ✅ {info['name']}: {info['status']}")
+                else:
+                    logger.warning(f"  ⚠️ {info['name']}: {info['status']}")
+            
+            # Get fallback stats
+            stats = get_fallback_stats()
+            logger.info(f"📊 Fallback system ready: {stats['active_providers']} providers active")
             self.github_token = os.getenv('GITHUB_TOKEN')
             self.repository = os.getenv('GITHUB_REPOSITORY')
             
@@ -84,18 +91,23 @@ Please provide:
 
 Format the response as a structured analysis with clear sections."""
             
-            response = await self.ai_service.generate_response(analysis_prompt)
+            # Use ultimate fallback system
+            logger.info("🚀 Analyzing issue using ultimate fallback system...")
+            result = await generate_ai_response(analysis_prompt, max_tokens=3000)
             
-            if response.success:
+            if result['success']:
+                logger.info(f"✅ Issue analysis successful with {result['provider_name']} in {result['response_time']:.2f}s")
                 return {
-                    'analysis': response.content,
-                    'provider': response.provider,
-                    'response_time': response.response_time,
+                    'analysis': result['content'],
+                    'provider': result['provider'],
+                    'provider_name': result['provider_name'],
+                    'response_time': result['response_time'],
                     'success': True
                 }
             else:
+                logger.error(f"❌ Issue analysis failed: {result['error']}")
                 return {
-                    'error': response.error,
+                    'error': result['error'],
                     'success': False
                 }
                 
@@ -131,18 +143,23 @@ Make the response:
 - Include relevant emojis for engagement
 - Keep it concise but comprehensive"""
             
-            response = await self.ai_service.generate_response(response_prompt)
+            # Use ultimate fallback system
+            logger.info("🚀 Generating issue response using ultimate fallback system...")
+            result = await generate_ai_response(response_prompt, max_tokens=2000)
             
-            if response.success:
+            if result['success']:
+                logger.info(f"✅ Issue response generated successfully with {result['provider_name']} in {result['response_time']:.2f}s")
                 return {
-                    'response': response.content,
-                    'provider': response.provider,
-                    'response_time': response.response_time,
+                    'response': result['content'],
+                    'provider': result['provider'],
+                    'provider_name': result['provider_name'],
+                    'response_time': result['response_time'],
                     'success': True
                 }
             else:
+                logger.error(f"❌ Issue response generation failed: {result['error']}")
                 return {
-                    'error': response.error,
+                    'error': result['error'],
                     'success': False
                 }
                 
@@ -167,12 +184,15 @@ Suggest labels from these categories:
 
 Return only the label names, one per line, without explanations."""
             
-            response = await self.ai_service.generate_response(prompt)
+            # Use ultimate fallback system
+            logger.info("🚀 Suggesting labels using ultimate fallback system...")
+            result = await generate_ai_response(prompt, max_tokens=500)
             
-            if response.success:
+            if result['success']:
+                logger.info(f"✅ Labels suggested successfully with {result['provider_name']} in {result['response_time']:.2f}s")
                 # Parse labels from response
                 labels = []
-                for line in response.content.split('\n'):
+                for line in result['content'].split('\n'):
                     line = line.strip()
                     if line and not line.startswith('#') and not line.startswith('-'):
                         # Clean up the label
@@ -182,6 +202,7 @@ Return only the label names, one per line, without explanations."""
                 
                 return labels[:10]  # Limit to 10 labels
             else:
+                logger.error(f"❌ Label suggestion failed: {result['error']}")
                 return []
                 
         except Exception as e:
@@ -204,12 +225,15 @@ Consider:
 
 Suggest 1-3 potential assignees with brief reasoning."""
             
-            response = await self.ai_service.generate_response(prompt)
+            # Use ultimate fallback system
+            logger.info("🚀 Suggesting assignees using ultimate fallback system...")
+            result = await generate_ai_response(prompt, max_tokens=500)
             
-            if response.success:
+            if result['success']:
+                logger.info(f"✅ Assignees suggested successfully with {result['provider_name']} in {result['response_time']:.2f}s")
                 # Extract assignee suggestions from response
                 assignees = []
-                lines = response.content.split('\n')
+                lines = result['content'].split('\n')
                 for line in lines:
                     if 'assignee' in line.lower() or 'developer' in line.lower() or 'engineer' in line.lower():
                         # Extract potential assignee names
@@ -220,6 +244,7 @@ Suggest 1-3 potential assignees with brief reasoning."""
                 
                 return assignees[:3]  # Limit to 3 assignees
             else:
+                logger.error(f"❌ Assignee suggestion failed: {result['error']}")
                 return []
                 
         except Exception as e:
