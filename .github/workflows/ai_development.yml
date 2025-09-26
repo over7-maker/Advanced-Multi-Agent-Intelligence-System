@@ -198,7 +198,11 @@ jobs:
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
       run: |
-        python scripts/ai_documentation_generator.py --files "$TARGET_FILES" --output docs/generated/
+        if [ -n "$TARGET_FILES" ]; then
+          python scripts/ai_documentation_generator.py --files $TARGET_FILES --output docs/generated/
+        else
+          python scripts/ai_documentation_generator.py --directory . --output docs/generated/ --extensions .py .js .ts
+        fi
     
     - name: Build documentation
       run: |
@@ -239,7 +243,11 @@ jobs:
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
       run: |
-        python scripts/ai_security_auditor.py --files "$TARGET_FILES" --output security_report.md
+        if [ -n "$TARGET_FILES" ]; then
+          python scripts/ai_security_auditor.py --files $TARGET_FILES --output security_report.md
+        else
+          python scripts/ai_security_auditor.py --directory . --output security_reports/ --extensions .py .js .ts
+        fi
     
     - name: Run security tools
       run: |
@@ -284,7 +292,11 @@ jobs:
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
       run: |
-        python scripts/ai_performance_analyzer.py --files "$TARGET_FILES" --output performance_report.md
+        if [ -n "$TARGET_FILES" ]; then
+          python scripts/ai_performance_analyzer.py --files $TARGET_FILES --output performance_report.md
+        else
+          python scripts/ai_performance_analyzer.py --directory . --output performance_reports/ --extensions .py .js .ts
+        fi
     
     - name: Create Pull Request
       uses: peter-evans/create-pull-request@v5
