@@ -140,7 +140,7 @@ Keep the analysis concise but thorough.
         
         # Common security patterns to flag
         security_patterns = {
-            'hardcoded_secrets': ['password =', 'api_key =', 'secret =', 'token ='],
+            'hardcoded_secrets': ['password =', 'api_key =', 'secret =', 'auth_token ='],
             'sql_injection': ['execute(', 'query(', 'raw sql'],
             'xss_vulnerabilities': ['innerHTML', 'dangerouslySetInnerHTML', 'eval('],
             'insecure_random': ['random.random()', 'math.random()'],

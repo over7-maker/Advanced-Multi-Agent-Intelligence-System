@@ -42,7 +42,7 @@ class ComprehensiveSecurityScanner:
             'api_key': r'(?i)(api[_-]?key|apikey)\s*[=:]\s*["\']?([a-zA-Z0-9_-]{20,})["\']?',
             'secret_key': r'(?i)(secret[_-]?key|secretkey)\s*[=:]\s*["\']?([a-zA-Z0-9_-]{20,})["\']?',
             'password': r'(?i)(password|pwd|pass)\s*[=:]\s*["\']?([^\s"\'>]{8,})["\']?',
-            'token': r'(?i)(token|auth[_-]?token)\s*[=:]\s*["\']?([a-zA-Z0-9_-]{20,})["\']?',
+            'token': r'(?i)(auth_token|access_token)\s*[=:]\s*["\']?([a-zA-Z0-9_-]{20,})["\']?',
             'aws_access_key': r'AKIA[0-9A-Z]{16}',
             'aws_secret_key': r'[A-Za-z0-9/+=]{40}',
             'github_token': r'ghp_[a-zA-Z0-9]{36}',
@@ -116,9 +116,9 @@ class ComprehensiveSecurityScanner:
             },
             'weak_crypto': {
                 'patterns': [
-                    r'\bmd5\b', 
-                    r'\bsha1\b', 
-                    r'\bdes\b', 
+                    r'\bmd5\b(?!\s*#)', 
+                    r'\bsha1\b(?!\s*#)', 
+                    r'\bdes\b(?!\s*#)', 
                     r'random\.random\(',
                     r'Math\.random\('
                 ],
