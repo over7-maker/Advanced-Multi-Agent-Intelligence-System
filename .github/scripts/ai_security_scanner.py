@@ -166,15 +166,16 @@ class AISecurityScanner:
                 'vuln_patterns', 'security_patterns', 'detection_patterns',
                 'hardcoded_secrets', 'sql_injection', 'xss_vulnerabilities',
                 'weak_crypto', 'insecure_random', 'unsafe_deserialization',
-                'patterns =', 'description =', 'vulnerability patterns'
+                'patterns =', 'description =', 'vulnerability patterns',
+                'path_traversal', 'command_injection'
             ]
             
             # Count pattern definition indicators vs actual code
             pattern_count = sum(1 for indicator in pattern_indicators if indicator in content)
             total_lines = len(content.split('\n'))
             
-            # If more than 20% of content contains pattern indicators, likely a pattern file
-            return pattern_count > (total_lines * 0.2)
+            # If more than 15% of content contains pattern indicators, likely a pattern file
+            return pattern_count > (total_lines * 0.15)
         
         return False
     
@@ -186,16 +187,38 @@ class AISecurityScanner:
         pattern_indicators = [
             'patterns =', 'description =', 'vuln_patterns', 'security_patterns',
             'hardcoded_secrets', 'sql_injection', 'xss_vulnerabilities',
-            'weak_crypto', 'insecure_random', 'unsafe_deserialization'
+            'weak_crypto', 'insecure_random', 'unsafe_deserialization',
+            'path_traversal', 'command_injection', 'insecure_random'
         ]
         
         # If line contains pattern indicators, it's likely a pattern definition
         if any(indicator in line_lower for indicator in pattern_indicators):
             return True
         
+        # Check for regex pattern definitions (lines with r'...' or r"...")
+        if ("r'" in line and "'" in line) or ('r"' in line and '"' in line):
+            # Check if this is within a patterns definition context
+            for context_line in context_lines:
+                if 'patterns' in context_line.lower() and '=' in context_line:
+                    return True
+        
         # Check if line is part of a dictionary definition for patterns
         if any('{' in context_line and '}' in context_line for context_line in context_lines):
             if ':' in line and ('[' in line or ']' in line):
+                return True
+        
+        # Check for specific pattern definition patterns
+        pattern_definitions = [
+            r"r'execute\\s*\\([^)]*\\+",  # SQL injection patterns
+            r"r'innerHTML\\s*=",  # XSS patterns
+            r"r'dangerouslySetInnerHTML",  # XSS patterns
+            r"r'eval\\s*\\(",  # XSS patterns
+            r"r'SELECT.*\\+.*FROM",  # SQL patterns
+            r"r'query\\s*\\([^)]*\\+",  # SQL patterns
+        ]
+        
+        for pattern in pattern_definitions:
+            if pattern.replace('\\', '') in line:
                 return True
         
         return False
