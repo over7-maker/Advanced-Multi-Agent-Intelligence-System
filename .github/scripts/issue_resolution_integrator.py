@@ -176,7 +176,7 @@ Based on the AI analysis above, please review and take appropriate action.
         url = f"https://api.github.com/repos/{self.repo_name}/issues/{self.issue_number}/comments"
         
         headers = {
-            'Authorization': f'token {self.github_token}',
+            'Authorization': f'Bearer {self.github_token}',
             'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json'
         }
@@ -197,7 +197,7 @@ Based on the AI analysis above, please review and take appropriate action.
         url = f"https://api.github.com/repos/{self.repo_name}/issues/{self.issue_number}/labels"
         
         headers = {
-            'Authorization': f'token {self.github_token}',
+            'Authorization': f'Bearer {self.github_token}',
             'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json'
         }

@@ -20,7 +20,7 @@ class WorkflowStatusChecker:
         url = f"https://api.github.com/repos/{self.repo_name}/actions/runs"
         
         headers = {
-            'Authorization': f'token {self.github_token}',
+            'Authorization': f'Bearer {self.github_token}',
             'Accept': 'application/vnd.github.v3+json'
         }
         
@@ -45,7 +45,7 @@ class WorkflowStatusChecker:
         url = f"https://api.github.com/repos/{self.repo_name}/actions/runs/{run_id}"
         
         headers = {
-            'Authorization': f'token {self.github_token}',
+            'Authorization': f'Bearer {self.github_token}',
             'Accept': 'application/vnd.github.v3+json'
         }
         
@@ -62,7 +62,7 @@ class WorkflowStatusChecker:
         url = f"https://api.github.com/repos/{self.repo_name}/actions/runs/{run_id}/jobs"
         
         headers = {
-            'Authorization': f'token {self.github_token}',
+            'Authorization': f'Bearer {self.github_token}',
             'Accept': 'application/vnd.github.v3+json'
         }
         
