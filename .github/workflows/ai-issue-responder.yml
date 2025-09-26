@@ -31,6 +31,23 @@ jobs:
       run: |
         pip install openai requests python-dotenv
     
+    - name: Debug Auto Response System
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+        ISSUE_NUMBER: ${{ github.event.issue.number }}
+        ISSUE_TITLE: ${{ github.event.issue.title }}
+        ISSUE_BODY: ${{ github.event.issue.body }}
+        ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+      run: |
+        echo "🐛 STARTING COMPREHENSIVE DEBUG"
+        echo "Repository: $GITHUB_REPOSITORY"
+        echo "Issue: #$ISSUE_NUMBER"
+        echo "Title: $ISSUE_TITLE"
+        echo "Author: $ISSUE_AUTHOR"
+        echo ""
+        python .github/scripts/debug_responder.py
+    
     - name: Guaranteed Auto Response
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -40,6 +57,7 @@ jobs:
         ISSUE_BODY: ${{ github.event.issue.body }}
         ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
       run: |
+        echo "🤖 STARTING GUARANTEED AUTO RESPONSE"
         python .github/scripts/simple_working_responder.py
     
     - name: Add AI Analysis Label
