@@ -18,6 +18,9 @@ class AIIssueResponder:
         self.deepseek_key = os.environ.get('DEEPSEEK_API_KEY')
         self.glm_key = os.environ.get('GLM_API_KEY')
         self.grok_key = os.environ.get('GROK_API_KEY')
+        self.kimi_key = os.environ.get('KIMI_API_KEY')
+        self.qwen_key = os.environ.get('QWEN_API_KEY')
+        self.gptoss_key = os.environ.get('GPTOSS_API_KEY')
         self.repo_name = os.environ.get('REPO_NAME')
         
         # Issue details
@@ -26,10 +29,10 @@ class AIIssueResponder:
         self.issue_body = os.environ.get('ISSUE_BODY', '')
         self.issue_author = os.environ.get('ISSUE_AUTHOR')
         
-        # Initialize AI clients with fallback priority
+        # Initialize AI clients with intelligent fallback priority
         self.ai_clients = []
         
-        # Priority order: DeepSeek (most reliable), GLM, Grok
+        # Priority order: DeepSeek (most reliable), GLM, Grok, Kimi, Qwen, GPTOSS
         if self.deepseek_key:
             try:
                 self.ai_clients.append({
@@ -38,7 +41,8 @@ class AIIssueResponder:
                         base_url="https://api.deepseek.com/v1",
                         api_key=self.deepseek_key,
                     ),
-                    'model': 'deepseek-chat'
+                    'model': 'deepseek-chat',
+                    'priority': 1
                 })
             except Exception as e:
                 print(f"Failed to initialize DeepSeek client: {e}")
@@ -51,7 +55,8 @@ class AIIssueResponder:
                         base_url="https://openrouter.ai/api/v1",
                         api_key=self.glm_key,
                     ),
-                    'model': 'z-ai/glm-4.5-air:free'
+                    'model': 'z-ai/glm-4.5-air:free',
+                    'priority': 2
                 })
             except Exception as e:
                 print(f"Failed to initialize GLM client: {e}")
@@ -64,13 +69,61 @@ class AIIssueResponder:
                         base_url="https://openrouter.ai/api/v1",
                         api_key=self.grok_key,
                     ),
-                    'model': 'x-ai/grok-4-fast:free'
+                    'model': 'x-ai/grok-4-fast:free',
+                    'priority': 3
                 })
             except Exception as e:
                 print(f"Failed to initialize Grok client: {e}")
         
+        if self.kimi_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Kimi',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.kimi_key,
+                    ),
+                    'model': 'moonshot/moonshot-v1-8k:free',
+                    'priority': 4
+                })
+            except Exception as e:
+                print(f"Failed to initialize Kimi client: {e}")
+        
+        if self.qwen_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Qwen',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.qwen_key,
+                    ),
+                    'model': 'qwen/qwen-2.5-7b-instruct:free',
+                    'priority': 5
+                })
+            except Exception as e:
+                print(f"Failed to initialize Qwen client: {e}")
+        
+        if self.gptoss_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'GPTOSS',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.gptoss_key,
+                    ),
+                    'model': 'openai/gpt-3.5-turbo:free',
+                    'priority': 6
+                })
+            except Exception as e:
+                print(f"Failed to initialize GPTOSS client: {e}")
+        
+        # Sort by priority
+        self.ai_clients.sort(key=lambda x: x['priority'])
+        
         if not self.ai_clients:
             print("⚠️ No AI clients available - will use fallback response")
+        else:
+            print(f"🤖 Initialized {len(self.ai_clients)} AI clients for issue response")
     
     def analyze_issue_type(self, title: str, body: str) -> str:
         """Analyze the type of issue based on content"""
