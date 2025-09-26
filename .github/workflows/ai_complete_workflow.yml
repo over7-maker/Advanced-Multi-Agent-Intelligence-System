@@ -122,7 +122,7 @@ jobs:
 
         '
     - name: Upload analysis report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ai-analysis-report-${{ github.run_number }}
         path: analysis_report.md
@@ -400,7 +400,7 @@ jobs:
 
         '
     - name: Upload security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-reports-${{ github.run_number }}
         path: 'security_report.md
@@ -609,7 +609,7 @@ jobs:
 
         '
     - name: Upload full analysis report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: full-analysis-report-${{ github.run_number }}
         path: 'final_validation_report.json

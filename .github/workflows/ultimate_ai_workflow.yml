@@ -267,28 +267,28 @@ jobs:
         safety check --json --output safety_check.json || echo "Safety check completed with issues"
     
     - name: Upload Analysis Report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: ultimate-ai-analysis-report-${{ github.run_number }}
         path: analysis_report.md
     
     - name: Upload Security Report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: ultimate-ai-security-report-${{ github.run_number }}
         path: security_report.md
     
     - name: Upload Performance Report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: ultimate-ai-performance-report-${{ github.run_number }}
         path: performance_report.md
     
     - name: Upload Continuous Development Report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       if: always()
       with:
         name: ultimate-ai-continuous-development-report-${{ github.run_number }}

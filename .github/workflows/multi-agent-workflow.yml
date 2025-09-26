@@ -154,7 +154,7 @@ jobs:
         echo "✅ Multi-agent continuous development complete!"
     
     - name: Upload Multi-Agent Reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: multi-agent-reports-${{ github.run_number }}
         path: |

@@ -60,7 +60,7 @@ jobs:
 
         '
     - name: Upload analysis report
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ai-analysis-report
         path: analysis_report.md
@@ -311,7 +311,7 @@ jobs:
 
         '
     - name: Upload security reports
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: security-reports
         path: 'security_report.md
