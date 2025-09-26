@@ -1,0 +1,46 @@
+name: Test GitHub Authentication
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  test-auth:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install requests
+    
+    - name: Test GitHub Authentication
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_REPOSITORY: ${{ github.repository }}
+      run: |
+        python test_github_auth.py
+    
+    - name: Test Multi-API System
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+      run: |
+        python quick_test.py
