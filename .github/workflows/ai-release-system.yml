@@ -251,8 +251,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.event.inputs.version || github.ref_name }}
-        release_name: "🤖 AMAS ${{ github.event.inputs.version || github.ref_name }} - AI-Enhanced Release"
+        tag_name: ${{ github.event.inputs.version || github.ref_name }}-ai
+        release_name: "🤖 AMAS ${{ github.event.inputs.version || github.ref_name }}-ai - AI-Enhanced Release"
         body_path: RELEASE_NOTES.md
         draft: false
         prerelease: ${{ github.event.inputs.release_type == 'prerelease' }}

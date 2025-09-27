@@ -120,8 +120,8 @@ This code analysis has been performed by 9 AI models working together:
 
 1. **Add Type Hints**
    ```python
-   def process_data(data: List[Dict[str, Any]]) -> Optional[Result]:
-       """Process data with type safety."""
+   def process_data(data, validate=True, timeout=30):
+       # Process data with type safety
        pass
    ```
 
@@ -130,8 +130,8 @@ This code analysis has been performed by 9 AI models working together:
    from functools import lru_cache
    
    @lru_cache(maxsize=128)
-   def expensive_calculation(param: str) -> str:
-       """Cache expensive calculations."""
+   def expensive_calculation(param):
+       # Cache expensive calculations
        pass
    ```
 
@@ -140,7 +140,7 @@ This code analysis has been performed by 9 AI models working together:
    try:
        result = risky_operation()
    except SpecificException as e:
-       logger.error(f"Operation failed: {{e}}")
+       logger.error(f"Operation failed: {e}")
        return fallback_value()
    ```
 

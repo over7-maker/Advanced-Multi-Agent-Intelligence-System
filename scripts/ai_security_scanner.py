@@ -112,8 +112,8 @@ This security analysis has been performed by 9 AI models working together:
 
 1. **Input Validation**
    ```python
-   def validate_input(data: str) -> bool:
-       """Validate and sanitize input data."""
+   def validate_input(data):
+       # Validate and sanitize input data
        if not data or len(data) > 1000:
            return False
        # Add more validation logic
@@ -122,16 +122,16 @@ This security analysis has been performed by 9 AI models working together:
 
 2. **SQL Injection Prevention**
    ```python
-   def safe_query(user_id: int) -> str:
-       """Execute safe database queries."""
+   def safe_query(user_id):
+       # Execute safe database queries
        query = "SELECT * FROM users WHERE id = %s"
        return execute_query(query, (user_id,))
    ```
 
 3. **XSS Prevention**
    ```python
-   def sanitize_output(data: str) -> str:
-       """Sanitize output to prevent XSS."""
+   def sanitize_output(data):
+       # Sanitize output to prevent XSS
        return html.escape(data)
    ```
 
