@@ -15,8 +15,15 @@ import time
 class AIIssueResponder:
     def __init__(self):
         self.github_token = os.environ.get('GITHUB_TOKEN')
-        self.openrouter_key = os.environ.get('OPENROUTER_API_KEY')
         self.deepseek_key = os.environ.get('DEEPSEEK_API_KEY')
+        self.glm_key = os.environ.get('GLM_API_KEY')
+        self.grok_key = os.environ.get('GROK_API_KEY')
+        self.kimi_key = os.environ.get('KIMI_API_KEY')
+        self.qwen_key = os.environ.get('QWEN_API_KEY')
+        self.gptoss_key = os.environ.get('GPTOSS_API_KEY')
+        self.claude_key = os.environ.get('CLAUDE_API_KEY')
+        self.gemini_key = os.environ.get('GEMINI_API_KEY')
+        self.gpt4_key = os.environ.get('GPT4_API_KEY')
         self.repo_name = os.environ.get('REPO_NAME')
         
         # Issue details
@@ -25,21 +32,101 @@ class AIIssueResponder:
         self.issue_body = os.environ.get('ISSUE_BODY', '')
         self.issue_author = os.environ.get('ISSUE_AUTHOR')
         
-        # Initialize AI clients
-        self.openrouter_client = None
-        self.deepseek_client = None
+        # Initialize AI clients with intelligent fallback priority
+        self.ai_clients = []
         
-        if self.openrouter_key:
-            self.openrouter_client = OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=self.openrouter_key,
-            )
-        
+        # Priority order: DeepSeek (most reliable), GLM, Grok, Kimi, Qwen, GPTOSS
         if self.deepseek_key:
-            self.deepseek_client = OpenAI(
-                base_url="https://api.deepseek.com/v1",
-                api_key=self.deepseek_key,
-            )
+            try:
+                self.ai_clients.append({
+                    'name': 'DeepSeek',
+                    'client': OpenAI(
+                        base_url="https://api.deepseek.com/v1",
+                        api_key=self.deepseek_key,
+                    ),
+                    'model': 'deepseek-chat',
+                    'priority': 1
+                })
+            except Exception as e:
+                print(f"Failed to initialize DeepSeek client: {e}")
+        
+        if self.glm_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'GLM',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.glm_key,
+                    ),
+                    'model': 'z-ai/glm-4.5-air:free',
+                    'priority': 2
+                })
+            except Exception as e:
+                print(f"Failed to initialize GLM client: {e}")
+        
+        if self.grok_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Grok',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.grok_key,
+                    ),
+                    'model': 'x-ai/grok-4-fast:free',
+                    'priority': 3
+                })
+            except Exception as e:
+                print(f"Failed to initialize Grok client: {e}")
+        
+        if self.kimi_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Kimi',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.kimi_key,
+                    ),
+                    'model': 'moonshot/moonshot-v1-8k:free',
+                    'priority': 4
+                })
+            except Exception as e:
+                print(f"Failed to initialize Kimi client: {e}")
+        
+        if self.qwen_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Qwen',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.qwen_key,
+                    ),
+                    'model': 'qwen/qwen-2.5-7b-instruct:free',
+                    'priority': 5
+                })
+            except Exception as e:
+                print(f"Failed to initialize Qwen client: {e}")
+        
+        if self.gptoss_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'GPTOSS',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.gptoss_key,
+                    ),
+                    'model': 'openai/gpt-3.5-turbo:free',
+                    'priority': 6
+                })
+            except Exception as e:
+                print(f"Failed to initialize GPTOSS client: {e}")
+        
+        # Sort by priority
+        self.ai_clients.sort(key=lambda x: x['priority'])
+        
+        if not self.ai_clients:
+            print("⚠️ No AI clients available - will use fallback response")
+        else:
+            print(f"🤖 Initialized {len(self.ai_clients)} AI clients for issue response")
     
     def analyze_issue_type(self, title: str, body: str) -> str:
         """Analyze the type of issue based on content"""
@@ -116,7 +203,10 @@ For security issues:
         return base_prompt + type_specific_prompts.get(issue_type, type_specific_prompts['question'])
     
     def generate_ai_response(self, issue_type: str, title: str, body: str) -> Optional[str]:
-        """Generate AI response using available APIs"""
+        """Generate AI response using available APIs with fallback"""
+        if not self.ai_clients:
+            return None
+            
         system_prompt = self.create_system_prompt(issue_type)
         
         user_prompt = f"""
@@ -132,15 +222,21 @@ Please provide a helpful, professional response that addresses this issue.
 Be specific to the AMAS project context and provide actionable guidance.
 """
         
-        # Try OpenRouter first (with your free models)
-        if self.openrouter_client:
+        # Try each AI client in order of preference
+        for client_info in self.ai_clients:
             try:
-                response = self.openrouter_client.chat.completions.create(
-                    extra_headers={
+                print(f"🤖 Trying {client_info['name']} for issue response...")
+                
+                extra_headers = {}
+                if 'openrouter.ai' in str(client_info['client'].base_url):
+                    extra_headers = {
                         "HTTP-Referer": f"https://github.com/{self.repo_name}",
                         "X-Title": "AMAS Intelligence System",
-                    },
-                    model="deepseek/deepseek-chat-v3.1:free",  # Your free DeepSeek model
+                    }
+                
+                response = client_info['client'].chat.completions.create(
+                    extra_headers=extra_headers if extra_headers else None,
+                    model=client_info['model'],
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
@@ -148,26 +244,15 @@ Be specific to the AMAS project context and provide actionable guidance.
                     temperature=0.7,
                     max_tokens=1000
                 )
+                
+                print(f"✅ Successfully generated response with {client_info['name']}")
                 return response.choices[0].message.content
+                
             except Exception as e:
-                print(f"OpenRouter API failed: {e}")
+                print(f"❌ {client_info['name']} failed: {e}")
+                continue
         
-        # Fallback to DeepSeek direct API
-        if self.deepseek_client:
-            try:
-                response = self.deepseek_client.chat.completions.create(
-                    model="deepseek-chat",
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    temperature=0.7,
-                    max_tokens=1000
-                )
-                return response.choices[0].message.content
-            except Exception as e:
-                print(f"DeepSeek API failed: {e}")
-        
+        print("❌ All AI clients failed")
         return None
     
     def post_github_comment(self, comment: str) -> bool:

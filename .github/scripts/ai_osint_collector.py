@@ -1,31 +1,36 @@
 #!/usr/bin/env python3
 """
-Multi-Agent Orchestrator Script
-Coordinates multiple AI agents for comprehensive analysis
+AI OSINT Data Collector Script
+Automated intelligence gathering using multiple AI models
 """
 
 import os
 import asyncio
+import requests
 from openai import OpenAI
 from typing import Dict, List, Any, Optional
 import time
+import json
+from datetime import datetime
 
-class MultiAgentOrchestrator:
+class AIOSINTCollector:
     def __init__(self):
         self.deepseek_key = os.environ.get('DEEPSEEK_API_KEY')
+        self.claude_key = os.environ.get('CLAUDE_API_KEY')
+        self.gpt4_key = os.environ.get('GPT4_API_KEY')
         self.glm_key = os.environ.get('GLM_API_KEY')
         self.grok_key = os.environ.get('GROK_API_KEY')
         self.kimi_key = os.environ.get('KIMI_API_KEY')
         self.qwen_key = os.environ.get('QWEN_API_KEY')
-        self.gptoss_key = os.environ.get('GPTOSS_API_KEY')
-        self.claude_key = os.environ.get('CLAUDE_API_KEY')
         self.gemini_key = os.environ.get('GEMINI_API_KEY')
-        self.gpt4_key = os.environ.get('GPT4_API_KEY')
+        self.gptoss_key = os.environ.get('GPTOSS_API_KEY')
+        self.repo_name = os.environ.get('REPO_NAME')
+        self.issue_number = os.environ.get('ISSUE_NUMBER')
         
         # Initialize AI clients with intelligent fallback priority
         self.agents = []
         
-        # DeepSeek agent (most reliable)
+        # Priority order: DeepSeek (most reliable), Claude, GPT-4, GLM, Grok, Kimi, Qwen, Gemini, GPTOSS
         if self.deepseek_key:
             try:
                 self.agents.append({
@@ -35,14 +40,12 @@ class MultiAgentOrchestrator:
                         api_key=self.deepseek_key,
                     ),
                     'model': 'deepseek-chat',
-                    'role': 'OSINT Collector',
-                    'description': 'Gathers initial intelligence and data',
+                    'role': 'Primary Intelligence Analyst',
                     'priority': 1
                 })
             except Exception as e:
                 print(f"Failed to initialize DeepSeek agent: {e}")
         
-        # GLM agent
         if self.glm_key:
             try:
                 self.agents.append({
@@ -52,14 +55,12 @@ class MultiAgentOrchestrator:
                         api_key=self.glm_key,
                     ),
                     'model': 'z-ai/glm-4.5-air:free',
-                    'role': 'Threat Analyst',
-                    'description': 'Analyzes threats and patterns',
+                    'role': 'Threat Intelligence Specialist',
                     'priority': 2
                 })
             except Exception as e:
                 print(f"Failed to initialize GLM agent: {e}")
         
-        # Grok agent
         if self.grok_key:
             try:
                 self.agents.append({
@@ -69,14 +70,12 @@ class MultiAgentOrchestrator:
                         api_key=self.grok_key,
                     ),
                     'model': 'x-ai/grok-4-fast:free',
-                    'role': 'Strategic Advisor',
-                    'description': 'Provides recommendations and strategy',
+                    'role': 'Strategic Intelligence Advisor',
                     'priority': 3
                 })
             except Exception as e:
                 print(f"Failed to initialize Grok agent: {e}")
         
-        # Kimi agent
         if self.kimi_key:
             try:
                 self.agents.append({
@@ -86,14 +85,12 @@ class MultiAgentOrchestrator:
                         api_key=self.kimi_key,
                     ),
                     'model': 'moonshot/moonshot-v1-8k:free',
-                    'role': 'Technical Specialist',
-                    'description': 'Provides technical analysis and implementation',
+                    'role': 'Technical Intelligence Analyst',
                     'priority': 4
                 })
             except Exception as e:
                 print(f"Failed to initialize Kimi agent: {e}")
         
-        # Qwen agent
         if self.qwen_key:
             try:
                 self.agents.append({
@@ -103,14 +100,12 @@ class MultiAgentOrchestrator:
                         api_key=self.qwen_key,
                     ),
                     'model': 'qwen/qwen-2.5-7b-instruct:free',
-                    'role': 'Research Assistant',
-                    'description': 'Conducts research and fact-checking',
+                    'role': 'Research Intelligence Specialist',
                     'priority': 5
                 })
             except Exception as e:
                 print(f"Failed to initialize Qwen agent: {e}")
         
-        # GPTOSS agent
         if self.gptoss_key:
             try:
                 self.agents.append({
@@ -120,8 +115,7 @@ class MultiAgentOrchestrator:
                         api_key=self.gptoss_key,
                     ),
                     'model': 'openai/gpt-3.5-turbo:free',
-                    'role': 'Quality Assurance',
-                    'description': 'Reviews and validates outputs',
+                    'role': 'Quality Assurance Analyst',
                     'priority': 6
                 })
             except Exception as e:
@@ -131,10 +125,10 @@ class MultiAgentOrchestrator:
         self.agents.sort(key=lambda x: x['priority'])
         
         if not self.agents:
-            print("⚠️ No AI agents available - cannot perform analysis")
+            print("⚠️ No AI agents available - cannot perform OSINT collection")
             return
         
-        print(f"🤖 Initialized {len(self.agents)} AI agents:")
+        print(f"🔍 Initialized {len(self.agents)} AI agents for OSINT collection:")
         for agent in self.agents:
             print(f"  - {agent['name']}: {agent['role']}")
     
@@ -148,102 +142,126 @@ class MultiAgentOrchestrator:
             extra_headers = {}
             if 'openrouter.ai' in str(agent['client'].base_url):
                 extra_headers = {
-                    "HTTP-Referer": "https://github.com/AMAS-Intelligence-System",
-                    "X-Title": "AMAS Multi-Agent Analysis",
+                    "HTTP-Referer": f"https://github.com/{self.repo_name}",
+                    "X-Title": "AMAS OSINT Intelligence Collection",
                 }
             
             response = agent['client'].chat.completions.create(
                 extra_headers=extra_headers if extra_headers else None,
                 model=agent['model'],
                 messages=[
-                    {"role": "system", "content": f"You are {agent['role']} for the AMAS Intelligence System. {agent['description']}"},
+                    {"role": "system", "content": f"You are {agent['role']} for the AMAS Intelligence System. {agent.get('description', '')}"},
                     {"role": "user", "content": full_prompt}
                 ],
                 temperature=0.7,
-                max_tokens=1500
+                max_tokens=2000
             )
             
             result = response.choices[0].message.content
-            print(f"✅ {agent['name']} completed analysis")
+            print(f"✅ {agent['name']} completed OSINT analysis")
             return result
             
         except Exception as e:
             print(f"❌ {agent['name']} failed: {e}")
             return None
     
-    async def run_intelligence_analysis(self) -> Dict[str, Any]:
-        """Run multi-agent intelligence analysis"""
+    async def collect_cybersecurity_intelligence(self) -> Dict[str, Any]:
+        """Collect cybersecurity intelligence using multiple agents"""
         if not self.agents:
             return {"error": "No agents available"}
         
-        print("🚀 Starting Multi-Agent Intelligence Analysis...")
+        print("🔍 Starting Multi-Agent OSINT Collection...")
         
-        # Step 1: OSINT Collection (DeepSeek or first available agent)
-        osint_agent = self.agents[0]  # Use first available agent
-        initial_prompt = """
-        Gather comprehensive open source intelligence on recent cyber attacks targeting financial institutions.
+        # Step 1: Primary Intelligence Gathering (DeepSeek or first available agent)
+        primary_agent = self.agents[0]
+        intelligence_prompt = """
+        Gather comprehensive open source intelligence on recent cybersecurity threats and trends.
         Focus on:
-        - Attack vectors and methods
-        - Affected organizations
-        - Timeline of events
-        - Attribution indicators
-        - Impact assessment
+        - Recent cyber attacks and breaches
+        - New malware and threat actors
+        - Security vulnerabilities and exploits
+        - Industry security trends
+        - Threat intelligence indicators
+        - Emerging attack vectors
+        - Security research findings
         """
         
-        osint_result = await self.call_agent(osint_agent, initial_prompt)
-        if not osint_result:
-            return {"error": "OSINT collection failed"}
+        primary_intelligence = await self.call_agent(primary_agent, intelligence_prompt)
+        if not primary_intelligence:
+            return {"error": "Primary intelligence collection failed"}
         
         # Step 2: Threat Analysis (GLM or second agent)
         analysis_agent = self.agents[1] if len(self.agents) > 1 else self.agents[0]
         analysis_prompt = f"""
-        Analyze this intelligence data and extract:
-        - Threat actors and their tactics, techniques, and procedures (TTPs)
+        Analyze this intelligence data and provide:
+        - Threat actor identification and attribution
         - Attack patterns and methodologies
-        - Vulnerabilities being exploited
-        - Potential future targets
         - Risk assessment for different sectors
+        - Vulnerability analysis
+        - Threat landscape overview
+        - Security recommendations
         
         Intelligence Data:
-        {osint_result}
+        {primary_intelligence}
         """
         
-        analysis_result = await self.call_agent(analysis_agent, analysis_prompt, osint_result)
-        if not analysis_result:
-            analysis_result = "Threat analysis failed - using OSINT data only"
+        threat_analysis = await self.call_agent(analysis_agent, analysis_prompt, primary_intelligence)
+        if not threat_analysis:
+            threat_analysis = "Threat analysis failed - using primary intelligence only"
         
-        # Step 3: Strategic Recommendations (Grok or third agent)
+        # Step 3: Strategic Assessment (Grok or third agent)
         strategy_agent = self.agents[2] if len(self.agents) > 2 else self.agents[0]
         strategy_prompt = f"""
         Based on the intelligence and threat analysis, provide:
-        - Immediate defensive measures
-        - Long-term strategic recommendations
-        - Priority actions for security teams
-        - Risk mitigation strategies
-        - Monitoring and detection improvements
+        - Strategic threat assessment
+        - Priority threat indicators
+        - Defensive recommendations
+        - Monitoring and detection strategies
+        - Risk mitigation approaches
+        - Future threat predictions
         
         Analysis Data:
-        {analysis_result}
+        {threat_analysis}
         """
         
-        strategy_result = await self.call_agent(strategy_agent, strategy_prompt, analysis_result)
-        if not strategy_result:
-            strategy_result = "Strategic recommendations failed - review analysis data"
+        strategic_assessment = await self.call_agent(strategy_agent, strategy_prompt, threat_analysis)
+        if not strategic_assessment:
+            strategic_assessment = "Strategic assessment failed - review analysis data"
+        
+        # Step 4: Technical Analysis (Kimi or fourth agent)
+        technical_agent = self.agents[3] if len(self.agents) > 3 else self.agents[0]
+        technical_prompt = f"""
+        Provide technical analysis focusing on:
+        - Technical indicators of compromise (IOCs)
+        - Malware analysis and characteristics
+        - Network security implications
+        - System vulnerabilities
+        - Technical countermeasures
+        - Implementation recommendations
+        
+        Intelligence Context:
+        {strategic_assessment}
+        """
+        
+        technical_analysis = await self.call_agent(technical_agent, technical_prompt, strategic_assessment)
+        if not technical_analysis:
+            technical_analysis = "Technical analysis failed - review strategic assessment"
         
         return {
-            'osint': osint_result,
-            'analysis': analysis_result,
-            'strategy': strategy_result,
+            'primary_intelligence': primary_intelligence,
+            'threat_analysis': threat_analysis,
+            'strategic_assessment': strategic_assessment,
+            'technical_analysis': technical_analysis,
             'agents_used': [agent['name'] for agent in self.agents],
             'timestamp': time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())
         }
     
-    def generate_report(self, results: Dict[str, Any]) -> str:
-        """Generate comprehensive intelligence report"""
+    def generate_osint_report(self, results: Dict[str, Any]) -> str:
+        """Generate comprehensive OSINT intelligence report"""
         if 'error' in results:
-            return f"# Multi-Agent Analysis Failed\n\nError: {results['error']}"
+            return f"# OSINT Collection Failed\n\nError: {results['error']}"
         
-        report = f"""# 🤖 AMAS Multi-Agent Intelligence Report
+        report = f"""# 🔍 AMAS OSINT Intelligence Report
 
 **Generated:** {results['timestamp']}  
 **Agents Used:** {', '.join(results['agents_used'])}
@@ -252,15 +270,15 @@ class MultiAgentOrchestrator:
 
 ## 📊 Executive Summary
 
-This report presents a comprehensive intelligence analysis conducted by multiple AI agents working in coordination to assess recent cyber threats targeting financial institutions.
+This report presents comprehensive open source intelligence (OSINT) analysis conducted by multiple AI agents working in coordination to assess current cybersecurity threats and trends.
 
 ---
 
-## 🔍 Step 1: Open Source Intelligence (OSINT)
+## 🕵️ Step 1: Primary Intelligence Gathering
 
 **Agent:** {results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['osint']}
+{results['primary_intelligence']}
 
 ---
 
@@ -268,28 +286,36 @@ This report presents a comprehensive intelligence analysis conducted by multiple
 
 **Agent:** {results['agents_used'][1] if len(results['agents_used']) > 1 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['analysis']}
+{results['threat_analysis']}
 
 ---
 
-## 💡 Step 3: Strategic Recommendations
+## 🏛️ Step 3: Strategic Assessment
 
 **Agent:** {results['agents_used'][2] if len(results['agents_used']) > 2 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['strategy']}
+{results['strategic_assessment']}
 
 ---
 
-## 📈 Key Insights
+## 🔧 Step 4: Technical Analysis
+
+**Agent:** {results['agents_used'][3] if len(results['agents_used']) > 3 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
+
+{results['technical_analysis']}
+
+---
+
+## 📈 Key Intelligence Insights
 
 - **Threat Level:** Assessed by multi-agent analysis
 - **Primary Concerns:** Identified through coordinated intelligence gathering
-- **Recommended Actions:** Prioritized based on threat analysis
-- **Monitoring Focus:** Areas requiring enhanced surveillance
+- **Strategic Recommendations:** Prioritized based on threat analysis
+- **Technical Indicators:** Areas requiring enhanced monitoring
 
 ---
 
-## 🔄 Next Steps
+## 🔄 Recommended Actions
 
 1. **Immediate Actions:** Implement high-priority defensive measures
 2. **Short-term:** Enhance monitoring and detection capabilities
@@ -297,40 +323,40 @@ This report presents a comprehensive intelligence analysis conducted by multiple
 
 ---
 
-*Report generated by AMAS Multi-Agent Intelligence System*
+*Report generated by AMAS Multi-Agent OSINT Collection System*
 *Powered by: {', '.join(results['agents_used']) if results['agents_used'] else 'AI Agents'}*
 """
         return report
     
     async def run(self):
         """Main execution function"""
-        print("🚀 Starting AMAS Multi-Agent Orchestrator...")
+        print("🚀 Starting AMAS OSINT Collection System...")
         
         # Create artifacts directory
         os.makedirs("artifacts", exist_ok=True)
         
-        # Run intelligence analysis
-        results = await self.run_intelligence_analysis()
+        # Collect intelligence
+        results = await self.collect_cybersecurity_intelligence()
         
         # Generate report
-        report = self.generate_report(results)
+        report = self.generate_osint_report(results)
         
         # Save report
-        report_path = "artifacts/multi_agent_report.md"
+        report_path = "artifacts/osint_report.md"
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(report)
         
-        print(f"📋 Report saved to {report_path}")
-        print("✅ Multi-Agent Analysis Complete!")
+        print(f"📋 OSINT report saved to {report_path}")
+        print("✅ OSINT Collection Complete!")
         
         return results
 
 async def main():
-    orchestrator = MultiAgentOrchestrator()
-    await orchestrator.run()
+    collector = AIOSINTCollector()
+    await collector.run()
 
 if __name__ == "__main__":
-    print("🔍 AMAS Multi-Agent Intelligence System")
+    print("🔍 AMAS OSINT Intelligence Collection System")
     print("=" * 50)
     
     # Check API key availability
@@ -338,6 +364,9 @@ if __name__ == "__main__":
     print(f"  DeepSeek: {'✅' if os.getenv('DEEPSEEK_API_KEY') else '❌'}")
     print(f"  GLM: {'✅' if os.getenv('GLM_API_KEY') else '❌'}")
     print(f"  Grok: {'✅' if os.getenv('GROK_API_KEY') else '❌'}")
+    print(f"  Kimi: {'✅' if os.getenv('KIMI_API_KEY') else '❌'}")
+    print(f"  Qwen: {'✅' if os.getenv('QWEN_API_KEY') else '❌'}")
+    print(f"  GPTOSS: {'✅' if os.getenv('GPTOSS_API_KEY') else '❌'}")
     print()
     
     asyncio.run(main())

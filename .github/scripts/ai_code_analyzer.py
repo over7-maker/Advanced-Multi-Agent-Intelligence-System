@@ -15,8 +15,15 @@ import difflib
 class AICodeAnalyzer:
     def __init__(self):
         self.github_token = os.environ.get('GITHUB_TOKEN')
-        self.openrouter_key = os.environ.get('OPENROUTER_API_KEY')
         self.deepseek_key = os.environ.get('DEEPSEEK_API_KEY')
+        self.glm_key = os.environ.get('GLM_API_KEY')
+        self.grok_key = os.environ.get('GROK_API_KEY')
+        self.kimi_key = os.environ.get('KIMI_API_KEY')
+        self.qwen_key = os.environ.get('QWEN_API_KEY')
+        self.gptoss_key = os.environ.get('GPTOSS_API_KEY')
+        self.claude_key = os.environ.get('CLAUDE_API_KEY')
+        self.gemini_key = os.environ.get('GEMINI_API_KEY')
+        self.gpt4_key = os.environ.get('GPT4_API_KEY')
         self.repo_name = os.environ.get('REPO_NAME')
         self.pr_number = os.environ.get('PR_NUMBER')
         self.commit_sha = os.environ.get('COMMIT_SHA')
@@ -25,18 +32,143 @@ class AICodeAnalyzer:
         changed_files_str = os.environ.get('CHANGED_FILES', '')
         self.changed_files = changed_files_str.split() if changed_files_str else []
         
-        # Initialize AI client
-        self.ai_client = None
-        if self.openrouter_key:
-            self.ai_client = OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=self.openrouter_key,
-            )
-        elif self.deepseek_key:
-            self.ai_client = OpenAI(
-                base_url="https://api.deepseek.com/v1",
-                api_key=self.deepseek_key,
-            )
+        # Initialize AI clients with intelligent fallback priority
+        self.ai_clients = []
+        
+        # Priority order: DeepSeek (most reliable), Claude, GPT-4, GLM, Grok, Kimi, Qwen, Gemini, GPTOSS
+        if self.deepseek_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'DeepSeek',
+                    'client': OpenAI(
+                        base_url="https://api.deepseek.com/v1",
+                        api_key=self.deepseek_key,
+                    ),
+                    'model': 'deepseek-chat',
+                    'priority': 1
+                })
+            except Exception as e:
+                print(f"Failed to initialize DeepSeek client: {e}")
+        
+        if self.claude_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Claude',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.claude_key,
+                    ),
+                    'model': 'anthropic/claude-3.5-sonnet',
+                    'priority': 2
+                })
+            except Exception as e:
+                print(f"Failed to initialize Claude client: {e}")
+        
+        if self.gpt4_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'GPT-4',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.gpt4_key,
+                    ),
+                    'model': 'openai/gpt-4o',
+                    'priority': 3
+                })
+            except Exception as e:
+                print(f"Failed to initialize GPT-4 client: {e}")
+        
+        if self.glm_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'GLM',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.glm_key,
+                    ),
+                    'model': 'z-ai/glm-4.5-air:free',
+                    'priority': 4
+                })
+            except Exception as e:
+                print(f"Failed to initialize GLM client: {e}")
+        
+        if self.grok_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Grok',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.grok_key,
+                    ),
+                    'model': 'x-ai/grok-4-fast:free',
+                    'priority': 5
+                })
+            except Exception as e:
+                print(f"Failed to initialize Grok client: {e}")
+        
+        if self.kimi_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Kimi',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.kimi_key,
+                    ),
+                    'model': 'moonshot/moonshot-v1-8k:free',
+                    'priority': 6
+                })
+            except Exception as e:
+                print(f"Failed to initialize Kimi client: {e}")
+        
+        if self.qwen_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Qwen',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.qwen_key,
+                    ),
+                    'model': 'qwen/qwen-2.5-7b-instruct:free',
+                    'priority': 7
+                })
+            except Exception as e:
+                print(f"Failed to initialize Qwen client: {e}")
+        
+        if self.gemini_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Gemini',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.gemini_key,
+                    ),
+                    'model': 'google/gemini-pro-1.5',
+                    'priority': 8
+                })
+            except Exception as e:
+                print(f"Failed to initialize Gemini client: {e}")
+        
+        if self.gptoss_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'GPTOSS',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.gptoss_key,
+                    ),
+                    'model': 'openai/gpt-3.5-turbo:free',
+                    'priority': 9
+                })
+            except Exception as e:
+                print(f"Failed to initialize GPTOSS client: {e}")
+        
+        # Sort by priority
+        self.ai_clients.sort(key=lambda x: x['priority'])
+        
+        if not self.ai_clients:
+            print("⚠️ No AI clients available - analysis will be limited")
+        else:
+            print(f"🤖 Initialized {len(self.ai_clients)} AI clients with fallback support")
     
     def read_file_content(self, file_path: str) -> Optional[str]:
         """Read file content safely"""
@@ -61,8 +193,8 @@ class AICodeAnalyzer:
             return None
     
     def analyze_code_with_ai(self, file_path: str, content: str, diff: str = None) -> Optional[Dict[str, Any]]:
-        """Analyze code using AI models"""
-        if not self.ai_client:
+        """Analyze code using AI models with fallback"""
+        if not self.ai_clients:
             return None
         
         file_extension = os.path.splitext(file_path)[1]
@@ -101,37 +233,42 @@ Please provide a structured code review with:
 Keep the analysis concise but thorough.
 """
         
-        try:
-            # Use appropriate model based on availability
-            model = "deepseek/deepseek-chat-v3.1:free" if self.openrouter_key else "deepseek-chat"
-            
-            extra_headers = {}
-            if self.openrouter_key:
-                extra_headers = {
-                    "HTTP-Referer": f"https://github.com/{self.repo_name}",
-                    "X-Title": "AMAS Code Analysis",
+        # Try each AI client in order of preference
+        for client_info in self.ai_clients:
+            try:
+                print(f"🤖 Trying {client_info['name']} for analysis...")
+                
+                extra_headers = {}
+                if 'openrouter.ai' in str(client_info['client'].base_url):
+                    extra_headers = {
+                        "HTTP-Referer": f"https://github.com/{self.repo_name}",
+                        "X-Title": "AMAS Code Analysis",
+                    }
+                
+                response = client_info['client'].chat.completions.create(
+                    extra_headers=extra_headers if extra_headers else None,
+                    model=client_info['model'],
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": analysis_prompt}
+                    ],
+                    temperature=0.3,  # Lower temperature for more consistent analysis
+                    max_tokens=1500
+                )
+                
+                print(f"✅ Successfully analyzed with {client_info['name']}")
+                return {
+                    'file_path': file_path,
+                    'analysis': response.choices[0].message.content,
+                    'model_used': f"{client_info['name']} ({client_info['model']})"
                 }
-            
-            response = self.ai_client.chat.completions.create(
-                extra_headers=extra_headers if self.openrouter_key else None,
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": analysis_prompt}
-                ],
-                temperature=0.3,  # Lower temperature for more consistent analysis
-                max_tokens=1500
-            )
-            
-            return {
-                'file_path': file_path,
-                'analysis': response.choices[0].message.content,
-                'model_used': model
-            }
-            
-        except Exception as e:
-            print(f"Error analyzing {file_path} with AI: {e}")
-            return None
+                
+            except Exception as e:
+                print(f"❌ {client_info['name']} failed: {e}")
+                continue
+        
+        print("❌ All AI clients failed")
+        return None
     
     def analyze_security_issues(self, file_path: str, content: str) -> List[str]:
         """Basic security issue detection"""

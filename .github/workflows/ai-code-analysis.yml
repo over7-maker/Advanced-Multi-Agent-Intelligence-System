@@ -49,8 +49,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install openai aiohttp python-dotenv requests pyyaml PyGithub gitpython
+        python -m pip install openai requests
     
     - name: Get changed files
       id: changed-files
@@ -68,57 +67,41 @@ jobs:
     - name: AI Code Analysis
       if: steps.changed-files.outputs.any_changed == 'true'
       env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
         REPO_NAME: ${{ github.repository }}
         COMMIT_SHA: ${{ github.sha }}
       run: |
-        echo "🤖 Running AI Code Analysis..."
-        python scripts/ai_code_analyzer.py \
-          --files "$CHANGED_FILES" \
-          --output analysis_report.md \
-          --analysis-type ${{ github.event.inputs.analysis_type || 'comprehensive' }} || echo "Code analysis completed with warnings"
-        echo "✅ Code analysis complete!"
+        python .github/scripts/ai_code_analyzer.py
     
     - name: Security Scan
       if: steps.changed-files.outputs.any_changed == 'true'
       env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        REPO_NAME: ${{ github.repository }}
       run: |
-        echo "🔒 Running Security Scan..."
-        python scripts/ai_security_auditor.py \
-          --files "$CHANGED_FILES" \
-          --output security_report.md || echo "Security scan completed with warnings"
-        echo "✅ Security scan complete!"
-    
-    - name: Performance Analysis
-      if: steps.changed-files.outputs.any_changed == 'true'
-      env:
-        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
-        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
-        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
-        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
-        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
-        CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
-      run: |
-        echo "⚡ Running Performance Analysis..."
-        python scripts/ai_performance_analyzer.py \
-          --files "$CHANGED_FILES" \
-          --output performance_report.md || echo "Performance analysis completed with warnings"
-        echo "✅ Performance analysis complete!"
+        python .github/scripts/ai_security_scanner.py
     
     - name: Upload Analysis Reports
       uses: actions/upload-artifact@v4
@@ -127,7 +110,6 @@ jobs:
         path: |
           analysis_report.md
           security_report.md
-          performance_report.md
     
     - name: Comment on PR
       if: github.event_name == 'pull_request'
@@ -153,5 +135,5 @@ jobs:
         echo "## 📊 AI Code Analysis Summary" >> $GITHUB_STEP_SUMMARY
         echo "- **Analysis Type**: ${{ github.event.inputs.analysis_type || 'comprehensive' }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Files Analyzed**: ${{ steps.changed-files.outputs.all_changed_files }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Reports Generated**: analysis_report.md, security_report.md, performance_report.md" >> $GITHUB_STEP_SUMMARY
+        echo "- **Reports Generated**: analysis_report.md, security_report.md" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ✅ Complete" >> $GITHUB_STEP_SUMMARY
