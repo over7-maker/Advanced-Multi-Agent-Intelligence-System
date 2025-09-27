@@ -168,7 +168,7 @@ Keep it concise but insightful.
                 },
                 json={
                     "model": "deepseek/deepseek-chat-v3.1:free",
-                    "messages": [{"role": "user", "content": prompt}]",
+                    "messages": [{"role": "user", "content": prompt}],
                     "max_tokens": 500
                 }
             )
