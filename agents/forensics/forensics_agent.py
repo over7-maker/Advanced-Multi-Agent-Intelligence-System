@@ -7,7 +7,7 @@ import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-from ..base.intelligence_agent import IntelligenceAgent, AgentStatus
+from agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
 
 logger = logging.getLogger(__name__)
 

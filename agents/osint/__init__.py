@@ -2,6 +2,6 @@
 OSINT Collection Module
 """
 
-from .osint_agent import OSINTAgent, OSINTCollectionWorkflow
+from .osint_agent import OSINTAgent
 
-__all__ = ['OSINTAgent', 'OSINTCollectionWorkflow']
+__all__ = ['OSINTAgent']
