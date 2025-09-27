@@ -36,7 +36,7 @@ def generate_release_notes(version: str) -> str:
     
     timestamp = datetime.now().strftime("%Y-%m-%d")
     
-    # Header
+    # Build release notes step by step
     release_notes = f"""# 🚀 AMAS {version} Release
 
 **Release Date**: {timestamp}  
