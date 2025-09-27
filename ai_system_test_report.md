@@ -1,18 +1,18 @@
 # 🧪 AI System Test Report
 
-**Generated:** 2025-09-27 00:56:23
-**Total Tests:** 63
-**Passed:** 56
-**Failed:** 6
+**Generated:** 2025-09-27 01:04:46
+**Total Tests:** 68
+**Passed:** 60
+**Failed:** 7
 **Warnings:** 0
-**Success Rate:** 88.9%
+**Success Rate:** 88.2%
 
 ## Test Results
 
 - ✅ **Workflow Files**: PASS
-  - Details: Found 13 workflow files
+  - Details: Found 17 workflow files
 - ✅ **AI Scripts**: PASS
-  - Details: Found 14 AI script files
+  - Details: Found 15 AI script files
 - ✅ **Key File: .github/workflows/ai-enhanced-workflow.yml**: PASS
 - ✅ **Key File: .github/workflows/test-ai-workflow.yml**: PASS
 - ✅ **Key File: .github/scripts/ai_code_analyzer.py**: PASS
@@ -27,8 +27,12 @@
 - ✅ **Module: datetime**: PASS
 - ✅ **YAML Syntax: ai-master-orchestrator.yml**: PASS
 - ✅ **YAML Syntax: ai-security-response.yml**: PASS
+- ✅ **YAML Syntax: ultimate_ai_workflow.yml**: PASS
 - ✅ **YAML Syntax: ai-osint-collection.yml**: PASS
 - ✅ **YAML Syntax: ai-adaptive-prompt-improvement.yml**: PASS
+- ✅ **YAML Syntax: ai_complete_workflow.yml**: PASS
+- ✅ **YAML Syntax: ai_development.yml**: PASS
+- ✅ **YAML Syntax: ai_simple_workflow.yml**: PASS
 - ✅ **YAML Syntax: ai-incident-response.yml**: PASS
 - ✅ **YAML Syntax: ai-issue-responder.yml**: PASS
 - ✅ **YAML Syntax: ai-threat-intelligence.yml**: PASS
@@ -43,10 +47,12 @@
 - ✅ **Python Syntax: ai_threat_intelligence.py**: PASS
 - ✅ **Python Syntax: ai_security_response.py**: PASS
 - ✅ **Python Syntax: multi_agent_orchestrator.py**: PASS
+- ✅ **Python Syntax: simple_working_responder.py**: PASS
 - ✅ **Python Syntax: ai_code_analyzer.py**: PASS
 - ✅ **Python Syntax: ai_osint_collector.py**: PASS
 - ✅ **Python Syntax: ai_workflow_monitor.py**: PASS
-- ✅ **Python Syntax: debug_responder.py**: PASS
+- ❌ **Python Syntax: debug_responder.py**: FAIL
+  - Details: Syntax error: closing parenthesis '}' does not match opening parenthesis '(' (debug_responder.py, line 220)
 - ✅ **Python Syntax: ai_security_scanner.py**: PASS
 - ✅ **Python Syntax: ai_enhanced_code_review.py**: PASS
 - ✅ **Python Syntax: ai_issue_responder.py**: PASS
@@ -93,8 +99,8 @@
 
 ### System Status
 - **Overall Result**: ❌ FAIL
-- **Success Rate**: 88.9%
-- **Critical Issues**: 6
+- **Success Rate**: 88.2%
+- **Critical Issues**: 7
 - **Warnings**: 0
 
 ### Recommendations
