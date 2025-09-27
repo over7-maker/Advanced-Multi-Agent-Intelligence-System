@@ -21,6 +21,10 @@ torch>=2.2.0,<3.0  # Fixed: Updated from 2.1.0 to compatible version
 numpy==1.24.3
 scikit-learn==1.3.0
 
+# AI Service Dependencies
+aiohttp==3.9.1
+python-dotenv==1.0.0
+
 # Data processing
 pandas==2.1.4
 scipy==1.11.4
