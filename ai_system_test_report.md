@@ -1,18 +1,18 @@
 # 🧪 AI System Test Report
 
-**Generated:** 2025-09-26 18:28:23
-**Total Tests:** 62
-**Passed:** 55
+**Generated:** 2025-09-27 00:21:13
+**Total Tests:** 63
+**Passed:** 56
 **Failed:** 6
 **Warnings:** 0
-**Success Rate:** 88.7%
+**Success Rate:** 88.9%
 
 ## Test Results
 
 - ✅ **Workflow Files**: PASS
   - Details: Found 13 workflow files
 - ✅ **AI Scripts**: PASS
-  - Details: Found 13 AI script files
+  - Details: Found 14 AI script files
 - ✅ **Key File: .github/workflows/ai-enhanced-workflow.yml**: PASS
 - ✅ **Key File: .github/workflows/test-ai-workflow.yml**: PASS
 - ✅ **Key File: .github/scripts/ai_code_analyzer.py**: PASS
@@ -46,6 +46,7 @@
 - ✅ **Python Syntax: ai_code_analyzer.py**: PASS
 - ✅ **Python Syntax: ai_osint_collector.py**: PASS
 - ✅ **Python Syntax: ai_workflow_monitor.py**: PASS
+- ✅ **Python Syntax: debug_responder.py**: PASS
 - ✅ **Python Syntax: ai_security_scanner.py**: PASS
 - ✅ **Python Syntax: ai_enhanced_code_review.py**: PASS
 - ✅ **Python Syntax: ai_issue_responder.py**: PASS
@@ -92,7 +93,7 @@
 
 ### System Status
 - **Overall Result**: ❌ FAIL
-- **Success Rate**: 88.7%
+- **Success Rate**: 88.9%
 - **Critical Issues**: 6
 - **Warnings**: 0
 

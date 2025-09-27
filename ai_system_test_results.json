@@ -1,384 +1,390 @@
 {
-  "timestamp": "2025-09-26T18:28:23.218228",
+  "timestamp": "2025-09-27T00:21:13.110819",
   "tests": [
     {
       "test": "Workflow Files",
       "status": "PASS",
       "details": "Found 13 workflow files",
-      "timestamp": "2025-09-26T18:28:23.219086"
+      "timestamp": "2025-09-27T00:21:13.111429"
     },
     {
       "test": "AI Scripts",
       "status": "PASS",
-      "details": "Found 13 AI script files",
-      "timestamp": "2025-09-26T18:28:23.219376"
+      "details": "Found 14 AI script files",
+      "timestamp": "2025-09-27T00:21:13.111692"
     },
     {
       "test": "Key File: .github/workflows/ai-enhanced-workflow.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.219424"
+      "timestamp": "2025-09-27T00:21:13.111735"
     },
     {
       "test": "Key File: .github/workflows/test-ai-workflow.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.219459"
+      "timestamp": "2025-09-27T00:21:13.111767"
     },
     {
       "test": "Key File: .github/scripts/ai_code_analyzer.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.219483"
+      "timestamp": "2025-09-27T00:21:13.111788"
     },
     {
       "test": "Key File: .github/scripts/ai_security_scanner.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.219502"
+      "timestamp": "2025-09-27T00:21:13.111805"
     },
     {
       "test": "Key File: .github/scripts/multi_agent_orchestrator.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.219539"
+      "timestamp": "2025-09-27T00:21:13.111822"
     },
     {
       "test": "Python Version",
       "status": "PASS",
       "details": "Python 3.13.3",
-      "timestamp": "2025-09-26T18:28:23.221863"
+      "timestamp": "2025-09-27T00:21:13.113385"
     },
     {
       "test": "Module: json",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.221915"
+      "timestamp": "2025-09-27T00:21:13.113415"
     },
     {
       "test": "Module: os",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.221929"
+      "timestamp": "2025-09-27T00:21:13.113432"
     },
     {
       "test": "Module: sys",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.221937"
+      "timestamp": "2025-09-27T00:21:13.113440"
     },
     {
       "test": "Module: pathlib",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.221943"
+      "timestamp": "2025-09-27T00:21:13.113445"
     },
     {
       "test": "Module: datetime",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.221950"
+      "timestamp": "2025-09-27T00:21:13.113451"
     },
     {
       "test": "YAML Syntax: ai-master-orchestrator.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.222226"
+      "timestamp": "2025-09-27T00:21:13.113660"
     },
     {
       "test": "YAML Syntax: ai-security-response.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.222306"
+      "timestamp": "2025-09-27T00:21:13.113720"
     },
     {
       "test": "YAML Syntax: ai-osint-collection.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.222386"
+      "timestamp": "2025-09-27T00:21:13.113780"
     },
     {
       "test": "YAML Syntax: ai-adaptive-prompt-improvement.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.222432"
+      "timestamp": "2025-09-27T00:21:13.113828"
     },
     {
       "test": "YAML Syntax: ai-incident-response.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.222478"
+      "timestamp": "2025-09-27T00:21:13.113867"
     },
     {
       "test": "YAML Syntax: ai-issue-responder.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.222514"
+      "timestamp": "2025-09-27T00:21:13.113925"
     },
     {
       "test": "YAML Syntax: ai-threat-intelligence.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.222570"
+      "timestamp": "2025-09-27T00:21:13.113972"
     },
     {
       "test": "YAML Syntax: ai-enhanced-workflow.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.222646"
+      "timestamp": "2025-09-27T00:21:13.114115"
     },
     {
       "test": "YAML Syntax: multi-agent-workflow.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.222699"
+      "timestamp": "2025-09-27T00:21:13.114169"
     },
     {
       "test": "YAML Syntax: ai-enhanced-code-review.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.222737"
+      "timestamp": "2025-09-27T00:21:13.114205"
     },
     {
       "test": "YAML Syntax: test-ai-workflow.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.222782"
+      "timestamp": "2025-09-27T00:21:13.114254"
     },
     {
       "test": "YAML Syntax: python-dependency-submission.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.222872"
+      "timestamp": "2025-09-27T00:21:13.114331"
     },
     {
       "test": "YAML Syntax: ai-code-analysis.yml",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.222914"
+      "timestamp": "2025-09-27T00:21:13.114371"
     },
     {
       "test": "Python Syntax: security_false_positive_analyzer.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.226088"
+      "timestamp": "2025-09-27T00:21:13.117365"
     },
     {
       "test": "Python Syntax: ai_incident_response.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.229664"
+      "timestamp": "2025-09-27T00:21:13.120882"
     },
     {
       "test": "Python Syntax: ai_threat_intelligence.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.232142"
+      "timestamp": "2025-09-27T00:21:13.123226"
     },
     {
       "test": "Python Syntax: ai_security_response.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.234554"
+      "timestamp": "2025-09-27T00:21:13.125538"
     },
     {
       "test": "Python Syntax: multi_agent_orchestrator.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.236615"
+      "timestamp": "2025-09-27T00:21:13.127632"
     },
     {
       "test": "Python Syntax: ai_code_analyzer.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.239279"
+      "timestamp": "2025-09-27T00:21:13.130247"
     },
     {
       "test": "Python Syntax: ai_osint_collector.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.241530"
+      "timestamp": "2025-09-27T00:21:13.132488"
     },
     {
       "test": "Python Syntax: ai_workflow_monitor.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.244817"
+      "timestamp": "2025-09-27T00:21:13.135608"
+    },
+    {
+      "test": "Python Syntax: debug_responder.py",
+      "status": "PASS",
+      "details": "",
+      "timestamp": "2025-09-27T00:21:13.137780"
     },
     {
       "test": "Python Syntax: ai_security_scanner.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.249482"
+      "timestamp": "2025-09-27T00:21:13.142251"
     },
     {
       "test": "Python Syntax: ai_enhanced_code_review.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.252262"
+      "timestamp": "2025-09-27T00:21:13.144911"
     },
     {
       "test": "Python Syntax: ai_issue_responder.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.254611"
+      "timestamp": "2025-09-27T00:21:13.147192"
     },
     {
       "test": "Python Syntax: ai_master_orchestrator.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.257442"
+      "timestamp": "2025-09-27T00:21:13.149986"
     },
     {
       "test": "Python Syntax: ai_adaptive_prompt_improvement.py",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.260295"
+      "timestamp": "2025-09-27T00:21:13.152790"
     },
     {
       "test": "API Key: DEEPSEEK_API_KEY",
       "status": "FAIL",
       "details": "Not configured",
-      "timestamp": "2025-09-26T18:28:23.260400"
+      "timestamp": "2025-09-27T00:21:13.152868"
     },
     {
       "test": "API Key: GLM_API_KEY",
       "status": "FAIL",
       "details": "Not configured",
-      "timestamp": "2025-09-26T18:28:23.260415"
+      "timestamp": "2025-09-27T00:21:13.152883"
     },
     {
       "test": "API Key: GROK_API_KEY",
       "status": "FAIL",
       "details": "Not configured",
-      "timestamp": "2025-09-26T18:28:23.260425"
+      "timestamp": "2025-09-27T00:21:13.152892"
     },
     {
       "test": "API Key: KIMI_API_KEY",
       "status": "FAIL",
       "details": "Not configured",
-      "timestamp": "2025-09-26T18:28:23.260431"
+      "timestamp": "2025-09-27T00:21:13.152900"
     },
     {
       "test": "API Key: QWEN_API_KEY",
       "status": "FAIL",
       "details": "Not configured",
-      "timestamp": "2025-09-26T18:28:23.260448"
+      "timestamp": "2025-09-27T00:21:13.152909"
     },
     {
       "test": "API Key: GPTOSS_API_KEY",
       "status": "FAIL",
       "details": "Not configured",
-      "timestamp": "2025-09-26T18:28:23.260456"
+      "timestamp": "2025-09-27T00:21:13.152916"
     },
     {
       "test": "API Key Summary",
       "status": "INFO",
       "details": "0/6 keys configured",
-      "timestamp": "2025-09-26T18:28:23.260467"
+      "timestamp": "2025-09-27T00:21:13.152937"
     },
     {
       "test": ".github/workflows/ai-enhanced-workflow.yml: Manual trigger",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.260610"
+      "timestamp": "2025-09-27T00:21:13.153051"
     },
     {
       "test": ".github/workflows/ai-enhanced-workflow.yml: Python version specified",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.260626"
+      "timestamp": "2025-09-27T00:21:13.153063"
     },
     {
       "test": ".github/workflows/ai-enhanced-workflow.yml: DeepSeek API key",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.260633"
+      "timestamp": "2025-09-27T00:21:13.153071"
     },
     {
       "test": ".github/workflows/ai-enhanced-workflow.yml: GLM API key",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.260638"
+      "timestamp": "2025-09-27T00:21:13.153078"
     },
     {
       "test": ".github/workflows/ai-enhanced-workflow.yml: Grok API key",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.260643"
+      "timestamp": "2025-09-27T00:21:13.153085"
     },
     {
       "test": ".github/workflows/test-ai-workflow.yml: Manual trigger",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.260708"
+      "timestamp": "2025-09-27T00:21:13.153143"
     },
     {
       "test": ".github/workflows/test-ai-workflow.yml: Python version specified",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.260717"
+      "timestamp": "2025-09-27T00:21:13.153152"
     },
     {
       "test": ".github/workflows/test-ai-workflow.yml: DeepSeek API key",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.260722"
+      "timestamp": "2025-09-27T00:21:13.153159"
     },
     {
       "test": ".github/workflows/test-ai-workflow.yml: GLM API key",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.260730"
+      "timestamp": "2025-09-27T00:21:13.153166"
     },
     {
       "test": ".github/workflows/test-ai-workflow.yml: Grok API key",
       "status": "PASS",
       "details": "",
-      "timestamp": "2025-09-26T18:28:23.260738"
+      "timestamp": "2025-09-27T00:21:13.153172"
     },
     {
       "test": "Script Structure: .github/scripts/ai_code_analyzer.py",
       "status": "PASS",
       "details": "Has class and init method",
-      "timestamp": "2025-09-26T18:28:23.260839"
+      "timestamp": "2025-09-27T00:21:13.153278"
     },
     {
       "test": "AI Integration: .github/scripts/ai_code_analyzer.py",
       "status": "PASS",
       "details": "Has OpenAI integration",
-      "timestamp": "2025-09-26T18:28:23.260854"
+      "timestamp": "2025-09-27T00:21:13.153297"
     },
     {
       "test": "Script Structure: .github/scripts/ai_security_scanner.py",
       "status": "PASS",
       "details": "Has class and init method",
-      "timestamp": "2025-09-26T18:28:23.260964"
+      "timestamp": "2025-09-27T00:21:13.153406"
     },
     {
       "test": "AI Integration: .github/scripts/ai_security_scanner.py",
       "status": "PASS",
       "details": "Has OpenAI integration",
-      "timestamp": "2025-09-26T18:28:23.260978"
+      "timestamp": "2025-09-27T00:21:13.153420"
     },
     {
       "test": "Script Structure: .github/scripts/multi_agent_orchestrator.py",
       "status": "PASS",
       "details": "Has class and init method",
-      "timestamp": "2025-09-26T18:28:23.261060"
+      "timestamp": "2025-09-27T00:21:13.153497"
     },
     {
       "test": "AI Integration: .github/scripts/multi_agent_orchestrator.py",
       "status": "PASS",
       "details": "Has OpenAI integration",
-      "timestamp": "2025-09-26T18:28:23.261072"
+      "timestamp": "2025-09-27T00:21:13.153509"
     }
   ],
   "summary": {
-    "total_tests": 62,
-    "passed": 55,
+    "total_tests": 63,
+    "passed": 56,
     "failed": 6,
     "warnings": 0,
-    "success_rate": 88.70967741935483
+    "success_rate": 88.88888888888889
   }
 }
