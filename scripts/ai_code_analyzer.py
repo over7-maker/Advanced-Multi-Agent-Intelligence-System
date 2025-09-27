@@ -140,7 +140,7 @@ This code analysis has been performed by 9 AI models working together:
    try:
        result = risky_operation()
    except SpecificException as e:
-       logger.error(f"Operation failed: {e}")
+       logger.error(f"Operation failed: {{e}}")
        return fallback_value()
    ```
 
