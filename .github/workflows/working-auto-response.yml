@@ -1,0 +1,57 @@
+name: Working Auto Response
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  working-response:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      issues: write
+    
+    steps:
+    - name: Working Auto Response
+      uses: actions/github-script@v7
+      with:
+        script: |
+          console.log('🤖 WORKING AUTO RESPONSE SYSTEM');
+          console.log('Issue #' + context.issue.number + ': ' + context.issue.title);
+          
+          // Post comment
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## 🤖 Auto Response
+
+Hello @${context.issue.user.login}! Thank you for creating this issue.
+
+**Issue Analysis:**
+- **Number**: #${context.issue.number}
+- **Title**: ${context.issue.title}
+- **Status**: Under Review
+- **Priority**: Medium
+
+**What We'll Do:**
+1. 📋 **Analysis**: Review your issue
+2. 🏷️ **Categorization**: Assign appropriate labels
+3. 📅 **Planning**: Determine next steps
+4. 🔄 **Updates**: Keep you informed
+
+Thanks for contributing to AMAS! 🙏
+
+---
+*🤖 Auto-generated response - AMAS AI System*`
+          });
+          
+          // Add labels
+          await github.rest.issues.addLabels({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['ai-analyzed', 'auto-response']
+          });
+          
+          console.log('✅ Auto-response completed successfully!');
