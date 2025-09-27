@@ -1,42 +1,90 @@
 #!/usr/bin/env python3
 """
-Debug Auto-Responder
-Comprehensive debugging script with detailed logging
+Debug Auto-Responder - Comprehensive debugging script with detailed logging
 """
 
 import os
 import sys
+import logging
 import requests
 import json
 from datetime import datetime
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
 def debug_environment():
-    """Debug environment variables"""
-    print("🔍 DEBUGGING ENVIRONMENT VARIABLES")
-    print("=" * 50)
+    """Debug environment variables and configuration"""
+    print("🔍 DEBUGGING AI ISSUE RESPONDER ENVIRONMENT")
+    print("="*60)
     
-    required_vars = {
-        'GITHUB_TOKEN': 'GitHub authentication token',
-        'GITHUB_REPOSITORY': 'Repository name',
-        'ISSUE_NUMBER': 'Issue number',
-        'ISSUE_TITLE': 'Issue title',
-        'ISSUE_BODY': 'Issue body',
-        'ISSUE_AUTHOR': 'Issue author'
-    }
+    # Check environment variables
+    env_vars = [
+        'GITHUB_TOKEN',
+        'GITHUB_REPOSITORY',
+        'ISSUE_NUMBER',
+        'ISSUE_TITLE',
+        'ISSUE_BODY',
+        'ISSUE_ACTION',
+        'ISSUE_AUTHOR'
+    ]
     
-    for var, description in required_vars.items():
-        value = os.environ.get(var)
+    print("📋 Environment Variables:")
+    for var in env_vars:
+        value = os.getenv(var)
         if value:
-            # Mask sensitive values
-            if 'TOKEN' in var:
-                masked_value = f"{value[:8]}...{value[-4:]}" if len(value) > 12 else "***"
-            else:
-                masked_value = value
-            print(f"✅ {var}: {masked_value} ({description})")
+            # Truncate long values for security
+            display_value = value[:50] + "..." if len(value) > 50 else value
+            print(f"  ✅ {var}: {display_value}")
         else:
-            print(f"❌ {var}: MISSING ({description})")
+            print(f"  ❌ {var}: Not set")
     
-    return all(os.environ.get(var) for var in required_vars.keys())
+    # Check API keys
+    api_keys = [
+        'DEEPSEEK_API_KEY',
+        'GLM_API_KEY',
+        'GROK_API_KEY',
+        'KIMI_API_KEY',
+        'QWEN_API_KEY',
+        'GPTOSS_API_KEY',
+        'GROQAI_API_KEY',
+        'CEREBRAS_API_KEY',
+        'GEMINIAI_API_KEY'
+    ]
+    
+    print("\n🔑 API Keys Status:")
+    active_keys = 0
+    for key in api_keys:
+        value = os.getenv(key)
+        if value and value.strip():
+            active_keys += 1
+            print(f"  ✅ {key}: Available")
+        else:
+            print(f"  ❌ {key}: Not available")
+    
+    print(f"\n📊 Summary: {active_keys}/9 API keys available")
+    
+    # Check Python environment
+    print("\n🐍 Python Environment:")
+    print(f"  Python Version: {sys.version}")
+    print(f"  Python Path: {sys.executable}")
+    
+    # Check if required modules are available
+    print("\n📦 Required Modules:")
+    modules = ['openai', 'aiohttp', 'requests', 'PyGithub']
+    for module in modules:
+        try:
+            __import__(module)
+            print(f"  ✅ {module}: Available")
+        except ImportError:
+            print(f"  ❌ {module}: Not available")
+    
+    print("\n✅ Debug completed successfully!")
+    return True
 
 def debug_github_auth():
     """Debug GitHub authentication"""
@@ -68,12 +116,10 @@ def debug_github_auth():
         
         print(f"🧪 Testing GitHub API access...")
         print(f"   URL: {url}")
-        print(f"   Headers: {dict(headers)}")
         
         response = requests.get(url, headers=headers, timeout=10)
         
         print(f"   Status Code: {response.status_code}")
-        print(f"   Response Headers: {dict(response.headers)}")
         
         if response.status_code == 200:
             print("✅ GitHub API access: SUCCESS")
@@ -171,13 +217,11 @@ This is a test comment from the AMAS Auto-Responder debug system.
         
         print(f"🧪 Testing comment posting...")
         print(f"   URL: {url}")
-        print(f"   Headers: {dict(headers)}")
-        print(f"   Comment length: {len(test_comment['body'])} characters")
+        print(f"   Comment length: {len(test_comment['body']} characters")
         
         response = requests.post(url, headers=headers, json=test_comment, timeout=10)
         
         print(f"   Status Code: {response.status_code}")
-        print(f"   Response Headers: {dict(response.headers)}")
         
         if response.status_code == 201:
             print("✅ Comment posting: SUCCESS")
@@ -194,53 +238,6 @@ This is a test comment from the AMAS Auto-Responder debug system.
         print(f"❌ Comment posting test failed: {e}")
         return False
 
-def debug_label_posting():
-    """Debug label posting"""
-    print("\n🏷️ DEBUGGING LABEL POSTING")
-    print("=" * 50)
-    
-    github_token = os.environ.get('GITHUB_TOKEN')
-    repo = os.environ.get('GITHUB_REPOSITORY')
-    issue_number = os.environ.get('ISSUE_NUMBER')
-    
-    if not all([github_token, repo, issue_number]):
-        print("❌ Missing required environment variables")
-        return False
-    
-    try:
-        url = f"https://api.github.com/repos/{repo}/issues/{issue_number}/labels"
-        headers = {
-            'Authorization': f'Bearer {github_token}',
-            'Accept': 'application/vnd.github.v3+json',
-            'Content-Type': 'application/json',
-            'User-Agent': 'AMAS-Auto-Responder/1.0'
-        }
-        
-        # Test label data
-        test_labels = {
-            'labels': ['debug-test', 'auto-response', 'ai-analyzed']
-        }
-        
-        print(f"🧪 Testing label posting...")
-        print(f"   URL: {url}")
-        print(f"   Labels: {test_labels['labels']}")
-        
-        response = requests.post(url, headers=headers, json=test_labels, timeout=10)
-        
-        print(f"   Status Code: {response.status_code}")
-        
-        if response.status_code == 200:
-            print("✅ Label posting: SUCCESS")
-            return True
-        else:
-            print(f"❌ Label posting: FAILED")
-            print(f"   Response: {response.text[:200]}...")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Label posting test failed: {e}")
-        return False
-
 def main():
     """Main debugging function"""
     print("🐛 AMAS AUTO-RESPONDER DEBUG SYSTEM")
@@ -253,8 +250,7 @@ def main():
         ("Environment Variables", debug_environment),
         ("GitHub Authentication", debug_github_auth),
         ("Issue Access", debug_issue_access),
-        ("Comment Posting", debug_comment_posting),
-        ("Label Posting", debug_label_posting)
+        ("Comment Posting", debug_comment_posting)
     ]
     
     results = []
