@@ -1,0 +1,120 @@
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+      release_type:
+        description: 'Type of release'
+        required: true
+        default: 'minor'
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
+        - prerelease
+      changelog:
+        description: 'Custom changelog (optional)'
+        required: false
+        type: string
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  create-release:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests pyyaml
+    
+    - name: Generate Changelog
+      id: changelog
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REPO_NAME: ${{ github.repository }}
+        VERSION: ${{ github.event.inputs.version || github.ref_name }}
+        RELEASE_TYPE: ${{ github.event.inputs.release_type || 'minor' }}
+        CUSTOM_CHANGELOG: ${{ github.event.inputs.changelog }}
+      run: |
+        echo "📝 Generating changelog..."
+        python scripts/generate_changelog.py \
+          --version "$VERSION" \
+          --type "$RELEASE_TYPE" \
+          --custom "$CUSTOM_CHANGELOG" \
+          --output CHANGELOG.md
+    
+    - name: Generate Release Notes
+      id: release-notes
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REPO_NAME: ${{ github.repository }}
+        VERSION: ${{ github.event.inputs.version || github.ref_name }}
+      run: |
+        echo "📋 Generating release notes..."
+        python scripts/generate_release_notes.py \
+          --version "$VERSION" \
+          --output RELEASE_NOTES.md
+    
+    - name: Create Release
+      id: create-release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.event.inputs.version || github.ref_name }}
+        release_name: "AMAS ${{ github.event.inputs.version || github.ref_name }}"
+        body_path: RELEASE_NOTES.md
+        draft: false
+        prerelease: ${{ github.event.inputs.release_type == 'prerelease' }}
+    
+    - name: Upload Release Assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create-release.outputs.upload_url }}
+        asset_path: CHANGELOG.md
+        asset_name: CHANGELOG.md
+        asset_content_type: text/markdown
+    
+    - name: Update Version Files
+      run: |
+        echo "📝 Updating version files..."
+        python scripts/update_version.py \
+          --version "${{ github.event.inputs.version || github.ref_name }}" \
+          --type "${{ github.event.inputs.release_type || 'minor' }}"
+    
+    - name: Create Release Summary
+      run: |
+        echo "## 🚀 Release ${{ github.event.inputs.version || github.ref_name }} Created" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version**: ${{ github.event.inputs.version || github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Type**: ${{ github.event.inputs.release_type || 'minor' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Changelog**: Generated and uploaded" >> $GITHUB_STEP_SUMMARY
+        echo "- **Release Notes**: Generated and published" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ✅ Complete" >> $GITHUB_STEP_SUMMARY
