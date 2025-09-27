@@ -183,9 +183,14 @@ Provide a concise analysis."""
             
             # Generate overall quality summary
             if file_analyses:
+                # Create file analysis summary
+                file_summaries = []
+                for fa in file_analyses[:3]:
+                    file_summaries.append(f"File: {fa['file']}\nAnalysis: {fa['analysis']}")
+                
                 summary_prompt = f"""Create a project-wide quality assessment based on these file analyses:
 
-{chr(10).join([f"File: {fa['file']}\nAnalysis: {fa['analysis']}" for fa in file_analyses[:3]])}
+{'\n'.join(file_summaries)}
 
 Provide:
 1. Overall project quality score
