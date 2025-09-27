@@ -21,6 +21,9 @@ class AICodeAnalyzer:
         self.kimi_key = os.environ.get('KIMI_API_KEY')
         self.qwen_key = os.environ.get('QWEN_API_KEY')
         self.gptoss_key = os.environ.get('GPTOSS_API_KEY')
+        self.claude_key = os.environ.get('CLAUDE_API_KEY')
+        self.gemini_key = os.environ.get('GEMINI_API_KEY')
+        self.gpt4_key = os.environ.get('GPT4_API_KEY')
         self.repo_name = os.environ.get('REPO_NAME')
         self.pr_number = os.environ.get('PR_NUMBER')
         self.commit_sha = os.environ.get('COMMIT_SHA')
@@ -32,7 +35,7 @@ class AICodeAnalyzer:
         # Initialize AI clients with intelligent fallback priority
         self.ai_clients = []
         
-        # Priority order: DeepSeek (most reliable), GLM, Grok, Kimi, Qwen, GPTOSS
+        # Priority order: DeepSeek (most reliable), Claude, GPT-4, GLM, Grok, Kimi, Qwen, Gemini, GPTOSS
         if self.deepseek_key:
             try:
                 self.ai_clients.append({
@@ -47,6 +50,34 @@ class AICodeAnalyzer:
             except Exception as e:
                 print(f"Failed to initialize DeepSeek client: {e}")
         
+        if self.claude_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Claude',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.claude_key,
+                    ),
+                    'model': 'anthropic/claude-3.5-sonnet',
+                    'priority': 2
+                })
+            except Exception as e:
+                print(f"Failed to initialize Claude client: {e}")
+        
+        if self.gpt4_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'GPT-4',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.gpt4_key,
+                    ),
+                    'model': 'openai/gpt-4o',
+                    'priority': 3
+                })
+            except Exception as e:
+                print(f"Failed to initialize GPT-4 client: {e}")
+        
         if self.glm_key:
             try:
                 self.ai_clients.append({
@@ -56,7 +87,7 @@ class AICodeAnalyzer:
                         api_key=self.glm_key,
                     ),
                     'model': 'z-ai/glm-4.5-air:free',
-                    'priority': 2
+                    'priority': 4
                 })
             except Exception as e:
                 print(f"Failed to initialize GLM client: {e}")
@@ -70,7 +101,7 @@ class AICodeAnalyzer:
                         api_key=self.grok_key,
                     ),
                     'model': 'x-ai/grok-4-fast:free',
-                    'priority': 3
+                    'priority': 5
                 })
             except Exception as e:
                 print(f"Failed to initialize Grok client: {e}")
@@ -84,7 +115,7 @@ class AICodeAnalyzer:
                         api_key=self.kimi_key,
                     ),
                     'model': 'moonshot/moonshot-v1-8k:free',
-                    'priority': 4
+                    'priority': 6
                 })
             except Exception as e:
                 print(f"Failed to initialize Kimi client: {e}")
@@ -98,10 +129,24 @@ class AICodeAnalyzer:
                         api_key=self.qwen_key,
                     ),
                     'model': 'qwen/qwen-2.5-7b-instruct:free',
-                    'priority': 5
+                    'priority': 7
                 })
             except Exception as e:
                 print(f"Failed to initialize Qwen client: {e}")
+        
+        if self.gemini_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Gemini',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.gemini_key,
+                    ),
+                    'model': 'google/gemini-pro-1.5',
+                    'priority': 8
+                })
+            except Exception as e:
+                print(f"Failed to initialize Gemini client: {e}")
         
         if self.gptoss_key:
             try:
@@ -112,7 +157,7 @@ class AICodeAnalyzer:
                         api_key=self.gptoss_key,
                     ),
                     'model': 'openai/gpt-3.5-turbo:free',
-                    'priority': 6
+                    'priority': 9
                 })
             except Exception as e:
                 print(f"Failed to initialize GPTOSS client: {e}")

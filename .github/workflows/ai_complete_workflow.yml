@@ -63,10 +63,13 @@ jobs:
     - name: AI Issue Response
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: "python scripts/ai_issues_responder.py \\ || echo \"Script completed with\
@@ -107,10 +110,13 @@ jobs:
     - name: AI Code Analysis
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
       run: 'echo "Running AI Code Analysis..."
 
@@ -169,10 +175,13 @@ jobs:
     - name: AI Code Improvement
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
       run: |
@@ -232,10 +241,13 @@ jobs:
     - name: AI Test Generation
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
       run: |
@@ -303,10 +315,13 @@ jobs:
     - name: AI Documentation Generation
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
       run: |
@@ -373,10 +388,13 @@ jobs:
     - name: AI Security Audit
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
       run: |
@@ -461,10 +479,13 @@ jobs:
     - name: AI Performance Analysis
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         TARGET_FILES: ${{ github.event.inputs.target_files }}
       run: |
@@ -525,10 +546,13 @@ jobs:
     - name: AI Continuous Development
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
       run: 'echo "Running AI Continuous Development..."
 
@@ -596,10 +620,13 @@ jobs:
     - name: AI Full Analysis Summary
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
       run: 'echo "Running AI Full Analysis Summary..."
 

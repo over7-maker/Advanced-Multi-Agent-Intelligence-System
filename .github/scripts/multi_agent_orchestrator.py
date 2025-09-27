@@ -18,6 +18,9 @@ class MultiAgentOrchestrator:
         self.kimi_key = os.environ.get('KIMI_API_KEY')
         self.qwen_key = os.environ.get('QWEN_API_KEY')
         self.gptoss_key = os.environ.get('GPTOSS_API_KEY')
+        self.claude_key = os.environ.get('CLAUDE_API_KEY')
+        self.gemini_key = os.environ.get('GEMINI_API_KEY')
+        self.gpt4_key = os.environ.get('GPT4_API_KEY')
         
         # Initialize AI clients with intelligent fallback priority
         self.agents = []

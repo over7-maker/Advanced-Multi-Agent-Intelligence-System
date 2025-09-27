@@ -59,10 +59,13 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -76,10 +79,13 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
@@ -114,10 +120,13 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         ISSUE_TITLE: ${{ github.event.issue.title }}
@@ -160,10 +169,13 @@ jobs:
     - name: Run Multi-Agent Orchestrator
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
       run: |
         mkdir -p artifacts

@@ -17,10 +17,13 @@ import subprocess
 class AIMasterOrchestrator:
     def __init__(self):
         self.deepseek_key = os.environ.get('DEEPSEEK_API_KEY')
+        self.claude_key = os.environ.get('CLAUDE_API_KEY')
+        self.gpt4_key = os.environ.get('GPT4_API_KEY')
         self.glm_key = os.environ.get('GLM_API_KEY')
         self.grok_key = os.environ.get('GROK_API_KEY')
         self.kimi_key = os.environ.get('KIMI_API_KEY')
         self.qwen_key = os.environ.get('QWEN_API_KEY')
+        self.gemini_key = os.environ.get('GEMINI_API_KEY')
         self.gptoss_key = os.environ.get('GPTOSS_API_KEY')
         self.github_token = os.environ.get('GITHUB_TOKEN')
         self.repo_name = os.environ.get('REPO_NAME')
@@ -29,7 +32,7 @@ class AIMasterOrchestrator:
         # Initialize AI clients with intelligent fallback priority
         self.agents = []
         
-        # Priority order: DeepSeek (most reliable), GLM, Grok, Kimi, Qwen, GPTOSS
+        # Priority order: DeepSeek (most reliable), Claude, GPT-4, GLM, Grok, Kimi, Qwen, Gemini, GPTOSS
         if self.deepseek_key:
             try:
                 self.agents.append({

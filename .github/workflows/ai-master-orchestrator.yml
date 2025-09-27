@@ -38,10 +38,13 @@ jobs:
     - name: Master AI Orchestration
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
         GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
         GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
         KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         REPO_NAME: ${{ github.repository }}
