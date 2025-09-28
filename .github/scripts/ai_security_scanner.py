@@ -14,8 +14,15 @@ from typing import Dict, List, Any, Optional
 class AISecurityScanner:
     def __init__(self):
         self.github_token = os.environ.get('GITHUB_TOKEN')
-        self.openrouter_key = os.environ.get('OPENROUTER_API_KEY')
         self.deepseek_key = os.environ.get('DEEPSEEK_API_KEY')
+        self.glm_key = os.environ.get('GLM_API_KEY')
+        self.grok_key = os.environ.get('GROK_API_KEY')
+        self.kimi_key = os.environ.get('KIMI_API_KEY')
+        self.qwen_key = os.environ.get('QWEN_API_KEY')
+        self.gptoss_key = os.environ.get('GPTOSS_API_KEY')
+        self.claude_key = os.environ.get('CLAUDE_API_KEY')
+        self.gemini_key = os.environ.get('GEMINI_API_KEY')
+        self.gpt4_key = os.environ.get('GPT4_API_KEY')
         self.repo_name = os.environ.get('REPO_NAME')
         self.pr_number = os.environ.get('PR_NUMBER')
         
@@ -23,18 +30,143 @@ class AISecurityScanner:
         changed_files_str = os.environ.get('CHANGED_FILES', '')
         self.changed_files = changed_files_str.split() if changed_files_str else []
         
-        # Initialize AI client
-        self.ai_client = None
-        if self.openrouter_key:
-            self.ai_client = OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=self.openrouter_key,
-            )
-        elif self.deepseek_key:
-            self.ai_client = OpenAI(
-                base_url="https://api.deepseek.com/v1",
-                api_key=self.deepseek_key,
-            )
+        # Initialize AI clients with intelligent fallback priority
+        self.ai_clients = []
+        
+        # Priority order: DeepSeek (most reliable), Claude, GPT-4, GLM, Grok, Kimi, Qwen, Gemini, GPTOSS
+        if self.deepseek_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'DeepSeek',
+                    'client': OpenAI(
+                        base_url="https://api.deepseek.com/v1",
+                        api_key=self.deepseek_key,
+                    ),
+                    'model': 'deepseek-chat',
+                    'priority': 1
+                })
+            except Exception as e:
+                print(f"Failed to initialize DeepSeek client: {e}")
+        
+        if self.claude_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Claude',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.claude_key,
+                    ),
+                    'model': 'anthropic/claude-3.5-sonnet',
+                    'priority': 2
+                })
+            except Exception as e:
+                print(f"Failed to initialize Claude client: {e}")
+        
+        if self.gpt4_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'GPT-4',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.gpt4_key,
+                    ),
+                    'model': 'openai/gpt-4o',
+                    'priority': 3
+                })
+            except Exception as e:
+                print(f"Failed to initialize GPT-4 client: {e}")
+        
+        if self.glm_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'GLM',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.glm_key,
+                    ),
+                    'model': 'z-ai/glm-4.5-air:free',
+                    'priority': 4
+                })
+            except Exception as e:
+                print(f"Failed to initialize GLM client: {e}")
+        
+        if self.grok_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Grok',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.grok_key,
+                    ),
+                    'model': 'x-ai/grok-4-fast:free',
+                    'priority': 5
+                })
+            except Exception as e:
+                print(f"Failed to initialize Grok client: {e}")
+        
+        if self.kimi_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Kimi',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.kimi_key,
+                    ),
+                    'model': 'moonshot/moonshot-v1-8k:free',
+                    'priority': 6
+                })
+            except Exception as e:
+                print(f"Failed to initialize Kimi client: {e}")
+        
+        if self.qwen_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Qwen',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.qwen_key,
+                    ),
+                    'model': 'qwen/qwen-2.5-7b-instruct:free',
+                    'priority': 7
+                })
+            except Exception as e:
+                print(f"Failed to initialize Qwen client: {e}")
+        
+        if self.gemini_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'Gemini',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.gemini_key,
+                    ),
+                    'model': 'google/gemini-pro-1.5',
+                    'priority': 8
+                })
+            except Exception as e:
+                print(f"Failed to initialize Gemini client: {e}")
+        
+        if self.gptoss_key:
+            try:
+                self.ai_clients.append({
+                    'name': 'GPTOSS',
+                    'client': OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.gptoss_key,
+                    ),
+                    'model': 'openai/gpt-3.5-turbo:free',
+                    'priority': 9
+                })
+            except Exception as e:
+                print(f"Failed to initialize GPTOSS client: {e}")
+        
+        # Sort by priority
+        self.ai_clients.sort(key=lambda x: x['priority'])
+        
+        if not self.ai_clients:
+            print("⚠️ No AI clients available - security analysis will be limited")
+        else:
+            print(f"🤖 Initialized {len(self.ai_clients)} AI clients for security analysis")
     
     def scan_for_secrets(self, content: str, file_path: str) -> List[Dict[str, str]]:
         """Scan for potential secrets and API keys"""
@@ -70,9 +202,80 @@ class AISecurityScanner:
         
         return secrets_found
     
+    def _is_pattern_definition_file(self, content: str, file_path: str) -> bool:
+        """Check if file contains only pattern definitions (not actual vulnerabilities)"""
+        # Check if file is a security scanner or pattern definition file
+        if any(keyword in file_path.lower() for keyword in ['security_scanner', 'ai_code_analyzer', 'ai_security']):
+            # Look for pattern definition indicators
+            pattern_indicators = [
+                'vuln_patterns', 'security_patterns', 'detection_patterns',
+                'hardcoded_secrets', 'sql_injection', 'xss_vulnerabilities',
+                'weak_crypto', 'insecure_random', 'unsafe_deserialization',
+                'patterns =', 'description =', 'vulnerability patterns',
+                'path_traversal', 'command_injection'
+            ]
+            
+            # Count pattern definition indicators vs actual code
+            pattern_count = sum(1 for indicator in pattern_indicators if indicator in content)
+            total_lines = len(content.split('\n'))
+            
+            # If more than 15% of content contains pattern indicators, likely a pattern file
+            return pattern_count > (total_lines * 0.15)
+        
+        return False
+    
+    def _is_pattern_definition_line(self, line: str, context_lines: list) -> bool:
+        """Check if a specific line is a pattern definition rather than actual vulnerable code"""
+        line_lower = line.lower().strip()
+        
+        # Check for pattern definition indicators
+        pattern_indicators = [
+            'patterns =', 'description =', 'vuln_patterns', 'security_patterns',
+            'hardcoded_secrets', 'sql_injection', 'xss_vulnerabilities',
+            'weak_crypto', 'insecure_random', 'unsafe_deserialization',
+            'path_traversal', 'command_injection', 'insecure_random'
+        ]
+        
+        # If line contains pattern indicators, it's likely a pattern definition
+        if any(indicator in line_lower for indicator in pattern_indicators):
+            return True
+        
+        # Check for regex pattern definitions (lines with r'...' or r"...")
+        if ("r'" in line and "'" in line) or ('r"' in line and '"' in line):
+            # Check if this is within a patterns definition context
+            for context_line in context_lines:
+                if 'patterns' in context_line.lower() and '=' in context_line:
+                    return True
+        
+        # Check if line is part of a dictionary definition for patterns
+        if any('{' in context_line and '}' in context_line for context_line in context_lines):
+            if ':' in line and ('[' in line or ']' in line):
+                return True
+        
+        # Check for specific pattern definition patterns
+        pattern_definitions = [
+            r"r'execute\\s*\\([^)]*\\+",  # SQL injection patterns
+            r"r'innerHTML\\s*=",  # XSS patterns
+            r"r'dangerouslySetInnerHTML",  # XSS patterns
+            r"r'eval\\s*\\(",  # XSS patterns
+            r"r'SELECT.*\\+.*FROM",  # SQL patterns
+            r"r'query\\s*\\([^)]*\\+",  # SQL patterns
+        ]
+        
+        for pattern in pattern_definitions:
+            if pattern.replace('\\', '') in line:
+                return True
+        
+        return False
+    
     def scan_for_vulnerabilities(self, content: str, file_path: str) -> List[Dict[str, str]]:
-        """Scan for common security vulnerabilities"""
+        """Scan for common security vulnerabilities with context awareness"""
         vulnerabilities = []
+        
+        # Skip if this is a pattern definition file
+        if self._is_pattern_definition_file(content, file_path):
+            print(f"🔍 Skipping pattern definition file: {file_path}")
+            return vulnerabilities
         
         # Vulnerability patterns
         vuln_patterns = {
@@ -103,6 +306,18 @@ class AISecurityScanner:
                 matches = re.finditer(pattern, content, re.IGNORECASE)
                 for match in matches:
                     line_num = content[:match.start()].count('\n') + 1
+                    
+                    # Get context lines around the match
+                    lines = content.split('\n')
+                    start_line = max(0, line_num - 3)
+                    end_line = min(len(lines), line_num + 3)
+                    context_lines = lines[start_line:end_line]
+                    
+                    # Check if this is a pattern definition line
+                    if self._is_pattern_definition_line(lines[line_num - 1], context_lines):
+                        print(f"🔍 Skipping pattern definition line {line_num} in {file_path}")
+                        continue
+                    
                     vulnerabilities.append({
                         'type': vuln_type,
                         'file': file_path,
@@ -128,8 +343,8 @@ class AISecurityScanner:
     
     def analyze_security_with_ai(self, file_path: str, content: str, 
                                  secrets: List[Dict], vulns: List[Dict]) -> Optional[str]:
-        """Get AI analysis of security issues"""
-        if not self.ai_client or (not secrets and not vulns):
+        """Get AI analysis of security issues with fallback"""
+        if not self.ai_clients or (not secrets and not vulns):
             return None
         
         system_prompt = """
@@ -164,33 +379,38 @@ Detected Issues:
         
         security_prompt += "\nPlease analyze these security issues and provide specific remediation guidance."
         
-        try:
-            # Use appropriate model based on availability
-            model = "deepseek/deepseek-chat-v3.1:free" if self.openrouter_key else "deepseek-chat"
-            
-            extra_headers = {}
-            if self.openrouter_key:
-                extra_headers = {
-                    "HTTP-Referer": f"https://github.com/{self.repo_name}",
-                    "X-Title": "AMAS Security Analysis",
-                }
-            
-            response = self.ai_client.chat.completions.create(
-                extra_headers=extra_headers if self.openrouter_key else None,
-                model=model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": security_prompt}
-                ],
-                temperature=0.2,
-                max_tokens=1000
-            )
-            
-            return response.choices[0].message.content
-            
-        except Exception as e:
-            print(f"Error getting AI security analysis: {e}")
-            return None
+        # Try each AI client in order of preference
+        for client_info in self.ai_clients:
+            try:
+                print(f"🤖 Trying {client_info['name']} for security analysis...")
+                
+                extra_headers = {}
+                if 'openrouter.ai' in str(client_info['client'].base_url):
+                    extra_headers = {
+                        "HTTP-Referer": f"https://github.com/{self.repo_name}",
+                        "X-Title": "AMAS Security Analysis",
+                    }
+                
+                response = client_info['client'].chat.completions.create(
+                    extra_headers=extra_headers if extra_headers else None,
+                    model=client_info['model'],
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": security_prompt}
+                    ],
+                    temperature=0.2,
+                    max_tokens=1000
+                )
+                
+                print(f"✅ Successfully analyzed security with {client_info['name']}")
+                return response.choices[0].message.content
+                
+            except Exception as e:
+                print(f"❌ {client_info['name']} failed: {e}")
+                continue
+        
+        print("❌ All AI clients failed for security analysis")
+        return None
     
     def post_pr_comment(self, comment: str) -> bool:
         """Post security report to pull request"""
@@ -311,7 +531,7 @@ Detected Issues:
             
             # Get AI analysis if issues found
             ai_analysis = None
-            if (secrets or vulnerabilities) and self.ai_client:
+            if (secrets or vulnerabilities) and self.ai_clients:
                 ai_analysis = self.analyze_security_with_ai(file_path, content, secrets, vulnerabilities)
             
             if secrets or vulnerabilities or ai_analysis:
