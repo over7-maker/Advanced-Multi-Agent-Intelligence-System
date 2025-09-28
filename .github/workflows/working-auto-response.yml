@@ -1,0 +1,264 @@
+name: Practical Issue Analysis and Response
+
+on:
+  issues:
+    types: [opened, edited]
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  analyze-and-respond:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+      checks: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pylint flake8 bandit safety pydocstyle radon pycodestyle
+          pip install requests pyyaml jinja2 gitpython
+
+      - name: Download analysis script
+        run: |
+          mkdir -p .github/scripts
+          wget -O .github/scripts/analyze_issue.py https://raw.githubusercontent.com/${{ github.repository }}/main/.github/scripts/analyze_issue.py || true
+          chmod +x .github/scripts/analyze_issue.py || true
+
+      - name: Run practical analysis
+        id: analysis
+        run: |
+          cd ${{ github.workspace }}
+          
+          # If script doesn't exist, create a simple one
+          if [ ! -f ".github/scripts/analyze_issue.py" ]; then
+            python3 -c "
+import os
+import json
+import subprocess
+
+# Simple analysis
+print('## 🔧 Practical Issue Analysis Report\n')
+print('### 📋 Quick Actions\n')
+
+# Get changed files
+try:
+    result = subprocess.run(['git', 'diff', '--name-only', 'HEAD~1...HEAD'], 
+                          capture_output=True, text=True)
+    files = result.stdout.strip().split('\n')
+    py_files = [f for f in files if f.endswith('.py')]
+    
+    if py_files:
+        print(f'**Files to review:** {len(py_files)} Python files changed\n')
+        for f in py_files[:5]:
+            print(f'- `{f}`')
+        print()
+        
+        print('### 🔍 Recommended Checks:\n')
+        print('```bash')
+        print('# Run linting')
+        print('flake8 ' + ' '.join(py_files[:3]))
+        print()
+        print('# Check security')
+        print('bandit -r .')
+        print()
+        print('# Format code')
+        print('black ' + ' '.join(py_files[:3]))
+        print('```')
+    else:
+        print('No Python files detected in recent changes.')
+        print()
+        print('### 💡 General Tips:')
+        print('- Use descriptive variable names')
+        print('- Add docstrings to functions')
+        print('- Handle exceptions properly')
+        print('- Add unit tests for new features')
+        
+except Exception as e:
+    print(f'Analysis note: {e}')
+    print('Please provide specific code or error messages for detailed help.')
+" > analysis_report.md
+          else
+            python .github/scripts/analyze_issue.py > analysis_output.txt 2>&1
+          fi
+          
+          # Check if analysis report was created
+          if [ -f "analysis_report.md" ]; then
+            echo "report_exists=true" >> $GITHUB_OUTPUT
+            # Save report content (escape multiline)
+            {
+              echo 'report<<EOF'
+              cat analysis_report.md
+              echo 'EOF'
+            } >> $GITHUB_OUTPUT
+          else
+            echo "report_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post analysis comment
+        if: steps.analysis.outputs.report_exists == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const report = `${{ steps.analysis.outputs.report }}`;
+            const issueNumber = context.issue.number || context.payload.pull_request.number;
+            
+            if (issueNumber) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: report
+              });
+            }
+
+      - name: Provide practical fallback response
+        if: steps.analysis.outputs.report_exists != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueNumber = context.issue.number || context.payload.pull_request.number;
+            
+            // Get issue/PR details
+            let title = '';
+            let body = '';
+            
+            if (context.payload.issue) {
+              title = context.payload.issue.title || '';
+              body = context.payload.issue.body || '';
+            } else if (context.payload.pull_request) {
+              title = context.payload.pull_request.title || '';
+              body = context.payload.pull_request.body || '';
+            }
+            
+            // Generate practical response based on keywords
+            let specificTips = [];
+            
+            // Check for common issue patterns
+            if (body.match(/error|exception|traceback/i)) {
+              specificTips.push(`
+            **🔴 Error Resolution Steps:**
+            1. Check the full error traceback
+            2. Verify all imports are correct
+            3. Ensure dependencies are installed: \`pip install -r requirements.txt\`
+            4. Check Python version compatibility
+            `);
+            }
+            
+            if (body.match(/performance|slow|optimize/i)) {
+              specificTips.push(`
+            **⚡ Performance Optimization:**
+            1. Profile your code: \`python -m cProfile your_script.py\`
+            2. Use \`timeit\` for micro-benchmarks
+            3. Consider using \`numpy\` for numerical operations
+            4. Check for unnecessary loops or repeated calculations
+            `);
+            }
+            
+            if (body.match(/test|testing|unittest/i)) {
+              specificTips.push(`
+            **🧪 Testing Best Practices:**
+            1. Run tests: \`pytest -v\`
+            2. Check coverage: \`pytest --cov=. --cov-report=html\`
+            3. Use \`pytest.mark.parametrize\` for multiple test cases
+            4. Mock external dependencies
+            `);
+            }
+            
+            if (body.match(/security|vulnerability|CVE/i)) {
+              specificTips.push(`
+            **🔒 Security Checklist:**
+            1. Run security scan: \`bandit -r . -ll\`
+            2. Check dependencies: \`safety check\`
+            3. Update vulnerable packages: \`pip-audit --fix\`
+            4. Never commit secrets or API keys
+            `);
+            }
+            
+            const fallbackReport = `## 🔧 Practical Issue Resolution Guide
+
+            ${specificTips.join('\n')}
+
+            ### 📋 General Action Items
+
+            **1. Immediate Steps:**
+            \`\`\`bash
+            # Install code quality tools
+            pip install flake8 black pylint bandit
+
+            # Format your code
+            black .
+
+            # Check for common issues
+            flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+            # Run security scan
+            bandit -r . -f json -o bandit_report.json
+            \`\`\`
+
+            **2. Code Quality Checklist:**
+            - [ ] Run \`flake8\` and fix all issues
+            - [ ] Use \`black\` for consistent formatting
+            - [ ] Add type hints where possible
+            - [ ] Ensure all functions have docstrings
+            - [ ] Remove debug print statements
+
+            **3. Common Fixes:**
+
+            | Issue | Quick Fix |
+            |-------|-----------|
+            | Import Error | Check PYTHONPATH and virtual env |
+            | Type Error | Add type checking with \`mypy\` |
+            | Memory Issue | Use generators instead of lists |
+            | Slow Code | Profile and optimize bottlenecks |
+
+            **4. Debugging Commands:**
+            \`\`\`bash
+            # Debug imports
+            python -c "import sys; print(sys.path)"
+
+            # Check installed packages
+            pip list
+
+            # Verify file structure
+            find . -name "*.py" -type f | head -20
+            \`\`\`
+
+            **💡 Pro Tips:**
+            - Use \`python -m pdb\` for interactive debugging
+            - Add logging instead of print statements
+            - Write unit tests for edge cases
+            - Document your code as you write it
+
+            **Need More Help?**
+            Please share:
+            1. The exact error message or traceback
+            2. Relevant code snippets (use code blocks)
+            3. What you've already tried
+            4. Your Python version and OS
+
+            This will help us provide more specific solutions!`;
+            
+            if (issueNumber) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: fallbackReport
+              });
+            }
