@@ -11,12 +11,12 @@ logger = logging.getLogger(__name__)
 
 class N8NIntegration:
     """N8N Integration for AMAS Intelligence System"""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.n8n_url = config.get('n8n_url', 'http://localhost:5678')
         self.api_key = config.get('n8n_api_key', '')
-        
+
     async def initialize(self):
         """Initialize the N8N integration"""
         try:
@@ -26,7 +26,7 @@ class N8NIntegration:
         except Exception as e:
             logger.error(f"Failed to initialize N8N integration: {e}")
             raise
-    
+
     async def create_intelligence_workflow(self, workflow_type: str, config: Dict[str, Any]) -> Dict[str, Any]:
         """Create an intelligence workflow"""
         try:
@@ -38,16 +38,16 @@ class N8NIntegration:
                 'config': config,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
             return workflow
-            
+
         except Exception as e:
             logger.error(f"Error creating workflow: {e}")
             return {
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def execute_workflow(self, workflow_id: str, config: Dict[str, Any]) -> Dict[str, Any]:
         """Execute a workflow"""
         try:
@@ -58,9 +58,9 @@ class N8NIntegration:
                 'result': 'Workflow executed successfully',
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
             return result
-            
+
         except Exception as e:
             logger.error(f"Error executing workflow: {e}")
             return {

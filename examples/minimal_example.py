@@ -27,15 +27,15 @@ from main import AMASIntelligenceSystem
 
 class MinimalAMASExample:
     """Minimal example demonstrating AMAS functionality"""
-    
+
     def __init__(self):
         self.amas_system = None
-        
+
     async def initialize_system(self):
         """Initialize the AMAS system with minimal configuration"""
         try:
             logger.info("Initializing AMAS Intelligence System (Minimal Mode)...")
-            
+
             # Minimal configuration - no external services required
             config = {
                 'llm_service_url': 'http://localhost:11434',  # Will use fallback
@@ -60,23 +60,23 @@ class MinimalAMASExample:
                 'n8n_url': 'http://localhost:5678',
                 'n8n_api_key': 'demo_key'
             }
-            
+
             # Initialize AMAS system
             self.amas_system = AMASIntelligenceSystem(config)
             await self.amas_system.initialize()
-            
+
             logger.info("AMAS Intelligence System initialized successfully (Minimal Mode)")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize AMAS system: {e}")
             return False
-    
+
     async def demonstrate_osint_task(self):
         """Demonstrate OSINT task execution"""
         try:
             logger.info("Demonstrating OSINT task execution...")
-            
+
             # Create OSINT task
             task_data = {
                 'type': 'osint',
@@ -88,26 +88,26 @@ class MinimalAMASExample:
                 },
                 'priority': 2
             }
-            
+
             # Submit task
             task_id = await self.amas_system.submit_intelligence_task(task_data)
             logger.info(f"OSINT task submitted with ID: {task_id}")
-            
+
             # Get system status
             status = await self.amas_system.get_system_status()
             logger.info(f"System status: {status}")
-            
+
             return task_id
-            
+
         except Exception as e:
             logger.error(f"Error demonstrating OSINT task: {e}")
             return None
-    
+
     async def demonstrate_investigation_task(self):
         """Demonstrate investigation task execution"""
         try:
             logger.info("Demonstrating investigation task execution...")
-            
+
             # Create investigation task
             task_data = {
                 'type': 'investigation',
@@ -119,31 +119,31 @@ class MinimalAMASExample:
                 },
                 'priority': 3
             }
-            
+
             # Submit task
             task_id = await self.amas_system.submit_intelligence_task(task_data)
             logger.info(f"Investigation task submitted with ID: {task_id}")
-            
+
             return task_id
-            
+
         except Exception as e:
             logger.error(f"Error demonstrating investigation task: {e}")
             return None
-    
+
     async def demonstrate_system_capabilities(self):
         """Demonstrate system capabilities"""
         try:
             logger.info("Demonstrating system capabilities...")
-            
+
             # Get system status
             status = await self.amas_system.get_system_status()
             logger.info(f"System Status: {status}")
-            
+
             # Demonstrate agent registration
             logger.info("Available agents:")
             for agent_id, agent in self.amas_system.agents.items():
                 logger.info(f"  - {agent_id}: {agent.name}")
-            
+
             # Demonstrate task submission
             tasks = [
                 {
@@ -162,48 +162,48 @@ class MinimalAMASExample:
                     'priority': 4
                 }
             ]
-            
+
             submitted_tasks = []
             for task_data in tasks:
                 task_id = await self.amas_system.submit_intelligence_task(task_data)
                 submitted_tasks.append(task_id)
                 logger.info(f"Submitted task: {task_data['type']} (ID: {task_id})")
-            
+
             return submitted_tasks
-            
+
         except Exception as e:
             logger.error(f"Error demonstrating system capabilities: {e}")
             return []
-    
+
     async def run_demonstration(self):
         """Run the complete demonstration"""
         try:
             logger.info("=" * 60)
             logger.info("AMAS Intelligence System - Minimal Working Example")
             logger.info("=" * 60)
-            
+
             # Initialize system
             if not await self.initialize_system():
                 logger.error("Failed to initialize system")
                 return False
-            
+
             # Demonstrate capabilities
             tasks = await self.demonstrate_system_capabilities()
-            
+
             # Demonstrate specific task types
             osint_task = await self.demonstrate_osint_task()
             investigation_task = await self.demonstrate_investigation_task()
-            
+
             # Final status
             final_status = await self.amas_system.get_system_status()
             logger.info(f"Final system status: {final_status}")
-            
+
             logger.info("=" * 60)
             logger.info("Demonstration completed successfully!")
             logger.info("=" * 60)
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Error in demonstration: {e}")
             return False
@@ -217,14 +217,14 @@ async def main():
     try:
         example = MinimalAMASExample()
         success = await example.run_demonstration()
-        
+
         if success:
             logger.info("AMAS Intelligence System demonstration completed successfully!")
             return 0
         else:
             logger.error("AMAS Intelligence System demonstration failed!")
             return 1
-            
+
     except Exception as e:
         logger.error(f"Application error: {e}")
         return 1

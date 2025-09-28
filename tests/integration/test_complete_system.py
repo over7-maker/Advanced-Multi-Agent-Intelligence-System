@@ -26,7 +26,7 @@ async def test_complete_amas_system():
     try:
         # Import the main system
         from main import AMASIntelligenceSystem
-        
+
         # Enhanced configuration with API keys
         config = {
             'llm_service_url': 'http://localhost:11434',
@@ -51,44 +51,44 @@ async def test_complete_amas_system():
             'n8n_url': 'http://localhost:5678',
             'n8n_api_key': 'your_n8n_api_key_here'
         }
-        
+
         # Initialize system
         logger.info("Initializing Complete AMAS Intelligence System...")
         amas = AMASIntelligenceSystem(config)
         await amas.initialize()
-        
+
         # Test 1: Service Health Checks
         logger.info("=== Testing Service Health Checks ===")
         health_status = await amas.service_manager.health_check_all_services()
         logger.info(f"Service health: {health_status}")
-        
+
         # Test 2: Database Service
         logger.info("=== Testing Database Service ===")
         db_health = await amas.database_service.health_check()
         logger.info(f"Database health: {db_health}")
-        
+
         # Test 3: Security Service
         logger.info("=== Testing Security Service ===")
         security_health = await amas.security_service.health_check()
         logger.info(f"Security health: {security_health}")
-        
+
         # Test 4: LLM Service with Multiple Providers
         logger.info("=== Testing LLM Service with Multiple Providers ===")
-        
+
         # Test Ollama (if available)
         try:
             ollama_response = await amas.service_manager.get_llm_service().generate_response(
-                "What is artificial intelligence?", 
+                "What is artificial intelligence?",
                 provider='ollama'
             )
             logger.info(f"Ollama response: {ollama_response.get('success', False)}")
         except Exception as e:
             logger.warning(f"Ollama test failed: {e}")
-        
+
         # Test DeepSeek API
         try:
             deepseek_response = await amas.service_manager.get_llm_service().generate_response(
-                "Explain the concept of multi-agent systems in AI.", 
+                "Explain the concept of multi-agent systems in AI.",
                 provider='deepseek'
             )
             logger.info(f"DeepSeek response: {deepseek_response.get('success', False)}")
@@ -96,11 +96,11 @@ async def test_complete_amas_system():
                 logger.info(f"DeepSeek response content: {deepseek_response.get('response', '')[:100]}...")
         except Exception as e:
             logger.warning(f"DeepSeek test failed: {e}")
-        
+
         # Test GLM API
         try:
             glm_response = await amas.service_manager.get_llm_service().generate_response(
-                "What are the key components of an intelligence system?", 
+                "What are the key components of an intelligence system?",
                 provider='glm'
             )
             logger.info(f"GLM response: {glm_response.get('success', False)}")
@@ -108,11 +108,11 @@ async def test_complete_amas_system():
                 logger.info(f"GLM response content: {glm_response.get('response', '')[:100]}...")
         except Exception as e:
             logger.warning(f"GLM test failed: {e}")
-        
+
         # Test Grok API
         try:
             grok_response = await amas.service_manager.get_llm_service().generate_response(
-                "Describe the architecture of a multi-agent intelligence system.", 
+                "Describe the architecture of a multi-agent intelligence system.",
                 provider='grok'
             )
             logger.info(f"Grok response: {grok_response.get('success', False)}")
@@ -120,21 +120,21 @@ async def test_complete_amas_system():
                 logger.info(f"Grok response content: {grok_response.get('response', '')[:100]}...")
         except Exception as e:
             logger.warning(f"Grok test failed: {e}")
-        
+
         # Test 5: System Status
         logger.info("=== Testing System Status ===")
         status = await amas.get_system_status()
         logger.info(f"System status: {status}")
-        
+
         # Test 6: Agent Capabilities
         logger.info("=== Testing Agent Capabilities ===")
         for agent_id, agent in amas.agents.items():
             agent_status = await agent.get_status()
             logger.info(f"Agent {agent_id}: {agent_status.get('status', 'unknown')} - {agent_status.get('capabilities', [])}")
-        
+
         # Test 7: Task Submission and Processing
         logger.info("=== Testing Task Submission and Processing ===")
-        
+
         # OSINT Task
         osint_task = {
             'type': 'osint',
@@ -146,10 +146,10 @@ async def test_complete_amas_system():
                 'max_pages': 5
             }
         }
-        
+
         task_id = await amas.submit_intelligence_task(osint_task)
         logger.info(f"Submitted OSINT task: {task_id}")
-        
+
         # Investigation Task
         investigation_task = {
             'type': 'investigation',
@@ -161,10 +161,10 @@ async def test_complete_amas_system():
                 'correlation_type': 'threat_intelligence'
             }
         }
-        
+
         investigation_task_id = await amas.submit_intelligence_task(investigation_task)
         logger.info(f"Submitted Investigation task: {investigation_task_id}")
-        
+
         # Forensics Task
         forensics_task = {
             'type': 'forensics',
@@ -176,29 +176,29 @@ async def test_complete_amas_system():
                 'timeline_reconstruction': True
             }
         }
-        
+
         forensics_task_id = await amas.submit_intelligence_task(forensics_task)
         logger.info(f"Submitted Forensics task: {forensics_task_id}")
-        
+
         # Wait for task processing
         logger.info("Waiting for task processing...")
         await asyncio.sleep(5)
-        
+
         # Test 8: Database Operations
         logger.info("=== Testing Database Operations ===")
         tasks = await amas.database_service.get_tasks_by_status('pending')
         logger.info(f"Pending tasks: {len(tasks)}")
-        
+
         completed_tasks = await amas.database_service.get_tasks_by_status('completed')
         logger.info(f"Completed tasks: {len(completed_tasks)}")
-        
+
         # Test 9: Security Operations
         logger.info("=== Testing Security Operations ===")
-        
+
         # Test authentication
         auth_result = await amas.security_service.authenticate_user('admin', 'admin123')
         logger.info(f"Authentication result: {auth_result.get('success', False)}")
-        
+
         # Test audit logging
         await amas.security_service.log_audit_event(
             event_type='system_test',
@@ -207,15 +207,15 @@ async def test_complete_amas_system():
             details='Comprehensive system test execution',
             classification='system'
         )
-        
+
         audit_log = await amas.security_service.get_audit_log()
         logger.info(f"Audit log entries: {len(audit_log)}")
-        
+
         # Test 10: Service Statistics
         logger.info("=== Testing Service Statistics ===")
         service_stats = await amas.service_manager.get_service_stats()
         logger.info(f"Service statistics: {service_stats}")
-        
+
         # Test 11: Workflow Execution
         logger.info("=== Testing Workflow Execution ===")
         try:
@@ -230,16 +230,16 @@ async def test_complete_amas_system():
             logger.info(f"Workflow execution result: {workflow_result}")
         except Exception as e:
             logger.warning(f"Workflow execution test failed: {e}")
-        
+
         # Final System Status
         logger.info("=== Final System Status ===")
         final_status = await amas.get_system_status()
         logger.info(f"Final system status: {final_status}")
-        
+
         # Shutdown
         await amas.shutdown()
         logger.info("Complete AMAS Intelligence System test completed successfully")
-        
+
         # Summary
         logger.info("=== TEST SUMMARY ===")
         logger.info("✅ System initialization: PASSED")
@@ -252,9 +252,9 @@ async def test_complete_amas_system():
         logger.info("✅ Multi-provider API support: PASSED")
         logger.info("✅ Workflow execution: PASSED")
         logger.info("✅ System shutdown: PASSED")
-        
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Complete system test failed: {e}")
         import traceback
@@ -265,9 +265,9 @@ async def test_api_endpoints():
     """Test API endpoints if FastAPI is running"""
     try:
         import httpx
-        
+
         logger.info("=== Testing API Endpoints ===")
-        
+
         async with httpx.AsyncClient() as client:
             # Test health endpoint
             try:
@@ -277,7 +277,7 @@ async def test_api_endpoints():
                     logger.info(f"Health response: {response.json()}")
             except Exception as e:
                 logger.warning(f"Health endpoint test failed: {e}")
-            
+
             # Test status endpoint
             try:
                 response = await client.get("http://localhost:8000/status")
@@ -286,7 +286,7 @@ async def test_api_endpoints():
                     logger.info(f"Status response: {response.json()}")
             except Exception as e:
                 logger.warning(f"Status endpoint test failed: {e}")
-            
+
             # Test task submission
             try:
                 task_data = {
@@ -305,10 +305,10 @@ async def test_api_endpoints():
                     logger.info(f"Task response: {response.json()}")
             except Exception as e:
                 logger.warning(f"Task submission test failed: {e}")
-        
+
         logger.info("✅ API endpoints test completed")
         return True
-        
+
     except Exception as e:
         logger.warning(f"API endpoints test failed: {e}")
         return False
@@ -317,20 +317,20 @@ async def main():
     """Main test function"""
     logger.info("Starting Complete AMAS Intelligence System Test")
     logger.info("=" * 60)
-    
+
     # Test core system
     system_test_passed = await test_complete_amas_system()
-    
+
     # Test API endpoints (if available)
     api_test_passed = await test_api_endpoints()
-    
+
     # Summary
     logger.info("=" * 60)
     logger.info("FINAL TEST RESULTS")
     logger.info("=" * 60)
     logger.info(f"Core System Test: {'PASSED' if system_test_passed else 'FAILED'}")
     logger.info(f"API Endpoints Test: {'PASSED' if api_test_passed else 'SKIPPED/FAILED'}")
-    
+
     if system_test_passed:
         logger.info("🎉 AMAS Intelligence System is fully operational!")
         logger.info("✅ Phase 1: Foundation Setup - COMPLETED")

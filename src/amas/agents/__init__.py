@@ -10,6 +10,6 @@ from .orchestrator import AgentOrchestrator
 
 __all__ = [
     "IntelligenceAgent",
-    "ReactAgent", 
-    "AgentOrchestrator"
+    "ReactAgent",
+    "AgentOrchestrator",
 ]

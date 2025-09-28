@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class ReportingAgent(IntelligenceAgent):
     """Reporting Agent for AMAS Intelligence System"""
-    
+
     def __init__(
         self,
         agent_id: str,
@@ -31,7 +31,7 @@ class ReportingAgent(IntelligenceAgent):
             "intelligence_briefing",
             "threat_assessment"
         ]
-        
+
         super().__init__(
             agent_id=agent_id,
             name=name,
@@ -41,18 +41,18 @@ class ReportingAgent(IntelligenceAgent):
             knowledge_graph=knowledge_graph,
             security_service=security_service
         )
-        
+
         self.report_templates = {}
         self.output_formats = ['pdf', 'html', 'json', 'markdown']
-        
+
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Execute reporting task"""
         try:
             task_type = task.get('type', 'general')
             task_id = task.get('id', 'unknown')
-            
+
             logger.info(f"Executing reporting task {task_id} of type {task_type}")
-            
+
             if task_type == 'report_generation':
                 return await self._generate_report(task)
             elif task_type == 'data_visualization':
@@ -67,7 +67,7 @@ class ReportingAgent(IntelligenceAgent):
                 return await self._create_threat_assessment(task)
             else:
                 return await self._perform_general_reporting(task)
-                
+
         except Exception as e:
             logger.error(f"Error executing reporting task: {e}")
             return {
@@ -75,24 +75,24 @@ class ReportingAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def validate_task(self, task: Dict[str, Any]) -> bool:
         """Validate if this agent can handle the task"""
         reporting_keywords = [
             'report', 'documentation', 'summary', 'briefing',
             'visualization', 'assessment', 'analysis', 'presentation'
         ]
-        
+
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
         return any(keyword in task_text for keyword in reporting_keywords)
-    
+
     async def _generate_report(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Generate comprehensive report"""
         try:
             data = task.get('parameters', {}).get('data', {})
             report_type = task.get('parameters', {}).get('report_type', 'intelligence')
             output_format = task.get('parameters', {}).get('output_format', 'pdf')
-            
+
             # Mock report generation
             report_content = {
                 'title': f'{report_type.title()} Report',
@@ -106,7 +106,7 @@ class ReportingAgent(IntelligenceAgent):
                 'data': data,
                 'format': output_format
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'report_generation',
@@ -114,7 +114,7 @@ class ReportingAgent(IntelligenceAgent):
                 'output_format': output_format,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in report generation: {e}")
             return {
@@ -122,13 +122,13 @@ class ReportingAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _create_visualization(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Create data visualization"""
         try:
             data = task.get('parameters', {}).get('data', [])
             chart_type = task.get('parameters', {}).get('chart_type', 'bar')
-            
+
             # Mock visualization creation
             visualization = {
                 'chart_type': chart_type,
@@ -139,14 +139,14 @@ class ReportingAgent(IntelligenceAgent):
                 'data': data,
                 'format': 'png'
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'data_visualization',
                 'visualization': visualization,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in visualization creation: {e}")
             return {
@@ -154,13 +154,13 @@ class ReportingAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _create_executive_summary(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Create executive summary"""
         try:
             data = task.get('parameters', {}).get('data', {})
             audience = task.get('parameters', {}).get('audience', 'executives')
-            
+
             # Mock executive summary
             summary = {
                 'title': 'Executive Summary',
@@ -177,14 +177,14 @@ class ReportingAgent(IntelligenceAgent):
                 'risk_level': 'high',
                 'confidence': 0.9
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'executive_summary',
                 'summary': summary,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in executive summary creation: {e}")
             return {
@@ -192,13 +192,13 @@ class ReportingAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _create_technical_documentation(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Create technical documentation"""
         try:
             technical_data = task.get('parameters', {}).get('technical_data', {})
             documentation_type = task.get('parameters', {}).get('documentation_type', 'api')
-            
+
             # Mock technical documentation
             documentation = {
                 'title': f'{documentation_type.title()} Documentation',
@@ -210,14 +210,14 @@ class ReportingAgent(IntelligenceAgent):
                 ],
                 'technical_data': technical_data
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'technical_documentation',
                 'documentation': documentation,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in technical documentation creation: {e}")
             return {
@@ -225,13 +225,13 @@ class ReportingAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _create_intelligence_briefing(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Create intelligence briefing"""
         try:
             intelligence_data = task.get('parameters', {}).get('intelligence_data', {})
             briefing_level = task.get('parameters', {}).get('briefing_level', 'confidential')
-            
+
             # Mock intelligence briefing
             briefing = {
                 'title': 'Intelligence Briefing',
@@ -245,14 +245,14 @@ class ReportingAgent(IntelligenceAgent):
                 'confidence': 0.85,
                 'intelligence_data': intelligence_data
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'intelligence_briefing',
                 'briefing': briefing,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in intelligence briefing creation: {e}")
             return {
@@ -260,13 +260,13 @@ class ReportingAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _create_threat_assessment(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Create threat assessment"""
         try:
             threat_data = task.get('parameters', {}).get('threat_data', {})
             assessment_scope = task.get('parameters', {}).get('assessment_scope', 'comprehensive')
-            
+
             # Mock threat assessment
             assessment = {
                 'title': 'Threat Assessment Report',
@@ -284,14 +284,14 @@ class ReportingAgent(IntelligenceAgent):
                 ],
                 'threat_data': threat_data
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'threat_assessment',
                 'assessment': assessment,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in threat assessment creation: {e}")
             return {
@@ -299,13 +299,13 @@ class ReportingAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _perform_general_reporting(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Perform general reporting"""
         try:
             description = task.get('description', '')
             parameters = task.get('parameters', {})
-            
+
             # Mock general reporting
             report_result = {
                 'report_id': f"report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
@@ -322,14 +322,14 @@ class ReportingAgent(IntelligenceAgent):
                 ],
                 'confidence': 0.9
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'general_reporting',
                 'result': report_result,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in general reporting: {e}")
             return {

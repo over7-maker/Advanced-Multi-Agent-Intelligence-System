@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class MetadataAgent(IntelligenceAgent):
     """Metadata Agent for AMAS Intelligence System"""
-    
+
     def __init__(
         self,
         agent_id: str,
@@ -31,7 +31,7 @@ class MetadataAgent(IntelligenceAgent):
             "audio_metadata",
             "video_metadata"
         ]
-        
+
         super().__init__(
             agent_id=agent_id,
             name=name,
@@ -41,15 +41,15 @@ class MetadataAgent(IntelligenceAgent):
             knowledge_graph=knowledge_graph,
             security_service=security_service
         )
-        
+
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Execute metadata extraction task"""
         try:
             task_type = task.get('type', 'general')
             task_id = task.get('id', 'unknown')
-            
+
             logger.info(f"Executing metadata task {task_id} of type {task_type}")
-            
+
             # Mock metadata extraction
             metadata_result = {
                 'extraction_id': f"metadata_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
@@ -66,14 +66,14 @@ class MetadataAgent(IntelligenceAgent):
                 ],
                 'confidence': 0.9
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'metadata_extraction',
                 'result': metadata_result,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error executing metadata task: {e}")
             return {
@@ -81,13 +81,13 @@ class MetadataAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def validate_task(self, task: Dict[str, Any]) -> bool:
         """Validate if this agent can handle the task"""
         metadata_keywords = [
             'metadata', 'exif', 'pdf', 'office', 'image',
             'audio', 'video', 'extraction', 'analysis'
         ]
-        
+
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
         return any(keyword in task_text for keyword in metadata_keywords)

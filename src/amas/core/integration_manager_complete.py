@@ -64,11 +64,11 @@ class WorkflowExecution:
 class IntegrationManager:
     """
     Complete Integration Manager for AMAS Intelligence System Phase 3
-    
+
     Manages complete service integration, workflow orchestration,
     real-time monitoring, and performance optimization.
     """
-    
+
     def __init__(
         self,
         orchestrator=None,
@@ -78,7 +78,7 @@ class IntegrationManager:
     ):
         """
         Initialize the integration manager.
-        
+
         Args:
             orchestrator: Intelligence orchestrator
             service_manager: Service manager
@@ -89,17 +89,17 @@ class IntegrationManager:
         self.service_manager = service_manager
         self.database_service = database_service
         self.security_service = security_service
-        
+
         # Integration state
         self.integration_status = IntegrationStatus.INITIALIZING
         self.connected_services = {}
         self.integration_metrics = {}
-        
+
         # Workflow management
         self.active_workflows = {}
         self.workflow_templates = {}
         self.workflow_executions = {}
-        
+
         # Monitoring
         self.monitoring_enabled = True
         self.alert_thresholds = {
@@ -108,51 +108,51 @@ class IntegrationManager:
             'memory_usage': 0.8,   # 80%
             'cpu_usage': 0.8       # 80%
         }
-        
+
         # Performance optimization
         self.performance_cache = {}
         self.connection_pools = {}
         self.load_balancers = {}
-        
+
         # Real-time monitoring
         self.monitoring_tasks = []
         self.alert_handlers = []
-        
+
         logger.info("Integration Manager initialized")
-    
+
     async def initialize_integration(self):
         """Initialize complete system integration"""
         try:
             logger.info("Initializing complete system integration...")
-            
+
             # Initialize service connections
             await self._initialize_service_connections()
-            
+
             # Initialize workflow engine
             await self._initialize_workflow_engine()
-            
+
             # Initialize monitoring system
             await self._initialize_monitoring_system()
-            
+
             # Initialize performance optimization
             await self._initialize_performance_optimization()
-            
+
             # Start real-time monitoring
             await self._start_real_time_monitoring()
-            
+
             self.integration_status = IntegrationStatus.CONNECTED
             logger.info("Complete system integration initialized successfully")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize integration: {e}")
             self.integration_status = IntegrationStatus.ERROR
             raise
-    
+
     async def _initialize_service_connections(self):
         """Initialize all service connections"""
         try:
             logger.info("Initializing service connections...")
-            
+
             # Connect to all services
             services = [
                 ('llm', 'LLM Service'),
@@ -161,7 +161,7 @@ class IntegrationManager:
                 ('database', 'Database Service'),
                 ('security', 'Security Service')
             ]
-            
+
             for service_name, service_description in services:
                 try:
                     # Simulate service connection
@@ -186,26 +186,26 @@ class IntegrationManager:
                         'last_health_check': datetime.utcnow(),
                         'error': str(e)
                     }
-            
+
             logger.info(f"Connected to {len(self.connected_services)} services")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize service connections: {e}")
             raise
-    
+
     async def _check_service_health(self, service_name: str) -> Dict[str, Any]:
         """Check health of a specific service"""
         try:
             # Simulate service health check
             await asyncio.sleep(0.01)  # Simulate network delay
-            
+
             return {
                 'status': 'healthy',
                 'response_time': 0.1,
                 'uptime': 99.9,
                 'last_check': datetime.utcnow()
             }
-            
+
         except Exception as e:
             logger.error(f"Service health check failed for {service_name}: {e}")
             return {
@@ -214,24 +214,24 @@ class IntegrationManager:
                 'uptime': 0.0,
                 'error': str(e)
             }
-    
+
     async def _initialize_workflow_engine(self):
         """Initialize enhanced workflow engine"""
         try:
             logger.info("Initializing enhanced workflow engine...")
-            
+
             # Load workflow templates
             await self._load_workflow_templates()
-            
+
             # Initialize workflow execution engine
             await self._initialize_workflow_execution_engine()
-            
+
             logger.info("Enhanced workflow engine initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize workflow engine: {e}")
             raise
-    
+
     async def _load_workflow_templates(self):
         """Load workflow templates"""
         try:
@@ -307,7 +307,7 @@ class IntegrationManager:
                 'max_concurrent_steps': 3,
                 'total_timeout': 900
             }
-            
+
             # Advanced Digital Forensics Workflow
             self.workflow_templates['advanced_digital_forensics'] = {
                 'name': 'Advanced Digital Forensics',
@@ -379,7 +379,7 @@ class IntegrationManager:
                 'max_concurrent_steps': 1,
                 'total_timeout': 1200
             }
-            
+
             # Advanced Threat Intelligence Workflow
             self.workflow_templates['advanced_threat_intelligence'] = {
                 'name': 'Advanced Threat Intelligence',
@@ -453,21 +453,21 @@ class IntegrationManager:
                 'max_concurrent_steps': 2,
                 'total_timeout': 720
             }
-            
+
             logger.info(f"Loaded {len(self.workflow_templates)} workflow templates")
-            
+
         except Exception as e:
             logger.error(f"Failed to load workflow templates: {e}")
             raise
-    
+
     async def _initialize_workflow_execution_engine(self):
         """Initialize workflow execution engine"""
         try:
             logger.info("Initializing workflow execution engine...")
-            
+
             # Initialize execution state
             self.workflow_executions = {}
-            
+
             # Initialize performance metrics
             self.workflow_metrics = {
                 'total_executions': 0,
@@ -476,18 +476,18 @@ class IntegrationManager:
                 'average_execution_time': 0.0,
                 'active_executions': 0
             }
-            
+
             logger.info("Workflow execution engine initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize workflow execution engine: {e}")
             raise
-    
+
     async def _initialize_monitoring_system(self):
         """Initialize real-time monitoring system"""
         try:
             logger.info("Initializing real-time monitoring system...")
-            
+
             # Initialize monitoring metrics
             self.monitoring_metrics = {
                 'system_health': 'healthy',
@@ -496,7 +496,7 @@ class IntegrationManager:
                 'alert_count': 0,
                 'last_health_check': datetime.utcnow()
             }
-            
+
             # Initialize alert handlers
             self.alert_handlers = [
                 self._handle_performance_alerts,
@@ -504,56 +504,56 @@ class IntegrationManager:
                 self._handle_service_alerts,
                 self._handle_security_alerts
             ]
-            
+
             logger.info("Real-time monitoring system initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize monitoring system: {e}")
             raise
-    
+
     async def _initialize_performance_optimization(self):
         """Initialize performance optimization"""
         try:
             logger.info("Initializing performance optimization...")
-            
+
             # Initialize connection pools
             self.connection_pools = {
                 'database': await self._create_database_pool(),
                 'redis': await self._create_redis_pool(),
                 'neo4j': await self._create_neo4j_pool()
             }
-            
+
             # Initialize load balancers
             self.load_balancers = {
                 'llm_providers': await self._create_llm_load_balancer(),
                 'agents': await self._create_agent_load_balancer()
             }
-            
+
             # Initialize performance cache
             self.performance_cache = {
                 'query_cache': {},
                 'result_cache': {},
                 'model_cache': {}
             }
-            
+
             logger.info("Performance optimization initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize performance optimization: {e}")
             raise
-    
+
     async def _create_database_pool(self):
         """Create database connection pool"""
         return {'pool_size': 10, 'max_connections': 20}
-    
+
     async def _create_redis_pool(self):
         """Create Redis connection pool"""
         return {'pool_size': 5, 'max_connections': 10}
-    
+
     async def _create_neo4j_pool(self):
         """Create Neo4j connection pool"""
         return {'pool_size': 3, 'max_connections': 5}
-    
+
     async def _create_llm_load_balancer(self):
         """Create LLM provider load balancer"""
         return {
@@ -561,7 +561,7 @@ class IntegrationManager:
             'providers': ['ollama', 'deepseek', 'glm', 'grok'],
             'current_index': 0
         }
-    
+
     async def _create_agent_load_balancer(self):
         """Create agent load balancer"""
         return {
@@ -569,12 +569,12 @@ class IntegrationManager:
             'agents': [],
             'current_index': 0
         }
-    
+
     async def _start_real_time_monitoring(self):
         """Start real-time monitoring tasks"""
         try:
             logger.info("Starting real-time monitoring...")
-            
+
             # Start monitoring tasks
             self.monitoring_tasks = [
                 asyncio.create_task(self._monitor_system_health()),
@@ -582,13 +582,13 @@ class IntegrationManager:
                 asyncio.create_task(self._monitor_workflow_executions()),
                 asyncio.create_task(self._monitor_security_events())
             ]
-            
+
             logger.info("Real-time monitoring started")
-            
+
         except Exception as e:
             logger.error(f"Failed to start real-time monitoring: {e}")
             raise
-    
+
     async def execute_advanced_workflow(
         self,
         workflow_id: str,
@@ -597,22 +597,22 @@ class IntegrationManager:
     ) -> str:
         """
         Execute an advanced workflow with enhanced capabilities.
-        
+
         Args:
             workflow_id: Workflow template ID
             parameters: Workflow parameters
             user_id: User ID for audit logging
-            
+
         Returns:
             Workflow execution ID
         """
         try:
             if workflow_id not in self.workflow_templates:
                 raise ValueError(f"Workflow {workflow_id} not found")
-            
+
             workflow = self.workflow_templates[workflow_id]
             execution_id = str(uuid.uuid4())
-            
+
             # Create workflow execution
             execution = WorkflowExecution(
                 execution_id=execution_id,
@@ -627,11 +627,11 @@ class IntegrationManager:
                 errors=[],
                 metrics={}
             )
-            
+
             # Store execution
             self.workflow_executions[execution_id] = execution
             self.active_workflows[execution_id] = execution
-            
+
             # Log audit event
             if user_id and self.security_service:
                 try:
@@ -644,74 +644,74 @@ class IntegrationManager:
                     )
                 except Exception as e:
                     logger.warning(f"Failed to log audit event: {e}")
-            
+
             # Execute workflow
             asyncio.create_task(self._execute_advanced_workflow(execution_id, parameters))
-            
+
             logger.info(f"Advanced workflow {workflow_id} execution started: {execution_id}")
             return execution_id
-            
+
         except Exception as e:
             logger.error(f"Failed to execute advanced workflow {workflow_id}: {e}")
             raise
-    
+
     async def _execute_advanced_workflow(self, execution_id: str, parameters: Dict[str, Any]):
         """Execute advanced workflow with enhanced capabilities"""
         try:
             execution = self.workflow_executions[execution_id]
             workflow = self.workflow_templates[execution.workflow_id]
-            
+
             execution.status = WorkflowStatus.RUNNING
             execution.started_at = datetime.utcnow()
-            
+
             # Execute workflow steps
             if workflow.get('parallel_execution', False):
                 await self._execute_parallel_workflow(execution_id, parameters)
             else:
                 await self._execute_sequential_workflow(execution_id, parameters)
-            
+
             # Update execution status
             if execution.errors:
                 execution.status = WorkflowStatus.FAILED
             else:
                 execution.status = WorkflowStatus.COMPLETED
-            
+
             execution.completed_at = datetime.utcnow()
             execution.progress = 100.0
-            
+
             # Update metrics
             self.workflow_metrics['total_executions'] += 1
             if execution.status == WorkflowStatus.COMPLETED:
                 self.workflow_metrics['successful_executions'] += 1
             else:
                 self.workflow_metrics['failed_executions'] += 1
-            
+
             # Calculate execution time
             execution_time = (execution.completed_at - execution.started_at).total_seconds()
             self._update_average_execution_time(execution_time)
-            
+
             # Remove from active workflows
             if execution_id in self.active_workflows:
                 del self.active_workflows[execution_id]
-            
+
             logger.info(f"Advanced workflow execution {execution_id} completed")
-            
+
         except Exception as e:
             logger.error(f"Advanced workflow execution {execution_id} failed: {e}")
             execution = self.workflow_executions[execution_id]
             execution.status = WorkflowStatus.FAILED
             execution.errors.append(str(e))
             execution.completed_at = datetime.utcnow()
-    
+
     async def _execute_parallel_workflow(self, execution_id: str, parameters: Dict[str, Any]):
         """Execute workflow steps in parallel"""
         try:
             execution = self.workflow_executions[execution_id]
             workflow = self.workflow_templates[execution.workflow_id]
-            
+
             # Group steps for parallel execution
             step_groups = self._group_steps_for_parallel_execution(workflow['steps'])
-            
+
             for group in step_groups:
                 # Execute steps in parallel
                 tasks = []
@@ -720,63 +720,63 @@ class IntegrationManager:
                         self._execute_workflow_step(execution_id, step, parameters)
                     )
                     tasks.append(task)
-                
+
                 # Wait for all tasks in group to complete
                 results = await asyncio.gather(*tasks, return_exceptions=True)
-                
+
                 # Process results
                 for i, result in enumerate(results):
                     if isinstance(result, Exception):
                         execution.errors.append(f"Step {group[i]['step_id']} failed: {result}")
                     else:
                         execution.results[group[i]['step_id']] = result
-                
+
                 # Update progress
                 execution.current_step += len(group)
                 execution.progress = (execution.current_step / execution.total_steps) * 100
-                
+
                 # Check for errors
                 if execution.errors:
                     break
-            
+
         except Exception as e:
             logger.error(f"Parallel workflow execution failed: {e}")
             raise
-    
+
     async def _execute_sequential_workflow(self, execution_id: str, parameters: Dict[str, Any]):
         """Execute workflow steps sequentially"""
         try:
             execution = self.workflow_executions[execution_id]
             workflow = self.workflow_templates[execution.workflow_id]
-            
+
             for step in workflow['steps']:
                 # Execute step
                 result = await self._execute_workflow_step(execution_id, step, parameters)
-                
+
                 if isinstance(result, Exception):
                     execution.errors.append(f"Step {step['step_id']} failed: {result}")
                     break
                 else:
                     execution.results[step['step_id']] = result
-                
+
                 # Update progress
                 execution.current_step += 1
                 execution.progress = (execution.current_step / execution.total_steps) * 100
-                
+
                 # Check for errors
                 if execution.errors:
                     break
-            
+
         except Exception as e:
             logger.error(f"Sequential workflow execution failed: {e}")
             raise
-    
+
     async def _execute_workflow_step(self, execution_id: str, step: Dict[str, Any], parameters: Dict[str, Any]):
         """Execute a single workflow step"""
         try:
             # Simulate task execution
             await asyncio.sleep(0.1)  # Simulate processing time
-            
+
             # Simulate step result
             result = {
                 'step_id': step['step_id'],
@@ -785,30 +785,30 @@ class IntegrationManager:
                 'execution_time': 0.1,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
             return result
-            
+
         except Exception as e:
             logger.error(f"Workflow step {step['step_id']} execution failed: {e}")
             raise
-    
+
     def _group_steps_for_parallel_execution(self, steps: List[Dict[str, Any]]) -> List[List[Dict[str, Any]]]:
         """Group workflow steps for parallel execution"""
         # Simple grouping - can be enhanced with dependency analysis
         groups = []
         current_group = []
-        
+
         for step in steps:
             current_group.append(step)
             if len(current_group) >= 3:  # Max 3 parallel steps
                 groups.append(current_group)
                 current_group = []
-        
+
         if current_group:
             groups.append(current_group)
-        
+
         return groups
-    
+
     async def _monitor_system_health(self):
         """Monitor system health in real-time"""
         while self.monitoring_enabled:
@@ -819,32 +819,32 @@ class IntegrationManager:
                         start_time = datetime.utcnow()
                         health = await self._check_service_health(service_name)
                         response_time = (datetime.utcnow() - start_time).total_seconds()
-                        
+
                         # Update metrics
                         service_info['last_health_check'] = datetime.utcnow()
                         service_info['response_time'] = response_time
-                        
+
                         if health.get('status') == 'healthy':
                             service_info['status'] = IntegrationStatus.CONNECTED
                             service_info['success_count'] += 1
                         else:
                             service_info['status'] = IntegrationStatus.ERROR
                             service_info['error_count'] += 1
-                            
+
                     except Exception as e:
                         service_info['status'] = IntegrationStatus.ERROR
                         service_info['error_count'] += 1
                         logger.warning(f"Health check failed for {service_name}: {e}")
-                
+
                 # Update monitoring metrics
                 self.monitoring_metrics['last_health_check'] = datetime.utcnow()
-                
+
                 await asyncio.sleep(30)  # Check every 30 seconds
-                
+
             except Exception as e:
                 logger.error(f"System health monitoring error: {e}")
                 await asyncio.sleep(60)
-    
+
     async def _monitor_service_performance(self):
         """Monitor service performance in real-time"""
         while self.monitoring_enabled:
@@ -854,7 +854,7 @@ class IntegrationManager:
                     # Calculate error rate
                     total_requests = service_info['success_count'] + service_info['error_count']
                     error_rate = service_info['error_count'] / max(total_requests, 1)
-                    
+
                     # Update integration metrics
                     self.integration_metrics[service_name] = IntegrationMetrics(
                         service_name=service_name,
@@ -867,23 +867,23 @@ class IntegrationManager:
                         memory_usage=0.0,  # Placeholder
                         cpu_usage=0.0     # Placeholder
                     )
-                
+
                 # Check for alerts
                 await self._check_performance_alerts()
-                
+
                 await asyncio.sleep(60)  # Check every minute
-                
+
             except Exception as e:
                 logger.error(f"Service performance monitoring error: {e}")
                 await asyncio.sleep(60)
-    
+
     async def _monitor_workflow_executions(self):
         """Monitor workflow executions in real-time"""
         while self.monitoring_enabled:
             try:
                 # Update workflow metrics
                 self.workflow_metrics['active_executions'] = len(self.active_workflows)
-                
+
                 # Check for stuck workflows
                 current_time = datetime.utcnow()
                 for execution_id, execution in list(self.active_workflows.items()):
@@ -894,26 +894,26 @@ class IntegrationManager:
                             execution.errors.append("Workflow execution timeout")
                             del self.active_workflows[execution_id]
                             logger.warning(f"Workflow {execution_id} timed out")
-                
+
                 await asyncio.sleep(30)  # Check every 30 seconds
-                
+
             except Exception as e:
                 logger.error(f"Workflow execution monitoring error: {e}")
                 await asyncio.sleep(60)
-    
+
     async def _monitor_security_events(self):
         """Monitor security events in real-time"""
         while self.monitoring_enabled:
             try:
                 # Check for security alerts
                 await self._check_security_alerts()
-                
+
                 await asyncio.sleep(60)  # Check every minute
-                
+
             except Exception as e:
                 logger.error(f"Security event monitoring error: {e}")
                 await asyncio.sleep(60)
-    
+
     async def _check_performance_alerts(self):
         """Check for performance alerts"""
         try:
@@ -921,22 +921,22 @@ class IntegrationManager:
                 # Check response time
                 if metrics.response_time > self.alert_thresholds['response_time']:
                     await self._trigger_alert('performance', f"High response time for {service_name}: {metrics.response_time}s")
-                
+
                 # Check error rate
                 if metrics.error_rate > self.alert_thresholds['error_rate']:
                     await self._trigger_alert('performance', f"High error rate for {service_name}: {metrics.error_rate:.2%}")
-                
+
                 # Check memory usage
                 if metrics.memory_usage > self.alert_thresholds['memory_usage']:
                     await self._trigger_alert('performance', f"High memory usage for {service_name}: {metrics.memory_usage:.2%}")
-                
+
                 # Check CPU usage
                 if metrics.cpu_usage > self.alert_thresholds['cpu_usage']:
                     await self._trigger_alert('performance', f"High CPU usage for {service_name}: {metrics.cpu_usage:.2%}")
-                    
+
         except Exception as e:
             logger.error(f"Performance alert check failed: {e}")
-    
+
     async def _check_security_alerts(self):
         """Check for security alerts"""
         try:
@@ -944,18 +944,18 @@ class IntegrationManager:
             # Check for suspicious activities
             # Check for unauthorized access attempts
             pass
-            
+
         except Exception as e:
             logger.error(f"Security alert check failed: {e}")
-    
+
     async def _trigger_alert(self, alert_type: str, message: str):
         """Trigger an alert"""
         try:
             logger.warning(f"ALERT [{alert_type.upper()}]: {message}")
-            
+
             # Update alert count
             self.monitoring_metrics['alert_count'] += 1
-            
+
             # Log alert
             if self.security_service:
                 try:
@@ -968,26 +968,26 @@ class IntegrationManager:
                     )
                 except Exception as e:
                     logger.warning(f"Failed to log alert: {e}")
-            
+
         except Exception as e:
             logger.error(f"Failed to trigger alert: {e}")
-    
+
     async def _handle_performance_alerts(self, alert_data: Dict[str, Any]):
         """Handle performance alerts"""
         pass
-    
+
     async def _handle_error_alerts(self, alert_data: Dict[str, Any]):
         """Handle error alerts"""
         pass
-    
+
     async def _handle_service_alerts(self, alert_data: Dict[str, Any]):
         """Handle service alerts"""
         pass
-    
+
     async def _handle_security_alerts(self, alert_data: Dict[str, Any]):
         """Handle security alerts"""
         pass
-    
+
     def _update_average_execution_time(self, execution_time: float):
         """Update average execution time"""
         total_executions = self.workflow_metrics['total_executions']
@@ -996,7 +996,7 @@ class IntegrationManager:
             self.workflow_metrics['average_execution_time'] = (
                 (current_avg * (total_executions - 1) + execution_time) / total_executions
             )
-    
+
     async def get_integration_status(self) -> Dict[str, Any]:
         """Get integration status"""
         return {
@@ -1007,12 +1007,12 @@ class IntegrationManager:
             'metrics': self.monitoring_metrics,
             'timestamp': datetime.utcnow().isoformat()
         }
-    
+
     async def get_workflow_status(self, execution_id: str) -> Optional[Dict[str, Any]]:
         """Get workflow execution status"""
         if execution_id not in self.workflow_executions:
             return None
-        
+
         execution = self.workflow_executions[execution_id]
         return {
             'execution_id': execution_id,
@@ -1027,23 +1027,23 @@ class IntegrationManager:
             'errors': execution.errors,
             'metrics': execution.metrics
         }
-    
+
     async def shutdown(self):
         """Shutdown integration manager"""
         try:
             logger.info("Shutting down integration manager...")
-            
+
             # Stop monitoring
             self.monitoring_enabled = False
-            
+
             # Cancel monitoring tasks
             for task in self.monitoring_tasks:
                 task.cancel()
-            
+
             # Wait for tasks to complete
             await asyncio.gather(*self.monitoring_tasks, return_exceptions=True)
-            
+
             logger.info("Integration manager shutdown complete")
-            
+
         except Exception as e:
             logger.error(f"Error during integration manager shutdown: {e}")

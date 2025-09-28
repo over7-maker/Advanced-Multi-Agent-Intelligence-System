@@ -13,7 +13,7 @@ from typing import Dict, List, Any
 
 class SimpleFunctionalityTest:
     """Simple functionality test for AMAS system"""
-    
+
     def __init__(self, workspace_path: str = "/workspace"):
         self.workspace_path = Path(workspace_path)
         self.test_results = {
@@ -24,11 +24,11 @@ class SimpleFunctionalityTest:
             'success_rate': 0.0,
             'test_details': []
         }
-    
+
     def test_file_imports(self) -> bool:
         """Test that all Python files can be imported without syntax errors"""
         print("🔍 Testing File Imports...")
-        
+
         python_files = [
             'main.py',
             'main_phase3_complete.py',
@@ -60,10 +60,10 @@ class SimpleFunctionalityTest:
             'agents/reporting/reporting_agent.py',
             'agents/technology_monitor/technology_monitor_agent.py'
         ]
-        
+
         passed = 0
         failed = 0
-        
+
         for file_path in python_files:
             full_path = self.workspace_path / file_path
             if full_path.exists():
@@ -71,7 +71,7 @@ class SimpleFunctionalityTest:
                     # Try to compile the file to check for syntax errors
                     with open(full_path, 'r', encoding='utf-8') as f:
                         content = f.read()
-                    
+
                     compile(content, str(full_path), 'exec')
                     passed += 1
                     print(f"  ✅ {file_path}")
@@ -84,32 +84,32 @@ class SimpleFunctionalityTest:
             else:
                 failed += 1
                 print(f"  ❌ {file_path} - File not found")
-        
+
         self.test_results['total_tests'] += len(python_files)
         self.test_results['passed_tests'] += passed
         self.test_results['failed_tests'] += failed
-        
+
         return failed == 0
-    
+
     def test_configuration_files(self) -> bool:
         """Test configuration files are valid"""
         print("\n🔍 Testing Configuration Files...")
-        
+
         config_files = [
             'docker-compose.yml',
             'requirements.txt'
         ]
-        
+
         passed = 0
         failed = 0
-        
+
         for config_file in config_files:
             config_path = self.workspace_path / config_file
             if config_path.exists():
                 try:
                     with open(config_path, 'r', encoding='utf-8') as f:
                         content = f.read()
-                    
+
                     # Basic validation
                     if config_file.endswith('.yml') or config_file.endswith('.yaml'):
                         # Check for basic YAML structure
@@ -136,17 +136,17 @@ class SimpleFunctionalityTest:
             else:
                 failed += 1
                 print(f"  ❌ {config_file} - File not found")
-        
+
         self.test_results['total_tests'] += len(config_files)
         self.test_results['passed_tests'] += passed
         self.test_results['failed_tests'] += failed
-        
+
         return failed == 0
-    
+
     def test_documentation_files(self) -> bool:
         """Test documentation files are readable"""
         print("\n🔍 Testing Documentation Files...")
-        
+
         doc_files = [
             'README.md',
             'COMPLETE_IMPLEMENTATION_SUMMARY.md',
@@ -155,17 +155,17 @@ class SimpleFunctionalityTest:
             'architecture.md',
             'hardening_enhanced.md'
         ]
-        
+
         passed = 0
         failed = 0
-        
+
         for doc_file in doc_files:
             doc_path = self.workspace_path / doc_file
             if doc_path.exists():
                 try:
                     with open(doc_path, 'r', encoding='utf-8') as f:
                         content = f.read()
-                    
+
                     # Check if file has content and is readable
                     if len(content.strip()) > 100:  # At least 100 characters
                         passed += 1
@@ -179,17 +179,17 @@ class SimpleFunctionalityTest:
             else:
                 failed += 1
                 print(f"  ❌ {doc_file} - File not found")
-        
+
         self.test_results['total_tests'] += len(doc_files)
         self.test_results['passed_tests'] += passed
         self.test_results['failed_tests'] += failed
-        
+
         return failed == 0
-    
+
     def test_directory_structure(self) -> bool:
         """Test directory structure is correct"""
         print("\n🔍 Testing Directory Structure...")
-        
+
         required_dirs = [
             'services',
             'agents',
@@ -202,10 +202,10 @@ class SimpleFunctionalityTest:
             'scripts',
             'examples'
         ]
-        
+
         passed = 0
         failed = 0
-        
+
         for dir_name in required_dirs:
             dir_path = self.workspace_path / dir_name
             if dir_path.exists() and dir_path.is_dir():
@@ -214,17 +214,17 @@ class SimpleFunctionalityTest:
             else:
                 failed += 1
                 print(f"  ❌ {dir_name}/ - Directory not found")
-        
+
         self.test_results['total_tests'] += len(required_dirs)
         self.test_results['passed_tests'] += passed
         self.test_results['failed_tests'] += failed
-        
+
         return failed == 0
-    
+
     def test_agent_structure(self) -> bool:
         """Test agent directory structure"""
         print("\n🔍 Testing Agent Structure...")
-        
+
         agent_dirs = [
             'agents/base',
             'agents/osint',
@@ -236,10 +236,10 @@ class SimpleFunctionalityTest:
             'agents/reporting',
             'agents/technology_monitor'
         ]
-        
+
         passed = 0
         failed = 0
-        
+
         for agent_dir in agent_dirs:
             agent_path = self.workspace_path / agent_dir
             if agent_path.exists() and agent_path.is_dir():
@@ -248,17 +248,17 @@ class SimpleFunctionalityTest:
             else:
                 failed += 1
                 print(f"  ❌ {agent_dir}/ - Directory not found")
-        
+
         self.test_results['total_tests'] += len(agent_dirs)
         self.test_results['passed_tests'] += passed
         self.test_results['failed_tests'] += failed
-        
+
         return failed == 0
-    
+
     def test_verification_scripts(self) -> bool:
         """Test verification scripts are executable"""
         print("\n🔍 Testing Verification Scripts...")
-        
+
         verification_scripts = [
             'final_workflow_verification.py',
             'verify_workflows.py',
@@ -269,17 +269,17 @@ class SimpleFunctionalityTest:
             'verify_all_workflows.py',
             'verify_file_structure.py'
         ]
-        
+
         passed = 0
         failed = 0
-        
+
         for script in verification_scripts:
             script_path = self.workspace_path / script
             if script_path.exists():
                 try:
                     with open(script_path, 'r', encoding='utf-8') as f:
                         content = f.read()
-                    
+
                     # Check if it's a valid Python script
                     compile(content, str(script_path), 'exec')
                     passed += 1
@@ -290,27 +290,27 @@ class SimpleFunctionalityTest:
             else:
                 failed += 1
                 print(f"  ❌ {script} - File not found")
-        
+
         self.test_results['total_tests'] += len(verification_scripts)
         self.test_results['passed_tests'] += passed
         self.test_results['failed_tests'] += failed
-        
+
         return failed == 0
-    
+
     def calculate_success_rate(self):
         """Calculate overall success rate"""
         if self.test_results['total_tests'] > 0:
             self.test_results['success_rate'] = (
-                self.test_results['passed_tests'] / 
+                self.test_results['passed_tests'] /
                 self.test_results['total_tests']
             ) * 100
         else:
             self.test_results['success_rate'] = 0.0
-    
+
     def generate_report(self):
         """Generate comprehensive test report"""
         self.calculate_success_rate()
-        
+
         print("\n" + "="*80)
         print("📊 FUNCTIONALITY TEST RESULTS")
         print("="*80)
@@ -318,23 +318,23 @@ class SimpleFunctionalityTest:
         print(f"Passed: {self.test_results['passed_tests']}")
         print(f"Failed: {self.test_results['failed_tests']}")
         print(f"Success Rate: {self.test_results['success_rate']:.1f}%")
-        
+
         # Save detailed report
         report_path = self.workspace_path / 'logs' / 'functionality_test_report.json'
         report_path.parent.mkdir(exist_ok=True)
-        
+
         with open(report_path, 'w') as f:
             json.dump(self.test_results, f, indent=2)
-        
+
         print(f"\n📄 Detailed report saved: {report_path}")
-        
+
         return self.test_results['success_rate'] >= 90.0
-    
+
     def run_tests(self) -> bool:
         """Run all functionality tests"""
         print("🎯 AMAS Intelligence System - Simple Functionality Test")
         print("="*80)
-        
+
         # Run all tests
         test_file_imports = self.test_file_imports()
         test_config_files = self.test_configuration_files()
@@ -342,10 +342,10 @@ class SimpleFunctionalityTest:
         test_dir_structure = self.test_directory_structure()
         test_agent_structure = self.test_agent_structure()
         test_verification_scripts = self.test_verification_scripts()
-        
+
         # Generate final report
         success = self.generate_report()
-        
+
         if success:
             print("\n🎉 FUNCTIONALITY TEST SUCCESSFUL!")
             print("✅ All core functionality is working correctly")
@@ -356,14 +356,14 @@ class SimpleFunctionalityTest:
             print("\n❌ FUNCTIONALITY TEST FAILED!")
             print("⚠️  Some functionality tests failed")
             print("⚠️  Please check the failed tests above")
-        
+
         return success
 
 def main():
     """Main test function"""
     tester = SimpleFunctionalityTest()
     success = tester.run_tests()
-    
+
     if success:
         print("\n🚀 AMAS Intelligence System functionality is working correctly!")
         sys.exit(0)

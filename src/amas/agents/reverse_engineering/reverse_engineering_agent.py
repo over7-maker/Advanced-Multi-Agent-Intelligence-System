@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class ReverseEngineeringAgent(IntelligenceAgent):
     """Reverse Engineering Agent for AMAS Intelligence System"""
-    
+
     def __init__(
         self,
         agent_id: str,
@@ -31,7 +31,7 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             "firmware_analysis",
             "sandbox_execution"
         ]
-        
+
         super().__init__(
             agent_id=agent_id,
             name=name,
@@ -41,18 +41,18 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             knowledge_graph=knowledge_graph,
             security_service=security_service
         )
-        
+
         self.sandbox_path = "/app/sandbox"
         self.analysis_results = {}
-        
+
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Execute reverse engineering task"""
         try:
             task_type = task.get('type', 'general')
             task_id = task.get('id', 'unknown')
-            
+
             logger.info(f"Executing reverse engineering task {task_id} of type {task_type}")
-            
+
             if task_type == 'binary_analysis':
                 return await self._analyze_binary(task)
             elif task_type == 'malware_analysis':
@@ -65,7 +65,7 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 return await self._analyze_firmware(task)
             else:
                 return await self._perform_general_reverse_engineering(task)
-                
+
         except Exception as e:
             logger.error(f"Error executing reverse engineering task: {e}")
             return {
@@ -73,23 +73,23 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def validate_task(self, task: Dict[str, Any]) -> bool:
         """Validate if this agent can handle the task"""
         re_keywords = [
             'reverse', 'engineering', 'binary', 'malware',
             'deobfuscation', 'protocol', 'firmware', 'sandbox'
         ]
-        
+
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
         return any(keyword in task_text for keyword in re_keywords)
-    
+
     async def _analyze_binary(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze binary files"""
         try:
             binary_path = task.get('parameters', {}).get('binary_path', '')
             analysis_depth = task.get('parameters', {}).get('analysis_depth', 'standard')
-            
+
             # Mock binary analysis
             analysis_result = {
                 'binary_path': binary_path,
@@ -105,14 +105,14 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 'strings': ['Hello World', 'Error', 'Success'],
                 'analysis_depth': analysis_depth
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'binary_analysis',
                 'result': analysis_result,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in binary analysis: {e}")
             return {
@@ -120,13 +120,13 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _analyze_malware(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze malware samples"""
         try:
             sample_path = task.get('parameters', {}).get('sample_path', '')
             sandbox_mode = task.get('parameters', {}).get('sandbox_mode', True)
-            
+
             # Mock malware analysis
             malware_result = {
                 'sample_path': sample_path,
@@ -144,14 +144,14 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                     'File hash: abc123def456'
                 ]
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'malware_analysis',
                 'result': malware_result,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in malware analysis: {e}")
             return {
@@ -159,13 +159,13 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _deobfuscate_code(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Deobfuscate obfuscated code"""
         try:
             code = task.get('parameters', {}).get('code', '')
             obfuscation_type = task.get('parameters', {}).get('obfuscation_type', 'unknown')
-            
+
             # Mock deobfuscation
             deobfuscated_result = {
                 'original_code': code,
@@ -174,14 +174,14 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 'deobfuscation_techniques': ['string replacement', 'control flow analysis'],
                 'confidence': 0.8
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'code_deobfuscation',
                 'result': deobfuscated_result,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in code deobfuscation: {e}")
             return {
@@ -189,13 +189,13 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _analyze_protocol(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze network protocols"""
         try:
             protocol_data = task.get('parameters', {}).get('protocol_data', '')
             protocol_type = task.get('parameters', {}).get('protocol_type', 'unknown')
-            
+
             # Mock protocol analysis
             protocol_result = {
                 'protocol_type': protocol_type,
@@ -208,14 +208,14 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 'encryption': 'AES-256',
                 'authentication': 'HMAC-SHA256'
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'protocol_analysis',
                 'result': protocol_result,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in protocol analysis: {e}")
             return {
@@ -223,13 +223,13 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _analyze_firmware(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze firmware files"""
         try:
             firmware_path = task.get('parameters', {}).get('firmware_path', '')
             analysis_type = task.get('parameters', {}).get('analysis_type', 'static')
-            
+
             # Mock firmware analysis
             firmware_result = {
                 'firmware_path': firmware_path,
@@ -242,14 +242,14 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 ],
                 'analysis_type': analysis_type
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'firmware_analysis',
                 'result': firmware_result,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in firmware analysis: {e}")
             return {
@@ -257,13 +257,13 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _perform_general_reverse_engineering(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Perform general reverse engineering"""
         try:
             description = task.get('description', '')
             parameters = task.get('parameters', {})
-            
+
             # Mock general reverse engineering
             re_result = {
                 'analysis_id': f"re_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
@@ -280,14 +280,14 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 ],
                 'confidence': 0.85
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'general_reverse_engineering',
                 'result': re_result,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in general reverse engineering: {e}")
             return {

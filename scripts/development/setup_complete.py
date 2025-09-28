@@ -23,16 +23,16 @@ def install_requirements():
     """Install required packages"""
     try:
         logger.info("Installing required packages...")
-        
+
         # Install base requirements
         subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
         logger.info("Base requirements installed successfully")
-        
+
         # Install phase 2 requirements if available
         if Path("requirements-phase2.txt").exists():
             subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements-phase2.txt"])
             logger.info("Phase 2 requirements installed successfully")
-        
+
         # Install additional packages for enhanced functionality
         additional_packages = [
             "python-dotenv",
@@ -43,16 +43,16 @@ def install_requirements():
             "rich",
             "typer"
         ]
-        
+
         for package in additional_packages:
             try:
                 subprocess.check_call([sys.executable, "-m", "pip", "install", package])
                 logger.info(f"Installed {package}")
             except subprocess.CalledProcessError as e:
                 logger.warning(f"Failed to install {package}: {e}")
-        
+
         logger.info("All requirements installed successfully")
-        
+
     except subprocess.CalledProcessError as e:
         logger.error(f"Error installing requirements: {e}")
         sys.exit(1)
@@ -75,7 +75,7 @@ def create_directories():
         "forensics_data",
         "analysis_results"
     ]
-    
+
     for directory in directories:
         Path(directory).mkdir(exist_ok=True)
         logger.info(f"Created directory: {directory}")
@@ -90,15 +90,15 @@ def setup_environment():
             logger.info("Environment variables loaded from .env file")
         else:
             logger.warning(".env file not found. Using default configuration.")
-        
+
         # Set environment variables
         os.environ.setdefault('AMAS_MODE', 'development')
         os.environ.setdefault('AMAS_OFFLINE_MODE', 'true')
         os.environ.setdefault('AMAS_GPU_ENABLED', 'true')
         os.environ.setdefault('AMAS_LOG_LEVEL', 'INFO')
-        
+
         logger.info("Environment setup completed")
-        
+
     except Exception as e:
         logger.error(f"Error setting up environment: {e}")
         raise
@@ -113,7 +113,7 @@ def check_docker_services():
         else:
             logger.warning("Docker Compose not found. Please install Docker and Docker Compose.")
             return False
-        
+
         # Check if services are running
         result = subprocess.run(['docker-compose', 'ps'], capture_output=True, text=True)
         if result.returncode == 0:
@@ -121,9 +121,9 @@ def check_docker_services():
             logger.info(result.stdout)
         else:
             logger.warning("Could not check Docker services status")
-        
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Error checking Docker services: {e}")
         return False
@@ -139,7 +139,7 @@ def start_docker_services():
         else:
             logger.error(f"Failed to start Docker services: {result.stderr}")
             return False
-            
+
     except Exception as e:
         logger.error(f"Error starting Docker services: {e}")
         return False
@@ -223,17 +223,17 @@ volumes:
   neo4j_logs:
   ollama_data:
 """
-    
+
     with open("docker-compose.override.yml", "w") as f:
         f.write(override_content)
-    
+
     logger.info("Created docker-compose.override.yml for development")
 
 async def test_system_components():
     """Test system components"""
     try:
         logger.info("Testing system components...")
-        
+
         # Test imports
         try:
             from main import AMASIntelligenceSystem
@@ -241,7 +241,7 @@ async def test_system_components():
         except Exception as e:
             logger.error(f"❌ Main system import failed: {e}")
             return False
-        
+
         # Test services
         try:
             from services.llm_service import LLMService
@@ -253,7 +253,7 @@ async def test_system_components():
         except Exception as e:
             logger.error(f"❌ Service imports failed: {e}")
             return False
-        
+
         # Test agents
         try:
             from agents.osint.osint_agent import OSINTAgent
@@ -263,7 +263,7 @@ async def test_system_components():
         except Exception as e:
             logger.error(f"❌ Agent imports failed: {e}")
             return False
-        
+
         # Test API
         try:
             from api.main import app
@@ -271,17 +271,17 @@ async def test_system_components():
         except Exception as e:
             logger.error(f"❌ API import failed: {e}")
             return False
-        
+
         logger.info("✅ All system components imported successfully")
         return True
-        
+
     except Exception as e:
         logger.error(f"System component test failed: {e}")
         return False
 
 def create_startup_scripts():
     """Create startup scripts for different environments"""
-    
+
     # Development startup script
     dev_script = """#!/bin/bash
 # AMAS Intelligence System - Development Startup Script
@@ -308,11 +308,11 @@ python main.py
 
 echo "AMAS Intelligence System started successfully!"
 """
-    
+
     with open("start_dev.sh", "w") as f:
         f.write(dev_script)
     os.chmod("start_dev.sh", 0o755)
-    
+
     # Production startup script
     prod_script = """#!/bin/bash
 # AMAS Intelligence System - Production Startup Script
@@ -339,11 +339,11 @@ python api/main.py
 
 echo "AMAS Intelligence System started successfully!"
 """
-    
+
     with open("start_prod.sh", "w") as f:
         f.write(prod_script)
     os.chmod("start_prod.sh", 0o755)
-    
+
     # Test script
     test_script = """#!/bin/bash
 # AMAS Intelligence System - Test Script
@@ -355,47 +355,47 @@ python test_complete_system.py
 
 echo "Tests completed!"
 """
-    
+
     with open("run_tests.sh", "w") as f:
         f.write(test_script)
     os.chmod("run_tests.sh", 0o755)
-    
+
     logger.info("Created startup scripts: start_dev.sh, start_prod.sh, run_tests.sh")
 
 def main():
     """Main setup function"""
     logger.info("Setting up AMAS Intelligence System...")
     logger.info("=" * 60)
-    
+
     try:
         # Step 1: Create directories
         logger.info("Step 1: Creating directories...")
         create_directories()
-        
+
         # Step 2: Install requirements
         logger.info("Step 2: Installing requirements...")
         install_requirements()
-        
+
         # Step 3: Setup environment
         logger.info("Step 3: Setting up environment...")
         setup_environment()
-        
+
         # Step 4: Create Docker override
         logger.info("Step 4: Creating Docker override...")
         create_docker_compose_override()
-        
+
         # Step 5: Create startup scripts
         logger.info("Step 5: Creating startup scripts...")
         create_startup_scripts()
-        
+
         # Step 6: Test system components
         logger.info("Step 6: Testing system components...")
         component_test_passed = asyncio.run(test_system_components())
-        
+
         # Step 7: Check Docker services
         logger.info("Step 7: Checking Docker services...")
         docker_available = check_docker_services()
-        
+
         if docker_available:
             logger.info("Step 8: Starting Docker services...")
             docker_started = start_docker_services()
@@ -405,7 +405,7 @@ def main():
                 logger.warning("⚠️ Docker services failed to start")
         else:
             logger.warning("⚠️ Docker not available. Please install Docker and Docker Compose.")
-        
+
         # Summary
         logger.info("=" * 60)
         logger.info("SETUP COMPLETED")
@@ -417,7 +417,7 @@ def main():
         logger.info(f"✅ Startup scripts created")
         logger.info(f"✅ System components: {'PASSED' if component_test_passed else 'FAILED'}")
         logger.info(f"✅ Docker services: {'AVAILABLE' if docker_available else 'NOT AVAILABLE'}")
-        
+
         if component_test_passed:
             logger.info("🎉 AMAS Intelligence System setup completed successfully!")
             logger.info("")
@@ -429,7 +429,7 @@ def main():
         else:
             logger.error("❌ Setup completed with errors. Please check the logs.")
             sys.exit(1)
-            
+
     except Exception as e:
         logger.error(f"Setup failed: {e}")
         import traceback

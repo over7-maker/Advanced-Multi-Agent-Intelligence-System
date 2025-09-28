@@ -23,10 +23,10 @@ def check_file_content(file_path: str, required_content: list) -> bool:
     try:
         if not check_file_exists(file_path):
             return False
-        
+
         with open(file_path, 'r') as f:
             content = f.read()
-            
+
         for required in required_content:
             if required not in content:
                 return False
@@ -38,9 +38,9 @@ def main():
     """Main workflow check"""
     print("🔍 AMAS Intelligence System - Simple Workflow Check")
     print("=" * 60)
-    
+
     results = []
-    
+
     # Check core files
     core_files = [
         'main_phase5_complete.py',
@@ -52,14 +52,14 @@ def main():
         'services/monitoring_service.py',
         'services/performance_service.py'
     ]
-    
+
     print("\n📁 Checking Core Files...")
     for file_path in core_files:
         exists = check_file_exists(file_path)
         results.append({'file': file_path, 'exists': exists, 'type': 'core_file'})
         status = "✅" if exists else "❌"
         print(f"  {status} {file_path}")
-    
+
     # Check agent files
     agent_files = [
         'agents/osint/osint_agent.py',
@@ -71,30 +71,30 @@ def main():
         'agents/reporting/reporting_agent.py',
         'agents/technology_monitor/technology_monitor_agent.py'
     ]
-    
+
     print("\n🤖 Checking Agent Files...")
     for file_path in agent_files:
         exists = check_file_exists(file_path)
         results.append({'file': file_path, 'exists': exists, 'type': 'agent_file'})
         status = "✅" if exists else "❌"
         print(f"  {status} {file_path}")
-    
+
     # Check workflow templates in orchestrator
     print("\n🔄 Checking Workflow Templates...")
     orchestrator_path = 'core/orchestrator.py'
     if check_file_exists(orchestrator_path):
         workflow_templates = [
             'osint_investigation',
-            'digital_forensics', 
+            'digital_forensics',
             'threat_intelligence'
         ]
-        
+
         for template in workflow_templates:
             has_template = check_file_content(orchestrator_path, [f"'{template}'"])
             results.append({'workflow': template, 'exists': has_template, 'type': 'workflow_template'})
             status = "✅" if has_template else "❌"
             print(f"  {status} {template} workflow template")
-    
+
     # Check security workflows in main application
     print("\n🔒 Checking Security Workflows...")
     main_app_path = 'main_phase5_complete.py'
@@ -105,13 +105,13 @@ def main():
             '_execute_incident_response_workflow',
             '_execute_security_assessment_workflow'
         ]
-        
+
         for workflow in security_workflows:
             has_workflow = check_file_content(main_app_path, [workflow])
             results.append({'workflow': workflow, 'exists': has_workflow, 'type': 'security_workflow'})
             status = "✅" if has_workflow else "❌"
             print(f"  {status} {workflow}")
-    
+
     # Check configuration files
     print("\n⚙️ Checking Configuration Files...")
     config_files = [
@@ -119,13 +119,13 @@ def main():
         'requirements.txt',
         'README.md'
     ]
-    
+
     for file_path in config_files:
         exists = check_file_exists(file_path)
         results.append({'file': file_path, 'exists': exists, 'type': 'config_file'})
         status = "✅" if exists else "❌"
         print(f"  {status} {file_path}")
-    
+
     # Check test files
     print("\n🧪 Checking Test Files...")
     test_files = [
@@ -135,19 +135,19 @@ def main():
         'check_workflow_status.py',
         'run_workflow_tests.py'
     ]
-    
+
     for file_path in test_files:
         exists = check_file_exists(file_path)
         results.append({'file': file_path, 'exists': exists, 'type': 'test_file'})
         status = "✅" if exists else "❌"
         print(f"  {status} {file_path}")
-    
+
     # Calculate summary
     total_checks = len(results)
     passed_checks = len([r for r in results if r['exists']])
     failed_checks = total_checks - passed_checks
     success_rate = (passed_checks / total_checks * 100) if total_checks > 0 else 0
-    
+
     print("\n" + "=" * 60)
     print("📊 Workflow Check Summary")
     print("=" * 60)
@@ -155,7 +155,7 @@ def main():
     print(f"Passed: {passed_checks}")
     print(f"Failed: {failed_checks}")
     print(f"Success Rate: {success_rate:.1f}%")
-    
+
     if failed_checks > 0:
         print(f"\n❌ Failed Checks:")
         for result in results:
@@ -163,7 +163,7 @@ def main():
                 print(f"  - {result.get('file', result.get('workflow', 'unknown'))}")
     else:
         print(f"\n🎉 All workflow checks passed!")
-    
+
     # Save results
     report = {
         'workflow_check_suite': 'AMAS Simple Workflow Check',
@@ -176,15 +176,15 @@ def main():
         },
         'results': results
     }
-    
+
     # Ensure logs directory exists
     os.makedirs('logs', exist_ok=True)
-    
+
     with open('logs/simple_workflow_check_report.json', 'w') as f:
         json.dump(report, f, indent=2)
-    
+
     print(f"\n📄 Report saved: logs/simple_workflow_check_report.json")
-    
+
     return 0 if failed_checks == 0 else 1
 
 if __name__ == "__main__":

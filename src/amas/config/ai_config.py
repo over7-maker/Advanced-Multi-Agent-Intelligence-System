@@ -35,11 +35,11 @@ class AIProviderConfig:
 
 class AIConfigManager:
     """AI Configuration Manager"""
-    
+
     def __init__(self):
         self.providers: Dict[AIProvider, AIProviderConfig] = {}
         self._load_configurations()
-    
+
     def _load_configurations(self):
         """Load AI provider configurations from environment variables"""
         try:
@@ -56,7 +56,7 @@ class AIConfigManager:
                 priority=1,
                 enabled=bool(os.getenv('DEEPSEEK_API_KEY'))
             )
-            
+
             # GLM 4.5 Air
             self.providers[AIProvider.GLM] = AIProviderConfig(
                 name="GLM 4.5 Air",
@@ -70,7 +70,7 @@ class AIConfigManager:
                 priority=2,
                 enabled=bool(os.getenv('GLM_API_KEY'))
             )
-            
+
             # Grok 4 Fast
             self.providers[AIProvider.GROK] = AIProviderConfig(
                 name="Grok 4 Fast",
@@ -84,7 +84,7 @@ class AIConfigManager:
                 priority=3,
                 enabled=bool(os.getenv('GROK_API_KEY'))
             )
-            
+
             # Kimi K2
             self.providers[AIProvider.KIMI] = AIProviderConfig(
                 name="Kimi K2",
@@ -98,7 +98,7 @@ class AIConfigManager:
                 priority=4,
                 enabled=bool(os.getenv('KIMI_API_KEY'))
             )
-            
+
             # Qwen3 Coder
             self.providers[AIProvider.QWEN] = AIProviderConfig(
                 name="Qwen3 Coder",
@@ -112,7 +112,7 @@ class AIConfigManager:
                 priority=5,
                 enabled=bool(os.getenv('QWEN_API_KEY'))
             )
-            
+
             # GPT OSS 120B
             self.providers[AIProvider.GPTOSS] = AIProviderConfig(
                 name="GPT OSS 120B",
@@ -126,27 +126,27 @@ class AIConfigManager:
                 priority=6,
                 enabled=bool(os.getenv('GPTOSS_API_KEY'))
             )
-            
+
             enabled_count = sum(1 for p in self.providers.values() if p.enabled)
             logger.info(f"Loaded {enabled_count} AI provider configurations")
-            
+
         except Exception as e:
             logger.error(f"Error loading AI configurations: {e}")
             raise
-    
+
     def get_provider_config(self, provider: AIProvider) -> Optional[AIProviderConfig]:
         """Get configuration for a specific provider"""
         return self.providers.get(provider)
-    
+
     def get_enabled_providers(self) -> Dict[AIProvider, AIProviderConfig]:
         """Get all enabled providers"""
         return {k: v for k, v in self.providers.items() if v.enabled}
-    
+
     def get_provider_by_priority(self) -> list:
         """Get providers sorted by priority"""
         enabled = self.get_enabled_providers()
         return sorted(enabled.items(), key=lambda x: x[1].priority)
-    
+
     def validate_configurations(self) -> Dict[str, Any]:
         """Validate all provider configurations"""
         validation_results = {
@@ -155,11 +155,11 @@ class AIConfigManager:
             'total_providers': len(self.providers),
             'enabled_providers': 0
         }
-        
+
         for provider, config in self.providers.items():
             if config.enabled:
                 validation_results['enabled_providers'] += 1
-                
+
                 if config.api_key and config.api_key.strip():
                     validation_results['valid_providers'].append({
                         'provider': provider.value,
@@ -178,13 +178,13 @@ class AIConfigManager:
                     'name': config.name,
                     'issue': 'Disabled'
                 })
-        
+
         return validation_results
-    
+
     def get_configuration_summary(self) -> Dict[str, Any]:
         """Get configuration summary"""
         validation = self.validate_configurations()
-        
+
         return {
             'total_providers': validation['total_providers'],
             'enabled_providers': validation['enabled_providers'],
@@ -193,7 +193,7 @@ class AIConfigManager:
             'provider_details': validation['valid_providers'],
             'issues': validation['invalid_providers']
         }
-    
+
     def update_provider_config(self, provider: AIProvider, **kwargs):
         """Update provider configuration"""
         if provider in self.providers:
@@ -202,19 +202,19 @@ class AIConfigManager:
                 if hasattr(config, key):
                     setattr(config, key, value)
                     logger.info(f"Updated {provider.value} {key}: {value}")
-    
+
     def disable_provider(self, provider: AIProvider):
         """Disable a provider"""
         if provider in self.providers:
             self.providers[provider].enabled = False
             logger.info(f"Disabled provider: {provider.value}")
-    
+
     def enable_provider(self, provider: AIProvider):
         """Enable a provider"""
         if provider in self.providers:
             self.providers[provider].enabled = True
             logger.info(f"Enabled provider: {provider.value}")
-    
+
     def get_health_check_config(self) -> Dict[str, Any]:
         """Get configuration for health checks"""
         return {

@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 class OSINTAgent(IntelligenceAgent):
     """Enhanced OSINT Collection Agent for AMAS Intelligence System"""
-    
+
     def __init__(
         self,
         agent_id: str,
@@ -29,7 +29,7 @@ class OSINTAgent(IntelligenceAgent):
     ):
         capabilities = [
             "web_scraping",
-            "social_media_monitoring", 
+            "social_media_monitoring",
             "news_aggregation",
             "domain_analysis",
             "email_analysis",
@@ -37,7 +37,7 @@ class OSINTAgent(IntelligenceAgent):
             "threat_intelligence",
             "dark_web_monitoring"
         ]
-        
+
         super().__init__(
             agent_id=agent_id,
             name=name,
@@ -47,7 +47,7 @@ class OSINTAgent(IntelligenceAgent):
             knowledge_graph=knowledge_graph,
             security_service=security_service
         )
-        
+
         self.data_sources = {
             'news': [
                 'https://www.bbc.com/news',
@@ -65,18 +65,18 @@ class OSINTAgent(IntelligenceAgent):
                 'https://www.securityfocus.com'
             ]
         }
-        
+
         self.collected_data = {}
         self.analysis_results = {}
-        
+
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Execute OSINT task"""
         try:
             task_type = task.get('type', 'general')
             task_id = task.get('id', 'unknown')
-            
+
             logger.info(f"Executing OSINT task {task_id} of type {task_type}")
-            
+
             if task_type == 'web_scraping':
                 return await self._perform_web_scraping(task)
             elif task_type == 'social_media_monitoring':
@@ -91,7 +91,7 @@ class OSINTAgent(IntelligenceAgent):
                 return await self._collect_threat_intelligence(task)
             else:
                 return await self._perform_general_osint(task)
-                
+
         except Exception as e:
             logger.error(f"Error executing OSINT task: {e}")
             return {
@@ -99,24 +99,24 @@ class OSINTAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def validate_task(self, task: Dict[str, Any]) -> bool:
         """Validate if this agent can handle the task"""
         osint_keywords = [
             'osint', 'intelligence', 'gathering', 'collection', 'monitoring',
             'web', 'social', 'news', 'domain', 'email', 'threat'
         ]
-        
+
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
         return any(keyword in task_text for keyword in osint_keywords)
-    
+
     async def _perform_web_scraping(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Perform web scraping"""
         try:
             urls = task.get('parameters', {}).get('urls', [])
             keywords = task.get('parameters', {}).get('keywords', [])
             max_pages = task.get('parameters', {}).get('max_pages', 10)
-            
+
             scraped_data = []
             for url in urls[:max_pages]:
                 try:
@@ -127,10 +127,10 @@ class OSINTAgent(IntelligenceAgent):
                 except Exception as e:
                     logger.error(f"Error scraping {url}: {e}")
                     continue
-            
+
             # Analyze scraped data
             analysis = await self._analyze_scraped_data(scraped_data, keywords)
-            
+
             return {
                 'success': True,
                 'task_type': 'web_scraping',
@@ -139,7 +139,7 @@ class OSINTAgent(IntelligenceAgent):
                 'analysis': analysis,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in web scraping: {e}")
             return {
@@ -147,7 +147,7 @@ class OSINTAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _scrape_webpage(self, url: str, keywords: List[str]) -> Dict[str, Any]:
         """Scrape a single webpage"""
         try:
@@ -164,13 +164,13 @@ class OSINTAgent(IntelligenceAgent):
                     'content_length': len(f'Mock content for {url}')
                 }
             }
-            
+
             return page_data
-            
+
         except Exception as e:
             logger.error(f"Error scraping webpage {url}: {e}")
             return None
-    
+
     async def _analyze_scraped_data(self, scraped_data: List[Dict[str, Any]], keywords: List[str]) -> Dict[str, Any]:
         """Analyze scraped data"""
         try:
@@ -183,20 +183,20 @@ class OSINTAgent(IntelligenceAgent):
                 'threat_indicators': [],
                 'summary': f'Analyzed {len(scraped_data)} pages for keywords: {", ".join(keywords)}'
             }
-            
+
             return analysis
-            
+
         except Exception as e:
             logger.error(f"Error analyzing scraped data: {e}")
             return {'error': str(e)}
-    
+
     async def _monitor_social_media(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Monitor social media platforms"""
         try:
             platforms = task.get('parameters', {}).get('platforms', ['twitter', 'reddit'])
             keywords = task.get('parameters', {}).get('keywords', [])
             time_range = task.get('parameters', {}).get('time_range', '24h')
-            
+
             # Mock social media monitoring
             social_data = []
             for platform in platforms:
@@ -215,10 +215,10 @@ class OSINTAgent(IntelligenceAgent):
                     'sentiment': 'positive'
                 }
                 social_data.append(platform_data)
-            
+
             # Analyze social media data
             analysis = await self._analyze_social_data(social_data, keywords)
-            
+
             return {
                 'success': True,
                 'task_type': 'social_media_monitoring',
@@ -227,7 +227,7 @@ class OSINTAgent(IntelligenceAgent):
                 'analysis': analysis,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in social media monitoring: {e}")
             return {
@@ -235,7 +235,7 @@ class OSINTAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _analyze_social_data(self, social_data: List[Dict[str, Any]], keywords: List[str]) -> Dict[str, Any]:
         """Analyze social media data"""
         try:
@@ -253,20 +253,20 @@ class OSINTAgent(IntelligenceAgent):
                 'influencers': ['user1', 'user2'],
                 'summary': f'Analyzed social media data across {len(social_data)} platforms'
             }
-            
+
             return analysis
-            
+
         except Exception as e:
             logger.error(f"Error analyzing social data: {e}")
             return {'error': str(e)}
-    
+
     async def _aggregate_news(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Aggregate news from multiple sources"""
         try:
             sources = task.get('parameters', {}).get('sources', self.data_sources['news'])
             keywords = task.get('parameters', {}).get('keywords', [])
             time_range = task.get('parameters', {}).get('time_range', '24h')
-            
+
             # Mock news aggregation
             news_data = []
             for source in sources:
@@ -284,10 +284,10 @@ class OSINTAgent(IntelligenceAgent):
                     ]
                 }
                 news_data.append(source_data)
-            
+
             # Analyze news data
             analysis = await self._analyze_news_data(news_data, keywords)
-            
+
             return {
                 'success': True,
                 'task_type': 'news_aggregation',
@@ -296,7 +296,7 @@ class OSINTAgent(IntelligenceAgent):
                 'analysis': analysis,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in news aggregation: {e}")
             return {
@@ -304,7 +304,7 @@ class OSINTAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _analyze_news_data(self, news_data: List[Dict[str, Any]], keywords: List[str]) -> Dict[str, Any]:
         """Analyze news data"""
         try:
@@ -321,19 +321,19 @@ class OSINTAgent(IntelligenceAgent):
                 },
                 'summary': f'Analyzed news from {len(news_data)} sources'
             }
-            
+
             return analysis
-            
+
         except Exception as e:
             logger.error(f"Error analyzing news data: {e}")
             return {'error': str(e)}
-    
+
     async def _analyze_domain(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze domain information"""
         try:
             domain = task.get('parameters', {}).get('domain', '')
             analysis_type = task.get('parameters', {}).get('analysis_type', 'comprehensive')
-            
+
             # Mock domain analysis
             domain_data = {
                 'domain': domain,
@@ -358,7 +358,7 @@ class OSINTAgent(IntelligenceAgent):
                 'threat_indicators': [],
                 'reputation_score': 0.8
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'domain_analysis',
@@ -367,7 +367,7 @@ class OSINTAgent(IntelligenceAgent):
                 'data': domain_data,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in domain analysis: {e}")
             return {
@@ -375,13 +375,13 @@ class OSINTAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _analyze_email(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze email information"""
         try:
             email = task.get('parameters', {}).get('email', '')
             analysis_type = task.get('parameters', {}).get('analysis_type', 'basic')
-            
+
             # Mock email analysis
             email_data = {
                 'email': email,
@@ -392,7 +392,7 @@ class OSINTAgent(IntelligenceAgent):
                 'data_breaches': [],
                 'reputation_score': 0.7
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'email_analysis',
@@ -401,7 +401,7 @@ class OSINTAgent(IntelligenceAgent):
                 'data': email_data,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in email analysis: {e}")
             return {
@@ -409,13 +409,13 @@ class OSINTAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _collect_threat_intelligence(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Collect threat intelligence"""
         try:
             threat_types = task.get('parameters', {}).get('threat_types', ['malware', 'phishing'])
             sources = task.get('parameters', {}).get('sources', ['virustotal', 'threatconnect'])
-            
+
             # Mock threat intelligence collection
             threat_data = []
             for threat_type in threat_types:
@@ -440,7 +440,7 @@ class OSINTAgent(IntelligenceAgent):
                     'last_seen': datetime.utcnow().isoformat()
                 }
                 threat_data.append(threat_info)
-            
+
             return {
                 'success': True,
                 'task_type': 'threat_intelligence',
@@ -449,7 +449,7 @@ class OSINTAgent(IntelligenceAgent):
                 'data': threat_data,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in threat intelligence collection: {e}")
             return {
@@ -457,13 +457,13 @@ class OSINTAgent(IntelligenceAgent):
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _perform_general_osint(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Perform general OSINT collection"""
         try:
             description = task.get('description', '')
             parameters = task.get('parameters', {})
-            
+
             # Mock general OSINT
             osint_result = {
                 'collection_id': f"osint_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
@@ -480,14 +480,14 @@ class OSINTAgent(IntelligenceAgent):
                 ],
                 'confidence': 0.85
             }
-            
+
             return {
                 'success': True,
                 'task_type': 'general_osint',
                 'result': osint_result,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error in general OSINT: {e}")
             return {

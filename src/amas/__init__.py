@@ -16,7 +16,7 @@ from .config.settings import AMASConfig
 
 __all__ = [
     "IntelligenceOrchestrator",
-    "ServiceManager", 
+    "ServiceManager",
     "AMASConfig",
-    "__version__"
+    "__version__",
 ]

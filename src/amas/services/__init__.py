@@ -12,6 +12,6 @@ from .security_service import SecurityService
 __all__ = [
     "ServiceManager",
     "LLMService",
-    "VectorService", 
-    "SecurityService"
+    "VectorService",
+    "SecurityService",
 ]

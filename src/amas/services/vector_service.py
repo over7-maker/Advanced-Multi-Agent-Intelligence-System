@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 class VectorService:
     """Vector Service for AMAS Intelligence System"""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.index_path = config.get('vector_service_url', '/app/faiss_index')
@@ -33,52 +33,52 @@ class VectorService:
         self.dimension = 384  # Default for all-MiniLM-L6-v2
         self.documents = []
         self.metadata = []
-        
+
     async def initialize(self):
         """Initialize the vector service"""
         try:
             if FAISS_AVAILABLE:
                 # Load or create FAISS index
                 await self._load_or_create_index()
-                
+
                 # Load embedding model
                 await self._load_embedding_model()
-                
+
                 logger.info("Vector service initialized successfully")
             else:
                 logger.warning("FAISS not available, using fallback mode")
-                
+
         except Exception as e:
             logger.error(f"Failed to initialize vector service: {e}")
             raise
-    
+
     async def _load_or_create_index(self):
         """Load existing index or create new one"""
         try:
             index_file = os.path.join(self.index_path, "faiss_index.bin")
             metadata_file = os.path.join(self.index_path, "metadata.json")
-            
+
             if os.path.exists(index_file):
                 # Load existing index
                 self.index = faiss.read_index(index_file)
                 self.dimension = self.index.d
-                
+
                 # Load metadata
                 if os.path.exists(metadata_file):
                     with open(metadata_file, 'r') as f:
                         self.metadata = json.load(f)
-                
+
                 logger.info(f"Loaded existing FAISS index with {self.index.ntotal} vectors")
             else:
                 # Create new index
                 os.makedirs(self.index_path, exist_ok=True)
                 self.index = faiss.IndexFlatIP(self.dimension)  # Inner product for cosine similarity
                 logger.info("Created new FAISS index")
-                
+
         except Exception as e:
             logger.error(f"Error loading/creating index: {e}")
             raise
-    
+
     async def _load_embedding_model(self):
         """Load sentence transformer model"""
         try:
@@ -87,11 +87,11 @@ class VectorService:
                 logger.info(f"Loaded embedding model: {self.embedding_model_name}")
             else:
                 logger.warning("Sentence transformers not available")
-                
+
         except Exception as e:
             logger.error(f"Error loading embedding model: {e}")
             raise
-    
+
     async def health_check(self) -> Dict[str, Any]:
         """Check vector service health"""
         try:
@@ -111,7 +111,7 @@ class VectorService:
                 'timestamp': datetime.utcnow().isoformat(),
                 'service': 'vector'
             }
-    
+
     async def add_documents(self, documents: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Add documents to the vector index"""
         try:
@@ -121,16 +121,16 @@ class VectorService:
                     'error': 'Vector service not properly initialized',
                     'timestamp': datetime.utcnow().isoformat()
                 }
-            
+
             texts = [doc.get('content', '') for doc in documents]
             embeddings = self.embedding_model.encode(texts)
-            
+
             # Normalize embeddings for cosine similarity
             faiss.normalize_L2(embeddings)
-            
+
             # Add to index
             self.index.add(embeddings.astype('float32'))
-            
+
             # Store metadata
             for i, doc in enumerate(documents):
                 self.metadata.append({
@@ -139,17 +139,17 @@ class VectorService:
                     'metadata': doc.get('metadata', {}),
                     'index': self.index.ntotal - len(documents) + i
                 })
-            
+
             # Save index and metadata
             await self._save_index()
-            
+
             return {
                 'success': True,
                 'documents_added': len(documents),
                 'total_documents': self.index.ntotal,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error adding documents: {e}")
             return {
@@ -157,10 +157,10 @@ class VectorService:
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def search(
-        self, 
-        query: str, 
+        self,
+        query: str,
         top_k: int = 5,
         threshold: float = 0.7
     ) -> Dict[str, Any]:
@@ -172,14 +172,14 @@ class VectorService:
                     'error': 'Vector service not properly initialized',
                     'timestamp': datetime.utcnow().isoformat()
                 }
-            
+
             # Generate query embedding
             query_embedding = self.embedding_model.encode([query])
             faiss.normalize_L2(query_embedding)
-            
+
             # Search
             scores, indices = self.index.search(query_embedding.astype('float32'), top_k)
-            
+
             # Format results
             results = []
             for score, idx in zip(scores[0], indices[0]):
@@ -192,7 +192,7 @@ class VectorService:
                         'score': float(score),
                         'index': int(idx)
                     })
-            
+
             return {
                 'success': True,
                 'query': query,
@@ -200,7 +200,7 @@ class VectorService:
                 'total_found': len(results),
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error searching: {e}")
             return {
@@ -208,7 +208,7 @@ class VectorService:
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
-    
+
     async def _save_index(self):
         """Save index and metadata to disk"""
         try:
@@ -216,17 +216,17 @@ class VectorService:
                 # Save FAISS index
                 index_file = os.path.join(self.index_path, "faiss_index.bin")
                 faiss.write_index(self.index, index_file)
-                
+
                 # Save metadata
                 metadata_file = os.path.join(self.index_path, "metadata.json")
                 with open(metadata_file, 'w') as f:
                     json.dump(self.metadata, f, indent=2)
-                
+
                 logger.info("Index and metadata saved successfully")
-                
+
         except Exception as e:
             logger.error(f"Error saving index: {e}")
-    
+
     async def get_stats(self) -> Dict[str, Any]:
         """Get vector service statistics"""
         return {

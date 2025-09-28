@@ -17,7 +17,7 @@ class DatabaseConfig(BaseSettings):
     user: str = Field(default="amas", env="AMAS_DB_USER")
     password: str = Field(default="amas123", env="AMAS_DB_PASSWORD")
     database: str = Field(default="amas", env="AMAS_DB_NAME")
-    
+
     @property
     def url(self) -> str:
         return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
@@ -29,7 +29,7 @@ class RedisConfig(BaseSettings):
     port: int = Field(default=6379, env="AMAS_REDIS_PORT")
     db: int = Field(default=0, env="AMAS_REDIS_DB")
     password: Optional[str] = Field(default=None, env="AMAS_REDIS_PASSWORD")
-    
+
     @property
     def url(self) -> str:
         auth = f":{self.password}@" if self.password else ""
@@ -43,7 +43,7 @@ class Neo4jConfig(BaseSettings):
     user: str = Field(default="neo4j", env="AMAS_NEO4J_USER")
     password: str = Field(default="amas123", env="AMAS_NEO4J_PASSWORD")
     database: str = Field(default="neo4j", env="AMAS_NEO4J_DATABASE")
-    
+
     @property
     def uri(self) -> str:
         return f"bolt://{self.host}:{self.port}"
@@ -55,7 +55,7 @@ class LLMConfig(BaseSettings):
     port: int = Field(default=11434, env="AMAS_LLM_PORT")
     model: str = Field(default="llama3.1:70b", env="AMAS_LLM_MODEL")
     timeout: int = Field(default=300, env="AMAS_LLM_TIMEOUT")
-    
+
     @property
     def url(self) -> str:
         return f"http://{self.host}:{self.port}"
@@ -81,7 +81,7 @@ class APIConfig(BaseSettings):
 
 class AMASConfig(BaseSettings):
     """Main AMAS configuration"""
-    
+
     # Application settings
     app_name: str = Field(default="AMAS", env="AMAS_APP_NAME")
     version: str = Field(default="1.0.0", env="AMAS_VERSION")
@@ -89,16 +89,16 @@ class AMASConfig(BaseSettings):
     debug: bool = Field(default=False, env="AMAS_DEBUG")
     offline_mode: bool = Field(default=True, env="AMAS_OFFLINE_MODE")
     gpu_enabled: bool = Field(default=True, env="AMAS_GPU_ENABLED")
-    
+
     # Logging
     log_level: str = Field(default="INFO", env="AMAS_LOG_LEVEL")
     log_format: str = Field(default="%(asctime)s - %(name)s - %(levelname)s - %(message)s", env="AMAS_LOG_FORMAT")
-    
+
     # Directories
     data_dir: Path = Field(default=Path("data"), env="AMAS_DATA_DIR")
     logs_dir: Path = Field(default=Path("logs"), env="AMAS_LOGS_DIR")
     models_dir: Path = Field(default=Path("models"), env="AMAS_MODELS_DIR")
-    
+
     # Component configurations
     database: DatabaseConfig = Field(default_factory=DatabaseConfig)
     redis: RedisConfig = Field(default_factory=RedisConfig)
@@ -106,7 +106,7 @@ class AMASConfig(BaseSettings):
     llm: LLMConfig = Field(default_factory=LLMConfig)
     security: SecurityConfig = Field(default_factory=SecurityConfig)
     api: APIConfig = Field(default_factory=APIConfig)
-    
+
     # External API keys (loaded from environment)
     deepseek_api_key: Optional[str] = Field(default=None, env="DEEPSEEK_API_KEY")
     glm_api_key: Optional[str] = Field(default=None, env="GLM_API_KEY")
@@ -114,26 +114,26 @@ class AMASConfig(BaseSettings):
     kimi_api_key: Optional[str] = Field(default=None, env="KIMI_API_KEY")
     qwen_api_key: Optional[str] = Field(default=None, env="QWEN_API_KEY")
     gptoss_api_key: Optional[str] = Field(default=None, env="GPTOSS_API_KEY")
-    
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
-    
+
     @validator('log_level')
     def validate_log_level(cls, v):
         valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
         if v.upper() not in valid_levels:
             raise ValueError(f'Log level must be one of {valid_levels}')
         return v.upper()
-    
+
     @validator('environment')
     def validate_environment(cls, v):
         valid_envs = ['development', 'staging', 'production']
         if v.lower() not in valid_envs:
             raise ValueError(f'Environment must be one of {valid_envs}')
         return v.lower()
-    
+
     def create_directories(self):
         """Create necessary directories"""
         for directory in [self.data_dir, self.logs_dir, self.models_dir]:

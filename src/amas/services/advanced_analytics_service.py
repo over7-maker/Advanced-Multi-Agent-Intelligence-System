@@ -84,18 +84,18 @@ class PredictionResult:
 
 class AdvancedAnalyticsService:
     """Advanced analytics service for Phase 8"""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.analytics_enabled = True
         self.models = {}
         self.insights = {}
         self.predictions = {}
-        
+
         # Model storage
         self.model_storage_path = config.get('model_storage_path', 'models/')
         self.insight_storage_path = config.get('insight_storage_path', 'insights/')
-        
+
         # Analytics configuration
         self.analytics_config = {
             'auto_training': config.get('auto_training', True),
@@ -105,53 +105,53 @@ class AdvancedAnalyticsService:
             'max_models_per_type': config.get('max_models_per_type', 10),
             'min_training_samples': config.get('min_training_samples', 100)
         }
-        
+
         # Background tasks
         self.analytics_tasks = []
-        
+
         logger.info("Advanced Analytics Service initialized")
-    
+
     async def initialize(self):
         """Initialize advanced analytics service"""
         try:
             logger.info("Initializing Advanced Analytics Service...")
-            
+
             await self._initialize_model_storage()
             await self._initialize_insight_generation()
             await self._initialize_predictive_models()
             await self._initialize_analytics_pipeline()
             await self._start_analytics_tasks()
-            
+
             logger.info("Advanced Analytics Service initialized successfully")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize Advanced Analytics Service: {e}")
             raise
-    
+
     async def _initialize_model_storage(self):
         """Initialize model storage"""
         try:
             import os
             os.makedirs(self.model_storage_path, exist_ok=True)
             os.makedirs(self.insight_storage_path, exist_ok=True)
-            
+
             # Load existing models
             await self._load_existing_models()
-            
+
             logger.info("Model storage initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize model storage: {e}")
             raise
-    
+
     async def _load_existing_models(self):
         """Load existing models from storage"""
         try:
             import os
             import glob
-            
+
             model_files = glob.glob(f"{self.model_storage_path}*.pkl")
-            
+
             for model_file in model_files:
                 try:
                     model_data = joblib.load(model_file)
@@ -161,12 +161,12 @@ class AdvancedAnalyticsService:
                         logger.info(f"Loaded model: {model_id}")
                 except Exception as e:
                     logger.warning(f"Failed to load model from {model_file}: {e}")
-            
+
             logger.info(f"Loaded {len(self.models)} existing models")
-            
+
         except Exception as e:
             logger.error(f"Failed to load existing models: {e}")
-    
+
     async def _initialize_insight_generation(self):
         """Initialize insight generation"""
         try:
@@ -191,13 +191,13 @@ class AdvancedAnalyticsService:
                     'priority': 3
                 }
             ]
-            
+
             logger.info("Insight generation initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize insight generation: {e}")
             raise
-    
+
     async def _initialize_predictive_models(self):
         """Initialize predictive models"""
         try:
@@ -232,17 +232,17 @@ class AdvancedAnalyticsService:
                     'algorithm': 'KMeans'
                 }
             ]
-            
+
             for model_config in default_models:
                 if model_config['model_id'] not in self.models:
                     await self._create_model(model_config)
-            
+
             logger.info("Predictive models initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize predictive models: {e}")
             raise
-    
+
     async def _initialize_analytics_pipeline(self):
         """Initialize analytics pipeline"""
         try:
@@ -252,7 +252,7 @@ class AdvancedAnalyticsService:
                 'label_encoder': LabelEncoder(),
                 'feature_selector': None  # Would be implemented based on specific needs
             }
-            
+
             # Model evaluation metrics
             self.evaluation_metrics = {
                 'classification': ['accuracy', 'precision', 'recall', 'f1_score'],
@@ -260,39 +260,39 @@ class AdvancedAnalyticsService:
                 'clustering': ['silhouette_score', 'inertia'],
                 'anomaly_detection': ['precision', 'recall', 'f1_score']
             }
-            
+
             logger.info("Analytics pipeline initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize analytics pipeline: {e}")
             raise
-    
+
     async def _start_analytics_tasks(self):
         """Start background analytics tasks"""
         try:
             logger.info("Starting analytics tasks...")
-            
+
             self.analytics_tasks = [
                 asyncio.create_task(self._auto_train_models()),
                 asyncio.create_task(self._generate_insights()),
                 asyncio.create_task(self._update_model_performance()),
                 asyncio.create_task(self._cleanup_old_data())
             ]
-            
+
             logger.info("Analytics tasks started")
-            
+
         except Exception as e:
             logger.error(f"Failed to start analytics tasks: {e}")
             raise
-    
+
     async def create_model(self, model_config: Dict[str, Any]) -> str:
         """Create a new analytics model"""
         try:
             model_id = model_config.get('model_id', f"model_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}")
-            
+
             # Create model instance
             model = await self._create_model_instance(model_config)
-            
+
             # Store model
             self.models[model_id] = {
                 'model_id': model_id,
@@ -303,19 +303,19 @@ class AdvancedAnalyticsService:
                 'last_trained': None,
                 'status': 'created'
             }
-            
+
             logger.info(f"Created model: {model_id}")
             return model_id
-            
+
         except Exception as e:
             logger.error(f"Failed to create model: {e}")
             raise
-    
+
     async def _create_model(self, model_config: Dict[str, Any]):
         """Create model instance"""
         try:
             model_id = model_config['model_id']
-            
+
             # Create analytics model
             analytics_model = AnalyticsModel(
                 model_id=model_id,
@@ -331,11 +331,11 @@ class AdvancedAnalyticsService:
                 status='created',
                 parameters=model_config.get('parameters', {})
             )
-            
+
             # Create ML model instance
             algorithm = model_config.get('algorithm', 'RandomForestClassifier')
             model_instance = await self._get_model_instance(algorithm, model_config.get('parameters', {}))
-            
+
             # Store model
             self.models[model_id] = {
                 'model_id': model_id,
@@ -347,14 +347,14 @@ class AdvancedAnalyticsService:
                 'last_trained': None,
                 'status': 'created'
             }
-            
+
             # Save model to storage
             await self._save_model(model_id)
-            
+
         except Exception as e:
             logger.error(f"Failed to create model {model_config['model_id']}: {e}")
             raise
-    
+
     async def _get_model_instance(self, algorithm: str, parameters: Dict[str, Any]):
         """Get model instance based on algorithm"""
         try:
@@ -382,37 +382,37 @@ class AdvancedAnalyticsService:
                 )
             else:
                 raise ValueError(f"Unknown algorithm: {algorithm}")
-                
+
         except Exception as e:
             logger.error(f"Failed to get model instance: {e}")
             raise
-    
+
     async def train_model(self, model_id: str, training_data: Dict[str, Any]) -> Dict[str, Any]:
         """Train a model with provided data"""
         try:
             if model_id not in self.models:
                 raise ValueError(f"Model {model_id} not found")
-            
+
             model_data = self.models[model_id]
             model = model_data['model']
-            
+
             # Prepare training data
             X, y = await self._prepare_training_data(training_data, model_data['config'])
-            
+
             # Split data
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-            
+
             # Train model
             model.fit(X_train, y_train)
-            
+
             # Evaluate model
             metrics = await self._evaluate_model(model, X_test, y_test, model_data['config'])
-            
+
             # Update model data
             model_data['last_trained'] = datetime.utcnow()
             model_data['status'] = 'trained'
             model_data['metrics'] = metrics
-            
+
             # Update analytics model
             if 'analytics_model' in model_data:
                 analytics_model = model_data['analytics_model']
@@ -422,17 +422,17 @@ class AdvancedAnalyticsService:
                 analytics_model.f1_score = metrics.get('f1_score', 0.0)
                 analytics_model.last_trained = datetime.utcnow()
                 analytics_model.status = 'trained'
-            
+
             # Save model
             await self._save_model(model_id)
-            
+
             logger.info(f"Model {model_id} trained successfully")
             return metrics
-            
+
         except Exception as e:
             logger.error(f"Failed to train model {model_id}: {e}")
             raise
-    
+
     async def _prepare_training_data(self, training_data: Dict[str, Any], model_config: Dict[str, Any]) -> Tuple[np.ndarray, np.ndarray]:
         """Prepare training data for model"""
         try:
@@ -441,33 +441,33 @@ class AdvancedAnalyticsService:
                 df = pd.DataFrame([training_data])
             else:
                 df = pd.DataFrame(training_data)
-            
+
             # Extract features and target
             feature_columns = model_config.get('feature_columns', [])
             target_column = model_config.get('target_column', 'target')
-            
+
             if not feature_columns:
                 # Auto-detect features (exclude target column)
                 feature_columns = [col for col in df.columns if col != target_column]
-            
+
             X = df[feature_columns].values
             y = df[target_column].values if target_column in df.columns else np.zeros(len(df))
-            
+
             # Handle missing values
             X = np.nan_to_num(X)
             y = np.nan_to_num(y)
-            
+
             return X, y
-            
+
         except Exception as e:
             logger.error(f"Failed to prepare training data: {e}")
             raise
-    
+
     async def _evaluate_model(self, model, X_test: np.ndarray, y_test: np.ndarray, model_config: Dict[str, Any]) -> Dict[str, float]:
         """Evaluate model performance"""
         try:
             model_type = model_config.get('model_type', ModelType.CLASSIFICATION)
-            
+
             if model_type == ModelType.CLASSIFICATION:
                 y_pred = model.predict(X_test)
                 return {
@@ -496,35 +496,35 @@ class AdvancedAnalyticsService:
                 }
             else:
                 return {'score': model.score(X_test, y_test) if hasattr(model, 'score') else 0.0}
-                
+
         except Exception as e:
             logger.error(f"Failed to evaluate model: {e}")
             return {}
-    
+
     async def predict(self, model_id: str, input_data: Dict[str, Any]) -> PredictionResult:
         """Make prediction using trained model"""
         try:
             if model_id not in self.models:
                 raise ValueError(f"Model {model_id} not found")
-            
+
             model_data = self.models[model_id]
             model = model_data['model']
-            
+
             if model_data['status'] != 'trained':
                 raise ValueError(f"Model {model_id} is not trained")
-            
+
             # Prepare input data
             X = await self._prepare_input_data(input_data, model_data['config'])
-            
+
             # Make prediction
             prediction = model.predict(X)
             probability = None
-            
+
             # Get prediction probability if available
             if hasattr(model, 'predict_proba'):
                 probabilities = model.predict_proba(X)
                 probability = float(np.max(probabilities))
-            
+
             # Create prediction result
             prediction_id = f"pred_{datetime.utcnow().strftime('%Y%m%d_%H%M%S_%f')}"
             result = PredictionResult(
@@ -536,64 +536,64 @@ class AdvancedAnalyticsService:
                 probability=probability,
                 created_at=datetime.utcnow()
             )
-            
+
             # Store prediction
             self.predictions[prediction_id] = result
-            
+
             logger.info(f"Prediction made with model {model_id}: {result.prediction}")
             return result
-            
+
         except Exception as e:
             logger.error(f"Failed to make prediction: {e}")
             raise
-    
+
     async def _prepare_input_data(self, input_data: Dict[str, Any], model_config: Dict[str, Any]) -> np.ndarray:
         """Prepare input data for prediction"""
         try:
             # Convert to DataFrame
             df = pd.DataFrame([input_data])
-            
+
             # Extract features
             feature_columns = model_config.get('feature_columns', [])
             if not feature_columns:
                 feature_columns = [col for col in df.columns if col != 'target']
-            
+
             X = df[feature_columns].values
             X = np.nan_to_num(X)
-            
+
             return X
-            
+
         except Exception as e:
             logger.error(f"Failed to prepare input data: {e}")
             raise
-    
+
     async def generate_insights(self, data: Dict[str, Any]) -> List[AnalyticsInsight]:
         """Generate analytics insights from data"""
         try:
             insights = []
-            
+
             # Apply insight generation rules
             for rule in self.insight_rules:
                 if rule['condition'](data):
                     rule_insights = await rule['generator'](data)
                     insights.extend(rule_insights)
-            
+
             # Store insights
             for insight in insights:
                 self.insights[insight.insight_id] = insight
-            
+
             logger.info(f"Generated {len(insights)} insights")
             return insights
-            
+
         except Exception as e:
             logger.error(f"Failed to generate insights: {e}")
             return []
-    
+
     async def _generate_performance_trend_insights(self, data: Dict[str, Any]) -> List[AnalyticsInsight]:
         """Generate performance trend insights"""
         try:
             insights = []
-            
+
             # Mock performance trend analysis
             insight = AnalyticsInsight(
                 insight_id=f"insight_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
@@ -610,19 +610,19 @@ class AdvancedAnalyticsService:
                 created_at=datetime.utcnow(),
                 insight_level=InsightLevel.INTERMEDIATE
             )
-            
+
             insights.append(insight)
             return insights
-            
+
         except Exception as e:
             logger.error(f"Failed to generate performance trend insights: {e}")
             return []
-    
+
     async def _generate_anomaly_insights(self, data: Dict[str, Any]) -> List[AnalyticsInsight]:
         """Generate anomaly detection insights"""
         try:
             insights = []
-            
+
             # Mock anomaly detection
             insight = AnalyticsInsight(
                 insight_id=f"anomaly_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
@@ -639,19 +639,19 @@ class AdvancedAnalyticsService:
                 created_at=datetime.utcnow(),
                 insight_level=InsightLevel.ADVANCED
             )
-            
+
             insights.append(insight)
             return insights
-            
+
         except Exception as e:
             logger.error(f"Failed to generate anomaly insights: {e}")
             return []
-    
+
     async def _generate_predictive_insights(self, data: Dict[str, Any]) -> List[AnalyticsInsight]:
         """Generate predictive insights"""
         try:
             insights = []
-            
+
             # Mock predictive insights
             insight = AnalyticsInsight(
                 insight_id=f"predictive_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
@@ -668,14 +668,14 @@ class AdvancedAnalyticsService:
                 created_at=datetime.utcnow(),
                 insight_level=InsightLevel.EXPERT
             )
-            
+
             insights.append(insight)
             return insights
-            
+
         except Exception as e:
             logger.error(f"Failed to generate predictive insights: {e}")
             return []
-    
+
     async def _auto_train_models(self):
         """Auto-train models with new data"""
         while self.analytics_enabled:
@@ -689,28 +689,28 @@ class AdvancedAnalyticsService:
                             if time_since_training > self.analytics_config['model_retraining_interval']:
                                 # Retrain model
                                 await self._retrain_model(model_id)
-                
+
                 await asyncio.sleep(self.analytics_config['model_retraining_interval'])
-                
+
             except Exception as e:
                 logger.error(f"Auto-training error: {e}")
                 await asyncio.sleep(3600)  # Wait 1 hour on error
-    
+
     async def _retrain_model(self, model_id: str):
         """Retrain a model with new data"""
         try:
             # Mock retraining - in real implementation, this would use new data
             logger.info(f"Retraining model {model_id}")
-            
+
             # Update last trained time
             self.models[model_id]['last_trained'] = datetime.utcnow()
-            
+
             # Save model
             await self._save_model(model_id)
-            
+
         except Exception as e:
             logger.error(f"Failed to retrain model {model_id}: {e}")
-    
+
     async def _generate_insights(self):
         """Generate insights from available data"""
         while self.analytics_enabled:
@@ -718,13 +718,13 @@ class AdvancedAnalyticsService:
                 # Mock insight generation
                 mock_data = {'sample_data': 'mock'}
                 insights = await self.generate_insights(mock_data)
-                
+
                 await asyncio.sleep(self.analytics_config['insight_generation_interval'])
-                
+
             except Exception as e:
                 logger.error(f"Insight generation error: {e}")
                 await asyncio.sleep(3600)
-    
+
     async def _update_model_performance(self):
         """Update model performance metrics"""
         while self.analytics_enabled:
@@ -734,13 +734,13 @@ class AdvancedAnalyticsService:
                     if model_data['status'] == 'trained':
                         # Mock performance update
                         model_data['metrics']['last_updated'] = datetime.utcnow()
-                
+
                 await asyncio.sleep(3600)  # Update every hour
-                
+
             except Exception as e:
                 logger.error(f"Model performance update error: {e}")
                 await asyncio.sleep(3600)
-    
+
     async def _cleanup_old_data(self):
         """Cleanup old analytics data"""
         while self.analytics_enabled:
@@ -751,25 +751,25 @@ class AdvancedAnalyticsService:
                     pred_id for pred_id, pred in self.predictions.items()
                     if pred.created_at < cutoff_time
                 ]
-                
+
                 for pred_id in old_predictions:
                     del self.predictions[pred_id]
-                
+
                 # Cleanup old insights
                 old_insights = [
                     insight_id for insight_id, insight in self.insights.items()
                     if insight.created_at < cutoff_time
                 ]
-                
+
                 for insight_id in old_insights:
                     del self.insights[insight_id]
-                
+
                 await asyncio.sleep(24 * 3600)  # Cleanup daily
-                
+
             except Exception as e:
                 logger.error(f"Data cleanup error: {e}")
                 await asyncio.sleep(3600)
-    
+
     async def _save_model(self, model_id: str):
         """Save model to storage"""
         try:
@@ -778,10 +778,10 @@ class AdvancedAnalyticsService:
                 model_file = f"{self.model_storage_path}{model_id}.pkl"
                 joblib.dump(model_data, model_file)
                 logger.info(f"Saved model {model_id} to {model_file}")
-                
+
         except Exception as e:
             logger.error(f"Failed to save model {model_id}: {e}")
-    
+
     async def get_analytics_status(self) -> Dict[str, Any]:
         """Get analytics service status"""
         try:
@@ -806,25 +806,25 @@ class AdvancedAnalyticsService:
         except Exception as e:
             logger.error(f"Failed to get analytics status: {e}")
             return {'error': str(e)}
-    
+
     async def shutdown(self):
         """Shutdown analytics service"""
         try:
             logger.info("Shutting down Advanced Analytics Service...")
-            
+
             self.analytics_enabled = False
-            
+
             # Cancel analytics tasks
             for task in self.analytics_tasks:
                 task.cancel()
-            
+
             await asyncio.gather(*self.analytics_tasks, return_exceptions=True)
-            
+
             # Save all models
             for model_id in self.models:
                 await self._save_model(model_id)
-            
+
             logger.info("Advanced Analytics Service shutdown complete")
-            
+
         except Exception as e:
             logger.error(f"Error during analytics service shutdown: {e}")

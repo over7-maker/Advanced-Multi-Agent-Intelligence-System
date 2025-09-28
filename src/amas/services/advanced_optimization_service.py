@@ -78,12 +78,12 @@ class ResourceUsage:
 
 class AdvancedOptimizationService:
     """Advanced optimization service for Phase 7"""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.optimization_enabled = True
         self.optimization_level = OptimizationLevel(config.get('optimization_level', 'advanced'))
-        
+
         # Advanced caching
         self.cache_strategies = {
             'lru': self._lru_cache,
@@ -96,12 +96,12 @@ class AdvancedOptimizationService:
             'hits': 0, 'misses': 0, 'evictions': 0, 'size': 0,
             'compression_ratio': 0.0, 'hit_rate': 0.0
         }
-        
+
         # Advanced load balancing
         self.load_balancers = {}
         self.service_pools = {}
         self.health_checks = {}
-        
+
         # Resource management
         self.resource_limits = {
             'max_memory': config.get('max_memory', 2 * 1024 * 1024 * 1024),  # 2GB
@@ -109,42 +109,42 @@ class AdvancedOptimizationService:
             'max_connections': config.get('max_connections', 1000),
             'max_cache_size': config.get('max_cache_size', 500 * 1024 * 1024)  # 500MB
         }
-        
+
         # Performance monitoring
         self.performance_metrics = {}
         self.resource_usage = {}
         self.optimization_rules = []
-        
+
         # Background tasks
         self.optimization_tasks = []
         self.cleanup_interval = config.get('cleanup_interval', 300)  # 5 minutes
         self.monitoring_interval = config.get('monitoring_interval', 60)  # 1 minute
-        
+
         logger.info("Advanced Optimization Service initialized")
-    
+
     async def initialize(self):
         """Initialize advanced optimization service"""
         try:
             logger.info("Initializing Advanced Optimization Service...")
-            
+
             await self._initialize_advanced_caching()
             await self._initialize_advanced_load_balancing()
             await self._initialize_resource_management()
             await self._initialize_performance_monitoring()
             await self._initialize_optimization_rules()
             await self._start_optimization_tasks()
-            
+
             logger.info("Advanced Optimization Service initialized successfully")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize Advanced Optimization Service: {e}")
             raise
-    
+
     async def _initialize_advanced_caching(self):
         """Initialize advanced caching system"""
         try:
             logger.info("Initializing advanced caching system...")
-            
+
             # Initialize cache based on optimization level
             if self.optimization_level == OptimizationLevel.ENTERPRISE:
                 await self._initialize_enterprise_caching()
@@ -152,13 +152,13 @@ class AdvancedOptimizationService:
                 await self._initialize_advanced_caching_strategies()
             else:
                 await self._initialize_basic_caching()
-            
+
             logger.info("Advanced caching system initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize advanced caching: {e}")
             raise
-    
+
     async def _initialize_enterprise_caching(self):
         """Initialize enterprise-level caching"""
         try:
@@ -168,63 +168,63 @@ class AdvancedOptimizationService:
                 'l2': {'size': 10000, 'strategy': CacheStrategy.LFU},
                 'l3': {'size': 100000, 'strategy': CacheStrategy.TTL}
             }
-            
+
             # Compression settings
             self.compression_enabled = True
             self.compression_threshold = 1024  # Compress items > 1KB
-            
+
             # Cache warming
             self.cache_warming_enabled = True
             self.cache_warming_rules = []
-            
+
             logger.info("Enterprise caching initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize enterprise caching: {e}")
             raise
-    
+
     async def _initialize_advanced_caching_strategies(self):
         """Initialize advanced caching strategies"""
         try:
             # Adaptive caching
             self.adaptive_cache = True
             self.cache_learning_enabled = True
-            
+
             # Predictive caching
             self.predictive_cache_enabled = True
             self.cache_prediction_model = None
-            
+
             # Cache partitioning
             self.cache_partitions = {
                 'hot': {'size': 0.2, 'strategy': CacheStrategy.LRU},
                 'warm': {'size': 0.3, 'strategy': CacheStrategy.LFU},
                 'cold': {'size': 0.5, 'strategy': CacheStrategy.TTL}
             }
-            
+
             logger.info("Advanced caching strategies initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize advanced caching strategies: {e}")
             raise
-    
+
     async def _initialize_basic_caching(self):
         """Initialize basic caching"""
         try:
             self.cache_strategy = CacheStrategy.LRU
             self.cache_max_size = 1000
             self.cache_ttl = 3600  # 1 hour
-            
+
             logger.info("Basic caching initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize basic caching: {e}")
             raise
-    
+
     async def _initialize_advanced_load_balancing(self):
         """Initialize advanced load balancing"""
         try:
             logger.info("Initializing advanced load balancing...")
-            
+
             # Service pools
             self.service_pools = {
                 'llm_providers': {
@@ -252,7 +252,7 @@ class AdvancedOptimizationService:
                     'circuit_breaker': {'enabled': True, 'failure_threshold': 3, 'recovery_timeout': 60}
                 }
             }
-            
+
             # Health check configuration
             self.health_check_config = {
                 'interval': 30,
@@ -260,18 +260,18 @@ class AdvancedOptimizationService:
                 'retries': 3,
                 'failure_threshold': 3
             }
-            
+
             logger.info("Advanced load balancing initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize advanced load balancing: {e}")
             raise
-    
+
     async def _initialize_resource_management(self):
         """Initialize resource management"""
         try:
             logger.info("Initializing resource management...")
-            
+
             # Resource monitoring
             self.resource_monitoring = {
                 'memory_usage': 0.0,
@@ -281,7 +281,7 @@ class AdvancedOptimizationService:
                 'connection_count': 0,
                 'last_check': datetime.utcnow()
             }
-            
+
             # Auto-scaling configuration
             self.auto_scaling = {
                 'enabled': True,
@@ -291,7 +291,7 @@ class AdvancedOptimizationService:
                 'max_instances': 10,
                 'cooldown_period': 300  # 5 minutes
             }
-            
+
             # Resource optimization
             self.resource_optimization = {
                 'memory_optimization': True,
@@ -300,18 +300,18 @@ class AdvancedOptimizationService:
                 'connection_pooling': True,
                 'garbage_collection': True
             }
-            
+
             logger.info("Resource management initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize resource management: {e}")
             raise
-    
+
     async def _initialize_performance_monitoring(self):
         """Initialize performance monitoring"""
         try:
             logger.info("Initializing performance monitoring...")
-            
+
             # Performance metrics collection
             self.performance_metrics = {
                 'response_times': [],
@@ -320,7 +320,7 @@ class AdvancedOptimizationService:
                 'resource_usage': [],
                 'cache_performance': []
             }
-            
+
             # Performance thresholds
             self.performance_thresholds = {
                 'response_time': 5.0,  # seconds
@@ -330,25 +330,25 @@ class AdvancedOptimizationService:
                 'memory_usage': 0.8,   # 80%
                 'cache_hit_rate': 0.7  # 70%
             }
-            
+
             # Performance alerts
             self.performance_alerts = {
                 'enabled': True,
                 'alert_channels': ['email', 'slack', 'webhook'],
                 'alert_levels': ['warning', 'critical', 'emergency']
             }
-            
+
             logger.info("Performance monitoring initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize performance monitoring: {e}")
             raise
-    
+
     async def _initialize_optimization_rules(self):
         """Initialize optimization rules"""
         try:
             logger.info("Initializing optimization rules...")
-            
+
             # Cache optimization rules
             self.cache_optimization_rules = [
                 {
@@ -364,7 +364,7 @@ class AdvancedOptimizationService:
                     'parameters': {'threshold': 0.5}
                 }
             ]
-            
+
             # Load balancing optimization rules
             self.load_balancing_rules = [
                 {
@@ -380,7 +380,7 @@ class AdvancedOptimizationService:
                     'parameters': {'scale_factor': 1.5}
                 }
             ]
-            
+
             # Resource optimization rules
             self.resource_optimization_rules = [
                 {
@@ -396,18 +396,18 @@ class AdvancedOptimizationService:
                     'parameters': {'thread_pool_size': 4}
                 }
             ]
-            
+
             logger.info("Optimization rules initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize optimization rules: {e}")
             raise
-    
+
     async def _start_optimization_tasks(self):
         """Start background optimization tasks"""
         try:
             logger.info("Starting optimization tasks...")
-            
+
             self.optimization_tasks = [
                 asyncio.create_task(self._optimize_cache_performance()),
                 asyncio.create_task(self._optimize_load_balancing()),
@@ -416,41 +416,41 @@ class AdvancedOptimizationService:
                 asyncio.create_task(self._cleanup_resources()),
                 asyncio.create_task(self._apply_optimization_rules())
             ]
-            
+
             logger.info("Optimization tasks started")
-            
+
         except Exception as e:
             logger.error(f"Failed to start optimization tasks: {e}")
             raise
-    
+
     async def get_from_cache(self, key: str, strategy: str = None) -> Optional[Any]:
         """Get value from cache with advanced strategies"""
         try:
             if strategy is None:
                 strategy = self.config.get('cache_strategy', 'lru')
-            
+
             if strategy in self.cache_strategies:
                 return await self.cache_strategies[strategy](key, 'get')
             else:
                 return await self._lru_cache(key, 'get')
-                
+
         except Exception as e:
             logger.error(f"Failed to get from cache: {e}")
             return None
-    
+
     async def set_in_cache(self, key: str, value: Any, strategy: str = None, ttl: float = None, priority: int = 1) -> bool:
         """Set value in cache with advanced strategies"""
         try:
             if strategy is None:
                 strategy = self.config.get('cache_strategy', 'lru')
-            
+
             # Compress large values if enabled
             if self.compression_enabled and len(str(value)) > self.compression_threshold:
                 value = gzip.compress(pickle.dumps(value))
                 compressed = True
             else:
                 compressed = False
-            
+
             # Create cache entry
             entry = CacheEntry(
                 key=key,
@@ -463,26 +463,26 @@ class AdvancedOptimizationService:
                 compressed=compressed,
                 priority=priority
             )
-            
+
             # Check cache size limits
             if len(self.cache) >= self.resource_limits['max_cache_size']:
                 await self._evict_entries()
-            
+
             # Store in cache
             self.cache[key] = entry
-            
+
             # Update cache statistics
             self.cache_stats['size'] = len(self.cache)
-            
+
             if strategy in self.cache_strategies:
                 await self.cache_strategies[strategy](key, 'set', entry)
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to set in cache: {e}")
             return False
-    
+
     async def _lru_cache(self, key: str, operation: str, entry: CacheEntry = None) -> Any:
         """LRU cache implementation"""
         try:
@@ -499,11 +499,11 @@ class AdvancedOptimizationService:
             elif operation == 'set':
                 # LRU doesn't need special handling for set
                 pass
-                
+
         except Exception as e:
             logger.error(f"LRU cache error: {e}")
             return None
-    
+
     async def _lfu_cache(self, key: str, operation: str, entry: CacheEntry = None) -> Any:
         """LFU cache implementation"""
         try:
@@ -520,11 +520,11 @@ class AdvancedOptimizationService:
             elif operation == 'set':
                 # LFU doesn't need special handling for set
                 pass
-                
+
         except Exception as e:
             logger.error(f"LFU cache error: {e}")
             return None
-    
+
     async def _ttl_cache(self, key: str, operation: str, entry: CacheEntry = None) -> Any:
         """TTL cache implementation"""
         try:
@@ -546,11 +546,11 @@ class AdvancedOptimizationService:
             elif operation == 'set':
                 # TTL doesn't need special handling for set
                 pass
-                
+
         except Exception as e:
             logger.error(f"TTL cache error: {e}")
             return None
-    
+
     async def _adaptive_cache(self, key: str, operation: str, entry: CacheEntry = None) -> Any:
         """Adaptive cache implementation"""
         try:
@@ -561,7 +561,7 @@ class AdvancedOptimizationService:
                     entry.accessed_at = datetime.utcnow()
                     entry.access_count += 1
                     self.cache_stats['hits'] += 1
-                    
+
                     # Adjust strategy based on access pattern
                     if entry.access_count > 10:
                         entry.priority = 3  # High priority
@@ -569,7 +569,7 @@ class AdvancedOptimizationService:
                         entry.priority = 2  # Medium priority
                     else:
                         entry.priority = 1  # Low priority
-                    
+
                     return entry.value
                 else:
                     self.cache_stats['misses'] += 1
@@ -582,20 +582,20 @@ class AdvancedOptimizationService:
                         entry.priority = 1
                     else:
                         entry.priority = 2
-                
+
         except Exception as e:
             logger.error(f"Adaptive cache error: {e}")
             return None
-    
+
     async def select_llm_provider(self, task_type: str = None, priority: int = 1) -> str:
         """Select LLM provider with advanced load balancing"""
         try:
             pool = self.service_pools['llm_providers']
             providers = [p for p in pool['providers'] if p['health']]
-            
+
             if not providers:
                 raise Exception("No healthy LLM providers available")
-            
+
             # Apply load balancing strategy
             if pool['strategy'] == LoadBalanceStrategy.ADAPTIVE:
                 return await self._adaptive_provider_selection(providers, task_type, priority)
@@ -607,11 +607,11 @@ class AdvancedOptimizationService:
                 return await self._weighted_round_robin_selection(providers)
             else:
                 return await self._round_robin_selection(providers, pool)
-                
+
         except Exception as e:
             logger.error(f"Failed to select LLM provider: {e}")
             return 'ollama'  # Fallback
-    
+
     async def _adaptive_provider_selection(self, providers: List[Dict], task_type: str, priority: int) -> str:
         """Adaptive provider selection based on multiple factors"""
         try:
@@ -619,73 +619,73 @@ class AdvancedOptimizationService:
             scores = []
             for provider in providers:
                 score = 0
-                
+
                 # Base weight
                 score += provider.get('weight', 1)
-                
+
                 # Response time factor (lower is better)
                 response_time = provider.get('response_time', 1.0)
                 score += max(0, 1.0 - response_time) * 10
-                
+
                 # Connection factor (lower is better)
                 connections = provider.get('connections', 0)
                 capacity = provider.get('capacity', 100)
                 connection_ratio = connections / max(capacity, 1)
                 score += max(0, 1.0 - connection_ratio) * 5
-                
+
                 # Priority factor
                 if priority > 2:
                     score += 2
-                
+
                 # Task type specialization
                 if task_type and hasattr(provider, 'specializations'):
                     if task_type in provider.get('specializations', []):
                         score += 3
-                
+
                 scores.append((provider['name'], score))
-            
+
             # Select provider with highest score
             best_provider = max(scores, key=lambda x: x[1])
             return best_provider[0]
-            
+
         except Exception as e:
             logger.error(f"Adaptive provider selection error: {e}")
             return providers[0]['name'] if providers else 'ollama'
-    
+
     async def _weighted_round_robin_selection(self, providers: List[Dict]) -> str:
         """Weighted round robin selection"""
         try:
             total_weight = sum(p.get('weight', 1) for p in providers)
             if total_weight == 0:
                 return providers[0]['name']
-            
+
             # Simple weighted selection
             import random
             rand = random.uniform(0, total_weight)
             current_weight = 0
-            
+
             for provider in providers:
                 current_weight += provider.get('weight', 1)
                 if rand <= current_weight:
                     return provider['name']
-            
+
             return providers[0]['name']
-            
+
         except Exception as e:
             logger.error(f"Weighted round robin selection error: {e}")
             return providers[0]['name'] if providers else 'ollama'
-    
+
     async def _round_robin_selection(self, providers: List[Dict], pool: Dict) -> str:
         """Round robin selection"""
         try:
             provider = providers[pool['current_index'] % len(providers)]
             pool['current_index'] += 1
             return provider['name']
-            
+
         except Exception as e:
             logger.error(f"Round robin selection error: {e}")
             return providers[0]['name'] if providers else 'ollama'
-    
+
     async def _optimize_cache_performance(self):
         """Optimize cache performance"""
         while self.optimization_enabled:
@@ -694,18 +694,18 @@ class AdvancedOptimizationService:
                 total_requests = self.cache_stats['hits'] + self.cache_stats['misses']
                 if total_requests > 0:
                     self.cache_stats['hit_rate'] = self.cache_stats['hits'] / total_requests
-                
+
                 # Apply cache optimization rules
                 for rule in self.cache_optimization_rules:
                     if rule['condition'](self.cache_stats):
                         await self._apply_cache_optimization_rule(rule)
-                
+
                 await asyncio.sleep(self.cleanup_interval)
-                
+
             except Exception as e:
                 logger.error(f"Cache optimization error: {e}")
                 await asyncio.sleep(60)
-    
+
     async def _optimize_load_balancing(self):
         """Optimize load balancing"""
         while self.optimization_enabled:
@@ -715,38 +715,38 @@ class AdvancedOptimizationService:
                     for provider in pool['providers']:
                         health = await self._check_provider_health(provider['name'])
                         provider['health'] = health
-                
+
                 # Apply load balancing optimization rules
                 for rule in self.load_balancing_rules:
                     metrics = await self._get_load_balancing_metrics()
                     if rule['condition'](metrics):
                         await self._apply_load_balancing_rule(rule)
-                
+
                 await asyncio.sleep(self.monitoring_interval)
-                
+
             except Exception as e:
                 logger.error(f"Load balancing optimization error: {e}")
                 await asyncio.sleep(60)
-    
+
     async def _optimize_resource_usage(self):
         """Optimize resource usage"""
         while self.optimization_enabled:
             try:
                 # Monitor resource usage
                 await self._monitor_resource_usage()
-                
+
                 # Apply resource optimization rules
                 for rule in self.resource_optimization_rules:
                     metrics = await self._get_resource_metrics()
                     if rule['condition'](metrics):
                         await self._apply_resource_optimization_rule(rule)
-                
+
                 await asyncio.sleep(self.monitoring_interval)
-                
+
             except Exception as e:
                 logger.error(f"Resource optimization error: {e}")
                 await asyncio.sleep(60)
-    
+
     async def _monitor_performance(self):
         """Monitor system performance"""
         while self.optimization_enabled:
@@ -754,60 +754,60 @@ class AdvancedOptimizationService:
                 # Collect performance metrics
                 metrics = await self._collect_performance_metrics()
                 self.performance_metrics[datetime.utcnow()] = metrics
-                
+
                 # Check performance thresholds
                 await self._check_performance_thresholds(metrics)
-                
+
                 await asyncio.sleep(self.monitoring_interval)
-                
+
             except Exception as e:
                 logger.error(f"Performance monitoring error: {e}")
                 await asyncio.sleep(60)
-    
+
     async def _cleanup_resources(self):
         """Cleanup system resources"""
         while self.optimization_enabled:
             try:
                 # Cleanup expired cache entries
                 await self._cleanup_expired_cache_entries()
-                
+
                 # Cleanup old performance metrics
                 await self._cleanup_old_metrics()
-                
+
                 # Garbage collection
                 if self.resource_optimization['garbage_collection']:
                     gc.collect()
-                
+
                 await asyncio.sleep(self.cleanup_interval)
-                
+
             except Exception as e:
                 logger.error(f"Resource cleanup error: {e}")
                 await asyncio.sleep(300)
-    
+
     async def _apply_optimization_rules(self):
         """Apply optimization rules"""
         while self.optimization_enabled:
             try:
                 # Get current system metrics
                 metrics = await self._get_system_metrics()
-                
+
                 # Apply all optimization rules
                 all_rules = (
                     self.cache_optimization_rules +
                     self.load_balancing_rules +
                     self.resource_optimization_rules
                 )
-                
+
                 for rule in all_rules:
                     if rule['condition'](metrics):
                         await self._apply_optimization_rule(rule)
-                
+
                 await asyncio.sleep(self.monitoring_interval)
-                
+
             except Exception as e:
                 logger.error(f"Optimization rules error: {e}")
                 await asyncio.sleep(60)
-    
+
     async def _check_provider_health(self, provider_name: str) -> bool:
         """Check provider health"""
         try:
@@ -816,7 +816,7 @@ class AdvancedOptimizationService:
         except Exception as e:
             logger.error(f"Health check error for {provider_name}: {e}")
             return False
-    
+
     async def _monitor_resource_usage(self):
         """Monitor system resource usage"""
         try:
@@ -824,7 +824,7 @@ class AdvancedOptimizationService:
             cpu_percent = psutil.cpu_percent(interval=1)
             memory = psutil.virtual_memory()
             disk = psutil.disk_usage('/')
-            
+
             # Update resource usage
             self.resource_usage[datetime.utcnow()] = ResourceUsage(
                 cpu_percent=cpu_percent,
@@ -834,7 +834,7 @@ class AdvancedOptimizationService:
                 connections=0,  # Would need connection monitoring
                 timestamp=datetime.utcnow()
             )
-            
+
             # Update resource monitoring
             self.resource_monitoring.update({
                 'memory_usage': memory.percent,
@@ -842,10 +842,10 @@ class AdvancedOptimizationService:
                 'disk_usage': disk.percent,
                 'last_check': datetime.utcnow()
             })
-            
+
         except Exception as e:
             logger.error(f"Resource monitoring error: {e}")
-    
+
     async def _collect_performance_metrics(self) -> PerformanceMetrics:
         """Collect performance metrics"""
         try:
@@ -874,69 +874,69 @@ class AdvancedOptimizationService:
                 connection_count=0,
                 timestamp=datetime.utcnow()
             )
-    
+
     async def _cleanup_expired_cache_entries(self):
         """Cleanup expired cache entries"""
         try:
             current_time = datetime.utcnow()
             expired_keys = []
-            
+
             for key, entry in self.cache.items():
                 if entry.ttl and (current_time - entry.created_at).total_seconds() > entry.ttl:
                     expired_keys.append(key)
-            
+
             for key in expired_keys:
                 del self.cache[key]
                 self.cache_stats['evictions'] += 1
-            
+
             self.cache_stats['size'] = len(self.cache)
-            
+
         except Exception as e:
             logger.error(f"Cache cleanup error: {e}")
-    
+
     async def _cleanup_old_metrics(self):
         """Cleanup old performance metrics"""
         try:
             cutoff_time = datetime.utcnow() - timedelta(hours=24)
-            
+
             # Cleanup performance metrics
             old_metrics = [k for k in self.performance_metrics.keys() if k < cutoff_time]
             for key in old_metrics:
                 del self.performance_metrics[key]
-            
+
             # Cleanup resource usage
             old_usage = [k for k in self.resource_usage.keys() if k < cutoff_time]
             for key in old_usage:
                 del self.resource_usage[key]
-                
+
         except Exception as e:
             logger.error(f"Metrics cleanup error: {e}")
-    
+
     async def _evict_entries(self):
         """Evict cache entries based on strategy"""
         try:
             if not self.cache:
                 return
-            
+
             # Sort entries by priority and access time
             sorted_entries = sorted(
                 self.cache.items(),
                 key=lambda x: (x[1].priority, x[1].accessed_at)
             )
-            
+
             # Evict 10% of entries
             evict_count = max(1, len(sorted_entries) // 10)
-            
+
             for i in range(evict_count):
                 key, entry = sorted_entries[i]
                 del self.cache[key]
                 self.cache_stats['evictions'] += 1
-            
+
             self.cache_stats['size'] = len(self.cache)
-            
+
         except Exception as e:
             logger.error(f"Cache eviction error: {e}")
-    
+
     async def get_optimization_status(self) -> Dict[str, Any]:
         """Get optimization service status"""
         try:
@@ -959,24 +959,24 @@ class AdvancedOptimizationService:
         except Exception as e:
             logger.error(f"Failed to get optimization status: {e}")
             return {'error': str(e)}
-    
+
     async def shutdown(self):
         """Shutdown optimization service"""
         try:
             logger.info("Shutting down Advanced Optimization Service...")
-            
+
             self.optimization_enabled = False
-            
+
             # Cancel optimization tasks
             for task in self.optimization_tasks:
                 task.cancel()
-            
+
             await asyncio.gather(*self.optimization_tasks, return_exceptions=True)
-            
+
             # Clear caches
             self.cache.clear()
-            
+
             logger.info("Advanced Optimization Service shutdown complete")
-            
+
         except Exception as e:
             logger.error(f"Error during optimization service shutdown: {e}")

@@ -33,7 +33,7 @@ def cli(ctx, config, verbose):
     ctx.ensure_object(dict)
     ctx.obj['config_file'] = config
     ctx.obj['verbose'] = verbose
-    
+
     if verbose:
         console.print("[blue]AMAS CLI v1.0.0[/blue]")
 
@@ -51,9 +51,9 @@ def start(ctx, host, port, workers, reload):
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-        
+
         task = progress.add_task("Starting AMAS system...", total=None)
-        
+
         try:
             config_override = {
                 'api_host': host,
@@ -61,10 +61,10 @@ def start(ctx, host, port, workers, reload):
                 'api_workers': workers,
                 'api_reload': reload
             }
-            
+
             app = AMASApplication(config_override)
             asyncio.run(app.start())
-            
+
         except KeyboardInterrupt:
             progress.update(task, description="Shutting down...")
             console.print("[yellow]AMAS system stopped[/yellow]")
@@ -87,44 +87,44 @@ def submit_task(ctx, task_type, description, priority, params, wait):
         try:
             app = AMASApplication()
             await app.initialize()
-            
+
             task_data = {
                 'type': task_type,
                 'description': description,
                 'priority': priority,
                 'parameters': json.loads(params) if params else {}
             }
-            
+
             with Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
                 console=console,
             ) as progress:
-                
+
                 submit_task = progress.add_task("Submitting task...", total=None)
                 task_id = await app.submit_task(task_data)
                 progress.update(submit_task, description=f"Task submitted: {task_id}")
-                
+
                 console.print(f"[green]Task submitted successfully[/green]")
                 console.print(f"Task ID: [blue]{task_id}[/blue]")
-                
+
                 if wait:
                     wait_task = progress.add_task("Waiting for completion...", total=None)
-                    
+
                     while True:
                         result = await app.get_task_result(task_id)
                         if result.get('status') in ['completed', 'failed']:
                             break
                         await asyncio.sleep(2)
-                    
+
                     progress.stop()
                     console.print("[green]Task completed![/green]")
                     console.print(JSON.from_data(result))
-                
+
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
             sys.exit(1)
-    
+
     asyncio.run(_submit())
 
 
@@ -137,14 +137,14 @@ def get_result(ctx, task_id):
         try:
             app = AMASApplication()
             await app.initialize()
-            
+
             result = await app.get_task_result(task_id)
             console.print(JSON.from_data(result))
-            
+
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
             sys.exit(1)
-    
+
     asyncio.run(_get_result())
 
 
@@ -156,26 +156,26 @@ def status(ctx):
         try:
             app = AMASApplication()
             await app.initialize()
-            
+
             status = await app.get_system_status()
-            
+
             # Create status table
             table = Table(title="AMAS System Status")
             table.add_column("Component", style="cyan")
             table.add_column("Status", style="green")
             table.add_column("Details", style="white")
-            
+
             table.add_row("System", status.get('status', 'unknown'), f"Version {app.config.version}")
             table.add_row("Active Agents", str(status.get('active_agents', 0)), "Registered agents")
             table.add_row("Active Tasks", str(status.get('active_tasks', 0)), "Currently processing")
             table.add_row("Total Tasks", str(status.get('total_tasks', 0)), "All time processed")
-            
+
             console.print(table)
-            
+
         except Exception as e:
             console.print(f"[red]Error: {e}[/red]")
             sys.exit(1)
-    
+
     asyncio.run(_status())
 
 
@@ -185,12 +185,12 @@ def config_show(ctx):
     """Show current configuration"""
     try:
         config = get_settings()
-        
+
         # Create config table
         table = Table(title="AMAS Configuration")
         table.add_column("Setting", style="cyan")
         table.add_column("Value", style="white")
-        
+
         table.add_row("App Name", config.app_name)
         table.add_row("Version", config.version)
         table.add_row("Environment", config.environment)
@@ -200,9 +200,9 @@ def config_show(ctx):
         table.add_row("Log Level", config.log_level)
         table.add_row("LLM URL", config.llm.url)
         table.add_row("Database URL", config.database.url)
-        
+
         console.print(table)
-        
+
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         sys.exit(1)
@@ -219,13 +219,13 @@ def health(ctx, check_deps, check_services, check_all):
         try:
             if check_all:
                 check_deps = check_services = True
-            
+
             console.print("[blue]AMAS Health Check[/blue]")
-            
+
             # Basic configuration check
             config = get_settings()
             console.print("[green]✓[/green] Configuration loaded")
-            
+
             if check_deps:
                 # Check Python dependencies
                 try:
@@ -235,26 +235,26 @@ def health(ctx, check_deps, check_services, check_all):
                     console.print("[green]✓[/green] Core dependencies available")
                 except ImportError as e:
                     console.print(f"[red]✗[/red] Missing dependency: {e}")
-            
+
             if check_services:
                 # Check external services
                 app = AMASApplication()
                 await app.initialize()
-                
+
                 status = await app.get_system_status()
                 if status.get('status') == 'operational':
                     console.print("[green]✓[/green] All services operational")
                 else:
                     console.print("[yellow]⚠[/yellow] Some services may be unavailable")
-                
+
                 await app.shutdown()
-            
+
             console.print("[green]Health check completed[/green]")
-            
+
         except Exception as e:
             console.print(f"[red]Health check failed: {e}[/red]")
             sys.exit(1)
-    
+
     asyncio.run(_health())
 
 

@@ -15,18 +15,18 @@ logger = logging.getLogger(__name__)
 
 class OfflineSetup:
     """Complete offline setup for AMAS system"""
-    
+
     def __init__(self):
         self.workspace_path = Path("/workspace")
         self.data_path = self.workspace_path / "data"
         self.models_path = self.workspace_path / "models"
         self.logs_path = self.workspace_path / "logs"
-        
+
     def create_offline_directories(self):
         """Create all necessary offline directories"""
         try:
             logger.info("📁 Creating offline directory structure...")
-            
+
             directories = [
                 self.data_path,
                 self.models_path,
@@ -43,23 +43,23 @@ class OfflineSetup:
                 self.models_path / "embedding",
                 self.models_path / "classification"
             ]
-            
+
             for directory in directories:
                 directory.mkdir(parents=True, exist_ok=True)
                 logger.info(f"   ✅ Created: {directory}")
-            
+
             logger.info("✅ Offline directory structure created")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error creating directories: {e}")
             return False
-    
+
     def create_offline_config_files(self):
         """Create offline configuration files"""
         try:
             logger.info("⚙️ Creating offline configuration files...")
-            
+
             # Create offline environment file
             env_content = """# AMAS Offline Environment Configuration
 AMAS_MODE=offline
@@ -92,12 +92,12 @@ AMAS_DATA_PATH=/workspace/data
 AMAS_MODELS_PATH=/workspace/models
 AMAS_LOGS_PATH=/workspace/logs
 """
-            
+
             env_file = self.workspace_path / ".env.offline"
             with open(env_file, 'w') as f:
                 f.write(env_content)
             logger.info(f"   ✅ Created: {env_file}")
-            
+
             # Create offline requirements file
             requirements_content = """# AMAS Offline Requirements
 # Core dependencies for offline operation
@@ -136,12 +136,12 @@ pyyaml==6.0.1
 click==8.1.7
 rich==13.7.0
 """
-            
+
             req_file = self.workspace_path / "requirements-offline.txt"
             with open(req_file, 'w') as f:
                 f.write(requirements_content)
             logger.info(f"   ✅ Created: {req_file}")
-            
+
             # Create offline startup script
             startup_script = """#!/bin/bash
 # AMAS Offline Startup Script
@@ -161,25 +161,25 @@ python3 offline_example.py
 
 echo "✅ AMAS Offline System started"
 """
-            
+
             startup_file = self.workspace_path / "start_offline.sh"
             with open(startup_file, 'w') as f:
                 f.write(startup_script)
             os.chmod(startup_file, 0o755)
             logger.info(f"   ✅ Created: {startup_file}")
-            
+
             logger.info("✅ Offline configuration files created")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error creating config files: {e}")
             return False
-    
+
     def create_offline_datasets(self):
         """Create offline datasets for local operation"""
         try:
             logger.info("📊 Creating offline datasets...")
-            
+
             # Create sample threat intelligence dataset
             threat_intel = {
                 "malware_signatures": [
@@ -221,13 +221,13 @@ echo "✅ AMAS Offline System started"
                     }
                 ]
             }
-            
+
             threat_file = self.data_path / "datasets" / "threat_intelligence.json"
             with open(threat_file, 'w') as f:
                 import json
                 json.dump(threat_intel, f, indent=2)
             logger.info(f"   ✅ Created: {threat_file}")
-            
+
             # Create sample OSINT dataset
             osint_data = {
                 "news_sources": [
@@ -255,25 +255,25 @@ echo "✅ AMAS Offline System started"
                     }
                 ]
             }
-            
+
             osint_file = self.data_path / "datasets" / "osint_sources.json"
             with open(osint_file, 'w') as f:
                 import json
                 json.dump(osint_data, f, indent=2)
             logger.info(f"   ✅ Created: {osint_file}")
-            
+
             logger.info("✅ Offline datasets created")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error creating datasets: {e}")
             return False
-    
+
     def create_docker_offline_setup(self):
         """Create Docker offline setup"""
         try:
             logger.info("🐳 Creating Docker offline setup...")
-            
+
             # Create offline Dockerfile
             dockerfile_content = """FROM python:3.13-slim
 
@@ -310,12 +310,12 @@ EXPOSE 8000
 # Start command
 CMD ["python3", "offline_example.py"]
 """
-            
+
             dockerfile = self.workspace_path / "Dockerfile.offline"
             with open(dockerfile, 'w') as f:
                 f.write(dockerfile_content)
             logger.info(f"   ✅ Created: {dockerfile}")
-            
+
             # Create offline startup script
             start_offline_script = """#!/bin/bash
 # AMAS Offline Docker Startup
@@ -330,20 +330,20 @@ echo "✅ AMAS Offline System started with Docker"
 echo "🌐 Access: http://localhost:8000"
 echo "📊 Health: http://localhost:8000/health"
 """
-            
+
             start_script = self.workspace_path / "start_offline_docker.sh"
             with open(start_script, 'w') as f:
                 f.write(start_offline_script)
             os.chmod(start_script, 0o755)
             logger.info(f"   ✅ Created: {start_script}")
-            
+
             logger.info("✅ Docker offline setup created")
             return True
-            
+
         except Exception as e:
             logger.error(f"Error creating Docker setup: {e}")
             return False
-    
+
     def run_offline_setup(self):
         """Run complete offline setup"""
         try:
@@ -351,23 +351,23 @@ echo "📊 Health: http://localhost:8000/health"
             logger.info("=" * 50)
             logger.info("🔒 Complete Local Isolation Setup")
             logger.info("=" * 50)
-            
+
             # Create directories
             if not self.create_offline_directories():
                 return False
-            
+
             # Create configuration files
             if not self.create_offline_config_files():
                 return False
-            
+
             # Create datasets
             if not self.create_offline_datasets():
                 return False
-            
+
             # Create Docker setup
             if not self.create_docker_offline_setup():
                 return False
-            
+
             # Final summary
             logger.info("=" * 50)
             logger.info("🎉 OFFLINE SETUP COMPLETED SUCCESSFULLY!")
@@ -382,9 +382,9 @@ echo "📊 Health: http://localhost:8000/health"
             logger.info("   ./start_offline.sh")
             logger.info("   ./start_offline_docker.sh")
             logger.info("=" * 50)
-            
+
             return True
-            
+
         except Exception as e:
             logger.error(f"Error in offline setup: {e}")
             return False
@@ -394,14 +394,14 @@ def main():
     try:
         setup = OfflineSetup()
         success = setup.run_offline_setup()
-        
+
         if success:
             logger.info("🏆 AMAS Offline setup completed successfully!")
             return 0
         else:
             logger.error("❌ AMAS Offline setup failed!")
             return 1
-            
+
     except Exception as e:
         logger.error(f"Setup error: {e}")
         return 1

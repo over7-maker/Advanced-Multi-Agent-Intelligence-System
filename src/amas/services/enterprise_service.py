@@ -76,14 +76,14 @@ class SecurityAudit:
 
 class EnterpriseService:
     """Enterprise service for Phase 10"""
-    
+
     def __init__(self, config: Dict[str, Any]):
         self.config = config
         self.enterprise_enabled = True
         self.tenants = {}
         self.compliance_reports = {}
         self.security_audits = {}
-        
+
         # Enterprise configuration
         self.enterprise_config = {
             'multi_tenancy_enabled': config.get('multi_tenancy_enabled', True),
@@ -95,29 +95,29 @@ class EnterpriseService:
             'audit_logging': config.get('audit_logging', True),
             'access_control': config.get('access_control', True)
         }
-        
+
         # Background tasks
         self.enterprise_tasks = []
-        
+
         logger.info("Enterprise Service initialized")
-    
+
     async def initialize(self):
         """Initialize enterprise service"""
         try:
             logger.info("Initializing Enterprise Service...")
-            
+
             await self._initialize_tenant_management()
             await self._initialize_compliance_monitoring()
             await self._initialize_security_auditing()
             await self._initialize_data_governance()
             await self._start_enterprise_tasks()
-            
+
             logger.info("Enterprise Service initialized successfully")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize Enterprise Service: {e}")
             raise
-    
+
     async def _initialize_tenant_management(self):
         """Initialize tenant management"""
         try:
@@ -140,15 +140,15 @@ class EnterpriseService:
                     'features': ['all']
                 }
             )
-            
+
             self.tenants['system'] = default_tenant
-            
+
             logger.info("Tenant management initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize tenant management: {e}")
             raise
-    
+
     async def _initialize_compliance_monitoring(self):
         """Initialize compliance monitoring"""
         try:
@@ -189,13 +189,13 @@ class EnterpriseService:
                     'reporting_interval': 14 * 24 * 3600  # 14 days
                 }
             }
-            
+
             logger.info("Compliance monitoring initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize compliance monitoring: {e}")
             raise
-    
+
     async def _initialize_security_auditing(self):
         """Initialize security auditing"""
         try:
@@ -222,13 +222,13 @@ class EnterpriseService:
                     'scope': ['regulatory_requirements', 'policies', 'procedures']
                 }
             }
-            
+
             logger.info("Security auditing initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize security auditing: {e}")
             raise
-    
+
     async def _initialize_data_governance(self):
         """Initialize data governance"""
         try:
@@ -251,18 +251,18 @@ class EnterpriseService:
                     'user_data': '3_years'
                 }
             }
-            
+
             logger.info("Data governance initialized")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize data governance: {e}")
             raise
-    
+
     async def _start_enterprise_tasks(self):
         """Start background enterprise tasks"""
         try:
             logger.info("Starting enterprise tasks...")
-            
+
             self.enterprise_tasks = [
                 asyncio.create_task(self._monitor_compliance()),
                 asyncio.create_task(self._conduct_security_audits()),
@@ -270,18 +270,18 @@ class EnterpriseService:
                 asyncio.create_task(self._generate_compliance_reports()),
                 asyncio.create_task(self._monitor_tenant_usage())
             ]
-            
+
             logger.info("Enterprise tasks started")
-            
+
         except Exception as e:
             logger.error(f"Failed to start enterprise tasks: {e}")
             raise
-    
+
     async def create_tenant(self, tenant_config: Dict[str, Any]) -> str:
         """Create a new tenant"""
         try:
             tenant_id = tenant_config.get('tenant_id', str(uuid.uuid4()))
-            
+
             # Create tenant
             tenant = Tenant(
                 tenant_id=tenant_id,
@@ -299,37 +299,37 @@ class EnterpriseService:
                 admin_users=tenant_config.get('admin_users', []),
                 settings=tenant_config.get('settings', {})
             )
-            
+
             self.tenants[tenant_id] = tenant
-            
+
             # Activate tenant
             await self._activate_tenant(tenant_id)
-            
+
             logger.info(f"Created tenant: {tenant_id}")
             return tenant_id
-            
+
         except Exception as e:
             logger.error(f"Failed to create tenant: {e}")
             raise
-    
+
     async def _activate_tenant(self, tenant_id: str):
         """Activate a tenant"""
         try:
             if tenant_id in self.tenants:
                 self.tenants[tenant_id].status = TenantStatus.ACTIVE
                 logger.info(f"Activated tenant: {tenant_id}")
-            
+
         except Exception as e:
             logger.error(f"Failed to activate tenant {tenant_id}: {e}")
-    
+
     async def get_tenant_data(self, tenant_id: str, data_type: str) -> Dict[str, Any]:
         """Get tenant-specific data"""
         try:
             if tenant_id not in self.tenants:
                 raise ValueError(f"Tenant {tenant_id} not found")
-            
+
             tenant = self.tenants[tenant_id]
-            
+
             # Mock tenant data retrieval
             data = {
                 'tenant_id': tenant_id,
@@ -339,47 +339,47 @@ class EnterpriseService:
                 'compliance_standards': [std.value for std in tenant.compliance_standards],
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
             return data
-            
+
         except Exception as e:
             logger.error(f"Failed to get tenant data: {e}")
             raise
-    
+
     async def store_tenant_data(self, tenant_id: str, data: Dict[str, Any]) -> bool:
         """Store tenant-specific data"""
         try:
             if tenant_id not in self.tenants:
                 raise ValueError(f"Tenant {tenant_id} not found")
-            
+
             tenant = self.tenants[tenant_id]
-            
+
             # Check data residency
             if self.enterprise_config['data_residency_enforcement']:
                 await self._enforce_data_residency(tenant, data)
-            
+
             # Encrypt data if required
             if self.enterprise_config['encryption_at_rest']:
                 data = await self._encrypt_tenant_data(tenant, data)
-            
+
             # Mock data storage
             logger.info(f"Stored data for tenant {tenant_id}")
             return True
-            
+
         except Exception as e:
             logger.error(f"Failed to store tenant data: {e}")
             return False
-    
+
     async def _enforce_data_residency(self, tenant: Tenant, data: Dict[str, Any]):
         """Enforce data residency requirements"""
         try:
             # Mock data residency enforcement
             if tenant.data_residency != 'global':
                 logger.info(f"Enforcing data residency for tenant {tenant.tenant_id}: {tenant.data_residency}")
-            
+
         except Exception as e:
             logger.error(f"Failed to enforce data residency: {e}")
-    
+
     async def _encrypt_tenant_data(self, tenant: Tenant, data: Dict[str, Any]) -> Dict[str, Any]:
         """Encrypt tenant data"""
         try:
@@ -391,24 +391,24 @@ class EnterpriseService:
                 'data': data,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
             return encrypted_data
-            
+
         except Exception as e:
             logger.error(f"Failed to encrypt tenant data: {e}")
             return data
-    
+
     async def generate_compliance_report(self, tenant_id: str, standard: ComplianceStandard) -> str:
         """Generate compliance report for tenant"""
         try:
             if tenant_id not in self.tenants:
                 raise ValueError(f"Tenant {tenant_id} not found")
-            
+
             tenant = self.tenants[tenant_id]
-            
+
             if standard not in tenant.compliance_standards:
                 raise ValueError(f"Tenant {tenant_id} not subject to {standard.value}")
-            
+
             # Generate compliance report
             report_id = str(uuid.uuid4())
             report = ComplianceReport(
@@ -437,25 +437,25 @@ class EnterpriseService:
                 generated_at=datetime.utcnow(),
                 valid_until=datetime.utcnow() + timedelta(days=30)
             )
-            
+
             self.compliance_reports[report_id] = report
-            
+
             logger.info(f"Generated compliance report {report_id} for tenant {tenant_id}")
             return report_id
-            
+
         except Exception as e:
             logger.error(f"Failed to generate compliance report: {e}")
             raise
-    
+
     async def conduct_security_audit(self, tenant_id: str, audit_type: str) -> str:
         """Conduct security audit for tenant"""
         try:
             if tenant_id not in self.tenants:
                 raise ValueError(f"Tenant {tenant_id} not found")
-            
+
             if audit_type not in self.audit_types:
                 raise ValueError(f"Unknown audit type: {audit_type}")
-            
+
             # Conduct security audit
             audit_id = str(uuid.uuid4())
             audit = SecurityAudit(
@@ -479,20 +479,20 @@ class EnterpriseService:
                 created_at=datetime.utcnow(),
                 completed_at=None
             )
-            
+
             self.security_audits[audit_id] = audit
-            
+
             # Complete audit
             audit.status = 'completed'
             audit.completed_at = datetime.utcnow()
-            
+
             logger.info(f"Conducted security audit {audit_id} for tenant {tenant_id}")
             return audit_id
-            
+
         except Exception as e:
             logger.error(f"Failed to conduct security audit: {e}")
             raise
-    
+
     async def _monitor_compliance(self):
         """Monitor compliance for all tenants"""
         while self.enterprise_enabled:
@@ -502,19 +502,19 @@ class EnterpriseService:
                         # Check compliance for each standard
                         for standard in tenant.compliance_standards:
                             compliance_status = await self._check_compliance_status(tenant_id, standard)
-                            
+
                             if compliance_status['score'] < 0.8:  # Below 80% compliance
                                 logger.warning(f"Low compliance score for tenant {tenant_id}, standard {standard.value}")
-                                
+
                                 # Generate compliance report
                                 await self.generate_compliance_report(tenant_id, standard)
-                
+
                 await asyncio.sleep(3600)  # Check every hour
-                
+
             except Exception as e:
                 logger.error(f"Compliance monitoring error: {e}")
                 await asyncio.sleep(3600)
-    
+
     async def _check_compliance_status(self, tenant_id: str, standard: ComplianceStandard) -> Dict[str, Any]:
         """Check compliance status for tenant and standard"""
         try:
@@ -526,11 +526,11 @@ class EnterpriseService:
                 'status': 'compliant',
                 'last_checked': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Failed to check compliance status: {e}")
             return {'score': 0.0, 'status': 'error'}
-    
+
     async def _conduct_security_audits(self):
         """Conduct security audits for all tenants"""
         while self.enterprise_enabled:
@@ -540,26 +540,26 @@ class EnterpriseService:
                         # Conduct different types of audits
                         for audit_type in self.audit_types:
                             await self.conduct_security_audit(tenant_id, audit_type)
-                
+
                 await asyncio.sleep(24 * 3600)  # Conduct audits daily
-                
+
             except Exception as e:
                 logger.error(f"Security audit error: {e}")
                 await asyncio.sleep(3600)
-    
+
     async def _enforce_data_governance(self):
         """Enforce data governance policies"""
         while self.enterprise_enabled:
             try:
                 # Mock data governance enforcement
                 logger.info("Enforcing data governance policies")
-                
+
                 await asyncio.sleep(3600)  # Enforce every hour
-                
+
             except Exception as e:
                 logger.error(f"Data governance enforcement error: {e}")
                 await asyncio.sleep(3600)
-    
+
     async def _generate_compliance_reports(self):
         """Generate compliance reports"""
         while self.enterprise_enabled:
@@ -569,13 +569,13 @@ class EnterpriseService:
                     if tenant.status == TenantStatus.ACTIVE and tenant.compliance_standards:
                         for standard in tenant.compliance_standards:
                             await self.generate_compliance_report(tenant_id, standard)
-                
+
                 await asyncio.sleep(7 * 24 * 3600)  # Generate reports weekly
-                
+
             except Exception as e:
                 logger.error(f"Compliance report generation error: {e}")
                 await asyncio.sleep(3600)
-    
+
     async def _monitor_tenant_usage(self):
         """Monitor tenant usage and limits"""
         while self.enterprise_enabled:
@@ -585,20 +585,20 @@ class EnterpriseService:
                         # Check usage against limits
                         usage = await self._get_tenant_usage(tenant_id)
                         limits = tenant.settings
-                        
+
                         # Check if usage exceeds limits
                         if usage.get('users', 0) > limits.get('max_users', 1000):
                             logger.warning(f"Tenant {tenant_id} exceeded user limit")
-                        
+
                         if usage.get('storage', 0) > self._parse_storage_limit(limits.get('max_storage', '1TB')):
                             logger.warning(f"Tenant {tenant_id} exceeded storage limit")
-                
+
                 await asyncio.sleep(3600)  # Monitor every hour
-                
+
             except Exception as e:
                 logger.error(f"Tenant usage monitoring error: {e}")
                 await asyncio.sleep(3600)
-    
+
     async def _get_tenant_usage(self, tenant_id: str) -> Dict[str, Any]:
         """Get tenant usage statistics"""
         try:
@@ -609,11 +609,11 @@ class EnterpriseService:
                 'api_calls': 1000,
                 'last_activity': datetime.utcnow().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Failed to get tenant usage: {e}")
             return {}
-    
+
     def _parse_storage_limit(self, storage_limit: str) -> int:
         """Parse storage limit string to bytes"""
         try:
@@ -627,7 +627,7 @@ class EnterpriseService:
                 return int(storage_limit)
         except Exception:
             return 1024 * 1024 * 1024 * 1024  # Default 1TB
-    
+
     def _generate_encryption_key(self) -> str:
         """Generate encryption key for tenant"""
         try:
@@ -635,7 +635,7 @@ class EnterpriseService:
         except Exception as e:
             logger.error(f"Failed to generate encryption key: {e}")
             return hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()
-    
+
     async def get_enterprise_status(self) -> Dict[str, Any]:
         """Get enterprise service status"""
         try:
@@ -662,21 +662,21 @@ class EnterpriseService:
         except Exception as e:
             logger.error(f"Failed to get enterprise status: {e}")
             return {'error': str(e)}
-    
+
     async def shutdown(self):
         """Shutdown enterprise service"""
         try:
             logger.info("Shutting down Enterprise Service...")
-            
+
             self.enterprise_enabled = False
-            
+
             # Cancel enterprise tasks
             for task in self.enterprise_tasks:
                 task.cancel()
-            
+
             await asyncio.gather(*self.enterprise_tasks, return_exceptions=True)
-            
+
             logger.info("Enterprise Service shutdown complete")
-            
+
         except Exception as e:
             logger.error(f"Error during enterprise service shutdown: {e}")

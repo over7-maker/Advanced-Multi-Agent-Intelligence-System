@@ -25,64 +25,64 @@ class ReasoningStep(Enum):
 class ReactAgent(IntelligenceAgent):
     """
     ReAct-based intelligence agent implementation.
-    
+
     This agent follows the ReAct framework for adaptive reasoning and decision-making
     in intelligence operations.
     """
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.reasoning_trace = []
         self.current_step = ReasoningStep.OBSERVE
         self.max_reasoning_steps = 10
         self.reasoning_timeout = 300  # 5 minutes
-    
+
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
         Execute a task using the ReAct framework.
-        
+
         Args:
             task: Task definition with parameters and context
-            
+
         Returns:
             Task execution results with reasoning trace
         """
         self.logger.info(f"Starting ReAct execution for task: {task.get('id', 'unknown')}")
-        
+
         # Initialize reasoning trace
         self.reasoning_trace = []
         self.current_step = ReasoningStep.OBSERVE
-        
+
         # Start ReAct cycle
         start_time = datetime.utcnow()
         timeout = asyncio.create_task(asyncio.sleep(self.reasoning_timeout))
-        
+
         try:
             while len(self.reasoning_trace) < self.max_reasoning_steps:
                 # Check for timeout
                 if timeout.done():
                     raise TimeoutError("ReAct reasoning timeout exceeded")
-                
+
                 # Execute current reasoning step
                 step_result = await self._execute_reasoning_step(task)
-                
+
                 # Add to reasoning trace
                 self.reasoning_trace.append({
                     'step': self.current_step.value,
                     'timestamp': datetime.utcnow().isoformat(),
                     'result': step_result
                 })
-                
+
                 # Check if task is complete
                 if step_result.get('task_complete', False):
                     break
-                
+
                 # Move to next reasoning step
                 self.current_step = self._get_next_step(step_result)
-            
+
             # Cancel timeout
             timeout.cancel()
-            
+
             # Compile final result
             execution_time = (datetime.utcnow() - start_time).total_seconds()
             result = {
@@ -92,14 +92,14 @@ class ReactAgent(IntelligenceAgent):
                 'reasoning_trace': self.reasoning_trace,
                 'final_result': self.reasoning_trace[-1]['result'] if self.reasoning_trace else None
             }
-            
+
             self.logger.info(f"ReAct execution completed for task: {task.get('id', 'unknown')}")
             return result
-            
+
         except Exception as e:
             # Cancel timeout
             timeout.cancel()
-            
+
             execution_time = (datetime.utcnow() - start_time).total_seconds()
             result = {
                 'task_id': task.get('id'),
@@ -108,17 +108,17 @@ class ReactAgent(IntelligenceAgent):
                 'reasoning_trace': self.reasoning_trace,
                 'error': str(e)
             }
-            
+
             self.logger.error(f"ReAct execution failed for task: {task.get('id', 'unknown')}: {e}")
             return result
-    
+
     async def _execute_reasoning_step(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
         Execute a single reasoning step.
-        
+
         Args:
             task: Current task context
-            
+
         Returns:
             Step execution result
         """
@@ -132,19 +132,19 @@ class ReactAgent(IntelligenceAgent):
             return await self._reflect(task)
         else:
             raise ValueError(f"Unknown reasoning step: {self.current_step}")
-    
+
     async def _observe(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
         Observe the current state and gather information.
-        
+
         Args:
             task: Current task context
-            
+
         Returns:
             Observation results
         """
         self.logger.debug(f"Observing for task: {task.get('id', 'unknown')}")
-        
+
         # Gather relevant information
         observations = {
             'task_context': task,
@@ -152,7 +152,7 @@ class ReactAgent(IntelligenceAgent):
             'available_capabilities': self.capabilities,
             'current_time': datetime.utcnow().isoformat()
         }
-        
+
         # Query knowledge sources if available
         if self.vector_service:
             try:
@@ -166,7 +166,7 @@ class ReactAgent(IntelligenceAgent):
                     observations['vector_search_results'] = search_results
             except Exception as e:
                 self.logger.warning(f"Vector search failed during observation: {e}")
-        
+
         if self.knowledge_graph:
             try:
                 # Query knowledge graph for relevant entities
@@ -176,50 +176,50 @@ class ReactAgent(IntelligenceAgent):
                     observations['knowledge_graph_results'] = graph_results
             except Exception as e:
                 self.logger.warning(f"Knowledge graph query failed during observation: {e}")
-        
+
         return {
             'step': 'observe',
             'observations': observations,
             'next_action': 'think'
         }
-    
+
     async def _think(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
         Think about the observations and plan next actions.
-        
+
         Args:
             task: Current task context
-            
+
         Returns:
             Thinking results
         """
         self.logger.debug(f"Thinking for task: {task.get('id', 'unknown')}")
-        
+
         # Get the latest observations
         latest_observations = self.reasoning_trace[-1]['result']['observations'] if self.reasoning_trace else {}
-        
+
         # Use LLM for reasoning if available
         if self.llm_service:
             try:
                 # Create reasoning prompt
                 reasoning_prompt = self._create_reasoning_prompt(task, latest_observations)
-                
+
                 # Get LLM reasoning
                 reasoning_result = await self.llm_service.generate(
                     prompt=reasoning_prompt,
                     max_tokens=500,
                     temperature=0.7
                 )
-                
+
                 # Parse reasoning result
                 reasoning = self._parse_reasoning_result(reasoning_result)
-                
+
                 return {
                     'step': 'think',
                     'reasoning': reasoning,
                     'next_action': reasoning.get('next_action', 'act')
                 }
-                
+
             except Exception as e:
                 self.logger.warning(f"LLM reasoning failed: {e}")
                 # Fallback to simple reasoning
@@ -227,29 +227,29 @@ class ReactAgent(IntelligenceAgent):
         else:
             # Fallback to simple reasoning
             return self._simple_reasoning(task, latest_observations)
-    
+
     async def _act(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
         Execute actions based on reasoning.
-        
+
         Args:
             task: Current task context
-            
+
         Returns:
             Action execution results
         """
         self.logger.debug(f"Acting for task: {task.get('id', 'unknown')}")
-        
+
         # Get the latest reasoning
         latest_reasoning = self.reasoning_trace[-1]['result'] if self.reasoning_trace else {}
-        
+
         # Determine actions to take
         actions = latest_reasoning.get('reasoning', {}).get('actions', [])
-        
+
         if not actions:
             # Default action based on task type
             actions = self._get_default_actions(task)
-        
+
         # Execute actions
         action_results = []
         for action in actions:
@@ -268,54 +268,54 @@ class ReactAgent(IntelligenceAgent):
                     'status': 'failed',
                     'error': str(e)
                 })
-        
+
         # Determine if task is complete
         task_complete = self._evaluate_task_completion(task, action_results)
-        
+
         return {
             'step': 'act',
             'actions': action_results,
             'task_complete': task_complete,
             'next_action': 'reflect' if task_complete else 'observe'
         }
-    
+
     async def _reflect(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
         Reflect on the results and determine next steps.
-        
+
         Args:
             task: Current task context
-            
+
         Returns:
             Reflection results
         """
         self.logger.debug(f"Reflecting for task: {task.get('id', 'unknown')}")
-        
+
         # Get the latest action results
         latest_actions = self.reasoning_trace[-1]['result'] if self.reasoning_trace else {}
-        
+
         # Use LLM for reflection if available
         if self.llm_service:
             try:
                 # Create reflection prompt
                 reflection_prompt = self._create_reflection_prompt(task, latest_actions)
-                
+
                 # Get LLM reflection
                 reflection_result = await self.llm_service.generate(
                     prompt=reflection_prompt,
                     max_tokens=300,
                     temperature=0.5
                 )
-                
+
                 # Parse reflection result
                 reflection = self._parse_reflection_result(reflection_result)
-                
+
                 return {
                     'step': 'reflect',
                     'reflection': reflection,
                     'next_action': reflection.get('next_action', 'observe')
                 }
-                
+
             except Exception as e:
                 self.logger.warning(f"LLM reflection failed: {e}")
                 # Fallback to simple reflection
@@ -323,11 +323,11 @@ class ReactAgent(IntelligenceAgent):
         else:
             # Fallback to simple reflection
             return self._simple_reflection(task, latest_actions)
-    
+
     def _get_next_step(self, step_result: Dict[str, Any]) -> ReasoningStep:
         """Determine the next reasoning step based on current result."""
         next_action = step_result.get('next_action', 'observe')
-        
+
         if next_action == 'think':
             return ReasoningStep.THINK
         elif next_action == 'act':
@@ -336,7 +336,7 @@ class ReactAgent(IntelligenceAgent):
             return ReasoningStep.REFLECT
         else:
             return ReasoningStep.OBSERVE
-    
+
     def _create_reasoning_prompt(self, task: Dict[str, Any], observations: Dict[str, Any]) -> str:
         """Create a reasoning prompt for the LLM."""
         return f"""
@@ -361,7 +361,7 @@ Provide your reasoning in JSON format:
     "next_action": "think|act|observe|reflect"
 }}
 """
-    
+
     def _create_reflection_prompt(self, task: Dict[str, Any], actions: Dict[str, Any]) -> str:
         """Create a reflection prompt for the LLM."""
         return f"""
@@ -382,7 +382,7 @@ Provide your reflection in JSON format:
     "next_action": "think|act|observe|reflect|complete"
 }}
 """
-    
+
     def _parse_reasoning_result(self, result: str) -> Dict[str, Any]:
         """Parse LLM reasoning result."""
         try:
@@ -394,7 +394,7 @@ Provide your reflection in JSON format:
                 "actions": [],
                 "next_action": "act"
             }
-    
+
     def _parse_reflection_result(self, result: str) -> Dict[str, Any]:
         """Parse LLM reflection result."""
         try:
@@ -406,7 +406,7 @@ Provide your reflection in JSON format:
                 "lessons_learned": "",
                 "next_action": "observe"
             }
-    
+
     def _format_observations(self, observations: Dict[str, Any]) -> str:
         """Format observations for display."""
         formatted = []
@@ -416,7 +416,7 @@ Provide your reflection in JSON format:
             else:
                 formatted.append(f"{key}: {value}")
         return "\n".join(formatted)
-    
+
     def _simple_reasoning(self, task: Dict[str, Any], observations: Dict[str, Any]) -> Dict[str, Any]:
         """Simple reasoning fallback when LLM is not available."""
         return {
@@ -428,7 +428,7 @@ Provide your reflection in JSON format:
             },
             'next_action': 'act'
         }
-    
+
     def _simple_reflection(self, task: Dict[str, Any], actions: Dict[str, Any]) -> Dict[str, Any]:
         """Simple reflection fallback when LLM is not available."""
         return {
@@ -440,11 +440,11 @@ Provide your reflection in JSON format:
             },
             'next_action': 'complete'
         }
-    
+
     def _get_default_actions(self, task: Dict[str, Any]) -> List[str]:
         """Get default actions based on task type."""
         task_type = task.get('type', 'unknown')
-        
+
         if task_type == 'osint':
             return ['collect_data', 'analyze_data', 'generate_report']
         elif task_type == 'investigation':
@@ -453,13 +453,13 @@ Provide your reflection in JSON format:
             return ['acquire_evidence', 'extract_artifacts', 'analyze_timeline']
         else:
             return ['process_task']
-    
+
     async def _execute_action(self, action: str, task: Dict[str, Any]) -> Any:
         """Execute a specific action."""
         # This is a placeholder - subclasses should override this method
         self.logger.info(f"Executing action: {action}")
         return {"action": action, "status": "completed"}
-    
+
     def _evaluate_task_completion(self, task: Dict[str, Any], action_results: List[Dict[str, Any]]) -> bool:
         """Evaluate if the task is complete based on action results."""
         # Simple completion logic - subclasses should override this

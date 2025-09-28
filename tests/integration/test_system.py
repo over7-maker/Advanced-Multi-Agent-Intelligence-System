@@ -23,7 +23,7 @@ async def test_amas_system():
     try:
         # Import the main system
         from main import AMASIntelligenceSystem
-        
+
         # Configuration
         config = {
             'llm_service_url': 'http://localhost:11434',
@@ -32,17 +32,17 @@ async def test_amas_system():
             'n8n_url': 'http://localhost:5678',
             'n8n_api_key': 'your_api_key_here'
         }
-        
+
         # Initialize system
         logger.info("Initializing AMAS Intelligence System...")
         amas = AMASIntelligenceSystem(config)
         await amas.initialize()
-        
+
         # Test system status
         logger.info("Getting system status...")
         status = await amas.get_system_status()
         logger.info(f"System status: {status}")
-        
+
         # Test task submission
         logger.info("Submitting test task...")
         task_data = {
@@ -54,21 +54,21 @@ async def test_amas_system():
                 'keywords': ['cyber', 'threat', 'security']
             }
         }
-        
+
         task_id = await amas.submit_intelligence_task(task_data)
         logger.info(f"Submitted task {task_id}")
-        
+
         # Wait a bit for task processing
         await asyncio.sleep(2)
-        
+
         # Get updated status
         status = await amas.get_system_status()
         logger.info(f"Updated system status: {status}")
-        
+
         # Shutdown
         await amas.shutdown()
         logger.info("AMAS Intelligence System test completed successfully")
-        
+
     except Exception as e:
         logger.error(f"Test failed: {e}")
         sys.exit(1)

@@ -15,10 +15,10 @@ sys.path.insert(0, str(src_path))
 
 try:
     from amas.cli import main
-    
+
     if __name__ == "__main__":
         main()
-        
+
 except ImportError as e:
     print(f"Error: Could not import AMAS modules: {e}")
     print("Please ensure you have installed the requirements:")

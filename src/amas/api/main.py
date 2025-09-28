@@ -85,7 +85,7 @@ async def startup_event():
     global amas_system
     try:
         logger.info("Initializing AMAS Intelligence System...")
-        
+
         # Configuration
         config = {
             'llm_service_url': 'http://localhost:11434',
@@ -110,13 +110,13 @@ async def startup_event():
             'n8n_url': 'http://localhost:5678',
             'n8n_api_key': 'your_n8n_api_key_here'
         }
-        
+
         # Initialize AMAS system
         amas_system = AMASIntelligenceSystem(config)
         await amas_system.initialize()
-        
+
         logger.info("AMAS Intelligence System initialized successfully")
-        
+
     except Exception as e:
         logger.error(f"Failed to initialize AMAS system: {e}")
         raise
@@ -135,16 +135,16 @@ async def health_check():
     """Get system health status"""
     try:
         amas = await get_amas_system()
-        
+
         # Get service health
         service_health = await amas.service_manager.health_check_all_services()
-        
+
         return HealthCheck(
             status=service_health.get('overall_status', 'unknown'),
             services=service_health.get('services', {}),
             timestamp=datetime.utcnow().isoformat()
         )
-        
+
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return HealthCheck(
@@ -160,7 +160,7 @@ async def get_system_status():
     try:
         amas = await get_amas_system()
         status = await amas.get_system_status()
-        
+
         return SystemStatus(
             status=status.get('status', 'unknown'),
             agents=status.get('agents', 0),
@@ -168,7 +168,7 @@ async def get_system_status():
             total_tasks=status.get('total_tasks', 0),
             timestamp=status.get('timestamp', datetime.utcnow().isoformat())
         )
-        
+
     except Exception as e:
         logger.error(f"Error getting system status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -183,7 +183,7 @@ async def submit_task(
     """Submit a new intelligence task"""
     try:
         amas = await get_amas_system()
-        
+
         # Submit task
         task_id = await amas.submit_intelligence_task({
             'type': task_request.type,
@@ -191,7 +191,7 @@ async def submit_task(
             'parameters': task_request.parameters,
             'priority': task_request.priority
         })
-        
+
         # Log audit event
         await amas.security_service.log_audit_event(
             event_type='task_submission',
@@ -200,13 +200,13 @@ async def submit_task(
             details=f'Task submitted: {task_request.type}',
             classification='system'
         )
-        
+
         return TaskResponse(
             task_id=task_id,
             status="submitted",
             message="Task submitted successfully"
         )
-        
+
     except Exception as e:
         logger.error(f"Error submitting task: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -217,12 +217,12 @@ async def get_task_status(task_id: str, auth: dict = Depends(verify_auth)):
     """Get task status"""
     try:
         amas = await get_amas_system()
-        
+
         # Get task from database
         task = await amas.database_service.get_task(task_id)
         if not task:
             raise HTTPException(status_code=404, detail="Task not found")
-        
+
         return {
             'task_id': task_id,
             'status': task.get('status', 'unknown'),
@@ -234,7 +234,7 @@ async def get_task_status(task_id: str, auth: dict = Depends(verify_auth)):
             'result': task.get('result', {}),
             'error': task.get('error', '')
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -247,7 +247,7 @@ async def get_agents(auth: dict = Depends(verify_auth)):
     """Get list of agents"""
     try:
         amas = await get_amas_system()
-        
+
         agents = []
         for agent_id, agent in amas.agents.items():
             agent_status = await agent.get_status()
@@ -259,9 +259,9 @@ async def get_agents(auth: dict = Depends(verify_auth)):
                 'last_activity': agent_status.get('last_activity', ''),
                 'metrics': agent_status.get('metrics', {})
             })
-        
+
         return {'agents': agents}
-        
+
     except Exception as e:
         logger.error(f"Error getting agents: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -272,15 +272,15 @@ async def get_agent_status(agent_id: str, auth: dict = Depends(verify_auth)):
     """Get specific agent status"""
     try:
         amas = await get_amas_system()
-        
+
         if agent_id not in amas.agents:
             raise HTTPException(status_code=404, detail="Agent not found")
-        
+
         agent = amas.agents[agent_id]
         status = await agent.get_status()
-        
+
         return status
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -298,10 +298,10 @@ async def execute_workflow(
     """Execute a workflow"""
     try:
         amas = await get_amas_system()
-        
+
         # Execute workflow
         result = await amas.execute_intelligence_workflow(workflow_id, parameters)
-        
+
         # Log audit event
         await amas.security_service.log_audit_event(
             event_type='workflow_execution',
@@ -310,9 +310,9 @@ async def execute_workflow(
             details=f'Workflow executed: {workflow_id}',
             classification='system'
         )
-        
+
         return result
-        
+
     except Exception as e:
         logger.error(f"Error executing workflow: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -328,18 +328,18 @@ async def get_audit_log(
     """Get audit log"""
     try:
         amas = await get_amas_system()
-        
+
         # Get audit log
         audit_log = await amas.security_service.get_audit_log(
             user_id=user_id,
             event_type=event_type
         )
-        
+
         # Limit results
         audit_log = audit_log[:limit]
-        
+
         return {'audit_log': audit_log}
-        
+
     except Exception as e:
         logger.error(f"Error getting audit log: {e}")
         raise HTTPException(status_code=500, detail=str(e))

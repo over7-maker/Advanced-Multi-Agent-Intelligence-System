@@ -25,37 +25,37 @@ async def test_basic_imports():
     """Test basic imports"""
     try:
         logger.info("Testing basic imports...")
-        
+
         # Test core imports
         try:
             from core.orchestrator import IntelligenceOrchestrator
             logger.info("✅ Core orchestrator import successful")
         except Exception as e:
             logger.warning(f"⚠️ Core orchestrator import failed: {e}")
-        
+
         # Test service imports
         try:
             from services.llm_service import LLMService
             logger.info("✅ LLM service import successful")
         except Exception as e:
             logger.warning(f"⚠️ LLM service import failed: {e}")
-        
+
         # Test agent imports
         try:
             from agents.osint.osint_agent import OSINTAgent
             logger.info("✅ OSINT agent import successful")
         except Exception as e:
             logger.warning(f"⚠️ OSINT agent import failed: {e}")
-        
+
         # Test API imports
         try:
             from api.main import app
             logger.info("✅ API import successful")
         except Exception as e:
             logger.warning(f"⚠️ API import failed: {e}")
-        
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Import test failed: {e}")
         return False
@@ -64,7 +64,7 @@ async def test_basic_functionality():
     """Test basic functionality"""
     try:
         logger.info("Testing basic functionality...")
-        
+
         # Test configuration
         config = {
             'llm_service_url': 'http://localhost:11434',
@@ -89,9 +89,9 @@ async def test_basic_functionality():
             'n8n_url': 'http://localhost:5678',
             'n8n_api_key': 'your_n8n_api_key_here'
         }
-        
+
         logger.info("✅ Configuration created successfully")
-        
+
         # Test LLM service initialization
         try:
             from services.llm_service import LLMService
@@ -99,7 +99,7 @@ async def test_basic_functionality():
             logger.info("✅ LLM service initialized")
         except Exception as e:
             logger.warning(f"⚠️ LLM service initialization failed: {e}")
-        
+
         # Test orchestrator initialization
         try:
             from core.orchestrator import IntelligenceOrchestrator
@@ -107,9 +107,9 @@ async def test_basic_functionality():
             logger.info("✅ Orchestrator initialized")
         except Exception as e:
             logger.warning(f"⚠️ Orchestrator initialization failed: {e}")
-        
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Basic functionality test failed: {e}")
         return False
@@ -118,7 +118,7 @@ async def test_api_structure():
     """Test API structure"""
     try:
         logger.info("Testing API structure...")
-        
+
         # Test FastAPI app creation
         try:
             from api.main import app
@@ -127,9 +127,9 @@ async def test_api_structure():
             logger.info(f"API version: {app.version}")
         except Exception as e:
             logger.warning(f"⚠️ FastAPI app creation failed: {e}")
-        
+
         return True
-        
+
     except Exception as e:
         logger.error(f"API structure test failed: {e}")
         return False
@@ -138,11 +138,11 @@ async def test_agent_structure():
     """Test agent structure"""
     try:
         logger.info("Testing agent structure...")
-        
+
         # Test agent classes
         agent_classes = [
             'OSINTAgent',
-            'InvestigationAgent', 
+            'InvestigationAgent',
             'ForensicsAgent',
             'DataAnalysisAgent',
             'ReverseEngineeringAgent',
@@ -150,7 +150,7 @@ async def test_agent_structure():
             'ReportingAgent',
             'TechnologyMonitorAgent'
         ]
-        
+
         for agent_class in agent_classes:
             try:
                 if agent_class == 'OSINTAgent':
@@ -179,9 +179,9 @@ async def test_agent_structure():
                     logger.info(f"✅ {agent_class} import successful")
             except Exception as e:
                 logger.warning(f"⚠️ {agent_class} import failed: {e}")
-        
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Agent structure test failed: {e}")
         return False
@@ -190,27 +190,27 @@ async def test_docker_configuration():
     """Test Docker configuration"""
     try:
         logger.info("Testing Docker configuration...")
-        
+
         # Check if docker-compose.yml exists
         if os.path.exists('docker-compose.yml'):
             logger.info("✅ docker-compose.yml found")
         else:
             logger.warning("⚠️ docker-compose.yml not found")
-        
+
         # Check if docker-compose.override.yml exists
         if os.path.exists('docker-compose.override.yml'):
             logger.info("✅ docker-compose.override.yml found")
         else:
             logger.warning("⚠️ docker-compose.override.yml not found")
-        
+
         # Check if init_db.sql exists
         if os.path.exists('scripts/init_db.sql'):
             logger.info("✅ Database initialization script found")
         else:
             logger.warning("⚠️ Database initialization script not found")
-        
+
         return True
-        
+
     except Exception as e:
         logger.error(f"Docker configuration test failed: {e}")
         return False
@@ -219,27 +219,27 @@ async def main():
     """Main test function"""
     logger.info("Starting Simple AMAS Intelligence System Test")
     logger.info("=" * 60)
-    
+
     # Test 1: Basic imports
     logger.info("=== Test 1: Basic Imports ===")
     imports_passed = await test_basic_imports()
-    
+
     # Test 2: Basic functionality
     logger.info("=== Test 2: Basic Functionality ===")
     functionality_passed = await test_basic_functionality()
-    
+
     # Test 3: API structure
     logger.info("=== Test 3: API Structure ===")
     api_passed = await test_api_structure()
-    
+
     # Test 4: Agent structure
     logger.info("=== Test 4: Agent Structure ===")
     agents_passed = await test_agent_structure()
-    
+
     # Test 5: Docker configuration
     logger.info("=== Test 5: Docker Configuration ===")
     docker_passed = await test_docker_configuration()
-    
+
     # Summary
     logger.info("=" * 60)
     logger.info("SIMPLE TEST RESULTS")
@@ -249,13 +249,13 @@ async def main():
     logger.info(f"API Structure: {'PASSED' if api_passed else 'FAILED'}")
     logger.info(f"Agent Structure: {'PASSED' if agents_passed else 'FAILED'}")
     logger.info(f"Docker Configuration: {'PASSED' if docker_passed else 'FAILED'}")
-    
+
     total_passed = sum([imports_passed, functionality_passed, api_passed, agents_passed, docker_passed])
     total_tests = 5
-    
+
     logger.info("=" * 60)
     logger.info(f"TOTAL: {total_passed}/{total_tests} tests passed")
-    
+
     if total_passed >= 3:
         logger.info("🎉 AMAS Intelligence System basic structure is working!")
         logger.info("✅ Phase 1: Foundation Setup - COMPLETED")
@@ -271,7 +271,7 @@ async def main():
     else:
         logger.error("❌ Basic structure test failed. Please check the logs for details.")
         return False
-    
+
     return True
 
 if __name__ == "__main__":

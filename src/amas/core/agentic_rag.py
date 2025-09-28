@@ -68,12 +68,12 @@ class SynthesisResult:
 class AgenticRAG:
     """
     Agentic Retrieval-Augmented Generation system.
-    
+
     This system enables intelligent agents to query, retrieve, and synthesize
     information from multiple heterogeneous data sources using advanced
     reasoning and decision-making capabilities.
     """
-    
+
     def __init__(
         self,
         vector_service: Any = None,
@@ -83,7 +83,7 @@ class AgenticRAG:
     ):
         """
         Initialize the Agentic RAG system.
-        
+
         Args:
             vector_service: Vector service for semantic search
             knowledge_graph: Knowledge graph service
@@ -94,7 +94,7 @@ class AgenticRAG:
         self.knowledge_graph = knowledge_graph
         self.llm_service = llm_service
         self.orchestrator = orchestrator
-        
+
         # Query strategies
         self.query_strategies = {
             QueryStrategy.SEMANTIC: self._semantic_query,
@@ -102,7 +102,7 @@ class AgenticRAG:
             QueryStrategy.HYBRID: self._hybrid_query,
             QueryStrategy.CONTEXTUAL: self._contextual_query
         }
-        
+
         # Synthesis methods
         self.synthesis_methods = {
             SynthesisMethod.CONCATENATION: self._concatenation_synthesis,
@@ -110,7 +110,7 @@ class AgenticRAG:
             SynthesisMethod.FUSION: self._fusion_synthesis,
             SynthesisMethod.REASONING: self._reasoning_synthesis
         }
-        
+
         # Performance metrics
         self.metrics = {
             'queries_processed': 0,
@@ -119,14 +119,14 @@ class AgenticRAG:
             'average_relevance_score': 0.0,
             'average_confidence_score': 0.0
         }
-        
+
         # Logging
         self.logger = logging.getLogger("amas.agentic_rag")
-        
+
         # Query history for learning
         self.query_history = []
         self.feedback_history = []
-    
+
     async def intelligent_query(
         self,
         agent_context: QueryContext,
@@ -134,47 +134,47 @@ class AgenticRAG:
     ) -> SynthesisResult:
         """
         Perform intelligent query with agent-based reasoning.
-        
+
         Args:
             agent_context: Context of the querying agent
             information_need: Information need description
-            
+
         Returns:
             Synthesized information result
         """
         try:
             self.logger.info(f"Processing intelligent query for agent {agent_context.agent_id}")
-            
+
             # Analyze information need
             query_analysis = await self._analyze_information_need(agent_context, information_need)
-            
+
             # Determine query strategy
             strategy = await self._determine_query_strategy(agent_context, query_analysis)
-            
+
             # Formulate queries for different sources
             queries = await self._formulate_queries(agent_context, query_analysis, strategy)
-            
+
             # Execute queries across sources
             retrieval_results = await self._execute_queries(queries, agent_context)
-            
+
             # Synthesize results
             synthesis_result = await self._synthesize_results(
                 retrieval_results, agent_context, query_analysis
             )
-            
+
             # Update metrics
             self._update_metrics(retrieval_results, synthesis_result)
-            
+
             # Store query for learning
             self._store_query_for_learning(agent_context, query_analysis, synthesis_result)
-            
+
             self.logger.info(f"Intelligent query completed for agent {agent_context.agent_id}")
             return synthesis_result
-            
+
         except Exception as e:
             self.logger.error(f"Intelligent query failed: {e}")
             raise
-    
+
     async def _analyze_information_need(
         self,
         agent_context: QueryContext,
@@ -182,11 +182,11 @@ class AgenticRAG:
     ) -> Dict[str, Any]:
         """
         Analyze the information need to understand requirements.
-        
+
         Args:
             agent_context: Context of the querying agent
             information_need: Information need description
-            
+
         Returns:
             Analysis of information need
         """
@@ -198,7 +198,7 @@ class AgenticRAG:
                 'complexity': 'medium',
                 'sources_needed': ['vector', 'graph']
             }
-        
+
         try:
             # Create analysis prompt
             prompt = f"""
@@ -223,13 +223,13 @@ Provide analysis in JSON format:
     "precision_requirement": "low|medium|high"
 }}
 """
-            
+
             result = await self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=300,
                 temperature=0.3
             )
-            
+
             # Parse result
             try:
                 analysis = json.loads(result)
@@ -242,7 +242,7 @@ Provide analysis in JSON format:
                     'complexity': 'medium',
                     'sources_needed': ['vector', 'graph']
                 }
-                
+
         except Exception as e:
             self.logger.error(f"Information need analysis failed: {e}")
             return {
@@ -252,7 +252,7 @@ Provide analysis in JSON format:
                 'complexity': 'medium',
                 'sources_needed': ['vector', 'graph']
             }
-    
+
     async def _determine_query_strategy(
         self,
         agent_context: QueryContext,
@@ -260,11 +260,11 @@ Provide analysis in JSON format:
     ) -> QueryStrategy:
         """
         Determine the best query strategy based on context and analysis.
-        
+
         Args:
             agent_context: Context of the querying agent
             query_analysis: Analysis of information need
-            
+
         Returns:
             Query strategy to use
         """
@@ -273,7 +273,7 @@ Provide analysis in JSON format:
             complexity = query_analysis.get('complexity', 'medium')
             intent = query_analysis.get('intent', 'information_retrieval')
             sources_needed = query_analysis.get('sources_needed', ['vector'])
-            
+
             if complexity == 'high' and 'both' in sources_needed:
                 return QueryStrategy.HYBRID
             elif intent == 'exploration':
@@ -282,11 +282,11 @@ Provide analysis in JSON format:
                 return QueryStrategy.SEMANTIC
             else:
                 return QueryStrategy.KEYWORD
-                
+
         except Exception as e:
             self.logger.error(f"Strategy determination failed: {e}")
             return QueryStrategy.SEMANTIC
-    
+
     async def _formulate_queries(
         self,
         agent_context: QueryContext,
@@ -295,38 +295,38 @@ Provide analysis in JSON format:
     ) -> Dict[str, Dict[str, Any]]:
         """
         Formulate queries for different data sources.
-        
+
         Args:
             agent_context: Context of the querying agent
             query_analysis: Analysis of information need
             strategy: Query strategy to use
-            
+
         Returns:
             Queries for different sources
         """
         try:
             queries = {}
-            
+
             # Vector service query
             if self.vector_service:
                 vector_query = await self.query_strategies[strategy](
                     agent_context, query_analysis, 'vector'
                 )
                 queries['vector'] = vector_query
-            
+
             # Knowledge graph query
             if self.knowledge_graph:
                 graph_query = await self.query_strategies[strategy](
                     agent_context, query_analysis, 'graph'
                 )
                 queries['graph'] = graph_query
-            
+
             return queries
-            
+
         except Exception as e:
             self.logger.error(f"Query formulation failed: {e}")
             return {}
-    
+
     async def _semantic_query(
         self,
         agent_context: QueryContext,
@@ -342,7 +342,7 @@ Provide analysis in JSON format:
             'limit': 10,
             'threshold': 0.7
         }
-    
+
     async def _keyword_query(
         self,
         agent_context: QueryContext,
@@ -357,7 +357,7 @@ Provide analysis in JSON format:
             'limit': 10,
             'threshold': 0.6
         }
-    
+
     async def _hybrid_query(
         self,
         agent_context: QueryContext,
@@ -373,7 +373,7 @@ Provide analysis in JSON format:
             'limit': 15,
             'threshold': 0.65
         }
-    
+
     async def _contextual_query(
         self,
         agent_context: QueryContext,
@@ -393,7 +393,7 @@ Provide analysis in JSON format:
             'limit': 12,
             'threshold': 0.7
         }
-    
+
     async def _execute_queries(
         self,
         queries: Dict[str, Dict[str, Any]],
@@ -401,36 +401,36 @@ Provide analysis in JSON format:
     ) -> List[RetrievalResult]:
         """
         Execute queries across data sources.
-        
+
         Args:
             queries: Queries to execute
             agent_context: Context of the querying agent
-            
+
         Returns:
             List of retrieval results
         """
         try:
             results = []
-            
+
             # Execute vector service query
             if 'vector' in queries and self.vector_service:
                 vector_results = await self._execute_vector_query(queries['vector'])
                 results.extend(vector_results)
-            
+
             # Execute knowledge graph query
             if 'graph' in queries and self.knowledge_graph:
                 graph_results = await self._execute_graph_query(queries['graph'])
                 results.extend(graph_results)
-            
+
             # Sort by relevance score
             results.sort(key=lambda x: x.relevance_score, reverse=True)
-            
+
             return results
-            
+
         except Exception as e:
             self.logger.error(f"Query execution failed: {e}")
             return []
-    
+
     async def _execute_vector_query(self, query: Dict[str, Any]) -> List[RetrievalResult]:
         """Execute query on vector service."""
         try:
@@ -459,7 +459,7 @@ Provide analysis in JSON format:
                     limit=query['limit'],
                     threshold=query['threshold']
                 )
-            
+
             # Convert to RetrievalResult objects
             retrieval_results = []
             for result in results:
@@ -471,13 +471,13 @@ Provide analysis in JSON format:
                     entities=result.get('entities', []),
                     timestamp=datetime.utcnow()
                 ))
-            
+
             return retrieval_results
-            
+
         except Exception as e:
             self.logger.error(f"Vector query execution failed: {e}")
             return []
-    
+
     async def _execute_graph_query(self, query: Dict[str, Any]) -> List[RetrievalResult]:
         """Execute query on knowledge graph."""
         try:
@@ -502,7 +502,7 @@ Provide analysis in JSON format:
                     query=query['query'],
                     limit=query['limit']
                 )
-            
+
             # Convert to RetrievalResult objects
             retrieval_results = []
             for result in results:
@@ -514,13 +514,13 @@ Provide analysis in JSON format:
                     entities=result.get('entities', []),
                     timestamp=datetime.utcnow()
                 ))
-            
+
             return retrieval_results
-            
+
         except Exception as e:
             self.logger.error(f"Graph query execution failed: {e}")
             return []
-    
+
     async def _synthesize_results(
         self,
         retrieval_results: List[RetrievalResult],
@@ -529,12 +529,12 @@ Provide analysis in JSON format:
     ) -> SynthesisResult:
         """
         Synthesize results from multiple sources.
-        
+
         Args:
             retrieval_results: Results from data sources
             agent_context: Context of the querying agent
             query_analysis: Analysis of information need
-            
+
         Returns:
             Synthesized result
         """
@@ -547,19 +547,19 @@ Provide analysis in JSON format:
                     reasoning_trace=[],
                     metadata={}
                 )
-            
+
             # Determine synthesis method
             synthesis_method = await self._determine_synthesis_method(
                 retrieval_results, agent_context, query_analysis
             )
-            
+
             # Perform synthesis
             synthesis_result = await self.synthesis_methods[synthesis_method](
                 retrieval_results, agent_context, query_analysis
             )
-            
+
             return synthesis_result
-            
+
         except Exception as e:
             self.logger.error(f"Result synthesis failed: {e}")
             return SynthesisResult(
@@ -569,7 +569,7 @@ Provide analysis in JSON format:
                 reasoning_trace=[],
                 metadata={'error': str(e)}
             )
-    
+
     async def _determine_synthesis_method(
         self,
         retrieval_results: List[RetrievalResult],
@@ -581,7 +581,7 @@ Provide analysis in JSON format:
             complexity = query_analysis.get('complexity', 'medium')
             intent = query_analysis.get('intent', 'information_retrieval')
             num_results = len(retrieval_results)
-            
+
             if complexity == 'high' and intent == 'analysis':
                 return SynthesisMethod.REASONING
             elif num_results > 10:
@@ -590,11 +590,11 @@ Provide analysis in JSON format:
                 return SynthesisMethod.FUSION
             else:
                 return SynthesisMethod.CONCATENATION
-                
+
         except Exception as e:
             self.logger.error(f"Synthesis method determination failed: {e}")
             return SynthesisMethod.CONCATENATION
-    
+
     async def _concatenation_synthesis(
         self,
         retrieval_results: List[RetrievalResult],
@@ -605,13 +605,13 @@ Provide analysis in JSON format:
         try:
             content_parts = []
             source_attributions = []
-            
+
             for result in retrieval_results:
                 content_parts.append(result.content)
                 source_attributions.append(result.source)
-            
+
             synthesized_content = "\n\n".join(content_parts)
-            
+
             return SynthesisResult(
                 synthesized_content=synthesized_content,
                 source_attributions=source_attributions,
@@ -619,11 +619,11 @@ Provide analysis in JSON format:
                 reasoning_trace=[],
                 metadata={'method': 'concatenation'}
             )
-            
+
         except Exception as e:
             self.logger.error(f"Concatenation synthesis failed: {e}")
             raise
-    
+
     async def _summarization_synthesis(
         self,
         retrieval_results: List[RetrievalResult],
@@ -636,17 +636,17 @@ Provide analysis in JSON format:
                 return await self._concatenation_synthesis(
                     retrieval_results, agent_context, query_analysis
                 )
-            
+
             # Prepare content for summarization
             content_parts = []
             source_attributions = []
-            
+
             for result in retrieval_results:
                 content_parts.append(result.content)
                 source_attributions.append(result.source)
-            
+
             combined_content = "\n\n".join(content_parts)
-            
+
             # Create summarization prompt
             prompt = f"""
 Summarize the following information for an intelligence agent:
@@ -667,13 +667,13 @@ Provide a comprehensive summary that:
 
 Summary:
 """
-            
+
             summary = await self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=1000,
                 temperature=0.3
             )
-            
+
             return SynthesisResult(
                 synthesized_content=summary,
                 source_attributions=source_attributions,
@@ -681,11 +681,11 @@ Summary:
                 reasoning_trace=[],
                 metadata={'method': 'summarization'}
             )
-            
+
         except Exception as e:
             self.logger.error(f"Summarization synthesis failed: {e}")
             raise
-    
+
     async def _fusion_synthesis(
         self,
         retrieval_results: List[RetrievalResult],
@@ -698,17 +698,17 @@ Summary:
                 return await self._concatenation_synthesis(
                     retrieval_results, agent_context, query_analysis
                 )
-            
+
             # Prepare content for fusion
             content_parts = []
             source_attributions = []
-            
+
             for result in retrieval_results:
                 content_parts.append(result.content)
                 source_attributions.append(result.source)
-            
+
             combined_content = "\n\n".join(content_parts)
-            
+
             # Create fusion prompt
             prompt = f"""
 Fuse and synthesize the following information for intelligence analysis:
@@ -730,13 +730,13 @@ Provide a fused synthesis that:
 
 Fused Synthesis:
 """
-            
+
             fused_content = await self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=1200,
                 temperature=0.3
             )
-            
+
             return SynthesisResult(
                 synthesized_content=fused_content,
                 source_attributions=source_attributions,
@@ -744,11 +744,11 @@ Fused Synthesis:
                 reasoning_trace=[],
                 metadata={'method': 'fusion'}
             )
-            
+
         except Exception as e:
             self.logger.error(f"Fusion synthesis failed: {e}")
             raise
-    
+
     async def _reasoning_synthesis(
         self,
         retrieval_results: List[RetrievalResult],
@@ -761,17 +761,17 @@ Fused Synthesis:
                 return await self._concatenation_synthesis(
                     retrieval_results, agent_context, query_analysis
                 )
-            
+
             # Prepare content for reasoning
             content_parts = []
             source_attributions = []
-            
+
             for result in retrieval_results:
                 content_parts.append(result.content)
                 source_attributions.append(result.source)
-            
+
             combined_content = "\n\n".join(content_parts)
-            
+
             # Create reasoning prompt
             prompt = f"""
 Perform advanced reasoning and synthesis on the following information:
@@ -794,13 +794,13 @@ Provide a reasoned synthesis that:
 
 Reasoned Synthesis:
 """
-            
+
             reasoned_content = await self.llm_service.generate(
                 prompt=prompt,
                 max_tokens=1500,
                 temperature=0.3
             )
-            
+
             return SynthesisResult(
                 synthesized_content=reasoned_content,
                 source_attributions=source_attributions,
@@ -808,11 +808,11 @@ Reasoned Synthesis:
                 reasoning_trace=[],
                 metadata={'method': 'reasoning'}
             )
-            
+
         except Exception as e:
             self.logger.error(f"Reasoning synthesis failed: {e}")
             raise
-    
+
     def _update_metrics(
         self,
         retrieval_results: List[RetrievalResult],
@@ -823,7 +823,7 @@ Reasoned Synthesis:
             self.metrics['queries_processed'] += 1
             self.metrics['sources_queried'] += len(retrieval_results)
             self.metrics['synthesis_operations'] += 1
-            
+
             # Update average relevance score
             if retrieval_results:
                 avg_relevance = sum(r.relevance_score for r in retrieval_results) / len(retrieval_results)
@@ -832,17 +832,17 @@ Reasoned Synthesis:
                 self.metrics['average_relevance_score'] = (
                     (current_avg * (total_queries - 1) + avg_relevance) / total_queries
                 )
-            
+
             # Update average confidence score
             total_synthesis = self.metrics['synthesis_operations']
             current_avg = self.metrics['average_confidence_score']
             self.metrics['average_confidence_score'] = (
                 (current_avg * (total_synthesis - 1) + synthesis_result.confidence_score) / total_synthesis
             )
-            
+
         except Exception as e:
             self.logger.error(f"Metrics update failed: {e}")
-    
+
     def _store_query_for_learning(
         self,
         agent_context: QueryContext,
@@ -862,16 +862,16 @@ Reasoned Synthesis:
                 },
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
             self.query_history.append(query_record)
-            
+
             # Keep only recent queries (last 1000)
             if len(self.query_history) > 1000:
                 self.query_history = self.query_history[-1000:]
-                
+
         except Exception as e:
             self.logger.error(f"Query storage failed: {e}")
-    
+
     async def provide_feedback(
         self,
         query_id: str,
@@ -879,11 +879,11 @@ Reasoned Synthesis:
     ) -> bool:
         """
         Provide feedback on query results for learning.
-        
+
         Args:
             query_id: ID of the query to provide feedback for
             feedback: Feedback information
-            
+
         Returns:
             True if feedback processed successfully, False otherwise
         """
@@ -893,20 +893,20 @@ Reasoned Synthesis:
                 'feedback': feedback,
                 'timestamp': datetime.utcnow().isoformat()
             }
-            
+
             self.feedback_history.append(feedback_record)
-            
+
             # Keep only recent feedback (last 500)
             if len(self.feedback_history) > 500:
                 self.feedback_history = self.feedback_history[-500:]
-            
+
             self.logger.info(f"Feedback provided for query {query_id}")
             return True
-            
+
         except Exception as e:
             self.logger.error(f"Feedback processing failed: {e}")
             return False
-    
+
     async def get_metrics(self) -> Dict[str, Any]:
         """Get performance metrics."""
         return {

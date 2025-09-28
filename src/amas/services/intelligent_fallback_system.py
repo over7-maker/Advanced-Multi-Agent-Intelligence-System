@@ -30,7 +30,7 @@ class ProviderStatus(Enum):
 
 class IntelligentFallbackSystem:
     """Intelligent fallback system for all 6 AI providers"""
-    
+
     def __init__(self):
         self.providers = {
             'deepseek': {
@@ -118,7 +118,7 @@ class IntelligentFallbackSystem:
                 'response_time': 0
             }
         }
-        
+
         self.fallback_stats = {
             'total_requests': 0,
             'successful_requests': 0,
@@ -128,10 +128,10 @@ class IntelligentFallbackSystem:
             'average_response_time': 0,
             'last_reset': datetime.now().isoformat()
         }
-        
+
         self.active_providers = self._get_active_providers()
         self.current_provider_index = 0
-        
+
     def _get_active_providers(self) -> List[str]:
         """Get list of active providers with valid API keys"""
         active = []
@@ -143,34 +143,34 @@ class IntelligentFallbackSystem:
             else:
                 config['status'] = ProviderStatus.FAILED
                 logger.warning(f"⚠️ {config['name']} is inactive (no API key)")
-        
+
         if not active:
             raise Exception("No active AI providers found! Please set at least one API key.")
-        
+
         # Sort by priority
         active.sort(key=lambda x: self.providers[x]['priority'])
         logger.info(f"Active providers (in priority order): {[self.providers[p]['name'] for p in active]}")
         return active
-    
+
     async def _test_provider(self, provider_id: str) -> bool:
         """Test if a provider is working"""
         try:
             config = self.providers[provider_id]
             config['status'] = ProviderStatus.TESTING
-            
+
             async with aiohttp.ClientSession() as session:
                 headers = {
                     'Authorization': f"Bearer {config['api_key']}",
                     'Content-Type': 'application/json'
                 }
-                
+
                 # Simple test request
                 test_payload = {
                     'model': config['model'],
                     'messages': [{'role': 'user', 'content': 'Test'}],
                     'max_tokens': 10
                 }
-                
+
                 start_time = time.time()
                 async with session.post(
                     f"{config['base_url']}/chat/completions",
@@ -180,57 +180,57 @@ class IntelligentFallbackSystem:
                 ) as response:
                     response_time = time.time() - start_time
                     config['response_time'] = response_time
-                    
+
                     if response.status == 200:
                         config['status'] = ProviderStatus.ACTIVE
                         return True
                     else:
                         config['status'] = ProviderStatus.FAILED
                         return False
-                        
+
         except Exception as e:
             logger.warning(f"Provider {provider_id} test failed: {e}")
             config['status'] = ProviderStatus.FAILED
             return False
-    
+
     async def _get_next_provider(self) -> Optional[str]:
         """Get next available provider in fallback order"""
         for i in range(len(self.active_providers)):
             provider_id = self.active_providers[self.current_provider_index]
             config = self.providers[provider_id]
-            
+
             # Skip if provider is known to be failed
             if config['status'] == ProviderStatus.FAILED:
                 self.current_provider_index = (self.current_provider_index + 1) % len(self.active_providers)
                 continue
-            
+
             # Test if provider is working
             if await self._test_provider(provider_id):
                 return provider_id
-            
+
             # Move to next provider
             self.current_provider_index = (self.current_provider_index + 1) % len(self.active_providers)
-            
+
         return None
-    
+
     async def _make_request(self, provider_id: str, messages: List[Dict], **kwargs) -> Dict[str, Any]:
         """Make request to specific provider"""
         config = self.providers[provider_id]
-        
+
         payload = {
             'model': config['model'],
             'messages': messages,
             'max_tokens': kwargs.get('max_tokens', 2000),
             'temperature': kwargs.get('temperature', 0.7)
         }
-        
+
         headers = {
             'Authorization': f"Bearer {config['api_key']}",
             'Content-Type': 'application/json'
         }
-        
+
         start_time = time.time()
-        
+
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(
@@ -242,12 +242,12 @@ class IntelligentFallbackSystem:
                     response_time = time.time() - start_time
                     config['response_time'] = response_time
                     config['last_used'] = datetime.now().isoformat()
-                    
+
                     if response.status == 200:
                         result = await response.json()
                         config['success_count'] += 1
                         config['status'] = ProviderStatus.ACTIVE
-                        
+
                         return {
                             'success': True,
                             'provider': provider_id,
@@ -261,7 +261,7 @@ class IntelligentFallbackSystem:
                         error_text = await response.text()
                         config['failure_count'] += 1
                         config['status'] = ProviderStatus.FAILED
-                        
+
                         return {
                             'success': False,
                             'provider': provider_id,
@@ -273,7 +273,7 @@ class IntelligentFallbackSystem:
             response_time = time.time() - start_time
             config['failure_count'] += 1
             config['status'] = ProviderStatus.FAILED
-            
+
             return {
                 'success': False,
                 'provider': provider_id,
@@ -281,29 +281,29 @@ class IntelligentFallbackSystem:
                 'error': str(e),
                 'response_time': response_time
             }
-    
+
     async def generate_response(self, prompt: str, **kwargs) -> Dict[str, Any]:
         """Generate response with intelligent fallback"""
         self.fallback_stats['total_requests'] += 1
-        
+
         messages = [{'role': 'user', 'content': prompt}]
-        
+
         # Try each provider in order
         for attempt in range(len(self.active_providers)):
             provider_id = await self._get_next_provider()
-            
+
             if not provider_id:
                 break
-                
+
             logger.info(f"Attempting request with {self.providers[provider_id]['name']} (attempt {attempt + 1})")
-            
+
             try:
                 result = await self._make_request(provider_id, messages, **kwargs)
-                
+
                 if result['success']:
                     self.fallback_stats['successful_requests'] += 1
                     self.fallback_stats['fallback_usage'][provider_id] = self.fallback_stats['fallback_usage'].get(provider_id, 0) + 1
-                    
+
                     # Update performance stats
                     if provider_id not in self.fallback_stats['provider_performance']:
                         self.fallback_stats['provider_performance'][provider_id] = {
@@ -312,27 +312,27 @@ class IntelligentFallbackSystem:
                             'total_response_time': 0,
                             'average_response_time': 0
                         }
-                    
+
                     perf = self.fallback_stats['provider_performance'][provider_id]
                     perf['success_count'] += 1
                     perf['total_response_time'] += result['response_time']
                     perf['average_response_time'] = perf['total_response_time'] / perf['success_count']
-                    
+
                     logger.info(f"✅ Success with {self.providers[provider_id]['name']} in {result['response_time']:.2f}s")
                     return result
                 else:
                     logger.warning(f"❌ {self.providers[provider_id]['name']} failed: {result['error']}")
-                    
+
             except Exception as e:
                 logger.warning(f"❌ {self.providers[provider_id]['name']} exception: {e}")
-            
+
             # Move to next provider
             self.current_provider_index = (self.current_provider_index + 1) % len(self.active_providers)
-        
+
         # All providers failed
         self.fallback_stats['failed_requests'] += 1
         logger.error("❌ All AI providers failed!")
-        
+
         return {
             'success': False,
             'provider': 'none',
@@ -340,17 +340,17 @@ class IntelligentFallbackSystem:
             'error': 'All AI providers failed',
             'fallback_stats': self.fallback_stats
         }
-    
+
     def get_fallback_stats(self) -> Dict[str, Any]:
         """Get comprehensive fallback statistics"""
         total = self.fallback_stats['total_requests']
         success_rate = (self.fallback_stats['successful_requests'] / total * 100) if total > 0 else 0
-        
+
         # Calculate average response time
         total_time = sum(perf['total_response_time'] for perf in self.fallback_stats['provider_performance'].values())
         total_success = sum(perf['success_count'] for perf in self.fallback_stats['provider_performance'].values())
         avg_response_time = total_time / total_success if total_success > 0 else 0
-        
+
         return {
             'total_requests': total,
             'successful_requests': self.fallback_stats['successful_requests'],
@@ -364,20 +364,20 @@ class IntelligentFallbackSystem:
             'provider_status': {p: self.providers[p]['status'].value for p in self.providers},
             'last_reset': self.fallback_stats['last_reset']
         }
-    
+
     def reset_fallback_order(self):
         """Reset fallback order to priority order"""
         self.current_provider_index = 0
         self.fallback_stats['last_reset'] = datetime.now().isoformat()
         logger.info("Fallback order reset to priority order")
-    
+
     def get_provider_health(self) -> Dict[str, Any]:
         """Get detailed provider health information"""
         health = {}
         for provider_id, config in self.providers.items():
             total_requests = config['success_count'] + config['failure_count']
             success_rate = (config['success_count'] / total_requests * 100) if total_requests > 0 else 0
-            
+
             health[provider_id] = {
                 'name': config['name'],
                 'status': config['status'].value,
@@ -388,7 +388,7 @@ class IntelligentFallbackSystem:
                 'last_used': config['last_used'],
                 'priority': config['priority']
             }
-        
+
         return health
 
 # Global fallback system instance
@@ -416,10 +416,10 @@ async def test_intelligent_fallback():
     """Test the intelligent fallback system"""
     print("🧪 Testing Intelligent Fallback System...")
     print("="*60)
-    
+
     # Test with a simple prompt
     result = await generate_ai_response("Hello, this is a test. Please respond with 'AI Fallback Test Successful'")
-    
+
     if result['success']:
         print(f"✅ Test successful with {result['provider_name']}")
         print(f"Response: {result['content'][:100]}...")
@@ -428,7 +428,7 @@ async def test_intelligent_fallback():
             print(f"Tokens Used: {result['tokens_used']}")
     else:
         print(f"❌ Test failed: {result['error']}")
-    
+
     # Show comprehensive stats
     stats = get_fallback_stats()
     print(f"\n📊 Fallback Statistics:")
@@ -437,7 +437,7 @@ async def test_intelligent_fallback():
     print(f"Average Response Time: {stats['average_response_time']}")
     print(f"Active Providers: {stats['active_providers']}")
     print(f"Provider Names: {', '.join(stats['provider_names'])}")
-    
+
     # Show provider health
     health = get_provider_health()
     print(f"\n🏥 Provider Health:")
