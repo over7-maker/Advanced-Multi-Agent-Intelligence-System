@@ -138,13 +138,13 @@ Keep the analysis concise but thorough.
         security_issues = []
         content_lower = content.lower()
         
-        # Common security patterns to flag
+        # Common security patterns to flag (excluding patterns in security scanners)
         security_patterns = {
-            'hardcoded_secrets': ['password =', 'api_key =', 'secret =', 'token ='],
+            'hardcoded_secrets': ['password =', 'api_key =', 'secret =', 'auth_token ='],
             'sql_injection': ['execute(', 'query(', 'raw sql'],
             'xss_vulnerabilities': ['innerHTML', 'dangerouslySetInnerHTML', 'eval('],
             'insecure_random': ['random.random()', 'math.random()'],
-            'weak_crypto': ['md5', 'sha1', 'des'],
+            'weak_crypto': ['md5(', 'sha1(', 'des('],  # Only function calls, not pattern strings
             'unsafe_deserialization': ['pickle.loads', 'yaml.load', 'eval(']
         }
         

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local GitHub Actions Runner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.5;
+        }
+        
+        .header {
+            background: #161b22;
+            border-bottom: 1px solid #30363d;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .header h1 {
+            color: #f0f6fc;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #238636;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #30363d;
+            margin-bottom: 24px;
+        }
+        
+        .tab {
+            padding: 12px 16px;
+            background: none;
+            border: none;
+            color: #8b949e;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        
+        .tab.active {
+            color: #f0f6fc;
+            border-bottom-color: #f85149;
+        }
+        
+        .tab:hover {
+            color: #f0f6fc;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .workflows-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+        
+        .workflow-card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 16px;
+            transition: all 0.2s;
+        }
+        
+        .workflow-card:hover {
+            border-color: #f85149;
+        }
+        
+        .workflow-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        
+        .workflow-name {
+            font-weight: 600;
+            color: #f0f6fc;
+        }
+        
+        .workflow-status {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-ready {
+            background: #238636;
+            color: #f0f6fc;
+        }
+        
+        .status-running {
+            background: #d29922;
+            color: #f0f6fc;
+        }
+        
+        .status-completed {
+            background: #238636;
+            color: #f0f6fc;
+        }
+        
+        .status-failed {
+            background: #da3633;
+            color: #f0f6fc;
+        }
+        
+        .workflow-description {
+            color: #8b949e;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+        
+        .workflow-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #238636;
+            color: #f0f6fc;
+        }
+        
+        .btn-primary:hover {
+            background: #2ea043;
+        }
+        
+        .btn-secondary {
+            background: #21262d;
+            color: #f0f6fc;
+            border: 1px solid #30363d;
+        }
+        
+        .btn-secondary:hover {
+            background: #30363d;
+        }
+        
+        .jobs-list {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .job-item {
+            padding: 16px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .job-item:last-child {
+            border-bottom: none;
+        }
+        
+        .job-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .job-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .job-icon.running {
+            background: #d29922;
+            color: #f0f6fc;
+        }
+        
+        .job-icon.completed {
+            background: #238636;
+            color: #f0f6fc;
+        }
+        
+        .job-icon.failed {
+            background: #da3633;
+            color: #f0f6fc;
+        }
+        
+        .logs-container {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            padding: 16px;
+            font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .log-line {
+            margin-bottom: 4px;
+            white-space: pre-wrap;
+        }
+        
+        .log-timestamp {
+            color: #8b949e;
+        }
+        
+        .log-content {
+            color: #c9d1d9;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #30363d;
+            border-radius: 50%;
+            border-top-color: #f85149;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 48px;
+            color: #8b949e;
+        }
+        
+        .empty-state h3 {
+            margin-bottom: 8px;
+            color: #f0f6fc;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 Local GitHub Actions Runner</h1>
+        <div class="status">
+            <div class="status-dot"></div>
+            <span>Running</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('workflows')">Workflows</button>
+            <button class="tab" onclick="switchTab('jobs')">Jobs</button>
+            <button class="tab" onclick="switchTab('logs')">Logs</button>
+        </div>
+        
+        <div id="workflows" class="tab-content active">
+            <h2 style="margin-bottom: 24px; color: #f0f6fc;">Available Workflows</h2>
+            <div class="workflows-grid" id="workflows-grid">
+                <!-- Workflows will be loaded here -->
+            </div>
+        </div>
+        
+        <div id="jobs" class="tab-content">
+            <h2 style="margin-bottom: 24px; color: #f0f6fc;">Running Jobs</h2>
+            <div class="jobs-list" id="jobs-list">
+                <div class="empty-state">
+                    <h3>No jobs running</h3>
+                    <p>Start a workflow to see jobs here</p>
+                </div>
+            </div>
+        </div>
+        
+        <div id="logs" class="tab-content">
+            <h2 style="margin-bottom: 24px; color: #f0f6fc;">Job Logs</h2>
+            <div class="logs-container" id="logs-container">
+                <div class="empty-state">
+                    <h3>No logs available</h3>
+                    <p>Start a workflow to see logs here</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentJobId = null;
+        
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+            
+            // Load data for the tab
+            if (tabName === 'jobs') {
+                loadJobs();
+            } else if (tabName === 'logs' && currentJobId) {
+                loadLogs(currentJobId);
+            }
+        }
+        
+        function loadWorkflows() {
+            fetch('/api/workflows')
+                .then(response => response.json())
+                .then(data => {
+                    const grid = document.getElementById('workflows-grid');
+                    grid.innerHTML = '';
+                    
+                    Object.entries(data).forEach(([name, workflow]) => {
+                        const card = document.createElement('div');
+                        card.className = 'workflow-card';
+                        card.innerHTML = `
+                            <div class="workflow-header">
+                                <div class="workflow-name">${name}</div>
+                                <div class="workflow-status status-${workflow.status}">${workflow.status}</div>
+                            </div>
+                            <div class="workflow-description">
+                                ${workflow.data.description || 'No description available'}
+                            </div>
+                            <div class="workflow-actions">
+                                <button class="btn btn-primary" onclick="runWorkflow('${name}')">
+                                    ▶️ Run
+                                </button>
+                                <button class="btn btn-secondary" onclick="viewWorkflow('${name}')">
+                                    👁️ View
+                                </button>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading workflows:', error);
+                });
+        }
+        
+        function runWorkflow(workflowName) {
+            fetch(`/api/workflows/${workflowName}/run`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.job_id) {
+                    currentJobId = data.job_id;
+                    alert(`Workflow started! Job ID: ${data.job_id}`);
+                    switchTab('jobs');
+                    loadJobs();
+                } else {
+                    alert('Error starting workflow: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error starting workflow:', error);
+                alert('Error starting workflow: ' + error.message);
+            });
+        }
+        
+        function loadJobs() {
+            fetch('/api/jobs')
+                .then(response => response.json())
+                .then(data => {
+                    const jobsList = document.getElementById('jobs-list');
+                    const runningJobs = data.running;
+                    const historyJobs = data.history;
+                    
+                    if (Object.keys(runningJobs).length === 0 && historyJobs.length === 0) {
+                        jobsList.innerHTML = `
+                            <div class="empty-state">
+                                <h3>No jobs available</h3>
+                                <p>Start a workflow to see jobs here</p>
+                            </div>
+                        `;
+                        return;
+                    }
+                    
+                    jobsList.innerHTML = '';
+                    
+                    // Show running jobs first
+                    Object.entries(runningJobs).forEach(([jobId, job]) => {
+                        const jobItem = document.createElement('div');
+                        jobItem.className = 'job-item';
+                        jobItem.innerHTML = `
+                            <div class="job-info">
+                                <div class="job-icon running">⚡</div>
+                                <div>
+                                    <div style="font-weight: 600; color: #f0f6fc;">${job.workflow}</div>
+                                    <div style="font-size: 12px; color: #8b949e;">Job ID: ${jobId}</div>
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn btn-secondary" onclick="viewJobLogs('${jobId}')">
+                                    📋 View Logs
+                                </button>
+                            </div>
+                        `;
+                        jobsList.appendChild(jobItem);
+                    });
+                    
+                    // Show recent history
+                    historyJobs.slice(-10).forEach(job => {
+                        const jobItem = document.createElement('div');
+                        jobItem.className = 'job-item';
+                        const statusClass = job.status === 'completed' ? 'completed' : 'failed';
+                        const statusIcon = job.status === 'completed' ? '✅' : '❌';
+                        jobItem.innerHTML = `
+                            <div class="job-info">
+                                <div class="job-icon ${statusClass}">${statusIcon}</div>
+                                <div>
+                                    <div style="font-weight: 600; color: #f0f6fc;">${job.workflow}</div>
+                                    <div style="font-size: 12px; color: #8b949e;">Job ID: ${job.id}</div>
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn btn-secondary" onclick="viewJobLogs('${job.id}')">
+                                    📋 View Logs
+                                </button>
+                            </div>
+                        `;
+                        jobsList.appendChild(jobItem);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading jobs:', error);
+                });
+        }
+        
+        function viewJobLogs(jobId) {
+            currentJobId = jobId;
+            switchTab('logs');
+            loadLogs(jobId);
+        }
+        
+        function loadLogs(jobId) {
+            if (!jobId) return;
+            
+            fetch(`/api/jobs/${jobId}/logs`)
+                .then(response => response.json())
+                .then(data => {
+                    const logsContainer = document.getElementById('logs-container');
+                    if (data.logs && data.logs.length > 0) {
+                        logsContainer.innerHTML = data.logs.map(log => 
+                            `<div class="log-line">${log}</div>`
+                        ).join('');
+                        logsContainer.scrollTop = logsContainer.scrollHeight;
+                    } else {
+                        logsContainer.innerHTML = `
+                            <div class="empty-state">
+                                <h3>No logs available</h3>
+                                <p>Logs will appear here when the job runs</p>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading logs:', error);
+                });
+        }
+        
+        function viewWorkflow(workflowName) {
+            alert(`Viewing workflow: ${workflowName}\n\nThis would open the workflow file for editing.`);
+        }
+        
+        // Auto-refresh jobs and logs
+        setInterval(() => {
+            if (document.getElementById('jobs').classList.contains('active')) {
+                loadJobs();
+            }
+            if (document.getElementById('logs').classList.contains('active') && currentJobId) {
+                loadLogs(currentJobId);
+            }
+        }, 2000);
+        
+        // Load initial data
+        loadWorkflows();
+    </script>
+</body>
+</html>

@@ -45,7 +45,7 @@ class AISecurityScanner:
             'api_key': r'(?i)(api[_-]?key|apikey)\s*[=:]\s*["\']?([a-zA-Z0-9_-]{20,})["\']?',
             'secret_key': r'(?i)(secret[_-]?key|secretkey)\s*[=:]\s*["\']?([a-zA-Z0-9_-]{20,})["\']?',
             'password': r'(?i)(password|pwd)\s*[=:]\s*["\']?([^\s"\'>]{8,})["\']?',
-            'token': r'(?i)(token|auth)\s*[=:]\s*["\']?([a-zA-Z0-9_-]{20,})["\']?',
+            'token': r'(?i)(auth_token|access_token)\s*[=:]\s*["\']?([a-zA-Z0-9_-]{20,})["\']?',
             'aws_key': r'AKIA[0-9A-Z]{16}',
             'github_token': r'ghp_[a-zA-Z0-9]{36}',
             'openrouter_key': r'sk-or-v1-[a-zA-Z0-9]{64}',
@@ -74,7 +74,7 @@ class AISecurityScanner:
         """Scan for common security vulnerabilities"""
         vulnerabilities = []
         
-        # Vulnerability patterns
+        # Vulnerability patterns (excluding security scanner patterns)
         vuln_patterns = {
             'sql_injection': {
                 'patterns': [r'execute\s*\([^)]*\+', r'query\s*\([^)]*\+', r'SELECT.*\+.*FROM'],

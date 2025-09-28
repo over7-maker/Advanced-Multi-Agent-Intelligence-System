@@ -1,0 +1,355 @@
+name: AI-Powered Release System
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+      release_type:
+        description: 'Type of release'
+        required: true
+        default: 'minor'
+        type: choice
+        options:
+        - major
+        - minor
+        - patch
+        - prerelease
+      changelog:
+        description: 'Custom changelog (optional)'
+        required: false
+        type: string
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  ai-release-system:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests pyyaml openai aiohttp python-dotenv
+    
+    - name: AI-Powered Changelog Generation
+      id: ai-changelog
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        REPO_NAME: ${{ github.repository }}
+        VERSION: ${{ github.event.inputs.version || github.ref_name }}
+        RELEASE_TYPE: ${{ github.event.inputs.release_type || 'minor' }}
+        CUSTOM_CHANGELOG: ${{ github.event.inputs.changelog }}
+      run: |
+        echo "🤖 AI-Powered Changelog Generation..."
+        python scripts/ai_changelog_generator.py \
+          --version "$VERSION" \
+          --type "$RELEASE_TYPE" \
+          --custom "$CUSTOM_CHANGELOG" \
+          --output CHANGELOG.md
+    
+    - name: AI-Powered Release Notes Generation
+      id: ai-release-notes
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        REPO_NAME: ${{ github.repository }}
+        VERSION: ${{ github.event.inputs.version || github.ref_name }}
+      run: |
+        echo "🤖 AI-Powered Release Notes Generation..."
+        python scripts/ai_release_notes_generator.py \
+          --version "$VERSION" \
+          --output RELEASE_NOTES.md
+    
+    - name: AI-Powered Code Analysis
+      id: ai-code-analysis
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        REPO_NAME: ${{ github.repository }}
+        VERSION: ${{ github.event.inputs.version || github.ref_name }}
+      run: |
+        echo "🤖 AI-Powered Code Analysis..."
+        python scripts/ai_code_analyzer.py \
+          --directory . \
+          --output ai_analysis_report.md \
+          --version "$VERSION"
+    
+    - name: AI-Powered Security Scan
+      id: ai-security-scan
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        REPO_NAME: ${{ github.repository }}
+        VERSION: ${{ github.event.inputs.version || github.ref_name }}
+      run: |
+        echo "🔒 AI-Powered Security Scan..."
+        python scripts/ai_security_scanner.py \
+          --directory . \
+          --output ai_security_report.md \
+          --version "$VERSION"
+    
+    - name: AI-Powered Performance Analysis
+      id: ai-performance-analysis
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        REPO_NAME: ${{ github.repository }}
+        VERSION: ${{ github.event.inputs.version || github.ref_name }}
+      run: |
+        echo "⚡ AI-Powered Performance Analysis..."
+        python scripts/ai_performance_analyzer.py \
+          --directory . \
+          --output ai_performance_report.md \
+          --version "$VERSION"
+    
+    - name: AI-Powered Documentation Generation
+      id: ai-documentation
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        REPO_NAME: ${{ github.repository }}
+        VERSION: ${{ github.event.inputs.version || github.ref_name }}
+      run: |
+        echo "📚 AI-Powered Documentation Generation..."
+        python scripts/ai_documentation_generator.py \
+          --directory . \
+          --output ai_documentation_report.md \
+          --version "$VERSION"
+    
+    - name: AI-Powered Test Generation
+      id: ai-test-generation
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        REPO_NAME: ${{ github.repository }}
+        VERSION: ${{ github.event.inputs.version || github.ref_name }}
+      run: |
+        echo "🧪 AI-Powered Test Generation..."
+        python scripts/ai_test_generator.py \
+          --directory . \
+          --output ai_test_report.md \
+          --version "$VERSION"
+    
+    - name: AI-Powered Quality Assessment
+      id: ai-quality-assessment
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        REPO_NAME: ${{ github.repository }}
+        VERSION: ${{ github.event.inputs.version || github.ref_name }}
+      run: |
+        echo "🎯 AI-Powered Quality Assessment..."
+        python scripts/ai_quality_assessor.py \
+          --directory . \
+          --output ai_quality_report.md \
+          --version "$VERSION"
+    
+    - name: AI-Powered Release Orchestration
+      id: ai-release-orchestration
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        REPO_NAME: ${{ github.repository }}
+        VERSION: ${{ github.event.inputs.version || github.ref_name }}
+        RELEASE_TYPE: ${{ github.event.inputs.release_type || 'minor' }}
+      run: |
+        echo "🎭 AI-Powered Release Orchestration..."
+        python scripts/ai_release_orchestrator.py \
+          --version "$VERSION" \
+          --type "$RELEASE_TYPE" \
+          --output ai_release_summary.md
+    
+    - name: Create AI-Enhanced Release
+      id: create-ai-release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.event.inputs.version || github.ref_name }}-ai
+        release_name: "🤖 AMAS ${{ github.event.inputs.version || github.ref_name }}-ai - AI-Enhanced Release"
+        body_path: RELEASE_NOTES.md
+        draft: false
+        prerelease: ${{ github.event.inputs.release_type == 'prerelease' }}
+    
+    - name: Upload AI-Generated Assets
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create-ai-release.outputs.upload_url }}
+        asset_path: CHANGELOG.md
+        asset_name: CHANGELOG.md
+        asset_content_type: text/markdown
+    
+    - name: Upload AI Analysis Reports
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create-ai-release.outputs.upload_url }}
+        asset_path: ai_analysis_report.md
+        asset_name: AI_Code_Analysis_Report.md
+        asset_content_type: text/markdown
+    
+    - name: Upload AI Security Report
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create-ai-release.outputs.upload_url }}
+        asset_path: ai_security_report.md
+        asset_name: AI_Security_Report.md
+        asset_content_type: text/markdown
+    
+    - name: Upload AI Performance Report
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create-ai-release.outputs.upload_url }}
+        asset_path: ai_performance_report.md
+        asset_name: AI_Performance_Report.md
+        asset_content_type: text/markdown
+    
+    - name: Upload AI Documentation Report
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create-ai-release.outputs.upload_url }}
+        asset_path: ai_documentation_report.md
+        asset_name: AI_Documentation_Report.md
+        asset_content_type: text/markdown
+    
+    - name: Upload AI Test Report
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create-ai-release.outputs.upload_url }}
+        asset_path: ai_test_report.md
+        asset_name: AI_Test_Report.md
+        asset_content_type: text/markdown
+    
+    - name: Upload AI Quality Report
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create-ai-release.outputs.upload_url }}
+        asset_path: ai_quality_report.md
+        asset_name: AI_Quality_Report.md
+        asset_content_type: text/markdown
+    
+    - name: Upload AI Release Summary
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create-ai-release.outputs.upload_url }}
+        asset_path: ai_release_summary.md
+        asset_name: AI_Release_Summary.md
+        asset_content_type: text/markdown
+    
+    - name: Update Version Files with AI
+      run: |
+        echo "📝 AI-Powered Version Updates..."
+        python scripts/update_version.py \
+          --version "${{ github.event.inputs.version || github.ref_name }}" \
+          --type "${{ github.event.inputs.release_type || 'minor' }}"
+    
+    - name: Create AI-Enhanced Release Summary
+      run: |
+        echo "## 🤖 AI-Enhanced Release ${{ github.event.inputs.version || github.ref_name }} Created" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version**: ${{ github.event.inputs.version || github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Type**: ${{ github.event.inputs.release_type || 'minor' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **AI Models Used**: DeepSeek, GLM, Grok, Kimi, Qwen, GPT-OSS, OpenRouter, Anthropic" >> $GITHUB_STEP_SUMMARY
+        echo "- **AI Analysis**: Code, Security, Performance, Documentation, Tests, Quality" >> $GITHUB_STEP_SUMMARY
+        echo "- **Assets Generated**: 8 AI-generated reports" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ✅ AI-Enhanced Release Complete" >> $GITHUB_STEP_SUMMARY
