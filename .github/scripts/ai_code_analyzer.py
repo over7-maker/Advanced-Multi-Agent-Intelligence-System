@@ -271,24 +271,79 @@ Keep the analysis concise but thorough.
         return None
     
     def analyze_security_issues(self, file_path: str, content: str) -> List[str]:
-        """Basic security issue detection"""
+        """Basic security issue detection with context awareness"""
         security_issues = []
-        content_lower = content.lower()
         
-        # Common security patterns to flag
+        # Skip security scanner files to avoid false positives on pattern definitions
+        if any(scanner_file in file_path.lower() for scanner_file in ['security_scanner', 'security_false_positive', 'ai_code_analyzer']):
+            return security_issues
+        
+        lines = content.split('\n')
+        
+        # Common security patterns to flag with regex for better accuracy
+        import re
         security_patterns = {
-            'hardcoded_secrets': ['password =', 'api_key =', 'secret =', 'token ='],
-            'sql_injection': ['execute(', 'query(', 'raw sql'],
-            'xss_vulnerabilities': ['innerHTML', 'dangerouslySetInnerHTML', 'eval('],
-            'insecure_random': ['random.random()', 'math.random()'],
-            'weak_crypto': ['md5', 'sha1', 'des'],
-            'unsafe_deserialization': ['pickle.loads', 'yaml.load', 'eval(']
+            'hardcoded_secrets': [
+                (r'password\s*=\s*["\'][^"\']+["\']', 'hardcoded password'),
+                (r'api_key\s*=\s*["\'][^"\']+["\']', 'hardcoded API key'),
+                (r'secret\s*=\s*["\'][^"\']+["\']', 'hardcoded secret'),
+                (r'(?<!github_)token\s*=\s*["\'][^"\']+["\']', 'hardcoded token'),
+            ],
+            'sql_injection': [
+                (r'execute\s*\([^)]*\+', 'SQL injection via string concatenation'),
+                (r'query\s*\([^)]*\+', 'SQL injection via string concatenation'),
+                (r'SELECT.*FROM.*\+', 'SQL injection via string concatenation'),
+            ],
+            'xss_vulnerabilities': [
+                (r'innerHTML\s*=', 'XSS via innerHTML'),
+                (r'dangerouslySetInnerHTML', 'XSS via React dangerouslySetInnerHTML'),
+                (r'eval\s*\(', 'XSS/code injection via eval'),
+            ],
+            'insecure_random': [
+                (r'random\.random\s*\(\)', 'insecure random for cryptography'),
+                (r'Math\.random\s*\(\)', 'insecure random for cryptography'),
+            ],
+            'weak_crypto': [
+                (r'\bmd5\s*\(', 'weak MD5 hashing'),
+                (r'\bsha1\s*\(', 'weak SHA1 hashing'),
+                (r'\bDES\b', 'weak DES encryption'),  # Only match DES as a standalone word
+            ],
+            'unsafe_deserialization': [
+                (r'pickle\.loads', 'unsafe pickle deserialization'),
+                (r'yaml\.load\s*\((?!.*Loader=)', 'unsafe yaml.load without safe loader'),
+            ]
         }
         
         for issue_type, patterns in security_patterns.items():
-            for pattern in patterns:
-                if pattern in content_lower:
-                    security_issues.append(f"Potential {issue_type.replace('_', ' ')}: Found '{pattern}'")
+            for pattern, description in patterns:
+                matches = re.finditer(pattern, content, re.IGNORECASE | re.MULTILINE)
+                for match in matches:
+                    line_num = content[:match.start()].count('\n') + 1
+                    
+                    # Skip if it's getting value from environment variable
+                    line = lines[line_num - 1] if line_num <= len(lines) else ""
+                    if 'os.environ.get' in line or 'getenv' in line or '= os.environ.get' in line:
+                        continue
+                    
+                    # Skip if it's in a comment
+                    if line.strip().startswith('#') or line.strip().startswith('//'):
+                        continue
+                    
+                    # Skip if it's a pattern definition
+                    if any(pat in line for pat in ["'password =", '"password =', "'token =", '"token =', 
+                                                   "'api_key =", '"api_key =', "'secret =", '"secret =']):
+                        continue
+                    
+                    # Skip obvious placeholders
+                    matched_text = match.group(0).lower()
+                    if any(placeholder in matched_text for placeholder in ['example', 'placeholder', 'your_', 'xxx', 'dummy', 'test', 'sample']):
+                        continue
+                    
+                    # Skip if in description or similar context
+                    if 'description' in line.lower():
+                        continue
+                    
+                    security_issues.append(f"Potential {description}: Found '{pattern}'")
         
         return security_issues
     
