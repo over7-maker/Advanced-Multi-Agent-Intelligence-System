@@ -1,0 +1,40 @@
+{
+  "malware_signatures": [
+    {
+      "name": "Trojan.Generic.Offline",
+      "hash": "abc123def456",
+      "severity": "high",
+      "source": "local_db",
+      "timestamp": "2024-09-26T18:00:00Z"
+    },
+    {
+      "name": "Ransomware.Crypto.Offline",
+      "hash": "def456ghi789",
+      "severity": "critical",
+      "source": "local_db",
+      "timestamp": "2024-09-26T18:00:00Z"
+    }
+  ],
+  "ip_reputation": [
+    {
+      "ip": "192.168.1.100",
+      "reputation": "malicious",
+      "source": "local_db",
+      "confidence": 0.9
+    },
+    {
+      "ip": "10.0.0.1",
+      "reputation": "clean",
+      "source": "local_db",
+      "confidence": 0.95
+    }
+  ],
+  "domain_reputation": [
+    {
+      "domain": "malicious-offline.example.com",
+      "reputation": "malicious",
+      "source": "local_db",
+      "confidence": 0.85
+    }
+  ]
+}

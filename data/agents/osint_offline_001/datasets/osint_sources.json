@@ -1,0 +1,21 @@
+{
+  "news_sources": [
+    {
+      "name": "Local News DB",
+      "url": "local://news",
+      "type": "offline"
+    },
+    {
+      "name": "Security Bulletins",
+      "url": "local://security",
+      "type": "offline"
+    }
+  ],
+  "social_media": [
+    {
+      "platform": "local_forum",
+      "url": "local://forum",
+      "type": "offline"
+    }
+  ]
+}
