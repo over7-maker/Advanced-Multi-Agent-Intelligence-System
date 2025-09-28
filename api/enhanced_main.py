@@ -605,6 +605,233 @@ async def get_agents(
             detail="Failed to retrieve agents"
         )
 
+@app.get("/workflows")
+@limiter.limit("30/minute")
+async def get_workflows(
+    request: Request,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Get available workflows"""
+    try:
+        amas = await get_amas_system()
+        
+        if hasattr(amas, 'workflow_engine') and amas.workflow_engine:
+            workflows = []
+            for workflow_id, workflow_def in amas.workflow_engine.workflow_definitions.items():
+                workflows.append({
+                    'workflow_id': workflow_def.workflow_id,
+                    'name': workflow_def.name,
+                    'description': workflow_def.description,
+                    'version': workflow_def.version,
+                    'node_count': len(workflow_def.nodes),
+                    'edge_count': len(workflow_def.edges),
+                    'timeout_minutes': workflow_def.timeout_minutes,
+                    'created_at': workflow_def.created_at.isoformat(),
+                    'created_by': workflow_def.created_by,
+                    'tags': list(workflow_def.tags)
+                })
+            
+            return {'workflows': workflows}
+        else:
+            return {'workflows': []}
+        
+    except Exception as e:
+        logger.error(f"Error getting workflows: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve workflows"
+        )
+
+@app.get("/workflows/executions/active")
+@limiter.limit("30/minute")
+async def get_active_workflow_executions(
+    request: Request,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Get active workflow executions"""
+    try:
+        amas = await get_amas_system()
+        
+        if hasattr(amas, 'workflow_engine') and amas.workflow_engine:
+            executions = []
+            for execution_id, execution in amas.workflow_engine.active_executions.items():
+                workflow_status = await amas.workflow_engine.get_workflow_status(execution_id)
+                if workflow_status:
+                    executions.append(workflow_status)
+            
+            return {'executions': executions}
+        else:
+            return {'executions': []}
+        
+    except Exception as e:
+        logger.error(f"Error getting active executions: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve active executions"
+        )
+
+@app.post("/workflows/{workflow_id}/execute")
+@limiter.limit("10/minute")
+async def execute_workflow_endpoint(
+    workflow_id: str,
+    workflow_request: WorkflowRequest,
+    background_tasks: BackgroundTasks,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Execute a workflow"""
+    try:
+        amas = await get_amas_system()
+        
+        if not hasattr(amas, 'workflow_engine') or not amas.workflow_engine:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Workflow engine not available"
+            )
+        
+        # Execute workflow
+        execution_id = await amas.workflow_engine.execute_workflow(
+            workflow_id=workflow_id,
+            execution_context=workflow_request.parameters,
+            initiated_by=current_user.user_id,
+            priority=workflow_request.priority
+        )
+        
+        # Log audit event
+        background_tasks.add_task(
+            log_audit_event,
+            "workflow_execution",
+            current_user.user_id,
+            "execute_workflow",
+            f"Workflow executed: {workflow_id}",
+            request.client.host if request.client else "unknown",
+            request.headers.get("user-agent", "unknown")
+        )
+        
+        return {
+            'execution_id': execution_id,
+            'workflow_id': workflow_id,
+            'status': 'started',
+            'message': 'Workflow execution started successfully'
+        }
+        
+    except Exception as e:
+        logger.error(f"Error executing workflow: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to execute workflow"
+        )
+
+@app.get("/workflows/executions/{execution_id}")
+@limiter.limit("60/minute")
+async def get_workflow_execution_status(
+    execution_id: str,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Get workflow execution status"""
+    try:
+        amas = await get_amas_system()
+        
+        if hasattr(amas, 'workflow_engine') and amas.workflow_engine:
+            workflow_status = await amas.workflow_engine.get_workflow_status(execution_id)
+            
+            if workflow_status:
+                return workflow_status
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Workflow execution not found"
+                )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Workflow engine not available"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting workflow execution status: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve workflow execution status"
+        )
+
+@app.delete("/workflows/executions/{execution_id}")
+@limiter.limit("10/minute")
+async def cancel_workflow_execution(
+    execution_id: str,
+    background_tasks: BackgroundTasks,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Cancel workflow execution"""
+    try:
+        amas = await get_amas_system()
+        
+        if hasattr(amas, 'workflow_engine') and amas.workflow_engine:
+            success = await amas.workflow_engine.cancel_execution(
+                execution_id=execution_id,
+                reason=f"Cancelled by user {current_user.username}"
+            )
+            
+            if success:
+                # Log audit event
+                background_tasks.add_task(
+                    log_audit_event,
+                    "workflow_cancellation",
+                    current_user.user_id,
+                    "cancel_workflow",
+                    f"Workflow execution cancelled: {execution_id}",
+                    request.client.host if request.client else "unknown",
+                    request.headers.get("user-agent", "unknown")
+                )
+                
+                return {'message': 'Workflow execution cancelled successfully'}
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Workflow execution not found or already completed"
+                )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Workflow engine not available"
+            )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error cancelling workflow execution: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to cancel workflow execution"
+        )
+
+@app.get("/workflows/metrics")
+@limiter.limit("30/minute")
+async def get_workflow_metrics(
+    request: Request,
+    current_user: TokenData = Depends(get_current_user)
+):
+    """Get workflow performance metrics"""
+    try:
+        amas = await get_amas_system()
+        
+        if hasattr(amas, 'workflow_engine') and amas.workflow_engine:
+            engine_status = amas.workflow_engine.get_engine_status()
+            return engine_status
+        else:
+            return {
+                'engine_status': 'unavailable',
+                'message': 'Workflow engine not initialized'
+            }
+        
+    except Exception as e:
+        logger.error(f"Error getting workflow metrics: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve workflow metrics"
+        )
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket, token: Optional[str] = None):
     """Enhanced WebSocket endpoint for real-time updates"""

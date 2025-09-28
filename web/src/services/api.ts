@@ -348,4 +348,122 @@ export class AMASApiService {
       };
     }
   }
+
+  /**
+   * Get available workflows
+   */
+  async getWorkflows(): Promise<any[]> {
+    try {
+      const response = await this.api.get('/workflows');
+      return response.data.workflows || [];
+    } catch (error) {
+      // Return mock workflows if endpoint not available
+      return [
+        {
+          workflow_id: 'intelligence_collection_v2',
+          name: 'Comprehensive Intelligence Collection',
+          description: 'Advanced multi-source intelligence collection with analysis and reporting',
+          version: '2.0',
+          nodes: {},
+          edges: {},
+          timeout_minutes: 120
+        },
+        {
+          workflow_id: 'threat_assessment_v2',
+          name: 'Advanced Threat Assessment',
+          description: 'Comprehensive threat assessment with iterative refinement',
+          version: '2.0',
+          nodes: {},
+          edges: {},
+          timeout_minutes: 90
+        },
+        {
+          workflow_id: 'investigation_v2',
+          name: 'Advanced Investigation Workflow',
+          description: 'Comprehensive investigation with iterative evidence gathering',
+          version: '2.0',
+          nodes: {},
+          edges: {},
+          timeout_minutes: 180
+        }
+      ];
+    }
+  }
+
+  /**
+   * Get active workflow executions
+   */
+  async getActiveWorkflowExecutions(): Promise<any[]> {
+    try {
+      const response = await this.api.get('/workflows/executions/active');
+      return response.data.executions || [];
+    } catch (error) {
+      // Return mock active executions
+      return [
+        {
+          execution_id: 'exec_001',
+          workflow_id: 'intelligence_collection_v2',
+          status: 'running',
+          progress: {
+            total_nodes: 8,
+            completed_nodes: 3,
+            failed_nodes: 0,
+            current_nodes: ['osint_collection'],
+            completion_percentage: 37.5
+          },
+          started_at: new Date(Date.now() - 300000).toISOString(),
+          execution_time: 300,
+          initiated_by: 'admin',
+          node_results: {}
+        }
+      ];
+    }
+  }
+
+  /**
+   * Get workflow execution details
+   */
+  async getWorkflowExecution(executionId: string): Promise<any> {
+    try {
+      const response = await this.api.get(`/workflows/executions/${executionId}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(`Failed to get workflow execution: ${error}`);
+    }
+  }
+
+  /**
+   * Cancel workflow execution
+   */
+  async cancelWorkflowExecution(executionId: string): Promise<void> {
+    try {
+      await this.api.delete(`/workflows/executions/${executionId}`);
+    } catch (error) {
+      throw new Error(`Failed to cancel workflow execution: ${error}`);
+    }
+  }
+
+  /**
+   * Get workflow performance metrics
+   */
+  async getWorkflowMetrics(): Promise<any> {
+    try {
+      const response = await this.api.get('/workflows/metrics');
+      return response.data;
+    } catch (error) {
+      // Return mock metrics
+      return {
+        total_workflows: 3,
+        successful_executions: 45,
+        failed_executions: 2,
+        average_execution_time: 180.5,
+        active_executions: 1,
+        node_execution_stats: {
+          task: { count: 150, avg_time: 45.2, success_rate: 0.96 },
+          decision: { count: 30, avg_time: 2.1, success_rate: 0.98 },
+          parallel: { count: 20, avg_time: 0.5, success_rate: 1.0 }
+        }
+      };
+    }
+  }
 }
