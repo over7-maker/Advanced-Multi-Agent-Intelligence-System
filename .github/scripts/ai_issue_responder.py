@@ -175,7 +175,7 @@ Be specific to the AMAS project context and provide actionable guidance.
         url = f"https://api.github.com/repos/{self.repo_name}/issues/{self.issue_number}/comments"
         
         headers = {
-            'Authorization': f'Bearer {self.github_token}',
+            'Authorization': f'token {self.github_token}',
             'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json'
         }
@@ -205,7 +205,7 @@ Be specific to the AMAS project context and provide actionable guidance.
         url = f"https://api.github.com/repos/{self.repo_name}/issues/{self.issue_number}/labels"
         
         headers = {
-            'Authorization': f'Bearer {self.github_token}',
+            'Authorization': f'token {self.github_token}',
             'Accept': 'application/vnd.github.v3+json',
             'Content-Type': 'application/json'
         }
