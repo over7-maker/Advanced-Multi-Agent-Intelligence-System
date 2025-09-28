@@ -21,6 +21,7 @@ from typing import Dict, Any, List, Optional, Union
 from contextlib import asynccontextmanager
 
 import jwt
+import json
 from fastapi import (
     FastAPI, HTTPException, Depends, BackgroundTasks, Request,
     WebSocket, WebSocketDisconnect, status
@@ -605,16 +606,48 @@ async def get_agents(
         )
 
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    """WebSocket endpoint for real-time updates"""
-    await manager.connect(websocket)
+async def websocket_endpoint(websocket: WebSocket, token: Optional[str] = None):
+    """Enhanced WebSocket endpoint for real-time updates"""
+    from api.websocket_handler import websocket_manager
+    
     try:
-        while True:
-            data = await websocket.receive_text()
-            # Handle incoming WebSocket messages
-            logger.info(f"WebSocket message received: {data}")
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        # Set AMAS system reference
+        websocket_manager.amas_system = amas_system
+        
+        # Connect client with authentication
+        connection_id = await websocket_manager.connect_client(websocket, token)
+        
+        try:
+            while True:
+                # Receive message from client
+                data = await websocket.receive_text()
+                
+                try:
+                    message = json.loads(data)
+                    await websocket_manager.handle_message(connection_id, message)
+                except json.JSONDecodeError:
+                    logger.warning(f"Invalid JSON received from {connection_id}: {data}")
+                    await websocket_manager._send_error_to_connection(
+                        connection_id, "Invalid JSON format"
+                    )
+                except Exception as e:
+                    logger.error(f"Error processing WebSocket message: {e}")
+                    await websocket_manager._send_error_to_connection(
+                        connection_id, f"Message processing error: {str(e)}"
+                    )
+                    
+        except WebSocketDisconnect:
+            await websocket_manager.disconnect_client(connection_id, "Client disconnected")
+        except Exception as e:
+            logger.error(f"WebSocket error: {e}")
+            await websocket_manager.disconnect_client(connection_id, f"Server error: {str(e)}")
+            
+    except Exception as e:
+        logger.error(f"WebSocket connection error: {e}")
+        try:
+            await websocket.close(code=1011, reason="Server error")
+        except Exception:
+            pass
 
 async def log_audit_event(
     event_type: str,
