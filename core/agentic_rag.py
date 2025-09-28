@@ -13,7 +13,7 @@ import json
 from dataclasses import dataclass
 from enum import Enum
 
-from ..agents.base.intelligence_agent import IntelligenceAgent
+from agents.base.intelligence_agent import IntelligenceAgent
 
 
 class QueryStrategy(Enum):

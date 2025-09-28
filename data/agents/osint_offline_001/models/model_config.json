@@ -1,0 +1,14 @@
+{
+  "embedding_model": {
+    "name": "local-embedding",
+    "type": "sentence-transformers",
+    "model_path": "./models/embedding",
+    "offline": true
+  },
+  "classification_model": {
+    "name": "local-classifier",
+    "type": "scikit-learn",
+    "model_path": "./models/classifier",
+    "offline": true
+  }
+}
