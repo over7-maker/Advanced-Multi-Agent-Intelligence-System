@@ -1,17 +1,28 @@
 """
-Intelligence Orchestrator
+Intelligence Orchestrator - Enhanced ReAct Implementation
 
 This module implements the central orchestrator for the AMAS Intelligence System,
-managing agent coordination, task distribution, and workflow execution.
+managing agent coordination, task distribution, and workflow execution using
+advanced ReAct (Reasoning-Acting-Observing) patterns and cognitive dual-process models.
+
+Based on the Advanced Multi-Agent Intelligence System Blueprint:
+- Cognitive Architecture: Dual-process model (System 1 & System 2)
+- Explainable Reasoning: Transparent decision-making processes  
+- Dynamic Workflows: Graph-based execution with loops and branching
+- AI Team Metaphor: Simulation of autonomous professional team
 """
 
 import asyncio
 import logging
-from typing import Dict, List, Any, Optional, Union
-from datetime import datetime
+import json
+from typing import Dict, List, Any, Optional, Union, Callable
+from datetime import datetime, timedelta
 from enum import Enum
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+import time
+from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 from agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
 from agents.osint.osint_agent import OSINTAgent

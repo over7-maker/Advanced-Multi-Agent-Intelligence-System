@@ -37,6 +37,9 @@ from agents.technology_monitor.technology_monitor_agent import TechnologyMonitor
 from agents.agentic_rag import AgenticRAG
 from agents.prompt_maker import PromptMaker
 from agents.n8n_integration import N8NIntegration
+from core.workflow_engine import AdvancedWorkflowEngine
+from agents.communication.message_bus import AdvancedMessageBus
+from core.state_manager import AdvancedStateManager
 
 class AMASIntelligenceSystem:
     """Main AMAS Intelligence System"""
@@ -51,6 +54,9 @@ class AMASIntelligenceSystem:
         self.agentic_rag = None
         self.prompt_maker = None
         self.n8n_integration = None
+        self.workflow_engine = None
+        self.message_bus = None
+        self.state_manager = None
         
     async def initialize(self):
         """Initialize the AMAS system"""
@@ -91,7 +97,19 @@ class AMASIntelligenceSystem:
             self.n8n_integration = N8NIntegration(self.config)
             await self.n8n_integration.initialize()
             
-            logger.info("AMAS Intelligence System initialized successfully")
+            # Initialize advanced workflow engine
+            self.workflow_engine = AdvancedWorkflowEngine(self.config, self)
+            await self.workflow_engine.start()
+            
+            # Initialize message bus for agent communication
+            self.message_bus = AdvancedMessageBus(self.config)
+            await self.message_bus.start()
+            
+            # Initialize state manager for shared state
+            self.state_manager = AdvancedStateManager(self.config)
+            await self.state_manager.start()
+            
+            logger.info("AMAS Intelligence System with advanced workflow orchestration initialized successfully")
             
         except Exception as e:
             logger.error(f"Failed to initialize AMAS system: {e}")
@@ -217,8 +235,27 @@ class AMASIntelligenceSystem:
         """Shutdown the system"""
         try:
             logger.info("Shutting down AMAS Intelligence System...")
-            # Cleanup operations
+            
+            # Shutdown advanced components
+            if self.workflow_engine:
+                await self.workflow_engine.stop()
+                logger.info("Workflow engine stopped")
+            
+            if self.message_bus:
+                await self.message_bus.stop()
+                logger.info("Message bus stopped")
+            
+            if self.state_manager:
+                await self.state_manager.stop()
+                logger.info("State manager stopped")
+            
+            # Shutdown other components
+            if self.service_manager:
+                await self.service_manager.shutdown_all_services()
+                logger.info("Service manager stopped")
+            
             logger.info("AMAS Intelligence System shutdown complete")
+            
         except Exception as e:
             logger.error(f"Error during shutdown: {e}")
 
