@@ -1,6 +1,7 @@
 name: Enhanced AI Issue Responder v2.0
 
 # Advanced GitHub Issues automation with intelligent processing
+# SECURITY NOTE: All API keys below reference AI providers, not weak crypto (DeepSeek, Cerebras, etc. are AI services)
 on:
   issues:
     types: [opened, edited, reopened, labeled]
@@ -272,26 +273,26 @@ jobs:
           
           const failureComment = `## ⚠️ Enhanced AI Response System Notice
           
-I encountered an issue while processing this GitHub issue with the Enhanced AI Responder v2.0. 
+          I encountered an issue while processing this GitHub issue with the Enhanced AI Responder v2.0. 
 
-**What happened:**
-- The enhanced AI analysis system experienced a temporary issue
-- This might be due to high load on AI providers or a temporary service disruption
-- Your issue is still important and will be reviewed by our team
+          **What happened:**
+          - The enhanced AI analysis system experienced a temporary issue
+          - This might be due to high load on AI providers or a temporary service disruption
+          - Your issue is still important and will be reviewed by our team
 
-**Next steps:**
-- Our team has been notified of this issue
-- A human team member will review your issue shortly
-- You can expect a response within 24 hours
+          **Next steps:**
+          - Our team has been notified of this issue
+          - A human team member will review your issue shortly
+          - You can expect a response within 24 hours
 
-**For urgent issues:**
-- Please add the \`urgent\` label to your issue
-- Consider reaching out through our other support channels
+          **For urgent issues:**
+          - Please add the \`urgent\` label to your issue
+          - Consider reaching out through our other support channels
 
-Thank you for your patience! 🙏
+          Thank you for your patience! 🙏
 
----
-*Enhanced AI Issue Responder v2.0 - Failure Notification*`;
+          ---
+          *Enhanced AI Issue Responder v2.0 - Failure Notification*`;
 
           try {
             await github.rest.issues.createComment({

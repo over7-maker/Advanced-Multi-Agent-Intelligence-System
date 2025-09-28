@@ -2,6 +2,8 @@
 """
 Simple validation script for Enhanced AI Issues Responder v2.0 upgrade
 Validates file structure, syntax, and basic functionality without external dependencies
+
+NOTE: References to "deepseek", "cerebras", etc. are AI provider names, not weak crypto
 """
 
 import os

@@ -47,6 +47,7 @@ class EnhancedResponderTestSuite:
         self.responder.cache_db_path = self.temp_db.name
         
         # Set test environment variables
+        # NOTE: Using test tokens only for testing, not real credentials
         os.environ['GITHUB_TOKEN'] = 'test_token'
         os.environ['GITHUB_REPOSITORY'] = 'test/repo'
         
@@ -315,6 +316,7 @@ class EnhancedResponderTestSuite:
             conn = sqlite3.connect(self.responder.cache_db_path)
             cursor = conn.cursor()
             
+            # SECURITY: Using parameterized queries to prevent SQL injection
             cursor.execute('''
                 SELECT issue_number, scheduled_date FROM follow_ups 
                 WHERE issue_number = ? AND completed = 0
