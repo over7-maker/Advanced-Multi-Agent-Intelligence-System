@@ -1,381 +1,361 @@
-# AMAS - Advanced Multi-Agent Intelligence System
+# Advanced Multi-Agent Intelligence System (AMAS)
 
-[![Python Version](https://img.shields.io/badge/python-3.9%2B-blue)](https://python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Code Style: Black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Security: Bandit](https://img.shields.io/badge/security-bandit-green.svg)](https://github.com/PyCQA/bandit)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=flat&logo=FastAPI)](https://fastapi.tiangolo.com/)
 
-> **🚀 The Future of Autonomous AI Intelligence**
-> 
-> AMAS is a cutting-edge, enterprise-grade multi-agent AI system designed for complete offline operation with uncompromising security and performance. Built on the ReAct (Reasoning-Acting-Observing) framework, it orchestrates multiple specialized AI agents to solve complex intelligence tasks autonomously.
+## 🚀 Overview
 
-## ✨ Key Features
+The **Advanced Multi-Agent Intelligence System (AMAS)** is a cutting-edge AI platform that orchestrates multiple specialized agents to perform complex intelligence operations. Built with modern technologies and designed for scalability, AMAS provides autonomous intelligence gathering, analysis, and reporting capabilities.
 
-### 🧠 **Multi-Agent Intelligence**
-- **Orchestrated Collaboration**: Multiple AI agents working in harmony
-- **Specialized Expertise**: Dedicated agents for OSINT, forensics, data analysis, and more
-- **ReAct Framework**: Advanced reasoning and action cycles
-- **Dynamic Task Distribution**: Intelligent workload balancing
+### ✨ Key Features
 
-### 🔒 **Enterprise Security**
-- **Zero-Trust Architecture**: Every component is authenticated and encrypted
-- **AES-GCM-256 Encryption**: Military-grade data protection
-- **Complete Audit Trail**: Immutable logging with tamper detection
-- **RBAC System**: Fine-grained role-based access control
-- **Compliance Ready**: GDPR, SOX, HIPAA, ISO 27001 compatible
-
-### ⚡ **Performance & Scalability**
-- **GPU Acceleration**: Optimized for RTX 4080 SUPER and CUDA
-- **Local LLM Hosting**: Llama 3.1 70B, CodeLlama 34B support
-- **Vector Search**: FAISS-powered semantic search at scale
-- **Knowledge Graphs**: Neo4j-based reasoning and knowledge representation
-- **Horizontal Scaling**: Multi-node deployment ready
-
-### 🌐 **Multi-Interface Access**
-- **Web Interface**: Modern React-based dashboard
-- **Desktop Application**: Cross-platform Electron app
-- **CLI Tools**: Full command-line interface
-- **REST API**: Complete programmatic access
+- **🤖 Multi-Agent Architecture**: 8 specialized AI agents working in coordination
+- **🧠 Advanced AI Integration**: LLM, Vector Search, and Knowledge Graph capabilities
+- **🔒 Enterprise Security**: Zero-trust architecture with comprehensive audit trails
+- **📊 Real-time Monitoring**: Prometheus and Grafana integration
+- **🌐 Modern Web Interface**: React-based dashboard with real-time updates
+- **🐳 Containerized Deployment**: Docker and Docker Compose ready
+- **🔧 API-First Design**: RESTful APIs with OpenAPI documentation
 
 ## 🏗️ Architecture
 
-```mermaid
-graph TD
-    A[Web Interface] --> D[Load Balancer]
-    B[Desktop App] --> D
-    C[CLI Tools] --> D
-    D --> E[FastAPI Backend]
-    E --> F[Agent Orchestrator]
-    F --> G[LLM Service]
-    F --> H[Vector Service]
-    F --> I[Knowledge Graph]
-    F --> J[Security Service]
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    AMAS System Architecture                 │
+├─────────────────────────────────────────────────────────────┤
+│  Web Interface (React)  │  Desktop App (Electron)  │  CLI  │
+├─────────────────────────────────────────────────────────────┤
+│                    API Gateway (FastAPI)                    │
+├─────────────────────────────────────────────────────────────┤
+│                Intelligence Orchestrator                     │
+├─────────────────────────────────────────────────────────────┤
+│  OSINT  │  Investigation  │  Forensics  │  Data Analysis    │
+│  Agent  │     Agent       │    Agent    │     Agent         │
+├─────────────────────────────────────────────────────────────┤
+│  Reverse Eng.  │  Metadata  │  Reporting  │  Tech Monitor   │
+│     Agent      │   Agent    │    Agent    │     Agent        │
+├─────────────────────────────────────────────────────────────┤
+│  LLM Service  │  Vector DB  │  Knowledge  │  Database       │
+│   (Ollama)    │   (FAISS)   │   Graph     │ (PostgreSQL)    │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Python 3.9+** (3.11 recommended)
-- **NVIDIA GPU** with CUDA 12.1+ (optional but recommended)
-- **Docker & Docker Compose** (for containerized deployment)
-- **16GB+ RAM** (32GB recommended for full models)
 
-### 1. Installation
+- **Docker & Docker Compose**
+- **Python 3.11+** (for development)
+- **Node.js 18+** (for web interface)
+- **8GB+ RAM** (16GB+ recommended)
+- **50GB+ storage**
+
+### 1. Clone the Repository
 
 ```bash
-# Clone the repository
 git clone https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System.git
 cd Advanced-Multi-Agent-Intelligence-System
-
-# Install AMAS
-pip install -e .
-
-# Or install with GPU support
-pip install -e .[gpu]
 ```
 
-### 2. Configuration
+### 2. Quick Deployment
 
 ```bash
-# Copy environment template
-cp .env.example .env
+# Make scripts executable
+chmod +x scripts/*.sh
 
-# Edit configuration (optional)
-vim .env
+# Deploy the complete system
+./scripts/deploy.sh development deploy
 ```
 
-### 3. Initialize Services
+### 3. Access the System
+
+- **🌐 Web Interface**: http://localhost
+- **📚 API Documentation**: http://localhost:8000/docs
+- **📊 Grafana Dashboard**: http://localhost:3001
+- **🔍 Neo4j Browser**: http://localhost:7474
+
+## 🛠️ Development Setup
+
+### 1. Environment Setup
 
 ```bash
-# Start all services with Docker
-docker-compose up -d
+# Run setup script
+./scripts/setup.sh
 
-# Or initialize manually
-python scripts/deployment/setup_services.py
+# Activate virtual environment
+source venv/bin/activate
 ```
 
-### 4. Launch AMAS
+### 2. Start Development Services
 
 ```bash
-# Start the system
-amas start
+# Start infrastructure services
+docker-compose up -d postgres redis neo4j ollama
 
-# Or use Python directly
-python main.py
+# Start API server
+python -m uvicorn src.amas.api.main:app --reload
+
+# Start web interface (optional)
+cd web && npm start
 ```
 
-### 5. Verify Installation
+### 3. Run Tests
 
 ```bash
-# Check system health
-amas health --check-all
+# Run all tests
+python run_tests.py
 
-# Submit a test task
-amas submit-task research "Analyze current AI trends" --wait
+# Run specific test categories
+python -m pytest tests/test_core.py -v
+python -m pytest tests/test_agents.py -v
+python -m pytest tests/test_api.py -v
 ```
 
-## 📖 Usage Examples
+## 📋 System Components
 
-### Python API
+### 🤖 Specialized Agents
 
-```python
-import asyncio
-from amas import AMASApplication
+| Agent | Purpose | Capabilities |
+|-------|---------|-------------|
+| **OSINT Agent** | Intelligence Collection | Web scraping, social media monitoring, data gathering |
+| **Investigation Agent** | Case Management | Evidence analysis, timeline reconstruction, case tracking |
+| **Forensics Agent** | Digital Forensics | Evidence acquisition, malware analysis, artifact examination |
+| **Data Analysis Agent** | Data Processing | Statistical analysis, pattern recognition, anomaly detection |
+| **Reverse Engineering Agent** | Code Analysis | Binary analysis, vulnerability assessment, exploit research |
+| **Metadata Agent** | File Analysis | EXIF extraction, steganography detection, file system analysis |
+| **Reporting Agent** | Documentation | Report generation, data visualization, executive summaries |
+| **Technology Monitor Agent** | Tech Intelligence | Trend monitoring, innovation tracking, research analysis |
 
-async def example():
-    # Initialize AMAS
-    app = AMASApplication()
-    await app.initialize()
-    
-    # Submit a research task
-    task_id = await app.submit_task({
-        'type': 'research',
-        'description': 'Research quantum computing in AI',
-        'priority': 1
-    })
-    
-    # Get results
-    result = await app.get_task_result(task_id)
-    print(f"Task completed: {result}")
-    
-    await app.shutdown()
+### 🔧 Core Services
 
-asyncio.run(example())
-```
+- **Intelligence Orchestrator**: Central coordination and task distribution
+- **LLM Service**: Language model integration (Ollama)
+- **Vector Service**: Semantic search and similarity matching
+- **Knowledge Graph**: Entity relationships and graph analytics
+- **Database Service**: Data persistence and querying
+- **Security Service**: Authentication, authorization, and encryption
 
-### CLI Interface
+### 🌐 User Interfaces
+
+- **Web Dashboard**: React-based management interface
+- **Desktop Application**: Electron-based offline client
+- **CLI Tools**: Command-line interface for automation
+- **API Endpoints**: RESTful APIs for integration
+
+## 🔒 Security Features
+
+### Authentication & Authorization
+
+- **JWT-based Authentication**: Secure token-based access
+- **Role-Based Access Control (RBAC)**: Granular permission management
+- **Multi-Factor Authentication**: Enhanced security layers
+- **Session Management**: Secure session handling and timeout
+
+### Data Protection
+
+- **End-to-End Encryption**: AES-256-GCM encryption
+- **Key Management**: Automated key rotation and management
+- **Data Classification**: Automatic sensitive data detection
+- **Audit Logging**: Comprehensive activity tracking
+
+### Network Security
+
+- **Rate Limiting**: API protection against abuse
+- **CORS Configuration**: Cross-origin request security
+- **SSL/TLS**: Encrypted communication
+- **Firewall Rules**: Network access control
+
+## 📊 Monitoring & Observability
+
+### Metrics Collection
+
+- **System Metrics**: CPU, memory, disk usage
+- **Application Metrics**: Request rates, response times, error rates
+- **Business Metrics**: Task completion, agent performance, user activity
+
+### Dashboards
+
+- **System Overview**: Real-time system health and status
+- **Agent Performance**: Individual agent metrics and efficiency
+- **Security Dashboard**: Authentication, authorization, and audit events
+- **Business Intelligence**: Task trends, user activity, system utilization
+
+### Alerting
+
+- **Health Checks**: Automated service monitoring
+- **Performance Alerts**: Resource usage and response time alerts
+- **Security Alerts**: Suspicious activity and access violations
+- **Business Alerts**: Task failures and system errors
+
+## 🚀 Deployment Options
+
+### Development Environment
 
 ```bash
-# System management
-amas status                     # Show system status
-amas config-show               # Display configuration
-
-# Task management
-amas submit-task osint "Analyze security threats" --priority 1
-amas get-result <task-id>      # Get task results
-
-# Health monitoring
-amas health --check-services   # Check service health
+# Quick development setup
+./scripts/setup.sh
+./scripts/deploy.sh development deploy
 ```
 
-### Web Interface
-
-Access the modern React dashboard at `http://localhost:3000`
-
-- **Dashboard**: Real-time system overview
-- **Task Management**: Submit and monitor tasks
-- **Agent Monitoring**: View agent status and performance
-- **Analytics**: System metrics and insights
-
-## 📁 Project Structure
-
-```
-amas/
-├── 📁 src/amas/              # Main source code
-│   ├── agents/               # AI agents and orchestration
-│   ├── core/                 # Core system components
-│   ├── services/             # External service integrations
-│   ├── api/                  # FastAPI REST API
-│   ├── config/               # Configuration management
-│   └── utils/                # Utility functions
-├── 📁 tests/                 # Test suite
-│   ├── unit/                 # Unit tests
-│   ├── integration/          # Integration tests
-│   └── e2e/                  # End-to-end tests
-├── 📁 docs/                  # Documentation
-│   ├── user/                 # User guides
-│   ├── developer/            # Developer documentation
-│   └── api/                  # API documentation
-├── 📁 scripts/               # Utility scripts
-│   ├── deployment/           # Deployment scripts
-│   ├── maintenance/          # Maintenance tools
-│   └── development/          # Development utilities
-├── 📁 examples/              # Usage examples
-├── 📁 docker/                # Docker configurations
-└── 📁 assets/                # Static assets
-```
-
-## 🔧 Development
-
-### Setup Development Environment
+### Production Deployment
 
 ```bash
-# Install development dependencies
-pip install -e .[dev]
+# Production deployment with SSL
+./scripts/deploy.sh production deploy
 
-# Install pre-commit hooks
-pre-commit install
-
-# Run tests
-pytest
-
-# Code formatting
-black src/ tests/
-flake8 src/ tests/
-
-# Type checking
-mypy src/
+# Configure SSL certificates
+sudo certbot certonly --standalone -d your-domain.com
 ```
+
+### Docker Compose Services
+
+```yaml
+services:
+  amas-api:          # Main API service
+  vector-service:    # Vector search service
+  postgres:          # Database
+  redis:            # Cache
+  neo4j:            # Knowledge graph
+  ollama:           # LLM service
+  nginx:            # Load balancer
+  prometheus:       # Metrics collection
+  grafana:          # Monitoring dashboard
+```
+
+## 📚 API Documentation
+
+### Core Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/health` | GET | System health check |
+| `/status` | GET | System status and metrics |
+| `/tasks` | POST | Submit new task |
+| `/tasks/{id}` | GET | Get task status |
+| `/agents` | GET | List all agents |
+| `/agents/{id}` | GET | Get agent status |
+| `/workflows/{id}/execute` | POST | Execute workflow |
+| `/audit` | GET | Get audit log |
+
+### Authentication
+
+```bash
+# Get access token
+curl -X POST "http://localhost:8000/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "admin123"}'
+
+# Use token in requests
+curl -H "Authorization: Bearer <token>" \
+  "http://localhost:8000/agents"
+```
+
+## 🧪 Testing
+
+### Test Categories
+
+- **Unit Tests**: Individual component testing
+- **Integration Tests**: Component interaction testing
+- **API Tests**: Endpoint functionality testing
+- **Security Tests**: Authentication and authorization testing
+- **Performance Tests**: Load and stress testing
 
 ### Running Tests
 
 ```bash
 # Run all tests
-pytest
+python run_tests.py
 
 # Run with coverage
-pytest --cov=amas --cov-report=html
+python -m pytest tests/ --cov=src/amas
 
-# Run specific test categories
-pytest tests/unit/          # Unit tests
-pytest tests/integration/   # Integration tests
-pytest tests/e2e/           # End-to-end tests
+# Run specific test types
+python -m pytest tests/test_core.py -v
+python -m pytest tests/test_agents.py -v
+python -m pytest tests/test_api.py -v
 ```
 
-## 📊 System Requirements
+## 📖 Documentation
 
-### Minimum Requirements
-- **CPU**: 8 cores, 3.0 GHz
-- **RAM**: 16GB
-- **Storage**: 100GB SSD
-- **OS**: Ubuntu 20.04+, Windows 10+, macOS 12+
-
-### Recommended Requirements
-- **CPU**: 16 cores, 3.5+ GHz
-- **RAM**: 32GB
-- **GPU**: NVIDIA RTX 4080+ with 16GB VRAM
-- **Storage**: 500GB NVMe SSD
-- **Network**: Gigabit ethernet
-
-## 🛠️ Configuration
-
-### Environment Variables
-
-```bash
-# Application Settings
-AMAS_ENVIRONMENT=production
-AMAS_DEBUG=false
-AMAS_OFFLINE_MODE=true
-AMAS_GPU_ENABLED=true
-
-# Database Configuration
-AMAS_DB_HOST=localhost
-AMAS_DB_PORT=5432
-AMAS_DB_USER=amas
-AMAS_DB_PASSWORD=secure_password
-AMAS_DB_NAME=amas
-
-# Security Settings
-AMAS_JWT_SECRET=your_jwt_secret_here
-AMAS_ENCRYPTION_KEY=your_32_char_encryption_key_here
-AMAS_AUDIT_ENABLED=true
-
-# LLM Configuration
-AMAS_LLM_HOST=localhost
-AMAS_LLM_PORT=11434
-AMAS_LLM_MODEL=llama3.1:70b
-```
-
-## 🚀 Deployment
-
-### Docker Deployment (Recommended)
-
-```bash
-# Production deployment
-docker-compose -f docker-compose.prod.yml up -d
-
-# Development deployment
-docker-compose up -d
-
-# Scale services
-docker-compose scale api=3 workers=5
-```
-
-### Manual Deployment
-
-```bash
-# Install system dependencies
-sudo scripts/deployment/install_dependencies.sh
-
-# Configure services
-python scripts/deployment/configure_services.py
-
-# Start AMAS
-systemctl start amas
-```
-
-## 📈 Monitoring & Observability
-
-- **Prometheus Metrics**: `/metrics` endpoint
-- **Health Checks**: `/health` endpoint
-- **Grafana Dashboards**: Pre-configured monitoring
-- **Structured Logging**: JSON-formatted logs
-- **Distributed Tracing**: OpenTelemetry integration
-
-## 🔍 Use Cases
-
-### Intelligence Analysis
-- **OSINT Collection**: Automated open-source intelligence gathering
-- **Threat Assessment**: Real-time security threat analysis
-- **Data Correlation**: Cross-source information synthesis
-
-### Research & Development
-- **Scientific Research**: Autonomous literature review and hypothesis generation
-- **Market Analysis**: Comprehensive market research and trend analysis
-- **Technology Scouting**: Emerging technology identification and evaluation
-
-### Business Intelligence
-- **Competitive Analysis**: Automated competitor monitoring
-- **Risk Assessment**: Enterprise risk evaluation and mitigation
-- **Strategic Planning**: Data-driven strategic recommendations
-
-## 📚 Documentation
-
-- **[User Guide](docs/user/README.md)** - Complete user documentation
-- **[Developer Guide](docs/developer/README.md)** - Technical implementation details
-- **[API Reference](docs/api/README.md)** - REST API documentation
-- **[Architecture Guide](docs/developer/architecture.md)** - System architecture overview
-- **[Security Guide](docs/developer/security.md)** - Security implementation details
+- **[Deployment Guide](DEPLOYMENT.md)**: Comprehensive deployment instructions
+- **[Testing Guide](TESTING.md)**: Testing framework and procedures
+- **[API Documentation](http://localhost:8000/docs)**: Interactive API documentation
+- **[Architecture Guide](docs/architecture.md)**: System design and architecture
+- **[Security Guide](docs/security.md)**: Security implementation and best practices
 
 ## 🤝 Contributing
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
-
 ### Development Workflow
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass
-6. Submit a pull request
+1. **Fork the repository**
+2. **Create a feature branch**
+3. **Make your changes**
+4. **Run tests and linting**
+5. **Submit a pull request**
 
 ### Code Standards
 
-- **Python**: Follow PEP 8, use Black for formatting
-- **Documentation**: Comprehensive docstrings and type hints
-- **Testing**: Minimum 90% code coverage
-- **Security**: All changes must pass security scans
+- **Python**: Follow PEP 8, use type hints
+- **JavaScript**: Follow ESLint rules, use modern ES6+
+- **Documentation**: Update docs for new features
+- **Testing**: Maintain test coverage above 80%
+
+### Getting Help
+
+- **Issues**: Report bugs and request features
+- **Discussions**: Ask questions and share ideas
+- **Documentation**: Check existing documentation first
+- **Community**: Join our community discussions
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🆘 Support
+## 🙏 Acknowledgments
 
-- **Documentation**: [docs/](docs/)
-- **Issues**: [GitHub Issues](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/discussions)
+- **OpenAI** for language model capabilities
+- **FastAPI** for the excellent web framework
+- **React** for the modern UI framework
+- **Docker** for containerization
+- **Prometheus & Grafana** for monitoring
+- **All contributors** who help improve AMAS
 
-## 🎯 Roadmap
+## 📞 Support
 
-- **Q1 2024**: Enhanced multi-modal AI capabilities
-- **Q2 2024**: Advanced knowledge graph reasoning
-- **Q3 2024**: Federated learning integration
-- **Q4 2024**: Quantum-resistant security implementation
+- **Documentation**: Check the docs folder
+- **Issues**: Open an issue on GitHub
+- **Discussions**: Use GitHub Discussions
+- **Email**: Contact the development team
+
+## 🗺️ Roadmap
+
+### Phase 1: Core System (✅ Complete)
+- [x] Multi-agent architecture
+- [x] Basic agent implementations
+- [x] API layer
+- [x] Web interface
+- [x] Security framework
+
+### Phase 2: Advanced Features (🔄 In Progress)
+- [ ] Advanced AI capabilities
+- [ ] Machine learning integration
+- [ ] Enhanced security features
+- [ ] Performance optimization
+
+### Phase 3: Enterprise Features (📋 Planned)
+- [ ] Multi-tenant support
+- [ ] Advanced analytics
+- [ ] Custom agent development
+- [ ] Enterprise integrations
+
+### Phase 4: AI Innovation (🔮 Future)
+- [ ] Autonomous agent learning
+- [ ] Advanced reasoning capabilities
+- [ ] Predictive analytics
+- [ ] AI-powered insights
 
 ---
 
-**🌟 Experience the future of autonomous AI intelligence with AMAS!**
-
-*Built with ❤️ by the AMAS Development Team*
+**AMAS** - Empowering Intelligence Through AI Collaboration 🤖✨

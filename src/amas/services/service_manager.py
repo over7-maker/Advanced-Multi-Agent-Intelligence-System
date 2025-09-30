@@ -10,17 +10,21 @@ from datetime import datetime
 from .llm_service import LLMService
 from .vector_service import VectorService
 from .knowledge_graph_service import KnowledgeGraphService
+from .database_service import DatabaseService
+from .security_service import SecurityService
 
 logger = logging.getLogger(__name__)
 
 class ServiceManager:
     """Central service manager for AMAS Intelligence System"""
 
-    def __init__(self, config: Dict[str, Any]):
-        self.config = config
+    def __init__(self, config: Any):
+        self.config = config.__dict__ if hasattr(config, '__dict__') else config
         self.llm_service = None
         self.vector_service = None
         self.knowledge_graph_service = None
+        self.database_service = None
+        self.security_service = None
         self.services_initialized = False
 
     async def initialize_all_services(self):
@@ -30,14 +34,17 @@ class ServiceManager:
 
             # Initialize LLM service
             self.llm_service = LLMService({
-                'llm_service_url': self.config.get('llm_service_url', 'http://localhost:11434')
+                'llm_service_url': self.config.get('llm', {}).get('url', 'http://localhost:11434'),
+                'deepseek_api_key': self.config.get('deepseek_api_key'),
+                'glm_api_key': self.config.get('glm_api_key'),
+                'grok_api_key': self.config.get('grok_api_key')
             })
             await self.llm_service.initialize()
             logger.info("LLM service initialized")
 
             # Initialize Vector service
             self.vector_service = VectorService({
-                'vector_service_url': self.config.get('vector_service_url', 'http://localhost:8001'),
+                'vector_service_url': self.config.get('vector_service_url', '/app/faiss_index'),
                 'embedding_model': self.config.get('embedding_model', 'sentence-transformers/all-MiniLM-L6-v2'),
                 'index_path': self.config.get('index_path', '/app/faiss_index')
             })
@@ -46,13 +53,23 @@ class ServiceManager:
 
             # Initialize Knowledge Graph service
             self.knowledge_graph_service = KnowledgeGraphService({
-                'graph_service_url': self.config.get('graph_service_url', 'bolt://localhost:7687'),
-                'username': self.config.get('neo4j_username', 'neo4j'),
-                'password': self.config.get('neo4j_password', 'amas123'),
-                'database': self.config.get('neo4j_database', 'neo4j')
+                'graph_service_url': self.config.get('neo4j', {}).get('uri', 'bolt://localhost:7687'),
+                'username': self.config.get('neo4j', {}).get('user', 'neo4j'),
+                'password': self.config.get('neo4j', {}).get('password', 'amas123'),
+                'database': self.config.get('neo4j', {}).get('database', 'neo4j')
             })
             await self.knowledge_graph_service.initialize()
             logger.info("Knowledge Graph service initialized")
+
+            # Initialize Database service
+            self.database_service = DatabaseService(self.config)
+            await self.database_service.initialize()
+            logger.info("Database service initialized")
+
+            # Initialize Security service
+            self.security_service = SecurityService(self.config)
+            await self.security_service.initialize()
+            logger.info("Security service initialized")
 
             self.services_initialized = True
             logger.info("All services initialized successfully")
@@ -89,6 +106,20 @@ class ServiceManager:
                 kg_health = await self.knowledge_graph_service.health_check()
                 health_status['services']['knowledge_graph'] = kg_health
                 if kg_health.get('status') != 'healthy':
+                    health_status['overall_status'] = 'degraded'
+
+            # Check Database service
+            if self.database_service:
+                db_health = await self.database_service.health_check()
+                health_status['services']['database'] = db_health
+                if db_health.get('status') != 'healthy':
+                    health_status['overall_status'] = 'degraded'
+
+            # Check Security service
+            if self.security_service:
+                sec_health = await self.security_service.health_check()
+                health_status['services']['security'] = sec_health
+                if sec_health.get('status') != 'healthy':
                     health_status['overall_status'] = 'degraded'
 
             return health_status
@@ -146,6 +177,14 @@ class ServiceManager:
                 await self.knowledge_graph_service.close()
                 logger.info("Knowledge Graph service closed")
 
+            if self.database_service:
+                await self.database_service.close()
+                logger.info("Database service closed")
+
+            if self.security_service:
+                await self.security_service.close()
+                logger.info("Security service closed")
+
             logger.info("All services closed successfully")
 
         except Exception as e:
@@ -162,3 +201,19 @@ class ServiceManager:
     def get_knowledge_graph_service(self) -> Optional[KnowledgeGraphService]:
         """Get Knowledge Graph service instance"""
         return self.knowledge_graph_service
+
+    def get_database_service(self) -> Optional[DatabaseService]:
+        """Get Database service instance"""
+        return self.database_service
+
+    def get_security_service(self) -> Optional[SecurityService]:
+        """Get Security service instance"""
+        return self.security_service
+
+    async def shutdown(self):
+        """Shutdown all services"""
+        try:
+            await self.close_all_services()
+            logger.info("All services shutdown successfully")
+        except Exception as e:
+            logger.error(f"Error during service shutdown: {e}")

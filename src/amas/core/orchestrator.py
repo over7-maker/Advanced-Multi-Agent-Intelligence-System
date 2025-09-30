@@ -13,14 +13,15 @@ from enum import Enum
 import uuid
 from dataclasses import dataclass
 
-from agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
-from agents.osint.osint_agent import OSINTAgent
-from agents.investigation.investigation_agent import InvestigationAgent
-from agents.forensics.forensics_agent import ForensicsAgent
-from agents.data_analysis.data_analysis_agent import DataAnalysisAgent
-from agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
-from agents.metadata.metadata_agent import MetadataAgent
-from agents.reporting.reporting_agent import ReportingAgent
+from ..agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
+from ..agents.osint.osint_agent import OSINTAgent
+from ..agents.investigation.investigation_agent import InvestigationAgent
+from ..agents.forensics.forensics_agent import ForensicsAgent
+from ..agents.data_analysis.data_analysis_agent import DataAnalysisAgent
+from ..agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
+from ..agents.metadata.metadata_agent import MetadataAgent
+from ..agents.reporting.reporting_agent import ReportingAgent
+from ..agents.technology_monitor.technology_monitor_agent import TechnologyMonitorAgent
 
 
 class TaskPriority(Enum):
@@ -74,6 +75,7 @@ class IntelligenceOrchestrator:
 
     def __init__(
         self,
+        config: Dict[str, Any] = None,
         llm_service: Any = None,
         vector_service: Any = None,
         knowledge_graph: Any = None,
@@ -83,11 +85,13 @@ class IntelligenceOrchestrator:
         Initialize the intelligence orchestrator.
 
         Args:
+            config: Configuration dictionary
             llm_service: LLM service for AI operations
             vector_service: Vector service for semantic search
             knowledge_graph: Knowledge graph service
             security_service: Security service for access control
         """
+        self.config = config or {}
         self.llm_service = llm_service
         self.vector_service = vector_service
         self.knowledge_graph = knowledge_graph
@@ -121,6 +125,23 @@ class IntelligenceOrchestrator:
 
         # Initialize core services
         self._initialize_services()
+
+    async def initialize(self):
+        """Initialize the orchestrator"""
+        try:
+            self.logger.info("Initializing Intelligence Orchestrator...")
+            
+            # Initialize specialized agents
+            self._register_specialized_agents()
+            
+            # Initialize workflow templates
+            self._initialize_workflow_templates()
+            
+            self.logger.info("Intelligence Orchestrator initialized successfully")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to initialize orchestrator: {e}")
+            raise
 
     def _initialize_services(self):
         """Initialize core services and agents."""
@@ -216,6 +237,17 @@ class IntelligenceOrchestrator:
                 security_service=self.security_service
             )
             self.register_agent(reporting_agent)
+
+            # Technology Monitor Agent
+            technology_monitor_agent = TechnologyMonitorAgent(
+                agent_id="technology_monitor_001",
+                name="Technology Monitor Agent",
+                llm_service=self.llm_service,
+                vector_service=self.vector_service,
+                knowledge_graph=self.knowledge_graph,
+                security_service=self.security_service
+            )
+            self.register_agent(technology_monitor_agent)
 
             self.logger.info("Specialized agents registered successfully")
 
