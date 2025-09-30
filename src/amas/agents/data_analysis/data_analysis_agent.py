@@ -7,7 +7,7 @@ import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-from agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
+from ..base.intelligence_agent import IntelligenceAgent, AgentStatus
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +25,12 @@ class DataAnalysisAgent(IntelligenceAgent):
     ):
         capabilities = [
             "statistical_analysis",
-            "predictive_modeling",
-            "correlation_analysis",
             "pattern_recognition",
+            "correlation_analysis",
             "anomaly_detection",
-            "data_visualization"
+            "predictive_modeling",
+            "data_visualization",
+            "trend_analysis"
         ]
 
         super().__init__(
@@ -42,7 +43,8 @@ class DataAnalysisAgent(IntelligenceAgent):
             security_service=security_service
         )
 
-        self.analysis_results = {}
+        self.analysis_cache = {}
+        self.model_store = {}
 
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Execute data analysis task"""
@@ -54,14 +56,16 @@ class DataAnalysisAgent(IntelligenceAgent):
 
             if task_type == 'statistical_analysis':
                 return await self._perform_statistical_analysis(task)
-            elif task_type == 'predictive_modeling':
-                return await self._perform_predictive_modeling(task)
-            elif task_type == 'correlation_analysis':
-                return await self._perform_correlation_analysis(task)
             elif task_type == 'pattern_recognition':
                 return await self._perform_pattern_recognition(task)
+            elif task_type == 'correlation_analysis':
+                return await self._perform_correlation_analysis(task)
             elif task_type == 'anomaly_detection':
-                return await self._perform_anomaly_detection(task)
+                return await self._detect_anomalies(task)
+            elif task_type == 'predictive_modeling':
+                return await self._build_predictive_model(task)
+            elif task_type == 'trend_analysis':
+                return await self._analyze_trends(task)
             else:
                 return await self._perform_general_analysis(task)
 
@@ -76,8 +80,8 @@ class DataAnalysisAgent(IntelligenceAgent):
     async def validate_task(self, task: Dict[str, Any]) -> bool:
         """Validate if this agent can handle the task"""
         analysis_keywords = [
-            'analysis', 'data', 'statistical', 'predictive',
-            'correlation', 'pattern', 'anomaly', 'modeling'
+            'analysis', 'statistical', 'pattern', 'correlation',
+            'anomaly', 'prediction', 'trend', 'data'
         ]
 
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
@@ -90,22 +94,35 @@ class DataAnalysisAgent(IntelligenceAgent):
             analysis_type = task.get('parameters', {}).get('analysis_type', 'descriptive')
 
             # Mock statistical analysis
-            stats = {
-                'mean': sum(data) / len(data) if data else 0,
-                'median': sorted(data)[len(data)//2] if data else 0,
-                'std_dev': 1.5,  # Mock value
-                'variance': 2.25,  # Mock value
-                'min': min(data) if data else 0,
-                'max': max(data) if data else 0,
-                'count': len(data)
+            stats_results = {
+                'data_points': len(data),
+                'descriptive_stats': {
+                    'mean': 0.5,
+                    'median': 0.5,
+                    'mode': 0.5,
+                    'std_dev': 0.1,
+                    'variance': 0.01,
+                    'min': 0.0,
+                    'max': 1.0,
+                    'range': 1.0
+                },
+                'distribution': {
+                    'skewness': 0.0,
+                    'kurtosis': 0.0,
+                    'normality_test': 'passed'
+                },
+                'confidence_intervals': {
+                    '95_percent': [0.4, 0.6],
+                    '99_percent': [0.35, 0.65]
+                },
+                'analysis_type': analysis_type
             }
 
             return {
                 'success': True,
                 'task_type': 'statistical_analysis',
-                'analysis_type': analysis_type,
-                'statistics': stats,
                 'data_points': len(data),
+                'results': stats_results,
                 'timestamp': datetime.utcnow().isoformat()
             }
 
@@ -117,31 +134,36 @@ class DataAnalysisAgent(IntelligenceAgent):
                 'timestamp': datetime.utcnow().isoformat()
             }
 
-    async def _perform_predictive_modeling(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Perform predictive modeling"""
+    async def _perform_pattern_recognition(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Perform pattern recognition analysis"""
         try:
-            training_data = task.get('parameters', {}).get('training_data', [])
-            model_type = task.get('parameters', {}).get('model_type', 'linear_regression')
+            data = task.get('parameters', {}).get('data', [])
+            pattern_type = task.get('parameters', {}).get('pattern_type', 'general')
 
-            # Mock predictive modeling
-            model_result = {
-                'model_type': model_type,
-                'accuracy': 0.85,
-                'predictions': [1, 2, 3, 4, 5],  # Mock predictions
-                'confidence_interval': [0.7, 0.9],
-                'feature_importance': {'feature1': 0.6, 'feature2': 0.4}
-            }
+            # Mock pattern recognition
+            patterns_found = []
+            for i in range(min(5, len(data))):
+                pattern = {
+                    'pattern_id': f"pattern_{i}",
+                    'pattern_type': pattern_type,
+                    'confidence': 0.8 - (i * 0.1),
+                    'description': f'Pattern {i} identified in data',
+                    'frequency': 10 + i,
+                    'significance': 'high' if i < 2 else 'medium'
+                }
+                patterns_found.append(pattern)
 
             return {
                 'success': True,
-                'task_type': 'predictive_modeling',
-                'model_result': model_result,
-                'training_samples': len(training_data),
+                'task_type': 'pattern_recognition',
+                'data_points': len(data),
+                'patterns_found': len(patterns_found),
+                'patterns': patterns_found,
                 'timestamp': datetime.utcnow().isoformat()
             }
 
         except Exception as e:
-            logger.error(f"Error in predictive modeling: {e}")
+            logger.error(f"Error in pattern recognition: {e}")
             return {
                 'success': False,
                 'error': str(e),
@@ -158,20 +180,23 @@ class DataAnalysisAgent(IntelligenceAgent):
             correlations = []
             for i, var1 in enumerate(variables):
                 for j, var2 in enumerate(variables[i+1:], i+1):
-                    correlation = 0.7  # Mock correlation value
-                    correlations.append({
+                    correlation = {
                         'variable1': var1,
                         'variable2': var2,
-                        'correlation': correlation,
-                        'significance': 'high' if abs(correlation) > 0.7 else 'medium'
-                    })
+                        'correlation_coefficient': 0.5 + (i * 0.1),
+                        'p_value': 0.05,
+                        'significance': 'significant',
+                        'correlation_type': correlation_type,
+                        'strength': 'moderate'
+                    }
+                    correlations.append(correlation)
 
             return {
                 'success': True,
                 'task_type': 'correlation_analysis',
-                'correlation_type': correlation_type,
-                'correlations': correlations,
                 'variables_analyzed': len(variables),
+                'correlations_found': len(correlations),
+                'correlations': correlations,
                 'timestamp': datetime.utcnow().isoformat()
             }
 
@@ -183,77 +208,139 @@ class DataAnalysisAgent(IntelligenceAgent):
                 'timestamp': datetime.utcnow().isoformat()
             }
 
-    async def _perform_pattern_recognition(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Perform pattern recognition"""
+    async def _detect_anomalies(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect anomalies in data"""
         try:
             data = task.get('parameters', {}).get('data', [])
-            pattern_type = task.get('parameters', {}).get('pattern_type', 'temporal')
+            detection_method = task.get('parameters', {}).get('method', 'statistical')
 
-            # Mock pattern recognition
-            patterns = [
-                {
-                    'pattern_id': 'pattern_1',
-                    'type': 'trend',
-                    'description': 'Upward trend detected',
-                    'confidence': 0.8,
-                    'frequency': 'daily'
-                },
-                {
-                    'pattern_id': 'pattern_2',
-                    'type': 'seasonal',
-                    'description': 'Seasonal variation detected',
-                    'confidence': 0.7,
-                    'frequency': 'weekly'
+            # Mock anomaly detection
+            anomalies = []
+            for i in range(min(3, len(data))):
+                anomaly = {
+                    'anomaly_id': f"anomaly_{i}",
+                    'data_point': data[i] if i < len(data) else 0,
+                    'anomaly_score': 0.8 + (i * 0.1),
+                    'severity': 'high' if i == 0 else 'medium',
+                    'description': f'Anomaly {i} detected',
+                    'detection_method': detection_method,
+                    'confidence': 0.9 - (i * 0.1)
                 }
-            ]
+                anomalies.append(anomaly)
 
             return {
                 'success': True,
-                'task_type': 'pattern_recognition',
-                'pattern_type': pattern_type,
-                'patterns_found': len(patterns),
-                'patterns': patterns,
+                'task_type': 'anomaly_detection',
                 'data_points': len(data),
+                'anomalies_detected': len(anomalies),
+                'anomalies': anomalies,
+                'detection_method': detection_method,
                 'timestamp': datetime.utcnow().isoformat()
             }
 
         except Exception as e:
-            logger.error(f"Error in pattern recognition: {e}")
+            logger.error(f"Error in anomaly detection: {e}")
             return {
                 'success': False,
                 'error': str(e),
                 'timestamp': datetime.utcnow().isoformat()
             }
 
-    async def _perform_anomaly_detection(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Perform anomaly detection"""
+    async def _build_predictive_model(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Build predictive model"""
         try:
-            data = task.get('parameters', {}).get('data', [])
-            threshold = task.get('parameters', {}).get('threshold', 0.8)
+            training_data = task.get('parameters', {}).get('training_data', [])
+            model_type = task.get('parameters', {}).get('model_type', 'regression')
+            target_variable = task.get('parameters', {}).get('target_variable', 'target')
 
-            # Mock anomaly detection
-            anomalies = []
-            for i, value in enumerate(data):
-                if abs(value - 5.0) > 2:  # Mock anomaly condition
-                    anomalies.append({
-                        'index': i,
-                        'value': value,
-                        'anomaly_score': 0.9,
-                        'type': 'outlier'
-                    })
+            # Mock predictive model
+            model_results = {
+                'model_id': f"model_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+                'model_type': model_type,
+                'training_data_size': len(training_data),
+                'target_variable': target_variable,
+                'model_performance': {
+                    'accuracy': 0.85,
+                    'precision': 0.82,
+                    'recall': 0.88,
+                    'f1_score': 0.85,
+                    'r_squared': 0.80
+                },
+                'feature_importance': {
+                    'feature1': 0.4,
+                    'feature2': 0.3,
+                    'feature3': 0.2,
+                    'feature4': 0.1
+                },
+                'cross_validation': {
+                    'cv_scores': [0.83, 0.85, 0.87, 0.84, 0.86],
+                    'mean_cv_score': 0.85,
+                    'std_cv_score': 0.015
+                }
+            }
+
+            # Store model
+            self.model_store[model_results['model_id']] = model_results
 
             return {
                 'success': True,
-                'task_type': 'anomaly_detection',
-                'anomalies_found': len(anomalies),
-                'anomalies': anomalies,
-                'threshold': threshold,
-                'data_points': len(data),
+                'task_type': 'predictive_modeling',
+                'model_id': model_results['model_id'],
+                'results': model_results,
                 'timestamp': datetime.utcnow().isoformat()
             }
 
         except Exception as e:
-            logger.error(f"Error in anomaly detection: {e}")
+            logger.error(f"Error in predictive modeling: {e}")
+            return {
+                'success': False,
+                'error': str(e),
+                'timestamp': datetime.utcnow().isoformat()
+            }
+
+    async def _analyze_trends(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze trends in data"""
+        try:
+            time_series_data = task.get('parameters', {}).get('time_series_data', [])
+            trend_period = task.get('parameters', {}).get('trend_period', '30d')
+
+            # Mock trend analysis
+            trend_results = {
+                'data_points': len(time_series_data),
+                'trend_period': trend_period,
+                'overall_trend': {
+                    'direction': 'increasing',
+                    'slope': 0.05,
+                    'r_squared': 0.75,
+                    'significance': 'significant'
+                },
+                'seasonal_patterns': {
+                    'has_seasonality': True,
+                    'seasonal_period': 7,
+                    'seasonal_strength': 0.6
+                },
+                'forecast': {
+                    'next_period': 1.05,
+                    'confidence_interval': [0.95, 1.15],
+                    'forecast_horizon': '7d'
+                },
+                'trend_components': {
+                    'trend': 0.8,
+                    'seasonal': 0.6,
+                    'residual': 0.4
+                }
+            }
+
+            return {
+                'success': True,
+                'task_type': 'trend_analysis',
+                'data_points': len(time_series_data),
+                'results': trend_results,
+                'timestamp': datetime.utcnow().isoformat()
+            }
+
+        except Exception as e:
+            logger.error(f"Error in trend analysis: {e}")
             return {
                 'success': False,
                 'error': str(e),
@@ -273,14 +360,14 @@ class DataAnalysisAgent(IntelligenceAgent):
                 'status': 'completed',
                 'findings': [
                     'Data analysis completed successfully',
-                    'No significant patterns detected',
+                    'No significant anomalies detected',
                     'Data quality is good'
                 ],
                 'recommendations': [
                     'Continue monitoring data quality',
-                    'Consider additional data sources'
+                    'Consider additional analysis methods'
                 ],
-                'confidence': 0.8
+                'confidence': 0.85
             }
 
             return {

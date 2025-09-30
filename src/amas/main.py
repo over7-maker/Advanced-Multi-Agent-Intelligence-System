@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Dict, Any, Optional
 
-from .config import get_settings
+from .config.settings import get_settings
 from .core.orchestrator import IntelligenceOrchestrator
 from .services.service_manager import ServiceManager
 
@@ -60,8 +60,11 @@ class AMASApplication:
 
             # Initialize orchestrator
             self.orchestrator = IntelligenceOrchestrator(
-                config=self.config,
-                service_manager=self.service_manager
+                config=self.config.__dict__,
+                llm_service=self.service_manager.get_llm_service(),
+                vector_service=self.service_manager.get_vector_service(),
+                knowledge_graph=self.service_manager.get_knowledge_graph_service(),
+                security_service=self.service_manager.get_security_service()
             )
             await self.orchestrator.initialize()
 
