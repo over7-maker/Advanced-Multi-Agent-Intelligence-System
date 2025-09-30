@@ -4,10 +4,10 @@ Metadata Agent Implementation
 
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
+from agents.base.intelligence_agent import AgentStatus, IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 

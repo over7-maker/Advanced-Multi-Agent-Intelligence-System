@@ -6,7 +6,7 @@ Analyzes and explains false positives in security scans
 
 import os
 import re
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 
 class SecurityFalsePositiveAnalyzer:

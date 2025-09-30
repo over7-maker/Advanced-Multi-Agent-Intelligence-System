@@ -8,7 +8,7 @@ import asyncio
 import logging
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 from .config import get_settings
 from .core.orchestrator import IntelligenceOrchestrator

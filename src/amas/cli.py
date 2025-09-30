@@ -8,17 +8,16 @@ import asyncio
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
 import click
 from rich.console import Console
-from rich.table import Table
-from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.json import JSON
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 
 from .config import get_settings
 from .main import AMASApplication
-
 
 console = Console()
 
@@ -251,9 +250,9 @@ def health(ctx, check_deps, check_services, check_all):
             if check_deps:
                 # Check Python dependencies
                 try:
-                    import torch
-                    import fastapi
                     import aiohttp
+                    import fastapi
+                    import torch
 
                     console.print("[green]✓[/green] Core dependencies available")
                 except ImportError as e:

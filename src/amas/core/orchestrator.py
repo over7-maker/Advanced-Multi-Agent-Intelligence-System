@@ -7,20 +7,20 @@ managing agent coordination, task distribution, and workflow execution.
 
 import asyncio
 import logging
-from typing import Dict, List, Any, Optional, Union
-from datetime import datetime
-from enum import Enum
 import uuid
 from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
-from agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
-from agents.osint.osint_agent import OSINTAgent
-from agents.investigation.investigation_agent import InvestigationAgent
-from agents.forensics.forensics_agent import ForensicsAgent
+from agents.base.intelligence_agent import AgentStatus, IntelligenceAgent
 from agents.data_analysis.data_analysis_agent import DataAnalysisAgent
-from agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
+from agents.forensics.forensics_agent import ForensicsAgent
+from agents.investigation.investigation_agent import InvestigationAgent
 from agents.metadata.metadata_agent import MetadataAgent
+from agents.osint.osint_agent import OSINTAgent
 from agents.reporting.reporting_agent import ReportingAgent
+from agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
 
 
 class TaskPriority(Enum):

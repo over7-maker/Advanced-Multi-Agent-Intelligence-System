@@ -4,14 +4,14 @@ Continuous Improvement System
 Integrates all AI agents to continuously improve the project
 """
 
-import os
-import json
 import asyncio
+import json
+import logging
+import os
+import subprocess
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
-import logging
-import subprocess
+from typing import Any, Dict, List, Optional
 
 
 class ContinuousImprovementSystem:

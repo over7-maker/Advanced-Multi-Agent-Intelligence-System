@@ -3,13 +3,14 @@
 Generate Changelog for Releases
 """
 
-import os
-import sys
-import requests
 import json
+import os
 import re
+import sys
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
+import requests
 
 
 def main():

@@ -2,18 +2,18 @@
 Test suite for AMAS Intelligence Agents
 """
 
-import pytest
 import asyncio
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
 
-from agents.osint.osint_agent import OSINTAgent
-from agents.investigation.investigation_agent import InvestigationAgent
-from agents.forensics.forensics_agent import ForensicsAgent
+import pytest
 from agents.data_analysis.data_analysis_agent import DataAnalysisAgent
-from agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
+from agents.forensics.forensics_agent import ForensicsAgent
+from agents.investigation.investigation_agent import InvestigationAgent
 from agents.metadata.metadata_agent import MetadataAgent
+from agents.osint.osint_agent import OSINTAgent
 from agents.reporting.reporting_agent import ReportingAgent
+from agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
 from agents.technology_monitor.technology_monitor_agent import TechnologyMonitorAgent
 
 

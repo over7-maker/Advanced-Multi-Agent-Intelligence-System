@@ -3,8 +3,8 @@
 Simple verification script to check for false positives
 """
 
-import re
 import os
+import re
 
 
 def check_file_for_patterns(file_path):

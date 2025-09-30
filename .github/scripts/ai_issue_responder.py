@@ -5,12 +5,13 @@ Automatically analyzes GitHub issues and provides intelligent responses
 using your AI APIs (OpenRouter, DeepSeek, etc.)
 """
 
-import os
 import json
+import os
+import time
+from typing import Any, Dict, Optional
+
 import requests
 from openai import OpenAI
-from typing import Dict, Any, Optional
-import time
 
 
 class AIIssueResponder:

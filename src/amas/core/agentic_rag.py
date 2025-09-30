@@ -6,12 +6,12 @@ for intelligent information retrieval and synthesis across multiple data sources
 """
 
 import asyncio
-import logging
-from typing import Dict, List, Any, Optional, Union, Tuple
-from datetime import datetime
 import json
+import logging
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from agents.base.intelligence_agent import IntelligenceAgent
 

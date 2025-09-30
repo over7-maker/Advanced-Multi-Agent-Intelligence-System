@@ -4,11 +4,12 @@ Multi-Agent Orchestrator Script
 Coordinates multiple AI agents for comprehensive analysis
 """
 
-import os
 import asyncio
-from openai import OpenAI
-from typing import Dict, List, Any, Optional
+import os
 import time
+from typing import Any, Dict, List, Optional
+
+from openai import OpenAI
 
 
 class MultiAgentOrchestrator:

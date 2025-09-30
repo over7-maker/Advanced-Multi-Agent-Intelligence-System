@@ -4,12 +4,12 @@ AMAS Intelligence System - Simple Functionality Test
 Test core functionality without external dependencies
 """
 
+import json
 import os
 import sys
-import json
-from pathlib import Path
 from datetime import datetime
-from typing import Dict, List, Any
+from pathlib import Path
+from typing import Any, Dict, List
 
 
 class SimpleFunctionalityTest:

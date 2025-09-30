@@ -4,14 +4,15 @@ Provides image analysis, object detection, and visual intelligence capabilities
 """
 
 import asyncio
+import base64
+import json
 import logging
-from typing import Dict, Any, List, Optional, Union, Tuple
+import uuid
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-import json
-import uuid
-import base64
-from dataclasses import dataclass
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import numpy as np
 
 logger = logging.getLogger(__name__)

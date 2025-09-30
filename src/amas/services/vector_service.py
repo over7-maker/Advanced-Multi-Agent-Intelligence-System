@@ -3,13 +3,14 @@ Vector Service Implementation for AMAS
 """
 
 import asyncio
-import logging
-import numpy as np
-from typing import Dict, Any, List, Optional, Tuple
 import json
-from datetime import datetime
-import pickle
+import logging
 import os
+import pickle
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 try:
     import faiss

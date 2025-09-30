@@ -4,20 +4,21 @@ Phase 7: Advanced performance optimization, caching, and resource management
 """
 
 import asyncio
-import logging
-import time
-import json
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Union
-from enum import Enum
-from dataclasses import dataclass
-import hashlib
-import pickle
-import gzip
-from collections import OrderedDict
-import threading
-import psutil
 import gc
+import gzip
+import hashlib
+import json
+import logging
+import pickle
+import threading
+import time
+from collections import OrderedDict
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
+
+import psutil
 
 logger = logging.getLogger(__name__)
 

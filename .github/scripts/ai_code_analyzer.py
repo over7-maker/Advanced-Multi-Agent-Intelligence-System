@@ -4,13 +4,14 @@ AI Code Analyzer Script
 Performs intelligent code analysis using AI models
 """
 
-import os
+import difflib
 import json
+import os
+import subprocess
+from typing import Any, Dict, List, Optional
+
 import requests
 from openai import OpenAI
-from typing import Dict, List, Any, Optional
-import subprocess
-import difflib
 
 
 class AICodeAnalyzer:

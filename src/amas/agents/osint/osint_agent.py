@@ -3,15 +3,15 @@ Enhanced OSINT Collection Agent
 """
 
 import asyncio
+import json
 import logging
 import re
-import json
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
-import aiohttp
+from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin, urlparse
 
-from agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
+import aiohttp
+from agents.base.intelligence_agent import AgentStatus, IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 

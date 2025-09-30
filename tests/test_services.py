@@ -2,17 +2,17 @@
 Test suite for AMAS Services
 """
 
-import pytest
 import asyncio
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
 
-from services.service_manager import ServiceManager
+import pytest
 from services.database_service import DatabaseService
-from services.security_service import SecurityService
-from services.llm_service import LLMService
-from services.vector_service import VectorService
 from services.knowledge_graph_service import KnowledgeGraphService
+from services.llm_service import LLMService
+from services.security_service import SecurityService
+from services.service_manager import ServiceManager
+from services.vector_service import VectorService
 
 
 class TestServiceManager:

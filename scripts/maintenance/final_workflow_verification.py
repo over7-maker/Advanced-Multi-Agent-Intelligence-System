@@ -4,9 +4,9 @@ AMAS Intelligence System - Final Workflow Verification
 Comprehensive final verification of all workflows and system status
 """
 
+import json
 import os
 import sys
-import json
 from datetime import datetime
 from pathlib import Path
 

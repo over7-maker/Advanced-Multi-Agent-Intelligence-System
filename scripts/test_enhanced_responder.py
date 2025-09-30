@@ -6,14 +6,14 @@ Comprehensive testing of all features and capabilities
 
 import asyncio
 import json
+import logging
 import os
+import sqlite3
 import sys
 import tempfile
-import sqlite3
 import time
 from pathlib import Path
-from typing import Dict, List, Any
-import logging
+from typing import Any, Dict, List
 
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))

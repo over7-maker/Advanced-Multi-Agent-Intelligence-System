@@ -4,12 +4,12 @@ AMAS Intelligence System - File Structure Verification
 Comprehensive verification that all project files and docs are in the right place
 """
 
+import json
 import os
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
-import json
-from datetime import datetime
 
 
 class FileStructureVerifier:

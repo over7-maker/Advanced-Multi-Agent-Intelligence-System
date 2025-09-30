@@ -3,12 +3,13 @@
 Debug Auto-Responder - Comprehensive debugging script with detailed logging
 """
 
+import json
+import logging
 import os
 import sys
-import logging
-import requests
-import json
 from datetime import datetime
+
+import requests
 
 # Configure logging
 logging.basicConfig(

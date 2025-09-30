@@ -3,12 +3,13 @@
 Generate Release Notes for GitHub Releases
 """
 
+import json
 import os
 import sys
-import requests
-import json
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
+import requests
 
 
 def main():

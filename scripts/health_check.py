@@ -4,11 +4,12 @@ AMAS Intelligence System Health Check
 """
 
 import asyncio
-import aiohttp
 import logging
 import sys
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+
+import aiohttp
 
 # Configure logging
 logging.basicConfig(

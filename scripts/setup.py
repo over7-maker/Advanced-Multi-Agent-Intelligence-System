@@ -3,10 +3,10 @@
 AMAS Intelligence System Setup Script
 """
 
-import os
-import sys
-import subprocess
 import logging
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 # Configure logging

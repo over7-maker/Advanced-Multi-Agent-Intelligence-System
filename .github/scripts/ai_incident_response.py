@@ -4,14 +4,15 @@ AI Incident Response Automation Script
 Automated incident triage and response using multiple AI models
 """
 
-import os
 import asyncio
+import json
+import os
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import requests
 from openai import OpenAI
-from typing import Dict, List, Any, Optional
-import time
-import json
-from datetime import datetime
 
 
 class AIIncidentResponse:

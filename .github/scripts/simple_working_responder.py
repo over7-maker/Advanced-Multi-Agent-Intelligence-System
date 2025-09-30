@@ -4,11 +4,12 @@ Simple Working Auto-Responder
 A guaranteed working auto-response system that doesn't rely on external APIs
 """
 
-import os
-import requests
 import json
+import os
 import re
 from datetime import datetime
+
+import requests
 
 
 def main():

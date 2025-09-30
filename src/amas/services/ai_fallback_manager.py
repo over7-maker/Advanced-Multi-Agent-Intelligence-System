@@ -3,16 +3,17 @@
 AI Fallback Manager - Intelligent fallback system for all 6 AI providers
 """
 
-import os
-import sys
 import asyncio
-import aiohttp
 import json
 import logging
-from typing import Dict, List, Any, Optional, Tuple
-from datetime import datetime
-import time
+import os
 import random
+import sys
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+
+import aiohttp
 
 # Configure logging
 logging.basicConfig(

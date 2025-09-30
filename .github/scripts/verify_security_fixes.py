@@ -4,8 +4,8 @@ Verification script to test that security false positives have been fixed
 """
 
 import os
-import sys
 import subprocess
+import sys
 
 
 def test_files():

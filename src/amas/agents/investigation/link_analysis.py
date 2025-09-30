@@ -6,12 +6,12 @@ enabling relationship discovery and network analysis.
 """
 
 import asyncio
-import logging
-from typing import Dict, List, Any, Optional, Tuple
-from datetime import datetime
 import json
+import logging
 from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class RelationshipType(Enum):

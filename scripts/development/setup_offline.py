@@ -4,12 +4,12 @@ AMAS Intelligence System - Offline Setup Script
 Complete offline installation and configuration
 """
 
-import os
-import sys
-import subprocess
 import logging
+import os
+import subprocess
+import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
