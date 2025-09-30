@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 async def create_database_schemas():
     """Create all necessary database tables and indexes"""
-    
+
     # Database connection parameters
     db_config = {
         'host': 'localhost',
@@ -22,12 +22,12 @@ async def create_database_schemas():
         'password': 'amas123',
         'database': 'amas'
     }
-    
+
     try:
         # Connect to database
         conn = await asyncpg.connect(**db_config)
         logger.info("Connected to PostgreSQL database")
-        
+
         # Create tasks table
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS tasks (
@@ -50,7 +50,7 @@ async def create_database_schemas():
             )
         """)
         logger.info("Tasks table created")
-        
+
         # Create agents table
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS agents (
@@ -69,7 +69,7 @@ async def create_database_schemas():
             )
         """)
         logger.info("Agents table created")
-        
+
         # Create task execution history
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS task_history (
@@ -84,7 +84,7 @@ async def create_database_schemas():
             )
         """)
         logger.info("Task history table created")
-        
+
         # Create system metrics table
         await conn.execute("""
             CREATE TABLE IF NOT EXISTS system_metrics (
@@ -96,7 +96,7 @@ async def create_database_schemas():
             )
         """)
         logger.info("System metrics table created")
-        
+
         # Create indexes for better performance
         indexes = [
             "CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)",
@@ -109,16 +109,16 @@ async def create_database_schemas():
             "CREATE INDEX IF NOT EXISTS idx_system_metrics_name ON system_metrics(metric_name)",
             "CREATE INDEX IF NOT EXISTS idx_system_metrics_timestamp ON system_metrics(timestamp)"
         ]
-        
+
         for index_sql in indexes:
             await conn.execute(index_sql)
-        
+
         logger.info("Database indexes created")
-        
+
         # Close connection
         await conn.close()
         logger.info("Database setup completed successfully")
-        
+
     except Exception as e:
         logger.error(f"Database setup failed: {e}")
         raise

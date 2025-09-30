@@ -13,35 +13,35 @@ from typing import List, Dict, Any
 def main():
     print("📋 Release Notes Generator")
     print("=" * 40)
-    
+
     # Get arguments
     version = os.environ.get('VERSION', 'v1.0.0')
     output_file = os.environ.get('OUTPUT', 'RELEASE_NOTES.md')
-    
+
     print(f"📋 Version: {version}")
     print(f"📄 Output: {output_file}")
-    
+
     # Generate release notes
     release_notes = generate_release_notes(version)
-    
+
     # Write to file
     with open(output_file, 'w', encoding='utf-8') as f:
         f.write(release_notes)
-    
+
     print(f"✅ Release notes generated: {output_file}")
     return True
 
 def generate_release_notes(version: str) -> str:
     """Generate comprehensive release notes"""
-    
+
     timestamp = datetime.now().strftime("%Y-%m-%d")
-    
+
     # Header
     release_notes = f"""# 🚀 AMAS {version} Release
 
-**Release Date**: {timestamp}  
-**Version**: {version}  
-**Type**: Production Release  
+**Release Date**: {timestamp}
+**Version**: {version}
+**Type**: Production Release
 
 ## 🎯 What's New
 

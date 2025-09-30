@@ -27,11 +27,11 @@ logger = logging.getLogger(__name__)
 
 class AIPerformanceAnalyzer:
     """AI-powered performance analyzer"""
-    
+
     def __init__(self):
         self.ai_service = None
         self.performance_reports = {}
-    
+
     async def initialize(self):
         """Initialize the performance analyzer"""
         try:
@@ -43,24 +43,24 @@ class AIPerformanceAnalyzer:
                 'qwen_api_key': os.getenv('QWEN_API_KEY'),
                 'gptoss_api_key': os.getenv('GPTOSS_API_KEY')
             }
-            
+
             self.ai_service = AIServiceManager(config)
             await self.ai_service.initialize()
             logger.info("AI Performance Analyzer initialized successfully")
-            
+
         except Exception as e:
             logger.error(f"Error initializing AI Performance Analyzer: {e}")
             raise
-    
+
     async def analyze_file_performance(self, file_path: str, analysis_type: str = "comprehensive") -> Dict[str, Any]:
         """Analyze performance of a single file"""
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
-            
+
             file_ext = Path(file_path).suffix.lower()
             language = self._get_language_from_extension(file_ext)
-            
+
             # Get file info
             file_info = {
                 'path': file_path,
@@ -68,26 +68,26 @@ class AIPerformanceAnalyzer:
                 'size': len(content),
                 'lines': len(content.splitlines())
             }
-            
+
             # Perform performance analysis
             performance_analysis = await self._analyze_performance(content, language, analysis_type)
-            
+
             if not performance_analysis.success:
                 return {
                     'file_info': file_info,
                     'error': performance_analysis.error,
                     'timestamp': datetime.now().isoformat()
                 }
-            
+
             # Generate optimization recommendations
             optimization_recommendations = await self._generate_optimization_recommendations(content, language)
-            
+
             # Generate performance metrics
             performance_metrics = await self._generate_performance_metrics(content, language)
-            
+
             # Calculate performance score
             performance_score = await self._calculate_performance_score(performance_analysis.content, optimization_recommendations.content if optimization_recommendations.success else "")
-            
+
             return {
                 'file_info': file_info,
                 'performance_analysis': performance_analysis.content,
@@ -99,14 +99,14 @@ class AIPerformanceAnalyzer:
                 'response_time': performance_analysis.response_time,
                 'timestamp': datetime.now().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error analyzing performance of file {file_path}: {e}")
             return {
                 'file_info': {'path': file_path, 'error': str(e)},
                 'timestamp': datetime.now().isoformat()
             }
-    
+
     def _get_language_from_extension(self, ext: str) -> str:
         """Get programming language from file extension"""
         language_map = {
@@ -142,7 +142,7 @@ class AIPerformanceAnalyzer:
             '.conf': 'ini'
         }
         return language_map.get(ext, 'unknown')
-    
+
     async def _analyze_performance(self, code: str, language: str, analysis_type: str) -> Any:
         """Perform comprehensive performance analysis"""
         try:
@@ -179,14 +179,14 @@ Provide:
 7. Performance testing suggestions
 
 Format as a detailed performance analysis report."""
-            
+
             response = await self.ai_service.generate_response(prompt)
             return response
-            
+
         except Exception as e:
             logger.error(f"Error analyzing performance: {e}")
             return type('Response', (), {'success': False, 'error': str(e), 'content': '', 'provider': 'none'})()
-    
+
     async def _generate_optimization_recommendations(self, code: str, language: str) -> Any:
         """Generate optimization recommendations"""
         try:
@@ -214,14 +214,14 @@ Include:
 15. Code refactoring suggestions
 
 Provide specific, actionable recommendations with code examples."""
-            
+
             response = await self.ai_service.generate_response(prompt)
             return response
-            
+
         except Exception as e:
             logger.error(f"Error generating optimization recommendations: {e}")
             return type('Response', (), {'success': False, 'error': str(e), 'content': '', 'provider': 'none'})()
-    
+
     async def _generate_performance_metrics(self, code: str, language: str) -> Any:
         """Generate performance metrics"""
         try:
@@ -249,14 +249,14 @@ Include:
 15. Performance regression detection
 
 Provide specific metrics and monitoring strategies."""
-            
+
             response = await self.ai_service.generate_response(prompt)
             return response
-            
+
         except Exception as e:
             logger.error(f"Error generating performance metrics: {e}")
             return type('Response', (), {'success': False, 'error': str(e), 'content': '', 'provider': 'none'})()
-    
+
     async def _calculate_performance_score(self, analysis_content: str, optimization_content: str) -> int:
         """Calculate performance score based on analysis results"""
         try:
@@ -278,9 +278,9 @@ Consider:
 7. Overall performance posture
 
 Return only a single number between 1-10 representing the performance score."""
-            
+
             response = await self.ai_service.generate_response(prompt)
-            
+
             if response.success:
                 # Try to extract number from response
                 import re
@@ -291,18 +291,18 @@ Return only a single number between 1-10 representing the performance score."""
                     return 5  # Default score if no number found
             else:
                 return 5  # Default score on error
-                
+
         except Exception as e:
             logger.error(f"Error calculating performance score: {e}")
             return 5  # Default score on error
-    
-    async def analyze_directory_performance(self, directory: str, output_dir: str, 
+
+    async def analyze_directory_performance(self, directory: str, output_dir: str,
                                           analysis_type: str = "comprehensive",
                                           extensions: List[str] = None) -> Dict[str, Any]:
         """Analyze performance of all files in a directory"""
         if extensions is None:
             extensions = ['.py', '.js', '.ts', '.java', '.cpp', '.c', '.go', '.rs']
-        
+
         results = {
             'directory': directory,
             'output_directory': output_dir,
@@ -311,58 +311,58 @@ Return only a single number between 1-10 representing the performance score."""
             'summary': {},
             'timestamp': datetime.now().isoformat()
         }
-        
+
         try:
             directory_path = Path(directory)
             output_path = Path(output_dir)
             output_path.mkdir(parents=True, exist_ok=True)
-            
+
             if not directory_path.exists():
                 logger.error(f"Directory {directory} does not exist")
                 return results
-            
+
             files = []
             for ext in extensions:
                 files.extend(directory_path.rglob(f"*{ext}"))
-            
+
             logger.info(f"Found {len(files)} files to analyze")
-            
+
             for file_path in files:
                 logger.info(f"Analyzing performance of {file_path}")
                 analysis_result = await self.analyze_file_performance(str(file_path), analysis_type)
                 results['performance_reports'].append(analysis_result)
-                
+
                 if 'performance_analysis' in analysis_result:
                     # Save performance report
                     relative_path = file_path.relative_to(directory_path)
                     performance_file_name = f"{relative_path.stem}_performance_report.md"
                     output_file = output_path / performance_file_name
-                    
+
                     with open(output_file, 'w', encoding='utf-8') as f:
                         f.write(f"# Performance Analysis Report for {relative_path}\n\n")
                         f.write(f"**Performance Score:** {analysis_result.get('performance_score', 'N/A')}/10\n\n")
                         f.write("## Performance Analysis\n\n")
                         f.write(analysis_result['performance_analysis'])
-                        
+
                         if analysis_result.get('optimization_recommendations'):
                             f.write("\n\n## Optimization Recommendations\n\n")
                             f.write(analysis_result['optimization_recommendations'])
-                        
+
                         if analysis_result.get('performance_metrics'):
                             f.write("\n\n## Performance Metrics\n\n")
                             f.write(analysis_result['performance_metrics'])
-                    
+
                     results['files_analyzed'] += 1
-            
+
             # Generate summary
             results['summary'] = await self._generate_performance_summary(results['performance_reports'])
-            
+
         except Exception as e:
             logger.error(f"Error analyzing directory performance {directory}: {e}")
             results['error'] = str(e)
-        
+
         return results
-    
+
     async def _generate_performance_summary(self, performance_reports: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Generate performance analysis summary"""
         try:
@@ -374,10 +374,10 @@ Return only a single number between 1-10 representing the performance score."""
                     analyses.append(report['performance_analysis'])
                 if 'performance_score' in report:
                     scores.append(report['performance_score'])
-            
+
             if not analyses:
                 return {'error': 'No performance analyses available for summary'}
-            
+
             # Create summary prompt
             summary_prompt = f"""Create a comprehensive performance analysis summary based on these reports:
 
@@ -392,9 +392,9 @@ Provide:
 4. Performance score analysis
 5. Priority optimization recommendations
 6. Performance improvement roadmap"""
-            
+
             response = await self.ai_service.generate_response(summary_prompt)
-            
+
             if response.success:
                 return {
                     'summary': response.content,
@@ -408,11 +408,11 @@ Provide:
                     'error': response.error,
                     'total_files': len(performance_reports)
                 }
-                
+
         except Exception as e:
             logger.error(f"Error generating performance summary: {e}")
             return {'error': str(e)}
-    
+
     def save_performance_report(self, results: Dict[str, Any], output_file: str):
         """Save performance analysis report to file"""
         try:
@@ -421,7 +421,7 @@ Provide:
             logger.info(f"Performance report saved to {output_file}")
         except Exception as e:
             logger.error(f"Error saving performance report: {e}")
-    
+
     async def shutdown(self):
         """Shutdown the performance analyzer"""
         if self.ai_service:
@@ -439,14 +439,14 @@ async def main():
     parser.add_argument('--extensions', nargs='+', default=['.py', '.js', '.ts'],
                       help='File extensions to analyze')
     parser.add_argument('--report', default='performance_report.md', help='Report file')
-    
+
     args = parser.parse_args()
-    
+
     analyzer = AIPerformanceAnalyzer()
-    
+
     try:
         await analyzer.initialize()
-        
+
         if args.files:
             # Analyze specific files
             results = {
@@ -454,30 +454,30 @@ async def main():
                 'performance_reports': [],
                 'timestamp': datetime.now().isoformat()
             }
-            
+
             for file_path in args.files:
                 logger.info(f"Analyzing {file_path}")
                 analysis_result = await analyzer.analyze_file_performance(file_path, args.analysis_type)
                 results['performance_reports'].append(analysis_result)
                 if 'performance_analysis' in analysis_result:
                     results['files_analyzed'] += 1
-            
+
             # Generate summary
             results['summary'] = await analyzer._generate_performance_summary(results['performance_reports'])
-            
+
         elif args.directory and args.output:
             # Analyze directory
             results = await analyzer.analyze_directory_performance(
                 args.directory, args.output, args.analysis_type, args.extensions
             )
-        
+
         else:
             logger.error("Please specify either --files or --directory with --output")
             return
-        
+
         # Save report
         analyzer.save_performance_report(results, args.report)
-        
+
         # Print summary
         if 'summary' in results and 'summary' in results['summary']:
             print("\n" + "="*50)
@@ -487,13 +487,13 @@ async def main():
             if 'average_score' in results['summary']:
                 print(f"\nAverage Performance Score: {results['summary']['average_score']:.1f}/10")
             print("="*50)
-        
+
         logger.info(f"Performance analysis complete. {results['files_analyzed']} files analyzed.")
-        
+
     except Exception as e:
         logger.error(f"Error in main: {e}")
         sys.exit(1)
-    
+
     finally:
         await analyzer.shutdown()
 
