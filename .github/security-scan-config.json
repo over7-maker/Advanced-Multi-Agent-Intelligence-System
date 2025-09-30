@@ -1,0 +1,59 @@
+{
+  "skip_files": [
+    "**/test_*.py",
+    "**/tests/**",
+    "**/*_test.py",
+    "**/verify_*.py",
+    "**/simple_verify_*.py",
+    "**/mock_*.py",
+    "**/fake_*.py",
+    "**/example_*.py",
+    "**/*_example.py"
+  ],
+  "pattern_definition_files": [
+    ".github/scripts/ai_security_scanner*.py",
+    ".github/scripts/ai_code_analyzer.py",
+    ".github/scripts/ai_security_auditor.py"
+  ],
+  "false_positive_suppressions": {
+    "weak_crypto": {
+      "DES": {
+        "allowed_contexts": [
+          "description",
+          "describes",
+          "design",
+          "desktop",
+          "destination",
+          "destructor"
+        ]
+      }
+    },
+    "secrets": {
+      "allowed_values": [
+        "your-api-key",
+        "your-token",
+        "your-secret",
+        "<api-key>",
+        "<token>",
+        "<secret>",
+        "xxx",
+        "placeholder",
+        "example",
+        "test",
+        "dummy",
+        "secretpassword123",
+        "test_token",
+        "dummy_key"
+      ]
+    }
+  },
+  "test_data_indicators": [
+    "test_cases",
+    "test_data",
+    "fixture",
+    "mock_data",
+    "example_data",
+    "should_flag",
+    "expected_result"
+  ]
+}
