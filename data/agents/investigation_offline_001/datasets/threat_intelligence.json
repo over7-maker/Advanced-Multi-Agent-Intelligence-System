@@ -1,0 +1,26 @@
+{
+  "malware_signatures": [
+    {
+      "name": "Trojan.Generic",
+      "hash": "abc123",
+      "severity": "high"
+    },
+    {
+      "name": "Ransomware.Crypto",
+      "hash": "def456",
+      "severity": "critical"
+    }
+  ],
+  "ip_reputation": [
+    {
+      "ip": "192.168.1.100",
+      "reputation": "malicious",
+      "source": "local_db"
+    },
+    {
+      "ip": "10.0.0.1",
+      "reputation": "clean",
+      "source": "local_db"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "news_sources": [
+    {
+      "name": "Local Security News",
+      "url": "local://news/security",
+      "type": "offline",
+      "last_updated": "2024-09-26T18:00:00Z"
+    }
+  ],
+  "social_media": [
+    {
+      "platform": "local_forum",
+      "url": "local://forum/security",
+      "type": "offline",
+      "last_updated": "2024-09-26T18:00:00Z"
+    }
+  ],
+  "web_sources": [
+    {
+      "name": "Local Web Archive",
+      "url": "local://archive/web",
+      "type": "offline",
+      "last_updated": "2024-09-26T18:00:00Z"
+    }
+  ]
+}

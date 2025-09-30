@@ -1,0 +1,320 @@
+{
+  "configuration_check_suite": "AMAS Workflow Configuration Check",
+  "timestamp": "2025-09-26T10:14:37.142310",
+  "summary": {
+    "total_checks": 50,
+    "passed_checks": 49,
+    "failed_checks": 1,
+    "success_rate": 98.0
+  },
+  "check_results": [
+    {
+      "check_name": "orchestrator_file",
+      "passed": true,
+      "message": "Orchestrator file exists",
+      "timestamp": "2025-09-26T10:14:37.137887"
+    },
+    {
+      "check_name": "workflow_templates",
+      "passed": false,
+      "message": "Error checking workflow templates: No module named 'aiohttp'",
+      "timestamp": "2025-09-26T10:14:37.141310"
+    },
+    {
+      "check_name": "security_monitoring_service",
+      "passed": true,
+      "message": "Security monitoring service file exists",
+      "timestamp": "2025-09-26T10:14:37.141473"
+    },
+    {
+      "check_name": "audit_logging_service",
+      "passed": true,
+      "message": "Audit logging service file exists",
+      "timestamp": "2025-09-26T10:14:37.141491"
+    },
+    {
+      "check_name": "incident_response_service",
+      "passed": true,
+      "message": "Incident response service file exists",
+      "timestamp": "2025-09-26T10:14:37.141504"
+    },
+    {
+      "check_name": "main_phase5_application",
+      "passed": true,
+      "message": "Main Phase 5 application file exists",
+      "timestamp": "2025-09-26T10:14:37.141516"
+    },
+    {
+      "check_name": "security_method_execute_security_workflow",
+      "passed": true,
+      "message": "Security method execute_security_workflow found",
+      "timestamp": "2025-09-26T10:14:37.141626"
+    },
+    {
+      "check_name": "security_method__execute_threat_hunting_workflow",
+      "passed": true,
+      "message": "Security method _execute_threat_hunting_workflow found",
+      "timestamp": "2025-09-26T10:14:37.141632"
+    },
+    {
+      "check_name": "security_method__execute_incident_response_workflow",
+      "passed": true,
+      "message": "Security method _execute_incident_response_workflow found",
+      "timestamp": "2025-09-26T10:14:37.141636"
+    },
+    {
+      "check_name": "security_method__execute_security_assessment_workflow",
+      "passed": true,
+      "message": "Security method _execute_security_assessment_workflow found",
+      "timestamp": "2025-09-26T10:14:37.141640"
+    },
+    {
+      "check_name": "agent_file_agents/osint/osint_agent.py",
+      "passed": true,
+      "message": "Agent file agents/osint/osint_agent.py exists",
+      "timestamp": "2025-09-26T10:14:37.141729"
+    },
+    {
+      "check_name": "agent_file_agents/investigation/investigation_agent.py",
+      "passed": true,
+      "message": "Agent file agents/investigation/investigation_agent.py exists",
+      "timestamp": "2025-09-26T10:14:37.141743"
+    },
+    {
+      "check_name": "agent_file_agents/forensics/forensics_agent.py",
+      "passed": true,
+      "message": "Agent file agents/forensics/forensics_agent.py exists",
+      "timestamp": "2025-09-26T10:14:37.141754"
+    },
+    {
+      "check_name": "agent_file_agents/data_analysis/data_analysis_agent.py",
+      "passed": true,
+      "message": "Agent file agents/data_analysis/data_analysis_agent.py exists",
+      "timestamp": "2025-09-26T10:14:37.141763"
+    },
+    {
+      "check_name": "agent_file_agents/reverse_engineering/reverse_engineering_agent.py",
+      "passed": true,
+      "message": "Agent file agents/reverse_engineering/reverse_engineering_agent.py exists",
+      "timestamp": "2025-09-26T10:14:37.141773"
+    },
+    {
+      "check_name": "agent_file_agents/metadata/metadata_agent.py",
+      "passed": true,
+      "message": "Agent file agents/metadata/metadata_agent.py exists",
+      "timestamp": "2025-09-26T10:14:37.141783"
+    },
+    {
+      "check_name": "agent_file_agents/reporting/reporting_agent.py",
+      "passed": true,
+      "message": "Agent file agents/reporting/reporting_agent.py exists",
+      "timestamp": "2025-09-26T10:14:37.141793"
+    },
+    {
+      "check_name": "agent_file_agents/technology_monitor/technology_monitor_agent.py",
+      "passed": true,
+      "message": "Agent file agents/technology_monitor/technology_monitor_agent.py exists",
+      "timestamp": "2025-09-26T10:14:37.141802"
+    },
+    {
+      "check_name": "base_agent_file_agents/base/intelligence_agent.py",
+      "passed": true,
+      "message": "Base agent file agents/base/intelligence_agent.py exists",
+      "timestamp": "2025-09-26T10:14:37.141811"
+    },
+    {
+      "check_name": "base_agent_file_agents/base/agent_communication.py",
+      "passed": true,
+      "message": "Base agent file agents/base/agent_communication.py exists",
+      "timestamp": "2025-09-26T10:14:37.141820"
+    },
+    {
+      "check_name": "core_service_services/service_manager.py",
+      "passed": true,
+      "message": "Core service services/service_manager.py exists",
+      "timestamp": "2025-09-26T10:14:37.141883"
+    },
+    {
+      "check_name": "core_service_services/database_service.py",
+      "passed": true,
+      "message": "Core service services/database_service.py exists",
+      "timestamp": "2025-09-26T10:14:37.141893"
+    },
+    {
+      "check_name": "core_service_services/security_service.py",
+      "passed": true,
+      "message": "Core service services/security_service.py exists",
+      "timestamp": "2025-09-26T10:14:37.141902"
+    },
+    {
+      "check_name": "core_service_services/llm_service.py",
+      "passed": true,
+      "message": "Core service services/llm_service.py exists",
+      "timestamp": "2025-09-26T10:14:37.141911"
+    },
+    {
+      "check_name": "core_service_services/vector_service.py",
+      "passed": true,
+      "message": "Core service services/vector_service.py exists",
+      "timestamp": "2025-09-26T10:14:37.141919"
+    },
+    {
+      "check_name": "core_service_services/knowledge_graph_service.py",
+      "passed": true,
+      "message": "Core service services/knowledge_graph_service.py exists",
+      "timestamp": "2025-09-26T10:14:37.141928"
+    },
+    {
+      "check_name": "monitoring_service_services/monitoring_service_complete.py",
+      "passed": true,
+      "message": "Monitoring service services/monitoring_service_complete.py exists",
+      "timestamp": "2025-09-26T10:14:37.141937"
+    },
+    {
+      "check_name": "monitoring_service_services/performance_service_complete.py",
+      "passed": true,
+      "message": "Monitoring service services/performance_service_complete.py exists",
+      "timestamp": "2025-09-26T10:14:37.141945"
+    },
+    {
+      "check_name": "ai_service_services/ml_service.py",
+      "passed": true,
+      "message": "AI service services/ml_service.py exists",
+      "timestamp": "2025-09-26T10:14:37.141954"
+    },
+    {
+      "check_name": "ai_service_services/ai_analytics_service.py",
+      "passed": true,
+      "message": "AI service services/ai_analytics_service.py exists",
+      "timestamp": "2025-09-26T10:14:37.141963"
+    },
+    {
+      "check_name": "ai_service_services/nlp_service.py",
+      "passed": true,
+      "message": "AI service services/nlp_service.py exists",
+      "timestamp": "2025-09-26T10:14:37.141971"
+    },
+    {
+      "check_name": "ai_service_services/computer_vision_service.py",
+      "passed": true,
+      "message": "AI service services/computer_vision_service.py exists",
+      "timestamp": "2025-09-26T10:14:37.141980"
+    },
+    {
+      "check_name": "ai_service_services/autonomous_agents_service.py",
+      "passed": true,
+      "message": "AI service services/autonomous_agents_service.py exists",
+      "timestamp": "2025-09-26T10:14:37.141990"
+    },
+    {
+      "check_name": "requirements_file_requirements.txt",
+      "passed": true,
+      "message": "Requirements file requirements.txt exists",
+      "timestamp": "2025-09-26T10:14:37.142053"
+    },
+    {
+      "check_name": "requirements_file_requirements_phase3.txt",
+      "passed": true,
+      "message": "Requirements file requirements_phase3.txt exists",
+      "timestamp": "2025-09-26T10:14:37.142064"
+    },
+    {
+      "check_name": "requirements_file_requirements-phase2.txt",
+      "passed": true,
+      "message": "Requirements file requirements-phase2.txt exists",
+      "timestamp": "2025-09-26T10:14:37.142072"
+    },
+    {
+      "check_name": "requirements_file_requirements-minimal.txt",
+      "passed": true,
+      "message": "Requirements file requirements-minimal.txt exists",
+      "timestamp": "2025-09-26T10:14:37.142080"
+    },
+    {
+      "check_name": "docker_compose",
+      "passed": true,
+      "message": "Docker Compose file exists",
+      "timestamp": "2025-09-26T10:14:37.142088"
+    },
+    {
+      "check_name": "setup_script_setup.py",
+      "passed": true,
+      "message": "Setup script setup.py exists",
+      "timestamp": "2025-09-26T10:14:37.142096"
+    },
+    {
+      "check_name": "setup_script_setup_venv.py",
+      "passed": true,
+      "message": "Setup script setup_venv.py exists",
+      "timestamp": "2025-09-26T10:14:37.142105"
+    },
+    {
+      "check_name": "setup_script_setup_complete.py",
+      "passed": true,
+      "message": "Setup script setup_complete.py exists",
+      "timestamp": "2025-09-26T10:14:37.142112"
+    },
+    {
+      "check_name": "api_main",
+      "passed": true,
+      "message": "API main file exists",
+      "timestamp": "2025-09-26T10:14:37.142170"
+    },
+    {
+      "check_name": "test_file_test_phase5_complete.py",
+      "passed": true,
+      "message": "Test file test_phase5_complete.py exists",
+      "timestamp": "2025-09-26T10:14:37.142180"
+    },
+    {
+      "check_name": "test_file_test_phase4_complete.py",
+      "passed": true,
+      "message": "Test file test_phase4_complete.py exists",
+      "timestamp": "2025-09-26T10:14:37.142189"
+    },
+    {
+      "check_name": "test_file_test_phase3_complete.py",
+      "passed": true,
+      "message": "Test file test_phase3_complete.py exists",
+      "timestamp": "2025-09-26T10:14:37.142197"
+    },
+    {
+      "check_name": "test_file_test_system.py",
+      "passed": true,
+      "message": "Test file test_system.py exists",
+      "timestamp": "2025-09-26T10:14:37.142205"
+    },
+    {
+      "check_name": "doc_file_README.md",
+      "passed": true,
+      "message": "Documentation file README.md exists",
+      "timestamp": "2025-09-26T10:14:37.142213"
+    },
+    {
+      "check_name": "doc_file_PHASE5_COMPLETE_IMPLEMENTATION_REPORT.md",
+      "passed": true,
+      "message": "Documentation file PHASE5_COMPLETE_IMPLEMENTATION_REPORT.md exists",
+      "timestamp": "2025-09-26T10:14:37.142222"
+    },
+    {
+      "check_name": "doc_file_PHASE4_COMPLETE_IMPLEMENTATION_REPORT.md",
+      "passed": true,
+      "message": "Documentation file PHASE4_COMPLETE_IMPLEMENTATION_REPORT.md exists",
+      "timestamp": "2025-09-26T10:14:37.142231"
+    },
+    {
+      "check_name": "doc_file_IMPLEMENTATION_STATUS.md",
+      "passed": true,
+      "message": "Documentation file IMPLEMENTATION_STATUS.md exists",
+      "timestamp": "2025-09-26T10:14:37.142239"
+    }
+  ],
+  "configuration_status": {
+    "core_workflows": "checked",
+    "security_workflows": "checked",
+    "agent_workflows": "checked",
+    "service_configurations": "checked",
+    "dependency_configurations": "checked",
+    "integration_configurations": "checked"
+  }
+}

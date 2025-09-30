@@ -1,0 +1,198 @@
+version: '3.8'
+
+# AMAS Intelligence System - Offline-First Configuration
+# Complete local isolation with no external network access
+
+services:
+  # AMAS Core System - Offline Mode
+  amas-offline:
+    build: .
+    container_name: amas-offline
+    ports:
+      - "8000:8000"
+    environment:
+      - AMAS_MODE=offline
+      - AMAS_OFFLINE_MODE=true
+      - AMAS_LOCAL_ONLY=true
+      - AMAS_NO_INTERNET=true
+      - AMAS_ISOLATION_LEVEL=complete
+      - AMAS_LLM_HOST=ollama:11434
+      - AMAS_VECTOR_HOST=vector-service:8001
+      - AMAS_GRAPH_HOST=neo4j:7474
+      - AMAS_REDIS_HOST=redis:6379
+      - AMAS_POSTGRES_HOST=postgres:5432
+      - AMAS_POSTGRES_USER=amas
+      - AMAS_POSTGRES_PASSWORD=amas_offline_secure
+      - AMAS_POSTGRES_DB=amas_offline
+      - AMAS_NEO4J_AUTH=neo4j/amas_offline_secure
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./models:/app/models
+      - ./scripts:/app/scripts
+    networks:
+      - amas-offline-network
+    restart: unless-stopped
+    # Network isolation - no external access
+    extra_hosts:
+      - "api.openai.com:127.0.0.1"
+      - "api.anthropic.com:127.0.0.1"
+      - "api.cohere.ai:127.0.0.1"
+
+  # Local PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: amas-postgres-offline
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=amas_offline
+      - POSTGRES_USER=amas
+      - POSTGRES_PASSWORD=amas_offline_secure
+      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db_offline.sql:/docker-entrypoint-initdb.d/init_db.sql
+    networks:
+      - amas-offline-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U amas -d amas_offline"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Local Redis Cache
+  redis:
+    image: redis:7.2-alpine
+    container_name: amas-redis-offline
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - amas-offline-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  # Local Neo4j Knowledge Graph
+  neo4j:
+    image: neo4j:5.15.0
+    container_name: amas-neo4j-offline
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/amas_offline_secure
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+      - NEO4J_dbms_security_procedures_allowlist=apoc.*
+    volumes:
+      - neo4j_data:/data
+      - neo4j_logs:/logs
+    networks:
+      - amas-offline-network
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "amas_offline_secure", "RETURN 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
+
+  # Local Ollama LLM Service
+  ollama:
+    image: ollama/ollama:latest
+    container_name: amas-ollama-offline
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=*
+    volumes:
+      - ollama_data:/root/.ollama
+      - ./models:/models
+    networks:
+      - amas-offline-network
+    restart: unless-stopped
+    # GPU support for local inference
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Local Vector Service (FAISS)
+  vector-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.vector
+    container_name: amas-vector-offline
+    ports:
+      - "8001:8001"
+    environment:
+      - VECTOR_SERVICE_MODE=offline
+      - FAISS_INDEX_PATH=/app/data/faiss_index
+      - EMBEDDING_MODEL=local
+    volumes:
+      - ./data/vectors:/app/data/faiss_index
+      - ./models:/app/models
+    networks:
+      - amas-offline-network
+    restart: unless-stopped
+
+  # Local N8N Workflow Engine (Optional)
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: amas-n8n-offline
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=amas
+      - N8N_BASIC_AUTH_PASSWORD=amas_offline_secure
+      - N8N_HOST=localhost
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - N8N_EDITOR_BASE_URL=http://localhost:5678
+    volumes:
+      - n8n_data:/home/node/.n8n
+    networks:
+      - amas-offline-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  neo4j_data:
+    driver: local
+  neo4j_logs:
+    driver: local
+  ollama_data:
+    driver: local
+  n8n_data:
+    driver: local
+
+networks:
+  amas-offline-network:
+    driver: bridge
+    internal: true  # No external network access
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

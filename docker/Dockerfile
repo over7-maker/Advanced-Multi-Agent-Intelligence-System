@@ -1,63 +1,109 @@
-# AMAS Intelligence System Dockerfile
-FROM python:3.11-slim
+# AMAS Docker Image
+# Multi-stage build for optimized production image
+
+# ============================================================================
+# Builder Stage - Install dependencies and build the application
+# ============================================================================
+FROM python:3.11-slim as builder
 
 # Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV AMAS_MODE=production
-ENV AMAS_OFFLINE_MODE=true
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
+    gcc \
+    g++ \
+    libpq-dev \
+    libffi-dev \
+    libssl-dev \
     curl \
-    git \
-    wget \
-    vim \
     && rm -rf /var/lib/apt/lists/*
 
-# Install NVIDIA CUDA toolkit (if available)
-RUN if command -v nvidia-smi >/dev/null 2>&1; then \
-        wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2004/x86_64/cuda-keyring_1.0-1_all.deb && \
-        dpkg -i cuda-keyring_1.0-1_all.deb && \
-        apt-get update && \
-        apt-get install -y cuda-toolkit-11-8 && \
-        rm -rf /var/lib/apt/lists/*; \
-    fi
-
-# Set working directory
+# Create application directory
 WORKDIR /app
 
-# Copy requirements first for better caching
-COPY requirements.txt requirements-intelligence.txt ./
+# Copy requirements and install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir -r requirements-intelligence.txt
+# ============================================================================
+# Runtime Stage - Create the final production image
+# ============================================================================
+FROM python:3.11-slim as production
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app/src
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd -r amas \
+    && useradd -r -g amas -d /app -s /bin/bash amas
+
+# Copy Python packages from builder
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+
+# Create application directory and set ownership
+WORKDIR /app
+RUN chown -R amas:amas /app
 
 # Copy application code
-COPY . .
+COPY --chown=amas:amas src/ ./src/
+COPY --chown=amas:amas config/ ./config/
+COPY --chown=amas:amas docker/entrypoint.sh ./entrypoint.sh
 
-# Create necessary directories
-RUN mkdir -p /app/data /app/logs /app/config /app/models
+# Create data directories
+RUN mkdir -p logs data models && \
+    chown -R amas:amas logs data models
 
-# Set permissions
-RUN chmod +x /app/scripts/*.py
-
-# Create non-root user
-RUN useradd -m -u 1000 amas && \
-    chown -R amas:amas /app
+# Make entrypoint executable
+RUN chmod +x entrypoint.sh
 
 # Switch to non-root user
 USER amas
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
 # Expose port
 EXPOSE 8000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+# Set entrypoint
+ENTRYPOINT ["./entrypoint.sh"]
 
-# Start command
-CMD ["python", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+# Default command
+CMD ["uvicorn", "amas.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+# ============================================================================
+# Development Stage - For development with hot reload
+# ============================================================================
+FROM production as development
+
+# Switch back to root for development tools installation
+USER root
+
+# Install development dependencies
+RUN pip install pytest black flake8 mypy pre-commit
+
+# Install development tools
+RUN apt-get update && apt-get install -y \
+    git \
+    vim \
+    htop \
+    && rm -rf /var/lib/apt/lists/*
+
+# Switch back to amas user
+USER amas
+
+# Override command for development
+CMD ["uvicorn", "amas.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
