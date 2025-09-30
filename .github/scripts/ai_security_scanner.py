@@ -226,6 +226,7 @@ class AISecurityScanner:
     
     def _is_pattern_definition_line(self, line: str, context_lines: list) -> bool:
         """Check if a specific line is a pattern definition rather than actual vulnerable code"""
+        import re
         line_lower = line.lower().strip()
         
         # Check for pattern definition indicators
@@ -253,17 +254,24 @@ class AISecurityScanner:
                 return True
         
         # Check for specific pattern definition patterns
+        # Look for patterns that are being defined as strings (within quotes)
+        if re.search(r'''['"]\s*r?['"]\s*[a-zA-Z_\\.*+()]+\s*['"]\s*['"]\s*,?''', line):
+            # This looks like a pattern string definition
+            if any(keyword in line.lower() for keyword in ['sql', 'xss', 'injection', 'patterns', 'vulnerabil']):
+                return True
+        
+        # Check if line contains regex pattern definitions
         pattern_definitions = [
-            r"r'execute\\s*\\([^)]*\\+",  # SQL injection patterns
-            r"r'innerHTML\\s*=",  # XSS patterns
-            r"r'dangerouslySetInnerHTML",  # XSS patterns
-            r"r'eval\\s*\\(",  # XSS patterns
-            r"r'SELECT.*\\+.*FROM",  # SQL patterns
-            r"r'query\\s*\\([^)]*\\+",  # SQL patterns
+            'execute\\\\s*\\\\(',  # SQL injection patterns
+            'innerHTML\\\\s*=',  # XSS patterns
+            'dangerouslySetInnerHTML',  # XSS patterns
+            'eval\\\\s*\\\\(',  # XSS patterns
+            'SELECT.*\\\\+.*FROM',  # SQL patterns
+            'query\\\\s*\\\\([^)]*\\\\+',  # SQL patterns
         ]
         
         for pattern in pattern_definitions:
-            if pattern.replace('\\', '') in line:
+            if pattern in line:
                 return True
         
         return False

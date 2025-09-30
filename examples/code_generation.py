@@ -15,7 +15,7 @@ async def code_generation_example():
     """Code generation example"""
     print("💻 AMAS Code Generation Example")
     print("=" * 50)
-    
+
     # Configuration
     config = {
         'llm_service_url': 'http://localhost:11434',
@@ -24,14 +24,14 @@ async def code_generation_example():
         'n8n_url': 'http://localhost:5678',
         'n8n_api_key': 'your_api_key_here'
     }
-    
+
     try:
         # Initialize AMAS system
         print("🚀 Initializing AMAS system...")
         amas = AMASIntelligenceSystem(config)
         await amas.initialize()
         print("✅ AMAS system initialized")
-        
+
         # Code generation tasks
         code_tasks = [
             {
@@ -68,23 +68,23 @@ async def code_generation_example():
                 }
             }
         ]
-        
+
         print("\n💻 Code Generation Tasks:")
         task_ids = []
-        
+
         for i, task in enumerate(code_tasks, 1):
             print(f"\n📝 Task {i}: {task['description']}")
             task_id = await amas.submit_intelligence_task(task)
             task_ids.append(task_id)
             print(f"✅ Task submitted: {task_id}")
-        
+
         # Monitor code generation progress
         print("\n⏳ Monitoring code generation progress...")
-        
+
         for i, (task_id, task) in enumerate(zip(task_ids, code_tasks), 1):
             status = await amas.orchestrator.get_task_status(task_id)
             print(f"  {i}. {task['description'][:50]}... - {status['status']}")
-        
+
         # Demonstrate code analysis
         print("\n🔍 Code Analysis Example:")
         analysis_task = {
@@ -97,10 +97,10 @@ async def code_generation_example():
                 'focus': 'vulnerabilities'
             }
         }
-        
+
         analysis_task_id = await amas.submit_intelligence_task(analysis_task)
         print(f"✅ Code analysis task submitted: {analysis_task_id}")
-        
+
         # Demonstrate code optimization
         print("\n⚡ Code Optimization Example:")
         optimization_task = {
@@ -113,23 +113,23 @@ async def code_generation_example():
                 'target': 'execution_speed'
             }
         }
-        
+
         optimization_task_id = await amas.submit_intelligence_task(optimization_task)
         print(f"✅ Code optimization task submitted: {optimization_task_id}")
-        
+
         # Get system status
         print("\n📈 System Status:")
         status = await amas.get_system_status()
         print(f"  Active Agents: {status['agents']}")
         print(f"  Active Tasks: {status['active_tasks']}")
         print(f"  Completed Tasks: {status['completed_tasks']}")
-        
+
         # List all tasks
         print("\n📋 All Tasks:")
         tasks = await amas.orchestrator.list_tasks()
         for task in tasks:
             print(f"  - {task['id']}: {task['description']} ({task['status']})")
-        
+
         print("\n🎉 Code generation example completed!")
         print("💻 Code generation demonstrates:")
         print("  - AI-powered code generation")
@@ -137,17 +137,17 @@ async def code_generation_example():
         print("  - Security-focused development")
         print("  - Performance optimization")
         print("  - Code analysis and review")
-        
+
     except Exception as e:
         print(f"❌ Error: {e}")
         return False
-    
+
     finally:
         # Shutdown
         print("\n🔄 Shutting down AMAS system...")
         await amas.shutdown()
         print("✅ AMAS system shutdown complete")
-    
+
     return True
 
 if __name__ == "__main__":
