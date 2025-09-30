@@ -54,12 +54,14 @@ class DatabaseService:
         """Initialize PostgreSQL connection"""
         try:
             db_config = self.config.get('database', {})
+            # Use environment variables for sensitive data
+            import os
             self.pg_pool = await asyncpg.create_pool(
-                host=db_config.get('host', 'localhost'),
-                port=db_config.get('port', 5432),
-                user=db_config.get('user', 'amas'),
-                password=db_config.get('password', 'amas123'),
-                database=db_config.get('database', 'amas'),
+                host=db_config.get('host', os.getenv('POSTGRES_HOST', 'localhost')),
+                port=db_config.get('port', int(os.getenv('POSTGRES_PORT', '5432'))),
+                user=db_config.get('user', os.getenv('POSTGRES_USER', 'amas')),
+                password=db_config.get('password', os.getenv('POSTGRES_PASSWORD', 'amas123')),
+                database=db_config.get('database', os.getenv('POSTGRES_DB', 'amas')),
                 min_size=1,
                 max_size=10
             )
@@ -72,11 +74,13 @@ class DatabaseService:
         """Initialize Redis connection"""
         try:
             redis_config = self.config.get('redis', {})
+            # Use environment variables for sensitive data
+            import os
             self.redis_client = redis.Redis(
-                host=redis_config.get('host', 'localhost'),
-                port=redis_config.get('port', 6379),
-                db=redis_config.get('db', 0),
-                password=redis_config.get('password'),
+                host=redis_config.get('host', os.getenv('REDIS_HOST', 'localhost')),
+                port=redis_config.get('port', int(os.getenv('REDIS_PORT', '6379'))),
+                db=redis_config.get('db', int(os.getenv('REDIS_DB', '0'))),
+                password=redis_config.get('password', os.getenv('REDIS_PASSWORD')),
                 decode_responses=True
             )
             # Test connection

@@ -239,18 +239,84 @@ class AuthorizationManager:
             # Evaluate condition (simplified - in production, use a proper rule engine)
             condition = rule["condition"]
             
-            # Replace variables in condition
+            # Replace variables in condition with safe values
             condition = condition.replace("user_id", f"'{user_id}'")
             condition = condition.replace("current_hour", str(datetime.now().hour))
             condition = condition.replace("ip_address", f"'{context.get('ip_address', '')}'")
             condition = condition.replace("data_classification", f"'{context.get('data_classification', '')}'")
             condition = condition.replace("user_clearance", f"'{context.get('user_clearance', '')}'")
             
-            # Evaluate condition (simplified evaluation)
-            return eval(condition)
+            # Secure evaluation without using eval()
+            return self._safe_evaluate_condition(condition)
             
         except Exception as e:
             logger.error(f"Error evaluating rule {rule['name']}: {e}")
+            return False
+    
+    def _safe_evaluate_condition(self, condition: str) -> bool:
+        """Safely evaluate a condition without using eval()"""
+        try:
+            # Simple string-based condition evaluation
+            # This is a basic implementation - in production, use a proper rule engine
+            if "==" in condition:
+                parts = condition.split("==")
+                if len(parts) == 2:
+                    left = parts[0].strip()
+                    right = parts[1].strip().strip("'\"")
+                    return left == right
+            
+            if "!=" in condition:
+                parts = condition.split("!=")
+                if len(parts) == 2:
+                    left = parts[0].strip()
+                    right = parts[1].strip().strip("'\"")
+                    return left != right
+            
+            if ">=" in condition:
+                parts = condition.split(">=")
+                if len(parts) == 2:
+                    left = parts[0].strip()
+                    right = parts[1].strip().strip("'\"")
+                    try:
+                        return int(left) >= int(right)
+                    except ValueError:
+                        return left >= right
+            
+            if "<=" in condition:
+                parts = condition.split("<=")
+                if len(parts) == 2:
+                    left = parts[0].strip()
+                    right = parts[1].strip().strip("'\"")
+                    try:
+                        return int(left) <= int(right)
+                    except ValueError:
+                        return left <= right
+            
+            if ">" in condition:
+                parts = condition.split(">")
+                if len(parts) == 2:
+                    left = parts[0].strip()
+                    right = parts[1].strip().strip("'\"")
+                    try:
+                        return int(left) > int(right)
+                    except ValueError:
+                        return left > right
+            
+            if "<" in condition:
+                parts = condition.split("<")
+                if len(parts) == 2:
+                    left = parts[0].strip()
+                    right = parts[1].strip().strip("'\"")
+                    try:
+                        return int(left) < int(right)
+                    except ValueError:
+                        return left < right
+            
+            # Default to False for unrecognized conditions
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error in safe condition evaluation: {e}")
             return False
     
     async def _check_resource_hierarchy(self, permission: Permission, resource: Resource) -> bool:
