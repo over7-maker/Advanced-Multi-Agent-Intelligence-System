@@ -11,16 +11,17 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 async def create_database_schemas():
     """Create all necessary database tables and indexes"""
 
     # Database connection parameters
     db_config = {
-        'host': 'localhost',
-        'port': 5432,
-        'user': 'amas',
-        'password': 'amas123',
-        'database': 'amas'
+        "host": "localhost",
+        "port": 5432,
+        "user": "amas",
+        "password": "amas123",
+        "database": "amas",
     }
 
     try:
@@ -29,7 +30,8 @@ async def create_database_schemas():
         logger.info("Connected to PostgreSQL database")
 
         # Create tasks table
-        await conn.execute("""
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS tasks (
                 id VARCHAR(36) PRIMARY KEY,
                 type VARCHAR(50) NOT NULL,
@@ -48,11 +50,13 @@ async def create_database_schemas():
                 dependencies JSONB DEFAULT '[]',
                 tags JSONB DEFAULT '[]'
             )
-        """)
+        """
+        )
         logger.info("Tasks table created")
 
         # Create agents table
-        await conn.execute("""
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS agents (
                 id VARCHAR(36) PRIMARY KEY,
                 name VARCHAR(100) NOT NULL,
@@ -67,11 +71,13 @@ async def create_database_schemas():
                 error_count INTEGER DEFAULT 0,
                 success_count INTEGER DEFAULT 0
             )
-        """)
+        """
+        )
         logger.info("Agents table created")
 
         # Create task execution history
-        await conn.execute("""
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS task_history (
                 id SERIAL PRIMARY KEY,
                 task_id VARCHAR(36) NOT NULL,
@@ -82,11 +88,13 @@ async def create_database_schemas():
                 execution_time FLOAT,
                 success BOOLEAN
             )
-        """)
+        """
+        )
         logger.info("Task history table created")
 
         # Create system metrics table
-        await conn.execute("""
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS system_metrics (
                 id SERIAL PRIMARY KEY,
                 metric_name VARCHAR(100) NOT NULL,
@@ -94,7 +102,8 @@ async def create_database_schemas():
                 metadata JSONB DEFAULT '{}',
                 timestamp TIMESTAMP NOT NULL DEFAULT NOW()
             )
-        """)
+        """
+        )
         logger.info("System metrics table created")
 
         # Create indexes for better performance
@@ -107,7 +116,7 @@ async def create_database_schemas():
             "CREATE INDEX IF NOT EXISTS idx_task_history_task_id ON task_history(task_id)",
             "CREATE INDEX IF NOT EXISTS idx_task_history_agent_id ON task_history(agent_id)",
             "CREATE INDEX IF NOT EXISTS idx_system_metrics_name ON system_metrics(metric_name)",
-            "CREATE INDEX IF NOT EXISTS idx_system_metrics_timestamp ON system_metrics(timestamp)"
+            "CREATE INDEX IF NOT EXISTS idx_system_metrics_timestamp ON system_metrics(timestamp)",
         ]
 
         for index_sql in indexes:
@@ -122,6 +131,7 @@ async def create_database_schemas():
     except Exception as e:
         logger.error(f"Database setup failed: {e}")
         raise
+
 
 if __name__ == "__main__":
     asyncio.run(create_database_schemas())

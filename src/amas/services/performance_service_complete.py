@@ -15,25 +15,31 @@ from dataclasses import dataclass
 
 logger = logging.getLogger(__name__)
 
+
 class CacheStrategy(Enum):
     """Cache strategy enumeration"""
+
     LRU = "lru"
     LFU = "lfu"
     TTL = "ttl"
     WRITE_THROUGH = "write_through"
     WRITE_BACK = "write_back"
 
+
 class LoadBalanceStrategy(Enum):
     """Load balancing strategy enumeration"""
+
     ROUND_ROBIN = "round_robin"
     LEAST_CONNECTIONS = "least_connections"
     WEIGHTED_ROUND_ROBIN = "weighted_round_robin"
     LEAST_RESPONSE_TIME = "least_response_time"
     RANDOM = "random"
 
+
 @dataclass
 class CacheEntry:
     """Cache entry data structure"""
+
     key: str
     value: Any
     created_at: datetime
@@ -42,9 +48,11 @@ class CacheEntry:
     ttl: Optional[float] = None
     size: int = 0
 
+
 @dataclass
 class PerformanceMetrics:
     """Performance metrics data structure"""
+
     service_name: str
     response_time: float
     throughput: float
@@ -53,6 +61,7 @@ class PerformanceMetrics:
     memory_usage: float
     connection_count: int
     timestamp: datetime
+
 
 class PerformanceService:
     """
@@ -73,18 +82,20 @@ class PerformanceService:
 
         # Cache configuration
         self.cache_config = {
-            'max_size': config.get('cache_max_size', 1000),
-            'default_ttl': config.get('cache_default_ttl', 3600),
-            'strategy': CacheStrategy(config.get('cache_strategy', 'lru')),
-            'enable_compression': config.get('cache_compression', True)
+            "max_size": config.get("cache_max_size", 1000),
+            "default_ttl": config.get("cache_default_ttl", 3600),
+            "strategy": CacheStrategy(config.get("cache_strategy", "lru")),
+            "enable_compression": config.get("cache_compression", True),
         }
 
         # Load balancing configuration
         self.load_balance_config = {
-            'strategy': LoadBalanceStrategy(config.get('load_balance_strategy', 'round_robin')),
-            'health_check_interval': config.get('health_check_interval', 30),
-            'max_retries': config.get('max_retries', 3),
-            'timeout': config.get('timeout', 30)
+            "strategy": LoadBalanceStrategy(
+                config.get("load_balance_strategy", "round_robin")
+            ),
+            "health_check_interval": config.get("health_check_interval", 30),
+            "max_retries": config.get("max_retries", 3),
+            "timeout": config.get("timeout", 30),
         }
 
         # Performance monitoring
@@ -93,12 +104,7 @@ class PerformanceService:
 
         # Cache storage
         self.cache = {}
-        self.cache_stats = {
-            'hits': 0,
-            'misses': 0,
-            'evictions': 0,
-            'size': 0
-        }
+        self.cache_stats = {"hits": 0, "misses": 0, "evictions": 0, "size": 0}
 
         # Load balancers
         self.load_balancers = {}
@@ -106,9 +112,9 @@ class PerformanceService:
 
         # Resource management
         self.resource_limits = {
-            'max_memory': config.get('max_memory', 1024 * 1024 * 1024),  # 1GB
-            'max_cpu': config.get('max_cpu', 80.0),  # 80%
-            'max_connections': config.get('max_connections', 1000)
+            "max_memory": config.get("max_memory", 1024 * 1024 * 1024),  # 1GB
+            "max_cpu": config.get("max_cpu", 80.0),  # 80%
+            "max_connections": config.get("max_connections", 1000),
         }
 
         logger.info("Performance service initialized")
@@ -145,11 +151,11 @@ class PerformanceService:
             logger.info("Initializing cache system...")
 
             # Initialize cache based on strategy
-            if self.cache_config['strategy'] == CacheStrategy.LRU:
+            if self.cache_config["strategy"] == CacheStrategy.LRU:
                 await self._initialize_lru_cache()
-            elif self.cache_config['strategy'] == CacheStrategy.LFU:
+            elif self.cache_config["strategy"] == CacheStrategy.LFU:
                 await self._initialize_lfu_cache()
-            elif self.cache_config['strategy'] == CacheStrategy.TTL:
+            elif self.cache_config["strategy"] == CacheStrategy.TTL:
                 await self._initialize_ttl_cache()
 
             logger.info("Cache system initialized")
@@ -176,29 +182,68 @@ class PerformanceService:
             logger.info("Initializing load balancers...")
 
             # Initialize LLM provider load balancer
-            self.load_balancers['llm_providers'] = {
-                'strategy': self.load_balance_config['strategy'],
-                'providers': [
-                    {'name': 'ollama', 'weight': 1, 'health': True, 'connections': 0, 'response_time': 0.1},
-                    {'name': 'deepseek', 'weight': 2, 'health': True, 'connections': 0, 'response_time': 0.2},
-                    {'name': 'glm', 'weight': 1, 'health': True, 'connections': 0, 'response_time': 0.15},
-                    {'name': 'grok', 'weight': 1, 'health': True, 'connections': 0, 'response_time': 0.3}
+            self.load_balancers["llm_providers"] = {
+                "strategy": self.load_balance_config["strategy"],
+                "providers": [
+                    {
+                        "name": "ollama",
+                        "weight": 1,
+                        "health": True,
+                        "connections": 0,
+                        "response_time": 0.1,
+                    },
+                    {
+                        "name": "deepseek",
+                        "weight": 2,
+                        "health": True,
+                        "connections": 0,
+                        "response_time": 0.2,
+                    },
+                    {
+                        "name": "glm",
+                        "weight": 1,
+                        "health": True,
+                        "connections": 0,
+                        "response_time": 0.15,
+                    },
+                    {
+                        "name": "grok",
+                        "weight": 1,
+                        "health": True,
+                        "connections": 0,
+                        "response_time": 0.3,
+                    },
                 ],
-                'current_index': 0,
-                'health_checks': {}
+                "current_index": 0,
+                "health_checks": {},
             }
 
             # Initialize agent load balancer
-            self.load_balancers['agents'] = {
-                'strategy': self.load_balance_config['strategy'],
-                'agents': [
-                    {'id': 'osint_001', 'weight': 1, 'health': True, 'active_tasks': 0},
-                    {'id': 'investigation_001', 'weight': 1, 'health': True, 'active_tasks': 0},
-                    {'id': 'forensics_001', 'weight': 1, 'health': True, 'active_tasks': 0},
-                    {'id': 'data_analysis_001', 'weight': 1, 'health': True, 'active_tasks': 0}
+            self.load_balancers["agents"] = {
+                "strategy": self.load_balance_config["strategy"],
+                "agents": [
+                    {"id": "osint_001", "weight": 1, "health": True, "active_tasks": 0},
+                    {
+                        "id": "investigation_001",
+                        "weight": 1,
+                        "health": True,
+                        "active_tasks": 0,
+                    },
+                    {
+                        "id": "forensics_001",
+                        "weight": 1,
+                        "health": True,
+                        "active_tasks": 0,
+                    },
+                    {
+                        "id": "data_analysis_001",
+                        "weight": 1,
+                        "health": True,
+                        "active_tasks": 0,
+                    },
                 ],
-                'current_index': 0,
-                'health_checks': {}
+                "current_index": 0,
+                "health_checks": {},
             }
 
             logger.info("Load balancers initialized")
@@ -214,10 +259,10 @@ class PerformanceService:
 
             # Initialize resource monitoring
             self.resource_monitoring = {
-                'memory_usage': 0,
-                'cpu_usage': 0,
-                'connection_count': 0,
-                'last_check': datetime.utcnow()
+                "memory_usage": 0,
+                "cpu_usage": 0,
+                "connection_count": 0,
+                "last_check": datetime.utcnow(),
             }
 
             logger.info("Resource management initialized")
@@ -233,13 +278,13 @@ class PerformanceService:
 
             # Initialize performance metrics collection
             self.performance_monitoring = {
-                'metrics': {},
-                'thresholds': {
-                    'response_time': 5.0,
-                    'error_rate': 0.05,
-                    'throughput': 1000
+                "metrics": {},
+                "thresholds": {
+                    "response_time": 5.0,
+                    "error_rate": 0.05,
+                    "throughput": 1000,
                 },
-                'optimization_rules': []
+                "optimization_rules": [],
             }
 
             logger.info("Performance monitoring initialized")
@@ -258,7 +303,7 @@ class PerformanceService:
                 asyncio.create_task(self._optimize_cache()),
                 asyncio.create_task(self._optimize_load_balancing()),
                 asyncio.create_task(self._optimize_resource_usage()),
-                asyncio.create_task(self._monitor_performance())
+                asyncio.create_task(self._monitor_performance()),
             ]
 
             logger.info("Optimization tasks started")
@@ -271,15 +316,18 @@ class PerformanceService:
         """Get value from cache"""
         try:
             if key not in self.cache:
-                self.cache_stats['misses'] += 1
+                self.cache_stats["misses"] += 1
                 return None
 
             entry = self.cache[key]
 
             # Check TTL
-            if entry.ttl and (datetime.utcnow() - entry.created_at).total_seconds() > entry.ttl:
+            if (
+                entry.ttl
+                and (datetime.utcnow() - entry.created_at).total_seconds() > entry.ttl
+            ):
                 await self._evict_from_cache(key)
-                self.cache_stats['misses'] += 1
+                self.cache_stats["misses"] += 1
                 return None
 
             # Update access information
@@ -287,23 +335,25 @@ class PerformanceService:
             entry.access_count += 1
 
             # Update cache order for LRU
-            if self.cache_config['strategy'] == CacheStrategy.LRU:
+            if self.cache_config["strategy"] == CacheStrategy.LRU:
                 if key in self.cache_order:
                     self.cache_order.remove(key)
                 self.cache_order.append(key)
 
-            self.cache_stats['hits'] += 1
+            self.cache_stats["hits"] += 1
             return entry.value
 
         except Exception as e:
             logger.error(f"Failed to get from cache: {e}")
             return None
 
-    async def set_in_cache(self, key: str, value: Any, ttl: Optional[float] = None) -> bool:
+    async def set_in_cache(
+        self, key: str, value: Any, ttl: Optional[float] = None
+    ) -> bool:
         """Set value in cache"""
         try:
             # Check cache size limit
-            if len(self.cache) >= self.cache_config['max_size']:
+            if len(self.cache) >= self.cache_config["max_size"]:
                 await self._evict_oldest_entry()
 
             # Create cache entry
@@ -313,25 +363,25 @@ class PerformanceService:
                 created_at=datetime.utcnow(),
                 accessed_at=datetime.utcnow(),
                 access_count=1,
-                ttl=ttl or self.cache_config['default_ttl'],
-                size=len(str(value))
+                ttl=ttl or self.cache_config["default_ttl"],
+                size=len(str(value)),
             )
 
             # Store in cache
             self.cache[key] = entry
 
             # Update cache order for LRU
-            if self.cache_config['strategy'] == CacheStrategy.LRU:
+            if self.cache_config["strategy"] == CacheStrategy.LRU:
                 if key in self.cache_order:
                     self.cache_order.remove(key)
                 self.cache_order.append(key)
 
             # Update cache frequency for LFU
-            if self.cache_config['strategy'] == CacheStrategy.LFU:
+            if self.cache_config["strategy"] == CacheStrategy.LFU:
                 self.cache_frequency[key] = 1
 
             # Update cache stats
-            self.cache_stats['size'] = len(self.cache)
+            self.cache_stats["size"] = len(self.cache)
 
             return True
 
@@ -354,8 +404,8 @@ class PerformanceService:
                     del self.cache_frequency[key]
 
                 # Update cache stats
-                self.cache_stats['evictions'] += 1
-                self.cache_stats['size'] = len(self.cache)
+                self.cache_stats["evictions"] += 1
+                self.cache_stats["size"] = len(self.cache)
 
         except Exception as e:
             logger.error(f"Failed to evict from cache: {e}")
@@ -366,21 +416,26 @@ class PerformanceService:
             if not self.cache:
                 return
 
-            if self.cache_config['strategy'] == CacheStrategy.LRU:
+            if self.cache_config["strategy"] == CacheStrategy.LRU:
                 # Evict least recently used
                 if self.cache_order:
                     oldest_key = self.cache_order[0]
                     await self._evict_from_cache(oldest_key)
 
-            elif self.cache_config['strategy'] == CacheStrategy.LFU:
+            elif self.cache_config["strategy"] == CacheStrategy.LFU:
                 # Evict least frequently used
                 if self.cache_frequency:
-                    oldest_key = min(self.cache_frequency.keys(), key=lambda k: self.cache_frequency[k])
+                    oldest_key = min(
+                        self.cache_frequency.keys(),
+                        key=lambda k: self.cache_frequency[k],
+                    )
                     await self._evict_from_cache(oldest_key)
 
-            elif self.cache_config['strategy'] == CacheStrategy.TTL:
+            elif self.cache_config["strategy"] == CacheStrategy.TTL:
                 # Evict oldest by creation time
-                oldest_key = min(self.cache.keys(), key=lambda k: self.cache[k].created_at)
+                oldest_key = min(
+                    self.cache.keys(), key=lambda k: self.cache[k].created_at
+                )
                 await self._evict_from_cache(oldest_key)
 
         except Exception as e:
@@ -389,80 +444,87 @@ class PerformanceService:
     async def select_llm_provider(self, task_type: str = None) -> str:
         """Select LLM provider using load balancing"""
         try:
-            balancer = self.load_balancers['llm_providers']
-            providers = [p for p in balancer['providers'] if p['health']]
+            balancer = self.load_balancers["llm_providers"]
+            providers = [p for p in balancer["providers"] if p["health"]]
 
             if not providers:
                 raise Exception("No healthy LLM providers available")
 
-            if balancer['strategy'] == LoadBalanceStrategy.ROUND_ROBIN:
-                provider = providers[balancer['current_index'] % len(providers)]
-                balancer['current_index'] += 1
-                return provider['name']
+            if balancer["strategy"] == LoadBalanceStrategy.ROUND_ROBIN:
+                provider = providers[balancer["current_index"] % len(providers)]
+                balancer["current_index"] += 1
+                return provider["name"]
 
-            elif balancer['strategy'] == LoadBalanceStrategy.LEAST_CONNECTIONS:
+            elif balancer["strategy"] == LoadBalanceStrategy.LEAST_CONNECTIONS:
                 # Select provider with least connections
-                provider = min(providers, key=lambda p: p.get('connections', 0))
-                return provider['name']
+                provider = min(providers, key=lambda p: p.get("connections", 0))
+                return provider["name"]
 
-            elif balancer['strategy'] == LoadBalanceStrategy.WEIGHTED_ROUND_ROBIN:
+            elif balancer["strategy"] == LoadBalanceStrategy.WEIGHTED_ROUND_ROBIN:
                 # Weighted round robin selection
-                total_weight = sum(p['weight'] for p in providers)
+                total_weight = sum(p["weight"] for p in providers)
                 if total_weight == 0:
-                    return providers[0]['name']
+                    return providers[0]["name"]
 
                 # Simple weighted selection
-                provider = providers[balancer['current_index'] % len(providers)]
-                balancer['current_index'] += 1
-                return provider['name']
+                provider = providers[balancer["current_index"] % len(providers)]
+                balancer["current_index"] += 1
+                return provider["name"]
 
-            elif balancer['strategy'] == LoadBalanceStrategy.LEAST_RESPONSE_TIME:
+            elif balancer["strategy"] == LoadBalanceStrategy.LEAST_RESPONSE_TIME:
                 # Select provider with least response time
-                provider = min(providers, key=lambda p: p.get('response_time', float('inf')))
-                return provider['name']
+                provider = min(
+                    providers, key=lambda p: p.get("response_time", float("inf"))
+                )
+                return provider["name"]
 
-            elif balancer['strategy'] == LoadBalanceStrategy.RANDOM:
+            elif balancer["strategy"] == LoadBalanceStrategy.RANDOM:
                 import random
+
                 provider = random.choice(providers)
-                return provider['name']
+                return provider["name"]
 
             else:
-                return providers[0]['name']
+                return providers[0]["name"]
 
         except Exception as e:
             logger.error(f"Failed to select LLM provider: {e}")
-            return 'ollama'  # Fallback
+            return "ollama"  # Fallback
 
     async def select_agent(self, task_type: str) -> str:
         """Select agent using load balancing"""
         try:
-            balancer = self.load_balancers['agents']
-            agents = [a for a in balancer['agents'] if a.get('health', True)]
+            balancer = self.load_balancers["agents"]
+            agents = [a for a in balancer["agents"] if a.get("health", True)]
 
             if not agents:
                 raise Exception("No healthy agents available")
 
             # Filter agents by task type capability
-            suitable_agents = [a for a in agents if task_type in a.get('capabilities', [])]
+            suitable_agents = [
+                a for a in agents if task_type in a.get("capabilities", [])
+            ]
 
             if not suitable_agents:
                 suitable_agents = agents  # Fallback to all agents
 
-            if balancer['strategy'] == LoadBalanceStrategy.ROUND_ROBIN:
-                agent = suitable_agents[balancer['current_index'] % len(suitable_agents)]
-                balancer['current_index'] += 1
-                return agent['id']
+            if balancer["strategy"] == LoadBalanceStrategy.ROUND_ROBIN:
+                agent = suitable_agents[
+                    balancer["current_index"] % len(suitable_agents)
+                ]
+                balancer["current_index"] += 1
+                return agent["id"]
 
-            elif balancer['strategy'] == LoadBalanceStrategy.LEAST_CONNECTIONS:
-                agent = min(suitable_agents, key=lambda a: a.get('active_tasks', 0))
-                return agent['id']
+            elif balancer["strategy"] == LoadBalanceStrategy.LEAST_CONNECTIONS:
+                agent = min(suitable_agents, key=lambda a: a.get("active_tasks", 0))
+                return agent["id"]
 
             else:
-                return suitable_agents[0]['id']
+                return suitable_agents[0]["id"]
 
         except Exception as e:
             logger.error(f"Failed to select agent: {e}")
-            return 'osint_001'  # Fallback
+            return "osint_001"  # Fallback
 
     async def _optimize_cache(self):
         """Optimize cache performance"""
@@ -473,14 +535,18 @@ class PerformanceService:
                 expired_keys = []
 
                 for key, entry in self.cache.items():
-                    if entry.ttl and (current_time - entry.created_at).total_seconds() > entry.ttl:
+                    if (
+                        entry.ttl
+                        and (current_time - entry.created_at).total_seconds()
+                        > entry.ttl
+                    ):
                         expired_keys.append(key)
 
                 for key in expired_keys:
                     await self._evict_from_cache(key)
 
                 # Optimize cache size
-                if len(self.cache) > self.cache_config['max_size'] * 0.9:
+                if len(self.cache) > self.cache_config["max_size"] * 0.9:
                     # Evict 10% of entries
                     evict_count = int(len(self.cache) * 0.1)
                     for _ in range(evict_count):
@@ -497,16 +563,16 @@ class PerformanceService:
         while True:
             try:
                 # Update provider health
-                for provider in self.load_balancers['llm_providers']['providers']:
-                    health = await self._check_provider_health(provider['name'])
-                    provider['health'] = health
+                for provider in self.load_balancers["llm_providers"]["providers"]:
+                    health = await self._check_provider_health(provider["name"])
+                    provider["health"] = health
 
                 # Update agent health
-                for agent in self.load_balancers['agents']['agents']:
-                    health = await self._check_agent_health(agent['id'])
-                    agent['health'] = health
+                for agent in self.load_balancers["agents"]["agents"]:
+                    health = await self._check_agent_health(agent["id"])
+                    agent["health"] = health
 
-                await asyncio.sleep(self.load_balance_config['health_check_interval'])
+                await asyncio.sleep(self.load_balance_config["health_check_interval"])
 
             except Exception as e:
                 logger.error(f"Load balancing optimization error: {e}")
@@ -574,18 +640,20 @@ class PerformanceService:
             cpu_usage = 67.8 + (time.time() % 5)  # Simulate varying CPU usage
 
             # Update resource monitoring
-            self.resource_monitoring.update({
-                'memory_usage': memory_usage,
-                'cpu_usage': cpu_usage,
-                'last_check': datetime.utcnow()
-            })
+            self.resource_monitoring.update(
+                {
+                    "memory_usage": memory_usage,
+                    "cpu_usage": cpu_usage,
+                    "last_check": datetime.utcnow(),
+                }
+            )
 
             # Check resource limits
-            if memory_usage > self.resource_limits['max_cpu']:
-                await self._handle_resource_limit_exceeded('memory', memory_usage)
+            if memory_usage > self.resource_limits["max_cpu"]:
+                await self._handle_resource_limit_exceeded("memory", memory_usage)
 
-            if cpu_usage > self.resource_limits['max_cpu']:
-                await self._handle_resource_limit_exceeded('cpu', cpu_usage)
+            if cpu_usage > self.resource_limits["max_cpu"]:
+                await self._handle_resource_limit_exceeded("cpu", cpu_usage)
 
         except Exception as e:
             logger.error(f"Failed to monitor resource usage: {e}")
@@ -596,9 +664,9 @@ class PerformanceService:
             logger.warning(f"Resource limit exceeded: {resource} usage is {usage:.1f}%")
 
             # Apply optimization measures
-            if resource == 'memory':
+            if resource == "memory":
                 await self._optimize_memory_usage()
-            elif resource == 'cpu':
+            elif resource == "cpu":
                 await self._optimize_cpu_usage()
 
         except Exception as e:
@@ -611,7 +679,7 @@ class PerformanceService:
             await self._clear_cache()
 
             # Reduce cache size
-            self.cache_config['max_size'] = int(self.cache_config['max_size'] * 0.8)
+            self.cache_config["max_size"] = int(self.cache_config["max_size"] * 0.8)
 
             logger.info("Memory usage optimized")
 
@@ -636,7 +704,7 @@ class PerformanceService:
             self.cache.clear()
             self.cache_order.clear()
             self.cache_frequency.clear()
-            self.cache_stats['size'] = 0
+            self.cache_stats["size"] = 0
 
             logger.info("Cache cleared")
 
@@ -647,20 +715,20 @@ class PerformanceService:
         """Collect performance metrics"""
         try:
             # Collect cache metrics
-            cache_hit_rate = self.cache_stats['hits'] / max(
-                self.cache_stats['hits'] + self.cache_stats['misses'], 1
+            cache_hit_rate = self.cache_stats["hits"] / max(
+                self.cache_stats["hits"] + self.cache_stats["misses"], 1
             )
 
             # Store performance metrics
             metrics = PerformanceMetrics(
-                service_name='performance_service',
+                service_name="performance_service",
                 response_time=0.0,  # Would be calculated from actual measurements
-                throughput=1000,    # Would be calculated from actual measurements
-                error_rate=0.0,     # Would be calculated from actual measurements
-                cpu_usage=self.resource_monitoring['cpu_usage'],
-                memory_usage=self.resource_monitoring['memory_usage'],
+                throughput=1000,  # Would be calculated from actual measurements
+                error_rate=0.0,  # Would be calculated from actual measurements
+                cpu_usage=self.resource_monitoring["cpu_usage"],
+                memory_usage=self.resource_monitoring["memory_usage"],
                 connection_count=0,  # Would be calculated from actual measurements
-                timestamp=datetime.utcnow()
+                timestamp=datetime.utcnow(),
             )
 
             self.performance_metrics[datetime.utcnow()] = metrics
@@ -695,35 +763,37 @@ class PerformanceService:
     async def get_performance_status(self) -> Dict[str, Any]:
         """Get performance status"""
         return {
-            'cache_stats': self.cache_stats,
-            'resource_monitoring': self.resource_monitoring,
-            'load_balancers': {
+            "cache_stats": self.cache_stats,
+            "resource_monitoring": self.resource_monitoring,
+            "load_balancers": {
                 name: {
-                    'strategy': balancer['strategy'].value,
-                    'healthy_providers': len([p for p in balancer['providers'] if p['health']]),
-                    'total_providers': len(balancer['providers'])
+                    "strategy": balancer["strategy"].value,
+                    "healthy_providers": len(
+                        [p for p in balancer["providers"] if p["health"]]
+                    ),
+                    "total_providers": len(balancer["providers"]),
                 }
                 for name, balancer in self.load_balancers.items()
             },
-            'optimization_active': len(self.optimization_tasks) > 0,
-            'timestamp': datetime.utcnow().isoformat()
+            "optimization_active": len(self.optimization_tasks) > 0,
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
     async def get_cache_stats(self) -> Dict[str, Any]:
         """Get cache statistics"""
-        hit_rate = self.cache_stats['hits'] / max(
-            self.cache_stats['hits'] + self.cache_stats['misses'], 1
+        hit_rate = self.cache_stats["hits"] / max(
+            self.cache_stats["hits"] + self.cache_stats["misses"], 1
         )
 
         return {
-            'size': self.cache_stats['size'],
-            'max_size': self.cache_config['max_size'],
-            'hit_rate': hit_rate,
-            'hits': self.cache_stats['hits'],
-            'misses': self.cache_stats['misses'],
-            'evictions': self.cache_stats['evictions'],
-            'strategy': self.cache_config['strategy'].value,
-            'timestamp': datetime.utcnow().isoformat()
+            "size": self.cache_stats["size"],
+            "max_size": self.cache_config["max_size"],
+            "hit_rate": hit_rate,
+            "hits": self.cache_stats["hits"],
+            "misses": self.cache_stats["misses"],
+            "evictions": self.cache_stats["evictions"],
+            "strategy": self.cache_config["strategy"].value,
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
     async def clear_cache(self) -> bool:

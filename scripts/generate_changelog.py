@@ -11,15 +11,16 @@ import re
 from datetime import datetime
 from typing import List, Dict, Any
 
+
 def main():
     print("📝 Changelog Generator")
     print("=" * 40)
 
     # Get arguments
-    version = os.environ.get('VERSION', 'v1.0.0')
-    release_type = os.environ.get('RELEASE_TYPE', 'minor')
-    custom_changelog = os.environ.get('CUSTOM_CHANGELOG', '')
-    output_file = os.environ.get('OUTPUT', 'CHANGELOG.md')
+    version = os.environ.get("VERSION", "v1.0.0")
+    release_type = os.environ.get("RELEASE_TYPE", "minor")
+    custom_changelog = os.environ.get("CUSTOM_CHANGELOG", "")
+    output_file = os.environ.get("OUTPUT", "CHANGELOG.md")
 
     print(f"📋 Version: {version}")
     print(f"🏷️ Type: {release_type}")
@@ -29,13 +30,16 @@ def main():
     changelog = generate_changelog(version, release_type, custom_changelog)
 
     # Write to file
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(changelog)
 
     print(f"✅ Changelog generated: {output_file}")
     return True
 
-def generate_changelog(version: str, release_type: str, custom_changelog: str = '') -> str:
+
+def generate_changelog(
+    version: str, release_type: str, custom_changelog: str = ""
+) -> str:
     """Generate comprehensive changelog"""
 
     timestamp = datetime.now().strftime("%Y-%m-%d")
@@ -54,13 +58,13 @@ All notable changes to AMAS (Advanced Multi-Agent Intelligence System) will be d
         changelog += f"### Custom Changes\n\n{custom_changelog}\n\n"
 
     # Generate sections based on release type
-    if release_type == 'major':
+    if release_type == "major":
         changelog += generate_major_release_section()
-    elif release_type == 'minor':
+    elif release_type == "minor":
         changelog += generate_minor_release_section()
-    elif release_type == 'patch':
+    elif release_type == "patch":
         changelog += generate_patch_release_section()
-    elif release_type == 'prerelease':
+    elif release_type == "prerelease":
         changelog += generate_prerelease_section()
 
     # Add standard sections
@@ -77,6 +81,7 @@ All notable changes to AMAS (Advanced Multi-Agent Intelligence System) will be d
 """
 
     return changelog
+
 
 def generate_major_release_section() -> str:
     """Generate major release section"""
@@ -104,6 +109,7 @@ def generate_major_release_section() -> str:
 - Fixed workflow errors
 
 """
+
 
 def generate_minor_release_section() -> str:
     """Generate minor release section"""
@@ -133,6 +139,7 @@ def generate_minor_release_section() -> str:
 
 """
 
+
 def generate_patch_release_section() -> str:
     """Generate patch release section"""
     return """### 🐛 Bug Fixes
@@ -152,6 +159,7 @@ def generate_patch_release_section() -> str:
 - Improved reliability
 
 """
+
 
 def generate_prerelease_section() -> str:
     """Generate prerelease section"""
@@ -177,6 +185,7 @@ def generate_prerelease_section() -> str:
 - Some workflows may fail
 
 """
+
 
 def generate_standard_sections() -> str:
     """Generate standard changelog sections"""
@@ -221,6 +230,7 @@ def generate_standard_sections() -> str:
 - Better monitoring
 
 """
+
 
 if __name__ == "__main__":
     try:

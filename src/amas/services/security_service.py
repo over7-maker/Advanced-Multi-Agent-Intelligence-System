@@ -14,13 +14,14 @@ import bcrypt
 
 logger = logging.getLogger(__name__)
 
+
 class SecurityService:
     """Security service for AMAS Intelligence System"""
 
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.jwt_secret = config.get('jwt_secret', secrets.token_urlsafe(32))
-        self.encryption_key = config.get('encryption_key', Fernet.generate_key())
+        self.jwt_secret = config.get("jwt_secret", secrets.token_urlsafe(32))
+        self.encryption_key = config.get("encryption_key", Fernet.generate_key())
         self.fernet = Fernet(self.encryption_key)
         self.audit_log = []
         self.access_control = {}
@@ -47,19 +48,19 @@ class SecurityService:
         try:
             # Default roles and permissions
             self.access_control = {
-                'roles': {
-                    'admin': ['read', 'write', 'delete', 'execute', 'manage'],
-                    'analyst': ['read', 'write', 'execute'],
-                    'viewer': ['read'],
-                    'system': ['read', 'write', 'execute', 'manage']
+                "roles": {
+                    "admin": ["read", "write", "delete", "execute", "manage"],
+                    "analyst": ["read", "write", "execute"],
+                    "viewer": ["read"],
+                    "system": ["read", "write", "execute", "manage"],
                 },
-                'permissions': {
-                    'read': 'Read access to data and reports',
-                    'write': 'Write access to create and modify data',
-                    'delete': 'Delete access to remove data',
-                    'execute': 'Execute access to run tasks and workflows',
-                    'manage': 'Manage access to system configuration'
-                }
+                "permissions": {
+                    "read": "Read access to data and reports",
+                    "write": "Write access to create and modify data",
+                    "delete": "Delete access to remove data",
+                    "execute": "Execute access to run tasks and workflows",
+                    "manage": "Manage access to system configuration",
+                },
             }
 
             logger.info("Access control system initialized")
@@ -73,11 +74,11 @@ class SecurityService:
         try:
             # Initialize audit log with system startup
             await self.log_audit_event(
-                event_type='system_startup',
-                user_id='system',
-                action='initialize',
-                details='Security service initialized',
-                classification='system'
+                event_type="system_startup",
+                user_id="system",
+                action="initialize",
+                details="Security service initialized",
+                classification="system",
             )
 
             logger.info("Audit logging system initialized")
@@ -90,65 +91,59 @@ class SecurityService:
         """Authenticate user"""
         try:
             # Mock authentication - in production, this would check against a user database
-            if username == 'admin' and password == 'admin123':
+            if username == "admin" and password == "admin123":
                 user_data = {
-                    'user_id': 'admin',
-                    'username': 'admin',
-                    'role': 'admin',
-                    'permissions': self.access_control['roles']['admin']
+                    "user_id": "admin",
+                    "username": "admin",
+                    "role": "admin",
+                    "permissions": self.access_control["roles"]["admin"],
                 }
 
                 # Generate JWT token
                 token = await self.generate_jwt_token(user_data)
 
                 await self.log_audit_event(
-                    event_type='authentication',
+                    event_type="authentication",
                     user_id=username,
-                    action='login',
-                    details='User authenticated successfully',
-                    classification='security'
+                    action="login",
+                    details="User authenticated successfully",
+                    classification="security",
                 )
 
                 return {
-                    'success': True,
-                    'user': user_data,
-                    'token': token,
-                    'expires_at': (datetime.utcnow() + timedelta(hours=24)).isoformat()
+                    "success": True,
+                    "user": user_data,
+                    "token": token,
+                    "expires_at": (datetime.utcnow() + timedelta(hours=24)).isoformat(),
                 }
             else:
                 await self.log_audit_event(
-                    event_type='authentication',
+                    event_type="authentication",
                     user_id=username,
-                    action='login_failed',
-                    details='Invalid credentials',
-                    classification='security'
+                    action="login_failed",
+                    details="Invalid credentials",
+                    classification="security",
                 )
 
-                return {
-                    'success': False,
-                    'error': 'Invalid credentials'
-                }
+                return {"success": False, "error": "Invalid credentials"}
 
         except Exception as e:
             logger.error(f"Error authenticating user: {e}")
-            return {
-                'success': False,
-                'error': str(e)
-            }
+            return {"success": False, "error": str(e)}
 
     async def generate_jwt_token(self, user_data: Dict[str, Any]) -> str:
         """Generate JWT token"""
         try:
             payload = {
-                'user_id': user_data['user_id'],
-                'username': user_data['username'],
-                'role': user_data['role'],
-                'permissions': user_data['permissions'],
-                'iat': datetime.utcnow(),
-                'exp': datetime.utcnow() + timedelta(hours=24)
+                "user_id": user_data["user_id"],
+                "username": user_data["username"],
+                "role": user_data["role"],
+                "permissions": user_data["permissions"],
+                "iat": datetime.utcnow(),
+                "exp": datetime.utcnow() + timedelta(hours=24),
             }
 
-            token = jwt.encode(payload, self.jwt_secret, algorithm='HS256')
+            token = jwt.encode(payload, self.jwt_secret, algorithm="HS256")
             return token
 
         except Exception as e:
@@ -158,39 +153,29 @@ class SecurityService:
     async def verify_jwt_token(self, token: str) -> Dict[str, Any]:
         """Verify JWT token"""
         try:
-            payload = jwt.decode(token, self.jwt_secret, algorithms=['HS256'])
-            return {
-                'valid': True,
-                'user_data': payload
-            }
+            payload = jwt.decode(token, self.jwt_secret, algorithms=["HS256"])
+            return {"valid": True, "user_data": payload}
 
         except jwt.ExpiredSignatureError:
-            return {
-                'valid': False,
-                'error': 'Token expired'
-            }
+            return {"valid": False, "error": "Token expired"}
         except jwt.InvalidTokenError:
-            return {
-                'valid': False,
-                'error': 'Invalid token'
-            }
+            return {"valid": False, "error": "Invalid token"}
         except Exception as e:
             logger.error(f"Error verifying JWT token: {e}")
-            return {
-                'valid': False,
-                'error': str(e)
-            }
+            return {"valid": False, "error": str(e)}
 
-    async def check_permission(self, user_id: str, permission: str, resource: str = None) -> bool:
+    async def check_permission(
+        self, user_id: str, permission: str, resource: str = None
+    ) -> bool:
         """Check if user has permission"""
         try:
             # Mock permission check - in production, this would check against user roles
-            if user_id == 'admin':
+            if user_id == "admin":
                 return True
-            elif user_id == 'analyst':
-                return permission in ['read', 'write', 'execute']
-            elif user_id == 'viewer':
-                return permission == 'read'
+            elif user_id == "analyst":
+                return permission in ["read", "write", "execute"]
+            elif user_id == "viewer":
+                return permission == "read"
             else:
                 return False
 
@@ -238,20 +223,26 @@ class SecurityService:
             logger.error(f"Error verifying password: {e}")
             return False
 
-    async def log_audit_event(self, event_type: str, user_id: str, action: str,
-                              details: str, classification: str = 'unclassified') -> bool:
+    async def log_audit_event(
+        self,
+        event_type: str,
+        user_id: str,
+        action: str,
+        details: str,
+        classification: str = "unclassified",
+    ) -> bool:
         """Log audit event"""
         try:
             audit_event = {
-                'event_id': secrets.token_urlsafe(16),
-                'timestamp': datetime.utcnow().isoformat(),
-                'event_type': event_type,
-                'user_id': user_id,
-                'action': action,
-                'details': details,
-                'classification': classification,
-                'ip_address': '127.0.0.1',  # Mock IP address
-                'user_agent': 'AMAS-System'
+                "event_id": secrets.token_urlsafe(16),
+                "timestamp": datetime.utcnow().isoformat(),
+                "event_type": event_type,
+                "user_id": user_id,
+                "action": action,
+                "details": details,
+                "classification": classification,
+                "ip_address": "127.0.0.1",  # Mock IP address
+                "user_agent": "AMAS-System",
             }
 
             self.audit_log.append(audit_event)
@@ -265,25 +256,40 @@ class SecurityService:
             logger.error(f"Error logging audit event: {e}")
             return False
 
-    async def get_audit_log(self, user_id: str = None, event_type: str = None,
-                          start_date: datetime = None, end_date: datetime = None) -> List[Dict[str, Any]]:
+    async def get_audit_log(
+        self,
+        user_id: str = None,
+        event_type: str = None,
+        start_date: datetime = None,
+        end_date: datetime = None,
+    ) -> List[Dict[str, Any]]:
         """Get audit log"""
         try:
             filtered_log = self.audit_log.copy()
 
             if user_id:
-                filtered_log = [event for event in filtered_log if event['user_id'] == user_id]
+                filtered_log = [
+                    event for event in filtered_log if event["user_id"] == user_id
+                ]
 
             if event_type:
-                filtered_log = [event for event in filtered_log if event['event_type'] == event_type]
+                filtered_log = [
+                    event for event in filtered_log if event["event_type"] == event_type
+                ]
 
             if start_date:
-                filtered_log = [event for event in filtered_log
-                              if datetime.fromisoformat(event['timestamp']) >= start_date]
+                filtered_log = [
+                    event
+                    for event in filtered_log
+                    if datetime.fromisoformat(event["timestamp"]) >= start_date
+                ]
 
             if end_date:
-                filtered_log = [event for event in filtered_log
-                              if datetime.fromisoformat(event['timestamp']) <= end_date]
+                filtered_log = [
+                    event
+                    for event in filtered_log
+                    if datetime.fromisoformat(event["timestamp"]) <= end_date
+                ]
 
             return filtered_log
 
@@ -297,18 +303,20 @@ class SecurityService:
             # Mock classification logic
             content = str(data).lower()
 
-            if any(keyword in content for keyword in ['classified', 'secret', 'top secret']):
-                return 'classified'
-            elif any(keyword in content for keyword in ['confidential', 'internal']):
-                return 'confidential'
-            elif any(keyword in content for keyword in ['public', 'open']):
-                return 'public'
+            if any(
+                keyword in content for keyword in ["classified", "secret", "top secret"]
+            ):
+                return "classified"
+            elif any(keyword in content for keyword in ["confidential", "internal"]):
+                return "confidential"
+            elif any(keyword in content for keyword in ["public", "open"]):
+                return "public"
             else:
-                return 'unclassified'
+                return "unclassified"
 
         except Exception as e:
             logger.error(f"Error classifying data: {e}")
-            return 'unclassified'
+            return "unclassified"
 
     async def sanitize_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Sanitize data for security"""
@@ -318,8 +326,10 @@ class SecurityService:
             for key, value in data.items():
                 if isinstance(value, str):
                     # Remove potentially dangerous characters
-                    sanitized_value = value.replace('<script>', '').replace('</script>', '')
-                    sanitized_value = sanitized_value.replace('javascript:', '')
+                    sanitized_value = value.replace("<script>", "").replace(
+                        "</script>", ""
+                    )
+                    sanitized_value = sanitized_value.replace("javascript:", "")
                     sanitized_data[key] = sanitized_value
                 else:
                     sanitized_data[key] = value
@@ -334,18 +344,18 @@ class SecurityService:
         """Check security service health"""
         try:
             return {
-                'status': 'healthy',
-                'encryption_available': True,
-                'jwt_available': True,
-                'audit_logging': True,
-                'access_control': True,
-                'timestamp': datetime.utcnow().isoformat()
+                "status": "healthy",
+                "encryption_available": True,
+                "jwt_available": True,
+                "audit_logging": True,
+                "access_control": True,
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error checking security service health: {e}")
             return {
-                'status': 'unhealthy',
-                'error': str(e),
-                'timestamp': datetime.utcnow().isoformat()
+                "status": "unhealthy",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
             }

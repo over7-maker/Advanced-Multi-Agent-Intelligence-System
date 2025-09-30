@@ -18,6 +18,7 @@ from agents.base.intelligence_agent import IntelligenceAgent
 
 class QueryStrategy(Enum):
     """Query strategy types"""
+
     SEMANTIC = "semantic"
     KEYWORD = "keyword"
     HYBRID = "hybrid"
@@ -26,6 +27,7 @@ class QueryStrategy(Enum):
 
 class SynthesisMethod(Enum):
     """Information synthesis methods"""
+
     CONCATENATION = "concatenation"
     SUMMARIZATION = "summarization"
     FUSION = "fusion"
@@ -35,6 +37,7 @@ class SynthesisMethod(Enum):
 @dataclass
 class QueryContext:
     """Query context information"""
+
     agent_id: str
     task_type: str
     information_need: str
@@ -47,6 +50,7 @@ class QueryContext:
 @dataclass
 class RetrievalResult:
     """Retrieval result from a data source"""
+
     source: str
     content: str
     relevance_score: float
@@ -58,6 +62,7 @@ class RetrievalResult:
 @dataclass
 class SynthesisResult:
     """Synthesis result from multiple sources"""
+
     synthesized_content: str
     source_attributions: List[str]
     confidence_score: float
@@ -79,7 +84,7 @@ class AgenticRAG:
         vector_service: Any = None,
         knowledge_graph: Any = None,
         llm_service: Any = None,
-        orchestrator: Any = None
+        orchestrator: Any = None,
     ):
         """
         Initialize the Agentic RAG system.
@@ -100,7 +105,7 @@ class AgenticRAG:
             QueryStrategy.SEMANTIC: self._semantic_query,
             QueryStrategy.KEYWORD: self._keyword_query,
             QueryStrategy.HYBRID: self._hybrid_query,
-            QueryStrategy.CONTEXTUAL: self._contextual_query
+            QueryStrategy.CONTEXTUAL: self._contextual_query,
         }
 
         # Synthesis methods
@@ -108,16 +113,16 @@ class AgenticRAG:
             SynthesisMethod.CONCATENATION: self._concatenation_synthesis,
             SynthesisMethod.SUMMARIZATION: self._summarization_synthesis,
             SynthesisMethod.FUSION: self._fusion_synthesis,
-            SynthesisMethod.REASONING: self._reasoning_synthesis
+            SynthesisMethod.REASONING: self._reasoning_synthesis,
         }
 
         # Performance metrics
         self.metrics = {
-            'queries_processed': 0,
-            'sources_queried': 0,
-            'synthesis_operations': 0,
-            'average_relevance_score': 0.0,
-            'average_confidence_score': 0.0
+            "queries_processed": 0,
+            "sources_queried": 0,
+            "synthesis_operations": 0,
+            "average_relevance_score": 0.0,
+            "average_confidence_score": 0.0,
         }
 
         # Logging
@@ -128,9 +133,7 @@ class AgenticRAG:
         self.feedback_history = []
 
     async def intelligent_query(
-        self,
-        agent_context: QueryContext,
-        information_need: str
+        self, agent_context: QueryContext, information_need: str
     ) -> SynthesisResult:
         """
         Perform intelligent query with agent-based reasoning.
@@ -143,16 +146,24 @@ class AgenticRAG:
             Synthesized information result
         """
         try:
-            self.logger.info(f"Processing intelligent query for agent {agent_context.agent_id}")
+            self.logger.info(
+                f"Processing intelligent query for agent {agent_context.agent_id}"
+            )
 
             # Analyze information need
-            query_analysis = await self._analyze_information_need(agent_context, information_need)
+            query_analysis = await self._analyze_information_need(
+                agent_context, information_need
+            )
 
             # Determine query strategy
-            strategy = await self._determine_query_strategy(agent_context, query_analysis)
+            strategy = await self._determine_query_strategy(
+                agent_context, query_analysis
+            )
 
             # Formulate queries for different sources
-            queries = await self._formulate_queries(agent_context, query_analysis, strategy)
+            queries = await self._formulate_queries(
+                agent_context, query_analysis, strategy
+            )
 
             # Execute queries across sources
             retrieval_results = await self._execute_queries(queries, agent_context)
@@ -166,9 +177,13 @@ class AgenticRAG:
             self._update_metrics(retrieval_results, synthesis_result)
 
             # Store query for learning
-            self._store_query_for_learning(agent_context, query_analysis, synthesis_result)
+            self._store_query_for_learning(
+                agent_context, query_analysis, synthesis_result
+            )
 
-            self.logger.info(f"Intelligent query completed for agent {agent_context.agent_id}")
+            self.logger.info(
+                f"Intelligent query completed for agent {agent_context.agent_id}"
+            )
             return synthesis_result
 
         except Exception as e:
@@ -176,9 +191,7 @@ class AgenticRAG:
             raise
 
     async def _analyze_information_need(
-        self,
-        agent_context: QueryContext,
-        information_need: str
+        self, agent_context: QueryContext, information_need: str
     ) -> Dict[str, Any]:
         """
         Analyze the information need to understand requirements.
@@ -192,11 +205,11 @@ class AgenticRAG:
         """
         if not self.llm_service:
             return {
-                'entities': [],
-                'concepts': [],
-                'intent': 'information_retrieval',
-                'complexity': 'medium',
-                'sources_needed': ['vector', 'graph']
+                "entities": [],
+                "concepts": [],
+                "intent": "information_retrieval",
+                "complexity": "medium",
+                "sources_needed": ["vector", "graph"],
             }
 
         try:
@@ -225,9 +238,7 @@ Provide analysis in JSON format:
 """
 
             result = await self.llm_service.generate(
-                prompt=prompt,
-                max_tokens=300,
-                temperature=0.3
+                prompt=prompt, max_tokens=300, temperature=0.3
             )
 
             # Parse result
@@ -236,27 +247,25 @@ Provide analysis in JSON format:
                 return analysis
             except:
                 return {
-                    'entities': [],
-                    'concepts': [],
-                    'intent': 'information_retrieval',
-                    'complexity': 'medium',
-                    'sources_needed': ['vector', 'graph']
+                    "entities": [],
+                    "concepts": [],
+                    "intent": "information_retrieval",
+                    "complexity": "medium",
+                    "sources_needed": ["vector", "graph"],
                 }
 
         except Exception as e:
             self.logger.error(f"Information need analysis failed: {e}")
             return {
-                'entities': [],
-                'concepts': [],
-                'intent': 'information_retrieval',
-                'complexity': 'medium',
-                'sources_needed': ['vector', 'graph']
+                "entities": [],
+                "concepts": [],
+                "intent": "information_retrieval",
+                "complexity": "medium",
+                "sources_needed": ["vector", "graph"],
             }
 
     async def _determine_query_strategy(
-        self,
-        agent_context: QueryContext,
-        query_analysis: Dict[str, Any]
+        self, agent_context: QueryContext, query_analysis: Dict[str, Any]
     ) -> QueryStrategy:
         """
         Determine the best query strategy based on context and analysis.
@@ -270,15 +279,15 @@ Provide analysis in JSON format:
         """
         try:
             # Simple strategy selection based on analysis
-            complexity = query_analysis.get('complexity', 'medium')
-            intent = query_analysis.get('intent', 'information_retrieval')
-            sources_needed = query_analysis.get('sources_needed', ['vector'])
+            complexity = query_analysis.get("complexity", "medium")
+            intent = query_analysis.get("intent", "information_retrieval")
+            sources_needed = query_analysis.get("sources_needed", ["vector"])
 
-            if complexity == 'high' and 'both' in sources_needed:
+            if complexity == "high" and "both" in sources_needed:
                 return QueryStrategy.HYBRID
-            elif intent == 'exploration':
+            elif intent == "exploration":
                 return QueryStrategy.CONTEXTUAL
-            elif len(query_analysis.get('entities', [])) > 0:
+            elif len(query_analysis.get("entities", [])) > 0:
                 return QueryStrategy.SEMANTIC
             else:
                 return QueryStrategy.KEYWORD
@@ -291,7 +300,7 @@ Provide analysis in JSON format:
         self,
         agent_context: QueryContext,
         query_analysis: Dict[str, Any],
-        strategy: QueryStrategy
+        strategy: QueryStrategy,
     ) -> Dict[str, Dict[str, Any]]:
         """
         Formulate queries for different data sources.
@@ -310,16 +319,16 @@ Provide analysis in JSON format:
             # Vector service query
             if self.vector_service:
                 vector_query = await self.query_strategies[strategy](
-                    agent_context, query_analysis, 'vector'
+                    agent_context, query_analysis, "vector"
                 )
-                queries['vector'] = vector_query
+                queries["vector"] = vector_query
 
             # Knowledge graph query
             if self.knowledge_graph:
                 graph_query = await self.query_strategies[strategy](
-                    agent_context, query_analysis, 'graph'
+                    agent_context, query_analysis, "graph"
                 )
-                queries['graph'] = graph_query
+                queries["graph"] = graph_query
 
             return queries
 
@@ -328,76 +337,62 @@ Provide analysis in JSON format:
             return {}
 
     async def _semantic_query(
-        self,
-        agent_context: QueryContext,
-        query_analysis: Dict[str, Any],
-        source: str
+        self, agent_context: QueryContext, query_analysis: Dict[str, Any], source: str
     ) -> Dict[str, Any]:
         """Formulate semantic query for vector service."""
         return {
-            'type': 'semantic',
-            'query': agent_context.information_need,
-            'entities': query_analysis.get('entities', []),
-            'concepts': query_analysis.get('concepts', []),
-            'limit': 10,
-            'threshold': 0.7
+            "type": "semantic",
+            "query": agent_context.information_need,
+            "entities": query_analysis.get("entities", []),
+            "concepts": query_analysis.get("concepts", []),
+            "limit": 10,
+            "threshold": 0.7,
         }
 
     async def _keyword_query(
-        self,
-        agent_context: QueryContext,
-        query_analysis: Dict[str, Any],
-        source: str
+        self, agent_context: QueryContext, query_analysis: Dict[str, Any], source: str
     ) -> Dict[str, Any]:
         """Formulate keyword query."""
         return {
-            'type': 'keyword',
-            'query': agent_context.information_need,
-            'keywords': query_analysis.get('entities', []),
-            'limit': 10,
-            'threshold': 0.6
+            "type": "keyword",
+            "query": agent_context.information_need,
+            "keywords": query_analysis.get("entities", []),
+            "limit": 10,
+            "threshold": 0.6,
         }
 
     async def _hybrid_query(
-        self,
-        agent_context: QueryContext,
-        query_analysis: Dict[str, Any],
-        source: str
+        self, agent_context: QueryContext, query_analysis: Dict[str, Any], source: str
     ) -> Dict[str, Any]:
         """Formulate hybrid query combining semantic and keyword approaches."""
         return {
-            'type': 'hybrid',
-            'semantic_query': agent_context.information_need,
-            'keyword_query': ' '.join(query_analysis.get('entities', [])),
-            'entities': query_analysis.get('entities', []),
-            'limit': 15,
-            'threshold': 0.65
+            "type": "hybrid",
+            "semantic_query": agent_context.information_need,
+            "keyword_query": " ".join(query_analysis.get("entities", [])),
+            "entities": query_analysis.get("entities", []),
+            "limit": 15,
+            "threshold": 0.65,
         }
 
     async def _contextual_query(
-        self,
-        agent_context: QueryContext,
-        query_analysis: Dict[str, Any],
-        source: str
+        self, agent_context: QueryContext, query_analysis: Dict[str, Any], source: str
     ) -> Dict[str, Any]:
         """Formulate contextual query using agent context."""
         return {
-            'type': 'contextual',
-            'query': agent_context.information_need,
-            'context': {
-                'task_type': agent_context.task_type,
-                'current_step': agent_context.current_step,
-                'previous_results': agent_context.previous_results
+            "type": "contextual",
+            "query": agent_context.information_need,
+            "context": {
+                "task_type": agent_context.task_type,
+                "current_step": agent_context.current_step,
+                "previous_results": agent_context.previous_results,
             },
-            'entities': query_analysis.get('entities', []),
-            'limit': 12,
-            'threshold': 0.7
+            "entities": query_analysis.get("entities", []),
+            "limit": 12,
+            "threshold": 0.7,
         }
 
     async def _execute_queries(
-        self,
-        queries: Dict[str, Dict[str, Any]],
-        agent_context: QueryContext
+        self, queries: Dict[str, Dict[str, Any]], agent_context: QueryContext
     ) -> List[RetrievalResult]:
         """
         Execute queries across data sources.
@@ -413,13 +408,13 @@ Provide analysis in JSON format:
             results = []
 
             # Execute vector service query
-            if 'vector' in queries and self.vector_service:
-                vector_results = await self._execute_vector_query(queries['vector'])
+            if "vector" in queries and self.vector_service:
+                vector_results = await self._execute_vector_query(queries["vector"])
                 results.extend(vector_results)
 
             # Execute knowledge graph query
-            if 'graph' in queries and self.knowledge_graph:
-                graph_results = await self._execute_graph_query(queries['graph'])
+            if "graph" in queries and self.knowledge_graph:
+                graph_results = await self._execute_graph_query(queries["graph"])
                 results.extend(graph_results)
 
             # Sort by relevance score
@@ -431,46 +426,50 @@ Provide analysis in JSON format:
             self.logger.error(f"Query execution failed: {e}")
             return []
 
-    async def _execute_vector_query(self, query: Dict[str, Any]) -> List[RetrievalResult]:
+    async def _execute_vector_query(
+        self, query: Dict[str, Any]
+    ) -> List[RetrievalResult]:
         """Execute query on vector service."""
         try:
-            if query['type'] == 'semantic':
+            if query["type"] == "semantic":
                 results = await self.vector_service.semantic_search(
-                    query=query['query'],
-                    limit=query['limit'],
-                    threshold=query['threshold']
+                    query=query["query"],
+                    limit=query["limit"],
+                    threshold=query["threshold"],
                 )
-            elif query['type'] == 'keyword':
+            elif query["type"] == "keyword":
                 results = await self.vector_service.keyword_search(
-                    query=query['query'],
-                    limit=query['limit'],
-                    threshold=query['threshold']
+                    query=query["query"],
+                    limit=query["limit"],
+                    threshold=query["threshold"],
                 )
-            elif query['type'] == 'hybrid':
+            elif query["type"] == "hybrid":
                 results = await self.vector_service.hybrid_search(
-                    semantic_query=query['semantic_query'],
-                    keyword_query=query['keyword_query'],
-                    limit=query['limit'],
-                    threshold=query['threshold']
+                    semantic_query=query["semantic_query"],
+                    keyword_query=query["keyword_query"],
+                    limit=query["limit"],
+                    threshold=query["threshold"],
                 )
             else:
                 results = await self.vector_service.search(
-                    query=query['query'],
-                    limit=query['limit'],
-                    threshold=query['threshold']
+                    query=query["query"],
+                    limit=query["limit"],
+                    threshold=query["threshold"],
                 )
 
             # Convert to RetrievalResult objects
             retrieval_results = []
             for result in results:
-                retrieval_results.append(RetrievalResult(
-                    source='vector',
-                    content=result.get('content', ''),
-                    relevance_score=result.get('score', 0.0),
-                    metadata=result.get('metadata', {}),
-                    entities=result.get('entities', []),
-                    timestamp=datetime.utcnow()
-                ))
+                retrieval_results.append(
+                    RetrievalResult(
+                        source="vector",
+                        content=result.get("content", ""),
+                        relevance_score=result.get("score", 0.0),
+                        metadata=result.get("metadata", {}),
+                        entities=result.get("entities", []),
+                        timestamp=datetime.utcnow(),
+                    )
+                )
 
             return retrieval_results
 
@@ -478,42 +477,41 @@ Provide analysis in JSON format:
             self.logger.error(f"Vector query execution failed: {e}")
             return []
 
-    async def _execute_graph_query(self, query: Dict[str, Any]) -> List[RetrievalResult]:
+    async def _execute_graph_query(
+        self, query: Dict[str, Any]
+    ) -> List[RetrievalResult]:
         """Execute query on knowledge graph."""
         try:
-            if query['type'] == 'semantic':
+            if query["type"] == "semantic":
                 results = await self.knowledge_graph.semantic_query(
-                    query=query['query'],
-                    limit=query['limit']
+                    query=query["query"], limit=query["limit"]
                 )
-            elif query['type'] == 'keyword':
+            elif query["type"] == "keyword":
                 results = await self.knowledge_graph.keyword_query(
-                    keywords=query['keywords'],
-                    limit=query['limit']
+                    keywords=query["keywords"], limit=query["limit"]
                 )
-            elif query['type'] == 'contextual':
+            elif query["type"] == "contextual":
                 results = await self.knowledge_graph.contextual_query(
-                    query=query['query'],
-                    context=query['context'],
-                    limit=query['limit']
+                    query=query["query"], context=query["context"], limit=query["limit"]
                 )
             else:
                 results = await self.knowledge_graph.query(
-                    query=query['query'],
-                    limit=query['limit']
+                    query=query["query"], limit=query["limit"]
                 )
 
             # Convert to RetrievalResult objects
             retrieval_results = []
             for result in results:
-                retrieval_results.append(RetrievalResult(
-                    source='graph',
-                    content=result.get('content', ''),
-                    relevance_score=result.get('score', 0.0),
-                    metadata=result.get('metadata', {}),
-                    entities=result.get('entities', []),
-                    timestamp=datetime.utcnow()
-                ))
+                retrieval_results.append(
+                    RetrievalResult(
+                        source="graph",
+                        content=result.get("content", ""),
+                        relevance_score=result.get("score", 0.0),
+                        metadata=result.get("metadata", {}),
+                        entities=result.get("entities", []),
+                        timestamp=datetime.utcnow(),
+                    )
+                )
 
             return retrieval_results
 
@@ -525,7 +523,7 @@ Provide analysis in JSON format:
         self,
         retrieval_results: List[RetrievalResult],
         agent_context: QueryContext,
-        query_analysis: Dict[str, Any]
+        query_analysis: Dict[str, Any],
     ) -> SynthesisResult:
         """
         Synthesize results from multiple sources.
@@ -545,7 +543,7 @@ Provide analysis in JSON format:
                     source_attributions=[],
                     confidence_score=0.0,
                     reasoning_trace=[],
-                    metadata={}
+                    metadata={},
                 )
 
             # Determine synthesis method
@@ -567,22 +565,22 @@ Provide analysis in JSON format:
                 source_attributions=[],
                 confidence_score=0.0,
                 reasoning_trace=[],
-                metadata={'error': str(e)}
+                metadata={"error": str(e)},
             )
 
     async def _determine_synthesis_method(
         self,
         retrieval_results: List[RetrievalResult],
         agent_context: QueryContext,
-        query_analysis: Dict[str, Any]
+        query_analysis: Dict[str, Any],
     ) -> SynthesisMethod:
         """Determine the best synthesis method."""
         try:
-            complexity = query_analysis.get('complexity', 'medium')
-            intent = query_analysis.get('intent', 'information_retrieval')
+            complexity = query_analysis.get("complexity", "medium")
+            intent = query_analysis.get("intent", "information_retrieval")
             num_results = len(retrieval_results)
 
-            if complexity == 'high' and intent == 'analysis':
+            if complexity == "high" and intent == "analysis":
                 return SynthesisMethod.REASONING
             elif num_results > 10:
                 return SynthesisMethod.SUMMARIZATION
@@ -599,7 +597,7 @@ Provide analysis in JSON format:
         self,
         retrieval_results: List[RetrievalResult],
         agent_context: QueryContext,
-        query_analysis: Dict[str, Any]
+        query_analysis: Dict[str, Any],
     ) -> SynthesisResult:
         """Simple concatenation synthesis."""
         try:
@@ -617,7 +615,7 @@ Provide analysis in JSON format:
                 source_attributions=source_attributions,
                 confidence_score=0.8,
                 reasoning_trace=[],
-                metadata={'method': 'concatenation'}
+                metadata={"method": "concatenation"},
             )
 
         except Exception as e:
@@ -628,7 +626,7 @@ Provide analysis in JSON format:
         self,
         retrieval_results: List[RetrievalResult],
         agent_context: QueryContext,
-        query_analysis: Dict[str, Any]
+        query_analysis: Dict[str, Any],
     ) -> SynthesisResult:
         """LLM-based summarization synthesis."""
         try:
@@ -669,9 +667,7 @@ Summary:
 """
 
             summary = await self.llm_service.generate(
-                prompt=prompt,
-                max_tokens=1000,
-                temperature=0.3
+                prompt=prompt, max_tokens=1000, temperature=0.3
             )
 
             return SynthesisResult(
@@ -679,7 +675,7 @@ Summary:
                 source_attributions=source_attributions,
                 confidence_score=0.9,
                 reasoning_trace=[],
-                metadata={'method': 'summarization'}
+                metadata={"method": "summarization"},
             )
 
         except Exception as e:
@@ -690,7 +686,7 @@ Summary:
         self,
         retrieval_results: List[RetrievalResult],
         agent_context: QueryContext,
-        query_analysis: Dict[str, Any]
+        query_analysis: Dict[str, Any],
     ) -> SynthesisResult:
         """Advanced fusion synthesis with conflict resolution."""
         try:
@@ -732,9 +728,7 @@ Fused Synthesis:
 """
 
             fused_content = await self.llm_service.generate(
-                prompt=prompt,
-                max_tokens=1200,
-                temperature=0.3
+                prompt=prompt, max_tokens=1200, temperature=0.3
             )
 
             return SynthesisResult(
@@ -742,7 +736,7 @@ Fused Synthesis:
                 source_attributions=source_attributions,
                 confidence_score=0.95,
                 reasoning_trace=[],
-                metadata={'method': 'fusion'}
+                metadata={"method": "fusion"},
             )
 
         except Exception as e:
@@ -753,7 +747,7 @@ Fused Synthesis:
         self,
         retrieval_results: List[RetrievalResult],
         agent_context: QueryContext,
-        query_analysis: Dict[str, Any]
+        query_analysis: Dict[str, Any],
     ) -> SynthesisResult:
         """Advanced reasoning synthesis with step-by-step analysis."""
         try:
@@ -796,9 +790,7 @@ Reasoned Synthesis:
 """
 
             reasoned_content = await self.llm_service.generate(
-                prompt=prompt,
-                max_tokens=1500,
-                temperature=0.3
+                prompt=prompt, max_tokens=1500, temperature=0.3
             )
 
             return SynthesisResult(
@@ -806,7 +798,7 @@ Reasoned Synthesis:
                 source_attributions=source_attributions,
                 confidence_score=0.98,
                 reasoning_trace=[],
-                metadata={'method': 'reasoning'}
+                metadata={"method": "reasoning"},
             )
 
         except Exception as e:
@@ -816,29 +808,31 @@ Reasoned Synthesis:
     def _update_metrics(
         self,
         retrieval_results: List[RetrievalResult],
-        synthesis_result: SynthesisResult
+        synthesis_result: SynthesisResult,
     ):
         """Update performance metrics."""
         try:
-            self.metrics['queries_processed'] += 1
-            self.metrics['sources_queried'] += len(retrieval_results)
-            self.metrics['synthesis_operations'] += 1
+            self.metrics["queries_processed"] += 1
+            self.metrics["sources_queried"] += len(retrieval_results)
+            self.metrics["synthesis_operations"] += 1
 
             # Update average relevance score
             if retrieval_results:
-                avg_relevance = sum(r.relevance_score for r in retrieval_results) / len(retrieval_results)
-                total_queries = self.metrics['queries_processed']
-                current_avg = self.metrics['average_relevance_score']
-                self.metrics['average_relevance_score'] = (
-                    (current_avg * (total_queries - 1) + avg_relevance) / total_queries
+                avg_relevance = sum(r.relevance_score for r in retrieval_results) / len(
+                    retrieval_results
                 )
+                total_queries = self.metrics["queries_processed"]
+                current_avg = self.metrics["average_relevance_score"]
+                self.metrics["average_relevance_score"] = (
+                    current_avg * (total_queries - 1) + avg_relevance
+                ) / total_queries
 
             # Update average confidence score
-            total_synthesis = self.metrics['synthesis_operations']
-            current_avg = self.metrics['average_confidence_score']
-            self.metrics['average_confidence_score'] = (
-                (current_avg * (total_synthesis - 1) + synthesis_result.confidence_score) / total_synthesis
-            )
+            total_synthesis = self.metrics["synthesis_operations"]
+            current_avg = self.metrics["average_confidence_score"]
+            self.metrics["average_confidence_score"] = (
+                current_avg * (total_synthesis - 1) + synthesis_result.confidence_score
+            ) / total_synthesis
 
         except Exception as e:
             self.logger.error(f"Metrics update failed: {e}")
@@ -847,20 +841,20 @@ Reasoned Synthesis:
         self,
         agent_context: QueryContext,
         query_analysis: Dict[str, Any],
-        synthesis_result: SynthesisResult
+        synthesis_result: SynthesisResult,
     ):
         """Store query information for learning and improvement."""
         try:
             query_record = {
-                'agent_id': agent_context.agent_id,
-                'task_type': agent_context.task_type,
-                'information_need': agent_context.information_need,
-                'query_analysis': query_analysis,
-                'synthesis_result': {
-                    'confidence_score': synthesis_result.confidence_score,
-                    'method': synthesis_result.metadata.get('method', 'unknown')
+                "agent_id": agent_context.agent_id,
+                "task_type": agent_context.task_type,
+                "information_need": agent_context.information_need,
+                "query_analysis": query_analysis,
+                "synthesis_result": {
+                    "confidence_score": synthesis_result.confidence_score,
+                    "method": synthesis_result.metadata.get("method", "unknown"),
                 },
-                'timestamp': datetime.utcnow().isoformat()
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
             self.query_history.append(query_record)
@@ -872,11 +866,7 @@ Reasoned Synthesis:
         except Exception as e:
             self.logger.error(f"Query storage failed: {e}")
 
-    async def provide_feedback(
-        self,
-        query_id: str,
-        feedback: Dict[str, Any]
-    ) -> bool:
+    async def provide_feedback(self, query_id: str, feedback: Dict[str, Any]) -> bool:
         """
         Provide feedback on query results for learning.
 
@@ -889,9 +879,9 @@ Reasoned Synthesis:
         """
         try:
             feedback_record = {
-                'query_id': query_id,
-                'feedback': feedback,
-                'timestamp': datetime.utcnow().isoformat()
+                "query_id": query_id,
+                "feedback": feedback,
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
             self.feedback_history.append(feedback_record)
@@ -910,8 +900,8 @@ Reasoned Synthesis:
     async def get_metrics(self) -> Dict[str, Any]:
         """Get performance metrics."""
         return {
-            'metrics': self.metrics,
-            'query_history_count': len(self.query_history),
-            'feedback_history_count': len(self.feedback_history),
-            'timestamp': datetime.utcnow().isoformat()
+            "metrics": self.metrics,
+            "query_history_count": len(self.query_history),
+            "feedback_history_count": len(self.feedback_history),
+            "timestamp": datetime.utcnow().isoformat(),
         }

@@ -18,8 +18,10 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+
 class ModelType(Enum):
     """Model type enumeration"""
+
     CLASSIFICATION = "classification"
     REGRESSION = "regression"
     CLUSTERING = "clustering"
@@ -29,17 +31,21 @@ class ModelType(Enum):
     RECOMMENDATION = "recommendation"
     TIME_SERIES = "time_series"
 
+
 class ModelStatus(Enum):
     """Model status enumeration"""
+
     TRAINING = "training"
     TRAINED = "trained"
     DEPLOYED = "deployed"
     RETIRED = "retired"
     ERROR = "error"
 
+
 @dataclass
 class ModelMetrics:
     """Model metrics data structure"""
+
     model_id: str
     accuracy: float
     precision: float
@@ -51,9 +57,11 @@ class ModelMetrics:
     r2_score: float
     timestamp: datetime
 
+
 @dataclass
 class TrainingJob:
     """Training job data structure"""
+
     job_id: str
     model_type: ModelType
     dataset_path: str
@@ -63,6 +71,7 @@ class TrainingJob:
     completed_at: Optional[datetime]
     metrics: Optional[ModelMetrics]
     error_message: Optional[str]
+
 
 class MLService:
     """
@@ -88,73 +97,82 @@ class MLService:
 
         # ML configuration
         self.ml_config = {
-            'model_storage_path': config.get('model_storage_path', 'models/'),
-            'dataset_storage_path': config.get('dataset_storage_path', 'datasets/'),
-            'max_models': config.get('max_models', 100),
-            'auto_retrain': config.get('auto_retrain', True),
-            'model_versioning': config.get('model_versioning', True)
+            "model_storage_path": config.get("model_storage_path", "models/"),
+            "dataset_storage_path": config.get("dataset_storage_path", "datasets/"),
+            "max_models": config.get("max_models", 100),
+            "auto_retrain": config.get("auto_retrain", True),
+            "model_versioning": config.get("model_versioning", True),
         }
 
         # Model types and their configurations
         self.model_configs = {
             ModelType.CLASSIFICATION: {
-                'algorithms': ['random_forest', 'svm', 'neural_network', 'xgboost'],
-                'default_algorithm': 'random_forest',
-                'hyperparameters': {
-                    'random_forest': {'n_estimators': 100, 'max_depth': 10},
-                    'svm': {'C': 1.0, 'kernel': 'rbf'},
-                    'neural_network': {'hidden_layers': [100, 50], 'epochs': 100},
-                    'xgboost': {'n_estimators': 100, 'max_depth': 6}
-                }
+                "algorithms": ["random_forest", "svm", "neural_network", "xgboost"],
+                "default_algorithm": "random_forest",
+                "hyperparameters": {
+                    "random_forest": {"n_estimators": 100, "max_depth": 10},
+                    "svm": {"C": 1.0, "kernel": "rbf"},
+                    "neural_network": {"hidden_layers": [100, 50], "epochs": 100},
+                    "xgboost": {"n_estimators": 100, "max_depth": 6},
+                },
             },
             ModelType.REGRESSION: {
-                'algorithms': ['linear_regression', 'random_forest', 'neural_network', 'xgboost'],
-                'default_algorithm': 'random_forest',
-                'hyperparameters': {
-                    'linear_regression': {'fit_intercept': True},
-                    'random_forest': {'n_estimators': 100, 'max_depth': 10},
-                    'neural_network': {'hidden_layers': [100, 50], 'epochs': 100},
-                    'xgboost': {'n_estimators': 100, 'max_depth': 6}
-                }
+                "algorithms": [
+                    "linear_regression",
+                    "random_forest",
+                    "neural_network",
+                    "xgboost",
+                ],
+                "default_algorithm": "random_forest",
+                "hyperparameters": {
+                    "linear_regression": {"fit_intercept": True},
+                    "random_forest": {"n_estimators": 100, "max_depth": 10},
+                    "neural_network": {"hidden_layers": [100, 50], "epochs": 100},
+                    "xgboost": {"n_estimators": 100, "max_depth": 6},
+                },
             },
             ModelType.CLUSTERING: {
-                'algorithms': ['kmeans', 'dbscan', 'hierarchical'],
-                'default_algorithm': 'kmeans',
-                'hyperparameters': {
-                    'kmeans': {'n_clusters': 8, 'random_state': 42},
-                    'dbscan': {'eps': 0.5, 'min_samples': 5},
-                    'hierarchical': {'n_clusters': 8, 'linkage': 'ward'}
-                }
+                "algorithms": ["kmeans", "dbscan", "hierarchical"],
+                "default_algorithm": "kmeans",
+                "hyperparameters": {
+                    "kmeans": {"n_clusters": 8, "random_state": 42},
+                    "dbscan": {"eps": 0.5, "min_samples": 5},
+                    "hierarchical": {"n_clusters": 8, "linkage": "ward"},
+                },
             },
             ModelType.ANOMALY_DETECTION: {
-                'algorithms': ['isolation_forest', 'one_class_svm', 'local_outlier_factor'],
-                'default_algorithm': 'isolation_forest',
-                'hyperparameters': {
-                    'isolation_forest': {'contamination': 0.1, 'random_state': 42},
-                    'one_class_svm': {'nu': 0.1, 'kernel': 'rbf'},
-                    'local_outlier_factor': {'n_neighbors': 20, 'contamination': 0.1}
-                }
+                "algorithms": [
+                    "isolation_forest",
+                    "one_class_svm",
+                    "local_outlier_factor",
+                ],
+                "default_algorithm": "isolation_forest",
+                "hyperparameters": {
+                    "isolation_forest": {"contamination": 0.1, "random_state": 42},
+                    "one_class_svm": {"nu": 0.1, "kernel": "rbf"},
+                    "local_outlier_factor": {"n_neighbors": 20, "contamination": 0.1},
+                },
             },
             ModelType.NLP: {
-                'algorithms': ['transformer', 'lstm', 'bert', 'gpt'],
-                'default_algorithm': 'transformer',
-                'hyperparameters': {
-                    'transformer': {'num_layers': 6, 'd_model': 512, 'num_heads': 8},
-                    'lstm': {'hidden_size': 128, 'num_layers': 2, 'dropout': 0.2},
-                    'bert': {'model_name': 'bert-base-uncased', 'max_length': 512},
-                    'gpt': {'model_name': 'gpt-2', 'max_length': 1024}
-                }
+                "algorithms": ["transformer", "lstm", "bert", "gpt"],
+                "default_algorithm": "transformer",
+                "hyperparameters": {
+                    "transformer": {"num_layers": 6, "d_model": 512, "num_heads": 8},
+                    "lstm": {"hidden_size": 128, "num_layers": 2, "dropout": 0.2},
+                    "bert": {"model_name": "bert-base-uncased", "max_length": 512},
+                    "gpt": {"model_name": "gpt-2", "max_length": 1024},
+                },
             },
             ModelType.COMPUTER_VISION: {
-                'algorithms': ['cnn', 'resnet', 'vgg', 'yolo'],
-                'default_algorithm': 'cnn',
-                'hyperparameters': {
-                    'cnn': {'num_filters': 32, 'kernel_size': 3, 'pool_size': 2},
-                    'resnet': {'num_layers': 18, 'pretrained': True},
-                    'vgg': {'num_layers': 16, 'pretrained': True},
-                    'yolo': {'num_classes': 80, 'input_size': 416}
-                }
-            }
+                "algorithms": ["cnn", "resnet", "vgg", "yolo"],
+                "default_algorithm": "cnn",
+                "hyperparameters": {
+                    "cnn": {"num_filters": 32, "kernel_size": 3, "pool_size": 2},
+                    "resnet": {"num_layers": 18, "pretrained": True},
+                    "vgg": {"num_layers": 16, "pretrained": True},
+                    "yolo": {"num_classes": 80, "input_size": 416},
+                },
+            },
         }
 
         # Training queue
@@ -193,10 +211,14 @@ class MLService:
         """Create storage directories"""
         try:
             # Create model storage directory
-            Path(self.ml_config['model_storage_path']).mkdir(parents=True, exist_ok=True)
+            Path(self.ml_config["model_storage_path"]).mkdir(
+                parents=True, exist_ok=True
+            )
 
             # Create dataset storage directory
-            Path(self.ml_config['dataset_storage_path']).mkdir(parents=True, exist_ok=True)
+            Path(self.ml_config["dataset_storage_path"]).mkdir(
+                parents=True, exist_ok=True
+            )
 
             logger.info("Storage directories created")
 
@@ -207,7 +229,7 @@ class MLService:
     async def _load_existing_models(self):
         """Load existing models from storage"""
         try:
-            model_path = Path(self.ml_config['model_storage_path'])
+            model_path = Path(self.ml_config["model_storage_path"])
 
             if model_path.exists():
                 for model_file in model_path.glob("*.pkl"):
@@ -216,7 +238,7 @@ class MLService:
                         # Load model metadata
                         metadata_file = model_path / f"{model_id}_metadata.json"
                         if metadata_file.exists():
-                            with open(metadata_file, 'r') as f:
+                            with open(metadata_file, "r") as f:
                                 metadata = json.load(f)
 
                             self.models[model_id] = metadata
@@ -264,7 +286,7 @@ class MLService:
         dataset_path: str,
         algorithm: str = None,
         hyperparameters: Dict[str, Any] = None,
-        target_column: str = None
+        target_column: str = None,
     ) -> str:
         """
         Train a new ML model.
@@ -285,10 +307,12 @@ class MLService:
 
             # Get algorithm and hyperparameters
             if not algorithm:
-                algorithm = self.model_configs[model_type]['default_algorithm']
+                algorithm = self.model_configs[model_type]["default_algorithm"]
 
             if not hyperparameters:
-                hyperparameters = self.model_configs[model_type]['hyperparameters'][algorithm]
+                hyperparameters = self.model_configs[model_type]["hyperparameters"][
+                    algorithm
+                ]
 
             # Create training job
             training_job = TrainingJob(
@@ -296,15 +320,15 @@ class MLService:
                 model_type=model_type,
                 dataset_path=dataset_path,
                 parameters={
-                    'algorithm': algorithm,
-                    'hyperparameters': hyperparameters,
-                    'target_column': target_column
+                    "algorithm": algorithm,
+                    "hyperparameters": hyperparameters,
+                    "target_column": target_column,
                 },
                 status=ModelStatus.TRAINING,
                 started_at=datetime.utcnow(),
                 completed_at=None,
                 metrics=None,
-                error_message=None
+                error_message=None,
             )
 
             # Add to training queue
@@ -323,7 +347,9 @@ class MLService:
         while True:
             try:
                 # Process training queue
-                if self.training_queue and len(self.active_training_jobs) < 3:  # Max 3 concurrent jobs
+                if (
+                    self.training_queue and len(self.active_training_jobs) < 3
+                ):  # Max 3 concurrent jobs
                     job = self.training_queue.pop(0)
                     self.active_training_jobs[job.job_id] = job
 
@@ -345,14 +371,17 @@ class MLService:
             dataset = await self._load_dataset(job.dataset_path)
 
             # Prepare data
-            X, y = await self._prepare_data(dataset, job.parameters.get('target_column'))
+            X, y = await self._prepare_data(
+                dataset, job.parameters.get("target_column")
+            )
 
             # Train model
             model = await self._train_model_algorithm(
                 job.model_type,
-                job.parameters['algorithm'],
-                job.parameters['hyperparameters'],
-                X, y
+                job.parameters["algorithm"],
+                job.parameters["hyperparameters"],
+                X,
+                y,
             )
 
             # Evaluate model
@@ -370,7 +399,9 @@ class MLService:
             if job.job_id in self.active_training_jobs:
                 del self.active_training_jobs[job.job_id]
 
-            logger.info(f"Training completed for job {job.job_id}, model ID: {model_id}")
+            logger.info(
+                f"Training completed for job {job.job_id}, model ID: {model_id}"
+            )
 
         except Exception as e:
             logger.error(f"Training failed for job {job.job_id}: {e}")
@@ -387,10 +418,10 @@ class MLService:
             # Simulate dataset loading
             # In real implementation, this would load actual data
             data = {
-                'feature1': np.random.randn(1000),
-                'feature2': np.random.randn(1000),
-                'feature3': np.random.randn(1000),
-                'target': np.random.randint(0, 2, 1000)
+                "feature1": np.random.randn(1000),
+                "feature2": np.random.randn(1000),
+                "feature3": np.random.randn(1000),
+                "target": np.random.randint(0, 2, 1000),
             }
 
             return pd.DataFrame(data)
@@ -399,7 +430,9 @@ class MLService:
             logger.error(f"Failed to load dataset: {e}")
             raise
 
-    async def _prepare_data(self, dataset: pd.DataFrame, target_column: str = None) -> Tuple[np.ndarray, np.ndarray]:
+    async def _prepare_data(
+        self, dataset: pd.DataFrame, target_column: str = None
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """Prepare data for training"""
         try:
             if target_column and target_column in dataset.columns:
@@ -421,7 +454,7 @@ class MLService:
         algorithm: str,
         hyperparameters: Dict[str, Any],
         X: np.ndarray,
-        y: np.ndarray = None
+        y: np.ndarray = None,
     ):
         """Train model using specified algorithm"""
         try:
@@ -431,10 +464,10 @@ class MLService:
 
             # Create mock model
             model = {
-                'algorithm': algorithm,
-                'hyperparameters': hyperparameters,
-                'trained_at': datetime.utcnow(),
-                'model_type': model_type.value
+                "algorithm": algorithm,
+                "hyperparameters": hyperparameters,
+                "trained_at": datetime.utcnow(),
+                "model_type": model_type.value,
             }
 
             return model
@@ -443,7 +476,9 @@ class MLService:
             logger.error(f"Failed to train model algorithm: {e}")
             raise
 
-    async def _evaluate_model(self, model: Dict[str, Any], X: np.ndarray, y: np.ndarray, model_type: ModelType) -> ModelMetrics:
+    async def _evaluate_model(
+        self, model: Dict[str, Any], X: np.ndarray, y: np.ndarray, model_type: ModelType
+    ) -> ModelMetrics:
         """Evaluate model performance"""
         try:
             # Simulate model evaluation
@@ -461,7 +496,7 @@ class MLService:
                 mse=0.15 + np.random.random() * 0.05,
                 mae=0.12 + np.random.random() * 0.03,
                 r2_score=0.83 + np.random.random() * 0.1,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.utcnow(),
             )
 
             return metrics
@@ -470,39 +505,45 @@ class MLService:
             logger.error(f"Failed to evaluate model: {e}")
             raise
 
-    async def _save_model(self, model: Dict[str, Any], job: TrainingJob, metrics: ModelMetrics) -> str:
+    async def _save_model(
+        self, model: Dict[str, Any], job: TrainingJob, metrics: ModelMetrics
+    ) -> str:
         """Save trained model"""
         try:
             model_id = f"model_{int(datetime.utcnow().timestamp())}"
 
             # Save model file
-            model_path = Path(self.ml_config['model_storage_path']) / f"{model_id}.pkl"
-            with open(model_path, 'wb') as f:
+            model_path = Path(self.ml_config["model_storage_path"]) / f"{model_id}.pkl"
+            with open(model_path, "wb") as f:
                 pickle.dump(model, f)
 
             # Save model metadata
             metadata = {
-                'model_id': model_id,
-                'model_type': job.model_type.value,
-                'algorithm': job.parameters['algorithm'],
-                'hyperparameters': job.parameters['hyperparameters'],
-                'metrics': {
-                    'accuracy': metrics.accuracy,
-                    'precision': metrics.precision,
-                    'recall': metrics.recall,
-                    'f1_score': metrics.f1_score,
-                    'auc_score': metrics.auc_score,
-                    'mse': metrics.mse,
-                    'mae': metrics.mae,
-                    'r2_score': metrics.r2_score
+                "model_id": model_id,
+                "model_type": job.model_type.value,
+                "algorithm": job.parameters["algorithm"],
+                "hyperparameters": job.parameters["hyperparameters"],
+                "metrics": {
+                    "accuracy": metrics.accuracy,
+                    "precision": metrics.precision,
+                    "recall": metrics.recall,
+                    "f1_score": metrics.f1_score,
+                    "auc_score": metrics.auc_score,
+                    "mse": metrics.mse,
+                    "mae": metrics.mae,
+                    "r2_score": metrics.r2_score,
                 },
-                'trained_at': job.started_at.isoformat(),
-                'completed_at': job.completed_at.isoformat() if job.completed_at else None,
-                'status': job.status.value
+                "trained_at": job.started_at.isoformat(),
+                "completed_at": (
+                    job.completed_at.isoformat() if job.completed_at else None
+                ),
+                "status": job.status.value,
             }
 
-            metadata_path = Path(self.ml_config['model_storage_path']) / f"{model_id}_metadata.json"
-            with open(metadata_path, 'w') as f:
+            metadata_path = (
+                Path(self.ml_config["model_storage_path"]) / f"{model_id}_metadata.json"
+            )
+            with open(metadata_path, "w") as f:
                 json.dump(metadata, f, indent=2)
 
             # Store in memory
@@ -532,8 +573,8 @@ class MLService:
                 raise ValueError(f"Model {model_id} not found")
 
             # Load model
-            model_path = Path(self.ml_config['model_storage_path']) / f"{model_id}.pkl"
-            with open(model_path, 'rb') as f:
+            model_path = Path(self.ml_config["model_storage_path"]) / f"{model_id}.pkl"
+            with open(model_path, "rb") as f:
                 model = pickle.load(f)
 
             # Simulate prediction
@@ -580,7 +621,7 @@ class MLService:
             models = list(self.models.values())
 
             if model_type:
-                models = [m for m in models if m['model_type'] == model_type.value]
+                models = [m for m in models if m["model_type"] == model_type.value]
 
             return models
 
@@ -595,12 +636,14 @@ class MLService:
                 raise ValueError(f"Model {model_id} not found")
 
             # Delete model file
-            model_path = Path(self.ml_config['model_storage_path']) / f"{model_id}.pkl"
+            model_path = Path(self.ml_config["model_storage_path"]) / f"{model_id}.pkl"
             if model_path.exists():
                 model_path.unlink()
 
             # Delete metadata file
-            metadata_path = Path(self.ml_config['model_storage_path']) / f"{model_id}_metadata.json"
+            metadata_path = (
+                Path(self.ml_config["model_storage_path"]) / f"{model_id}_metadata.json"
+            )
             if metadata_path.exists():
                 metadata_path.unlink()
 
@@ -624,10 +667,12 @@ class MLService:
                 for model_id, metrics in self.model_metrics.items():
                     # Check for performance degradation
                     if metrics.accuracy < 0.7:  # Threshold for performance degradation
-                        logger.warning(f"Model {model_id} performance degraded: {metrics.accuracy}")
+                        logger.warning(
+                            f"Model {model_id} performance degraded: {metrics.accuracy}"
+                        )
 
                         # Trigger retraining if auto_retrain is enabled
-                        if self.ml_config['auto_retrain']:
+                        if self.ml_config["auto_retrain"]:
                             await self._schedule_retraining(model_id)
 
                 await asyncio.sleep(3600)  # Check every hour
@@ -667,14 +712,14 @@ class MLService:
             # Create retraining job
             retraining_job = TrainingJob(
                 job_id=f"retrain_{int(datetime.utcnow().timestamp())}",
-                model_type=ModelType(model_info['model_type']),
+                model_type=ModelType(model_info["model_type"]),
                 dataset_path="retraining_dataset.csv",  # Would use actual dataset
                 parameters=model_info,
                 status=ModelStatus.TRAINING,
                 started_at=datetime.utcnow(),
                 completed_at=None,
                 metrics=None,
-                error_message=None
+                error_message=None,
             )
 
             # Add to training queue
@@ -695,13 +740,15 @@ class MLService:
             job = self.training_jobs[job_id]
 
             return {
-                'job_id': job.job_id,
-                'model_type': job.model_type.value,
-                'status': job.status.value,
-                'started_at': job.started_at.isoformat(),
-                'completed_at': job.completed_at.isoformat() if job.completed_at else None,
-                'metrics': job.metrics.__dict__ if job.metrics else None,
-                'error_message': job.error_message
+                "job_id": job.job_id,
+                "model_type": job.model_type.value,
+                "status": job.status.value,
+                "started_at": job.started_at.isoformat(),
+                "completed_at": (
+                    job.completed_at.isoformat() if job.completed_at else None
+                ),
+                "metrics": job.metrics.__dict__ if job.metrics else None,
+                "error_message": job.error_message,
             }
 
         except Exception as e:
@@ -711,13 +758,13 @@ class MLService:
     async def get_ml_status(self) -> Dict[str, Any]:
         """Get ML service status"""
         return {
-            'total_models': len(self.models),
-            'active_training_jobs': len(self.active_training_jobs),
-            'queued_jobs': len(self.training_queue),
-            'model_types': list(set(m['model_type'] for m in self.models.values())),
-            'storage_path': self.ml_config['model_storage_path'],
-            'auto_retrain': self.ml_config['auto_retrain'],
-            'timestamp': datetime.utcnow().isoformat()
+            "total_models": len(self.models),
+            "active_training_jobs": len(self.active_training_jobs),
+            "queued_jobs": len(self.training_queue),
+            "model_types": list(set(m["model_type"] for m in self.models.values())),
+            "storage_path": self.ml_config["model_storage_path"],
+            "auto_retrain": self.ml_config["auto_retrain"],
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
     async def shutdown(self):

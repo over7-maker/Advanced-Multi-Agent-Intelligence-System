@@ -13,7 +13,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Add services to path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'services'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "services"))
 
 from ultimate_fallback_system import (
     generate_ai_response,
@@ -23,35 +23,37 @@ from ultimate_fallback_system import (
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class UltimateAIIntegration:
     """Ultimate AI integration with all 9 providers and intelligent fallback"""
 
     def __init__(self):
         self.scripts_to_update = [
-            'ai_code_analyzer.py',
-            'ai_code_improver.py',
-            'ai_test_generator.py',
-            'ai_documentation_generator.py',
-            'ai_security_auditor.py',
-            'ai_performance_analyzer.py',
-            'ai_continuous_developer.py',
-            'ai_issues_responder.py'
+            "ai_code_analyzer.py",
+            "ai_code_improver.py",
+            "ai_test_generator.py",
+            "ai_documentation_generator.py",
+            "ai_security_auditor.py",
+            "ai_performance_analyzer.py",
+            "ai_continuous_developer.py",
+            "ai_issues_responder.py",
         ]
 
         self.fallback_stats = {
-            'total_requests': 0,
-            'successful_requests': 0,
-            'failed_requests': 0,
-            'script_usage': {},
-            'provider_performance': {}
+            "total_requests": 0,
+            "successful_requests": 0,
+            "failed_requests": 0,
+            "script_usage": {},
+            "provider_performance": {},
         }
 
-    async def analyze_code_with_fallback(self, code: str, analysis_type: str = "comprehensive") -> Dict[str, Any]:
+    async def analyze_code_with_fallback(
+        self, code: str, analysis_type: str = "comprehensive"
+    ) -> Dict[str, Any]:
         """Analyze code with ultimate fallback"""
         prompt = f"""
         Analyze the following code for {analysis_type} analysis:
@@ -72,10 +74,12 @@ class UltimateAIIntegration:
         """
 
         result = await generate_ai_response(prompt, max_tokens=3000)
-        self._update_stats('code_analysis', result)
+        self._update_stats("code_analysis", result)
         return result
 
-    async def improve_code_with_fallback(self, code: str, improvement_type: str = "performance") -> Dict[str, Any]:
+    async def improve_code_with_fallback(
+        self, code: str, improvement_type: str = "performance"
+    ) -> Dict[str, Any]:
         """Improve code with ultimate fallback"""
         prompt = f"""
         Improve the following code for {improvement_type} optimization:
@@ -96,10 +100,12 @@ class UltimateAIIntegration:
         """
 
         result = await generate_ai_response(prompt, max_tokens=4000)
-        self._update_stats('code_improvement', result)
+        self._update_stats("code_improvement", result)
         return result
 
-    async def generate_tests_with_fallback(self, code: str, test_type: str = "comprehensive") -> Dict[str, Any]:
+    async def generate_tests_with_fallback(
+        self, code: str, test_type: str = "comprehensive"
+    ) -> Dict[str, Any]:
         """Generate tests with ultimate fallback"""
         prompt = f"""
         Generate {test_type} tests for the following code:
@@ -120,10 +126,12 @@ class UltimateAIIntegration:
         """
 
         result = await generate_ai_response(prompt, max_tokens=4000)
-        self._update_stats('test_generation', result)
+        self._update_stats("test_generation", result)
         return result
 
-    async def generate_documentation_with_fallback(self, code: str, doc_type: str = "comprehensive") -> Dict[str, Any]:
+    async def generate_documentation_with_fallback(
+        self, code: str, doc_type: str = "comprehensive"
+    ) -> Dict[str, Any]:
         """Generate documentation with ultimate fallback"""
         prompt = f"""
         Generate {doc_type} documentation for the following code:
@@ -144,10 +152,12 @@ class UltimateAIIntegration:
         """
 
         result = await generate_ai_response(prompt, max_tokens=3000)
-        self._update_stats('documentation_generation', result)
+        self._update_stats("documentation_generation", result)
         return result
 
-    async def audit_security_with_fallback(self, code: str, audit_type: str = "comprehensive") -> Dict[str, Any]:
+    async def audit_security_with_fallback(
+        self, code: str, audit_type: str = "comprehensive"
+    ) -> Dict[str, Any]:
         """Audit security with ultimate fallback"""
         prompt = f"""
         Perform {audit_type} security audit on the following code:
@@ -168,10 +178,12 @@ class UltimateAIIntegration:
         """
 
         result = await generate_ai_response(prompt, max_tokens=3000)
-        self._update_stats('security_audit', result)
+        self._update_stats("security_audit", result)
         return result
 
-    async def analyze_performance_with_fallback(self, code: str, analysis_type: str = "comprehensive") -> Dict[str, Any]:
+    async def analyze_performance_with_fallback(
+        self, code: str, analysis_type: str = "comprehensive"
+    ) -> Dict[str, Any]:
         """Analyze performance with ultimate fallback"""
         prompt = f"""
         Perform {analysis_type} performance analysis on the following code:
@@ -192,10 +204,12 @@ class UltimateAIIntegration:
         """
 
         result = await generate_ai_response(prompt, max_tokens=3000)
-        self._update_stats('performance_analysis', result)
+        self._update_stats("performance_analysis", result)
         return result
 
-    async def respond_to_issue_with_fallback(self, issue_title: str, issue_body: str, action: str = "opened") -> Dict[str, Any]:
+    async def respond_to_issue_with_fallback(
+        self, issue_title: str, issue_body: str, action: str = "opened"
+    ) -> Dict[str, Any]:
         """Respond to GitHub issue with ultimate fallback"""
         prompt = f"""
         Respond to this GitHub issue as an AI assistant:
@@ -215,10 +229,12 @@ class UltimateAIIntegration:
         """
 
         result = await generate_ai_response(prompt, max_tokens=2000)
-        self._update_stats('issue_response', result)
+        self._update_stats("issue_response", result)
         return result
 
-    async def continuous_development_with_fallback(self, project_path: str, mode: str = "full_analysis") -> Dict[str, Any]:
+    async def continuous_development_with_fallback(
+        self, project_path: str, mode: str = "full_analysis"
+    ) -> Dict[str, Any]:
         """Continuous development with ultimate fallback"""
         prompt = f"""
         Perform {mode} continuous development analysis for the project at {project_path}:
@@ -234,44 +250,48 @@ class UltimateAIIntegration:
         """
 
         result = await generate_ai_response(prompt, max_tokens=4000)
-        self._update_stats('continuous_development', result)
+        self._update_stats("continuous_development", result)
         return result
 
     def _update_stats(self, script_type: str, result: Dict[str, Any]):
         """Update fallback statistics"""
-        self.fallback_stats['total_requests'] += 1
+        self.fallback_stats["total_requests"] += 1
 
-        if result['success']:
-            self.fallback_stats['successful_requests'] += 1
-            provider = result['provider']
-            if provider not in self.fallback_stats['provider_performance']:
-                self.fallback_stats['provider_performance'][provider] = 0
-            self.fallback_stats['provider_performance'][provider] += 1
+        if result["success"]:
+            self.fallback_stats["successful_requests"] += 1
+            provider = result["provider"]
+            if provider not in self.fallback_stats["provider_performance"]:
+                self.fallback_stats["provider_performance"][provider] = 0
+            self.fallback_stats["provider_performance"][provider] += 1
         else:
-            self.fallback_stats['failed_requests'] += 1
+            self.fallback_stats["failed_requests"] += 1
 
-        if script_type not in self.fallback_stats['script_usage']:
-            self.fallback_stats['script_usage'][script_type] = 0
-        self.fallback_stats['script_usage'][script_type] += 1
+        if script_type not in self.fallback_stats["script_usage"]:
+            self.fallback_stats["script_usage"][script_type] = 0
+        self.fallback_stats["script_usage"][script_type] += 1
 
     def get_integration_stats(self) -> Dict[str, Any]:
         """Get integration statistics"""
-        total = self.fallback_stats['total_requests']
-        success_rate = (self.fallback_stats['successful_requests'] / total * 100) if total > 0 else 0
+        total = self.fallback_stats["total_requests"]
+        success_rate = (
+            (self.fallback_stats["successful_requests"] / total * 100)
+            if total > 0
+            else 0
+        )
 
         return {
-            'integration_stats': self.fallback_stats,
-            'fallback_stats': get_fallback_stats(),
-            'provider_health': get_provider_health(),
-            'success_rate': f"{success_rate:.1f}%",
-            'total_requests': total,
-            'successful_requests': self.fallback_stats['successful_requests'],
-            'failed_requests': self.fallback_stats['failed_requests']
+            "integration_stats": self.fallback_stats,
+            "fallback_stats": get_fallback_stats(),
+            "provider_health": get_provider_health(),
+            "success_rate": f"{success_rate:.1f}%",
+            "total_requests": total,
+            "successful_requests": self.fallback_stats["successful_requests"],
+            "failed_requests": self.fallback_stats["failed_requests"],
         }
 
     def create_ultimate_fallback_script(self, script_name: str) -> str:
         """Create an ultimate fallback script wrapper"""
-        script_class = script_name.replace('.py', '').replace('_', '').title()
+        script_class = script_name.replace(".py", "").replace("_", "").title()
 
         wrapper_content = f'''#!/usr/bin/env python3
 """
@@ -408,8 +428,11 @@ if __name__ == "__main__":
                 wrapper_content = self.create_ultimate_fallback_script(script_name)
 
                 # Save wrapper
-                wrapper_path = script_path.parent / f"{script_name.replace('.py', '_ultimate_fallback.py')}"
-                with open(wrapper_path, 'w', encoding='utf-8') as f:
+                wrapper_path = (
+                    script_path.parent
+                    / f"{script_name.replace('.py', '_ultimate_fallback.py')}"
+                )
+                with open(wrapper_path, "w", encoding="utf-8") as f:
                     f.write(wrapper_content)
 
                 # Make executable
@@ -422,51 +445,86 @@ if __name__ == "__main__":
 
         return updated_scripts
 
+
 # Global integration instance
 ultimate_ai_integration = UltimateAIIntegration()
 
+
 # Convenience functions for all AI scripts
-async def analyze_code(code: str, analysis_type: str = "comprehensive") -> Dict[str, Any]:
+async def analyze_code(
+    code: str, analysis_type: str = "comprehensive"
+) -> Dict[str, Any]:
     """Analyze code with ultimate fallback"""
     return await ultimate_ai_integration.analyze_code_with_fallback(code, analysis_type)
 
-async def improve_code(code: str, improvement_type: str = "performance") -> Dict[str, Any]:
+
+async def improve_code(
+    code: str, improvement_type: str = "performance"
+) -> Dict[str, Any]:
     """Improve code with ultimate fallback"""
-    return await ultimate_ai_integration.improve_code_with_fallback(code, improvement_type)
+    return await ultimate_ai_integration.improve_code_with_fallback(
+        code, improvement_type
+    )
+
 
 async def generate_tests(code: str, test_type: str = "comprehensive") -> Dict[str, Any]:
     """Generate tests with ultimate fallback"""
     return await ultimate_ai_integration.generate_tests_with_fallback(code, test_type)
 
-async def generate_documentation(code: str, doc_type: str = "comprehensive") -> Dict[str, Any]:
-    """Generate documentation with ultimate fallback"""
-    return await ultimate_ai_integration.generate_documentation_with_fallback(code, doc_type)
 
-async def audit_security(code: str, audit_type: str = "comprehensive") -> Dict[str, Any]:
+async def generate_documentation(
+    code: str, doc_type: str = "comprehensive"
+) -> Dict[str, Any]:
+    """Generate documentation with ultimate fallback"""
+    return await ultimate_ai_integration.generate_documentation_with_fallback(
+        code, doc_type
+    )
+
+
+async def audit_security(
+    code: str, audit_type: str = "comprehensive"
+) -> Dict[str, Any]:
     """Audit security with ultimate fallback"""
     return await ultimate_ai_integration.audit_security_with_fallback(code, audit_type)
 
-async def analyze_performance(code: str, analysis_type: str = "comprehensive") -> Dict[str, Any]:
+
+async def analyze_performance(
+    code: str, analysis_type: str = "comprehensive"
+) -> Dict[str, Any]:
     """Analyze performance with ultimate fallback"""
-    return await ultimate_ai_integration.analyze_performance_with_fallback(code, analysis_type)
+    return await ultimate_ai_integration.analyze_performance_with_fallback(
+        code, analysis_type
+    )
 
-async def respond_to_issue(issue_title: str, issue_body: str, action: str = "opened") -> Dict[str, Any]:
+
+async def respond_to_issue(
+    issue_title: str, issue_body: str, action: str = "opened"
+) -> Dict[str, Any]:
     """Respond to issue with ultimate fallback"""
-    return await ultimate_ai_integration.respond_to_issue_with_fallback(issue_title, issue_body, action)
+    return await ultimate_ai_integration.respond_to_issue_with_fallback(
+        issue_title, issue_body, action
+    )
 
-async def continuous_development(project_path: str, mode: str = "full_analysis") -> Dict[str, Any]:
+
+async def continuous_development(
+    project_path: str, mode: str = "full_analysis"
+) -> Dict[str, Any]:
     """Continuous development with ultimate fallback"""
-    return await ultimate_ai_integration.continuous_development_with_fallback(project_path, mode)
+    return await ultimate_ai_integration.continuous_development_with_fallback(
+        project_path, mode
+    )
+
 
 def get_integration_stats() -> Dict[str, Any]:
     """Get integration statistics"""
     return ultimate_ai_integration.get_integration_stats()
 
+
 # Test function
 async def test_ultimate_ai_integration():
     """Test the ultimate AI integration"""
     print("🧪 Testing Ultimate AI Integration...")
-    print("="*60)
+    print("=" * 60)
 
     # Test code
     test_code = """
@@ -483,14 +541,14 @@ def fibonacci(n):
         ("Test Generation", lambda: generate_tests(test_code)),
         ("Documentation", lambda: generate_documentation(test_code)),
         ("Security Audit", lambda: audit_security(test_code)),
-        ("Performance Analysis", lambda: analyze_performance(test_code))
+        ("Performance Analysis", lambda: analyze_performance(test_code)),
     ]
 
     for test_name, test_func in tests:
         print(f"\n🔍 Testing {test_name}...")
         try:
             result = await test_func()
-            if result['success']:
+            if result["success"]:
                 print(f"✅ {test_name} successful with {result['provider_name']}")
                 print(f"   Response time: {result['response_time']:.2f}s")
             else:
@@ -507,7 +565,7 @@ def fibonacci(n):
     print(f"Failed Requests: {stats['failed_requests']}")
 
     # Show fallback stats
-    fallback_stats = stats['fallback_stats']
+    fallback_stats = stats["fallback_stats"]
     print(f"\n🔄 Ultimate Fallback Statistics:")
     print(f"Total Fallback Requests: {fallback_stats['total_requests']}")
     print(f"Fallback Success Rate: {fallback_stats['success_rate']}")
@@ -517,10 +575,11 @@ def fibonacci(n):
     print(f"Priority Selections: {fallback_stats['priority_selection_count']}")
 
     # Show provider health
-    health = stats['provider_health']
+    health = stats["provider_health"]
     print(f"\n🏥 Provider Health:")
     for provider_id, info in health.items():
         print(f"  {info['name']}: {info['status']} ({info['success_rate']})")
+
 
 if __name__ == "__main__":
     asyncio.run(test_ultimate_ai_integration())

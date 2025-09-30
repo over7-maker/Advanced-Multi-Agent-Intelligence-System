@@ -11,12 +11,14 @@ import json
 try:
     import asyncpg
     import redis.asyncio as redis
+
     DATABASE_AVAILABLE = True
 except ImportError:
     DATABASE_AVAILABLE = False
     logging.warning("Database drivers not available")
 
 logger = logging.getLogger(__name__)
+
 
 class DatabaseService:
     """Database service for AMAS Intelligence System"""
@@ -37,22 +39,22 @@ class DatabaseService:
 
             # Initialize PostgreSQL connection pool
             self.postgres_pool = await asyncpg.create_pool(
-                host=self.config.get('postgres_host', 'localhost'),
-                port=self.config.get('postgres_port', 5432),
-                user=self.config.get('postgres_user', 'amas'),
-                password=self.config.get('postgres_password', 'amas123'),
-                database=self.config.get('postgres_db', 'amas'),
+                host=self.config.get("postgres_host", "localhost"),
+                port=self.config.get("postgres_port", 5432),
+                user=self.config.get("postgres_user", "amas"),
+                password=self.config.get("postgres_password", "amas123"),
+                database=self.config.get("postgres_db", "amas"),
                 min_size=1,
-                max_size=10
+                max_size=10,
             )
             logger.info("PostgreSQL connection pool created")
 
             # Initialize Redis client
             self.redis_client = redis.Redis(
-                host=self.config.get('redis_host', 'localhost'),
-                port=self.config.get('redis_port', 6379),
-                db=self.config.get('redis_db', 0),
-                decode_responses=True
+                host=self.config.get("redis_host", "localhost"),
+                port=self.config.get("redis_port", 6379),
+                db=self.config.get("redis_db", 0),
+                decode_responses=True,
             )
             await self.redis_client.ping()
             logger.info("Redis connection established")
@@ -72,7 +74,8 @@ class DatabaseService:
         try:
             async with self.postgres_pool.acquire() as conn:
                 # Create agents table
-                await conn.execute("""
+                await conn.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS agents (
                         id SERIAL PRIMARY KEY,
                         agent_id VARCHAR(255) UNIQUE NOT NULL,
@@ -82,10 +85,12 @@ class DatabaseService:
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
-                """)
+                """
+                )
 
                 # Create tasks table
-                await conn.execute("""
+                await conn.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS tasks (
                         id SERIAL PRIMARY KEY,
                         task_id VARCHAR(255) UNIQUE NOT NULL,
@@ -101,10 +106,12 @@ class DatabaseService:
                         started_at TIMESTAMP,
                         completed_at TIMESTAMP
                     )
-                """)
+                """
+                )
 
                 # Create workflows table
-                await conn.execute("""
+                await conn.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS workflows (
                         id SERIAL PRIMARY KEY,
                         workflow_id VARCHAR(255) UNIQUE NOT NULL,
@@ -115,10 +122,12 @@ class DatabaseService:
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
-                """)
+                """
+                )
 
                 # Create intelligence_data table
-                await conn.execute("""
+                await conn.execute(
+                    """
                     CREATE TABLE IF NOT EXISTS intelligence_data (
                         id SERIAL PRIMARY KEY,
                         data_id VARCHAR(255) UNIQUE NOT NULL,
@@ -130,14 +139,25 @@ class DatabaseService:
                         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                     )
-                """)
+                """
+                )
 
                 # Create indexes
-                await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)")
-                await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_type ON tasks(task_type)")
-                await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_agent ON tasks(assigned_agent)")
-                await conn.execute("CREATE INDEX IF NOT EXISTS idx_intelligence_type ON intelligence_data(data_type)")
-                await conn.execute("CREATE INDEX IF NOT EXISTS idx_intelligence_classification ON intelligence_data(classification)")
+                await conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)"
+                )
+                await conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_tasks_type ON tasks(task_type)"
+                )
+                await conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_tasks_agent ON tasks(assigned_agent)"
+                )
+                await conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_intelligence_type ON intelligence_data(data_type)"
+                )
+                await conn.execute(
+                    "CREATE INDEX IF NOT EXISTS idx_intelligence_classification ON intelligence_data(classification)"
+                )
 
                 logger.info("Database schema created successfully")
 
@@ -152,7 +172,8 @@ class DatabaseService:
                 return False
 
             async with self.postgres_pool.acquire() as conn:
-                await conn.execute("""
+                await conn.execute(
+                    """
                     INSERT INTO agents (agent_id, name, capabilities, status)
                     VALUES ($1, $2, $3, $4)
                     ON CONFLICT (agent_id) DO UPDATE SET
@@ -160,9 +181,12 @@ class DatabaseService:
                     capabilities = EXCLUDED.capabilities,
                     status = EXCLUDED.status,
                     updated_at = CURRENT_TIMESTAMP
-                """, agent_data['agent_id'], agent_data['name'],
-                     json.dumps(agent_data.get('capabilities', [])),
-                     agent_data.get('status', 'idle'))
+                """,
+                    agent_data["agent_id"],
+                    agent_data["name"],
+                    json.dumps(agent_data.get("capabilities", [])),
+                    agent_data.get("status", "idle"),
+                )
 
                 return True
 
@@ -177,7 +201,8 @@ class DatabaseService:
                 return False
 
             async with self.postgres_pool.acquire() as conn:
-                await conn.execute("""
+                await conn.execute(
+                    """
                     INSERT INTO tasks (task_id, task_type, description, parameters, priority, status, assigned_agent)
                     VALUES ($1, $2, $3, $4, $5, $6, $7)
                     ON CONFLICT (task_id) DO UPDATE SET
@@ -187,12 +212,15 @@ class DatabaseService:
                     error = EXCLUDED.error,
                     started_at = EXCLUDED.started_at,
                     completed_at = EXCLUDED.completed_at
-                """, task_data['task_id'], task_data['task_type'],
-                     task_data.get('description', ''),
-                     json.dumps(task_data.get('parameters', {})),
-                     task_data.get('priority', 2),
-                     task_data.get('status', 'pending'),
-                     task_data.get('assigned_agent'))
+                """,
+                    task_data["task_id"],
+                    task_data["task_type"],
+                    task_data.get("description", ""),
+                    json.dumps(task_data.get("parameters", {})),
+                    task_data.get("priority", 2),
+                    task_data.get("status", "pending"),
+                    task_data.get("assigned_agent"),
+                )
 
                 return True
 
@@ -207,18 +235,22 @@ class DatabaseService:
                 return False
 
             async with self.postgres_pool.acquire() as conn:
-                await conn.execute("""
+                await conn.execute(
+                    """
                     INSERT INTO intelligence_data (data_id, data_type, source, content, metadata, classification)
                     VALUES ($1, $2, $3, $4, $5, $6)
                     ON CONFLICT (data_id) DO UPDATE SET
                     content = EXCLUDED.content,
                     metadata = EXCLUDED.metadata,
                     updated_at = CURRENT_TIMESTAMP
-                """, data['data_id'], data['data_type'],
-                     data.get('source', ''),
-                     json.dumps(data.get('content', {})),
-                     json.dumps(data.get('metadata', {})),
-                     data.get('classification', 'unclassified'))
+                """,
+                    data["data_id"],
+                    data["data_type"],
+                    data.get("source", ""),
+                    json.dumps(data.get("content", {})),
+                    json.dumps(data.get("metadata", {})),
+                    data.get("classification", "unclassified"),
+                )
 
                 return True
 
@@ -272,7 +304,8 @@ class DatabaseService:
 
             async with self.postgres_pool.acquire() as conn:
                 rows = await conn.fetch(
-                    "SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC", status
+                    "SELECT * FROM tasks WHERE status = $1 ORDER BY created_at DESC",
+                    status,
                 )
 
                 return [dict(row) for row in rows]
@@ -281,27 +314,47 @@ class DatabaseService:
             logger.error(f"Error getting tasks by status: {e}")
             return []
 
-    async def update_task_status(self, task_id: str, status: str, result: Dict[str, Any] = None, error: str = None) -> bool:
+    async def update_task_status(
+        self,
+        task_id: str,
+        status: str,
+        result: Dict[str, Any] = None,
+        error: str = None,
+    ) -> bool:
         """Update task status"""
         try:
             if not self.initialized:
                 return False
 
             async with self.postgres_pool.acquire() as conn:
-                if status == 'in_progress':
-                    await conn.execute("""
+                if status == "in_progress":
+                    await conn.execute(
+                        """
                         UPDATE tasks SET status = $1, started_at = CURRENT_TIMESTAMP
                         WHERE task_id = $2
-                    """, status, task_id)
-                elif status in ['completed', 'failed']:
-                    await conn.execute("""
+                    """,
+                        status,
+                        task_id,
+                    )
+                elif status in ["completed", "failed"]:
+                    await conn.execute(
+                        """
                         UPDATE tasks SET status = $1, completed_at = CURRENT_TIMESTAMP,
                         result = $2, error = $3 WHERE task_id = $4
-                    """, status, json.dumps(result) if result else None, error, task_id)
+                    """,
+                        status,
+                        json.dumps(result) if result else None,
+                        error,
+                        task_id,
+                    )
                 else:
-                    await conn.execute("""
+                    await conn.execute(
+                        """
                         UPDATE tasks SET status = $1 WHERE task_id = $2
-                    """, status, task_id)
+                    """,
+                        status,
+                        task_id,
+                    )
 
                 return True
 
@@ -342,9 +395,9 @@ class DatabaseService:
         try:
             if not self.initialized:
                 return {
-                    'status': 'unhealthy',
-                    'error': 'Database not initialized',
-                    'timestamp': datetime.utcnow().isoformat()
+                    "status": "unhealthy",
+                    "error": "Database not initialized",
+                    "timestamp": datetime.utcnow().isoformat(),
                 }
 
             # Check PostgreSQL
@@ -366,21 +419,23 @@ class DatabaseService:
                 except Exception as e:
                     logger.error(f"Redis health check failed: {e}")
 
-            overall_status = 'healthy' if postgres_healthy and redis_healthy else 'degraded'
+            overall_status = (
+                "healthy" if postgres_healthy and redis_healthy else "degraded"
+            )
 
             return {
-                'status': overall_status,
-                'postgres': 'healthy' if postgres_healthy else 'unhealthy',
-                'redis': 'healthy' if redis_healthy else 'unhealthy',
-                'timestamp': datetime.utcnow().isoformat()
+                "status": overall_status,
+                "postgres": "healthy" if postgres_healthy else "unhealthy",
+                "redis": "healthy" if redis_healthy else "unhealthy",
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error checking database health: {e}")
             return {
-                'status': 'unhealthy',
-                'error': str(e),
-                'timestamp': datetime.utcnow().isoformat()
+                "status": "unhealthy",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
     async def close(self):

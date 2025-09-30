@@ -10,6 +10,7 @@ import json
 
 logger = logging.getLogger(__name__)
 
+
 class AgentCommunication:
     """Agent communication handler"""
 
@@ -22,10 +23,10 @@ class AgentCommunication:
         """Send message to another agent"""
         try:
             message_data = {
-                'from': self.agent_id,
-                'to': target_agent,
-                'message': message,
-                'timestamp': datetime.utcnow().isoformat()
+                "from": self.agent_id,
+                "to": target_agent,
+                "message": message,
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
             # In a real implementation, this would use a message broker
@@ -46,14 +47,16 @@ class AgentCommunication:
             logger.error(f"Error receiving message: {e}")
             return None
 
-    async def broadcast_message(self, message: Dict[str, Any], topic: str = "general") -> bool:
+    async def broadcast_message(
+        self, message: Dict[str, Any], topic: str = "general"
+    ) -> bool:
         """Broadcast message to all subscribers"""
         try:
             message_data = {
-                'from': self.agent_id,
-                'topic': topic,
-                'message': message,
-                'timestamp': datetime.utcnow().isoformat()
+                "from": self.agent_id,
+                "topic": topic,
+                "message": message,
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
             logger.info(f"Broadcast message from {self.agent_id} on topic {topic}")

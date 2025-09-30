@@ -27,7 +27,7 @@ class N8NIntegration:
         n8n_url: str = "http://localhost:5678",
         n8n_api_key: Optional[str] = None,
         username: str = "admin",
-        password: str = "admin"
+        password: str = "admin",
     ):
         """
         Initialize n8n integration.
@@ -38,7 +38,7 @@ class N8NIntegration:
             username: n8n username
             password: n8n password
         """
-        self.n8n_url = n8n_url.rstrip('/')
+        self.n8n_url = n8n_url.rstrip("/")
         self.n8n_api_key = n8n_api_key
         self.username = username
         self.password = password
@@ -52,10 +52,10 @@ class N8NIntegration:
 
         # Performance metrics
         self.metrics = {
-            'workflows_executed': 0,
-            'workflows_failed': 0,
-            'average_execution_time': 0.0,
-            'active_workflows': 0
+            "workflows_executed": 0,
+            "workflows_failed": 0,
+            "average_execution_time": 0.0,
+            "active_workflows": 0,
         }
 
         # Logging
@@ -68,37 +68,35 @@ class N8NIntegration:
         """Initialize intelligence workflow templates."""
         try:
             # OSINT Monitoring Workflow
-            self.workflow_templates['osint_monitoring'] = {
-                'name': 'OSINT Monitoring Workflow',
-                'description': 'Continuous OSINT source monitoring',
-                'nodes': [
+            self.workflow_templates["osint_monitoring"] = {
+                "name": "OSINT Monitoring Workflow",
+                "description": "Continuous OSINT source monitoring",
+                "nodes": [
                     {
-                        'name': 'Schedule Trigger',
-                        'type': 'n8n-nodes-base.scheduleTrigger',
-                        'parameters': {
-                            'rule': {
-                                'interval': [{'field': 'minutes', 'value': 30}]
-                            }
-                        }
+                        "name": "Schedule Trigger",
+                        "type": "n8n-nodes-base.scheduleTrigger",
+                        "parameters": {
+                            "rule": {"interval": [{"field": "minutes", "value": 30}]}
+                        },
                     },
                     {
-                        'name': 'OSINT Collection',
-                        'type': 'n8n-nodes-base.httpRequest',
-                        'parameters': {
-                            'url': 'http://amas-api:8000/api/agents/osint/collect',
-                            'method': 'POST',
-                            'body': {
-                                'sources': '{{ $json.sources }}',
-                                'keywords': '{{ $json.keywords }}',
-                                'filters': '{{ $json.filters }}'
-                            }
-                        }
+                        "name": "OSINT Collection",
+                        "type": "n8n-nodes-base.httpRequest",
+                        "parameters": {
+                            "url": "http://amas-api:8000/api/agents/osint/collect",
+                            "method": "POST",
+                            "body": {
+                                "sources": "{{ $json.sources }}",
+                                "keywords": "{{ $json.keywords }}",
+                                "filters": "{{ $json.filters }}",
+                            },
+                        },
                     },
                     {
-                        'name': 'Data Processing',
-                        'type': 'n8n-nodes-base.function',
-                        'parameters': {
-                            'functionCode': '''
+                        "name": "Data Processing",
+                        "type": "n8n-nodes-base.function",
+                        "parameters": {
+                            "functionCode": """
 // Process collected OSINT data
 const items = $input.all();
 const processedItems = [];
@@ -118,126 +116,121 @@ for (const item of items) {
 }
 
 return processedItems;
-'''
-                        }
+"""
+                        },
                     },
                     {
-                        'name': 'Store Results',
-                        'type': 'n8n-nodes-base.httpRequest',
-                        'parameters': {
-                            'url': 'http://amas-api:8000/api/data/store',
-                            'method': 'POST',
-                            'body': {
-                                'data': '{{ $json }}',
-                                'type': 'osint'
-                            }
-                        }
-                    }
-                ]
+                        "name": "Store Results",
+                        "type": "n8n-nodes-base.httpRequest",
+                        "parameters": {
+                            "url": "http://amas-api:8000/api/data/store",
+                            "method": "POST",
+                            "body": {"data": "{{ $json }}", "type": "osint"},
+                        },
+                    },
+                ],
             }
 
             # Investigation Workflow
-            self.workflow_templates['investigation'] = {
-                'name': 'Investigation Workflow',
-                'description': 'Multi-step investigation process',
-                'nodes': [
+            self.workflow_templates["investigation"] = {
+                "name": "Investigation Workflow",
+                "description": "Multi-step investigation process",
+                "nodes": [
                     {
-                        'name': 'Manual Trigger',
-                        'type': 'n8n-nodes-base.manualTrigger',
-                        'parameters': {}
+                        "name": "Manual Trigger",
+                        "type": "n8n-nodes-base.manualTrigger",
+                        "parameters": {},
                     },
                     {
-                        'name': 'Entity Analysis',
-                        'type': 'n8n-nodes-base.httpRequest',
-                        'parameters': {
-                            'url': 'http://amas-api:8000/api/agents/investigation/analyze',
-                            'method': 'POST',
-                            'body': {
-                                'entities': '{{ $json.entities }}',
-                                'analysis_type': 'deep'
-                            }
-                        }
+                        "name": "Entity Analysis",
+                        "type": "n8n-nodes-base.httpRequest",
+                        "parameters": {
+                            "url": "http://amas-api:8000/api/agents/investigation/analyze",
+                            "method": "POST",
+                            "body": {
+                                "entities": "{{ $json.entities }}",
+                                "analysis_type": "deep",
+                            },
+                        },
                     },
                     {
-                        'name': 'Link Analysis',
-                        'type': 'n8n-nodes-base.httpRequest',
-                        'parameters': {
-                            'url': 'http://amas-api:8000/api/agents/investigation/links',
-                            'method': 'POST',
-                            'body': {
-                                'entities': '{{ $json.entities }}',
-                                'depth': 'deep'
-                            }
-                        }
+                        "name": "Link Analysis",
+                        "type": "n8n-nodes-base.httpRequest",
+                        "parameters": {
+                            "url": "http://amas-api:8000/api/agents/investigation/links",
+                            "method": "POST",
+                            "body": {
+                                "entities": "{{ $json.entities }}",
+                                "depth": "deep",
+                            },
+                        },
                     },
                     {
-                        'name': 'Generate Report',
-                        'type': 'n8n-nodes-base.httpRequest',
-                        'parameters': {
-                            'url': 'http://amas-api:8000/api/agents/reporting/generate',
-                            'method': 'POST',
-                            'body': {
-                                'report_type': 'investigation',
-                                'data': '{{ $json }}'
-                            }
-                        }
-                    }
-                ]
+                        "name": "Generate Report",
+                        "type": "n8n-nodes-base.httpRequest",
+                        "parameters": {
+                            "url": "http://amas-api:8000/api/agents/reporting/generate",
+                            "method": "POST",
+                            "body": {
+                                "report_type": "investigation",
+                                "data": "{{ $json }}",
+                            },
+                        },
+                    },
+                ],
             }
 
             # Threat Intelligence Workflow
-            self.workflow_templates['threat_intelligence'] = {
-                'name': 'Threat Intelligence Workflow',
-                'description': 'Threat intelligence collection and analysis',
-                'nodes': [
+            self.workflow_templates["threat_intelligence"] = {
+                "name": "Threat Intelligence Workflow",
+                "description": "Threat intelligence collection and analysis",
+                "nodes": [
                     {
-                        'name': 'Schedule Trigger',
-                        'type': 'n8n-nodes-base.scheduleTrigger',
-                        'parameters': {
-                            'rule': {
-                                'interval': [{'field': 'hours', 'value': 6}]
-                            }
-                        }
+                        "name": "Schedule Trigger",
+                        "type": "n8n-nodes-base.scheduleTrigger",
+                        "parameters": {
+                            "rule": {"interval": [{"field": "hours", "value": 6}]}
+                        },
                     },
                     {
-                        'name': 'OSINT Collection',
-                        'type': 'n8n-nodes-base.httpRequest',
-                        'parameters': {
-                            'url': 'http://amas-api:8000/api/agents/osint/collect',
-                            'method': 'POST',
-                            'body': {
-                                'sources': '{{ $json.threat_sources }}',
-                                'keywords': '{{ $json.threat_keywords }}',
-                                'filters': '{{ $json.filters }}'
-                            }
-                        }
+                        "name": "OSINT Collection",
+                        "type": "n8n-nodes-base.httpRequest",
+                        "parameters": {
+                            "url": "http://amas-api:8000/api/agents/osint/collect",
+                            "method": "POST",
+                            "body": {
+                                "sources": "{{ $json.threat_sources }}",
+                                "keywords": "{{ $json.threat_keywords }}",
+                                "filters": "{{ $json.filters }}",
+                            },
+                        },
                     },
                     {
-                        'name': 'Threat Analysis',
-                        'type': 'n8n-nodes-base.httpRequest',
-                        'parameters': {
-                            'url': 'http://amas-api:8000/api/agents/data_analysis/threats',
-                            'method': 'POST',
-                            'body': {
-                                'data': '{{ $json }}',
-                                'analysis_type': 'threat_assessment'
-                            }
-                        }
+                        "name": "Threat Analysis",
+                        "type": "n8n-nodes-base.httpRequest",
+                        "parameters": {
+                            "url": "http://amas-api:8000/api/agents/data_analysis/threats",
+                            "method": "POST",
+                            "body": {
+                                "data": "{{ $json }}",
+                                "analysis_type": "threat_assessment",
+                            },
+                        },
                     },
                     {
-                        'name': 'Alert Generation',
-                        'type': 'n8n-nodes-base.httpRequest',
-                        'parameters': {
-                            'url': 'http://amas-api:8000/api/alerts/create',
-                            'method': 'POST',
-                            'body': {
-                                'alert_type': 'threat_intelligence',
-                                'severity': '{{ $json.severity }}',
-                                'content': '{{ $json.analysis }}'
-                            }
-                        }
-                    }
-                ]
+                        "name": "Alert Generation",
+                        "type": "n8n-nodes-base.httpRequest",
+                        "parameters": {
+                            "url": "http://amas-api:8000/api/alerts/create",
+                            "method": "POST",
+                            "body": {
+                                "alert_type": "threat_intelligence",
+                                "severity": "{{ $json.severity }}",
+                                "content": "{{ $json.analysis }}",
+                            },
+                        },
+                    },
+                ],
             }
 
             self.logger.info("Workflow templates initialized successfully")
@@ -256,28 +249,25 @@ return processedItems;
         try:
             if self.n8n_api_key:
                 # Use API key authentication
-                self.session.headers.update({
-                    'Authorization': f'Bearer {self.n8n_api_key}'
-                })
+                self.session.headers.update(
+                    {"Authorization": f"Bearer {self.n8n_api_key}"}
+                )
                 self.auth_token = self.n8n_api_key
             else:
                 # Use username/password authentication
                 auth_url = f"{self.n8n_url}/api/auth/login"
-                auth_data = {
-                    'email': self.username,
-                    'password': self.password
-                }
+                auth_data = {"email": self.username, "password": self.password}
 
                 response = self.session.post(auth_url, json=auth_data)
                 response.raise_for_status()
 
                 auth_result = response.json()
-                self.auth_token = auth_result.get('token')
+                self.auth_token = auth_result.get("token")
 
                 if self.auth_token:
-                    self.session.headers.update({
-                        'Authorization': f'Bearer {self.auth_token}'
-                    })
+                    self.session.headers.update(
+                        {"Authorization": f"Bearer {self.auth_token}"}
+                    )
 
             # Test authentication
             test_url = f"{self.n8n_url}/api/workflows"
@@ -295,7 +285,7 @@ return processedItems;
         self,
         workflow_name: str,
         workflow_template: str,
-        parameters: Dict[str, Any] = None
+        parameters: Dict[str, Any] = None,
     ) -> Optional[str]:
         """
         Create a new workflow in n8n.
@@ -324,20 +314,18 @@ return processedItems;
             # Create workflow
             create_url = f"{self.n8n_url}/api/workflows"
             workflow_payload = {
-                'name': workflow_name,
-                'nodes': workflow_data['nodes'],
-                'connections': self._generate_connections(workflow_data['nodes']),
-                'active': True,
-                'settings': {
-                    'executionOrder': 'v1'
-                }
+                "name": workflow_name,
+                "nodes": workflow_data["nodes"],
+                "connections": self._generate_connections(workflow_data["nodes"]),
+                "active": True,
+                "settings": {"executionOrder": "v1"},
             }
 
             response = self.session.post(create_url, json=workflow_payload)
             response.raise_for_status()
 
             workflow_result = response.json()
-            workflow_id = workflow_result.get('id')
+            workflow_id = workflow_result.get("id")
 
             self.logger.info(f"Workflow {workflow_name} created with ID {workflow_id}")
             return workflow_id
@@ -347,34 +335,36 @@ return processedItems;
             return None
 
     def _customize_workflow(
-        self,
-        template: Dict[str, Any],
-        parameters: Dict[str, Any]
+        self, template: Dict[str, Any], parameters: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Customize workflow template with parameters."""
         try:
             customized_workflow = template.copy()
 
             # Apply parameter customizations
-            for node in customized_workflow['nodes']:
-                if 'parameters' in node:
+            for node in customized_workflow["nodes"]:
+                if "parameters" in node:
                     # Customize node parameters based on template
-                    if 'url' in node['parameters']:
+                    if "url" in node["parameters"]:
                         # Replace placeholder URLs with actual endpoints
-                        node['parameters']['url'] = node['parameters']['url'].replace(
-                            '{{ $json.sources }}', str(parameters.get('sources', []))
+                        node["parameters"]["url"] = node["parameters"]["url"].replace(
+                            "{{ $json.sources }}", str(parameters.get("sources", []))
                         )
 
-                    if 'body' in node['parameters']:
+                    if "body" in node["parameters"]:
                         # Customize request body
-                        body = node['parameters']['body']
+                        body = node["parameters"]["body"]
                         if isinstance(body, dict):
                             for key, value in body.items():
-                                if isinstance(value, str) and '{{ $json.' in value:
+                                if isinstance(value, str) and "{{ $json." in value:
                                     # Replace template variables
-                                    var_name = value.replace('{{ $json.', '').replace(' }}', '')
+                                    var_name = value.replace("{{ $json.", "").replace(
+                                        " }}", ""
+                                    )
                                     if var_name in parameters:
-                                        node['parameters']['body'][key] = parameters[var_name]
+                                        node["parameters"]["body"][key] = parameters[
+                                            var_name
+                                        ]
 
             return customized_workflow
 
@@ -388,19 +378,13 @@ return processedItems;
             connections = {}
 
             for i, node in enumerate(nodes):
-                node_name = node['name']
+                node_name = node["name"]
 
                 if i < len(nodes) - 1:
-                    next_node = nodes[i + 1]['name']
+                    next_node = nodes[i + 1]["name"]
                     connections[node_name] = {
-                        'main': [
-                            [
-                                {
-                                    'node': next_node,
-                                    'type': 'main',
-                                    'index': 0
-                                }
-                            ],
+                        "main": [
+                            [{"node": next_node, "type": "main", "index": 0}],
                         ]
                     }
 
@@ -411,9 +395,7 @@ return processedItems;
             return {}
 
     async def execute_workflow(
-        self,
-        workflow_id: str,
-        input_data: Dict[str, Any] = None
+        self, workflow_id: str, input_data: Dict[str, Any] = None
     ) -> Optional[str]:
         """
         Execute a workflow.
@@ -431,30 +413,29 @@ return processedItems;
 
             # Start workflow execution
             execute_url = f"{self.n8n_url}/api/workflows/{workflow_id}/execute"
-            execute_payload = {
-                'data': input_data or {},
-                'mode': 'trigger'
-            }
+            execute_payload = {"data": input_data or {}, "mode": "trigger"}
 
             response = self.session.post(execute_url, json=execute_payload)
             response.raise_for_status()
 
             execution_result = response.json()
-            execution_id = execution_result.get('executionId')
+            execution_id = execution_result.get("executionId")
 
             if execution_id:
-                self.metrics['workflows_executed'] += 1
-                self.metrics['active_workflows'] += 1
+                self.metrics["workflows_executed"] += 1
+                self.metrics["active_workflows"] += 1
 
                 # Start monitoring execution
                 asyncio.create_task(self._monitor_execution(workflow_id, execution_id))
 
-            self.logger.info(f"Workflow {workflow_id} execution started: {execution_id}")
+            self.logger.info(
+                f"Workflow {workflow_id} execution started: {execution_id}"
+            )
             return execution_id
 
         except Exception as e:
             self.logger.error(f"Failed to execute workflow {workflow_id}: {e}")
-            self.metrics['workflows_failed'] += 1
+            self.metrics["workflows_failed"] += 1
             return None
 
     async def _monitor_execution(self, workflow_id: str, execution_id: str):
@@ -467,16 +448,22 @@ return processedItems;
 
                 if response.status_code == 200:
                     execution_data = response.json()
-                    status = execution_data.get('status')
+                    status = execution_data.get("status")
 
-                    if status in ['success', 'error', 'cancelled']:
+                    if status in ["success", "error", "cancelled"]:
                         # Execution completed
-                        self.metrics['active_workflows'] = max(0, self.metrics['active_workflows'] - 1)
+                        self.metrics["active_workflows"] = max(
+                            0, self.metrics["active_workflows"] - 1
+                        )
 
-                        if status == 'success':
-                            self.logger.info(f"Workflow {workflow_id} execution completed successfully")
+                        if status == "success":
+                            self.logger.info(
+                                f"Workflow {workflow_id} execution completed successfully"
+                            )
                         else:
-                            self.logger.warning(f"Workflow {workflow_id} execution failed with status: {status}")
+                            self.logger.warning(
+                                f"Workflow {workflow_id} execution failed with status: {status}"
+                            )
 
                         break
 
@@ -484,8 +471,12 @@ return processedItems;
                 await asyncio.sleep(5)
 
         except Exception as e:
-            self.logger.error(f"Execution monitoring failed for workflow {workflow_id}: {e}")
-            self.metrics['active_workflows'] = max(0, self.metrics['active_workflows'] - 1)
+            self.logger.error(
+                f"Execution monitoring failed for workflow {workflow_id}: {e}"
+            )
+            self.metrics["active_workflows"] = max(
+                0, self.metrics["active_workflows"] - 1
+            )
 
     async def get_workflow_status(self, workflow_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -510,20 +501,20 @@ return processedItems;
 
             # Get execution history
             executions_url = f"{self.n8n_url}/api/executions"
-            params = {'workflowId': workflow_id, 'limit': 10}
+            params = {"workflowId": workflow_id, "limit": 10}
             response = self.session.get(executions_url, params=params)
             response.raise_for_status()
 
             executions_data = response.json()
 
             return {
-                'workflow_id': workflow_id,
-                'name': workflow_data.get('name'),
-                'active': workflow_data.get('active', False),
-                'created_at': workflow_data.get('createdAt'),
-                'updated_at': workflow_data.get('updatedAt'),
-                'recent_executions': executions_data.get('data', []),
-                'status': 'active' if workflow_data.get('active') else 'inactive'
+                "workflow_id": workflow_id,
+                "name": workflow_data.get("name"),
+                "active": workflow_data.get("active", False),
+                "created_at": workflow_data.get("createdAt"),
+                "updated_at": workflow_data.get("updatedAt"),
+                "recent_executions": executions_data.get("data", []),
+                "status": "active" if workflow_data.get("active") else "inactive",
             }
 
         except Exception as e:
@@ -552,13 +543,13 @@ return processedItems;
             execution_data = response.json()
 
             return {
-                'execution_id': execution_id,
-                'workflow_id': execution_data.get('workflowId'),
-                'status': execution_data.get('status'),
-                'started_at': execution_data.get('startedAt'),
-                'finished_at': execution_data.get('finishedAt'),
-                'data': execution_data.get('data'),
-                'error': execution_data.get('error')
+                "execution_id": execution_id,
+                "workflow_id": execution_data.get("workflowId"),
+                "status": execution_data.get("status"),
+                "started_at": execution_data.get("startedAt"),
+                "finished_at": execution_data.get("finishedAt"),
+                "data": execution_data.get("data"),
+                "error": execution_data.get("error"),
             }
 
         except Exception as e:
@@ -581,7 +572,7 @@ return processedItems;
 
             # Deactivate workflow
             update_url = f"{self.n8n_url}/api/workflows/{workflow_id}"
-            update_payload = {'active': False}
+            update_payload = {"active": False}
 
             response = self.session.patch(update_url, json=update_payload)
             response.raise_for_status()
@@ -636,7 +627,7 @@ return processedItems;
             response.raise_for_status()
 
             workflows_data = response.json()
-            return workflows_data.get('data', [])
+            return workflows_data.get("data", [])
 
         except Exception as e:
             self.logger.error(f"Failed to get workflows: {e}")
@@ -645,8 +636,8 @@ return processedItems;
     async def get_metrics(self) -> Dict[str, Any]:
         """Get integration metrics."""
         return {
-            'metrics': self.metrics,
-            'n8n_url': self.n8n_url,
-            'authenticated': self.auth_token is not None,
-            'timestamp': datetime.utcnow().isoformat()
+            "metrics": self.metrics,
+            "n8n_url": self.n8n_url,
+            "authenticated": self.auth_token is not None,
+            "timestamp": datetime.utcnow().isoformat(),
         }
