@@ -1,64 +1,77 @@
 """
-Agent Communication Module for AMAS
+Agent Communication Module
+
+This module handles inter-agent communication and coordination.
 """
 
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Callable
 from datetime import datetime
 import json
 
 logger = logging.getLogger(__name__)
 
 class AgentCommunication:
-    """Agent communication handler"""
-
+    """Handles communication between agents"""
+    
     def __init__(self, agent_id: str):
         self.agent_id = agent_id
-        self.message_queue = asyncio.Queue()
-        self.subscribers = {}
-
-    async def send_message(self, target_agent: str, message: Dict[str, Any]) -> bool:
-        """Send message to another agent"""
+        self.subscribers: Dict[str, List[Callable]] = {}
+        self.message_queue: List[Dict[str, Any]] = []
+        
+    async def publish(self, event_type: str, data: Dict[str, Any]):
+        """Publish an event to subscribers"""
         try:
-            message_data = {
-                'from': self.agent_id,
-                'to': target_agent,
+            message = {
+                'event_type': event_type,
+                'data': data,
+                'sender': self.agent_id,
+                'timestamp': datetime.utcnow().isoformat()
+            }
+            
+            self.message_queue.append(message)
+            
+            if event_type in self.subscribers:
+                for handler in self.subscribers[event_type]:
+                    try:
+                        await handler(message)
+                    except Exception as e:
+                        logger.error(f"Error in event handler for {event_type}: {e}")
+                        
+            logger.info(f"Published event {event_type} from {self.agent_id}")
+            
+        except Exception as e:
+            logger.error(f"Error publishing event {event_type}: {e}")
+    
+    async def subscribe(self, event_type: str, handler: Callable):
+        """Subscribe to an event type"""
+        if event_type not in self.subscribers:
+            self.subscribers[event_type] = []
+        self.subscribers[event_type].append(handler)
+        logger.info(f"Agent {self.agent_id} subscribed to {event_type}")
+    
+    async def send_message(self, target_agent: str, message: Dict[str, Any]):
+        """Send a direct message to another agent"""
+        try:
+            direct_message = {
+                'target_agent': target_agent,
+                'sender': self.agent_id,
                 'message': message,
                 'timestamp': datetime.utcnow().isoformat()
             }
-
-            # In a real implementation, this would use a message broker
-            logger.info(f"Message sent from {self.agent_id} to {target_agent}")
-            return True
-
+            
+            self.message_queue.append(direct_message)
+            logger.info(f"Sent message to {target_agent} from {self.agent_id}")
+            
         except Exception as e:
-            logger.error(f"Error sending message: {e}")
-            return False
-
-    async def receive_message(self) -> Optional[Dict[str, Any]]:
-        """Receive message from queue"""
-        try:
-            if not self.message_queue.empty():
-                return await self.message_queue.get()
-            return None
-        except Exception as e:
-            logger.error(f"Error receiving message: {e}")
-            return None
-
-    async def broadcast_message(self, message: Dict[str, Any], topic: str = "general") -> bool:
-        """Broadcast message to all subscribers"""
-        try:
-            message_data = {
-                'from': self.agent_id,
-                'topic': topic,
-                'message': message,
-                'timestamp': datetime.utcnow().isoformat()
-            }
-
-            logger.info(f"Broadcast message from {self.agent_id} on topic {topic}")
-            return True
-
-        except Exception as e:
-            logger.error(f"Error broadcasting message: {e}")
-            return False
+            logger.error(f"Error sending message to {target_agent}: {e}")
+    
+    async def get_messages(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """Get recent messages"""
+        return self.message_queue[-limit:]
+    
+    async def clear_messages(self):
+        """Clear message queue"""
+        self.message_queue.clear()
+        logger.info(f"Cleared message queue for {self.agent_id}")

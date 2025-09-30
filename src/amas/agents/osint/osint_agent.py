@@ -11,7 +11,7 @@ from typing import Dict, Any, List, Optional
 import aiohttp
 from urllib.parse import urljoin, urlparse
 
-from agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
+from ..base.intelligence_agent import IntelligenceAgent, AgentStatus
 
 logger = logging.getLogger(__name__)
 

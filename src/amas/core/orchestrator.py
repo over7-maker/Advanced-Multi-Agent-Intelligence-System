@@ -21,6 +21,7 @@ from ..agents.data_analysis.data_analysis_agent import DataAnalysisAgent
 from ..agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
 from ..agents.metadata.metadata_agent import MetadataAgent
 from ..agents.reporting.reporting_agent import ReportingAgent
+from ..agents.technology_monitor.technology_monitor_agent import TechnologyMonitorAgent
 
 
 class TaskPriority(Enum):
