@@ -44,16 +44,17 @@ jobs:
     runs-on: ubuntu-latest
     
     permissions:
-      contents: read
-      issues: write
-      pull-requests: write
-      actions: read
+      contents: write          # Required for creating branches and files
+      issues: write           # Required for issue management
+      pull-requests: write    # Required for creating pull requests
+      actions: read          # Required for reading workflow artifacts
     
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Set up Python
       uses: actions/setup-python@v4
