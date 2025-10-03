@@ -63,7 +63,11 @@ class UniversalMultiAgentOrchestrator:
         print(f"🔧 AI Providers: {len(self.ai_manager.active_providers)}")
 
     async def call_agent(
-        self, agent_id: str, prompt: str, context: str = "", strategy: str = "intelligent"
+        self,
+        agent_id: str,
+        prompt: str,
+        context: str = "",
+        strategy: str = "intelligent",
     ) -> Dict[str, Any]:
         """
         Call a specific agent with comprehensive fallback
@@ -88,7 +92,9 @@ class UniversalMultiAgentOrchestrator:
         # Prepare full prompt with context
         full_prompt = prompt
         if context:
-            full_prompt = f"Context from previous analysis:\n{context}\n\nTask: {prompt}"
+            full_prompt = (
+                f"Context from previous analysis:\n{context}\n\nTask: {prompt}"
+            )
 
         # Use Universal AI Manager with fallback
         result = await self.ai_manager.generate(
@@ -171,8 +177,12 @@ class UniversalMultiAgentOrchestrator:
         Provide structured intelligence with sources.
         """
 
-        phase1 = await self.call_agent("osint_collector", phase1_prompt, strategy=strategy)
-        investigation["phases"].append({"phase": 1, "name": "OSINT Collection", "result": phase1})
+        phase1 = await self.call_agent(
+            "osint_collector", phase1_prompt, strategy=strategy
+        )
+        investigation["phases"].append(
+            {"phase": 1, "name": "OSINT Collection", "result": phase1}
+        )
 
         if phase1["success"]:
             context = phase1["response"]
@@ -193,8 +203,12 @@ class UniversalMultiAgentOrchestrator:
         Provide detailed threat assessment.
         """
 
-        phase2 = await self.call_agent("threat_analyst", phase2_prompt, context, strategy)
-        investigation["phases"].append({"phase": 2, "name": "Threat Analysis", "result": phase2})
+        phase2 = await self.call_agent(
+            "threat_analyst", phase2_prompt, context, strategy
+        )
+        investigation["phases"].append(
+            {"phase": 2, "name": "Threat Analysis", "result": phase2}
+        )
 
         if phase2["success"]:
             context += f"\n\n{phase2['response']}"
@@ -219,8 +233,12 @@ class UniversalMultiAgentOrchestrator:
             Provide technical code assessment.
             """
 
-            phase3 = await self.call_agent("code_analyst", phase3_prompt, context, strategy)
-            investigation["phases"].append({"phase": 3, "name": "Code Analysis", "result": phase3})
+            phase3 = await self.call_agent(
+                "code_analyst", phase3_prompt, context, strategy
+            )
+            investigation["phases"].append(
+                {"phase": 3, "name": "Code Analysis", "result": phase3}
+            )
 
             if phase3["success"]:
                 context += f"\n\n{phase3['response']}"
@@ -241,7 +259,9 @@ class UniversalMultiAgentOrchestrator:
         Provide executive-level strategic recommendations.
         """
 
-        phase4 = await self.call_agent("strategic_advisor", phase4_prompt, context, strategy)
+        phase4 = await self.call_agent(
+            "strategic_advisor", phase4_prompt, context, strategy
+        )
         investigation["phases"].append(
             {"phase": 4, "name": "Strategic Recommendations", "result": phase4}
         )
@@ -252,7 +272,9 @@ class UniversalMultiAgentOrchestrator:
 
         # Finalize
         investigation["completed_at"] = datetime.now().isoformat()
-        investigation["success"] = any(p["result"]["success"] for p in investigation["phases"])
+        investigation["success"] = any(
+            p["result"]["success"] for p in investigation["phases"]
+        )
 
         return investigation
 

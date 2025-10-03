@@ -16,7 +16,9 @@ from enum import Enum
 from dataclasses import dataclass
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
@@ -324,7 +326,9 @@ class StandaloneUniversalAIManager:
                     if response.status == 200:
                         result = await response.json()
                         content = (
-                            result.get("choices", [{}])[0].get("message", {}).get("content", "")
+                            result.get("choices", [{}])[0]
+                            .get("message", {})
+                            .get("content", "")
                         )
 
                         return {
@@ -333,7 +337,9 @@ class StandaloneUniversalAIManager:
                             "response_time": response_time,
                             "provider": provider_id,
                             "provider_name": config.name,
-                            "tokens_used": result.get("usage", {}).get("total_tokens", 0),
+                            "tokens_used": result.get("usage", {}).get(
+                                "total_tokens", 0
+                            ),
                         }
                     elif response.status == 429:
                         config.rate_limit_until = datetime.now() + timedelta(minutes=5)
@@ -372,7 +378,10 @@ class StandaloneUniversalAIManager:
         try:
             content = messages[-1]["content"] if messages else "Hello"
 
-            headers = {"Content-Type": "application/json", "X-goog-api-key": config.api_key}
+            headers = {
+                "Content-Type": "application/json",
+                "X-goog-api-key": config.api_key,
+            }
 
             payload = {"contents": [{"parts": [{"text": content}]}]}
 
@@ -464,10 +473,14 @@ class StandaloneUniversalAIManager:
             for pid in available:
                 config = self.providers[pid]
                 success_rate = (
-                    config.get_success_rate() / 100.0 if config.get_success_rate() > 0 else 0.5
+                    config.get_success_rate() / 100.0
+                    if config.get_success_rate() > 0
+                    else 0.5
                 )
                 speed_factor = (
-                    1.0 / (config.avg_response_time + 0.1) if config.avg_response_time > 0 else 1.0
+                    1.0 / (config.avg_response_time + 0.1)
+                    if config.avg_response_time > 0
+                    else 1.0
                 )
                 weight = (success_rate * 0.7) + (speed_factor * 0.3)
                 weights.append(weight)
@@ -482,7 +495,9 @@ class StandaloneUniversalAIManager:
         elif strategy == "fastest":
             available_configs = [(p, self.providers[p]) for p in available]
             available_configs.sort(
-                key=lambda x: x[1].avg_response_time if x[1].avg_response_time > 0 else 999
+                key=lambda x: (
+                    x[1].avg_response_time if x[1].avg_response_time > 0 else 999
+                )
             )
             return available_configs[0][0] if available_configs else None
         else:
@@ -515,7 +530,9 @@ class StandaloneUniversalAIManager:
                 continue
 
             config = self.providers[provider_id]
-            logger.info(f"🤖 Attempting with {config.name} (attempt {attempt + 1}/{max_attempts})")
+            logger.info(
+                f"🤖 Attempting with {config.name} (attempt {attempt + 1}/{max_attempts})"
+            )
 
             try:
                 result = await self._make_request(provider_id, messages, **kwargs)
@@ -548,7 +565,9 @@ class StandaloneUniversalAIManager:
                     if attempt > 0:
                         self.global_stats["total_fallbacks"] += 1
 
-                    logger.info(f"✅ Success with {config.name} in {result['response_time']:.2f}s")
+                    logger.info(
+                        f"✅ Success with {config.name} in {result['response_time']:.2f}s"
+                    )
                     return result
 
                 else:
@@ -584,7 +603,8 @@ class StandaloneUniversalAIManager:
         success_rate = 0
         if self.global_stats["total_requests"] > 0:
             success_rate = (
-                self.global_stats["successful_requests"] / self.global_stats["total_requests"]
+                self.global_stats["successful_requests"]
+                / self.global_stats["total_requests"]
             ) * 100
 
         uptime = (datetime.now() - self.global_stats["uptime"]).total_seconds()
@@ -639,7 +659,9 @@ class StandaloneUniversalAIManager:
 
         for pid in self.active_providers:
             config = self.providers[pid]
-            lines.append(f"  [{config.priority:2d}] {config.name:25s} | {config.model:35s}")
+            lines.append(
+                f"  [{config.priority:2d}] {config.name:25s} | {config.model:35s}"
+            )
 
         lines.extend(["", "=" * 80])
 
@@ -659,7 +681,10 @@ def get_manager() -> StandaloneUniversalAIManager:
 
 
 async def generate_ai_response(
-    prompt: str, system_prompt: Optional[str] = None, strategy: str = "intelligent", **kwargs
+    prompt: str,
+    system_prompt: Optional[str] = None,
+    strategy: str = "intelligent",
+    **kwargs,
 ) -> Dict[str, Any]:
     """Convenience function to generate AI response"""
     manager = get_manager()

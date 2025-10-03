@@ -318,13 +318,19 @@ class UniversalAIManager:
         # Sort by priority
         self.active_providers.sort(key=lambda x: self.providers[x].priority)
 
-        logger.info(f"✅ Initialized {len(self.active_providers)}/{len(self.providers)} providers")
+        logger.info(
+            f"✅ Initialized {len(self.active_providers)}/{len(self.providers)} providers"
+        )
         for pid in self.active_providers:
             config = self.providers[pid]
-            logger.info(f"  [{config.priority}] {config.name} ({config.provider_type.value})")
+            logger.info(
+                f"  [{config.priority}] {config.name} ({config.provider_type.value})"
+            )
 
         if not self.active_providers:
-            logger.error("❌ No active AI providers found! Please set at least one API key.")
+            logger.error(
+                "❌ No active AI providers found! Please set at least one API key."
+            )
             raise Exception("No active AI providers configured")
 
     async def _make_openai_request(
@@ -365,7 +371,9 @@ class UniversalAIManager:
                     if response.status == 200:
                         result = await response.json()
                         content = (
-                            result.get("choices", [{}])[0].get("message", {}).get("content", "")
+                            result.get("choices", [{}])[0]
+                            .get("message", {})
+                            .get("content", "")
                         )
 
                         return {
@@ -374,7 +382,9 @@ class UniversalAIManager:
                             "response_time": response_time,
                             "provider": provider_id,
                             "provider_name": config.name,
-                            "tokens_used": result.get("usage", {}).get("total_tokens", 0),
+                            "tokens_used": result.get("usage", {}).get(
+                                "total_tokens", 0
+                            ),
                             "raw_response": result,
                         }
                     elif response.status == 429:
@@ -415,7 +425,10 @@ class UniversalAIManager:
             # Convert messages to Gemini format
             content = messages[-1]["content"] if messages else "Hello"
 
-            headers = {"Content-Type": "application/json", "X-goog-api-key": config.api_key}
+            headers = {
+                "Content-Type": "application/json",
+                "X-goog-api-key": config.api_key,
+            }
 
             payload = {"contents": [{"parts": [{"text": content}]}]}
 
@@ -590,12 +603,16 @@ class UniversalAIManager:
             for pid in available:
                 config = self.providers[pid]
                 success_rate = (
-                    config.get_success_rate() / 100.0 if config.get_success_rate() > 0 else 0.5
+                    config.get_success_rate() / 100.0
+                    if config.get_success_rate() > 0
+                    else 0.5
                 )
 
                 # Faster response time = higher weight
                 speed_factor = (
-                    1.0 / (config.avg_response_time + 0.1) if config.avg_response_time > 0 else 1.0
+                    1.0 / (config.avg_response_time + 0.1)
+                    if config.avg_response_time > 0
+                    else 1.0
                 )
 
                 # Combined weight
@@ -615,7 +632,9 @@ class UniversalAIManager:
             # Select fastest provider
             available_configs = [(p, self.providers[p]) for p in available]
             available_configs.sort(
-                key=lambda x: x[1].avg_response_time if x[1].avg_response_time > 0 else 999
+                key=lambda x: (
+                    x[1].avg_response_time if x[1].avg_response_time > 0 else 999
+                )
             )
             return available_configs[0][0] if available_configs else None
 
@@ -664,7 +683,9 @@ class UniversalAIManager:
                 continue
 
             config = self.providers[provider_id]
-            logger.info(f"🤖 Attempting with {config.name} (attempt {attempt + 1}/{max_attempts})")
+            logger.info(
+                f"🤖 Attempting with {config.name} (attempt {attempt + 1}/{max_attempts})"
+            )
 
             try:
                 result = await self._make_request(provider_id, messages, **kwargs)
@@ -700,7 +721,9 @@ class UniversalAIManager:
                     if attempt > 0:
                         self.global_stats["total_fallbacks"] += 1
 
-                    logger.info(f"✅ Success with {config.name} in {result['response_time']:.2f}s")
+                    logger.info(
+                        f"✅ Success with {config.name} in {result['response_time']:.2f}s"
+                    )
                     return result
 
                 else:
@@ -739,7 +762,8 @@ class UniversalAIManager:
         success_rate = 0
         if self.global_stats["total_requests"] > 0:
             success_rate = (
-                self.global_stats["successful_requests"] / self.global_stats["total_requests"]
+                self.global_stats["successful_requests"]
+                / self.global_stats["total_requests"]
             ) * 100
 
         uptime = (datetime.now() - self.global_stats["uptime"]).total_seconds()
@@ -778,7 +802,9 @@ class UniversalAIManager:
                 "last_used": config.last_used.isoformat() if config.last_used else None,
                 "last_error": config.last_error,
                 "rate_limited": (
-                    config.rate_limit_until.isoformat() if config.rate_limit_until else None
+                    config.rate_limit_until.isoformat()
+                    if config.rate_limit_until
+                    else None
                 ),
             }
 
@@ -828,7 +854,9 @@ class UniversalAIManager:
 
         lines.extend(["", "INACTIVE PROVIDERS:", ""])
 
-        inactive = [pid for pid in self.providers.keys() if pid not in self.active_providers]
+        inactive = [
+            pid for pid in self.providers.keys() if pid not in self.active_providers
+        ]
         if inactive:
             for pid in inactive:
                 config = self.providers[pid]
@@ -854,7 +882,10 @@ def get_universal_ai_manager() -> UniversalAIManager:
 
 
 async def generate_ai_response(
-    prompt: str, system_prompt: Optional[str] = None, strategy: str = "intelligent", **kwargs
+    prompt: str,
+    system_prompt: Optional[str] = None,
+    strategy: str = "intelligent",
+    **kwargs,
 ) -> Dict[str, Any]:
     """
     Convenience function to generate AI response
@@ -888,7 +919,8 @@ async def test_universal_ai_manager():
     # Test 1: Simple generation
     print("📝 Test 1: Simple generation with intelligent strategy...")
     result = await manager.generate(
-        "Say 'Hello from Universal AI Manager!' and nothing else.", strategy="intelligent"
+        "Say 'Hello from Universal AI Manager!' and nothing else.",
+        strategy="intelligent",
     )
 
     if result["success"]:
@@ -914,7 +946,9 @@ async def test_universal_ai_manager():
 
     # Test 3: Fastest strategy
     print("📝 Test 3: Generation with fastest strategy...")
-    result = await manager.generate("Say 'Speed test' and nothing else.", strategy="fastest")
+    result = await manager.generate(
+        "Say 'Speed test' and nothing else.", strategy="fastest"
+    )
 
     if result["success"]:
         print(f"✅ Success!")
