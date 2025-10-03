@@ -4,175 +4,194 @@ AI Security Scanner Response System
 Automated response to security scan reports
 """
 
-import os
 import asyncio
+import json
+import os
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import requests
 from openai import OpenAI
-from typing import Dict, List, Any, Optional
-import time
-import json
-from datetime import datetime
+
 
 class AISecurityResponse:
     def __init__(self):
-        self.deepseek_key = os.environ.get('DEEPSEEK_API_KEY')
-        self.claude_key = os.environ.get('CLAUDE_API_KEY')
-        self.gpt4_key = os.environ.get('GPT4_API_KEY')
-        self.glm_key = os.environ.get('GLM_API_KEY')
-        self.grok_key = os.environ.get('GROK_API_KEY')
-        self.kimi_key = os.environ.get('KIMI_API_KEY')
-        self.qwen_key = os.environ.get('QWEN_API_KEY')
-        self.gemini_key = os.environ.get('GEMINI_API_KEY')
-        self.gptoss_key = os.environ.get('GPTOSS_API_KEY')
-        self.github_token = os.environ.get('GITHUB_TOKEN')
-        self.repo_name = os.environ.get('REPO_NAME')
-        self.pr_number = os.environ.get('PR_NUMBER')
-        
+        self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
+        self.claude_key = os.environ.get("CLAUDE_API_KEY")
+        self.gpt4_key = os.environ.get("GPT4_API_KEY")
+        self.glm_key = os.environ.get("GLM_API_KEY")
+        self.grok_key = os.environ.get("GROK_API_KEY")
+        self.kimi_key = os.environ.get("KIMI_API_KEY")
+        self.qwen_key = os.environ.get("QWEN_API_KEY")
+        self.gemini_key = os.environ.get("GEMINI_API_KEY")
+        self.gptoss_key = os.environ.get("GPTOSS_API_KEY")
+        self.github_token = os.environ.get("GITHUB_TOKEN")
+        self.repo_name = os.environ.get("REPO_NAME")
+        self.pr_number = os.environ.get("PR_NUMBER")
+
         # Initialize AI clients with intelligent fallback priority
         self.agents = []
-        
+
         # Priority order: DeepSeek (most reliable), Claude, GPT-4, GLM, Grok, Kimi, Qwen, Gemini, GPTOSS
         if self.deepseek_key:
             try:
-                self.agents.append({
-                    'name': 'DeepSeek',
-                    'client': OpenAI(
-                        base_url="https://api.deepseek.com/v1",
-                        api_key=self.deepseek_key,
-                    ),
-                    'model': 'deepseek-chat',
-                    'role': 'Primary Security Analyst',
-                    'priority': 1
-                })
+                self.agents.append(
+                    {
+                        "name": "DeepSeek",
+                        "client": OpenAI(
+                            base_url="https://api.deepseek.com/v1",
+                            api_key=self.deepseek_key,
+                        ),
+                        "model": "deepseek-chat",
+                        "role": "Primary Security Analyst",
+                        "priority": 1,
+                    }
+                )
             except Exception as e:
                 print(f"Failed to initialize DeepSeek agent: {e}")
-        
+
         if self.glm_key:
             try:
-                self.agents.append({
-                    'name': 'GLM',
-                    'client': OpenAI(
-                        base_url="https://openrouter.ai/api/v1",
-                        api_key=self.glm_key,
-                    ),
-                    'model': 'z-ai/glm-4.5-air:free',
-                    'role': 'Security Assessment Specialist',
-                    'priority': 2
-                })
+                self.agents.append(
+                    {
+                        "name": "GLM",
+                        "client": OpenAI(
+                            base_url="https://openrouter.ai/api/v1",
+                            api_key=self.glm_key,
+                        ),
+                        "model": "z-ai/glm-4.5-air:free",
+                        "role": "Security Assessment Specialist",
+                        "priority": 2,
+                    }
+                )
             except Exception as e:
                 print(f"Failed to initialize GLM agent: {e}")
-        
+
         if self.grok_key:
             try:
-                self.agents.append({
-                    'name': 'Grok',
-                    'client': OpenAI(
-                        base_url="https://openrouter.ai/api/v1",
-                        api_key=self.grok_key,
-                    ),
-                    'model': 'x-ai/grok-4-fast:free',
-                    'role': 'Security Strategy Advisor',
-                    'priority': 3
-                })
+                self.agents.append(
+                    {
+                        "name": "Grok",
+                        "client": OpenAI(
+                            base_url="https://openrouter.ai/api/v1",
+                            api_key=self.grok_key,
+                        ),
+                        "model": "x-ai/grok-4-fast:free",
+                        "role": "Security Strategy Advisor",
+                        "priority": 3,
+                    }
+                )
             except Exception as e:
                 print(f"Failed to initialize Grok agent: {e}")
-        
+
         if self.kimi_key:
             try:
-                self.agents.append({
-                    'name': 'Kimi',
-                    'client': OpenAI(
-                        base_url="https://openrouter.ai/api/v1",
-                        api_key=self.kimi_key,
-                    ),
-                    'model': 'moonshot/moonshot-v1-8k:free',
-                    'role': 'Technical Security Specialist',
-                    'priority': 4
-                })
+                self.agents.append(
+                    {
+                        "name": "Kimi",
+                        "client": OpenAI(
+                            base_url="https://openrouter.ai/api/v1",
+                            api_key=self.kimi_key,
+                        ),
+                        "model": "moonshot/moonshot-v1-8k:free",
+                        "role": "Technical Security Specialist",
+                        "priority": 4,
+                    }
+                )
             except Exception as e:
                 print(f"Failed to initialize Kimi agent: {e}")
-        
+
         if self.qwen_key:
             try:
-                self.agents.append({
-                    'name': 'Qwen',
-                    'client': OpenAI(
-                        base_url="https://openrouter.ai/api/v1",
-                        api_key=self.qwen_key,
-                    ),
-                    'model': 'qwen/qwen-2.5-7b-instruct:free',
-                    'role': 'Security Research Specialist',
-                    'priority': 5
-                })
+                self.agents.append(
+                    {
+                        "name": "Qwen",
+                        "client": OpenAI(
+                            base_url="https://openrouter.ai/api/v1",
+                            api_key=self.qwen_key,
+                        ),
+                        "model": "qwen/qwen-2.5-7b-instruct:free",
+                        "role": "Security Research Specialist",
+                        "priority": 5,
+                    }
+                )
             except Exception as e:
                 print(f"Failed to initialize Qwen agent: {e}")
-        
+
         if self.gptoss_key:
             try:
-                self.agents.append({
-                    'name': 'GPTOSS',
-                    'client': OpenAI(
-                        base_url="https://openrouter.ai/api/v1",
-                        api_key=self.gptoss_key,
-                    ),
-                    'model': 'openai/gpt-3.5-turbo:free',
-                    'role': 'Security Validation Specialist',
-                    'priority': 6
-                })
+                self.agents.append(
+                    {
+                        "name": "GPTOSS",
+                        "client": OpenAI(
+                            base_url="https://openrouter.ai/api/v1",
+                            api_key=self.gptoss_key,
+                        ),
+                        "model": "openai/gpt-3.5-turbo:free",
+                        "role": "Security Validation Specialist",
+                        "priority": 6,
+                    }
+                )
             except Exception as e:
                 print(f"Failed to initialize GPTOSS agent: {e}")
-        
+
         # Sort by priority
-        self.agents.sort(key=lambda x: x['priority'])
-        
+        self.agents.sort(key=lambda x: x["priority"])
+
         if not self.agents:
             print("⚠️ No AI agents available - cannot perform security analysis")
             return
-        
+
         print(f"🔒 Initialized {len(self.agents)} AI agents for security response:")
         for agent in self.agents:
             print(f"  - {agent['name']}: {agent['role']}")
-    
-    async def call_agent(self, agent: Dict[str, Any], prompt: str, context: str = "") -> Optional[str]:
+
+    async def call_agent(
+        self, agent: Dict[str, Any], prompt: str, context: str = ""
+    ) -> Optional[str]:
         """Call a specific AI agent with error handling"""
         try:
             print(f"🤖 {agent['name']} ({agent['role']}) is working...")
-            
+
             full_prompt = f"{prompt}\n\nContext: {context}" if context else prompt
-            
+
             extra_headers = {}
-            if 'openrouter.ai' in str(agent['client'].base_url):
+            if "openrouter.ai" in str(agent["client"].base_url):
                 extra_headers = {
                     "HTTP-Referer": f"https://github.com/{self.repo_name}",
                     "X-Title": "AMAS Security Response System",
                 }
-            
-            response = agent['client'].chat.completions.create(
+
+            response = agent["client"].chat.completions.create(
                 extra_headers=extra_headers if extra_headers else None,
-                model=agent['model'],
+                model=agent["model"],
                 messages=[
-                    {"role": "system", "content": f"You are {agent['role']} for the AMAS Intelligence System. {agent.get('description', '')}"},
-                    {"role": "user", "content": full_prompt}
+                    {
+                        "role": "system",
+                        "content": f"You are {agent['role']} for the AMAS Intelligence System. {agent.get('description', '')}",
+                    },
+                    {"role": "user", "content": full_prompt},
                 ],
                 temperature=0.7,
-                max_tokens=2000
+                max_tokens=2000,
             )
-            
+
             result = response.choices[0].message.content
             print(f"✅ {agent['name']} completed security analysis")
             return result
-            
+
         except Exception as e:
             print(f"❌ {agent['name']} failed: {e}")
             return None
-    
+
     async def analyze_security_findings(self, security_report: str) -> Dict[str, Any]:
         """Analyze security findings using multiple agents"""
         if not self.agents:
             return {"error": "No agents available"}
-        
+
         print("🔒 Starting Multi-Agent Security Analysis...")
-        
+
         # Step 1: Security Assessment (DeepSeek or first available agent)
         primary_agent = self.agents[0]
         assessment_prompt = f"""
@@ -187,11 +206,11 @@ class AISecurityResponse:
         Security Report:
         {security_report}
         """
-        
+
         security_assessment = await self.call_agent(primary_agent, assessment_prompt)
         if not security_assessment:
             return {"error": "Security assessment failed"}
-        
+
         # Step 2: False Positive Analysis (GLM or second agent)
         analysis_agent = self.agents[1] if len(self.agents) > 1 else self.agents[0]
         false_positive_prompt = f"""
@@ -205,11 +224,15 @@ class AISecurityResponse:
         Security Assessment:
         {security_assessment}
         """
-        
-        false_positive_analysis = await self.call_agent(analysis_agent, false_positive_prompt, security_assessment)
+
+        false_positive_analysis = await self.call_agent(
+            analysis_agent, false_positive_prompt, security_assessment
+        )
         if not false_positive_analysis:
-            false_positive_analysis = "False positive analysis failed - using security assessment only"
-        
+            false_positive_analysis = (
+                "False positive analysis failed - using security assessment only"
+            )
+
         # Step 3: Security Recommendations (Grok or third agent)
         strategy_agent = self.agents[2] if len(self.agents) > 2 else self.agents[0]
         strategy_prompt = f"""
@@ -224,24 +247,30 @@ class AISecurityResponse:
         False Positive Analysis:
         {false_positive_analysis}
         """
-        
-        security_recommendations = await self.call_agent(strategy_agent, strategy_prompt, false_positive_analysis)
+
+        security_recommendations = await self.call_agent(
+            strategy_agent, strategy_prompt, false_positive_analysis
+        )
         if not security_recommendations:
-            security_recommendations = "Security recommendations failed - review false positive analysis"
-        
+            security_recommendations = (
+                "Security recommendations failed - review false positive analysis"
+            )
+
         return {
-            'security_assessment': security_assessment,
-            'false_positive_analysis': false_positive_analysis,
-            'security_recommendations': security_recommendations,
-            'agents_used': [agent['name'] for agent in self.agents],
-            'timestamp': time.strftime('%Y-%m-%d %H:%M:%S UTC', time.gmtime())
+            "security_assessment": security_assessment,
+            "false_positive_analysis": false_positive_analysis,
+            "security_recommendations": security_recommendations,
+            "agents_used": [agent["name"] for agent in self.agents],
+            "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
         }
-    
-    def generate_security_response(self, results: Dict[str, Any], original_report: str) -> str:
+
+    def generate_security_response(
+        self, results: Dict[str, Any], original_report: str
+    ) -> str:
         """Generate comprehensive security response"""
-        if 'error' in results:
+        if "error" in results:
             return f"# Security Analysis Failed\n\nError: {results['error']}"
-        
+
         response = f"""# 🔒 AMAS Security Scanner Response
 
 **Generated:** {results['timestamp']}  
@@ -329,29 +358,30 @@ Thank you for the comprehensive security scan report! The AMAS AI Security Scann
 </details>
 """
         return response
-    
+
     async def run(self, security_report: str = ""):
         """Main execution function"""
         print("🚀 Starting AMAS Security Response System...")
-        
+
         # Create artifacts directory
         os.makedirs("artifacts", exist_ok=True)
-        
+
         # Analyze security findings
         results = await self.analyze_security_findings(security_report)
-        
+
         # Generate response
         response = self.generate_security_response(results, security_report)
-        
+
         # Save response
         response_path = "artifacts/security_response.md"
         with open(response_path, "w", encoding="utf-8") as f:
             f.write(response)
-        
+
         print(f"📋 Security response saved to {response_path}")
         print("✅ Security Response Complete!")
-        
+
         return results
+
 
 async def main():
     # Sample security report for testing
@@ -370,14 +400,15 @@ async def main():
     - Potential SQL injection vulnerability (Line 167)
     - Potential XSS vulnerability (Line 171)
     """
-    
+
     responder = AISecurityResponse()
     await responder.run(sample_report)
+
 
 if __name__ == "__main__":
     print("🔒 AMAS Security Response System")
     print("=" * 50)
-    
+
     # Check API key availability
     print("🔑 API Key Status:")
     print(f"  DeepSeek: {'✅' if os.getenv('DEEPSEEK_API_KEY') else '❌'}")
@@ -387,5 +418,5 @@ if __name__ == "__main__":
     print(f"  Qwen: {'✅' if os.getenv('QWEN_API_KEY') else '❌'}")
     print(f"  GPTOSS: {'✅' if os.getenv('GPTOSS_API_KEY') else '❌'}")
     print()
-    
+
     asyncio.run(main())

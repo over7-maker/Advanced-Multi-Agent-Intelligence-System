@@ -4,9 +4,9 @@ Automated setup for Phase 1 foundation components
 """
 
 import asyncio
+import logging
 import os
 import subprocess
-import logging
 from pathlib import Path
 
 logging.basicConfig(level=logging.INFO)

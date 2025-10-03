@@ -3,20 +3,22 @@
 Generate Release Notes for GitHub Releases
 """
 
+import json
 import os
 import sys
-import requests
-import json
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
+import requests
+
 
 def main():
     print("📋 Release Notes Generator")
     print("=" * 40)
 
     # Get arguments
-    version = os.environ.get('VERSION', 'v1.0.0')
-    output_file = os.environ.get('OUTPUT', 'RELEASE_NOTES.md')
+    version = os.environ.get("VERSION", "v1.0.0")
+    output_file = os.environ.get("OUTPUT", "RELEASE_NOTES.md")
 
     print(f"📋 Version: {version}")
     print(f"📄 Output: {output_file}")
@@ -25,11 +27,12 @@ def main():
     release_notes = generate_release_notes(version)
 
     # Write to file
-    with open(output_file, 'w', encoding='utf-8') as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(release_notes)
 
     print(f"✅ Release notes generated: {output_file}")
     return True
+
 
 def generate_release_notes(version: str) -> str:
     """Generate comprehensive release notes"""
@@ -133,3 +136,32 @@ cd Advanced-Multi-Agent-Intelligence-System
 
 # Follow the setup guide
 cat SETUP_GUIDE.md
+```
+
+## 🙏 Contributors
+
+Thanks to all contributors who made this release possible!
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/discussions)
+- **Documentation**: [Project Wiki](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/wiki)
+
+---
+
+**Full Changelog**: https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/releases
+
+*Thank you for using AMAS!* 🚀
+"""
+
+    return release_notes
+
+
+if __name__ == "__main__":
+    try:
+        success = main()
+        sys.exit(0 if success else 1)
+    except Exception as e:
+        print(f"❌ Error generating release notes: {e}")
+        sys.exit(1)

@@ -3,26 +3,27 @@
 Final YAML Fix - Fix ALL remaining YAML syntax issues
 """
 
-import os
-import sys
-import yaml
-import re
-from pathlib import Path
-from typing import Dict, Any, List
-from datetime import datetime
 import logging
+import os
+import re
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
+
+import yaml
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 def fix_all_yaml_issues(workflow_file: str) -> Dict[str, Any]:
     """Fix ALL YAML issues in a workflow file"""
     try:
-        with open(workflow_file, 'r', encoding='utf-8') as f:
+        with open(workflow_file, "r", encoding="utf-8") as f:
             content = f.read()
 
         original_content = content
@@ -97,43 +98,44 @@ def fix_all_yaml_issues(workflow_file: str) -> Dict[str, Any]:
 
         # Write back if fixes were applied
         if fixes_applied > 0:
-            with open(workflow_file, 'w', encoding='utf-8') as f:
+            with open(workflow_file, "w", encoding="utf-8") as f:
                 f.write(content)
 
         return {
-            'fixed': True,
-            'fixes_applied': fixes_applied,
-            'content_changed': content != original_content
+            "fixed": True,
+            "fixes_applied": fixes_applied,
+            "content_changed": content != original_content,
         }
 
     except Exception as e:
         return {
-            'fixed': False,
-            'error': str(e),
-            'fixes_applied': 0,
-            'content_changed': False
+            "fixed": False,
+            "error": str(e),
+            "fixes_applied": 0,
+            "content_changed": False,
         }
+
 
 def main():
     """Main function"""
     workflow_files = [
-        '.github/workflows/ai_development.yml',
-        '.github/workflows/ai_complete_workflow.yml',
-        '.github/workflows/ai_simple_workflow.yml'
+        ".github/workflows/ai_development.yml",
+        ".github/workflows/ai_complete_workflow.yml",
+        ".github/workflows/ai_simple_workflow.yml",
     ]
 
     total_fixes = 0
 
     print("🔧 FINAL YAML FIX - FIXING ALL REMAINING ISSUES...")
-    print("="*60)
+    print("=" * 60)
 
     for workflow_file in workflow_files:
         if Path(workflow_file).exists():
             print(f"Fixing {workflow_file}...")
             result = fix_all_yaml_issues(workflow_file)
 
-            if result['fixed']:
-                fixes = result['fixes_applied']
+            if result["fixed"]:
+                fixes = result["fixes_applied"]
                 total_fixes += fixes
                 print(f"  ✅ Applied {fixes} fixes")
             else:
@@ -141,12 +143,13 @@ def main():
         else:
             print(f"  ❌ File not found: {workflow_file}")
 
-    print("="*60)
+    print("=" * 60)
     print(f"✅ TOTAL FIXES APPLIED: {total_fixes}")
     print("✅ ALL YAML ISSUES COMPLETELY FIXED!")
     print("✅ NO MORE BROKEN RUN COMMANDS!")
     print("✅ ALL WORKFLOWS NOW HAVE VALID YAML!")
-    print("="*60)
+    print("=" * 60)
+
 
 if __name__ == "__main__":
     main()

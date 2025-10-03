@@ -4,10 +4,11 @@ Agentic RAG Implementation
 
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
 
 class AgenticRAG:
     """Agentic RAG for AMAS Intelligence System"""
@@ -33,18 +34,15 @@ class AgenticRAG:
         try:
             # Mock RAG query
             result = {
-                'query': query,
-                'response': 'This is a mock RAG response',
-                'sources': ['source1', 'source2'],
-                'confidence': 0.8,
-                'timestamp': datetime.utcnow().isoformat()
+                "query": query,
+                "response": "This is a mock RAG response",
+                "sources": ["source1", "source2"],
+                "confidence": 0.8,
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
             return result
 
         except Exception as e:
             logger.error(f"Error in RAG query: {e}")
-            return {
-                'error': str(e),
-                'timestamp': datetime.utcnow().isoformat()
-            }
+            return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}

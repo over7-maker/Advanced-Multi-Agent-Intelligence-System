@@ -3,25 +3,26 @@
 Test the 9-API failover system
 """
 
+import json
 import os
 import sys
-import json
 from pathlib import Path
+
 
 def test_api_keys():
     """Test API key configuration"""
     print("🔑 Testing API Key Configuration...")
 
     api_keys = [
-        'DEEPSEEK_API_KEY',
-        'CLAUDE_API_KEY',
-        'GPT4_API_KEY',
-        'GLM_API_KEY',
-        'GROK_API_KEY',
-        'KIMI_API_KEY',
-        'QWEN_API_KEY',
-        'GEMINI_API_KEY',
-        'GPTOSS_API_KEY'
+        "DEEPSEEK_API_KEY",
+        "CLAUDE_API_KEY",
+        "GPT4_API_KEY",
+        "GLM_API_KEY",
+        "GROK_API_KEY",
+        "KIMI_API_KEY",
+        "QWEN_API_KEY",
+        "GEMINI_API_KEY",
+        "GPTOSS_API_KEY",
     ]
 
     configured_count = 0
@@ -35,6 +36,7 @@ def test_api_keys():
     print(f"\n📊 API Key Status: {configured_count}/9 configured")
     return configured_count
 
+
 def test_workflow_files():
     """Test workflow files for 9-API support"""
     print("\n📄 Testing Workflow Files...")
@@ -45,14 +47,14 @@ def test_workflow_files():
     updated_count = 0
     for workflow in workflows:
         try:
-            with open(workflow, 'r') as f:
+            with open(workflow, "r") as f:
                 content = f.read()
 
             # Check for 9-API support
-            has_deepseek = 'DEEPSEEK_API_KEY' in content
-            has_claude = 'CLAUDE_API_KEY' in content
-            has_gpt4 = 'GPT4_API_KEY' in content
-            has_gemini = 'GEMINI_API_KEY' in content
+            has_deepseek = "DEEPSEEK_API_KEY" in content
+            has_claude = "CLAUDE_API_KEY" in content
+            has_gpt4 = "GPT4_API_KEY" in content
+            has_gemini = "GEMINI_API_KEY" in content
 
             if has_deepseek and has_claude and has_gpt4 and has_gemini:
                 print(f"  ✅ {workflow.name}: 9-API support")
@@ -66,6 +68,7 @@ def test_workflow_files():
     print(f"\n📊 Workflow Status: {updated_count}/{len(workflows)} updated")
     return updated_count
 
+
 def test_ai_scripts():
     """Test AI scripts for 9-API support"""
     print("\n🤖 Testing AI Scripts...")
@@ -76,14 +79,14 @@ def test_ai_scripts():
     updated_count = 0
     for script in scripts:
         try:
-            with open(script, 'r') as f:
+            with open(script, "r") as f:
                 content = f.read()
 
             # Check for 9-API support
-            has_deepseek = 'DEEPSEEK_API_KEY' in content
-            has_claude = 'CLAUDE_API_KEY' in content
-            has_gpt4 = 'GPT4_API_KEY' in content
-            has_gemini = 'GEMINI_API_KEY' in content
+            has_deepseek = "DEEPSEEK_API_KEY" in content
+            has_claude = "CLAUDE_API_KEY" in content
+            has_gpt4 = "GPT4_API_KEY" in content
+            has_gemini = "GEMINI_API_KEY" in content
 
             if has_deepseek and has_claude and has_gpt4 and has_gemini:
                 print(f"  ✅ {script.name}: 9-API support")
@@ -97,20 +100,28 @@ def test_ai_scripts():
     print(f"\n📊 Script Status: {updated_count}/{len(scripts)} updated")
     return updated_count
 
+
 def test_fallback_priority():
     """Test fallback priority order"""
     print("\n🔄 Testing Fallback Priority...")
 
     # Expected priority order
     expected_order = [
-        'DeepSeek', 'Claude', 'GPT-4', 'GLM', 'Grok',
-        'Kimi', 'Qwen', 'Gemini', 'GPTOSS'
+        "DeepSeek",
+        "Claude",
+        "GPT-4",
+        "GLM",
+        "Grok",
+        "Kimi",
+        "Qwen",
+        "Gemini",
+        "GPTOSS",
     ]
 
     # Check a sample script for priority order
     script_path = Path(".github/scripts/ai_code_analyzer.py")
     try:
-        with open(script_path, 'r') as f:
+        with open(script_path, "r") as f:
             content = f.read()
 
         # Check if priority comments are updated
@@ -124,6 +135,7 @@ def test_fallback_priority():
     except Exception as e:
         print(f"  ❌ Error checking priority: {e}")
         return False
+
 
 def main():
     """Run comprehensive 9-API system test"""
@@ -155,12 +167,17 @@ def main():
         print("\n🎉 9-API System Status: ✅ READY")
         print("✅ All workflows now support 9-API failover")
         print("✅ Intelligent fallback system active")
-        print("✅ Priority order: DeepSeek → Claude → GPT-4 → GLM → Grok → Kimi → Qwen → Gemini → GPTOSS")
+        print(
+            "✅ Priority order: DeepSeek → Claude → GPT-4 → GLM → Grok → Kimi → Qwen → Gemini → GPTOSS"
+        )
     else:
         print("\n⚠️ 9-API System Status: ⚠️ NEEDS ATTENTION")
         print("Some components may need additional configuration")
 
-    return api_count >= 6 and workflow_count >= 10 and script_count >= 10 and priority_ok
+    return (
+        api_count >= 6 and workflow_count >= 10 and script_count >= 10 and priority_ok
+    )
+
 
 if __name__ == "__main__":
     success = main()
