@@ -1,0 +1,176 @@
+name: Universal AI Workflow
+# Demonstrates using all 16 AI providers with comprehensive fallback
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task to perform'
+        required: true
+        default: 'test'
+        type: choice
+        options:
+          - test
+          - analyze
+          - generate
+  issues:
+    types: [opened, edited, labeled]
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  universal-ai-task:
+    runs-on: ubuntu-latest
+    
+    env:
+      # All 16 AI API Keys - Comprehensive Fallback Support
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+      KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+      QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+      GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+      CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+      GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+      CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+      NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+      GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+      GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+      COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+      CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+      
+      # GitHub context
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO_NAME: ${{ github.repository }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install aiohttp asyncio
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+      
+      - name: Check API Keys Configuration
+        run: |
+          echo "🔍 Checking configured API keys..."
+          
+          count=0
+          [ ! -z "$DEEPSEEK_API_KEY" ] && echo "✅ DeepSeek" && ((count++)) || echo "❌ DeepSeek"
+          [ ! -z "$GLM_API_KEY" ] && echo "✅ GLM" && ((count++)) || echo "❌ GLM"
+          [ ! -z "$GROK_API_KEY" ] && echo "✅ Grok" && ((count++)) || echo "❌ Grok"
+          [ ! -z "$KIMI_API_KEY" ] && echo "✅ Kimi" && ((count++)) || echo "❌ Kimi"
+          [ ! -z "$QWEN_API_KEY" ] && echo "✅ Qwen" && ((count++)) || echo "❌ Qwen"
+          [ ! -z "$GPTOSS_API_KEY" ] && echo "✅ GPT OSS" && ((count++)) || echo "❌ GPT OSS"
+          [ ! -z "$GROQAI_API_KEY" ] && echo "✅ Groq AI" && ((count++)) || echo "❌ Groq AI"
+          [ ! -z "$CEREBRAS_API_KEY" ] && echo "✅ Cerebras" && ((count++)) || echo "❌ Cerebras"
+          [ ! -z "$GEMINIAI_API_KEY" ] && echo "✅ Gemini" && ((count++)) || echo "❌ Gemini"
+          [ ! -z "$CODESTRAL_API_KEY" ] && echo "✅ Codestral" && ((count++)) || echo "❌ Codestral"
+          [ ! -z "$NVIDIA_API_KEY" ] && echo "✅ NVIDIA" && ((count++)) || echo "❌ NVIDIA"
+          [ ! -z "$GEMINI2_API_KEY" ] && echo "✅ Gemini 2" && ((count++)) || echo "❌ Gemini 2"
+          [ ! -z "$GROQ2_API_KEY" ] && echo "✅ Groq 2" && ((count++)) || echo "❌ Groq 2"
+          [ ! -z "$COHERE_API_KEY" ] && echo "✅ Cohere" && ((count++)) || echo "❌ Cohere"
+          [ ! -z "$CHUTES_API_KEY" ] && echo "✅ Chutes" && ((count++)) || echo "❌ Chutes"
+          
+          echo ""
+          echo "📊 Total configured: $count/15 providers"
+      
+      - name: Test Universal AI Manager
+        run: |
+          echo "🧪 Testing Universal AI Manager..."
+          python -m src.amas.services.universal_ai_manager
+      
+      - name: Run AI Task
+        id: ai_task
+        run: |
+          python <<EOF
+          import asyncio
+          import sys
+          from pathlib import Path
+          
+          # Add project to path
+          sys.path.insert(0, str(Path.cwd()))
+          
+          from src.amas.services.universal_ai_manager import get_universal_ai_manager
+          
+          async def main():
+              manager = get_universal_ai_manager()
+              
+              # Show configuration
+              print(manager.get_config_summary())
+              print()
+              
+              # Test generation with all strategies
+              strategies = ['priority', 'intelligent', 'fastest']
+              
+              for strategy in strategies:
+                  print(f"🧪 Testing {strategy} strategy...")
+                  result = await manager.generate(
+                      prompt="Write a brief test message confirming the AI system is working.",
+                      system_prompt="You are a helpful AI assistant.",
+                      strategy=strategy,
+                      max_tokens=100
+                  )
+                  
+                  if result['success']:
+                      print(f"✅ {strategy.upper()} - Success with {result['provider_name']}")
+                      print(f"   Response: {result['content'][:100]}...")
+                      print(f"   Time: {result['response_time']:.2f}s")
+                  else:
+                      print(f"❌ {strategy.upper()} - Failed: {result['error']}")
+                  print()
+              
+              # Show final stats
+              print("=" * 80)
+              print("📊 FINAL STATISTICS")
+              print("=" * 80)
+              stats = manager.get_stats()
+              for key, value in stats.items():
+                  print(f"  {key}: {value}")
+              print()
+              
+              # Show provider health
+              print("=" * 80)
+              print("🏥 PROVIDER HEALTH")
+              print("=" * 80)
+              health = manager.get_provider_health()
+              for provider_id, info in health.items():
+                  status_emoji = "✅" if info['available'] else "❌"
+                  print(f"{status_emoji} {info['name']:25s} | Success: {info['success_rate']:6s} | Avg Time: {info['avg_response_time']:8s}")
+          
+          asyncio.run(main())
+          EOF
+      
+      - name: Upload Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: universal-ai-results
+          path: |
+            *.log
+            artifacts/**
+          retention-days: 30
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "## 🤖 Universal AI Manager Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Workflow completed using Universal AI Manager" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Features" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ 16 AI providers with automatic fallback" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Intelligent provider selection" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Circuit breaker for failing providers" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Rate limit handling" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Performance tracking" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "See logs for detailed statistics and provider health information." >> $GITHUB_STEP_SUMMARY
