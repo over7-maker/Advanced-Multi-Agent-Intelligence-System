@@ -13,14 +13,14 @@ from enum import Enum
 import uuid
 from dataclasses import dataclass
 
-from agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
-from agents.osint.osint_agent import OSINTAgent
-from agents.investigation.investigation_agent import InvestigationAgent
-from agents.forensics.forensics_agent import ForensicsAgent
-from agents.data_analysis.data_analysis_agent import DataAnalysisAgent
-from agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
-from agents.metadata.metadata_agent import MetadataAgent
-from agents.reporting.reporting_agent import ReportingAgent
+from ..agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
+from ..agents.osint.osint_agent import OSINTAgent
+from ..agents.investigation.investigation_agent import InvestigationAgent
+from ..agents.forensics.forensics_agent import ForensicsAgent
+from ..agents.data_analysis.data_analysis_agent import DataAnalysisAgent
+from ..agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
+from ..agents.metadata.metadata_agent import MetadataAgent
+from ..agents.reporting.reporting_agent import ReportingAgent
 
 
 class TaskPriority(Enum):
