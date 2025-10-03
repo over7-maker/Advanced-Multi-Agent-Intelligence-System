@@ -86,12 +86,12 @@ jobs:
       - name: Test Universal AI Manager
         run: |
           echo "🧪 Testing Universal AI Manager..."
-          python -m src.amas.services.universal_ai_manager
+          python3 standalone_universal_ai_manager.py
       
       - name: Run AI Task
         id: ai_task
         run: |
-          python <<EOF
+          python3 <<EOF
           import asyncio
           import sys
           from pathlib import Path
@@ -99,7 +99,7 @@ jobs:
           # Add project to path
           sys.path.insert(0, str(Path.cwd()))
           
-          from src.amas.services.universal_ai_manager import get_universal_ai_manager
+          from standalone_universal_ai_manager import get_manager as get_universal_ai_manager
           
           async def main():
               manager = get_universal_ai_manager()
