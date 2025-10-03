@@ -1,6 +1,6 @@
 """
 AMAS Enhanced Agent Orchestrator
-Phase 1 Implementation: Complete core orchestrator with database integration
+Updated with Intelligent API Management and 16-Provider Fallback System
 """
 
 import asyncio
@@ -13,7 +13,19 @@ from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass, field
 from abc import ABC, abstractmethod
 import os
+import sys
 import traceback
+
+# Import the new intelligent API management system
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+try:
+    from amas.core.ai_api_manager import (
+        generate_ai_response, TaskType, APIProvider, get_api_manager
+    )
+    API_MANAGER_AVAILABLE = True
+except ImportError:
+    logger.warning("New API manager not available, using fallback mode")
+    API_MANAGER_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(
