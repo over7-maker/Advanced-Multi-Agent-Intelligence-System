@@ -54,7 +54,8 @@ def test_all_dependencies() -> Dict[str, Any]:
     optional_packages = [
         ("groq", "groq"),
         ("google-generativeai", "google.generativeai"),
-        ("cerebras-cloud-sdk", "cerebras"),
+        # Note: cerebras-cloud-sdk is not available on PyPI, skipping
+        # ("cerebras-cloud-sdk", "cerebras_cloud_sdk"),
         ("cohere", "cohere"),
     ]
     

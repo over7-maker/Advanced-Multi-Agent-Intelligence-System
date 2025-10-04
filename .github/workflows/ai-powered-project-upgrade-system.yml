@@ -110,7 +110,8 @@ jobs:
         # Install optional AI packages with fallback
         pip install groq || echo "Groq package not available, continuing without it"
         pip install google-generativeai || echo "Google Generative AI package not available, continuing without it"
-        pip install cerebras-cloud-sdk || echo "Cerebras package not available, continuing without it"
+        # Note: cerebras-cloud-sdk may not be available on PyPI, skipping for now
+        # pip install cerebras-cloud-sdk || echo "Cerebras Cloud SDK package not available, continuing without it"
         pip install cohere || echo "Cohere package not available, continuing without it"
     
     - name: 🧪 Test Dependencies
@@ -315,7 +316,8 @@ jobs:
         # Install optional AI packages with fallback
         pip install groq || echo "Groq package not available, continuing without it"
         pip install google-generativeai || echo "Google Generative AI package not available, continuing without it"
-        pip install cerebras-cloud-sdk || echo "Cerebras package not available, continuing without it"
+        # Note: cerebras-cloud-sdk may not be available on PyPI, skipping for now
+        # pip install cerebras-cloud-sdk || echo "Cerebras Cloud SDK package not available, continuing without it"
         pip install cohere || echo "Cohere package not available, continuing without it"
     
     - name: 🔧 AI Code Improvements
