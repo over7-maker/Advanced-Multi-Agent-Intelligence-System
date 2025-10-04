@@ -12,7 +12,7 @@ from typing import Dict, Any, List, Optional, Tuple, Union
 from enum import Enum
 from dataclasses import dataclass
 import json
-import pickle
+import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingRegressor
 from sklearn.cluster import KMeans, DBSCAN
 from sklearn.preprocessing import StandardScaler, LabelEncoder

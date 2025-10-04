@@ -12,7 +12,7 @@ from typing import Dict, Any, List, Optional, Union
 from enum import Enum
 from dataclasses import dataclass
 import hashlib
-import pickle
+import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data
 import gzip
 from collections import OrderedDict
 import threading

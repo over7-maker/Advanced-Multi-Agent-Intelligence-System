@@ -1,17 +1,17 @@
 {
   "errors": [],
-  "generated_at": "2025-10-04T15:51:59Z",
+  "generated_at": "2025-10-04T15:57:44Z",
   "metrics": {
     "_totals": {
       "CONFIDENCE.HIGH": 10,
       "CONFIDENCE.LOW": 0,
-      "CONFIDENCE.MEDIUM": 5,
+      "CONFIDENCE.MEDIUM": 0,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
-      "SEVERITY.LOW": 11,
-      "SEVERITY.MEDIUM": 4,
+      "SEVERITY.LOW": 9,
+      "SEVERITY.MEDIUM": 1,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 22005,
+      "loc": 22006,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -408,11 +408,11 @@
     "src/amas/api/main.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
-      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.MEDIUM": 0,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
       "SEVERITY.LOW": 0,
-      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
       "loc": 278,
       "nosec": 0,
@@ -421,11 +421,11 @@
     "src/amas/cli.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
-      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.MEDIUM": 0,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
       "SEVERITY.LOW": 0,
-      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
       "loc": 206,
       "nosec": 0,
@@ -460,11 +460,11 @@
     "src/amas/config/settings.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
-      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.MEDIUM": 0,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
       "SEVERITY.LOW": 0,
-      "SEVERITY.MEDIUM": 1,
+      "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
       "loc": 120,
       "nosec": 0,
@@ -785,10 +785,10 @@
     "src/amas/services/n8n_integration.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
-      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.MEDIUM": 0,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
-      "SEVERITY.LOW": 1,
+      "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
       "loc": 522,
@@ -850,13 +850,13 @@
     "src/amas/services/security_service.py": {
       "CONFIDENCE.HIGH": 0,
       "CONFIDENCE.LOW": 0,
-      "CONFIDENCE.MEDIUM": 1,
+      "CONFIDENCE.MEDIUM": 0,
       "CONFIDENCE.UNDEFINED": 0,
       "SEVERITY.HIGH": 0,
-      "SEVERITY.LOW": 1,
+      "SEVERITY.LOW": 0,
       "SEVERITY.MEDIUM": 0,
       "SEVERITY.UNDEFINED": 0,
-      "loc": 284,
+      "loc": 285,
       "nosec": 0,
       "skipped_tests": 0
     },
@@ -928,67 +928,7 @@
   },
   "results": [
     {
-      "code": "360         \"api.main:app\",\n361         host=\"0.0.0.0\",\n362         port=8000,\n",
-      "col_offset": 13,
-      "end_col_offset": 22,
-      "filename": "src/amas/api/main.py",
-      "issue_confidence": "MEDIUM",
-      "issue_cwe": {
-        "id": 605,
-        "link": "https://cwe.mitre.org/data/definitions/605.html"
-      },
-      "issue_severity": "MEDIUM",
-      "issue_text": "Possible binding to all interfaces.",
-      "line_number": 361,
-      "line_range": [
-        361
-      ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b104_hardcoded_bind_all_interfaces.html",
-      "test_id": "B104",
-      "test_name": "hardcoded_bind_all_interfaces"
-    },
-    {
-      "code": "41 @cli.command()\n42 @click.option('--host', default='0.0.0.0', help='API host (default: 0.0.0.0)')\n43 @click.option('--port', default=8000, help='API port (default: 8000)')\n",
-      "col_offset": 32,
-      "end_col_offset": 41,
-      "filename": "src/amas/cli.py",
-      "issue_confidence": "MEDIUM",
-      "issue_cwe": {
-        "id": 605,
-        "link": "https://cwe.mitre.org/data/definitions/605.html"
-      },
-      "issue_severity": "MEDIUM",
-      "issue_text": "Possible binding to all interfaces.",
-      "line_number": 42,
-      "line_range": [
-        42
-      ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b104_hardcoded_bind_all_interfaces.html",
-      "test_id": "B104",
-      "test_name": "hardcoded_bind_all_interfaces"
-    },
-    {
-      "code": "74     \"\"\"API configuration\"\"\"\n75     host: str = Field(default=\"0.0.0.0\", env=\"AMAS_API_HOST\")\n76     port: int = Field(default=8000, env=\"AMAS_API_PORT\")\n",
-      "col_offset": 30,
-      "end_col_offset": 39,
-      "filename": "src/amas/config/settings.py",
-      "issue_confidence": "MEDIUM",
-      "issue_cwe": {
-        "id": 605,
-        "link": "https://cwe.mitre.org/data/definitions/605.html"
-      },
-      "issue_severity": "MEDIUM",
-      "issue_text": "Possible binding to all interfaces.",
-      "line_number": 75,
-      "line_range": [
-        75
-      ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b104_hardcoded_bind_all_interfaces.html",
-      "test_id": "B104",
-      "test_name": "hardcoded_bind_all_interfaces"
-    },
-    {
-      "code": "14 import json\n15 import pickle\n16 from sklearn.ensemble import RandomForestClassifier, GradientBoostingRegressor\n",
+      "code": "14 import json\n15 import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data\n16 from sklearn.ensemble import RandomForestClassifier, GradientBoostingRegressor\n",
       "col_offset": 0,
       "end_col_offset": 13,
       "filename": "src/amas/services/advanced_analytics_service.py",
@@ -1008,7 +948,7 @@
       "test_name": "blacklist"
     },
     {
-      "code": "14 import hashlib\n15 import pickle\n16 import gzip\n",
+      "code": "14 import hashlib\n15 import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data\n16 import gzip\n",
       "col_offset": 0,
       "end_col_offset": 13,
       "filename": "src/amas/services/advanced_optimization_service.py",
@@ -1048,7 +988,7 @@
       "test_name": "blacklist"
     },
     {
-      "code": "14 from dataclasses import dataclass\n15 import pickle\n16 import joblib\n",
+      "code": "14 from dataclasses import dataclass\n15 import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data\n16 import joblib\n",
       "col_offset": 0,
       "end_col_offset": 13,
       "filename": "src/amas/services/ml_service.py",
@@ -1068,7 +1008,7 @@
       "test_name": "blacklist"
     },
     {
-      "code": "536             with open(model_path, 'rb') as f:\n537                 model = pickle.load(f)\n538 \n",
+      "code": "537             with open(model_path, 'rb') as f:\n538                 model = pickle.load(f)\n539 \n",
       "col_offset": 24,
       "end_col_offset": 38,
       "filename": "src/amas/services/ml_service.py",
@@ -1079,73 +1019,13 @@
       },
       "issue_severity": "MEDIUM",
       "issue_text": "Pickle and modules that wrap it can be unsafe when used to deserialize untrusted data, possible security issue.",
-      "line_number": 537,
+      "line_number": 538,
       "line_range": [
-        537
+        538
       ],
       "more_info": "https://bandit.readthedocs.io/en/1.8.6/blacklists/blacklist_calls.html#b301-pickle",
       "test_id": "B301",
       "test_name": "blacklist"
-    },
-    {
-      "code": "24 \n25     def __init__(\n26         self,\n27         n8n_url: str = \"http://localhost:5678\",\n28         n8n_api_key: Optional[str] = None,\n29         username: str = \"admin\",\n30         password: str = \"admin\"\n31     ):\n32         \"\"\"\n33         Initialize n8n integration.\n34 \n35         Args:\n36             n8n_url: n8n instance URL\n37             n8n_api_key: n8n API key (if available)\n38             username: n8n username\n39             password: n8n password\n40         \"\"\"\n41         self.n8n_url = n8n_url.rstrip('/')\n42         self.n8n_api_key = n8n_api_key\n43         self.username = username\n44         self.password = password\n45 \n46         # Authentication\n47         self.auth_token = None\n48         self.session = requests.Session()\n49 \n50         # Workflow templates\n51         self.workflow_templates = {}\n52 \n53         # Performance metrics\n54         self.metrics = {\n55             'workflows_executed': 0,\n56             'workflows_failed': 0,\n57             'average_execution_time': 0.0,\n58             'active_workflows': 0\n59         }\n60 \n61         # Logging\n62         self.logger = logging.getLogger(\"amas.n8n_integration\")\n63 \n64         # Initialize workflow templates\n65         self._initialize_workflow_templates()\n66 \n",
-      "col_offset": 4,
-      "end_col_offset": 45,
-      "filename": "src/amas/services/n8n_integration.py",
-      "issue_confidence": "MEDIUM",
-      "issue_cwe": {
-        "id": 259,
-        "link": "https://cwe.mitre.org/data/definitions/259.html"
-      },
-      "issue_severity": "LOW",
-      "issue_text": "Possible hardcoded password: 'admin'",
-      "line_number": 25,
-      "line_range": [
-        25,
-        26,
-        27,
-        28,
-        29,
-        30,
-        31,
-        32,
-        33,
-        34,
-        35,
-        36,
-        37,
-        38,
-        39,
-        40,
-        41,
-        42,
-        43,
-        44,
-        45,
-        46,
-        47,
-        48,
-        49,
-        50,
-        51,
-        52,
-        53,
-        54,
-        55,
-        56,
-        57,
-        58,
-        59,
-        60,
-        61,
-        62,
-        63,
-        64,
-        65
-      ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b107_hardcoded_password_default.html",
-      "test_id": "B107",
-      "test_name": "hardcoded_password_default"
     },
     {
       "code": "419                 import random\n420                 provider = random.choice(providers)\n421                 return provider['name']\n",
@@ -1188,26 +1068,6 @@
       "test_name": "blacklist"
     },
     {
-      "code": "92             # Mock authentication - in production, this would check against a user database\n93             if username == 'admin' and password == 'admin123':\n94                 user_data = {\n",
-      "col_offset": 51,
-      "end_col_offset": 61,
-      "filename": "src/amas/services/security_service.py",
-      "issue_confidence": "MEDIUM",
-      "issue_cwe": {
-        "id": 259,
-        "link": "https://cwe.mitre.org/data/definitions/259.html"
-      },
-      "issue_severity": "LOW",
-      "issue_text": "Possible hardcoded password: 'admin123'",
-      "line_number": 93,
-      "line_range": [
-        93
-      ],
-      "more_info": "https://bandit.readthedocs.io/en/1.8.6/plugins/b105_hardcoded_password_string.html",
-      "test_id": "B105",
-      "test_name": "hardcoded_password_string"
-    },
-    {
       "code": "354 \n355         return random.choices(available_providers, weights=weights)[0]\n356 \n",
       "col_offset": 15,
       "end_col_offset": 67,
@@ -1248,7 +1108,7 @@
       "test_name": "blacklist"
     },
     {
-      "code": "10 from datetime import datetime\n11 import pickle\n12 import os\n",
+      "code": "10 from datetime import datetime\n11 import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data\n12 import os\n",
       "col_offset": 0,
       "end_col_offset": 13,
       "filename": "src/amas/services/vector_service.py",
