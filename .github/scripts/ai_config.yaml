@@ -1,0 +1,93 @@
+# AI-Powered Project Upgrade System Configuration
+# Security and performance settings for all AI scripts
+
+# File Processing Limits
+max_files: 50                    # Maximum number of files to process
+max_file_size: 10485760          # Maximum file size in bytes (10MB)
+max_total_size: 104857600        # Maximum total size in bytes (100MB)
+max_input_length: 10000          # Maximum user input length
+
+# Allowed File Extensions
+allowed_extensions:
+  - .py
+  - .js
+  - .ts
+  - .jsx
+  - .tsx
+  - .html
+  - .css
+  - .scss
+  - .json
+  - .yaml
+  - .yml
+  - .md
+  - .txt
+  - .xml
+  - .sql
+  - .sh
+  - .bash
+  - .zsh
+  - .fish
+  - .ps1
+  - .bat
+  - .cmd
+
+# AI Provider Settings
+ai_providers:
+  timeout: 30                    # Request timeout in seconds
+  max_retries: 3                 # Maximum retry attempts
+  rate_limit_delay: 1            # Delay between requests in seconds
+  max_tokens: 4000              # Maximum tokens per request
+  strategy: "intelligent"        # AI provider selection strategy
+
+# Security Settings
+security:
+  sanitize_input: true           # Sanitize user inputs
+  filter_sensitive: true         # Filter sensitive information
+  validate_paths: true           # Validate file paths
+  check_permissions: true        # Check file permissions
+  max_prompt_length: 50000       # Maximum prompt length
+
+# Logging Settings
+logging:
+  level: "INFO"                  # Log level (DEBUG, INFO, WARNING, ERROR)
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "ai_system.log"         # Log file name
+  max_size: 10485760            # Maximum log file size (10MB)
+  backup_count: 5               # Number of backup log files
+
+# Performance Settings
+performance:
+  batch_size: 10                # Number of files to process in parallel
+  memory_limit: 1073741824       # Memory limit in bytes (1GB)
+  cpu_limit: 4                  # CPU usage limit
+  cache_size: 100               # Cache size for responses
+
+# AMAS Integration
+amas:
+  enable_events: true           # Enable AMAS event system
+  enable_monitoring: true       # Enable AMAS monitoring
+  enable_auth: true             # Enable AMAS authentication
+  log_level: "INFO"             # AMAS log level
+
+# Error Handling
+error_handling:
+  max_errors: 10                # Maximum errors before stopping
+  retry_delay: 2                # Delay between retries in seconds
+  exponential_backoff: true     # Use exponential backoff
+  graceful_degradation: true     # Continue with reduced functionality
+
+# Output Settings
+output:
+  format: "json"                # Output format (json, yaml, markdown)
+  include_metadata: true        # Include metadata in output
+  include_timestamps: true      # Include timestamps
+  include_ai_stats: true        # Include AI provider statistics
+  compress_output: false        # Compress output files
+
+# Development Settings
+development:
+  debug_mode: false             # Enable debug mode
+  verbose_logging: false         # Enable verbose logging
+  test_mode: false              # Enable test mode
+  mock_ai_responses: false      # Mock AI responses for testing

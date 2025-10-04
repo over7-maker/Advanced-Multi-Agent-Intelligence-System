@@ -2,6 +2,9 @@
 """
 AI Comprehensive Analyzer - Advanced project analysis using multiple AI providers
 Part of the AI-Powered Project Upgrade System
+
+Security-enhanced version with comprehensive input validation,
+error handling, and AMAS integration.
 """
 
 import os
@@ -9,6 +12,7 @@ import sys
 import json
 import asyncio
 import argparse
+import logging
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 from datetime import datetime
@@ -17,49 +21,141 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from standalone_universal_ai_manager import get_manager
+from ai_security_utils import (
+    AISecurityValidator, AILogger, AIConfigManager,
+    validate_ai_response, sanitize_prompt
+)
 
 
 class AIComprehensiveAnalyzer:
-    """Advanced project analyzer using multiple AI providers"""
+    """
+    Advanced project analyzer using multiple AI providers
     
-    def __init__(self):
+    Security-enhanced version with comprehensive input validation,
+    error handling, and AMAS integration.
+    """
+    
+    def __init__(self, config_file: Optional[Path] = None):
+        """Initialize the AI comprehensive analyzer with security validation"""
         self.manager = get_manager()
         self.analysis_results = {}
+        self.config = AIConfigManager(config_file)
+        self.validator = AISecurityValidator()
+        self.logger = AILogger(__name__)
+        
+        # Configuration from config manager
+        self.max_files = self.config.get_max_files()
+        self.max_file_size = self.config.get_max_file_size()
+        self.allowed_extensions = set(self.config.get_allowed_extensions())
+        
+        self.logger.info("AI Comprehensive Analyzer initialized with security validation")
         self.project_context = {}
         
     async def analyze_project_structure(self) -> Dict[str, Any]:
-        """Analyze project structure and architecture"""
-        print("🔍 Analyzing project structure...")
+        """
+        Analyze project structure and architecture with security validation
         
-        # Get project files
-        project_files = self._get_project_files()
+        Returns:
+            Dict containing analysis results and metadata
+            
+        Raises:
+            RuntimeError: If analysis fails
+        """
+        try:
+            self.logger.info("🔍 Analyzing project structure...")
+            
+            # Get safe project files
+            project_files = self._get_safe_project_files()
+            
+            if not project_files:
+                self.logger.warning("No safe project files found for analysis")
+                return {
+                    "structure_analysis": "No safe project files found for analysis",
+                    "provider_used": "none",
+                    "response_time": 0,
+                    "warnings": ["No safe project files found"]
+                }
+            
+            # Create secure analysis prompt
+            prompt = self._create_secure_analysis_prompt("structure", project_files)
+            
+            # Generate analysis with retry logic
+            result = await self._generate_analysis_with_retry(prompt, "project structure")
+            
+            return result
+            
+        except Exception as e:
+            self.logger.error(f"Project structure analysis failed: {e}")
+            raise RuntimeError(f"Project structure analysis failed: {e}")
+    
+    def _get_safe_project_files(self) -> List[str]:
+        """Get safe project files with security validation"""
+        try:
+            safe_files = self.validator.get_safe_file_list("all", self.max_files)
+            return [str(f.relative_to(self.validator.project_root)) for f in safe_files]
+        except Exception as e:
+            self.logger.error(f"Failed to get safe project files: {e}")
+            return []
+    
+    def _create_secure_analysis_prompt(self, analysis_type: str, files: List[str]) -> str:
+        """Create secure analysis prompt with sanitized inputs"""
+        files_content = "\n".join(files[:50])  # Limit to 50 files
         
-        # Analyze with AI
         prompt = f"""
-        Analyze this project structure and provide comprehensive insights:
+        Analyze the project {analysis_type}:
         
-        Project Files: {project_files}
+        Project Files:
+        {files_content}
         
         Please provide:
-        1. Architecture overview
+        1. Project architecture overview
         2. Technology stack analysis
-        3. Code quality assessment
+        3. Code organization assessment
         4. Potential improvements
-        5. Security considerations
-        6. Performance optimization opportunities
+        5. Best practices recommendations
         """
         
-        result = await self.manager.generate(
-            prompt=prompt,
-            system_prompt="You are an expert software architect and code analyst. Provide detailed, actionable insights.",
-            strategy="intelligent",
-            max_tokens=4000
-        )
+        return sanitize_prompt(prompt)
+    
+    async def _generate_analysis_with_retry(self, prompt: str, analysis_type: str, max_retries: int = 3) -> Dict[str, Any]:
+        """Generate analysis with retry logic and error handling"""
+        for attempt in range(max_retries):
+            try:
+                result = await self.manager.generate(
+                    prompt=prompt,
+                    system_prompt=f"You are a senior software architect. Analyze {analysis_type} and provide comprehensive insights.",
+                    strategy="intelligent",
+                    max_tokens=4000
+                )
+                
+                # Validate response
+                if validate_ai_response(result, ['content', 'provider_name', 'response_time']):
+                    return {
+                        "structure_analysis": result.get("content", ""),
+                        "provider_used": result.get("provider_name", ""),
+                        "response_time": result.get("response_time", 0),
+                        "attempt": attempt + 1
+                    }
+                else:
+                    self.logger.warning(f"Invalid AI response for {analysis_type}, attempt {attempt + 1}")
+                    
+            except Exception as e:
+                self.logger.error(f"AI analysis failed for {analysis_type}, attempt {attempt + 1}: {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                else:
+                    self.logger.error(f"All attempts failed for {analysis_type}")
+                    return {
+                        "structure_analysis": f"Analysis failed for {analysis_type}",
+                        "provider_used": "none",
+                        "response_time": 0,
+                        "error": str(e)
+                    }
         
         return {
-            "structure_analysis": result.get("content", ""),
-            "provider_used": result.get("provider_name", ""),
-            "response_time": result.get("response_time", 0)
+            "structure_analysis": f"Analysis failed for {analysis_type} after {max_retries} attempts",
+            "provider_used": "none",
+            "response_time": 0
         }
     
     async def analyze_code_quality(self) -> Dict[str, Any]:
