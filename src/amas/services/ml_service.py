@@ -12,7 +12,7 @@ import json
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass
-import pickle
+import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data
 import joblib
 from pathlib import Path
 
@@ -533,6 +533,7 @@ class MLService:
 
             # Load model
             model_path = Path(self.ml_config['model_storage_path']) / f"{model_id}.pkl"
+            # SECURITY WARNING: Only load pickle files from trusted sources
             with open(model_path, 'rb') as f:
                 model = pickle.load(f)
 

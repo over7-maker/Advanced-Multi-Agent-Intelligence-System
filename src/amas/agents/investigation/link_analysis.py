@@ -195,7 +195,7 @@ class LinkAnalysis:
             unique_relationships = self._deduplicate_relationships(relationships)
             filtered_relationships = [
                 rel for rel in unique_relationships
-                if rel.get('strength', 0) >= params['min_strength'],
+                if rel.get('strength', 0) >= params['min_strength']
             ]
 
             return filtered_relationships

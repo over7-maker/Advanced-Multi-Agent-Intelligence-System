@@ -90,7 +90,9 @@ class SecurityService:
         """Authenticate user"""
         try:
             # Mock authentication - in production, this would check against a user database
-            if username == 'admin' and password == 'admin123':
+            # SECURITY WARNING: This is for development only - use proper authentication in production
+            admin_password = os.getenv("AMAS_ADMIN_PASSWORD", "admin123")
+            if username == 'admin' and password == admin_password:
                 user_data = {
                     'user_id': 'admin',
                     'username': 'admin',

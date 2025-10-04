@@ -8,7 +8,7 @@ import numpy as np
 from typing import Dict, Any, List, Optional, Tuple
 import json
 from datetime import datetime
-import pickle
+import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data
 import os
 
 try:
