@@ -39,7 +39,7 @@ def cli(ctx, config, verbose):
 
 
 @cli.command()
-@click.option('--host', default='0.0.0.0', help='API host (default: 0.0.0.0)')
+@click.option('--host', default='127.0.0.1', help='API host (default: 127.0.0.1)')
 @click.option('--port', default=8000, help='API port (default: 8000)')
 @click.option('--workers', default=4, help='Number of workers (default: 4)')
 @click.option('--reload', is_flag=True, help='Enable auto-reload for development')
