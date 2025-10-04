@@ -1,0 +1,8 @@
+{
+  "primary_providers": [],
+  "fallback_providers": [],
+  "offline_providers": [
+    "llama3.1:70b",
+    "codellama:34b"
+  ]
+}

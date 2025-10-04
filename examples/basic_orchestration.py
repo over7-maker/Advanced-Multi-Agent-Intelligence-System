@@ -15,7 +15,7 @@ async def basic_orchestration_example():
     """Basic orchestration example"""
     print("🤖 AMAS Basic Orchestration Example")
     print("=" * 50)
-    
+
     # Configuration
     config = {
         'llm_service_url': 'http://localhost:11434',
@@ -24,14 +24,14 @@ async def basic_orchestration_example():
         'n8n_url': 'http://localhost:5678',
         'n8n_api_key': 'your_api_key_here'
     }
-    
+
     try:
         # Initialize AMAS system
         print("🚀 Initializing AMAS system...")
         amas = AMASIntelligenceSystem(config)
         await amas.initialize()
         print("✅ AMAS system initialized")
-        
+
         # Submit OSINT task
         print("\n📊 Submitting OSINT task...")
         osint_task = {
@@ -43,10 +43,10 @@ async def basic_orchestration_example():
                 'keywords': ['cyber', 'threat', 'security']
             }
         }
-        
+
         task_id = await amas.submit_intelligence_task(osint_task)
         print(f"✅ OSINT task submitted: {task_id}")
-        
+
         # Submit Investigation task
         print("\n🔍 Submitting Investigation task...")
         investigation_task = {
@@ -58,10 +58,10 @@ async def basic_orchestration_example():
                 'timeframe': 'last_7_days'
             }
         }
-        
+
         task_id = await amas.submit_intelligence_task(investigation_task)
         print(f"✅ Investigation task submitted: {task_id}")
-        
+
         # Submit Forensics task
         print("\n🔬 Submitting Forensics task...")
         forensics_task = {
@@ -73,39 +73,39 @@ async def basic_orchestration_example():
                 'incident_id': 'INC-2024-001'
             }
         }
-        
+
         task_id = await amas.submit_intelligence_task(forensics_task)
         print(f"✅ Forensics task submitted: {task_id}")
-        
+
         # Get system status
         print("\n📈 Getting system status...")
         status = await amas.get_system_status()
         print(f"System Status: {status}")
-        
+
         # List agents
         print("\n👥 Available Agents:")
         agents = await amas.orchestrator.list_agents()
         for agent in agents:
             print(f"  - {agent['name']} ({agent['type']}) - {agent['status']}")
-        
+
         # List tasks
         print("\n📋 Current Tasks:")
         tasks = await amas.orchestrator.list_tasks()
         for task in tasks:
             print(f"  - {task['id']}: {task['description']} ({task['status']})")
-        
+
         print("\n🎉 Basic orchestration example completed!")
-        
+
     except Exception as e:
         print(f"❌ Error: {e}")
         return False
-    
+
     finally:
         # Shutdown
         print("\n🔄 Shutting down AMAS system...")
         await amas.shutdown()
         print("✅ AMAS system shutdown complete")
-    
+
     return True
 
 if __name__ == "__main__":

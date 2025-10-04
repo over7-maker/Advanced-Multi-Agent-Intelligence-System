@@ -29,12 +29,12 @@ logger = logging.getLogger(__name__)
 
 class CompleteWorkflowSetup:
     """Complete Workflow Setup Manager"""
-    
+
     def __init__(self):
         self.ai_service = None
         self.config_manager = get_ai_config()
         self.setup_results = {}
-    
+
     async def initialize(self):
         """Initialize the setup manager"""
         try:
@@ -46,20 +46,20 @@ class CompleteWorkflowSetup:
                 'qwen_api_key': os.getenv('QWEN_API_KEY'),
                 'gptoss_api_key': os.getenv('GPTOSS_API_KEY')
             }
-            
+
             self.ai_service = AIServiceManager(config)
             await self.ai_service.initialize()
             logger.info("Complete Workflow Setup initialized successfully")
-            
+
         except Exception as e:
             logger.error(f"Error initializing Complete Workflow Setup: {e}")
             raise
-    
+
     async def setup_all_ai_workflows(self) -> Dict[str, Any]:
         """Setup all AI workflows"""
         try:
             logger.info("Setting up all AI workflows...")
-            
+
             workflows = {
                 'code_analysis': await self._setup_code_analysis_workflow(),
                 'code_improvement': await self._setup_code_improvement_workflow(),
@@ -69,16 +69,16 @@ class CompleteWorkflowSetup:
                 'performance_analysis': await self._setup_performance_analysis_workflow(),
                 'continuous_development': await self._setup_continuous_development_workflow()
             }
-            
+
             return {
                 'workflows': workflows,
                 'timestamp': datetime.now().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error setting up AI workflows: {e}")
             return {'error': str(e)}
-    
+
     async def _setup_code_analysis_workflow(self) -> Dict[str, Any]:
         """Setup code analysis workflow"""
         try:
@@ -91,9 +91,9 @@ class CompleteWorkflowSetup:
 5. Integrates with GitHub Actions
 
 Generate a complete workflow implementation."""
-            
+
             response = await self.ai_service.generate_code(prompt, "python")
-            
+
             if response.success:
                 return {
                     'workflow_code': response.content,
@@ -102,11 +102,11 @@ Generate a complete workflow implementation."""
                 }
             else:
                 return {'status': 'failed', 'error': response.error}
-                
+
         except Exception as e:
             logger.error(f"Error setting up code analysis workflow: {e}")
             return {'error': str(e)}
-    
+
     async def _setup_code_improvement_workflow(self) -> Dict[str, Any]:
         """Setup code improvement workflow"""
         try:
@@ -119,9 +119,9 @@ Generate a complete workflow implementation."""
 5. Creates pull requests with improvements
 
 Generate a complete workflow implementation."""
-            
+
             response = await self.ai_service.generate_code(prompt, "python")
-            
+
             if response.success:
                 return {
                     'workflow_code': response.content,
@@ -130,11 +130,11 @@ Generate a complete workflow implementation."""
                 }
             else:
                 return {'status': 'failed', 'error': response.error}
-                
+
         except Exception as e:
             logger.error(f"Error setting up code improvement workflow: {e}")
             return {'error': str(e)}
-    
+
     async def _setup_test_generation_workflow(self) -> Dict[str, Any]:
         """Setup test generation workflow"""
         try:
@@ -147,9 +147,9 @@ Generate a complete workflow implementation."""
 5. Integrates with CI/CD pipeline
 
 Generate a complete workflow implementation."""
-            
+
             response = await self.ai_service.generate_code(prompt, "python")
-            
+
             if response.success:
                 return {
                     'workflow_code': response.content,
@@ -158,11 +158,11 @@ Generate a complete workflow implementation."""
                 }
             else:
                 return {'status': 'failed', 'error': response.error}
-                
+
         except Exception as e:
             logger.error(f"Error setting up test generation workflow: {e}")
             return {'error': str(e)}
-    
+
     async def _setup_documentation_workflow(self) -> Dict[str, Any]:
         """Setup documentation workflow"""
         try:
@@ -175,9 +175,9 @@ Generate a complete workflow implementation."""
 5. Publishes documentation automatically
 
 Generate a complete workflow implementation."""
-            
+
             response = await self.ai_service.generate_code(prompt, "python")
-            
+
             if response.success:
                 return {
                     'workflow_code': response.content,
@@ -186,11 +186,11 @@ Generate a complete workflow implementation."""
                 }
             else:
                 return {'status': 'failed', 'error': response.error}
-                
+
         except Exception as e:
             logger.error(f"Error setting up documentation workflow: {e}")
             return {'error': str(e)}
-    
+
     async def _setup_security_audit_workflow(self) -> Dict[str, Any]:
         """Setup security audit workflow"""
         try:
@@ -203,9 +203,9 @@ Generate a complete workflow implementation."""
 5. Integrates with security tools
 
 Generate a complete workflow implementation."""
-            
+
             response = await self.ai_service.generate_code(prompt, "python")
-            
+
             if response.success:
                 return {
                     'workflow_code': response.content,
@@ -214,11 +214,11 @@ Generate a complete workflow implementation."""
                 }
             else:
                 return {'status': 'failed', 'error': response.error}
-                
+
         except Exception as e:
             logger.error(f"Error setting up security audit workflow: {e}")
             return {'error': str(e)}
-    
+
     async def _setup_performance_analysis_workflow(self) -> Dict[str, Any]:
         """Setup performance analysis workflow"""
         try:
@@ -231,9 +231,9 @@ Generate a complete workflow implementation."""
 5. Monitors performance metrics
 
 Generate a complete workflow implementation."""
-            
+
             response = await self.ai_service.generate_code(prompt, "python")
-            
+
             if response.success:
                 return {
                     'workflow_code': response.content,
@@ -242,11 +242,11 @@ Generate a complete workflow implementation."""
                 }
             else:
                 return {'status': 'failed', 'error': response.error}
-                
+
         except Exception as e:
             logger.error(f"Error setting up performance analysis workflow: {e}")
             return {'error': str(e)}
-    
+
     async def _setup_continuous_development_workflow(self) -> Dict[str, Any]:
         """Setup continuous development workflow"""
         try:
@@ -259,9 +259,9 @@ Generate a complete workflow implementation."""
 5. Provides development insights
 
 Generate a complete workflow implementation."""
-            
+
             response = await self.ai_service.generate_code(prompt, "python")
-            
+
             if response.success:
                 return {
                     'workflow_code': response.content,
@@ -270,20 +270,20 @@ Generate a complete workflow implementation."""
                 }
             else:
                 return {'status': 'failed', 'error': response.error}
-                
+
         except Exception as e:
             logger.error(f"Error setting up continuous development workflow: {e}")
             return {'error': str(e)}
-    
+
     def validate_all_components(self) -> Dict[str, Any]:
         """Validate all components"""
         try:
             logger.info("Validating all components...")
-            
+
             # Validate GitHub Actions workflow
             workflow_file = Path(".github/workflows/ai_development.yml")
             workflow_valid = workflow_file.exists()
-            
+
             # Validate AI scripts
             ai_scripts = [
                 'ai_code_analyzer.py',
@@ -298,7 +298,7 @@ Generate a complete workflow implementation."""
                 'test_ai_integration_complete.py',
                 'validate_complete_workflows.py'
             ]
-            
+
             script_validations = {}
             for script in ai_scripts:
                 script_path = Path(f"scripts/{script}")
@@ -306,13 +306,13 @@ Generate a complete workflow implementation."""
                     'exists': script_path.exists(),
                     'readable': script_path.exists() and script_path.is_file()
                 }
-            
+
             # Validate AI services
             service_files = [
                 'services/ai_service_manager.py',
                 'config/ai_config.py'
             ]
-            
+
             service_validations = {}
             for service_file in service_files:
                 service_path = Path(service_file)
@@ -320,14 +320,14 @@ Generate a complete workflow implementation."""
                     'exists': service_path.exists(),
                     'readable': service_path.exists() and service_path.is_file()
                 }
-            
+
             # Validate documentation
             doc_files = [
                 'AI_INTEGRATION_README.md',
                 'README.md',
                 'setup_ai_complete.sh'
             ]
-            
+
             doc_validations = {}
             for doc_file in doc_files:
                 doc_path = Path(doc_file)
@@ -335,7 +335,7 @@ Generate a complete workflow implementation."""
                     'exists': doc_path.exists(),
                     'readable': doc_path.exists() and doc_path.is_file()
                 }
-            
+
             return {
                 'workflow_valid': workflow_valid,
                 'script_validations': script_validations,
@@ -343,22 +343,22 @@ Generate a complete workflow implementation."""
                 'doc_validations': doc_validations,
                 'timestamp': datetime.now().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error validating components: {e}")
             return {'error': str(e)}
-    
+
     def test_all_scripts(self) -> Dict[str, Any]:
         """Test all scripts"""
         try:
             logger.info("Testing all scripts...")
-            
+
             test_scripts = [
                 'setup_ai_integration.py',
                 'test_ai_integration_complete.py',
                 'validate_complete_workflows.py'
             ]
-            
+
             script_tests = {}
             for script in test_scripts:
                 script_path = Path(f"scripts/{script}")
@@ -367,14 +367,14 @@ Generate a complete workflow implementation."""
                         result = subprocess.run([
                             sys.executable, str(script_path), '--help'
                         ], capture_output=True, text=True, timeout=30)
-                        
+
                         script_tests[script] = {
                             'exists': True,
                             'help_works': result.returncode == 0,
                             'output': result.stdout,
                             'error': result.stderr
                         }
-                        
+
                     except subprocess.TimeoutExpired:
                         script_tests[script] = {
                             'exists': True,
@@ -382,7 +382,7 @@ Generate a complete workflow implementation."""
                             'output': '',
                             'error': 'Timeout'
                         }
-                    
+
                     except Exception as e:
                         script_tests[script] = {
                             'exists': True,
@@ -397,30 +397,30 @@ Generate a complete workflow implementation."""
                         'output': '',
                         'error': 'File not found'
                     }
-            
+
             return {
                 'script_tests': script_tests,
                 'timestamp': datetime.now().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error testing scripts: {e}")
             return {'error': str(e)}
-    
+
     async def run_complete_setup(self) -> Dict[str, Any]:
         """Run complete workflow setup"""
         try:
             logger.info("Running complete workflow setup...")
-            
+
             # Setup all AI workflows
             workflow_setup = await self.setup_all_ai_workflows()
-            
+
             # Validate all components
             component_validation = self.validate_all_components()
-            
+
             # Test all scripts
             script_testing = self.test_all_scripts()
-            
+
             # Generate comprehensive setup report
             setup_report = {
                 'timestamp': datetime.now().isoformat(),
@@ -431,13 +431,13 @@ Generate a complete workflow implementation."""
                     workflow_setup, component_validation, script_testing
                 )
             }
-            
+
             return setup_report
-            
+
         except Exception as e:
             logger.error(f"Error in complete setup: {e}")
             return {'error': str(e)}
-    
+
     def _generate_setup_summary(self, workflow_setup: Dict[str, Any],
                               component_validation: Dict[str, Any],
                               script_testing: Dict[str, Any]) -> Dict[str, Any]:
@@ -449,33 +449,33 @@ Generate a complete workflow implementation."""
                 w for w in workflows.values()
                 if w.get('status') == 'generated'
             ])
-            
+
             # Count validated components
             script_results = component_validation.get('script_validations', {})
             validated_scripts = len([
                 s for s in script_results.values()
                 if s.get('exists', False)
             ])
-            
+
             service_results = component_validation.get('service_validations', {})
             validated_services = len([
                 s for s in service_results.values()
                 if s.get('exists', False)
             ])
-            
+
             doc_results = component_validation.get('doc_validations', {})
             validated_docs = len([
                 d for d in doc_results.values()
                 if d.get('exists', False)
             ])
-            
+
             # Count working scripts
             script_tests = script_testing.get('script_tests', {})
             working_scripts = len([
                 s for s in script_tests.values()
                 if s.get('help_works', False)
             ])
-            
+
             return {
                 'total_workflows': len(workflows),
                 'successful_workflows': successful_workflows,
@@ -494,11 +494,11 @@ Generate a complete workflow implementation."""
                     validated_docs, working_scripts
                 )
             }
-            
+
         except Exception as e:
             logger.error(f"Error generating setup summary: {e}")
             return {'error': str(e)}
-    
+
     def _generate_setup_recommendations(self, successful_workflows: int,
                                        validated_scripts: int,
                                        validated_services: int,
@@ -506,28 +506,28 @@ Generate a complete workflow implementation."""
                                        working_scripts: int) -> List[str]:
         """Generate setup recommendations"""
         recommendations = []
-        
+
         if successful_workflows < 7:
             recommendations.append(f"Only {successful_workflows} workflows were generated. Complete all AI workflows.")
-        
+
         if validated_scripts < 11:
             recommendations.append(f"Only {validated_scripts} scripts are validated. Check script implementations.")
-        
+
         if validated_services < 2:
             recommendations.append(f"Only {validated_services} services are validated. Check service implementations.")
-        
+
         if validated_docs < 3:
             recommendations.append(f"Only {validated_docs} documentation files are validated. Complete all documentation.")
-        
+
         if working_scripts < 3:
             recommendations.append(f"Only {working_scripts} scripts are working. Check script implementations.")
-        
+
         if successful_workflows > 0 and working_scripts > 0:
             recommendations.append("Workflow setup is mostly complete! Address remaining issues.")
             recommendations.append("All components are working together successfully.")
-        
+
         return recommendations
-    
+
     def save_setup_report(self, report: Dict[str, Any], output_file: str):
         """Save setup report to file"""
         try:
@@ -536,7 +536,7 @@ Generate a complete workflow implementation."""
             logger.info(f"Setup report saved to {output_file}")
         except Exception as e:
             logger.error(f"Error saving setup report: {e}")
-    
+
     async def shutdown(self):
         """Shutdown the setup manager"""
         if self.ai_service:
@@ -549,14 +549,14 @@ async def main():
     parser.add_argument('--workflows-only', action='store_true', help='Only setup AI workflows')
     parser.add_argument('--validate-only', action='store_true', help='Only validate components')
     parser.add_argument('--test-only', action='store_true', help='Only test scripts')
-    
+
     args = parser.parse_args()
-    
+
     setup = CompleteWorkflowSetup()
-    
+
     try:
         await setup.initialize()
-        
+
         if args.workflows_only:
             # Only setup AI workflows
             results = await setup.setup_all_ai_workflows()
@@ -567,7 +567,7 @@ async def main():
                 status = "✓" if result.get('status') == 'generated' else "✗"
                 print(f"{status} {workflow}: {result.get('status', 'unknown')}")
             print("="*50)
-            
+
         elif args.validate_only:
             # Only validate components
             results = setup.validate_all_components()
@@ -579,7 +579,7 @@ async def main():
                 status = "✓" if validation.get('exists') else "✗"
                 print(f"{status} {script}: {validation.get('exists', False)}")
             print("="*50)
-            
+
         elif args.test_only:
             # Only test scripts
             results = setup.test_all_scripts()
@@ -590,12 +590,12 @@ async def main():
                 status = "✓" if test.get('help_works') else "✗"
                 print(f"{status} {script}: {test.get('help_works', False)}")
             print("="*50)
-            
+
         else:
             # Complete setup
             results = await setup.run_complete_setup()
             setup.save_setup_report(results, args.output)
-            
+
             # Print summary
             if 'summary' in results:
                 summary = results['summary']
@@ -618,13 +618,13 @@ async def main():
                 for rec in summary.get('recommendations', []):
                     print(f"- {rec}")
                 print("="*50)
-            
+
             logger.info("Complete workflow setup finished.")
-        
+
     except Exception as e:
         logger.error(f"Error in main: {e}")
         sys.exit(1)
-    
+
     finally:
         await setup.shutdown()
 

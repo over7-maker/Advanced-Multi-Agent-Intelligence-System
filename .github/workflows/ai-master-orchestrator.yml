@@ -1,0 +1,81 @@
+name: AI Master Workflow Orchestrator
+
+# Master orchestrator to coordinate all AI workflows
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight UTC
+  workflow_dispatch:  # Manual trigger
+  issues:
+    types: [opened, labeled]
+    labels: ['ai-orchestration', 'master-workflow']
+
+jobs:
+  master-orchestration:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      actions: read
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install openai requests python-dotenv
+    
+    - name: Master AI Orchestration
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REPO_NAME: ${{ github.repository }}
+        ISSUE_NUMBER: ${{ github.event.issue.number }}
+      run: |
+        python .github/scripts/ai_master_orchestrator.py
+    
+    - name: Upload Master Orchestration Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: master-orchestration-report
+        path: artifacts/master_orchestration_report.md
+        retention-days: 30
+    
+    - name: Create Master Orchestration Summary Issue
+      if: github.event_name == 'schedule'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = 'artifacts/master_orchestration_report.md';
+          
+          if (fs.existsSync(path)) {
+            const report = fs.readFileSync(path, 'utf8');
+            const summary = report.split('## 📊 Executive Summary')[1]?.split('---')[0] || 'Master orchestration completed.';
+            
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🎯 Daily AI Master Orchestration Report - ${new Date().toISOString().split('T')[0]}`,
+              body: `## Daily AI Master Orchestration Summary\n\n${summary}\n\n---\n\n*Full report available in workflow artifacts.*`,
+              labels: ['ai-orchestration', 'automated', 'daily', 'master-workflow']
+            });
+          }

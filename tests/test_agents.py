@@ -18,7 +18,7 @@ from agents.technology_monitor.technology_monitor_agent import TechnologyMonitor
 
 class TestOSINTAgent:
     """Test OSINT Agent"""
-    
+
     @pytest.fixture
     async def osint_agent(self):
         """Create OSINT agent for testing"""
@@ -29,7 +29,7 @@ class TestOSINTAgent:
         await agent.start()
         yield agent
         await agent.stop()
-    
+
     @pytest.mark.asyncio
     async def test_web_scraping_task(self, osint_agent):
         """Test web scraping task"""
@@ -43,14 +43,14 @@ class TestOSINTAgent:
                 'max_pages': 5
             }
         }
-        
+
         result = await osint_agent.execute_task(task)
-        
+
         assert result['success'] is True
         assert result['task_type'] == 'web_scraping'
         assert 'data' in result
         assert 'analysis' in result
-    
+
     @pytest.mark.asyncio
     async def test_social_media_monitoring(self, osint_agent):
         """Test social media monitoring task"""
@@ -64,14 +64,14 @@ class TestOSINTAgent:
                 'time_range': '24h'
             }
         }
-        
+
         result = await osint_agent.execute_task(task)
-        
+
         assert result['success'] is True
         assert result['task_type'] == 'social_media_monitoring'
         assert 'data' in result
         assert 'analysis' in result
-    
+
     @pytest.mark.asyncio
     async def test_domain_analysis(self, osint_agent):
         """Test domain analysis task"""
@@ -84,9 +84,9 @@ class TestOSINTAgent:
                 'analysis_type': 'comprehensive'
             }
         }
-        
+
         result = await osint_agent.execute_task(task)
-        
+
         assert result['success'] is True
         assert result['task_type'] == 'domain_analysis'
         assert 'data' in result
@@ -94,7 +94,7 @@ class TestOSINTAgent:
 
 class TestInvestigationAgent:
     """Test Investigation Agent"""
-    
+
     @pytest.fixture
     async def investigation_agent(self):
         """Create Investigation agent for testing"""
@@ -105,7 +105,7 @@ class TestInvestigationAgent:
         await agent.start()
         yield agent
         await agent.stop()
-    
+
     @pytest.mark.asyncio
     async def test_link_analysis(self, investigation_agent):
         """Test link analysis task"""
@@ -118,14 +118,14 @@ class TestInvestigationAgent:
                 'depth': 'medium'
             }
         }
-        
+
         result = await investigation_agent.execute_task(task)
-        
+
         assert result['success'] is True
         assert result['task_type'] == 'link_analysis'
         assert 'entities_analyzed' in result
         assert 'relationships' in result
-    
+
     @pytest.mark.asyncio
     async def test_entity_resolution(self, investigation_agent):
         """Test entity resolution task"""
@@ -138,9 +138,9 @@ class TestInvestigationAgent:
                 'threshold': 0.8
             }
         }
-        
+
         result = await investigation_agent.execute_task(task)
-        
+
         assert result['success'] is True
         assert result['task_type'] == 'entity_resolution'
         assert 'entities_processed' in result
@@ -148,7 +148,7 @@ class TestInvestigationAgent:
 
 class TestForensicsAgent:
     """Test Forensics Agent"""
-    
+
     @pytest.fixture
     async def forensics_agent(self):
         """Create Forensics agent for testing"""
@@ -159,7 +159,7 @@ class TestForensicsAgent:
         await agent.start()
         yield agent
         await agent.stop()
-    
+
     @pytest.mark.asyncio
     async def test_evidence_acquisition(self, forensics_agent):
         """Test evidence acquisition task"""
@@ -172,14 +172,14 @@ class TestForensicsAgent:
                 'acquisition_type': 'forensic'
             }
         }
-        
+
         result = await forensics_agent.execute_task(task)
-        
+
         assert result['success'] is True
         assert result['task_type'] == 'evidence_acquisition'
         assert 'result' in result
         assert 'evidence_id' in result['result']
-    
+
     @pytest.mark.asyncio
     async def test_file_analysis(self, forensics_agent):
         """Test file analysis task"""
@@ -192,9 +192,9 @@ class TestForensicsAgent:
                 'analysis_depth': 'standard'
             }
         }
-        
+
         result = await forensics_agent.execute_task(task)
-        
+
         assert result['success'] is True
         assert result['task_type'] == 'file_analysis'
         assert 'files_analyzed' in result
@@ -202,7 +202,7 @@ class TestForensicsAgent:
 
 class TestDataAnalysisAgent:
     """Test Data Analysis Agent"""
-    
+
     @pytest.fixture
     async def data_analysis_agent(self):
         """Create Data Analysis agent for testing"""
@@ -213,7 +213,7 @@ class TestDataAnalysisAgent:
         await agent.start()
         yield agent
         await agent.stop()
-    
+
     @pytest.mark.asyncio
     async def test_statistical_analysis(self, data_analysis_agent):
         """Test statistical analysis task"""
@@ -226,14 +226,14 @@ class TestDataAnalysisAgent:
                 'analysis_type': 'descriptive'
             }
         }
-        
+
         result = await data_analysis_agent.execute_task(task)
-        
+
         assert result['success'] is True
         assert result['task_type'] == 'statistical_analysis'
         assert 'statistics' in result
         assert 'data_points' in result
-    
+
     @pytest.mark.asyncio
     async def test_anomaly_detection(self, data_analysis_agent):
         """Test anomaly detection task"""
@@ -246,9 +246,9 @@ class TestDataAnalysisAgent:
                 'threshold': 0.8
             }
         }
-        
+
         result = await data_analysis_agent.execute_task(task)
-        
+
         assert result['success'] is True
         assert result['task_type'] == 'anomaly_detection'
         assert 'anomalies_found' in result
@@ -256,7 +256,7 @@ class TestDataAnalysisAgent:
 
 class TestReportingAgent:
     """Test Reporting Agent"""
-    
+
     @pytest.fixture
     async def reporting_agent(self):
         """Create Reporting agent for testing"""
@@ -267,7 +267,7 @@ class TestReportingAgent:
         await agent.start()
         yield agent
         await agent.stop()
-    
+
     @pytest.mark.asyncio
     async def test_report_generation(self, reporting_agent):
         """Test report generation task"""
@@ -281,14 +281,14 @@ class TestReportingAgent:
                 'output_format': 'pdf'
             }
         }
-        
+
         result = await reporting_agent.execute_task(task)
-        
+
         assert result['success'] is True
         assert result['task_type'] == 'report_generation'
         assert 'report_content' in result
         assert 'output_format' in result
-    
+
     @pytest.mark.asyncio
     async def test_executive_summary(self, reporting_agent):
         """Test executive summary generation"""
@@ -301,9 +301,9 @@ class TestReportingAgent:
                 'audience': 'executives'
             }
         }
-        
+
         result = await reporting_agent.execute_task(task)
-        
+
         assert result['success'] is True
         assert result['task_type'] == 'executive_summary'
         assert 'summary' in result
@@ -311,7 +311,7 @@ class TestReportingAgent:
 
 class TestAgentIntegration:
     """Test agent integration"""
-    
+
     @pytest.mark.asyncio
     async def test_agent_communication(self):
         """Test agent communication"""
@@ -320,34 +320,34 @@ class TestAgentIntegration:
             agent_id="test_osint_001",
             name="Test OSINT Agent"
         )
-        
+
         investigation_agent = InvestigationAgent(
             agent_id="test_investigation_001",
             name="Test Investigation Agent"
         )
-        
+
         await osint_agent.start()
         await investigation_agent.start()
-        
+
         try:
             # Test agent status
             osint_status = await osint_agent.get_status()
             investigation_status = await investigation_agent.get_status()
-            
+
             assert osint_status['agent_id'] == 'test_osint_001'
             assert investigation_status['agent_id'] == 'test_investigation_001'
-            
+
             # Test agent capabilities
             osint_capabilities = await osint_agent.get_capabilities()
             investigation_capabilities = await investigation_agent.get_capabilities()
-            
+
             assert len(osint_capabilities) > 0
             assert len(investigation_capabilities) > 0
-            
+
         finally:
             await osint_agent.stop()
             await investigation_agent.stop()
-    
+
     @pytest.mark.asyncio
     async def test_agent_health_check(self):
         """Test agent health check"""
@@ -355,15 +355,15 @@ class TestAgentIntegration:
             agent_id="test_health_001",
             name="Test Health Agent"
         )
-        
+
         await agent.start()
-        
+
         try:
             health = await agent.health_check()
-            
+
             assert 'status' in health
             assert 'timestamp' in health
-            
+
         finally:
             await agent.stop()
 

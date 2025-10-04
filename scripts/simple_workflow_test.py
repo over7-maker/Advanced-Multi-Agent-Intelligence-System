@@ -21,33 +21,33 @@ logger = logging.getLogger(__name__)
 
 class SimpleWorkflowTest:
     """Simple workflow tester without AI dependencies"""
-    
+
     def __init__(self):
         self.test_results = {}
-    
+
     def test_github_workflows(self) -> Dict[str, Any]:
         """Test GitHub Actions workflows"""
         try:
             logger.info("Testing GitHub Actions workflows...")
-            
+
             workflow_files = [
                 '.github/workflows/ai_development.yml',
                 '.github/workflows/ai_complete_workflow.yml',
                 '.github/workflows/ai_simple_workflow.yml'
             ]
-            
+
             workflow_tests = {}
-            
+
             for workflow_file in workflow_files:
                 workflow_path = Path(workflow_file)
                 if workflow_path.exists():
                     try:
                         with open(workflow_path, 'r', encoding='utf-8') as f:
                             workflow_content = f.read()
-                        
+
                         # Parse YAML
                         workflow_yaml = yaml.safe_load(workflow_content)
-                        
+
                         # Check for required components
                         required_components = [
                             'ai_code_analysis',
@@ -58,13 +58,13 @@ class SimpleWorkflowTest:
                             'ai_performance_optimization',
                             'continuous_ai_development'
                         ]
-                        
+
                         jobs = workflow_yaml.get('jobs', {})
                         component_tests = {}
-                        
+
                         for component in required_components:
                             component_tests[component] = component in jobs
-                        
+
                         # Check for environment variables
                         env_vars = [
                             'DEEPSEEK_API_KEY',
@@ -74,11 +74,11 @@ class SimpleWorkflowTest:
                             'QWEN_API_KEY',
                             'GPTOSS_API_KEY'
                         ]
-                        
+
                         env_tests = {}
                         for env_var in env_vars:
                             env_tests[env_var] = f'${{{{ secrets.{env_var} }}}}' in workflow_content
-                        
+
                         workflow_tests[workflow_file] = {
                             'exists': True,
                             'yaml_valid': True,
@@ -88,14 +88,14 @@ class SimpleWorkflowTest:
                             'total_jobs': len(jobs),
                             'working_components': len([c for c in component_tests.values() if c])
                         }
-                        
+
                     except yaml.YAMLError as e:
                         workflow_tests[workflow_file] = {
                             'exists': True,
                             'yaml_valid': False,
                             'error': f'YAML parsing error: {e}'
                         }
-                    
+
                     except Exception as e:
                         workflow_tests[workflow_file] = {
                             'exists': True,
@@ -108,21 +108,21 @@ class SimpleWorkflowTest:
                         'yaml_valid': False,
                         'error': 'Workflow file not found'
                     }
-            
+
             return {
                 'workflow_tests': workflow_tests,
                 'timestamp': datetime.now().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error testing GitHub workflows: {e}")
             return {'error': str(e)}
-    
+
     def test_ai_scripts(self) -> Dict[str, Any]:
         """Test all AI scripts"""
         try:
             logger.info("Testing AI scripts...")
-            
+
             scripts = [
                 'ai_code_analyzer.py',
                 'ai_code_improver.py',
@@ -141,9 +141,9 @@ class SimpleWorkflowTest:
                 'test_workflows.py',
                 'simple_workflow_test.py'
             ]
-            
+
             script_tests = {}
-            
+
             for script in scripts:
                 script_path = Path(f"scripts/{script}")
                 script_test = {
@@ -154,12 +154,12 @@ class SimpleWorkflowTest:
                     'size': 0,
                     'line_count': 0
                 }
-                
+
                 if script_path.exists():
                     try:
                         with open(script_path, 'r', encoding='utf-8') as f:
                             content = f.read()
-                        
+
                         script_test.update({
                             'readable': True,
                             'has_main': 'if __name__ == "__main__"' in content,
@@ -167,12 +167,12 @@ class SimpleWorkflowTest:
                             'size': len(content),
                             'line_count': len(content.splitlines())
                         })
-                        
+
                     except Exception as e:
                         script_test['error'] = str(e)
-                
+
                 script_tests[script] = script_test
-            
+
             return {
                 'script_tests': script_tests,
                 'total_scripts': len(scripts),
@@ -180,16 +180,16 @@ class SimpleWorkflowTest:
                 'working_scripts': len([s for s in script_tests.values() if s['exists'] and s['has_main']]),
                 'timestamp': datetime.now().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error testing AI scripts: {e}")
             return {'error': str(e)}
-    
+
     def test_environment_setup(self) -> Dict[str, Any]:
         """Test environment setup"""
         try:
             logger.info("Testing environment setup...")
-            
+
             # Check environment variables
             required_env_vars = [
                 'DEEPSEEK_API_KEY',
@@ -199,7 +199,7 @@ class SimpleWorkflowTest:
                 'QWEN_API_KEY',
                 'GPTOSS_API_KEY'
             ]
-            
+
             env_validations = {}
             for env_var in required_env_vars:
                 value = os.getenv(env_var)
@@ -209,11 +209,11 @@ class SimpleWorkflowTest:
                     'starts_with_sk': value.startswith('sk-') if value else False,
                     'valid_format': value and len(value) > 50 if value else False
                 }
-            
+
             # Check Python version
             python_version = sys.version_info
             python_compatible = python_version.major == 3 and python_version.minor >= 8
-            
+
             # Check required files
             required_files = [
                 'services/ai_service_manager.py',
@@ -221,12 +221,12 @@ class SimpleWorkflowTest:
                 'AI_INTEGRATION_README.md',
                 'setup_ai_complete.sh'
             ]
-            
+
             file_validations = {}
             for file_path in required_files:
                 file_exists = Path(file_path).exists()
                 file_validations[file_path] = file_exists
-            
+
             return {
                 'env_validations': env_validations,
                 'python_compatible': python_compatible,
@@ -234,25 +234,25 @@ class SimpleWorkflowTest:
                 'file_validations': file_validations,
                 'timestamp': datetime.now().isoformat()
             }
-            
+
         except Exception as e:
             logger.error(f"Error testing environment setup: {e}")
             return {'error': str(e)}
-    
+
     def run_complete_test(self) -> Dict[str, Any]:
         """Run complete workflow test"""
         try:
             logger.info("Running complete workflow test...")
-            
+
             # Test GitHub workflows
             workflow_tests = self.test_github_workflows()
-            
+
             # Test AI scripts
             script_tests = self.test_ai_scripts()
-            
+
             # Test environment setup
             environment_tests = self.test_environment_setup()
-            
+
             # Generate comprehensive test report
             test_report = {
                 'timestamp': datetime.now().isoformat(),
@@ -263,13 +263,13 @@ class SimpleWorkflowTest:
                     workflow_tests, script_tests, environment_tests
                 )
             }
-            
+
             return test_report
-            
+
         except Exception as e:
             logger.error(f"Error in complete test: {e}")
             return {'error': str(e)}
-    
+
     def _generate_test_summary(self, workflow_tests: Dict[str, Any],
                              script_tests: Dict[str, Any],
                              environment_tests: Dict[str, Any]) -> Dict[str, Any]:
@@ -281,28 +281,28 @@ class SimpleWorkflowTest:
                 w for w in workflow_results.values()
                 if w.get('yaml_valid', False) and w.get('working_components', 0) > 0
             ])
-            
+
             # Count working scripts
             script_results = script_tests.get('script_tests', {})
             working_scripts = len([
                 s for s in script_results.values()
                 if s.get('exists', False) and s.get('has_main', False)
             ])
-            
+
             # Count environment variables
             env_results = environment_tests.get('env_validations', {})
             set_env_vars = len([
                 e for e in env_results.values()
                 if e.get('set', False)
             ])
-            
+
             # Count required files
             file_results = environment_tests.get('file_validations', {})
             existing_files = len([
                 f for f in file_results.values()
                 if f
             ])
-            
+
             return {
                 'total_workflows': len(workflow_results),
                 'successful_workflows': successful_workflows,
@@ -318,38 +318,38 @@ class SimpleWorkflowTest:
                     successful_workflows, working_scripts, set_env_vars, existing_files
                 )
             }
-            
+
         except Exception as e:
             logger.error(f"Error generating test summary: {e}")
             return {'error': str(e)}
-    
+
     def _generate_test_recommendations(self, successful_workflows: int,
                                      working_scripts: int,
                                      set_env_vars: int,
                                      existing_files: int) -> List[str]:
         """Generate test recommendations"""
         recommendations = []
-        
+
         if successful_workflows == 0:
             recommendations.append("No workflows are working. Check GitHub Actions configuration.")
         elif successful_workflows < 3:
             recommendations.append(f"Only {successful_workflows} workflows are working. Complete all workflow configurations.")
-        
+
         if working_scripts < 16:
             recommendations.append(f"Only {working_scripts} AI scripts are working. Check script implementations.")
-        
+
         if set_env_vars < 6:
             recommendations.append(f"Only {set_env_vars} environment variables are set. Set all required API keys.")
-        
+
         if existing_files < 4:
             recommendations.append(f"Only {existing_files} required files exist. Check file implementations.")
-        
+
         if successful_workflows > 0 and working_scripts > 0:
             recommendations.append("Workflow testing is mostly complete! Address remaining issues.")
             recommendations.append("All components are working together successfully.")
-        
+
         return recommendations
-    
+
     def save_test_report(self, report: Dict[str, Any], output_file: str):
         """Save test report to file"""
         try:
@@ -367,11 +367,11 @@ def main():
     parser.add_argument('--workflows-only', action='store_true', help='Only test GitHub workflows')
     parser.add_argument('--scripts-only', action='store_true', help='Only test AI scripts')
     parser.add_argument('--environment-only', action='store_true', help='Only test environment setup')
-    
+
     args = parser.parse_args()
-    
+
     tester = SimpleWorkflowTest()
-    
+
     try:
         if args.workflows_only:
             # Only test GitHub workflows
@@ -383,7 +383,7 @@ def main():
                 status = "✓" if test.get('yaml_valid') and test.get('working_components', 0) > 0 else "✗"
                 print(f"{status} {workflow}: {test.get('working_components', 0)} components")
             print("="*50)
-            
+
         elif args.scripts_only:
             # Only test AI scripts
             results = tester.test_ai_scripts()
@@ -394,7 +394,7 @@ def main():
                 status = "✓" if test.get('exists') and test.get('has_main') else "✗"
                 print(f"{status} {script}: {test.get('exists', False)}")
             print("="*50)
-            
+
         elif args.environment_only:
             # Only test environment setup
             results = tester.test_environment_setup()
@@ -409,12 +409,12 @@ def main():
                 status = "✓" if exists else "✗"
                 print(f"{status} {file}: {exists}")
             print("="*50)
-            
+
         else:
             # Complete test
             results = tester.run_complete_test()
             tester.save_test_report(results, args.output)
-            
+
             # Print summary
             if 'summary' in results:
                 summary = results['summary']
@@ -435,9 +435,9 @@ def main():
                 for rec in summary.get('recommendations', []):
                     print(f"- {rec}")
                 print("="*50)
-            
+
             logger.info("Simple workflow testing complete.")
-        
+
     except Exception as e:
         logger.error(f"Error in main: {e}")
         sys.exit(1)

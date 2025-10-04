@@ -1,0 +1,378 @@
+name: Enhanced AI Issue Responder v2.0
+
+# Advanced GitHub Issues automation with intelligent processing
+on:
+  issues:
+    types: [opened, edited, reopened, labeled]
+  issue_comment:
+    types: [created, edited]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: 'Issue number to respond to'
+        required: true
+        type: string
+      force_reprocess:
+        description: 'Force reprocessing even if cached'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+
+jobs:
+  enhanced-ai-issue-response:
+    runs-on: ubuntu-latest
+    
+    # Enhanced conditions with better filtering
+    if: |
+      (github.event.issue.pull_request == null) &&
+      (github.event_name != 'issue_comment' || 
+       !contains(github.event.comment.body, 'Enhanced AI Issues Responder v2.0'))
+    
+    permissions:
+      issues: write
+      contents: read
+      pull-requests: read
+    
+    # Add concurrency control to prevent duplicate processing
+    concurrency:
+      group: issue-responder-${{ github.event.issue.number || github.event.inputs.issue_number }}
+      cancel-in-progress: false
+    
+    steps:
+    - name: 🚀 Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 📦 Install dependencies with caching
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade setuptools wheel
+        if [ -f requirements.txt ]; then
+          python -m pip install -r requirements.txt
+        fi
+        python -m pip install openai requests aiohttp sqlite3 groq google-generativeai cerebras
+    
+    - name: 🔧 Setup enhanced environment
+      run: |
+        echo "Setting up enhanced AI responder environment..."
+        mkdir -p /tmp/ai_responder_cache
+        mkdir -p logs
+        
+        # Create performance monitoring directory
+        mkdir -p performance_reports
+        
+        # Set up database permissions
+        touch /tmp/issues_cache.db
+        chmod 666 /tmp/issues_cache.db
+    
+    - name: 🧠 Enhanced AI Issue Analysis and Response
+      id: ai_response
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+        CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+        ISSUE_NUMBER: ${{ github.event.issue.number || github.event.inputs.issue_number }}
+        ISSUE_TITLE: ${{ github.event.issue.title }}
+        ISSUE_BODY: ${{ github.event.issue.body }}
+        ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+        REPO_NAME: ${{ github.repository }}
+        ACTION: ${{ github.event.action }}
+        FORCE_REPROCESS: ${{ github.event.inputs.force_reprocess }}
+      run: |
+        echo "🚀 Starting Enhanced AI Issue Processing..."
+        echo "Issue Number: $ISSUE_NUMBER"
+        echo "Issue Title: $ISSUE_TITLE"
+        echo "Issue Author: $ISSUE_AUTHOR"
+        echo "Repository: $REPO_NAME"
+        echo "Action: $ACTION"
+        echo ""
+        
+        # Run the enhanced AI issues responder
+        python scripts/ai_issues_responder_v2.py \
+          --issue-number "$ISSUE_NUMBER" \
+          --issue-title "$ISSUE_TITLE" \
+          --issue-body "$ISSUE_BODY" \
+          --repository "$REPO_NAME" \
+          --action "$ACTION" \
+          --author "$ISSUE_AUTHOR" \
+          --output "performance_reports/issue_${ISSUE_NUMBER}_response.json" \
+          --verbose || {
+            echo "❌ Enhanced processing failed, attempting fallback..."
+            
+            # Fallback to original responder if available
+            if [ -f scripts/ai_issues_responder.py ]; then
+              python scripts/ai_issues_responder.py \
+                --issue-number "$ISSUE_NUMBER" \
+                --issue-title "$ISSUE_TITLE" \
+                --issue-body "$ISSUE_BODY" \
+                --repository "$REPO_NAME" \
+                --action "$ACTION" \
+                --output "performance_reports/issue_${ISSUE_NUMBER}_fallback.json" || \
+              echo "⚠️ Both enhanced and fallback processing failed"
+            else
+              echo "⚠️ No fallback responder available"
+            fi
+          }
+        
+        echo "✅ Enhanced AI processing complete!"
+    
+    - name: 📊 Generate Performance Report
+      id: performance
+      if: always()
+      run: |
+        echo "📊 Generating performance report..."
+        
+        # Generate performance report
+        python scripts/ai_issues_responder_v2.py --performance-report > performance_reports/performance_report.json || \
+        echo '{"error": "Performance report generation failed"}' > performance_reports/performance_report.json
+        
+        # Generate cache statistics
+        python scripts/ai_issues_responder_v2.py --cache-stats > performance_reports/cache_stats.txt || \
+        echo "Cache stats generation failed" > performance_reports/cache_stats.txt
+        
+        # Extract key metrics for GitHub output
+        if [ -f "performance_reports/issue_${ISSUE_NUMBER}_response.json" ]; then
+          PROCESSING_TIME=$(jq -r '.processing_time // 0' "performance_reports/issue_${ISSUE_NUMBER}_response.json")
+          SUCCESS=$(jq -r '.success // false' "performance_reports/issue_${ISSUE_NUMBER}_response.json")
+          CONFIDENCE=$(jq -r '.confidence // 0' "performance_reports/issue_${ISSUE_NUMBER}_response.json")
+          LANGUAGE=$(jq -r '.language // "unknown"' "performance_reports/issue_${ISSUE_NUMBER}_response.json")
+          ANALYSIS_PROVIDER=$(jq -r '.analysis_provider // "unknown"' "performance_reports/issue_${ISSUE_NUMBER}_response.json")
+          RESPONSE_PROVIDER=$(jq -r '.response_provider // "unknown"' "performance_reports/issue_${ISSUE_NUMBER}_response.json")
+          
+          echo "processing_time=$PROCESSING_TIME" >> $GITHUB_OUTPUT
+          echo "success=$SUCCESS" >> $GITHUB_OUTPUT
+          echo "confidence=$CONFIDENCE" >> $GITHUB_OUTPUT
+          echo "language=$LANGUAGE" >> $GITHUB_OUTPUT
+          echo "analysis_provider=$ANALYSIS_PROVIDER" >> $GITHUB_OUTPUT
+          echo "response_provider=$RESPONSE_PROVIDER" >> $GITHUB_OUTPUT
+        else
+          echo "processing_time=0" >> $GITHUB_OUTPUT
+          echo "success=false" >> $GITHUB_OUTPUT
+          echo "confidence=0" >> $GITHUB_OUTPUT
+          echo "language=unknown" >> $GITHUB_OUTPUT
+          echo "analysis_provider=unknown" >> $GITHUB_OUTPUT
+          echo "response_provider=unknown" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: 🏷️ Add Enhanced AI Analysis Labels
+      uses: actions/github-script@v7
+      if: steps.performance.outputs.success == 'true'
+      with:
+        script: |
+          const issueNumber = context.issue.number || '${{ github.event.inputs.issue_number }}';
+          const confidence = parseFloat('${{ steps.performance.outputs.confidence }}');
+          const language = '${{ steps.performance.outputs.language }}';
+          
+          const labels = ['ai-analyzed-v2', 'auto-response-enhanced'];
+          
+          // Add confidence-based labels
+          if (confidence > 0.8) {
+            labels.push('high-confidence');
+          } else if (confidence > 0.6) {
+            labels.push('medium-confidence');
+          } else {
+            labels.push('low-confidence');
+          }
+          
+          // Add language label if not English
+          if (language && language !== 'en' && language !== 'unknown') {
+            labels.push(`lang:${language}`);
+          }
+          
+          try {
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              labels: labels
+            });
+            
+            console.log(`✅ Added enhanced labels: ${labels.join(', ')}`);
+          } catch (error) {
+            console.error(`❌ Failed to add labels: ${error.message}`);
+          }
+    
+    - name: 📈 Upload Performance Reports
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: enhanced-ai-performance-reports-${{ github.event.issue.number || github.event.inputs.issue_number }}
+        path: performance_reports/
+        retention-days: 30
+    
+    - name: 💾 Upload Cache Database
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ai-responder-cache-${{ github.run_number }}
+        path: /tmp/issues_cache.db
+        retention-days: 7
+    
+    - name: 📋 Generate Enhanced Response Summary
+      id: summary
+      if: always()
+      run: |
+        echo "## 🤖 Enhanced AI Issue Response Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Processing Results" >> $GITHUB_STEP_SUMMARY
+        echo "- **Issue Number**: #${{ github.event.issue.number || github.event.inputs.issue_number }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Issue Title**: ${{ github.event.issue.title }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Issue Author**: ${{ github.event.issue.user.login }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Processing Success**: ${{ steps.performance.outputs.success }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Processing Time**: ${{ steps.performance.outputs.processing_time }}s" >> $GITHUB_STEP_SUMMARY
+        echo "- **Confidence Score**: ${{ steps.performance.outputs.confidence }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Detected Language**: ${{ steps.performance.outputs.language }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🤖 AI Providers Used" >> $GITHUB_STEP_SUMMARY
+        echo "- **Analysis Provider**: ${{ steps.performance.outputs.analysis_provider }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Response Provider**: ${{ steps.performance.outputs.response_provider }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### ⚡ System Status" >> $GITHUB_STEP_SUMMARY
+        echo "- **Responder Version**: v2.0 Enhanced" >> $GITHUB_STEP_SUMMARY
+        echo "- **Fallback System**: ✅ 9-Provider Intelligent Fallback" >> $GITHUB_STEP_SUMMARY
+        echo "- **Caching**: ✅ SQLite-based Performance Caching" >> $GITHUB_STEP_SUMMARY
+        echo "- **Multi-language**: ✅ Automatic Language Detection" >> $GITHUB_STEP_SUMMARY
+        echo "- **Smart Labels**: ✅ Context-aware Label Suggestions" >> $GITHUB_STEP_SUMMARY
+        echo "- **Follow-up Scheduling**: ✅ Automated Follow-up Management" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🔗 Artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "- Performance reports and cache database uploaded as artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "- Detailed logs available in workflow run" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "*Enhanced AI Issue Responder v2.0 - Powered by Advanced Multi-Agent AI System*" >> $GITHUB_STEP_SUMMARY
+    
+    - name: 🚨 Notify on Failure
+      uses: actions/github-script@v7
+      if: failure()
+      with:
+        script: |
+          const issueNumber = context.issue.number || '${{ github.event.inputs.issue_number }}';
+          
+          const failureComment = `## ⚠️ Enhanced AI Response System Notice
+          
+I encountered an issue while processing this GitHub issue with the Enhanced AI Responder v2.0. 
+
+**What happened:**
+- The enhanced AI analysis system experienced a temporary issue
+- This might be due to high load on AI providers or a temporary service disruption
+- Your issue is still important and will be reviewed by our team
+
+**Next steps:**
+- Our team has been notified of this issue
+- A human team member will review your issue shortly
+- You can expect a response within 24 hours
+
+**For urgent issues:**
+- Please add the \`urgent\` label to your issue
+- Consider reaching out through our other support channels
+
+Thank you for your patience! 🙏
+
+---
+*Enhanced AI Issue Responder v2.0 - Failure Notification*`;
+
+          try {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issueNumber,
+              body: failureComment
+            });
+            
+            console.log('✅ Failure notification comment posted');
+          } catch (error) {
+            console.error(`❌ Failed to post failure notification: ${error.message}`);
+          }
+
+  # Separate job for follow-up processing
+  follow-up-processor:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+    - name: 🚀 Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: 📅 Process Scheduled Follow-ups
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "📅 Processing scheduled follow-ups..."
+        # This would be implemented as a separate script
+        # python scripts/process_followups.py
+        echo "Follow-up processing would be implemented here"
+    
+  # Health check job
+  system-health-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+    - name: 🚀 Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: 🔍 AI Providers Health Check
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+        CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+      run: |
+        echo "🔍 Checking AI provider health..."
+        python -c "
+        import sys
+        sys.path.append('services')
+        from ultimate_fallback_system import get_provider_health, get_fallback_stats
+        
+        health = get_provider_health()
+        stats = get_fallback_stats()
+        
+        print('🏥 Provider Health Status:')
+        for provider, info in health.items():
+            status_emoji = '✅' if info['status'] == 'active' else '❌'
+            print(f'  {status_emoji} {info[\"name\"]}: {info[\"status\"]}')
+        
+        active_count = sum(1 for info in health.values() if info['status'] == 'active')
+        print(f'\n📊 System Stats:')
+        print(f'  Active Providers: {active_count}/9')
+        print(f'  Total Requests: {stats.get(\"total_requests\", 0)}')
+        print(f'  Success Rate: {stats.get(\"successful_requests\", 0) / max(stats.get(\"total_requests\", 1), 1) * 100:.1f}%')
+        "

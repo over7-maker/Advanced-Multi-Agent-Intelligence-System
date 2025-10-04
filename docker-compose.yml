@@ -1,113 +1,83 @@
 version: '3.8'
 
 services:
-  # AMAS Intelligence System - Phase 1 Enhanced
-  amas-core:
-    build: .
-    container_name: amas-core
-    ports:
-      - "8000:8000"
-    environment:
-      - AMAS_MODE=development
-      - AMAS_OFFLINE_MODE=true
-      - AMAS_GPU_ENABLED=true
-      - AMAS_LOG_LEVEL=INFO
-      - AMAS_LLM_HOST=ollama:11434
-      - AMAS_VECTOR_HOST=vector-service:8001
-      - AMAS_GRAPH_HOST=neo4j:7474
-      - AMAS_REDIS_HOST=redis:6379
-      - AMAS_POSTGRES_HOST=postgres:5432
-      - AMAS_POSTGRES_USER=amas
-      - AMAS_POSTGRES_PASSWORD=amas123
-      - AMAS_POSTGRES_DB=amas
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      neo4j:
-        condition: service_healthy
-    volumes:
-      - ./logs:/app/logs
-      - ./data:/app/data
-      - ./scripts:/app/scripts
-    networks:
-      - amas-network
-    restart: unless-stopped
-
-  # PostgreSQL Database with health check
+  # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
     container_name: amas-postgres
-    ports:
-      - "5432:5432"
     environment:
-      - POSTGRES_DB=amas
-      - POSTGRES_USER=amas
-      - POSTGRES_PASSWORD=amas123
-      - POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256
+      POSTGRES_DB: ${POSTGRES_DB:-amas}
+      POSTGRES_USER: ${POSTGRES_USER:-amas}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-amas_secure_password_123}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+      - ./docker/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
     networks:
       - amas-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U amas -d amas"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    restart: unless-stopped
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-amas}"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Redis Cache with health check
+  # Redis Cache
   redis:
-    image: redis:7.2-alpine
+    image: redis:7-alpine
     container_name: amas-redis
-    ports:
-      - "6379:6379"
+    command: redis-server --appendonly yes ${REDIS_PASSWORD:+--requirepass $REDIS_PASSWORD}
     volumes:
       - redis_data:/data
+    ports:
+      - "6379:6379"
     networks:
       - amas-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    restart: unless-stopped
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  # Neo4j Knowledge Graph with health check
+  # Neo4j Knowledge Graph
   neo4j:
-    image: neo4j:5.15.0
+    image: neo4j:5.15-community
     container_name: amas-neo4j
-    ports:
-      - "7474:7474"
-      - "7687:7687"
     environment:
-      - NEO4J_AUTH=neo4j/amas123
-      - NEO4J_PLUGINS=["apoc"]
-      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+      NEO4J_AUTH: ${NEO4J_AUTH:-neo4j/amas_neo4j_password_123}
+      NEO4J_PLUGINS: '["apoc", "graph-data-science"]'
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*,gds.*
     volumes:
       - neo4j_data:/data
       - neo4j_logs:/logs
+    ports:
+      - "7474:7474"  # HTTP
+      - "7687:7687"  # Bolt
     networks:
       - amas-network
     healthcheck:
-      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "amas123", "RETURN 1"]
-      interval: 10s
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "${NEO4J_AUTH##*/}", "RETURN 1"]
+      interval: 30s
       timeout: 10s
-      retries: 5
-    restart: unless-stopped
+      retries: 3
 
   # Ollama LLM Service
   ollama:
     image: ollama/ollama:latest
     container_name: amas-ollama
-    ports:
-      - "11434:11434"
-    environment:
-      - OLLAMA_HOST=0.0.0.0
     volumes:
       - ollama_data:/root/.ollama
+    ports:
+      - "11434:11434"
+    networks:
+      - amas-network
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
     deploy:
       resources:
         reservations:
@@ -115,6 +85,108 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
+
+  # AMAS API Service
+  amas-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: production
+    container_name: amas-api
+    environment:
+      - AMAS_ENVIRONMENT=production
+      - AMAS_DB_HOST=postgres
+      - AMAS_REDIS_HOST=redis
+      - AMAS_NEO4J_HOST=neo4j
+      - AMAS_LLM_HOST=ollama
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    networks:
+      - amas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Vector Search Service
+  vector-service:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.vector
+    container_name: amas-vector
+    environment:
+      - VECTOR_DATA_PATH=/data/vectors
+      - VECTOR_INDEX_TYPE=faiss
+    volumes:
+      - vector_data:/data/vectors
+    ports:
+      - "8001:8001"
+    networks:
+      - amas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Nginx Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: amas-nginx
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./docker/nginx/ssl:/etc/nginx/ssl
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - amas-api
+    networks:
+      - amas-network
+    restart: unless-stopped
+
+  # Prometheus Monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: amas-prometheus
+    volumes:
+      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - amas-network
+    restart: unless-stopped
+
+  # Grafana Dashboard
+  grafana:
+    image: grafana/grafana:latest
+    container_name: amas-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=amas_admin_password
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./docker/grafana/datasources:/etc/grafana/provisioning/datasources
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
     networks:
       - amas-network
     restart: unless-stopped
@@ -125,7 +197,13 @@ volumes:
   neo4j_data:
   neo4j_logs:
   ollama_data:
+  vector_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   amas-network:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

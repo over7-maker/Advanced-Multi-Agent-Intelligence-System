@@ -1,3 +1,0 @@
-"""
-AMAS Services Package
-"""
