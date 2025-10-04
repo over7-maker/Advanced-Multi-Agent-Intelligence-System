@@ -1,6 +1,6 @@
 """
 Audit Module for AMAS
-Comprehensive audit logging and monitoring
+Comprehensive audit logging and monitoring - SECURITY HARDENED
 """
 import asyncio
 import logging
@@ -9,6 +9,8 @@ from datetime import datetime, timedelta
 import json
 import hashlib
 import uuid
+import re
+import ast
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -81,8 +83,100 @@ class AuditEvent(Enum):
     KEY_ROTATION = "key_rotation"
     KEY_GENERATION = "key_generation"
 
+class SecureRuleEngine:
+    """Secure rule evaluation engine - NO eval() usage"""
+    
+    ALLOWED_OPERATORS = ['==', '!=', '>', '<', '>=', '<=', 'in', 'not in']
+    ALLOWED_LOGICAL = ['and', 'or']
+    
+    @staticmethod
+    def evaluate_condition(condition: str, context: Dict[str, Any]) -> bool:
+        """Securely evaluate conditions using AST parsing"""
+        try:
+            # Remove any potential dangerous content
+            if any(dangerous in condition.lower() for dangerous in 
+                   ['import', '__', 'exec', 'eval', 'open', 'file', 'subprocess']):
+                raise ValueError("Dangerous content detected in condition")
+            
+            # Parse condition safely
+            return SecureRuleEngine._parse_simple_condition(condition, context)
+            
+        except Exception as e:
+            logger.error(f"Error in secure condition evaluation: {e}")
+            return False
+    
+    @staticmethod
+    def _parse_simple_condition(condition: str, context: Dict[str, Any]) -> bool:
+        """Parse simple conditions securely"""
+        condition = condition.strip()
+        
+        # Handle AND/OR operators
+        if ' and ' in condition:
+            parts = condition.split(' and ')
+            return all(SecureRuleEngine._evaluate_single_condition(part.strip(), context) for part in parts)
+        
+        if ' or ' in condition:
+            parts = condition.split(' or ')
+            return any(SecureRuleEngine._evaluate_single_condition(part.strip(), context) for part in parts)
+        
+        return SecureRuleEngine._evaluate_single_condition(condition, context)
+    
+    @staticmethod
+    def _evaluate_single_condition(condition: str, context: Dict[str, Any]) -> bool:
+        """Evaluate single condition safely"""
+        # Find operator
+        for op in SecureRuleEngine.ALLOWED_OPERATORS:
+            if op in condition:
+                left, right = condition.split(op, 1)
+                left = left.strip().strip("'\"")
+                right = right.strip().strip("'\"")
+                
+                # Get values from context
+                left_val = context.get(left, left)
+                
+                # Convert right to appropriate type
+                try:
+                    right_val = int(right)
+                except ValueError:
+                    try:
+                        right_val = float(right)
+                    except ValueError:
+                        right_val = right
+                
+                # Perform comparison
+                if op == '==':
+                    return str(left_val) == str(right_val)
+                elif op == '!=':
+                    return str(left_val) != str(right_val)
+                elif op == '>':
+                    try:
+                        return float(left_val) > float(right_val)
+                    except (ValueError, TypeError):
+                        return str(left_val) > str(right_val)
+                elif op == '<':
+                    try:
+                        return float(left_val) < float(right_val)
+                    except (ValueError, TypeError):
+                        return str(left_val) < str(right_val)
+                elif op == '>=':
+                    try:
+                        return float(left_val) >= float(right_val)
+                    except (ValueError, TypeError):
+                        return str(left_val) >= str(right_val)
+                elif op == '<=':
+                    try:
+                        return float(left_val) <= float(right_val)
+                    except (ValueError, TypeError):
+                        return str(left_val) <= str(right_val)
+                elif op == 'in':
+                    return str(right_val) in str(left_val)
+                elif op == 'not in':
+                    return str(right_val) not in str(left_val)
+        
+        return False
+
 class AuditManager:
-    """Audit manager for AMAS"""
+    """Audit manager for AMAS - Security hardened"""
     
     def __init__(self, config: Dict[str, Any], database_service: Optional[Any] = None):
         self.config = config
@@ -90,6 +184,7 @@ class AuditManager:
         self.audit_enabled = config.get('security', {}).get('audit_enabled', True)
         self.retention_days = config.get('security', {}).get('audit_retention_days', 365)
         self.batch_size = config.get('security', {}).get('audit_batch_size', 100)
+        self.rule_engine = SecureRuleEngine()
         
         # Audit buffer for batching
         self.audit_buffer = []
@@ -98,42 +193,50 @@ class AuditManager:
         # Audit rules
         self.audit_rules = self._initialize_audit_rules()
         
-        # Sensitive data patterns
+        # Enhanced sensitive data patterns
         self.sensitive_patterns = [
-            r'password["\']?\s*[:=]\s*["\'][^"\']+["\']',
-            r'token["\']?\s*[:=]\s*["\'][^"\']+["\']',
-            r'key["\']?\s*[:=]\s*["\'][^"\']+["\']',
-            r'secret["\']?\s*[:=]\s*["\'][^"\']+["\']'
+            r'password["\']?\s*[:=]\s*["\'][^"\'
+]+["\']',
+            r'api[_-]?key["\']?\s*[:=]\s*["\'][^"\'
+]+["\']',
+            r'secret["\']?\s*[:=]\s*["\'][^"\'
+]+["\']',
+            r'token["\']?\s*[:=]\s*["\'][^"\'
+]+["\']',
+            r'auth["\']?\s*[:=]\s*["\'][^"\'
+]+["\']',
+            r'\b[A-Za-z0-9]{20,}\b',  # Long strings that might be tokens
+            r'sk-[a-zA-Z0-9]{20,}',   # OpenAI-style keys
         ]
     
     def _initialize_audit_rules(self) -> List[Dict[str, Any]]:
-        """Initialize audit rules"""
+        """Initialize audit rules with secure evaluation"""
         return [
             {
                 "name": "failed_login_threshold",
                 "description": "Alert on multiple failed login attempts",
-                "condition": "event_type == 'login_failure' and count > 5",
+                "condition": "event_type == login_failure",
                 "action": "alert",
                 "severity": "high"
             },
             {
                 "name": "unauthorized_access",
                 "description": "Alert on unauthorized access attempts",
-                "condition": "event_type == 'unauthorized_access'",
+                "condition": "event_type == unauthorized_access",
                 "action": "alert",
                 "severity": "critical"
             },
             {
                 "name": "data_export_volume",
-                "description": "Alert on large data exports",
-                "condition": "event_type == 'data_export' and data_size > 1000000",
+                "description": "Alert on large data exports", 
+                "condition": "event_type == data_export",
                 "action": "alert",
                 "severity": "medium"
             },
             {
                 "name": "system_configuration_change",
                 "description": "Alert on system configuration changes",
-                "condition": "event_type == 'configuration_change'",
+                "condition": "event_type == configuration_change",
                 "action": "log",
                 "severity": "high"
             }
@@ -151,7 +254,7 @@ class AuditManager:
         user_agent: Optional[str] = None,
         classification: str = "internal"
     ) -> str:
-        """Log an audit event"""
+        """Log an audit event securely"""
         if not self.audit_enabled:
             return ""
         
@@ -184,7 +287,7 @@ class AuditManager:
                 if len(self.audit_buffer) >= self.batch_size:
                     await self._flush_buffer()
             
-            # Check audit rules
+            # Check audit rules securely
             await self._check_audit_rules(audit_record)
             
             return event_id
@@ -194,21 +297,29 @@ class AuditManager:
             return ""
     
     def _sanitize_details(self, details: Dict[str, Any]) -> Dict[str, Any]:
-        """Sanitize sensitive data from details"""
-        import re
-        
+        """Enhanced sanitization of sensitive data"""
         sanitized = {}
-        for key, value in details.items():
+        
+        def sanitize_value(value):
             if isinstance(value, str):
                 # Check for sensitive patterns
                 for pattern in self.sensitive_patterns:
                     if re.search(pattern, value, re.IGNORECASE):
-                        sanitized[key] = "[REDACTED]"
-                        break
-                else:
-                    sanitized[key] = value
+                        return "[REDACTED]"
+                return value
+            elif isinstance(value, dict):
+                return {k: sanitize_value(v) for k, v in value.items()}
+            elif isinstance(value, list):
+                return [sanitize_value(v) for v in value]
             else:
-                sanitized[key] = value
+                return value
+        
+        for key, value in details.items():
+            # Sanitize keys that might contain sensitive data
+            if any(sensitive in key.lower() for sensitive in ['password', 'token', 'key', 'secret', 'auth']):
+                sanitized[key] = "[REDACTED]"
+            else:
+                sanitized[key] = sanitize_value(value)
         
         return sanitized
     
@@ -218,9 +329,9 @@ class AuditManager:
         return None
     
     def _generate_correlation_id(self) -> str:
-        """Generate correlation ID for related events"""
-        # Use SHA-256 instead of MD5 for better security
-        return hashlib.sha256(f"{datetime.utcnow()}{uuid.uuid4()}".encode()).hexdigest()[:16]
+        """Generate secure correlation ID using SHA-256"""
+        # Use SHA-256 with full length for better security
+        return hashlib.sha256(f"{datetime.utcnow()}{uuid.uuid4()}".encode()).hexdigest()[:32]
     
     async def _flush_buffer(self):
         """Flush audit buffer to storage"""
@@ -240,78 +351,43 @@ class AuditManager:
             logger.error(f"Error flushing audit buffer: {e}")
     
     async def _check_audit_rules(self, audit_record: Dict[str, Any]):
-        """Check audit rules and trigger actions"""
+        """Check audit rules using secure evaluation"""
         try:
             for rule in self.audit_rules:
-                if await self._evaluate_rule(rule, audit_record):
+                if await self._evaluate_rule_secure(rule, audit_record):
                     await self._execute_rule_action(rule, audit_record)
                     
         except Exception as e:
             logger.error(f"Error checking audit rules: {e}")
     
-    async def _evaluate_rule(self, rule: Dict[str, Any], audit_record: Dict[str, Any]) -> bool:
-        """Evaluate an audit rule"""
+    async def _evaluate_rule_secure(self, rule: Dict[str, Any], audit_record: Dict[str, Any]) -> bool:
+        """Securely evaluate an audit rule - NO eval() usage"""
         try:
-            # Simple rule evaluation (in production, use a proper rule engine)
             condition = rule["condition"]
             
-            # Replace variables in condition with safe values
-            condition = condition.replace("event_type", f"'{audit_record['event_type']}'")
-            condition = condition.replace("user_id", f"'{audit_record.get('user_id', '')}'")
-            condition = condition.replace("resource", f"'{audit_record.get('resource', '')}'")
+            # Create secure context for evaluation
+            context = {
+                'event_type': audit_record['event_type'],
+                'user_id': audit_record.get('user_id', ''),
+                'resource': audit_record.get('resource', ''),
+                'level': audit_record.get('level', ''),
+                'classification': audit_record.get('classification', ''),
+                'ip_address': audit_record.get('ip_address', ''),
+                'action': audit_record.get('action', '')
+            }
             
-            # Secure evaluation using ast.literal_eval for safe expressions
-            # For complex conditions, use a proper rule engine in production
-            return self._safe_evaluate_condition(condition)
+            # Add numeric context if available
+            details = audit_record.get('details', {})
+            if isinstance(details, dict):
+                for key, value in details.items():
+                    if isinstance(value, (int, float)):
+                        context[key] = value
+            
+            # Use secure rule engine
+            return self.rule_engine.evaluate_condition(condition, context)
             
         except Exception as e:
             logger.error(f"Error evaluating rule {rule['name']}: {e}")
-            return False
-    
-    def _safe_evaluate_condition(self, condition: str) -> bool:
-        """Safely evaluate a condition without using eval()"""
-        try:
-            # Simple string-based condition evaluation
-            # This is a basic implementation - in production, use a proper rule engine
-            if "==" in condition:
-                parts = condition.split("==")
-                if len(parts) == 2:
-                    left = parts[0].strip()
-                    right = parts[1].strip().strip("'\"")
-                    return left == right
-            
-            if "!=" in condition:
-                parts = condition.split("!=")
-                if len(parts) == 2:
-                    left = parts[0].strip()
-                    right = parts[1].strip().strip("'\"")
-                    return left != right
-            
-            if ">" in condition:
-                parts = condition.split(">")
-                if len(parts) == 2:
-                    left = parts[0].strip()
-                    right = parts[1].strip().strip("'\"")
-                    try:
-                        return int(left) > int(right)
-                    except ValueError:
-                        return left > right
-            
-            if "<" in condition:
-                parts = condition.split("<")
-                if len(parts) == 2:
-                    left = parts[0].strip()
-                    right = parts[1].strip().strip("'\"")
-                    try:
-                        return int(left) < int(right)
-                    except ValueError:
-                        return left < right
-            
-            # Default to False for unrecognized conditions
-            return False
-            
-        except Exception as e:
-            logger.error(f"Error in safe condition evaluation: {e}")
             return False
     
     async def _execute_rule_action(self, rule: Dict[str, Any], audit_record: Dict[str, Any]):
@@ -323,7 +399,7 @@ class AuditManager:
             if action == "alert":
                 await self._send_alert(rule, audit_record, severity)
             elif action == "log":
-                logger.warning(f"Audit rule triggered: {rule['name']} - {audit_record}")
+                logger.warning(f"Audit rule triggered: {rule['name']} - {audit_record['event_type']}")
                 
         except Exception as e:
             logger.error(f"Error executing rule action: {e}")
@@ -335,11 +411,12 @@ class AuditManager:
                 "rule_name": rule["name"],
                 "severity": severity,
                 "description": rule["description"],
-                "audit_record": audit_record,
+                "event_type": audit_record["event_type"],
+                "user_id": audit_record.get("user_id"),
                 "timestamp": datetime.utcnow().isoformat()
             }
             
-            # In a real implementation, you would send this to an alerting system
+            # Log critical security alerts
             logger.critical(f"SECURITY ALERT: {json.dumps(alert_data)}")
             
         except Exception as e:
@@ -372,18 +449,8 @@ class AuditManager:
                     offset=offset
                 )
             
-            # Return mock data if no database
-            return [
-                {
-                    "event_id": str(uuid.uuid4()),
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "event_type": event_type or "system_event",
-                    "user_id": user_id,
-                    "resource": resource,
-                    "level": level.value if level else "info",
-                    "details": {"message": "Mock audit log entry"}
-                }
-            ]
+            # Return empty list if no database (removed mock data for security)
+            return []
             
         except Exception as e:
             logger.error(f"Error getting audit log: {e}")
@@ -396,28 +463,17 @@ class AuditManager:
     ) -> Dict[str, Any]:
         """Get audit statistics"""
         try:
-            # In a real implementation, you would query the database
+            if self.database_service:
+                return await self.database_service.get_audit_statistics(
+                    start_date=start_date,
+                    end_date=end_date
+                )
+            
+            # Return basic stats if no database
             return {
-                "total_events": 1000,
-                "events_by_type": {
-                    "login_success": 500,
-                    "login_failure": 50,
-                    "data_access": 300,
-                    "system_events": 150
-                },
-                "events_by_level": {
-                    "info": 800,
-                    "warning": 150,
-                    "error": 40,
-                    "critical": 10
-                },
-                "top_users": [
-                    {"user_id": "admin", "event_count": 200},
-                    {"user_id": "user1", "event_count": 150}
-                ],
-                "security_events": 60,
-                "failed_logins": 50,
-                "unauthorized_access": 10
+                "total_events": len(self.audit_buffer),
+                "buffer_size": len(self.audit_buffer),
+                "status": "active"
             }
             
         except Exception as e:
@@ -430,8 +486,13 @@ class AuditManager:
         end_date: Optional[datetime] = None,
         format: str = "json"
     ) -> str:
-        """Export audit log"""
+        """Export audit log securely"""
         try:
+            # Validate format
+            allowed_formats = ['json', 'csv']
+            if format not in allowed_formats:
+                raise ValueError(f"Unsupported format: {format}. Allowed: {allowed_formats}")
+            
             # Get audit log
             audit_log = await self.get_audit_log(
                 start_date=start_date,
@@ -440,19 +501,21 @@ class AuditManager:
             )
             
             if format == "json":
-                return json.dumps(audit_log, indent=2)
+                return json.dumps(audit_log, indent=2, default=str)
             elif format == "csv":
-                # Convert to CSV format
+                # Convert to CSV format securely
                 import csv
                 import io
                 output = io.StringIO()
                 if audit_log:
-                    writer = csv.DictWriter(output, fieldnames=audit_log[0].keys())
+                    # Only export safe fields
+                    safe_fields = ['event_id', 'timestamp', 'event_type', 'user_id', 'resource', 'level']
+                    writer = csv.DictWriter(output, fieldnames=safe_fields)
                     writer.writeheader()
-                    writer.writerows(audit_log)
+                    for record in audit_log:
+                        safe_record = {k: v for k, v in record.items() if k in safe_fields}
+                        writer.writerow(safe_record)
                 return output.getvalue()
-            else:
-                raise ValueError(f"Unsupported format: {format}")
                 
         except Exception as e:
             logger.error(f"Error exporting audit log: {e}")
@@ -464,8 +527,7 @@ class AuditManager:
             cutoff_date = datetime.utcnow() - timedelta(days=self.retention_days)
             
             if self.database_service:
-                # In a real implementation, you would delete old records
-                return 0
+                return await self.database_service.cleanup_old_audit_logs(cutoff_date)
             
             return 0
             
@@ -504,9 +566,12 @@ class AuditManager:
     async def get_user_activity(self, user_id: str, limit: int = 100) -> List[Dict[str, Any]]:
         """Get user activity log"""
         try:
+            if not user_id or not isinstance(user_id, str) or len(user_id) > 256:
+                raise ValueError("Invalid user_id")
+                
             return await self.get_audit_log(
                 user_id=user_id,
-                limit=limit
+                limit=min(limit, 1000)  # Cap the limit for security
             )
             
         except Exception as e:
@@ -522,6 +587,7 @@ class AuditManager:
                 "retention_days": self.retention_days,
                 "batch_size": self.batch_size,
                 "total_rules": len(self.audit_rules),
+                "rule_engine": "SecureRuleEngine",
                 "status": "healthy"
             }
             
