@@ -105,9 +105,17 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install openai aiohttp python-dotenv requests pyyaml
-        pip install groq google-generativeai cerebras-cloud-sdk
         pip install PyGithub gitpython beautifulsoup4 lxml
         pip install pandas numpy scikit-learn matplotlib seaborn
+        # Install optional AI packages with fallback
+        pip install groq || echo "Groq package not available, continuing without it"
+        pip install google-generativeai || echo "Google Generative AI package not available, continuing without it"
+        pip install cerebras-cloud-sdk || echo "Cerebras package not available, continuing without it"
+        pip install cohere || echo "Cohere package not available, continuing without it"
+    
+    - name: 🧪 Test Dependencies
+      run: |
+        python .github/scripts/test_dependencies.py || echo "Some optional dependencies not available, continuing with core functionality"
     
     - name: 🔍 Intelligent Project Analysis
       id: analysis
@@ -303,8 +311,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install openai aiohttp python-dotenv requests pyyaml
-        pip install groq google-generativeai cerebras-cloud-sdk
         pip install PyGithub gitpython
+        # Install optional AI packages with fallback
+        pip install groq || echo "Groq package not available, continuing without it"
+        pip install google-generativeai || echo "Google Generative AI package not available, continuing without it"
+        pip install cerebras-cloud-sdk || echo "Cerebras package not available, continuing without it"
+        pip install cohere || echo "Cohere package not available, continuing without it"
     
     - name: 🔧 AI Code Improvements
       env:
