@@ -16,7 +16,13 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import aiohttp
 import openai
-from cerebras.cloud.sdk import Cerebras
+# Note: cerebras.cloud.sdk may not be available, handle gracefully
+try:
+    from cerebras.cloud.sdk import Cerebras
+    CEREBRAS_AVAILABLE = True
+except ImportError:
+    Cerebras = None
+    CEREBRAS_AVAILABLE = False
 from google import genai
 from groq import Groq
 
@@ -307,6 +313,12 @@ class UltimateFallbackSystem:
     async def _test_cerebras_provider(self, provider_id: str) -> bool:
         """Test Cerebras provider"""
         try:
+            if not CEREBRAS_AVAILABLE:
+                logger.warning("Cerebras SDK not available, skipping test")
+                config = self.providers[provider_id]
+                config["status"] = ProviderStatus.FAILED
+                return False
+                
             config = self.providers[provider_id]
             client = Cerebras(api_key=config["api_key"])
 
@@ -533,6 +545,14 @@ class UltimateFallbackSystem:
         self, provider_id: str, messages: List[Dict], **kwargs
     ) -> Dict[str, Any]:
         """Make request to Cerebras provider"""
+        if not CEREBRAS_AVAILABLE:
+            return {
+                "success": False,
+                "provider": provider_id,
+                "error": "Cerebras SDK not available",
+                "response_time": 0,
+            }
+            
         config = self.providers[provider_id]
 
         start_time = time.time()
