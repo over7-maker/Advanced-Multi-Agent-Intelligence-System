@@ -72,7 +72,7 @@ class SecurityConfig(BaseSettings):
 
 class APIConfig(BaseSettings):
     """API configuration"""
-    host: str = Field(default="0.0.0.0", env="AMAS_API_HOST")
+    host: str = Field(default="127.0.0.1", env="AMAS_API_HOST")
     port: int = Field(default=8000, env="AMAS_API_PORT")
     workers: int = Field(default=4, env="AMAS_API_WORKERS")
     reload: bool = Field(default=False, env="AMAS_API_RELOAD")

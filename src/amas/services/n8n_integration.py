@@ -27,7 +27,7 @@ class N8NIntegration:
         n8n_url: str = "http://localhost:5678",
         n8n_api_key: Optional[str] = None,
         username: str = "admin",
-        password: str = "admin"
+        password: str = os.getenv("N8N_PASSWORD", "admin")
     ):
         """
         Initialize n8n integration.
