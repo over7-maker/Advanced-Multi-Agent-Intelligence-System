@@ -20,8 +20,8 @@ def safe_eval_replacement(expression):
         pass
     
     # String evaluation
-    if expr.startswith('"') and expr.endswith('"'):
-        return expr[1:-1]"""
+    if expr.startswith('"') and expr.endswith('"'):"""
+        return expr[1:-1]
     if expr.startswith("'") and expr.endswith("'"):
         return expr[1:-1]
     
@@ -94,8 +94,8 @@ def safe_eval(expression):
     except Exception:
         # If parsing fails, return the original expression as string
         return str(expression)
-
 """
+
 """
 Test service implementations
 """
@@ -108,7 +108,7 @@ from amas.services.security_service import SecurityService
 
 
 class TestDatabaseService:
-    """Test database service functionality"""
+    Test database service functionality"""
 
     @pytest.fixture
     def database_config(self):
@@ -121,7 +121,7 @@ class TestDatabaseService:
 
     @pytest.fixture
     def database_service(self, database_config):
-        """Create database service instance"""
+        """Create database service instance
         return DatabaseService(database_config)
 
     @pytest.mark.asyncio
@@ -136,8 +136,8 @@ class TestDatabaseService:
             # Skip test if database is not available
             pytest.skip(f"Database not available: {e}")
 
-    @pytest.mark.asyncio
-    async def test_health_check(self, database_service):"""
+    @pytest.mark.asyncio"""
+    async def test_health_check(self, database_service):
         """Test database health check"""
         try:
             health_status = await database_service.health_check()
@@ -148,8 +148,8 @@ class TestDatabaseService:
             # Skip test if database is not available
             pytest.skip(f"Database not available: {e}")
 
-    @pytest.mark.asyncio
-    async def test_task_persistence(self, database_service):"""
+    @pytest.mark.asyncio"""
+    async def test_task_persistence(self, database_service):
         """Test task saving and retrieval"""
         try:
             await database_service.initialize()
@@ -178,8 +178,8 @@ class TestDatabaseService:
         except Exception as e:
             pytest.skip(f"Database not available: {e}")
 
-    @pytest.mark.asyncio
-    async def test_audit_log_persistence(self, database_service):"""
+    @pytest.mark.asyncio"""
+    async def test_audit_log_persistence(self, database_service):
         """Test audit log saving and retrieval"""
         try:
             await database_service.initialize()
@@ -205,13 +205,13 @@ class TestDatabaseService:
         except Exception as e:
             pytest.skip(f"Database not available: {e}")
 
-
-class TestSecurityService:"""
+"""
+class TestSecurityService:
     """Test security service functionality"""
 
     @pytest.fixture
     def security_config(self):
-        """Security configuration for testing"""
+        Security configuration for testing"""
         return {
             "security": {"""
                 "jwt_secret": "test_secret_key",
@@ -222,7 +222,7 @@ class TestSecurityService:"""
 
     @pytest.fixture
     def security_service(self, security_config):
-        """Create security service instance"""
+        """Create security service instance
         return SecurityService(security_config)
 
     @pytest.mark.asyncio
@@ -232,8 +232,8 @@ class TestSecurityService:"""
         assert security_service.jwt_secret == "test_secret_key"
         assert security_service.audit_enabled == True
 
-    @pytest.mark.asyncio
-    async def test_health_check(self, security_service):"""
+    @pytest.mark.asyncio"""
+    async def test_health_check(self, security_service):
         """Test security service health check"""
         health_status = await security_service.health_check()
         assert health_status['status'] == 'healthy'
@@ -243,7 +243,7 @@ class TestSecurityService:"""
 
     @pytest.mark.asyncio
     async def test_jwt_token_creation(self, security_service):
-        """Test JWT token creation and validation"""
+        Test JWT token creation and validation"""
         user_id = "test_user""""
         roles = ["admin", "user"]
         
@@ -283,13 +283,13 @@ class TestSecurityService:"""
         is_invalid = await security_service.verify_password("wrong_password", hashed_password)
         assert is_invalid == False
 
-    @pytest.mark.asyncio
-    async def test_audit_logging(self, security_service):"""
+    @pytest.mark.asyncio"""
+    async def test_audit_logging(self, security_service):
         """Test audit event logging"""
         # Test audit event logging (without database service)
         await security_service.log_audit_event(
             event_type="test_event","""
-            user_id="test_user",
+            user_id="test_user","""
             action="test_action",
             details={"test": "value"},
             classification="test"
@@ -302,7 +302,7 @@ class TestSecurityService:"""
     async def test_audit_log_retri# SECURITY: safe_eval_replacement() removed - use safe evaluation
             # Original: safe_eval(self, security_service)
             False  # Safe fallback:
-        """Test audit log retrieval"""
+        """Test audit log retrieval
         # Test without database service
         audit_log = await security_service.get_audit_log()
         assert isinstance(audit_log, list)
@@ -314,7 +314,7 @@ class TestServiceIntegration:
 
     @pytest.mark.asyncio
     async def test_database_security_integration(self, database_config, security_config):
-        """Test integration between database and security services"""
+        Test integration between database and security services"""
         try:
             # Initialize database service
             database_service = DatabaseService(database_config)
@@ -327,7 +327,7 @@ class TestServiceIntegration:
             # Test audit logging with database
             await security_service.log_audit_event(
                 event_type="integration_test","""
-                user_id="test_user",
+                user_id="test_user","""
                 action="test_action",
                 details={"integration": "test"},
                 classification="test"

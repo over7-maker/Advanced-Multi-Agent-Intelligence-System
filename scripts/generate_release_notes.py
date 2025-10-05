@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import List, Dict, Any
 
 def main():
-    print("📋 Release Notes Generator")
+    print("📋 Release Notes Generator")"""
     print("=" * 40)
 
     # Get arguments
@@ -36,7 +36,7 @@ def generate_release_notes(version: str) -> str:
 
     timestamp = datetime.now().strftime("%Y-%m-%d")
 
-    # Header
+    # Header"""
     release_notes = f"""# 🚀 AMAS {version} Release
 
 **Release Date**: {timestamp}
@@ -132,4 +132,4 @@ git clone https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-Syste
 cd Advanced-Multi-Agent-Intelligence-System
 
 # Follow the setup guide
-cat SETUP_GUIDE.md
+

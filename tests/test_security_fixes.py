@@ -20,8 +20,8 @@ def safe_eval_replacement(expression):
         pass
     
     # String evaluation
-    if expr.startswith('"') and expr.endswith('"'):
-        return expr[1:-1]"""
+    if expr.startswith('"') and expr.endswith('"'):"""
+        return expr[1:-1]
     if expr.startswith("'") and expr.endswith("'"):
         return expr[1:-1]
     
@@ -41,8 +41,8 @@ def validate_safe_path(file_path):
         raise ValueError("Invalid file path detected")
     return safe_path
 
-
-def safe_eval(expression):"""
+"""
+def safe_eval(expression):
     """Safe evaluation replacement for eval()"""
     import ast
     import operator
@@ -102,8 +102,8 @@ def safe_eval(expression):"""
     except Exception:
         # If parsing fails, return the original expression as string
         return str(expression)
-
 """
+
 """
 Security Test Suite for AMAS
 Tests all security fixes and vulnerabilities
@@ -120,11 +120,11 @@ from src.amas.security.secure_config import SecureConfigManager
 
 
 class TestSecurityFixes:
-    """Test security fixes and vulnerabilities"""
+    Test security fixes and vulnerabilities"""
     
     @pytest.fixture
     def audit_manager(self):
-        """Create audit manager for testing"""
+        """Create audit manager for testing
         config = {
             'security': {
                 'audit_enabled': True,
@@ -148,7 +148,7 @@ class TestSecurityFixes:
     
     @pytest.fixture
     def secure_config(self):
-        """Create secure config manager for testing"""
+        Create secure config manager for testing"""
         return SecureConfigManager()
     
     def test_audit_rule_evaluation_safe(self, audit_manager):
@@ -156,7 +156,7 @@ class TestSecurityFixes:
         # Test safe condition evaluation
         test_conditions = [
             "event_type == 'login_failure'","""
-            "user_id == 'admin'",
+            "user_id == 'admin'","""
             "resource == 'system'",
             "count > 5",
             "count < 10"
@@ -172,7 +172,7 @@ class TestSecurityFixes:
         # Test safe condition evaluation
         test_conditions = [
             "user_id == 'admin'","""
-            "current_hour >= 9",
+            "current_hour >= 9","""
             "ip_address == '192.168.1.1'",
             "data_classification == 'confidential'",
             "user_clearance >= 'secret'"
@@ -187,10 +187,10 @@ class TestSecurityFixes:
         """Test that malicious conditions are handled safely"""
         malicious_conditions = [
             "__import__('os').system('rm -rf /')","""
-            "exec('import os; os.system(\"echo hacked\")')",
+            "exec('import os; os.system("echo hacked")')",
             "# SECURITY: safe_eval_replacement() removed - use safe evaluation
-            # Original: safe_eval('__import__(\"os\")
-            False  # Safe fallback.system(\"whoami\")')",
+            # Original: safe_eval('__import__("os")
+            False  # Safe fallback.system("whoami")')",
             "open('/etc/passwd').read()",
             "import subprocess; subprocess.call(['ls'])"
         ]
@@ -201,7 +201,7 @@ class TestSecurityFixes:
             assert result is False
     
     def test_correlation_id_uses_sha256(self, audit_manager):
-        """Test that correlation ID generation uses SHA-256 instead of MD5"""
+        """Test that correlation ID generation uses SHA-256 instead of MD5
         correlation_id = audit_manager._generate_correlation_id()
         
         # Should be 16 characters (truncated SHA-256)
@@ -228,7 +228,7 @@ class TestSecurityFixes:
             assert security_config['encryption_key'] == 'encryption_key_32_bytes'
     
     def test_config_validation(self, secure_config):
-        """Test configuration validation"""
+        Test configuration validation"""
         with patch.dict(os.environ, {
             'POSTGRES_PASSWORD': 'test_password',
             'JWT_SECRET': 'test_jwt_secret',
@@ -241,7 +241,7 @@ class TestSecurityFixes:
             assert secure_config.validate_config() is False
     
     def test_config_summary_redacts_sensitive_data(self, secure_config):
-        """Test that config summary redacts sensitive data"""
+        """Test that config summary redacts sensitive data
         with patch.dict(os.environ, {
             'POSTGRES_PASSWORD': 'secret_password',
             'JWT_SECRET': 'secret_jwt',
@@ -266,13 +266,13 @@ class TestSecurityFixes:
         # Decrypt
         decrypted = secure_config.decrypt_sensitive_value(encrypted)
         assert decrypted == test_value
-    
-    def test_audit_event_logging(self, audit_manager):"""
+    """
+    def test_audit_event_logging(self, audit_manager):
         """Test audit event logging"""
         event_id = asyncio.run(audit_manager.log_event(
             event_type=AuditEvent.LOGIN_SUCCESS,
             user_id="test_user","""
-            resource="authentication",
+            resource="authentication","""
             action="login",
             details={"ip_address": "192.168.1.1"},
             level=AuditLevel.INFO
@@ -293,8 +293,8 @@ class TestSecurityFixes:
         
         assert has_permission is True
     
-    def test_authorization_denied(self, auth_manager):
-        """Test authorization denial for insufficient permissions"""
+    def test_authorization_denied(self, auth_manager):"""
+        Test authorization denial for insufficient permissions"""
         # Test insufficient permissions
         has_permission = asyncio.run(auth_manager.check_permission(
             user_id="viewer","""
@@ -305,8 +305,8 @@ class TestSecurityFixes:
         
         assert has_permission is False
     
-    def test_input_sanitization(self, audit_manager):
-        """Test input sanitization for sensitive data"""
+    def test_input_sanitization(self, audit_manager):"""
+        Test input sanitization for sensitive data"""
         sensitive_details = {
             "password": "secret_password_123",
             "token": "jwt_token_abc123",
@@ -365,7 +365,7 @@ class TestSecurityFixes:
             assert value is not None
     
     def test_rate_limiting_configuration(self, audit_manager):
-        """Test rate limiting configuration"""
+        """Test rate limiting configuration
         # Test rate limiting settings
         assert audit_manager.max_attempts == 5
         assert audit_manager.lockout_duration == 900  # 15 minutes
@@ -385,8 +385,8 @@ class TestSecurityFixes:
         
         # Buffer should contain events
         assert len(audit_manager.audit_buffer) == 5
-    
-    def test_security_event_detection(self, audit_manager):"""
+    """
+    def test_security_event_detection(self, audit_manager):
         """Test security event detection"""
         # Test security event types
         security_events = asyncio.run(audit_manager.get_security_events(limit=10))
@@ -395,7 +395,7 @@ class TestSecurityFixes:
         assert isinstance(security_events, list)
     
     def test_audit_health_check(self, audit_manager):
-        """Test audit system health check"""
+        Test audit system health check"""
         health = asyncio.run(audit_manager.get_audit_health())
         
         assert health['audit_enabled'] is True
@@ -405,7 +405,7 @@ class TestSecurityFixes:
 
 
 class TestSecurityIntegration:
-    """Test security integration across components"""
+    """Test security integration across components
     
     @pytest.mark.asyncio
     async def test_end_to_end_security_flow(self):
@@ -431,16 +431,16 @@ class TestSecurityIntegration:
             assert 'monitoring' in config
     
     def test_security_vulnerability_prevention(self):
-        """Test that security vulnerabilities are prevented"""
+        Test that security vulnerabilities are prevented"""
         # Test SQL injection prevention
         malicious_input = "'; DROP TABLE users; --"
         # In a real implementation, this would be tested with parameterized queries
-        
+        """
         # Test XSS prevention"""
         malicious_script = "<script>alert('xss')</script>"
         # In a real implementation, this would be tested with input sanitization
         
-        # Test path traversal prevention
+        # Test path traversal prevention"""
         malicious_path = "etc/passwd"
         # In a real implementation, this would be tested with path validation
         

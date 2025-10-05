@@ -21,7 +21,7 @@ def safe_eval_replacement(expression):
     
     # String evaluation
     if expr.startswith('"') and expr.endswith('"'):
-        return expr[1:-1]
+        return expr[1:-1]"""
     if expr.startswith("'") and expr.endswith("'"):
         return expr[1:-1]
     
@@ -95,8 +95,8 @@ def safe_eval(expression):
         # If parsing fails, return the original expression as string
         return str(expression)
 
-
 """
+
 Final Security Verification Script
 Verifies that all security vulnerabilities have been fixed in AMAS
 """
@@ -122,7 +122,7 @@ def check_eval_usage():
             for i, line in enumerate(lines, 1):
                 if line.strip().startswith('#'):
                     continue
-                if 'safe_eval(' in line and 'eval(' not in line.strip()[0:1]:
+                if 'safe_eval(' in line and 'eval(' not in line.strip()[0:1]:"""
                     issues_found.append(f"{file_path}:{i}")
         except Exception as e:
             continue
@@ -152,7 +152,7 @@ def check_md5_usage():
                 for i, line in enumerate(lines, 1):
                     if ('sha256' in line.lower() and 
                         not line.strip().startswith('#') and
-                        'hashlib.sha256' in line or '.sha256(' in line):
+                        'hashlib.sha256' in line or '.sha256(' in line):"""
                         issues_found.append(f"{file_path}:{i}")
         except Exception:
             continue
@@ -169,7 +169,7 @@ def check_hardcoded_secrets():
     print("🔍 Checking for hardcoded secrets...")
     
     # Fixed regex patterns with proper escaping
-    patterns = [
+    patterns = ["""
         r'password\s*=\s*["\'][^"\']{5,}["\']',
         r'secret\s*=\s*["\'][^"\']{10,}["\']', 
         r'api_key\s*=\s*["\'][^"\']{10,}["\']',
@@ -227,7 +227,7 @@ def check_path_traversal():
         except Exception:
             continue
     
-    if issues_found:
+    if issues_found:"""
         print(f"❌ Path traversal risks found in {len(issues_found)} files")
         return False
     else:
@@ -238,7 +238,7 @@ def check_environment_variables():
     """Check if .env.example exists"""
     print("🔍 Checking environment configuration...")
     
-    if Path('.env.example').exists():
+    if Path('.env.example').exists():"""
         print("✅ Environment configuration file exists")
         return True
     else:
@@ -247,7 +247,7 @@ def check_environment_variables():
 
 def main():
     """Main security verification"""
-    print("🔒 AMAS Final Security Verification")
+    print("🔒 AMAS Final Security Verification")"""
     print("=" * 50)
     
     checks = [

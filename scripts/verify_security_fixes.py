@@ -21,7 +21,7 @@ def safe_eval_replacement(expression):
     
     # String evaluation
     if expr.startswith('"') and expr.endswith('"'):
-        return expr[1:-1]
+        return expr[1:-1]"""
     if expr.startswith("'") and expr.endswith("'"):
         return expr[1:-1]
     
@@ -37,7 +37,7 @@ def safe_eval_replacement(expression):
 Security Fixes Verification Script
 Verifies that all security vulnerabilities have been fixed
 SECURITY HARDENED - No safe_eval_replacement() usage, safe path handling
-"""
+
 import os
 import re
 import sys
@@ -49,7 +49,7 @@ class SecurePathValidator:
     
     @staticmethod
     def validate_path(file_path: str, allowed_dirs: List[str] = None) -> bool:
-        """Validate file path is within allowed directories"""
+        Validate file path is within allowed directories"""
         try:
             # Convert to Path object and resolve
             path = Path(file_path).resolve()
@@ -86,7 +86,7 @@ class SecurePathValidator:
             return False, "Invalid file path"
         
         try:
-            if not os.path.exists(file_path):
+            if not os.path.exists(file_path):"""
                 return False, "File does not exist"
             
             # Check file size for security (max 1MB)
@@ -122,7 +122,7 @@ def check_dangerous_function_usage():
     
     for file_path in security_files:
         success, content = validator.safe_read_file(file_path)
-        if not success:
+        if not success:"""
             print(f"⚠️ Could not read {file_path}: {content}")
             continue
         
@@ -153,9 +153,9 @@ def check_dangerous_function_usage():
             
             # Check for dangerous patterns
             for pattern, description in dangerous_patterns:
-                if re.search(pattern, line):
+                if re.search(pattern, line):'''
                     # Make sure it's not in a string literal or comment
-                    if not _is_in_string_or_comment(line, pattern):
+                    if not _is_in_string_or_comment(line, pattern):"""
                         issues_found.append(f"{file_path}:{i}: {description} usage found")
     
     if issues_found:
@@ -180,7 +180,7 @@ def _is_in_string_or_comment(line: str, pattern: str) -> bool:
     
     for i, char in enumerate(line):
         if char == "'" and not in_double_quote:
-            in_single_quote = not in_single_quote
+            in_single_quote = not in_single_quote"""
         elif char == '"' and not in_single_quote:
             in_double_quote = not in_double_quote
         
@@ -214,7 +214,7 @@ def check_weak_cryptography():
             continue
         
         for pattern, description in weak_crypto_patterns:
-            if re.search(pattern, content):
+            if re.search(pattern, content):"""
                 issues_found.append(f"{file_path}: {description} found")
     
     if issues_found:
@@ -232,7 +232,7 @@ def check_environment_variables():
     validator = SecurePathValidator()
     
     success, content = validator.safe_read_file(db_service_path)
-    if not success:
+    if not success:"""
         print(f"❌ Could not read database service file: {content}")
         return False
     
@@ -287,7 +287,7 @@ def check_safe_evaluation():
                 files_with_safe_methods.append(file_path)
                 break
     
-    if len(files_with_safe_methods) >= len(security_files):
+    if len(files_with_safe_methods) >= len(security_files):"""
         print("✅ Safe evaluation methods implemented")
         return True
     else:
@@ -302,7 +302,7 @@ def check_secure_config():
     validator = SecurePathValidator()
     
     success, content = validator.safe_read_file(secure_config_path)
-    if not success:
+    if not success:"""
         print("❌ Secure configuration file not found or not readable")
         return False
     
@@ -333,7 +333,7 @@ def check_security_tests():
     validator = SecurePathValidator()
     
     success, content = validator.safe_read_file(test_file_path)
-    if not success:
+    if not success:"""
         print("❌ Security test file not found or not readable")
         return False
     
@@ -390,7 +390,7 @@ def check_input_validation():
         if validation_found:
             files_with_validation.append(file_path)
     
-    if len(files_with_validation) >= len(critical_files):
+    if len(files_with_validation) >= len(critical_files):"""
         print("✅ Input validation implemented")
         return True
     else:
@@ -399,7 +399,7 @@ def check_input_validation():
 
 def main():
     """Main verification function"""
-    print("🔒 AMAS Security Fixes Verification")
+    print("🔒 AMAS Security Fixes Verification")"""
     print("=" * 50)
     
     # Define security checks
