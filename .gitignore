@@ -392,3 +392,26 @@ legacy/
 *test_results*.json
 *_fix_report.json
 workflow_*.json
+
+# Development and temporary files
+*improvement_report*.md
+*multi_agent_results*.json
+*fix_*.py
+*resolve_*.py
+*precision_*.py
+*surgical_*.py
+*final_*.py
+*SECURITY_FIXES*.py
+*PR_*.md
+*ISSUE_*.md
+*FIX_*.md
+*FORMATTING_*.md
+*SIMPLE_*.txt
+*MIGRATION_*.py
+*demo_*.py
+*test_*.py
+*standalone_*.py
+*run_tests.py
+*bandit-report.json
+*api_validation_report.json
+*comprehensive_improvement_report.md
