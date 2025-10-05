@@ -18,6 +18,7 @@ from ..base.agent_communication import AgentCommunication
 
 class AgentStatus(Enum):
     """Agent status enumeration"""
+
     IDLE = "idle"
     ACTIVE = "active"
     BUSY = "busy"
@@ -41,7 +42,7 @@ class IntelligenceAgent(ABC):
         llm_service: Any = None,
         vector_service: Any = None,
         knowledge_graph: Any = None,
-        security_service: Any = None
+        security_service: Any = None,
     ):
         """
         Initialize the intelligence agent.
@@ -80,10 +81,10 @@ class IntelligenceAgent(ABC):
 
         # Performance metrics
         self.metrics = {
-            'tasks_completed': 0,
-            'tasks_failed': 0,
-            'average_response_time': 0.0,
-            'last_activity': self.last_activity
+            "tasks_completed": 0,
+            "tasks_failed": 0,
+            "average_response_time": 0.0,
+            "last_activity": self.last_activity,
         }
 
     @abstractmethod
@@ -169,7 +170,9 @@ class IntelligenceAgent(ABC):
             self.current_task = task
 
             # Execute task
-            self.logger.info(f"Processing task {task.get('id', 'unknown')} with agent {self.agent_id}")
+            self.logger.info(
+                f"Processing task {task.get('id', 'unknown')} with agent {self.agent_id}"
+            )
             result = await self.execute_task(task)
 
             # Update metrics
@@ -182,12 +185,14 @@ class IntelligenceAgent(ABC):
             self.last_activity = datetime.utcnow()
 
             # Add to task history
-            self.task_history.append({
-                'task_id': task.get('id'),
-                'execution_time': execution_time,
-                'status': 'completed',
-                'timestamp': datetime.utcnow()
-            })
+            self.task_history.append(
+                {
+                    "task_id": task.get("id"),
+                    "execution_time": execution_time,
+                    "status": "completed",
+                    "timestamp": datetime.utcnow(),
+                }
+            )
 
             self.logger.info(f"Task {task.get('id', 'unknown')} completed successfully")
             return result
@@ -202,13 +207,15 @@ class IntelligenceAgent(ABC):
             self.current_task = None
 
             # Add to task history
-            self.task_history.append({
-                'task_id': task.get('id'),
-                'execution_time': execution_time,
-                'status': 'failed',
-                'error': str(e),
-                'timestamp': datetime.utcnow()
-            })
+            self.task_history.append(
+                {
+                    "task_id": task.get("id"),
+                    "execution_time": execution_time,
+                    "status": "failed",
+                    "error": str(e),
+                    "timestamp": datetime.utcnow(),
+                }
+            )
 
             self.logger.error(f"Task {task.get('id', 'unknown')} failed: {e}")
             raise
@@ -221,14 +228,14 @@ class IntelligenceAgent(ABC):
             Agent status information
         """
         return {
-            'agent_id': self.agent_id,
-            'name': self.name,
-            'status': self.status.value,
-            'capabilities': self.capabilities,
-            'current_task': self.current_task,
-            'metrics': self.metrics,
-            'last_activity': self.last_activity.isoformat(),
-            'created_at': self.created_at.isoformat()
+            "agent_id": self.agent_id,
+            "name": self.name,
+            "status": self.status.value,
+            "capabilities": self.capabilities,
+            "current_task": self.current_task,
+            "metrics": self.metrics,
+            "last_activity": self.last_activity.isoformat(),
+            "created_at": self.created_at.isoformat(),
         }
 
     async def get_capabilities(self) -> List[str]:
@@ -250,48 +257,48 @@ class IntelligenceAgent(ABC):
         try:
             # Check service dependencies
             health_status = {
-                'agent_id': self.agent_id,
-                'status': 'healthy',
-                'timestamp': datetime.utcnow().isoformat(),
-                'dependencies': {}
+                "agent_id": self.agent_id,
+                "status": "healthy",
+                "timestamp": datetime.utcnow().isoformat(),
+                "dependencies": {},
             }
 
             # Check LLM service
             if self.llm_service:
                 try:
                     await self.llm_service.health_check()
-                    health_status['dependencies']['llm_service'] = 'healthy'
+                    health_status["dependencies"]["llm_service"] = "healthy"
                 except Exception as e:
-                    health_status['dependencies']['llm_service'] = f'unhealthy: {e}'
-                    health_status['status'] = 'degraded'
+                    health_status["dependencies"]["llm_service"] = f"unhealthy: {e}"
+                    health_status["status"] = "degraded"
 
             # Check vector service
             if self.vector_service:
                 try:
                     await self.vector_service.health_check()
-                    health_status['dependencies']['vector_service'] = 'healthy'
+                    health_status["dependencies"]["vector_service"] = "healthy"
                 except Exception as e:
-                    health_status['dependencies']['vector_service'] = f'unhealthy: {e}'
-                    health_status['status'] = 'degraded'
+                    health_status["dependencies"]["vector_service"] = f"unhealthy: {e}"
+                    health_status["status"] = "degraded"
 
             # Check knowledge graph
             if self.knowledge_graph:
                 try:
                     await self.knowledge_graph.health_check()
-                    health_status['dependencies']['knowledge_graph'] = 'healthy'
+                    health_status["dependencies"]["knowledge_graph"] = "healthy"
                 except Exception as e:
-                    health_status['dependencies']['knowledge_graph'] = f'unhealthy: {e}'
-                    health_status['status'] = 'degraded'
+                    health_status["dependencies"]["knowledge_graph"] = f"unhealthy: {e}"
+                    health_status["status"] = "degraded"
 
             return health_status
 
         except Exception as e:
             self.logger.error(f"Health check failed for agent {self.agent_id}: {e}")
             return {
-                'agent_id': self.agent_id,
-                'status': 'unhealthy',
-                'error': str(e),
-                'timestamp': datetime.utcnow().isoformat()
+                "agent_id": self.agent_id,
+                "status": "unhealthy",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
             }
 
     async def _initialize_resources(self):
@@ -305,16 +312,16 @@ class IntelligenceAgent(ABC):
     def _update_metrics(self, execution_time: float, success: bool):
         """Update agent performance metrics."""
         if success:
-            self.metrics['tasks_completed'] += 1
+            self.metrics["tasks_completed"] += 1
         else:
-            self.metrics['tasks_failed'] += 1
+            self.metrics["tasks_failed"] += 1
 
         # Update average response time
-        total_tasks = self.metrics['tasks_completed'] + self.metrics['tasks_failed']
+        total_tasks = self.metrics["tasks_completed"] + self.metrics["tasks_failed"]
         if total_tasks > 0:
-            current_avg = self.metrics['average_response_time']
-            self.metrics['average_response_time'] = (
-                (current_avg * (total_tasks - 1) + execution_time) / total_tasks
-            )
+            current_avg = self.metrics["average_response_time"]
+            self.metrics["average_response_time"] = (
+                current_avg * (total_tasks - 1) + execution_time
+            ) / total_tasks
 
-        self.metrics['last_activity'] = self.last_activity
+        self.metrics["last_activity"] = self.last_activity

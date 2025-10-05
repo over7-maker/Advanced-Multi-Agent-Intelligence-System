@@ -14,10 +14,10 @@ import logging
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class ComprehensiveYAMLFixer:
     """Comprehensive YAML syntax fixer"""
@@ -28,7 +28,7 @@ class ComprehensiveYAMLFixer:
     def fix_workflow_file(self, workflow_file: str) -> Dict[str, Any]:
         """Fix all YAML issues in a workflow file"""
         try:
-            with open(workflow_file, 'r', encoding='utf-8') as f:
+            with open(workflow_file, "r", encoding="utf-8") as f:
                 content = f.read()
 
             original_content = content
@@ -45,7 +45,7 @@ class ComprehensiveYAMLFixer:
 
             # Fix 2: Simple broken run commands with backslashes
             pattern2 = r'run: "([^"]*)\\n([^"]*)\\n([^"]*)\\n"'
-            replacement2 = r'run: |\n        \1\n        \2\n        \3'
+            replacement2 = r"run: |\n        \1\n        \2\n        \3"
 
             if re.search(pattern2, content):
                 content = re.sub(pattern2, replacement2, content)
@@ -85,21 +85,21 @@ class ComprehensiveYAMLFixer:
 
             # Write back if fixes were applied
             if fixes_applied > 0:
-                with open(workflow_file, 'w', encoding='utf-8') as f:
+                with open(workflow_file, "w", encoding="utf-8") as f:
                     f.write(content)
 
             return {
-                'fixed': True,
-                'fixes_applied': fixes_applied,
-                'content_changed': content != original_content
+                "fixed": True,
+                "fixes_applied": fixes_applied,
+                "content_changed": content != original_content,
             }
 
         except Exception as e:
             return {
-                'fixed': False,
-                'error': str(e),
-                'fixes_applied': 0,
-                'content_changed': False
+                "fixed": False,
+                "error": str(e),
+                "fixes_applied": 0,
+                "content_changed": False,
             }
 
     def fix_all_workflows(self) -> Dict[str, Any]:
@@ -108,9 +108,9 @@ class ComprehensiveYAMLFixer:
             logger.info("Fixing all workflow YAML files...")
 
             workflow_files = [
-                '.github/workflows/ai_development.yml',
-                '.github/workflows/ai_complete_workflow.yml',
-                '.github/workflows/ai_simple_workflow.yml'
+                ".github/workflows/ai_development.yml",
+                ".github/workflows/ai_complete_workflow.yml",
+                ".github/workflows/ai_simple_workflow.yml",
             ]
 
             workflow_fixes = {}
@@ -124,26 +124,34 @@ class ComprehensiveYAMLFixer:
 
                     workflow_fixes[workflow_file] = fixes
                 else:
-                    workflow_fixes[workflow_file] = {
-                        'error': 'File not found'
-                    }
+                    workflow_fixes[workflow_file] = {"error": "File not found"}
 
             return {
-                'workflow_fixes': workflow_fixes,
-                'total_workflows': len(workflow_files),
-                'fixed_workflows': len([w for w in workflow_fixes.values() if w.get('fixes_applied', 0) > 0]),
-                'timestamp': datetime.now().isoformat()
+                "workflow_fixes": workflow_fixes,
+                "total_workflows": len(workflow_files),
+                "fixed_workflows": len(
+                    [
+                        w
+                        for w in workflow_fixes.values()
+                        if w.get("fixes_applied", 0) > 0
+                    ]
+                ),
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error fixing workflows: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
+
 
 def main():
     """Main function"""
     import argparse
-    parser = argparse.ArgumentParser(description='Fix All YAML Issues')
-    parser.add_argument('--output', default='yaml_fix_report.json', help='Output file for fix report')
+
+    parser = argparse.ArgumentParser(description="Fix All YAML Issues")
+    parser.add_argument(
+        "--output", default="yaml_fix_report.json", help="Output file for fix report"
+    )
 
     args = parser.parse_args()
 
@@ -154,40 +162,42 @@ def main():
         results = fixer.fix_all_workflows()
 
         # Save report
-        with open(args.output, 'w', encoding='utf-8') as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             import json
+
             json.dump(results, f, indent=2, ensure_ascii=False)
 
         # Print summary
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("🔧 COMPREHENSIVE YAML FIX SUMMARY")
-        print("="*60)
+        print("=" * 60)
 
-        total_workflows = results.get('total_workflows', 0)
-        fixed_workflows = results.get('fixed_workflows', 0)
+        total_workflows = results.get("total_workflows", 0)
+        fixed_workflows = results.get("fixed_workflows", 0)
         print(f"Total Workflows: {total_workflows}")
         print(f"Fixed Workflows: {fixed_workflows}")
 
         # Show details for each workflow
-        for workflow, fixes in results.get('workflow_fixes', {}).items():
-            total_fixes = fixes.get('fixes_applied', 0)
+        for workflow, fixes in results.get("workflow_fixes", {}).items():
+            total_fixes = fixes.get("fixes_applied", 0)
             print(f"\n{workflow}:")
             print(f"  Total Fixes: {total_fixes}")
             print(f"  Content Changed: {fixes.get('content_changed', False)}")
-            if 'error' in fixes:
+            if "error" in fixes:
                 print(f"  Error: {fixes['error']}")
 
-        print("="*60)
+        print("=" * 60)
         print("✅ ALL YAML SYNTAX ISSUES FIXED!")
         print("✅ NO MORE BROKEN RUN COMMANDS!")
         print("✅ ALL WORKFLOWS NOW HAVE VALID YAML!")
-        print("="*60)
+        print("=" * 60)
 
         logger.info("Comprehensive YAML fixing complete.")
 
     except Exception as e:
         logger.error(f"Error in main: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

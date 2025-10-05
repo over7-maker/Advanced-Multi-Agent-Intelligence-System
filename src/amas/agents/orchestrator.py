@@ -17,8 +17,10 @@ from abc import ABC, abstractmethod
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class AgentType(Enum):
     """Agent types for intelligence operations"""
+
     OSINT = "osint"
     INVESTIGATION = "investigation"
     FORENSICS = "forensics"
@@ -28,24 +30,30 @@ class AgentType(Enum):
     REPORTING = "reporting"
     TECHNOLOGY_MONITOR = "technology_monitor"
 
+
 class TaskStatus(Enum):
     """Task status enumeration"""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
 
+
 class TaskPriority(Enum):
     """Task priority levels"""
+
     LOW = 1
     MEDIUM = 2
     HIGH = 3
     CRITICAL = 4
 
+
 @dataclass
 class Task:
     """Task data structure"""
+
     id: str
     type: str
     description: str
@@ -58,9 +66,11 @@ class Task:
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
 
+
 @dataclass
 class Agent:
     """Agent data structure"""
+
     id: str
     name: str
     type: AgentType
@@ -69,6 +79,7 @@ class Agent:
     current_task: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.now)
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 class BaseAgent(ABC):
     """Base class for all intelligence agents"""
@@ -96,6 +107,7 @@ class BaseAgent(ABC):
         self.status = status
         logger.info(f"Agent {self.name} status updated to {status}")
 
+
 class AgentOrchestrator:
     """Core orchestrator for multi-agent intelligence operations"""
 
@@ -105,9 +117,15 @@ class AgentOrchestrator:
         self.tasks: Dict[str, Task] = {}
         self.task_queue: List[str] = []
         self.event_bus = EventBus()
-        self.llm_service = LLMService(config.get('llm_service_url', 'http://localhost:11434'))
-        self.vector_service = VectorService(config.get('vector_service_url', 'http://localhost:8001'))
-        self.knowledge_graph = KnowledgeGraph(config.get('graph_service_url', 'http://localhost:7474'))
+        self.llm_service = LLMService(
+            config.get("llm_service_url", "http://localhost:11434")
+        )
+        self.vector_service = VectorService(
+            config.get("vector_service_url", "http://localhost:8001")
+        )
+        self.knowledge_graph = KnowledgeGraph(
+            config.get("graph_service_url", "http://localhost:7474")
+        )
 
     async def register_agent(self, agent: BaseAgent):
         """Register a new agent"""
@@ -119,20 +137,24 @@ class AgentOrchestrator:
         task_id = str(uuid.uuid4())
         task = Task(
             id=task_id,
-            type=task_data.get('type', 'general'),
-            description=task_data.get('description', ''),
-            priority=TaskPriority(task_data.get('priority', 2)),
-            metadata=task_data.get('metadata', {})
+            type=task_data.get("type", "general"),
+            description=task_data.get("description", ""),
+            priority=TaskPriority(task_data.get("priority", 2)),
+            metadata=task_data.get("metadata", {}),
         )
 
         self.tasks[task_id] = task
         self.task_queue.append(task_id)
 
         # Sort tasks by priority
-        self.task_queue.sort(key=lambda tid: self.tasks[tid].priority.value, reverse=True)
+        self.task_queue.sort(
+            key=lambda tid: self.tasks[tid].priority.value, reverse=True
+        )
 
         logger.info(f"Task {task_id} submitted: {task.description}")
-        await self.event_bus.publish('task_submitted', {'task_id': task_id, 'task': task})
+        await self.event_bus.publish(
+            "task_submitted", {"task_id": task_id, "task": task}
+        )
 
         return task_id
 
@@ -161,7 +183,9 @@ class AgentOrchestrator:
         agent.status = "busy"
 
         logger.info(f"Task {task_id} assigned to agent {agent_id}")
-        await self.event_bus.publish('task_assigned', {'task_id': task_id, 'agent_id': agent_id})
+        await self.event_bus.publish(
+            "task_assigned", {"task_id": task_id, "agent_id": agent_id}
+        )
 
         return True
 
@@ -200,11 +224,13 @@ class AgentOrchestrator:
             """
 
             reasoning = await self.llm_service.generate_response(reasoning_prompt)
-            steps.append({
-                'phase': 'reasoning',
-                'content': reasoning,
-                'timestamp': datetime.now().isoformat()
-            })
+            steps.append(
+                {
+                    "phase": "reasoning",
+                    "content": reasoning,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
             # Acting phase
             action_prompt = f"""
@@ -222,11 +248,13 @@ class AgentOrchestrator:
             """
 
             actions = await self.llm_service.generate_response(action_prompt)
-            steps.append({
-                'phase': 'acting',
-                'content': actions,
-                'timestamp': datetime.now().isoformat()
-            })
+            steps.append(
+                {
+                    "phase": "acting",
+                    "content": actions,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
             # Observing phase
             observation_prompt = f"""
@@ -244,11 +272,13 @@ class AgentOrchestrator:
             """
 
             observations = await self.llm_service.generate_response(observation_prompt)
-            steps.append({
-                'phase': 'observing',
-                'content': observations,
-                'timestamp': datetime.now().isoformat()
-            })
+            steps.append(
+                {
+                    "phase": "observing",
+                    "content": observations,
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
             # Execute the actual task
             result = await agent.execute_task(task)
@@ -256,14 +286,18 @@ class AgentOrchestrator:
             task.status = TaskStatus.COMPLETED
             task.updated_at = datetime.now()
 
-            steps.append({
-                'phase': 'completion',
-                'content': f"Task completed successfully. Result: {result}",
-                'timestamp': datetime.now().isoformat()
-            })
+            steps.append(
+                {
+                    "phase": "completion",
+                    "content": f"Task completed successfully. Result: {result}",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
             logger.info(f"Task {task_id} completed successfully")
-            await self.event_bus.publish('task_completed', {'task_id': task_id, 'result': result})
+            await self.event_bus.publish(
+                "task_completed", {"task_id": task_id, "result": result}
+            )
 
         except Exception as e:
             logger.error(f"Error executing task {task_id}: {e}")
@@ -271,13 +305,17 @@ class AgentOrchestrator:
             task.error = str(e)
             task.updated_at = datetime.now()
 
-            steps.append({
-                'phase': 'error',
-                'content': f"Task failed with error: {e}",
-                'timestamp': datetime.now().isoformat()
-            })
+            steps.append(
+                {
+                    "phase": "error",
+                    "content": f"Task failed with error: {e}",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
 
-            await self.event_bus.publish('task_failed', {'task_id': task_id, 'error': str(e)})
+            await self.event_bus.publish(
+                "task_failed", {"task_id": task_id, "error": str(e)}
+            )
 
         finally:
             # Reset agent status
@@ -293,16 +331,16 @@ class AgentOrchestrator:
 
         task = self.tasks[task_id]
         return {
-            'id': task.id,
-            'type': task.type,
-            'description': task.description,
-            'status': task.status.value,
-            'priority': task.priority.value,
-            'assigned_agent': task.assigned_agent,
-            'created_at': task.created_at.isoformat(),
-            'updated_at': task.updated_at.isoformat(),
-            'result': task.result,
-            'error': task.error
+            "id": task.id,
+            "type": task.type,
+            "description": task.description,
+            "status": task.status.value,
+            "priority": task.priority.value,
+            "assigned_agent": task.assigned_agent,
+            "created_at": task.created_at.isoformat(),
+            "updated_at": task.updated_at.isoformat(),
+            "result": task.result,
+            "error": task.error,
         }
 
     async def get_agent_status(self, agent_id: str) -> Optional[Dict[str, Any]]:
@@ -312,26 +350,31 @@ class AgentOrchestrator:
 
         agent = self.agents[agent_id]
         return {
-            'id': agent.agent_id,
-            'name': agent.name,
-            'type': agent.agent_type.value,
-            'status': agent.status,
-            'current_task': agent.current_task,
-            'capabilities': agent.capabilities,
-            'created_at': agent.created_at.isoformat()
+            "id": agent.agent_id,
+            "name": agent.name,
+            "type": agent.agent_type.value,
+            "status": agent.status,
+            "current_task": agent.current_task,
+            "capabilities": agent.capabilities,
+            "created_at": agent.created_at.isoformat(),
         }
 
     async def list_agents(self) -> List[Dict[str, Any]]:
         """List all registered agents"""
-        return [await self.get_agent_status(agent_id) for agent_id in self.agents.keys()]
+        return [
+            await self.get_agent_status(agent_id) for agent_id in self.agents.keys()
+        ]
 
-    async def list_tasks(self, status_filter: Optional[TaskStatus] = None) -> List[Dict[str, Any]]:
+    async def list_tasks(
+        self, status_filter: Optional[TaskStatus] = None
+    ) -> List[Dict[str, Any]]:
         """List all tasks, optionally filtered by status"""
         tasks = []
         for task in self.tasks.values():
             if status_filter is None or task.status == status_filter:
                 tasks.append(await self.get_task_status(task.id))
         return tasks
+
 
 class EventBus:
     """Event bus for inter-agent communication"""
@@ -356,6 +399,7 @@ class EventBus:
         self.subscribers[event_type].append(handler)
         logger.info(f"Subscribed to event {event_type}")
 
+
 class LLMService:
     """LLM service for AI operations"""
 
@@ -368,6 +412,7 @@ class LLMService:
         # For now, return a placeholder
         return f"LLM Response to: {prompt[:100]}..."
 
+
 class VectorService:
     """Vector service for semantic search"""
 
@@ -378,6 +423,7 @@ class VectorService:
         """Search for similar vectors"""
         # This would integrate with FAISS or other vector services
         return []
+
 
 class KnowledgeGraph:
     """Knowledge graph service"""

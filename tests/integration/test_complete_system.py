@@ -13,13 +13,12 @@ from typing import Dict, Any
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 
 logger = logging.getLogger(__name__)
+
 
 async def test_complete_amas_system():
     """Test the complete AMAS Intelligence System"""
@@ -29,27 +28,27 @@ async def test_complete_amas_system():
 
         # Enhanced configuration with API keys
         config = {
-            'llm_service_url': 'http://localhost:11434',
-            'vector_service_url': 'http://localhost:8001',
-            'graph_service_url': 'bolt://localhost:7687',
-            'postgres_host': 'localhost',
-            'postgres_port': 5432,
-            'postgres_user': 'amas',
-            'postgres_password': 'amas123',
-            'postgres_db': 'amas',
-            'redis_host': 'localhost',
-            'redis_port': 6379,
-            'redis_db': 0,
-            'neo4j_username': 'neo4j',
-            'neo4j_password': 'amas123',
-            'neo4j_database': 'neo4j',
-            'jwt_secret': 'amas_jwt_secret_key_2024_secure',
-            'encryption_key': 'amas_encryption_key_2024_secure_32_chars',
-            'deepseek_api_key': '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',
-            'glm_api_key': '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',
-            'grok_api_key': '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',
-            'n8n_url': 'http://localhost:5678',
-            'n8n_api_key': 'your_n8n_api_key_here'
+            "llm_service_url": "http://localhost:11434",
+            "vector_service_url": "http://localhost:8001",
+            "graph_service_url": "bolt://localhost:7687",
+            "postgres_host": "localhost",
+            "postgres_port": 5432,
+            "postgres_user": "amas",
+            "postgres_password": "amas123",
+            "postgres_db": "amas",
+            "redis_host": "localhost",
+            "redis_port": 6379,
+            "redis_db": 0,
+            "neo4j_username": "neo4j",
+            "neo4j_password": "amas123",
+            "neo4j_database": "neo4j",
+            "jwt_secret": "amas_jwt_secret_key_2024_secure",
+            "encryption_key": "amas_encryption_key_2024_secure_32_chars",
+            "deepseek_api_key": "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",
+            "glm_api_key": "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",
+            "grok_api_key": "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",
+            "n8n_url": "http://localhost:5678",
+            "n8n_api_key": "your_n8n_api_key_here",
         }
 
         # Initialize system
@@ -77,9 +76,10 @@ async def test_complete_amas_system():
 
         # Test Ollama (if available)
         try:
-            ollama_response = await amas.service_manager.get_llm_service().generate_response(
-                "What is artificial intelligence?",
-                provider='ollama'
+            ollama_response = (
+                await amas.service_manager.get_llm_service().generate_response(
+                    "What is artificial intelligence?", provider="ollama"
+                )
             )
             logger.info(f"Ollama response: {ollama_response.get('success', False)}")
         except Exception as e:
@@ -87,37 +87,49 @@ async def test_complete_amas_system():
 
         # Test DeepSeek API
         try:
-            deepseek_response = await amas.service_manager.get_llm_service().generate_response(
-                "Explain the concept of multi-agent systems in AI.",
-                provider='deepseek'
+            deepseek_response = (
+                await amas.service_manager.get_llm_service().generate_response(
+                    "Explain the concept of multi-agent systems in AI.",
+                    provider="deepseek",
+                )
             )
             logger.info(f"DeepSeek response: {deepseek_response.get('success', False)}")
-            if deepseek_response.get('success'):
-                logger.info(f"DeepSeek response content: {deepseek_response.get('response', '')[:100]}...")
+            if deepseek_response.get("success"):
+                logger.info(
+                    f"DeepSeek response content: {deepseek_response.get('response', '')[:100]}..."
+                )
         except Exception as e:
             logger.warning(f"DeepSeek test failed: {e}")
 
         # Test GLM API
         try:
-            glm_response = await amas.service_manager.get_llm_service().generate_response(
-                "What are the key components of an intelligence system?",
-                provider='glm'
+            glm_response = (
+                await amas.service_manager.get_llm_service().generate_response(
+                    "What are the key components of an intelligence system?",
+                    provider="glm",
+                )
             )
             logger.info(f"GLM response: {glm_response.get('success', False)}")
-            if glm_response.get('success'):
-                logger.info(f"GLM response content: {glm_response.get('response', '')[:100]}...")
+            if glm_response.get("success"):
+                logger.info(
+                    f"GLM response content: {glm_response.get('response', '')[:100]}..."
+                )
         except Exception as e:
             logger.warning(f"GLM test failed: {e}")
 
         # Test Grok API
         try:
-            grok_response = await amas.service_manager.get_llm_service().generate_response(
-                "Describe the architecture of a multi-agent intelligence system.",
-                provider='grok'
+            grok_response = (
+                await amas.service_manager.get_llm_service().generate_response(
+                    "Describe the architecture of a multi-agent intelligence system.",
+                    provider="grok",
+                )
             )
             logger.info(f"Grok response: {grok_response.get('success', False)}")
-            if grok_response.get('success'):
-                logger.info(f"Grok response content: {grok_response.get('response', '')[:100]}...")
+            if grok_response.get("success"):
+                logger.info(
+                    f"Grok response content: {grok_response.get('response', '')[:100]}..."
+                )
         except Exception as e:
             logger.warning(f"Grok test failed: {e}")
 
@@ -130,21 +142,23 @@ async def test_complete_amas_system():
         logger.info("=== Testing Agent Capabilities ===")
         for agent_id, agent in amas.agents.items():
             agent_status = await agent.get_status()
-            logger.info(f"Agent {agent_id}: {agent_status.get('status', 'unknown')} - {agent_status.get('capabilities', [])}")
+            logger.info(
+                f"Agent {agent_id}: {agent_status.get('status', 'unknown')} - {agent_status.get('capabilities', [])}"
+            )
 
         # Test 7: Task Submission and Processing
         logger.info("=== Testing Task Submission and Processing ===")
 
         # OSINT Task
         osint_task = {
-            'type': 'osint',
-            'description': 'Collect intelligence on emerging cyber threats from multiple sources',
-            'priority': 2,
-            'parameters': {
-                'sources': ['news', 'social_media', 'forums'],
-                'keywords': ['cyber', 'threat', 'security', 'malware'],
-                'max_pages': 5
-            }
+            "type": "osint",
+            "description": "Collect intelligence on emerging cyber threats from multiple sources",
+            "priority": 2,
+            "parameters": {
+                "sources": ["news", "social_media", "forums"],
+                "keywords": ["cyber", "threat", "security", "malware"],
+                "max_pages": 5,
+            },
         }
 
         task_id = await amas.submit_intelligence_task(osint_task)
@@ -152,14 +166,14 @@ async def test_complete_amas_system():
 
         # Investigation Task
         investigation_task = {
-            'type': 'investigation',
-            'description': 'Analyze suspicious network activity and correlate with known threats',
-            'priority': 1,
-            'parameters': {
-                'network_logs': ['firewall', 'ids', 'proxy'],
-                'timeframe': '24h',
-                'correlation_type': 'threat_intelligence'
-            }
+            "type": "investigation",
+            "description": "Analyze suspicious network activity and correlate with known threats",
+            "priority": 1,
+            "parameters": {
+                "network_logs": ["firewall", "ids", "proxy"],
+                "timeframe": "24h",
+                "correlation_type": "threat_intelligence",
+            },
         }
 
         investigation_task_id = await amas.submit_intelligence_task(investigation_task)
@@ -167,14 +181,14 @@ async def test_complete_amas_system():
 
         # Forensics Task
         forensics_task = {
-            'type': 'forensics',
-            'description': 'Analyze digital evidence from compromised system',
-            'priority': 1,
-            'parameters': {
-                'evidence_type': 'disk_image',
-                'analysis_depth': 'comprehensive',
-                'timeline_reconstruction': True
-            }
+            "type": "forensics",
+            "description": "Analyze digital evidence from compromised system",
+            "priority": 1,
+            "parameters": {
+                "evidence_type": "disk_image",
+                "analysis_depth": "comprehensive",
+                "timeline_reconstruction": True,
+            },
         }
 
         forensics_task_id = await amas.submit_intelligence_task(forensics_task)
@@ -186,26 +200,26 @@ async def test_complete_amas_system():
 
         # Test 8: Database Operations
         logger.info("=== Testing Database Operations ===")
-        tasks = await amas.database_service.get_tasks_by_status('pending')
+        tasks = await amas.database_service.get_tasks_by_status("pending")
         logger.info(f"Pending tasks: {len(tasks)}")
 
-        completed_tasks = await amas.database_service.get_tasks_by_status('completed')
+        completed_tasks = await amas.database_service.get_tasks_by_status("completed")
         logger.info(f"Completed tasks: {len(completed_tasks)}")
 
         # Test 9: Security Operations
         logger.info("=== Testing Security Operations ===")
 
         # Test authentication
-        auth_result = await amas.security_service.authenticate_user('admin', 'admin123')
+        auth_result = await amas.security_service.authenticate_user("admin", "admin123")
         logger.info(f"Authentication result: {auth_result.get('success', False)}")
 
         # Test audit logging
         await amas.security_service.log_audit_event(
-            event_type='system_test',
-            user_id='test_user',
-            action='complete_system_test',
-            details='Comprehensive system test execution',
-            classification='system'
+            event_type="system_test",
+            user_id="test_user",
+            action="complete_system_test",
+            details="Comprehensive system test execution",
+            classification="system",
         )
 
         audit_log = await amas.security_service.get_audit_log()
@@ -220,12 +234,12 @@ async def test_complete_amas_system():
         logger.info("=== Testing Workflow Execution ===")
         try:
             workflow_result = await amas.execute_intelligence_workflow(
-                'osint_investigation',
+                "osint_investigation",
                 {
-                    'target': 'suspicious_domain.com',
-                    'depth': 'deep',
-                    'sources': ['web', 'social_media', 'forums']
-                }
+                    "target": "suspicious_domain.com",
+                    "depth": "deep",
+                    "sources": ["web", "social_media", "forums"],
+                },
             )
             logger.info(f"Workflow execution result: {workflow_result}")
         except Exception as e:
@@ -258,8 +272,10 @@ async def test_complete_amas_system():
     except Exception as e:
         logger.error(f"Complete system test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 async def test_api_endpoints():
     """Test API endpoints if FastAPI is running"""
@@ -293,12 +309,12 @@ async def test_api_endpoints():
                     "type": "osint",
                     "description": "Test API task submission",
                     "parameters": {"test": True},
-                    "priority": 2
+                    "priority": 2,
                 }
                 response = await client.post(
                     "http://localhost:8000/tasks",
                     json=task_data,
-                    headers={"Authorization": "Bearer valid_token"}
+                    headers={"Authorization": "Bearer valid_token"},
                 )
                 logger.info(f"Task submission: {response.status_code}")
                 if response.status_code == 200:
@@ -312,6 +328,7 @@ async def test_api_endpoints():
     except Exception as e:
         logger.warning(f"API endpoints test failed: {e}")
         return False
+
 
 async def main():
     """Main test function"""
@@ -329,7 +346,9 @@ async def main():
     logger.info("FINAL TEST RESULTS")
     logger.info("=" * 60)
     logger.info(f"Core System Test: {'PASSED' if system_test_passed else 'FAILED'}")
-    logger.info(f"API Endpoints Test: {'PASSED' if api_test_passed else 'SKIPPED/FAILED'}")
+    logger.info(
+        f"API Endpoints Test: {'PASSED' if api_test_passed else 'SKIPPED/FAILED'}"
+    )
 
     if system_test_passed:
         logger.info("🎉 AMAS Intelligence System is fully operational!")
@@ -342,6 +361,7 @@ async def main():
     else:
         logger.error("❌ System test failed. Please check the logs for details.")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

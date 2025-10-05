@@ -16,37 +16,45 @@ class SecretScanner:
 
     # Common secret patterns
     SECRET_PATTERNS = {
-        'api_key': re.compile(r'(?i)(api[_-]?key|apikey)\s*[=:]\s*["\']([a-zA-Z0-9_-]{20,})["\']'),
-        'password': re.compile(r'(?i)(password|passwd|pwd)\s*[=:]\s*["\']([^"\']{8,})["\']'),
-        'token': re.compile(r'(?i)(token|auth[_-]?token)\s*[=:]\s*["\']([a-zA-Z0-9_-]{20,})["\']'),
-        'secret': re.compile(r'(?i)(secret|secret[_-]?key)\s*[=:]\s*["\']([a-zA-Z0-9_-]{20,})["\']'),
-        'private_key': re.compile(r'-----BEGIN [A-Z ]+ PRIVATE KEY-----'),
-        'aws_key': re.compile(r'AKIA[0-9A-Z]{16}'),
-        'gcp_key': re.compile(r'AIza[0-9A-Za-z_-]{35}'),
-        'github_token': re.compile(r'ghp_[a-zA-Z0-9]{36}'),
-        'jwt': re.compile(r'eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*'),
+        "api_key": re.compile(
+            r'(?i)(api[_-]?key|apikey)\s*[=:]\s*["\']([a-zA-Z0-9_-]{20,})["\']'
+        ),
+        "password": re.compile(
+            r'(?i)(password|passwd|pwd)\s*[=:]\s*["\']([^"\']{8,})["\']'
+        ),
+        "token": re.compile(
+            r'(?i)(token|auth[_-]?token)\s*[=:]\s*["\']([a-zA-Z0-9_-]{20,})["\']'
+        ),
+        "secret": re.compile(
+            r'(?i)(secret|secret[_-]?key)\s*[=:]\s*["\']([a-zA-Z0-9_-]{20,})["\']'
+        ),
+        "private_key": re.compile(r"-----BEGIN [A-Z ]+ PRIVATE KEY-----"),
+        "aws_key": re.compile(r"AKIA[0-9A-Z]{16}"),
+        "gcp_key": re.compile(r"AIza[0-9A-Za-z_-]{35}"),
+        "github_token": re.compile(r"ghp_[a-zA-Z0-9]{36}"),
+        "jwt": re.compile(r"eyJ[a-zA-Z0-9_-]*\.eyJ[a-zA-Z0-9_-]*\.[a-zA-Z0-9_-]*"),
     }
 
     # Files to exclude from scanning
     EXCLUDED_PATTERNS = [
-        r'\.git/',
-        r'__pycache__/',
-        r'\.pyc$',
-        r'\.example$',
-        r'\.template$',
-        r'/archive/',
-        r'check_secrets\.py$',  # Don't scan this file itself
+        r"\.git/",
+        r"__pycache__/",
+        r"\.pyc$",
+        r"\.example$",
+        r"\.template$",
+        r"/archive/",
+        r"check_secrets\.py$",  # Don't scan this file itself
     ]
 
     # Allowed patterns (false positives)
     ALLOWED_PATTERNS = [
-        r'your_.*_key_here',
-        r'example_.*',
-        r'dummy_.*',
-        r'test_.*_key',
-        r'placeholder_.*',
-        r'<.*>',  # Template placeholders
-        r'\$\{.*\}',  # Environment variable references
+        r"your_.*_key_here",
+        r"example_.*",
+        r"dummy_.*",
+        r"test_.*_key",
+        r"placeholder_.*",
+        r"<.*>",  # Template placeholders
+        r"\$\{.*\}",  # Environment variable references
     ]
 
     def __init__(self):
@@ -71,9 +79,9 @@ class SecretScanner:
         issues = []
 
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                 content = f.read()
-                lines = content.split('\n')
+                lines = content.split("\n")
 
                 for pattern_name, pattern in self.SECRET_PATTERNS.items():
                     for match in pattern.finditer(content):
@@ -84,15 +92,25 @@ class SecretScanner:
                             continue
 
                         # Find line number
-                        line_num = content[:match.start()].count('\n') + 1
+                        line_num = content[: match.start()].count("\n") + 1
 
-                        issues.append({
-                            'file': str(file_path),
-                            'line': line_num,
-                            'pattern': pattern_name,
-                            'matched_text': matched_text[:50] + '...' if len(matched_text) > 50 else matched_text,
-                            'full_line': lines[line_num - 1].strip() if line_num <= len(lines) else ''
-                        })
+                        issues.append(
+                            {
+                                "file": str(file_path),
+                                "line": line_num,
+                                "pattern": pattern_name,
+                                "matched_text": (
+                                    matched_text[:50] + "..."
+                                    if len(matched_text) > 50
+                                    else matched_text
+                                ),
+                                "full_line": (
+                                    lines[line_num - 1].strip()
+                                    if line_num <= len(lines)
+                                    else ""
+                                ),
+                            }
+                        )
 
         except Exception as e:
             print(f"Warning: Could not scan {file_path}: {e}")
@@ -103,10 +121,19 @@ class SecretScanner:
         """Scan all files in directory recursively"""
         all_issues = []
 
-        for file_path in directory.rglob('*'):
+        for file_path in directory.rglob("*"):
             if file_path.is_file() and not self.is_excluded_file(str(file_path)):
                 # Only scan text files
-                if file_path.suffix in ['.py', '.yml', '.yaml', '.json', '.md', '.txt', '.sh', '.env']:
+                if file_path.suffix in [
+                    ".py",
+                    ".yml",
+                    ".yaml",
+                    ".json",
+                    ".md",
+                    ".txt",
+                    ".sh",
+                    ".env",
+                ]:
                     issues = self.scan_file(file_path)
                     all_issues.extend(issues)
 

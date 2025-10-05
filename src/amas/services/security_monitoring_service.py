@@ -19,15 +19,19 @@ from collections import defaultdict, deque
 
 logger = logging.getLogger(__name__)
 
+
 class ThreatLevel(Enum):
     """Threat level enumeration"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
 
+
 class SecurityEventType(Enum):
     """Security event type enumeration"""
+
     AUTHENTICATION = "authentication"
     AUTHORIZATION = "authorization"
     DATA_ACCESS = "data_access"
@@ -39,9 +43,11 @@ class SecurityEventType(Enum):
     DATA_EXFILTRATION = "data_exfiltration"
     PRIVILEGE_ESCALATION = "privilege_escalation"
 
+
 @dataclass
 class SecurityEvent:
     """Security event data structure"""
+
     event_id: str
     event_type: SecurityEventType
     threat_level: ThreatLevel
@@ -55,9 +61,11 @@ class SecurityEvent:
     resolved: bool = False
     resolved_at: Optional[datetime] = None
 
+
 @dataclass
 class ThreatIntelligence:
     """Threat intelligence data structure"""
+
     threat_id: str
     threat_type: str
     severity: ThreatLevel
@@ -66,6 +74,7 @@ class ThreatIntelligence:
     mitigation: List[str]
     last_seen: datetime
     confidence: float
+
 
 class SecurityMonitoringService:
     """
@@ -91,19 +100,19 @@ class SecurityMonitoringService:
 
         # Security thresholds
         self.thresholds = {
-            'failed_login_attempts': 5,
-            'suspicious_requests_per_minute': 10,
-            'data_access_volume': 1000,
-            'privilege_escalation_attempts': 3,
-            'unusual_access_patterns': 5
+            "failed_login_attempts": 5,
+            "suspicious_requests_per_minute": 10,
+            "data_access_volume": 1000,
+            "privilege_escalation_attempts": 3,
+            "unusual_access_patterns": 5,
         }
 
         # Monitoring intervals
         self.intervals = {
-            'security_scan': 30,        # seconds
-            'threat_analysis': 60,      # seconds
-            'incident_response': 120,    # seconds
-            'security_cleanup': 300     # seconds
+            "security_scan": 30,  # seconds
+            "threat_analysis": 60,  # seconds
+            "incident_response": 120,  # seconds
+            "security_cleanup": 300,  # seconds
         }
 
         # Security event storage
@@ -144,43 +153,45 @@ class SecurityMonitoringService:
         """Initialize security rules"""
         try:
             # Authentication rules
-            self.security_rules.extend([
-                {
-                    'name': 'failed_login_threshold',
-                    'type': 'authentication',
-                    'condition': 'failed_logins > 5',
-                    'action': 'block_ip',
-                    'severity': ThreatLevel.HIGH
-                },
-                {
-                    'name': 'suspicious_login_pattern',
-                    'type': 'authentication',
-                    'condition': 'login_from_new_location',
-                    'action': 'require_2fa',
-                    'severity': ThreatLevel.MEDIUM
-                },
-                {
-                    'name': 'privilege_escalation_attempt',
-                    'type': 'authorization',
-                    'condition': 'unauthorized_privilege_access',
-                    'action': 'alert_and_block',
-                    'severity': ThreatLevel.CRITICAL
-                },
-                {
-                    'name': 'data_exfiltration_pattern',
-                    'type': 'data_access',
-                    'condition': 'unusual_data_volume',
-                    'action': 'alert_and_monitor',
-                    'severity': ThreatLevel.HIGH
-                },
-                {
-                    'name': 'malware_detection',
-                    'type': 'malware',
-                    'condition': 'malware_signature_match',
-                    'action': 'quarantine_and_alert',
-                    'severity': ThreatLevel.CRITICAL
-                }
-            ])
+            self.security_rules.extend(
+                [
+                    {
+                        "name": "failed_login_threshold",
+                        "type": "authentication",
+                        "condition": "failed_logins > 5",
+                        "action": "block_ip",
+                        "severity": ThreatLevel.HIGH,
+                    },
+                    {
+                        "name": "suspicious_login_pattern",
+                        "type": "authentication",
+                        "condition": "login_from_new_location",
+                        "action": "require_2fa",
+                        "severity": ThreatLevel.MEDIUM,
+                    },
+                    {
+                        "name": "privilege_escalation_attempt",
+                        "type": "authorization",
+                        "condition": "unauthorized_privilege_access",
+                        "action": "alert_and_block",
+                        "severity": ThreatLevel.CRITICAL,
+                    },
+                    {
+                        "name": "data_exfiltration_pattern",
+                        "type": "data_access",
+                        "condition": "unusual_data_volume",
+                        "action": "alert_and_monitor",
+                        "severity": ThreatLevel.HIGH,
+                    },
+                    {
+                        "name": "malware_detection",
+                        "type": "malware",
+                        "condition": "malware_signature_match",
+                        "action": "quarantine_and_alert",
+                        "severity": ThreatLevel.CRITICAL,
+                    },
+                ]
+            )
 
             logger.info("Security rules initialized")
 
@@ -193,11 +204,11 @@ class SecurityMonitoringService:
         try:
             # Initialize threat intelligence database
             self.threat_intelligence = {
-                'malware_signatures': {},
-                'suspicious_ips': set(),
-                'known_attack_patterns': {},
-                'threat_actors': {},
-                'vulnerabilities': {}
+                "malware_signatures": {},
+                "suspicious_ips": set(),
+                "known_attack_patterns": {},
+                "threat_actors": {},
+                "vulnerabilities": {},
             }
 
             # Load known threat indicators
@@ -213,31 +224,31 @@ class SecurityMonitoringService:
         """Initialize incident response plan"""
         try:
             self.incident_response_plan = {
-                'detection': {
-                    'automated_monitoring': True,
-                    'alert_thresholds': self.thresholds,
-                    'escalation_procedures': True
+                "detection": {
+                    "automated_monitoring": True,
+                    "alert_thresholds": self.thresholds,
+                    "escalation_procedures": True,
                 },
-                'containment': {
-                    'automatic_isolation': True,
-                    'network_segmentation': True,
-                    'access_restriction': True
+                "containment": {
+                    "automatic_isolation": True,
+                    "network_segmentation": True,
+                    "access_restriction": True,
                 },
-                'eradication': {
-                    'malware_removal': True,
-                    'vulnerability_patching': True,
-                    'system_hardening': True
+                "eradication": {
+                    "malware_removal": True,
+                    "vulnerability_patching": True,
+                    "system_hardening": True,
                 },
-                'recovery': {
-                    'system_restoration': True,
-                    'data_recovery': True,
-                    'service_restoration': True
+                "recovery": {
+                    "system_restoration": True,
+                    "data_recovery": True,
+                    "service_restoration": True,
                 },
-                'lessons_learned': {
-                    'incident_documentation': True,
-                    'security_improvements': True,
-                    'training_updates': True
-                }
+                "lessons_learned": {
+                    "incident_documentation": True,
+                    "security_improvements": True,
+                    "training_updates": True,
+                },
             }
 
             logger.info("Incident response plan initialized")
@@ -257,7 +268,7 @@ class SecurityMonitoringService:
                 asyncio.create_task(self._monitor_suspicious_activities()),
                 asyncio.create_task(self._analyze_threat_patterns()),
                 asyncio.create_task(self._process_incident_response()),
-                asyncio.create_task(self._cleanup_security_data())
+                asyncio.create_task(self._cleanup_security_data()),
             ]
 
             logger.info("Security monitoring tasks started")
@@ -279,7 +290,7 @@ class SecurityMonitoringService:
                 # Monitor brute force attacks
                 await self._check_brute_force_attacks()
 
-                await asyncio.sleep(self.intervals['security_scan'])
+                await asyncio.sleep(self.intervals["security_scan"])
 
             except Exception as e:
                 logger.error(f"Authentication monitoring error: {e}")
@@ -298,7 +309,7 @@ class SecurityMonitoringService:
                 # Monitor role-based access violations
                 await self._check_rbac_violations()
 
-                await asyncio.sleep(self.intervals['security_scan'])
+                await asyncio.sleep(self.intervals["security_scan"])
 
             except Exception as e:
                 logger.error(f"Authorization monitoring error: {e}")
@@ -317,7 +328,7 @@ class SecurityMonitoringService:
                 # Monitor sensitive data access
                 await self._check_sensitive_data_access()
 
-                await asyncio.sleep(self.intervals['security_scan'])
+                await asyncio.sleep(self.intervals["security_scan"])
 
             except Exception as e:
                 logger.error(f"Data access monitoring error: {e}")
@@ -336,7 +347,7 @@ class SecurityMonitoringService:
                 # Monitor port scanning attempts
                 await self._check_port_scanning()
 
-                await asyncio.sleep(self.intervals['security_scan'])
+                await asyncio.sleep(self.intervals["security_scan"])
 
             except Exception as e:
                 logger.error(f"Network monitoring error: {e}")
@@ -355,7 +366,7 @@ class SecurityMonitoringService:
                 # Monitor malware indicators
                 await self._check_malware_indicators()
 
-                await asyncio.sleep(self.intervals['security_scan'])
+                await asyncio.sleep(self.intervals["security_scan"])
 
             except Exception as e:
                 logger.error(f"Suspicious activity monitoring error: {e}")
@@ -374,7 +385,7 @@ class SecurityMonitoringService:
                 # Update threat intelligence
                 await self._update_threat_intelligence()
 
-                await asyncio.sleep(self.intervals['threat_analysis'])
+                await asyncio.sleep(self.intervals["threat_analysis"])
 
             except Exception as e:
                 logger.error(f"Threat pattern analysis error: {e}")
@@ -393,7 +404,7 @@ class SecurityMonitoringService:
                 # Update incident status
                 await self._update_incident_status()
 
-                await asyncio.sleep(self.intervals['incident_response'])
+                await asyncio.sleep(self.intervals["incident_response"])
 
             except Exception as e:
                 logger.error(f"Incident response processing error: {e}")
@@ -406,14 +417,15 @@ class SecurityMonitoringService:
                 # Clean up old security events
                 cutoff_time = datetime.utcnow() - timedelta(days=30)
                 self.security_event_history = [
-                    event for event in self.security_event_history
+                    event
+                    for event in self.security_event_history
                     if event.timestamp > cutoff_time
                 ]
 
                 # Clean up old threat intelligence
                 await self._cleanup_threat_intelligence()
 
-                await asyncio.sleep(self.intervals['security_cleanup'])
+                await asyncio.sleep(self.intervals["security_cleanup"])
 
             except Exception as e:
                 logger.error(f"Security data cleanup error: {e}")
@@ -649,9 +661,16 @@ class SecurityMonitoringService:
         except Exception as e:
             logger.error(f"Failed to cleanup threat intelligence: {e}")
 
-    async def log_security_event(self, event_type: SecurityEventType, threat_level: ThreatLevel,
-                                source_ip: str, user_id: str, description: str,
-                                details: Dict[str, Any], classification: str = 'unclassified') -> str:
+    async def log_security_event(
+        self,
+        event_type: SecurityEventType,
+        threat_level: ThreatLevel,
+        source_ip: str,
+        user_id: str,
+        description: str,
+        details: Dict[str, Any],
+        classification: str = "unclassified",
+    ) -> str:
         """Log a security event"""
         try:
             event_id = secrets.token_urlsafe(16)
@@ -667,7 +686,7 @@ class SecurityMonitoringService:
                 description=description,
                 details=details,
                 classification=classification,
-                signature=self._generate_event_signature(event_id, description)
+                signature=self._generate_event_signature(event_id, description),
             )
 
             # Store event
@@ -677,7 +696,9 @@ class SecurityMonitoringService:
             # Check security rules
             await self._check_security_rules(event)
 
-            logger.warning(f"SECURITY EVENT [{threat_level.value.upper()}] {event_type.value}: {description}")
+            logger.warning(
+                f"SECURITY EVENT [{threat_level.value.upper()}] {event_type.value}: {description}"
+            )
 
             return event_id
 
@@ -709,17 +730,17 @@ class SecurityMonitoringService:
     async def _execute_rule_action(self, rule: Dict[str, Any], event: SecurityEvent):
         """Execute rule action"""
         try:
-            action = rule.get('action')
+            action = rule.get("action")
 
-            if action == 'block_ip':
+            if action == "block_ip":
                 await self._block_ip(event.source_ip)
-            elif action == 'require_2fa':
+            elif action == "require_2fa":
                 await self._require_2fa(event.user_id)
-            elif action == 'alert_and_block':
+            elif action == "alert_and_block":
                 await self._alert_and_block(event)
-            elif action == 'alert_and_monitor':
+            elif action == "alert_and_monitor":
                 await self._alert_and_monitor(event)
-            elif action == 'quarantine_and_alert':
+            elif action == "quarantine_and_alert":
                 await self._quarantine_and_alert(event)
 
         except Exception as e:
@@ -800,12 +821,10 @@ class SecurityMonitoringService:
     def _generate_event_signature(self, event_id: str, description: str) -> str:
         """Generate event signature for tamper detection"""
         try:
-            secret_key = self.config.get('security_secret_key', 'default_secret')
+            secret_key = self.config.get("security_secret_key", "default_secret")
             data = f"{event_id}:{description}"
             signature = hmac.new(
-                secret_key.encode(),
-                data.encode(),
-                hashlib.sha256
+                secret_key.encode(), data.encode(), hashlib.sha256
             ).hexdigest()
             return signature
 
@@ -816,20 +835,25 @@ class SecurityMonitoringService:
     async def get_security_status(self) -> Dict[str, Any]:
         """Get security monitoring status"""
         return {
-            'monitoring_enabled': self.monitoring_enabled,
-            'active_events': len([e for e in self.security_events.values() if not e.resolved]),
-            'total_events': len(self.security_event_history),
-            'blocked_ips': len(self.blocked_ips),
-            'suspicious_users': len(self.suspicious_users),
-            'threat_intelligence_entries': len(self.threat_intelligence),
-            'security_rules': len(self.security_rules),
-            'timestamp': datetime.utcnow().isoformat()
+            "monitoring_enabled": self.monitoring_enabled,
+            "active_events": len(
+                [e for e in self.security_events.values() if not e.resolved]
+            ),
+            "total_events": len(self.security_event_history),
+            "blocked_ips": len(self.blocked_ips),
+            "suspicious_users": len(self.suspicious_users),
+            "threat_intelligence_entries": len(self.threat_intelligence),
+            "security_rules": len(self.security_rules),
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
-    async def get_security_events(self, event_type: SecurityEventType = None,
-                                 threat_level: ThreatLevel = None,
-                                 start_date: datetime = None,
-                                 end_date: datetime = None) -> List[Dict[str, Any]]:
+    async def get_security_events(
+        self,
+        event_type: SecurityEventType = None,
+        threat_level: ThreatLevel = None,
+        start_date: datetime = None,
+        end_date: datetime = None,
+    ) -> List[Dict[str, Any]]:
         """Get security events"""
         try:
             events = []
@@ -843,19 +867,23 @@ class SecurityMonitoringService:
                 if end_date and event.timestamp > end_date:
                     continue
 
-                events.append({
-                    'event_id': event.event_id,
-                    'event_type': event.event_type.value,
-                    'threat_level': event.threat_level.value,
-                    'timestamp': event.timestamp.isoformat(),
-                    'source_ip': event.source_ip,
-                    'user_id': event.user_id,
-                    'description': event.description,
-                    'details': event.details,
-                    'classification': event.classification,
-                    'resolved': event.resolved,
-                    'resolved_at': event.resolved_at.isoformat() if event.resolved_at else None
-                })
+                events.append(
+                    {
+                        "event_id": event.event_id,
+                        "event_type": event.event_type.value,
+                        "threat_level": event.threat_level.value,
+                        "timestamp": event.timestamp.isoformat(),
+                        "source_ip": event.source_ip,
+                        "user_id": event.user_id,
+                        "description": event.description,
+                        "details": event.details,
+                        "classification": event.classification,
+                        "resolved": event.resolved,
+                        "resolved_at": (
+                            event.resolved_at.isoformat() if event.resolved_at else None
+                        ),
+                    }
+                )
 
             return events
 
@@ -884,13 +912,13 @@ class SecurityMonitoringService:
 
             threat = ThreatIntelligence(
                 threat_id=threat_id,
-                threat_type=threat_data.get('threat_type', 'unknown'),
-                severity=ThreatLevel(threat_data.get('severity', 'low')),
-                indicators=threat_data.get('indicators', []),
-                description=threat_data.get('description', ''),
-                mitigation=threat_data.get('mitigation', []),
+                threat_type=threat_data.get("threat_type", "unknown"),
+                severity=ThreatLevel(threat_data.get("severity", "low")),
+                indicators=threat_data.get("indicators", []),
+                description=threat_data.get("description", ""),
+                mitigation=threat_data.get("mitigation", []),
                 last_seen=datetime.utcnow(),
-                confidence=threat_data.get('confidence', 0.0)
+                confidence=threat_data.get("confidence", 0.0),
             )
 
             self.threat_intelligence[threat_id] = threat

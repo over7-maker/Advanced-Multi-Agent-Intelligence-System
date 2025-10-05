@@ -7,6 +7,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def test_environment():
     """Test the environment and dependencies"""
     print("🧪 Testing AI System Environment...")
@@ -18,6 +19,7 @@ def test_environment():
     # Test required modules
     try:
         import openai
+
         print("✅ OpenAI module: Available")
     except ImportError:
         print("❌ OpenAI module: Missing")
@@ -25,6 +27,7 @@ def test_environment():
 
     try:
         import requests
+
         print("✅ Requests module: Available")
     except ImportError:
         print("❌ Requests module: Missing")
@@ -32,18 +35,19 @@ def test_environment():
 
     return True
 
+
 def test_api_keys():
     """Test API key configuration"""
     print("\n🔑 Testing API Key Configuration...")
     print("=" * 50)
 
     api_keys = {
-        'DEEPSEEK_API_KEY': os.getenv('DEEPSEEK_API_KEY'),
-        'GLM_API_KEY': os.getenv('GLM_API_KEY'),
-        'GROK_API_KEY': os.getenv('GROK_API_KEY'),
-        'KIMI_API_KEY': os.getenv('KIMI_API_KEY'),
-        'QWEN_API_KEY': os.getenv('QWEN_API_KEY'),
-        'GPTOSS_API_KEY': os.getenv('GPTOSS_API_KEY')
+        "DEEPSEEK_API_KEY": os.getenv("DEEPSEEK_API_KEY"),
+        "GLM_API_KEY": os.getenv("GLM_API_KEY"),
+        "GROK_API_KEY": os.getenv("GROK_API_KEY"),
+        "KIMI_API_KEY": os.getenv("KIMI_API_KEY"),
+        "QWEN_API_KEY": os.getenv("QWEN_API_KEY"),
+        "GPTOSS_API_KEY": os.getenv("GPTOSS_API_KEY"),
     }
 
     available_keys = 0
@@ -57,24 +61,25 @@ def test_api_keys():
     print(f"\n📊 API Keys Status: {available_keys}/6 configured")
     return available_keys > 0
 
+
 def test_workflow_files():
     """Test workflow file existence and structure"""
     print("\n📁 Testing Workflow Files...")
     print("=" * 50)
 
     workflow_files = [
-        '.github/workflows/ai-enhanced-workflow.yml',
-        '.github/workflows/test-ai-workflow.yml',
-        '.github/workflows/ai-code-analysis.yml',
-        '.github/workflows/ai-issue-responder.yml',
-        '.github/workflows/multi-agent-workflow.yml',
-        '.github/workflows/ai-osint-collection.yml',
-        '.github/workflows/ai-threat-intelligence.yml',
-        '.github/workflows/ai-incident-response.yml',
-        '.github/workflows/ai-adaptive-prompt-improvement.yml',
-        '.github/workflows/ai-enhanced-code-review.yml',
-        '.github/workflows/ai-master-orchestrator.yml',
-        '.github/workflows/ai-security-response.yml'
+        ".github/workflows/ai-enhanced-workflow.yml",
+        ".github/workflows/test-ai-workflow.yml",
+        ".github/workflows/ai-code-analysis.yml",
+        ".github/workflows/ai-issue-responder.yml",
+        ".github/workflows/multi-agent-workflow.yml",
+        ".github/workflows/ai-osint-collection.yml",
+        ".github/workflows/ai-threat-intelligence.yml",
+        ".github/workflows/ai-incident-response.yml",
+        ".github/workflows/ai-adaptive-prompt-improvement.yml",
+        ".github/workflows/ai-enhanced-code-review.yml",
+        ".github/workflows/ai-master-orchestrator.yml",
+        ".github/workflows/ai-security-response.yml",
     ]
 
     existing_files = 0
@@ -88,24 +93,25 @@ def test_workflow_files():
     print(f"\n📊 Workflow Files: {existing_files}/{len(workflow_files)} found")
     return existing_files > 0
 
+
 def test_script_files():
     """Test AI script files"""
     print("\n🐍 Testing AI Script Files...")
     print("=" * 50)
 
     script_files = [
-        '.github/scripts/ai_code_analyzer.py',
-        '.github/scripts/ai_issue_responder.py',
-        '.github/scripts/ai_security_scanner.py',
-        '.github/scripts/multi_agent_orchestrator.py',
-        '.github/scripts/ai_osint_collector.py',
-        '.github/scripts/ai_threat_intelligence.py',
-        '.github/scripts/ai_incident_response.py',
-        '.github/scripts/ai_adaptive_prompt_improvement.py',
-        '.github/scripts/ai_enhanced_code_review.py',
-        '.github/scripts/ai_master_orchestrator.py',
-        '.github/scripts/ai_security_response.py',
-        '.github/scripts/ai_workflow_monitor.py'
+        ".github/scripts/ai_code_analyzer.py",
+        ".github/scripts/ai_issue_responder.py",
+        ".github/scripts/ai_security_scanner.py",
+        ".github/scripts/multi_agent_orchestrator.py",
+        ".github/scripts/ai_osint_collector.py",
+        ".github/scripts/ai_threat_intelligence.py",
+        ".github/scripts/ai_incident_response.py",
+        ".github/scripts/ai_adaptive_prompt_improvement.py",
+        ".github/scripts/ai_enhanced_code_review.py",
+        ".github/scripts/ai_master_orchestrator.py",
+        ".github/scripts/ai_security_response.py",
+        ".github/scripts/ai_workflow_monitor.py",
     ]
 
     existing_scripts = 0
@@ -119,6 +125,7 @@ def test_script_files():
     print(f"\n📊 AI Scripts: {existing_scripts}/{len(script_files)} found")
     return existing_scripts > 0
 
+
 def test_ai_client_initialization():
     """Test AI client initialization"""
     print("\n🤖 Testing AI Client Initialization...")
@@ -128,7 +135,7 @@ def test_ai_client_initialization():
         from openai import OpenAI
 
         # Test DeepSeek client
-        deepseek_key = os.getenv('DEEPSEEK_API_KEY')
+        deepseek_key = os.getenv("DEEPSEEK_API_KEY")
         if deepseek_key:
             try:
                 client = OpenAI(
@@ -142,7 +149,7 @@ def test_ai_client_initialization():
             print("⚠️ DeepSeek client: No API key")
 
         # Test GLM client
-        glm_key = os.getenv('GLM_API_KEY')
+        glm_key = os.getenv("GLM_API_KEY")
         if glm_key:
             try:
                 client = OpenAI(
@@ -160,6 +167,7 @@ def test_ai_client_initialization():
     except Exception as e:
         print(f"❌ AI Client Test: Failed - {e}")
         return False
+
 
 def generate_test_report():
     """Generate comprehensive test report"""
@@ -179,7 +187,14 @@ def generate_test_report():
 """
 
     # Add API key status
-    api_keys = ['DEEPSEEK_API_KEY', 'GLM_API_KEY', 'GROK_API_KEY', 'KIMI_API_KEY', 'QWEN_API_KEY', 'GPTOSS_API_KEY']
+    api_keys = [
+        "DEEPSEEK_API_KEY",
+        "GLM_API_KEY",
+        "GROK_API_KEY",
+        "KIMI_API_KEY",
+        "QWEN_API_KEY",
+        "GPTOSS_API_KEY",
+    ]
     for key in api_keys:
         status = "✅ Configured" if os.getenv(key) else "❌ Not configured"
         report += f"- {key}: {status}\n"
@@ -214,11 +229,12 @@ def generate_test_report():
 """
 
     # Save report
-    with open('ai_system_test_report.md', 'w') as f:
+    with open("ai_system_test_report.md", "w") as f:
         f.write(report)
 
     print("✅ Test report saved to: ai_system_test_report.md")
     return True
+
 
 def main():
     """Main test function"""
@@ -232,7 +248,7 @@ def main():
         ("Workflow Files", test_workflow_files),
         ("Script Files", test_script_files),
         ("AI Clients", test_ai_client_initialization),
-        ("Report Generation", generate_test_report)
+        ("Report Generation", generate_test_report),
     ]
 
     results = []
@@ -262,6 +278,7 @@ def main():
         print("⚠️ Some tests failed. Please check the issues above.")
 
     return passed == total
+
 
 if __name__ == "__main__":
     success = main()
