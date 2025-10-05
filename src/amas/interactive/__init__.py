@@ -23,7 +23,7 @@ from .utils.logger import InteractiveLogger
 
 __all__ = [
     "AMASInteractiveCLI",
-    "CommandProcessor", 
+    "CommandProcessor",
     "AgentCoordinator",
     "TaskManager",
     "VisualInterface",
@@ -32,5 +32,5 @@ __all__ = [
     "ContextManager",
     "EnhancedOrchestrator",
     "ConfigManager",
-    "InteractiveLogger"
+    "InteractiveLogger",
 ]
