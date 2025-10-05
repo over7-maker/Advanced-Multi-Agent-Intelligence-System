@@ -6,17 +6,17 @@ This script demonstrates how to quickly integrate the new AI API Manager
 with your existing AMAS system for maximum reliability.
 """
 
-import os
-import sys
 import asyncio
 import json
+import os
+import sys
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 # Import the new API manager components
 from .ai_api_manager import AIAPIManager, get_ai_response
-from .enhanced_orchestrator import EnhancedOrchestrator, execute_task, run_investigation
 from .api_integration import EnhancedAgentOrchestrator, initialize_enhanced_system
+from .enhanced_orchestrator import EnhancedOrchestrator, execute_task, run_investigation
 
 
 class QuickStartIntegration:

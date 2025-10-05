@@ -2,19 +2,20 @@
 Test agent implementations
 """
 
-import pytest
 import asyncio
-from typing import Dict, Any
+from typing import Any, Dict
 
-from amas.agents.osint.osint_agent import OSINTAgent
-from amas.agents.investigation.investigation_agent import InvestigationAgent
-from amas.agents.forensics.forensics_agent import ForensicsAgent
+import pytest
+
 from amas.agents.data_analysis.data_analysis_agent import DataAnalysisAgent
+from amas.agents.forensics.forensics_agent import ForensicsAgent
+from amas.agents.investigation.investigation_agent import InvestigationAgent
+from amas.agents.metadata.metadata_agent import MetadataAgent
+from amas.agents.osint.osint_agent import OSINTAgent
+from amas.agents.reporting.reporting_agent import ReportingAgent
 from amas.agents.reverse_engineering.reverse_engineering_agent import (
     ReverseEngineeringAgent,
 )
-from amas.agents.metadata.metadata_agent import MetadataAgent
-from amas.agents.reporting.reporting_agent import ReportingAgent
 from amas.agents.technology_monitor.technology_monitor_agent import (
     TechnologyMonitorAgent,
 )
