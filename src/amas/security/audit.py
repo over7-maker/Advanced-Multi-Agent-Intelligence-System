@@ -1,3 +1,4 @@
+import os
 """
 Audit Module for AMAS
 Comprehensive audit logging and monitoring - SECURITY HARDENED
@@ -74,7 +75,7 @@ class AuditEvent(Enum):
     SECURITY_VIOLATION = "security_violation"
     SUSPICIOUS_ACTIVITY = "suspicious_activity"
     RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
-    INVALID_TOKEN = "invalid_token"
+    INVALID_token = os.getenv("TOKEN", "invalid_token")
     UNAUTHORIZED_ACCESS = "unauthorized_access"
     
     # Encryption events

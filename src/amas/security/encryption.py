@@ -62,7 +62,7 @@ class EncryptionManager:
     
     def _generate_key_id(self) -> str:
         """Generate a unique key ID"""
-        return hashlib.sha256(f"{datetime.utcnow()}{secrets.token_urlsafe(16)}".encode()).hexdigest()[:16]
+        return hashlib.sha256(f"{datetime.utcnow()}{secrets.token_urlsafe(16)}".encode()).hexdigest()[:32]
     
     async def encrypt_symmetric(self, data: Union[str, bytes], key_id: Optional[str] = None) -> Dict[str, Any]:
         """Encrypt data using symmetric encryption"""

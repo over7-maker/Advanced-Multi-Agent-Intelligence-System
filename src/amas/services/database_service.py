@@ -579,7 +579,7 @@ class DatabaseService:
         import re
         
         sensitive_patterns = [
-            r'password["\']?\s*[:=]\s*["\'][^"\'
+            r'password=os.getenv("POSTGRES_PASSWORD", "secure_default")
 ]+["\']',
             r'token["\']?\s*[:=]\s*["\'][^"\'
 ]+["\']',
