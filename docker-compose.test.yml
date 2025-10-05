@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  amas-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: development
+    container_name: amas-api-test
+    ports:
+      - "8000:8000"
+    environment:
+      - AMAS_ENVIRONMENT=testing
+      - AMAS_DB_HOST=postgres
+      - AMAS_DB_PORT=5432
+      - AMAS_DB_USER=amas_test
+      - AMAS_DB_PASSWORD=test_password
+      - AMAS_DB_NAME=amas_test
+      - AMAS_REDIS_HOST=redis
+      - AMAS_REDIS_PORT=6379
+      - AMAS_NEO4J_URI=bolt://neo4j:7687
+      - AMAS_NEO4J_USERNAME=neo4j
+      - AMAS_NEO4J_PASSWORD=test_password
+      - OPENROUTER_API_KEY=test_key
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - amas-test
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: amas-postgres-test
+    environment:
+      - POSTGRES_USER=amas_test
+      - POSTGRES_PASSWORD=test_password
+      - POSTGRES_DB=amas_test
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-test-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U amas_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - amas-test
+
+  redis:
+    image: redis:7-alpine
+    container_name: amas-redis-test
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - amas-test
+
+  neo4j:
+    image: neo4j:5-community
+    container_name: amas-neo4j-test
+    environment:
+      - NEO4J_AUTH=neo4j/test_password
+      - NEO4J_PLUGINS=["apoc"]
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j-test-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7474"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - amas-test
+
+volumes:
+  postgres-test-data:
+  neo4j-test-data:
+
+networks:
+  amas-test:
+    driver: bridge

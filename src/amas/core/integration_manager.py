@@ -13,9 +13,9 @@ from dataclasses import dataclass
 import json
 
 from .orchestrator import IntelligenceOrchestrator
-from services.service_manager import ServiceManager
-from services.database_service import DatabaseService
-from services.security_service import SecurityService
+from amas.services.service_manager import ServiceManager
+from amas.services.database_service import DatabaseService
+from amas.services.security_service import SecurityService
 
 logger = logging.getLogger(__name__)
 
