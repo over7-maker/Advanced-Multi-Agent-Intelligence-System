@@ -11,13 +11,13 @@ from datetime import datetime
 from typing import List, Dict, Any
 
 def main():
-    print("📋 Release Notes Generator")"""
+    print("📋 Release Notes Generator")
     print("=" * 40)
 
     # Get arguments
     version = os.environ.get('VERSION', 'v1.0.0')
     output_file = os.environ.get('OUTPUT', 'RELEASE_NOTES.md')
-
+"""
     print(f"📋 Version: {version}")
     print(f"📄 Output: {output_file}")
 
@@ -34,10 +34,10 @@ def main():
 def generate_release_notes(version: str) -> str:
     """Generate comprehensive release notes"""
 
-    timestamp = datetime.now().strftime("%Y-%m-%d")
-
-    # Header"""
-    release_notes = f"""# 🚀 AMAS {version} Release
+    timestamp = datetime.now().strftime(%Y-%m-%d)
+"""
+    # Header
+    release_notes = f"""# 🚀 AMAS {version} Release"""
 
 **Release Date**: {timestamp}
 **Version**: {version}

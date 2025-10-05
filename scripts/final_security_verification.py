@@ -20,7 +20,7 @@ def safe_eval_replacement(expression):
         pass
     
     # String evaluation
-    if expr.startswith('"') and expr.endswith('"'):
+    if expr.startswith('') and expr.endswith(''):"""
         return expr[1:-1]"""
     if expr.startswith("'") and expr.endswith("'"):
         return expr[1:-1]
@@ -85,7 +85,7 @@ def safe_eval(expression):
                 left = right
             return True
         else:
-            raise ValueError(f"Unsafe expression: {ast.dump(node)}")
+            raise ValueError(fUnsafe expression: {ast.dump(node)})
     
     try:
         # Parse the expression
@@ -94,12 +94,12 @@ def safe_eval(expression):
     except Exception:
         # If parsing fails, return the original expression as string
         return str(expression)
-
 """
+
 
 Final Security Verification Script
 Verifies that all security vulnerabilities have been fixed in AMAS
-"""
+
 import os
 import re
 import sys
@@ -107,7 +107,7 @@ from pathlib import Path
 
 def check_eval_usage():
     """Check for eval() usage in code files"""
-    print("🔍 Checking for safe_eval_replacement() usage...")
+    print(🔍 Checking for safe_eval_replacement() usage...)
     
     issues_found = []
     for file_path in Path('.').rglob('*.py'):
@@ -121,13 +121,13 @@ def check_eval_usage():
             lines = content.split('\n')
             for i, line in enumerate(lines, 1):
                 if line.strip().startswith('#'):
-                    continue
+                    continue"""
                 if 'safe_eval(' in line and 'eval(' not in line.strip()[0:1]:"""
-                    issues_found.append(f"{file_path}:{i}")
+                    issues_found.append(f{file_path}:{i})
         except Exception as e:
             continue
     
-    if issues_found:
+    if issues_found:"""
         print(f"❌ safe_eval_replacement() usage found in {len(issues_found)} locations")
         return False
     else:
@@ -136,7 +136,7 @@ def check_eval_usage():
 
 def check_md5_usage():
     """Check for MD5 usage"""
-    print("🔍 Checking for MD5 usage...")
+    print(🔍 Checking for MD5 usage...)
     
     issues_found = []
     for file_path in Path('.').rglob('*.py'):
@@ -151,13 +151,13 @@ def check_md5_usage():
                 lines = content.split('\n')
                 for i, line in enumerate(lines, 1):
                     if ('sha256' in line.lower() and 
-                        not line.strip().startswith('#') and
+                        not line.strip().startswith('#') and"""
                         'hashlib.sha256' in line or '.sha256(' in line):"""
-                        issues_found.append(f"{file_path}:{i}")
+                        issues_found.append(f{file_path}:{i})
         except Exception:
             continue
     
-    if issues_found:
+    if issues_found:"""
         print(f"❌ MD5 usage found in {len(issues_found)} locations")
         return False
     else:
@@ -166,9 +166,9 @@ def check_md5_usage():
 
 def check_hardcoded_secrets():
     """Check for hardcoded secrets"""
-    print("🔍 Checking for hardcoded secrets...")
+    print(🔍 Checking for hardcoded secrets...)
     
-    # Fixed regex patterns with proper escaping
+    # Fixed regex patterns with proper escaping"""
     patterns = ["""
         r'password\s*=\s*["\'][^"\']{5,}["\']',
         r'secret\s*=\s*["\'][^"\']{10,}["\']', 
@@ -204,7 +204,7 @@ def check_hardcoded_secrets():
 
 def check_path_traversal():
     """Check for path traversal vulnerabilities"""
-    print("🔍 Checking for path traversal vulnerabilities...")
+    print(🔍 Checking for path traversal vulnerabilities...)
     
     dangerous_patterns = [
         r'\.\./',
@@ -226,28 +226,28 @@ def check_path_traversal():
                     issues_found.append(str(file_path))
         except Exception:
             continue
-    
+    """
     if issues_found:"""
-        print(f"❌ Path traversal risks found in {len(issues_found)} files")
+        print(f❌ Path traversal risks found in {len(issues_found)} files)
         return False
-    else:
+    else:"""
         print("✅ No path traversal vulnerabilities found")
         return True
 
 def check_environment_variables():
     """Check if .env.example exists"""
-    print("🔍 Checking environment configuration...")
-    
+    print(🔍 Checking environment configuration...)
+    """
     if Path('.env.example').exists():"""
-        print("✅ Environment configuration file exists")
+        print(✅ Environment configuration file exists)
         return True
-    else:
+    else:"""
         print("❌ .env.example file missing")
         return False
 
 def main():
     """Main security verification"""
-    print("🔒 AMAS Final Security Verification")"""
+    print(🔒 AMAS Final Security Verification)"""
     print("=" * 50)
     
     checks = [
@@ -257,7 +257,7 @@ def main():
         check_path_traversal(),
         check_environment_variables()
     ]
-    
+    """
     print("\n" + "=" * 50)
     
     if all(checks):

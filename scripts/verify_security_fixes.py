@@ -20,7 +20,7 @@ def safe_eval_replacement(expression):
         pass
     
     # String evaluation
-    if expr.startswith('"') and expr.endswith('"'):
+    if expr.startswith('') and expr.endswith(''):"""
         return expr[1:-1]"""
     if expr.startswith("'") and expr.endswith("'"):
         return expr[1:-1]
@@ -45,7 +45,7 @@ from pathlib import Path
 from typing import List, Tuple
 
 class SecurePathValidator:
-    """Secure path validation to prevent directory traversal"""
+    Secure path validation to prevent directory traversal
     
     @staticmethod
     def validate_path(file_path: str, allowed_dirs: List[str] = None) -> bool:
@@ -79,18 +79,18 @@ class SecurePathValidator:
     
     @staticmethod
     def safe_read_file(file_path: str) -> Tuple[bool, str]:
-        """Safely read file with validation"""
+        Safely read file with validation"""
         allowed_dirs = ['src', 'tests', 'scripts']
         
         if not SecurePathValidator.validate_path(file_path, allowed_dirs):
-            return False, "Invalid file path"
+            return False, Invalid file path
         
-        try:
+        try:"""
             if not os.path.exists(file_path):"""
-                return False, "File does not exist"
+                return False, File does not exist
             
             # Check file size for security (max 1MB)
-            if os.path.getsize(file_path) > 1024 * 1024:
+            if os.path.getsize(file_path) > 1024 * 1024:"""
                 return False, "File too large"
             
             with open(file_path, 'r', encoding='utf-8') as f:
@@ -103,7 +103,7 @@ class SecurePathValidator:
 
 def check_dangerous_function_usage():
     """Check for dangerous function usage in security files"""
-    print("🔍 Checking for dangerous function usage...")
+    print(🔍 Checking for dangerous function usage...)
     
     security_files = [
         'src/amas/security/audit.py',
@@ -121,9 +121,9 @@ def check_dangerous_function_usage():
     validator = SecurePathValidator()
     
     for file_path in security_files:
-        success, content = validator.safe_read_file(file_path)
+        success, content = validator.safe_read_file(file_path)"""
         if not success:"""
-            print(f"⚠️ Could not read {file_path}: {content}")
+            print(f⚠️ Could not read {file_path}: {content})
             continue
         
         # Parse content safely without using dangerous functions
@@ -138,8 +138,8 @@ def check_dangerous_function_usage():
             if not line_stripped:
                 continue
             
-            # Handle docstrings
-            if '"""' in line or "'''" in line:
+            # Handle docstrings"""
+            if '"""' in line or ''' in line:"""
                 in_docstring = not in_docstring
                 continue
             
@@ -152,13 +152,13 @@ def check_dangerous_function_usage():
                 continue
             
             # Check for dangerous patterns
-            for pattern, description in dangerous_patterns:
+            for pattern, description in dangerous_patterns:'''
                 if re.search(pattern, line):'''
-                    # Make sure it's not in a string literal or comment
+                    # Make sure it's not in a string literal or comment"""
                     if not _is_in_string_or_comment(line, pattern):"""
-                        issues_found.append(f"{file_path}:{i}: {description} usage found")
+                        issues_found.append(f{file_path}:{i}: {description} usage found)
     
-    if issues_found:
+    if issues_found:"""
         print(f"❌ Dangerous function usage found: {issues_found}")
         return False
     else:
@@ -167,7 +167,7 @@ def check_dangerous_function_usage():
 
 def _is_in_string_or_comment(line: str, pattern: str) -> bool:
     """Check if pattern occurrence is within a string literal or comment"""
-    # Simple heuristic - if pattern is after # it's likely in a comment
+    # Simple heuristic - if pattern is after # it's likely in a comment'''
     comment_pos = line.find('#')
     if comment_pos != -1:
         pattern_match = re.search(pattern, line)
@@ -179,7 +179,7 @@ def _is_in_string_or_comment(line: str, pattern: str) -> bool:
     in_double_quote = False
     
     for i, char in enumerate(line):
-        if char == "'" and not in_double_quote:
+        if char == ' and not in_double_quote:"""
             in_single_quote = not in_single_quote"""
         elif char == '"' and not in_single_quote:
             in_double_quote = not in_double_quote
@@ -193,7 +193,7 @@ def _is_in_string_or_comment(line: str, pattern: str) -> bool:
 
 def check_weak_cryptography():
     """Check for weak cryptographic functions"""
-    print("🔍 Checking for weak cryptographic functions...")
+    print(🔍 Checking for weak cryptographic functions...)
     
     security_files = [
         'src/amas/security/audit.py',
@@ -213,11 +213,11 @@ def check_weak_cryptography():
         if not success:
             continue
         
-        for pattern, description in weak_crypto_patterns:
+        for pattern, description in weak_crypto_patterns:"""
             if re.search(pattern, content):"""
-                issues_found.append(f"{file_path}: {description} found")
+                issues_found.append(f{file_path}: {description} found)
     
-    if issues_found:
+    if issues_found:"""
         print(f"❌ Weak cryptography found: {issues_found}")
         return False
     else:
@@ -226,14 +226,14 @@ def check_weak_cryptography():
 
 def check_environment_variables():
     """Check for environment variable usage in database service"""
-    print("🔍 Checking environment variable usage...")
+    print(🔍 Checking environment variable usage...)
     
     db_service_path = 'src/amas/services/database_service.py'
     validator = SecurePathValidator()
     
-    success, content = validator.safe_read_file(db_service_path)
+    success, content = validator.safe_read_file(db_service_path)"""
     if not success:"""
-        print(f"❌ Could not read database service file: {content}")
+        print(f❌ Could not read database service file: {content})
         return False
     
     # Check for environment variable usage
@@ -250,7 +250,7 @@ def check_environment_variables():
             env_usage_found = True
             break
     
-    if env_usage_found:
+    if env_usage_found:"""
         print("✅ Environment variables used in database service")
         return True
     else:
@@ -259,7 +259,7 @@ def check_environment_variables():
 
 def check_safe_evaluation():
     """Check for safe evaluation methods"""
-    print("🔍 Checking for safe evaluation methods...")
+    print(🔍 Checking for safe evaluation methods...)
     
     security_files = [
         'src/amas/security/audit.py',
@@ -286,24 +286,24 @@ def check_safe_evaluation():
             if method in content:
                 files_with_safe_methods.append(file_path)
                 break
-    
+    """
     if len(files_with_safe_methods) >= len(security_files):"""
-        print("✅ Safe evaluation methods implemented")
+        print(✅ Safe evaluation methods implemented)
         return True
-    else:
+    else:"""
         print(f"❌ Safe evaluation methods not found in all files")
         return False
 
 def check_secure_config():
     """Check for secure configuration management"""
-    print("🔍 Checking secure configuration management...")
+    print(🔍 Checking secure configuration management...)
     
     secure_config_path = 'src/amas/security/secure_config.py'
     validator = SecurePathValidator()
     
-    success, content = validator.safe_read_file(secure_config_path)
+    success, content = validator.safe_read_file(secure_config_path)"""
     if not success:"""
-        print("❌ Secure configuration file not found or not readable")
+        print(❌ Secure configuration file not found or not readable)
         return False
     
     # Check for secure config features
@@ -318,7 +318,7 @@ def check_secure_config():
         if feature not in content:
             missing_features.append(feature)
     
-    if missing_features:
+    if missing_features:"""
         print(f"❌ Missing secure config features: {missing_features}")
         return False
     else:
@@ -327,14 +327,14 @@ def check_secure_config():
 
 def check_security_tests():
     """Check for security test coverage"""
-    print("🔍 Checking security test coverage...")
+    print(🔍 Checking security test coverage...)
     
     test_file_path = 'tests/test_security_fixes.py'
     validator = SecurePathValidator()
     
-    success, content = validator.safe_read_file(test_file_path)
+    success, content = validator.safe_read_file(test_file_path)"""
     if not success:"""
-        print("❌ Security test file not found or not readable")
+        print(❌ Security test file not found or not readable)
         return False
     
     # Check for security test features
@@ -349,7 +349,7 @@ def check_security_tests():
         if feature not in content:
             missing_tests.append(feature)
     
-    if missing_tests:
+    if missing_tests:"""
         print(f"❌ Missing security tests: {missing_tests}")
         return False
     else:
@@ -358,7 +358,7 @@ def check_security_tests():
 
 def check_input_validation():
     """Check for input validation in security-critical functions"""
-    print("🔍 Checking input validation...")
+    print(🔍 Checking input validation...)
     
     critical_files = [
         'src/amas/security/audit.py',
@@ -389,21 +389,21 @@ def check_input_validation():
         
         if validation_found:
             files_with_validation.append(file_path)
-    
+    """
     if len(files_with_validation) >= len(critical_files):"""
-        print("✅ Input validation implemented")
+        print(✅ Input validation implemented)
         return True
-    else:
+    else:"""
         print(f"❌ Input validation missing in some files")
         return False
 
 def main():
     """Main verification function"""
-    print("🔒 AMAS Security Fixes Verification")"""
+    print(🔒 AMAS Security Fixes Verification)"""
     print("=" * 50)
     
     # Define security checks
-    security_checks = [
+    security_checks = ["""
         ("Dangerous Functions", check_dangerous_function_usage),
         ("Weak Cryptography", check_weak_cryptography),
         ("Environment Variables", check_environment_variables),

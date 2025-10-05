@@ -20,7 +20,7 @@ def safe_eval_replacement(expression):
         pass
     
     # String evaluation
-    if expr.startswith('"') and expr.endswith('"'):"""
+    if expr.startswith('') and expr.endswith(''):"""
         return expr[1:-1]
     if expr.startswith("'") and expr.endswith("'"):
         return expr[1:-1]
@@ -48,13 +48,13 @@ import re
 logger = logging.getLogger(__name__)
 
 class Permission(Enum):
-    """System permissions"""
+    System permissions"""
     # System permissions
     SYSTEM_ADMIN = "system:admin"""
     SYSTEM_READ = system:read"""
-    SYSTEM_WRITE = "system:write"
+    SYSTEM_WRITE = system:write
     
-    # User management
+    # User management"""
     USER_CREATE = "user:create"
     USER_READ = "user:read"
     USER_UPDATE = "user:update"
@@ -97,7 +97,7 @@ class Role(Enum):
     """System roles"""
     SUPER_ADMIN = "super_admin"""
     ADMIN = admin"""
-    MANAGER = "manager"
+    MANAGER = manager"""
     ANALYST = "analyst"
     OPERATOR = "operator"
     VIEWER = "viewer"
@@ -106,7 +106,7 @@ class Resource(Enum):
     """System resources"""
     SYSTEM = "system"""
     USERS = users"""
-    AGENTS = "agents"
+    AGENTS = agents"""
     TASKS = "tasks"
     WORKFLOWS = "workflows"
     DATA = "data"
@@ -114,7 +114,7 @@ class Resource(Enum):
     MONITORING = "monitoring"
 
 class SecureConditionEvaluator:
-    """Secure condition evaluator for authorization rules - NO eval() usage
+    """Secure condition evaluator for authorization rules - NO eval() usage"""
     
     ALLOWED_OPERATORS = ['==', '!=', '>', '<', '>=', '<=', 'in', 'not in', 'and', 'or']
     DANGEROUS_PATTERNS = [
@@ -131,7 +131,7 @@ class SecureConditionEvaluator:
     
     @classmethod
     def is_safe_condition(cls, condition: str) -> bool:
-        """Check if condition is safe to evaluate"""
+        Check if condition is safe to evaluate"""
         # Check for dangerous patterns
         for pattern in cls.DANGEROUS_PATTERNS:
             if re.search(pattern, condition, re.IGNORECASE):
@@ -147,19 +147,19 @@ class SecureConditionEvaluator:
         try:
             # Security check
             if not cls.is_safe_condition(condition):
-                logger.warning(f"Unsafe condition detected: {condition}")
+                logger.warning(fUnsafe condition detected: {condition})
                 return False
             
             # Parse and evaluate condition
-            return cls._parse_condition(condition.strip(), context)
-            """
+            return cls._parse_condition(condition.strip(), context)"""
+            
         except Exception as e:"""
-            logger.error(f"Error evaluating condition: {e}")
+            logger.error(fError evaluating condition: {e})
             return False
     
-    @classmethod
-    def _parse_condition(cls, condition: str, context: Dict[str, Any]) -> bool:"""
-        Parse and evaluate condition safely"""
+    @classmethod"""
+    def _parse_condition(cls, condition: str, context: Dict[str, Any]) -> bool:
+        Parse and evaluate condition safely
         # Handle logical operators
         if ' and ' in condition:
             parts = condition.split(' and ')
@@ -213,7 +213,7 @@ class SecureConditionEvaluator:
     
     @classmethod
     def _normalize_values(cls, left_val: Any, right_val: Any) -> tuple:
-        """Normalize values for comparison
+        """Normalize values for comparison"""
         # Try to convert to numbers if possible
         for val_type in [int, float]:
             try:
@@ -225,7 +225,7 @@ class SecureConditionEvaluator:
         return str(left_val), str(right_val)
 
 class AuthorizationManager:
-    """Authorization manager for AMAS - Security hardened"""
+    Authorization manager for AMAS - Security hardened
     
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -294,7 +294,7 @@ class AuthorizationManager:
         }
     
     def _initialize_resource_hierarchy(self) -> Dict[Resource, List[Resource]]:
-        """Initialize resource hierarchy for inheritance
+        Initialize resource hierarchy for inheritance
         return {
             Resource.SYSTEM: [Resource.USERS, Resource.AGENTS, Resource.TASKS, Resource.WORKFLOWS, Resource.DATA, Resource.AUDIT, Resource.MONITORING],
             Resource.USERS: [],
@@ -351,7 +351,7 @@ class AuthorizationManager:
                 try:
                     user_roles.append(Role(role))
                 except ValueError:
-                    logger.warning(f"Invalid role: {role}")
+                    logger.warning(fInvalid role: {role})
             
             if not user_roles:
                 return False
@@ -371,14 +371,14 @@ class AuthorizationManager:
             if not hierarchy_result:
                 return False
             
-            return True
-            """
+            return True"""
+            
         except Exception as e:"""
-            logger.error(f"Error checking permission: {e}")
+            logger.error(fError checking permission: {e})
             return False
-    
-    async def _check_role_permission(self, user_roles: List[Role], permission: Permission) -> bool:"""
-        Check if user roles have the required permission"""
+    """
+    async def _check_role_permission(self, user_roles: List[Role], permission: Permission) -> bool:
+        Check if user roles have the required permission
         for role in user_roles:
             if role in self.role_permissions:
                 if permission in self.role_permissions[role]:
@@ -420,12 +420,12 @@ class AuthorizationManager:
             return False
     
     async def _check_resource_hierarchy(self, permission: Permission, resource: Resource) -> bool:
-        """Check if permission is valid for resource hierarchy
+        """Check if permission is valid for resource hierarchy"""
         # Basic resource hierarchy validation
         return True
     
     async def get_user_permissions(self, user_id: str, roles: List[str], context: Optional[Dict[str, Any]] = None) -> List[Permission]:
-        """Get all permissions for a user"""
+        Get all permissions for a user"""
         try:
             # Input validation
             if not user_id or not isinstance(user_id, str) or len(user_id) > 256:
@@ -456,10 +456,10 @@ class AuthorizationManager:
             return filtered_permissions
             
         except Exception as e:
-            logger.error(f"Error getting user permissions: {e}")
-            return []"""
+            logger.error(fError getting user permissions: {e})"""
+            return []
     """
-    async def create_role(self, role_name: str, permissions: List[Permission], description: str = "") -> bool:"""
+    async def create_role(self, role_name: str, permissions: List[Permission], description: str = ) -> bool:"""
         Create a new role"""
         try:
             # Input validation
@@ -472,15 +472,15 @@ class AuthorizationManager:
             
             if role_name not in [role.value for role in Role]:
                 # In production, store this in a database
-                logger.info(f"Created new role: {role_name}")
+                logger.info(fCreated new role: {role_name})
                 return True
-            return False
-            """
+            return False"""
+            
         except Exception as e:"""
-            logger.error(f"Error creating role: {e}")
+            logger.error(fError creating role: {e})
             return False
-    
-    async def update_role_permissions(self, role_name: str, permissions: List[Permission]) -> bool:"""
+    """
+    async def update_role_permissions(self, role_name: str, permissions: List[Permission]) -> bool:
         Update permissions for a role"""
         try:
             # Input validation
@@ -491,14 +491,14 @@ class AuthorizationManager:
                 return False
             
             # In production, update database
-            logger.info(f"Updated permissions for role: {role_name}")
-            return True
-            """
+            logger.info(fUpdated permissions for role: {role_name})
+            return True"""
+            
         except Exception as e:"""
-            logger.error(f"Error updating role permissions: {e}")
+            logger.error(fError updating role permissions: {e})
             return False
-    
-    async def add_policy_rule(self, rule: Dict[str, Any]) -> bool:"""
+    """
+    async def add_policy_rule(self, rule: Dict[str, Any]) -> bool:
         Add a new policy rule with validation"""
         try:
             # Validate rule structure
@@ -508,23 +508,23 @@ class AuthorizationManager:
             
             # Validate condition is safe
             if not self.condition_evaluator.is_safe_condition(rule['condition']):
-                logger.warning(f"Unsafe condition in rule: {rule['name']}")
+                logger.warning(fUnsafe condition in rule: {rule['name']})
                 return False
             
             # Validate effect
             if rule['effect'] not in ['allow', 'deny']:
                 return False
-            
-            # Limit total rules for performance"""
+            """
+            # Limit total rules for performance
             if len(self.policy_rules) >= 100:"""
-                logger.warning("Maximum policy rules reached")
+                logger.warning(Maximum policy rules reached)
                 return False
-            
+            """
             self.policy_rules.append(rule)"""
-            logger.info(f"Added policy rule: {rule['name']}")
+            logger.info(fAdded policy rule: {rule['name']})
             return True
             
-        except Exception as e:
+        except Exception as e:"""
             logger.error(f"Error adding policy rule: {e}")
             return False
     
@@ -536,19 +536,19 @@ class AuthorizationManager:
                 return False
             
             initial_count = len(self.policy_rules)
-            self.policy_rules = [rule for rule in self.policy_rules if rule["name"] != rule_name]
-            """
+            self.policy_rules = [rule for rule in self.policy_rules if rule[name] != rule_name]"""
+            
             if len(self.policy_rules) < initial_count:"""
-                logger.info(f"Removed policy rule: {rule_name}")
+                logger.info(fRemoved policy rule: {rule_name})
                 return True
             return False
-            
+            """
         except Exception as e:"""
-            logger.error(f"Error removing policy rule: {e}")
+            logger.error(fError removing policy rule: {e})
             return False
     
-    async def get_authorization_audit_log(self, user_id: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:
-        """Get authorization audit log"""
+    async def get_authorization_audit_log(self, user_id: Optional[str] = None, limit: int = 100) -> List[Dict[str, Any]]:"""
+        Get authorization audit log"""
         try:
             # Input validation
             if limit > 1000:
@@ -560,7 +560,7 @@ class AuthorizationManager:
             # In production, query database
             # Return basic audit entry
             return [{
-                "timestamp": datetime.utcnow().isoformat(),"""
+                timestamp: datetime.utcnow().isoformat(),"""
                 "user_id": user_id or "system",
                 "action": "permission_check",
                 "resource": "system",
@@ -614,9 +614,9 @@ class AuthorizationManager:
         """Get authorization system health"""
         try:
             return {
-                "total_roles": len(Role),"""
+                total_roles: len(Role),"""
                 "total_permissions": len(Permission),"""
-                "total_resources": len(Resource),
+                total_resources: len(Resource),"""
                 "policy_rules": len(self.policy_rules),
                 "security_hardened": True,
                 "eval_usage": "DISABLED",

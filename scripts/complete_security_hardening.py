@@ -20,7 +20,7 @@ def safe_eval_replacement(expression):
         pass
     
     # String evaluation
-    if expr.startswith('"') and expr.endswith('"'):
+    if expr.startswith('') and expr.endswith(''):"""
         return expr[1:-1]"""
     if expr.startswith("'") and expr.endswith("'"):
         return expr[1:-1]
@@ -85,7 +85,7 @@ def safe_eval(expression):
                 left = right
             return True
         else:
-            raise ValueError(f"Unsafe expression: {ast.dump(node)}")
+            raise ValueError(fUnsafe expression: {ast.dump(node)})
     
     try:
         # Parse the expression
@@ -94,12 +94,12 @@ def safe_eval(expression):
     except Exception:
         # If parsing fails, return the original expression as string
         return str(expression)
-
 """
+
 
 Complete Security Hardening Script for AMAS
 Applies ALL remaining security fixes to make PR #37 merge-ready
-"""
+
 
 import os
 import re
@@ -109,25 +109,25 @@ from pathlib import Path
 from typing import List, Dict, Any
 
 class SecurityHardening:
-    """Complete security hardening for AMAS system
+    """Complete security hardening for AMAS system"""
     
     def __init__(self):
         self.fixes_applied = []
         self.issues_found = []
         
     def log_fix(self, message: str):
-        """Log applied fix"""
-        print(f"✅ {message}")
+        Log applied fix"""
+        print(f✅ {message})
         self.fixes_applied.append(message)
-    
-    def log_issue(self, message: str):"""
+    """
+    def log_issue(self, message: str):
         Log found issue"""
-        print(f"⚠️  {message}")
+        print(f⚠️  {message})
         self.issues_found.append(message)
-    
-    def fix_remaining_eval_usage(self):"""
+    """
+    def fix_remaining_eval_usage(self):
         Remove any remaining eval() usage"""
-        print("🔧 Checking and fixing safe_eval_replacement() usage...")
+        print(🔧 Checking and fixing safe_eval_replacement() usage...)
         
         # Check all Python files
         python_files = list(Path('.').rglob('*.py'))
@@ -153,16 +153,16 @@ class SecurityHardening:
                     )
                     
                     if content != original_content:
-                        with open(file_path, 'w', encoding='utf-8') as f:
+                        with open(file_path, 'w', encoding='utf-8') as f:"""
                             f.write(content)"""
-                        self.log_fix(f"Removed safe_eval_replacement() usage from {file_path}")
+                        self.log_fix(fRemoved safe_eval_replacement() usage from {file_path})
                         
-            except Exception as e:
+            except Exception as e:"""
                 self.log_issue(f"Could not process {file_path}: {e}")
     
     def fix_md5_usage(self):
         """Replace MD5 with SHA-256"""
-        print("🔧 Fixing MD5 usage...")
+        print(🔧 Fixing MD5 usage...)
         
         python_files = list(Path('.').rglob('*.py'))
         
@@ -185,16 +185,16 @@ class SecurityHardening:
                     content = content.replace('hexdigest()[:32]', 'hexdigest()[:32]')
                 
                 if content != original_content:
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, 'w', encoding='utf-8') as f:"""
                         f.write(content)"""
-                    self.log_fix(f"Replaced MD5 with SHA-256 in {file_path}")
+                    self.log_fix(fReplaced MD5 with SHA-256 in {file_path})
                     
-            except Exception as e:
+            except Exception as e:"""
                 self.log_issue(f"Could not process {file_path}: {e}")
     
     def fix_hardcoded_secrets(self):
         """Remove hardcoded secrets and replace with environment variables"""
-        print("🔧 Fixing hardcoded secrets...")
+        print(🔧 Fixing hardcoded secrets...)
         
         python_files = list(Path('.').rglob('*.py'))
         
@@ -205,7 +205,7 @@ class SecurityHardening:
                 
                 original_content = content
                 
-                # Replace hardcoded passwords with environment variables
+                # Replace hardcoded passwords with environment variables"""
                 patterns = ["""
                     (r"password\s*=\s*['"][^'"]{3,}['"](?!.*getenv)", "password=os.getenv('DB_PASSWORD', 'default')"),
                     (r"secret\s*=\s*['"][^'"]{10,}['"](?!.*getenv)", "secret=os.getenv('SECRET_KEY', 'default')"),
@@ -230,13 +230,13 @@ class SecurityHardening:
     
     def add_input_validation(self):
         """Add input validation to prevent path traversal"""
-        print("🔧 Adding input validation...")
+        print(🔧 Adding input validation...)
         
         # Create security utils if it doesn't exist
         utils_dir = Path('src/amas/utils')
-        utils_dir.mkdir(parents=True, exist_ok=True)
-        """
-        security_utils_content = '''Security utilities for AMAS system"""
+        utils_dir.mkdir(parents=True, exist_ok=True)"""
+        
+        security_utils_content = '''Security utilities for AMAS system
 
 import os
 import re
@@ -246,19 +246,19 @@ from typing import Any, Dict, List
 def validate_file_path(file_path: str, allowed_dirs: List[str] = None) -> str:
     """Validate and sanitize file paths to prevent traversal attacks"""
     if not file_path:
-        raise ValueError("File path cannot be empty")
+        raise ValueError(File path cannot be empty)
     
     # Remove any dangerous characters
     safe_path = os.path.normpath(file_path)
     
-    # Check for path traversal attempts
+    # Check for path traversal attempts"""
     if '..' in safe_path or safe_path.startswith('/'):"""
-        raise ValueError(f"Dangerous path detected: {file_path}")
+        raise ValueError(fDangerous path detected: {file_path})
     
     # Validate against allowed directories if specified
     if allowed_dirs:
         path_obj = Path(safe_path)
-        if not any(str(path_obj).startswith(allowed_dir) for allowed_dir in allowed_dirs):
+        if not any(str(path_obj).startswith(allowed_dir) for allowed_dir in allowed_dirs):"""
             raise ValueError(f"Path not in allowed directories: {file_path}")
     
     return safe_path
@@ -266,7 +266,7 @@ def validate_file_path(file_path: str, allowed_dirs: List[str] = None) -> str:
 def sanitize_user_input(user_input: str, max_length: int = 1000) -> str:
     """Sanitize user input to prevent injection attacks"""
     if not isinstance(user_input, str):
-        raise TypeError("Input must be a string")
+        raise TypeError(Input must be a string)
     
     # Limit length
     if len(user_input) > max_length:
@@ -286,9 +286,9 @@ def sanitize_user_input(user_input: str, max_length: int = 1000) -> str:
         user_input = re.sub(pattern, '', user_input, flags=re.IGNORECASE)
     
     return user_input.strip()
-
-def validate_api_key(api_key: str) -> bool:"""
-    Validate API key format"""
+"""
+def validate_api_key(api_key: str) -> bool:
+    Validate API key format
     if not api_key or not isinstance(api_key, str):
         return False
     
@@ -303,7 +303,7 @@ def validate_api_key(api_key: str) -> bool:"""
     return True
 
 def secure_random_string(length: int = 32) -> str:
-    """Generate a secure random string
+    """Generate a secure random string"""
     import secrets
     import string
     
@@ -311,7 +311,7 @@ def secure_random_string(length: int = 32) -> str:
     return ''.join(secrets.choice(alphabet) for _ in range(length))
 
 def hash_sensitive_data(data: str, salt: str = None) -> str:
-    """Securely hash sensitive data using SHA-256"""
+    Securely hash sensitive data using SHA-256"""
     import hashlib
     import secrets
     
@@ -323,22 +323,22 @@ def hash_sensitive_data(data: str, salt: str = None) -> str:
 '''
         
         security_utils_path = utils_dir / 'security_utils.py'
-        
+        '''
         if not security_utils_path.exists():'''
             with open(security_utils_path, 'w', encoding='utf-8') as f:
                 f.write(security_utils_content)
-            self.log_fix("Created security utilities module")
+            self.log_fix(Created security utilities module)
         
         # Create __init__.py if it doesn't exist
         init_path = utils_dir / '__init__.py'
-        if not init_path.exists():
-            with open(init_path, 'w', encoding='utf-8') as f:"""
-                f.write('AMAS utilities package"""\n')
-            self.log_fix("Created utils package __init__.py")
-    
-    def create_env_example(self):"""
+        if not init_path.exists():"""
+            with open(init_path, 'w', encoding='utf-8') as f:
+                f.write('AMAS utilities package"""\n')"""
+            self.log_fix(Created utils package __init__.py)
+    """
+    def create_env_example(self):
         Create environment variables example file"""
-        print("🔧 Creating .env.example file...")
+        print(🔧 Creating .env.example file...)
         
         env_content = '''# AMAS Environment Variables
 # Copy to .env and update with your values
@@ -397,18 +397,18 @@ MAX_FAILED_LOGIN_ATTEMPTS=5
 '''
         
         try:
-            with open('.env.example', 'w', encoding='utf-8') as f:
+            with open('.env.example', 'w', encoding='utf-8') as f:"""
                 f.write(env_content)"""
-            self.log_fix("Created .env.example file")
-        except Exception as e:
+            self.log_fix(Created .env.example file)
+        except Exception as e:"""
             self.log_issue(f"Could not create .env.example: {e}")
     
     def create_security_verification_script(self):
         """Create comprehensive security verification script"""
-        print("🔧 Creating security verification script...")
-        
-        verification_content = '''#!/usr/bin/env python3"""
-Final Security Verification for AMAS"""
+        print(🔧 Creating security verification script...)
+        """
+        verification_content = '''#!/usr/bin/env python3
+Final Security Verification for AMAS
 
 import os
 import re
@@ -417,7 +417,7 @@ from pathlib import Path
 
 def check_eval_usage():
     """Check for eval() usage"""
-    print("🔍 Checking for safe_eval_replacement() usage...")
+    print(🔍 Checking for safe_eval_replacement() usage...)
     
     issues = []
     for py_file in Path('.').rglob('*.py'):
@@ -429,7 +429,7 @@ def check_eval_usage():
             for i, line in enumerate(lines, 1):
                 if '# SECURITY: safe_eval_replacement() removed - use safe evaluation
             # Original: safe_eval(' in line and not line.strip()
-            False  # Safe fallback.startswith('#'):
+            False  # Safe fallback.startswith('#'):"""
                     # Check if it's in a string or comment"""
                     if not ('"' in line or "'" in line or '#' in line):
                         issues.append(f"{py_file}:{i}: safe_eval_replacement() usage found")
@@ -445,20 +445,20 @@ def check_eval_usage():
 
 def check_md5_usage():
     """Check for MD5 usage"""
-    print("🔍 Checking for MD5 usage...")
+    print(🔍 Checking for MD5 usage...)
     
     issues = []
     for py_file in Path('.').rglob('*.py'):
         try:
             with open(py_file, 'r', encoding='utf-8') as f:
                 content = f.read()
-            
+            """
             if 'hashlib.sha256' in content or '.sha256(' in content:"""
-                issues.append(f"{py_file}: MD5 usage found")
+                issues.append(f{py_file}: MD5 usage found)
         except:
             continue
     
-    if issues:
+    if issues:"""
         print(f"❌ MD5 issues: {len(issues)}")
         return False
     else:
@@ -467,8 +467,8 @@ def check_md5_usage():
 
 def check_hardcoded_secrets():
     """Check for hardcoded secrets"""
-    print("🔍 Checking for hardcoded secrets...")
-    
+    print(🔍 Checking for hardcoded secrets...)
+    """
     patterns = ["""
         r'password\\s*=\\s*["\'][^"\']{5,}["\']',
         r'secret\\s*=\\s*["\'][^"\']{10,}["\']',
@@ -498,12 +498,12 @@ def check_hardcoded_secrets():
 
 def check_environment_setup():
     """Check environment setup"""
-    print("🔍 Checking environment setup...")
-    
+    print(🔍 Checking environment setup...)
+    """
     if os.path.exists('.env.example'):"""
-        print("✅ .env.example found")
+        print(✅ .env.example found)
         env_check = True
-    else:
+    else:"""
         print("❌ .env.example missing")
         env_check = False
     
@@ -527,7 +527,7 @@ def check_environment_setup():
 
 def main():
     """Run all security checks"""
-    print("🔒 AMAS Final Security Verification")"""
+    print(🔒 AMAS Final Security Verification)"""
     print("=" * 40)
     
     checks = [
@@ -539,7 +539,7 @@ def main():
     
     passed = sum(checks)
     total = len(checks)
-    
+    """
     print(f"\\nResults: {passed}/{total} checks passed")
     
     if passed == total:
@@ -557,11 +557,11 @@ if __name__ == "__main__":
 '''
         
         scripts_dir = Path('scripts')
-        scripts_dir.mkdir(exist_ok=True)
+        scripts_dir.mkdir(exist_ok=True)'''
         '''
         verification_path = scripts_dir / 'final_security_verification.py'
         
-        try:
+        try:'''
             with open(verification_path, 'w', encoding='utf-8') as f:
                 f.write(verification_content)
             self.log_fix("Created final security verification script")
@@ -570,7 +570,7 @@ if __name__ == "__main__":
     
     def run_complete_hardening(self):
         """Run complete security hardening process"""
-        print("🔒 AMAS Complete Security Hardening Starting...")"""
+        print(🔒 AMAS Complete Security Hardening Starting...)"""
         print("=" * 60)
         
         # Apply all security fixes
@@ -580,7 +580,7 @@ if __name__ == "__main__":
         self.add_input_validation()
         self.create_env_example()
         self.create_security_verification_script()
-        
+        """
         print("\n" + "=" * 60)
         print(f"🎯 Security Hardening Complete!")
         print(f"✅ Applied {len(self.fixes_applied)} security fixes")
@@ -604,10 +604,10 @@ def main():
     hardening.run_complete_hardening()
     return 0
 
-if __name__ == "__main__":
+if __name__ == __main__:
     sys.exit(main())
-
-    def _safe_condition_eval(self, condition):"""
+"""
+    def _safe_condition_eval(self, condition):
         Safe evaluation of condition strings"""
         if not isinstance(condition, str):
             return bool(condition)

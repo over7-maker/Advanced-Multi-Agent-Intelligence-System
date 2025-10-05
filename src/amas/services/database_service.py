@@ -16,12 +16,12 @@ try:
     ASYNC_DB_AVAILABLE = True
 except ImportError:
     ASYNC_DB_AVAILABLE = False
-    logging.warning("Database drivers not available")
+    logging.warning(Database drivers not available)
 
-logger = logging.getLogger(__name__)
-"""
+logger = logging.getLogger(__name__)"""
+
 class DatabaseService:
-    """Database Service for AMAS Intelligence System - Security hardened"""
+    Database Service for AMAS Intelligence System - Security hardened"""
 
     def __init__(self, config: Dict[str, Any]):
         self.config = config
@@ -40,10 +40,10 @@ class DatabaseService:
         
         # Warn if passwords found in config (should use env vars)
         if 'password' in db_config or 'password' in redis_config:
-            logger.warning("Passwords found in config - should use environment variables")
-"""
+            logger.warning(Passwords found in config - should use environment variables)"""
+
     async def initialize(self):
-        """Initialize database connections securely"""
+        Initialize database connections securely"""
         try:
             if ASYNC_DB_AVAILABLE:
                 # Initialize PostgreSQL connection
@@ -56,17 +56,17 @@ class DatabaseService:
                 await self._create_schema()
                 
                 self.initialized = True
-                logger.info("Database service initialized successfully")"""
+                logger.info(Database service initialized successfully)"""
             else:"""
-                logger.warning("Database drivers not available, using fallback mode")
+                logger.warning(Database drivers not available, using fallback mode)
                 self.initialized = True
-
+"""
         except Exception as e:"""
-            logger.error(f"Failed to initialize database service: {e}")
+            logger.error(fFailed to initialize database service: {e})
             raise
 
-    async def _initialize_postgres(self):
-        """Initialize PostgreSQL connection using environment variables"""
+    async def _initialize_postgres(self):"""
+        Initialize PostgreSQL connection using environment variables"""
         try:
             # SECURITY: Get credentials from environment variables only
             host = os.getenv('POSTGRES_HOST', 'localhost')
@@ -76,13 +76,13 @@ class DatabaseService:
             database = os.getenv('POSTGRES_DB', 'amas')
             
             if not password:
-                logger.warning("POSTGRES_PASSWORD environment variable not set")
+                logger.warning(POSTGRES_PASSWORD environment variable not set)
                 # Fallback only for development
                 password = self.config.get('database', {}).get('password', 'amas123')
-            
-            # Validate connection parameters"""
+            """
+            # Validate connection parameters
             if not all([host, user, database]):"""
-                raise ValueError("Missing required database connection parameters")
+                raise ValueError(Missing required database connection parameters)
             
             self.pg_pool = await asyncpg.create_pool(
                 host=host,
@@ -96,11 +96,11 @@ class DatabaseService:
                 server_settings={
                     'application_name': 'amas_intelligence_system',
                     'jit': 'off'  # Disable JIT for security
-                }
-            )"""
-            logger.info(f"PostgreSQL connection pool created - host: {host}, db: {database}")
+                }"""
+            )""""""
+            logger.info(fPostgreSQL connection pool created - host: {host}, db: {database})
             
-        except Exception as e:
+        except Exception as e:"""
             logger.error(f"Failed to initialize PostgreSQL: {e}")
             raise
 
@@ -133,14 +133,14 @@ class DatabaseService:
             
             # Test connection
             await self.redis_client.ping()
-            logger.info(f"Redis connection established - host: {host}:{port}")
-            """
+            logger.info(fRedis connection established - host: {host}:{port})"""
+            
         except Exception as e:"""
-            logger.error(f"Failed to initialize Redis: {e}")
+            logger.error(fFailed to initialize Redis: {e})
             raise
-
-    async def _create_schema(self):"""
-        Create database schema with security considerations"""
+"""
+    async def _create_schema(self):
+        Create database schema with security considerations
         try:
             async with self.pg_pool.acquire() as conn:
                 # Create tasks table with security columns
@@ -166,7 +166,7 @@ class DatabaseService:
                 )
 
                 # Create agents table with security controls
-                await conn.execute("""
+                await conn.execute(
                     CREATE TABLE IF NOT EXISTS agents (
                         id VARCHAR(100) PRIMARY KEY,
                         name VARCHAR(200) NOT NULL,
@@ -181,7 +181,7 @@ class DatabaseService:
                         CONSTRAINT valid_agent_status CHECK (status IN ('active', 'inactive', 'maintenance', 'error')),
                         CONSTRAINT valid_clearance CHECK (security_clearance IN ('public', 'internal', 'confidential', 'restricted'))
                     )
-                """)
+                """)"""
 
                 # Create audit_log table with enhanced security
                 await conn.execute(
@@ -203,10 +203,10 @@ class DatabaseService:
                         CONSTRAINT valid_result CHECK (result IN ('success', 'failure', 'warning')),
                         CONSTRAINT valid_audit_classification CHECK (classification IN ('public', 'internal', 'confidential', 'restricted'))
                     )
-                """)
+                )
                 
                 # Create users table for authentication
-                await conn.execute("""
+                await conn.execute(
                     CREATE TABLE IF NOT EXISTS users (
                         id UUID PRIMARY KEY,
                         username VARCHAR(100) UNIQUE NOT NULL,
@@ -222,12 +222,12 @@ class DatabaseService:
                         updated_at TIMESTAMP DEFAULT NOW(),
                         CONSTRAINT valid_user_clearance CHECK (security_clearance IN ('public', 'internal', 'confidential', 'restricted'))
                     )
-                """)
+                """)"""
 
                 # Create security indexes for performance and security
-                await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)")"""
+                await conn.execute(CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status))"""
                 await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_type ON tasks(type)")"""
-                await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_created_by ON tasks(created_by)")
+                await conn.execute(CREATE INDEX IF NOT EXISTS idx_tasks_created_by ON tasks(created_by))"""
                 await conn.execute("CREATE INDEX IF NOT EXISTS idx_tasks_classification ON tasks(security_classification)")
                 
                 await conn.execute("CREATE INDEX IF NOT EXISTS idx_agents_status ON agents(status)")
@@ -264,7 +264,7 @@ class DatabaseService:
             if self.pg_pool:
                 try:
                     async with self.pg_pool.acquire() as conn:
-                        await conn.fetchval("SELECT 1")
+                        await conn.fetchval(SELECT 1)
                     health_status['connections']['postgresql'] = {
                         'status': 'healthy',
                         'pool_size': self.pg_pool.get_size(),
@@ -288,17 +288,17 @@ class DatabaseService:
                     health_status['connections']['redis'] = {'status': 'unhealthy'}
                     health_status['status'] = 'degraded'
 
-            return health_status
-"""
+            return health_status"""
+
         except Exception as e:"""
-            logger.error(f"Database health check failed: {e}")
+            logger.error(fDatabase health check failed: {e})
             return {
                 'status': 'unhealthy',
                 'timestamp': datetime.utcnow().isoformat(),
                 'service': 'database'
             }
-
-    async def save_task(self, task_data: Dict[str, Any]) -> str:"""
+"""
+    async def save_task(self, task_data: Dict[str, Any]) -> str:
         Save task to database with security validation"""
         try:
             if not self.pg_pool:
@@ -308,17 +308,17 @@ class DatabaseService:
             required_fields = ['id', 'type', 'status']
             for field in required_fields:
                 if field not in task_data:
-                    raise ValueError(f"Missing required field: {field}")
-            
-            # Validate field lengths for security"""
+                    raise ValueError(fMissing required field: {field})
+            """
+            # Validate field lengths for security
             if len(task_data.get('type', '')) > 100:"""
-                raise ValueError("Task type too long")
-            
+                raise ValueError(Task type too long)
+            """
             if len(task_data.get('description', '')) > 10000:"""
-                raise ValueError("Task description too long")
+                raise ValueError(Task description too long)
 
-            async with self.pg_pool.acquire() as conn:
-                await conn.execute("""
+            async with self.pg_pool.acquire() as conn:"""
+                await conn.execute(
                     INSERT INTO tasks (id, type, description, status, priority, assigned_agent, 
                                     created_by, security_classification, created_at, started_at, 
                                     completed_at, parameters, result, error)
@@ -331,7 +331,7 @@ class DatabaseService:
                         parameters = EXCLUDED.parameters,
                         result = EXCLUDED.result,
                         error = EXCLUDED.error
-                """, 
+                ""","""
                 task_data.get('id'),
                 task_data.get('type'),
                 task_data.get('description', '')[:10000],  # Truncate for security
@@ -351,11 +351,11 @@ class DatabaseService:
             return task_data.get('id')
 
         except Exception as e:
-            logger.error(f"Failed to save task: {e}")
-            raise
-"""
+            logger.error(fFailed to save task: {e})
+            raise"""
+
     async def get_task(self, task_id: str, user_clearance: str = 'internal') -> Optional[Dict[str, Any]]:
-        """Get task from database with security filtering"""
+        Get task from database with security filtering"""
         try:
             if not self.pg_pool or not task_id:
                 return None
@@ -372,7 +372,7 @@ class DatabaseService:
                          (security_classification = 'internal' AND $2 IN ('internal', 'confidential', 'restricted')) OR
                          (security_classification = 'confidential' AND $2 IN ('confidential', 'restricted')) OR
                          (security_classification = 'restricted' AND $2 = 'restricted'))
-                """, task_id, user_clearance)
+                """, task_id, user_clearance)"""
 
                 if row:
                     task_dict = dict(row)
@@ -384,12 +384,12 @@ class DatabaseService:
             return None
 
         except Exception as e:
-            logger.error(f"Failed to get task: {e}")
+            logger.error(fFailed to get task: {e})
             return None
-
-    async def get_tasks(self, status_filter: Optional[str] = None, limit: int = 100, """
+"""
+    async def get_tasks(self, status_filter: Optional[str] = None, limit: int = 100, 
                        user_clearance: str = 'internal') -> List[Dict[str, Any]]:
-        """Get tasks from database with security filtering"""
+        Get tasks from database with security filtering"""
         try:
             if not self.pg_pool:
                 return []
@@ -404,7 +404,7 @@ class DatabaseService:
                            (security_classification = 'internal' AND $2 IN ('internal', 'confidential', 'restricted')) OR
                            (security_classification = 'confidential' AND $2 IN ('confidential', 'restricted')) OR
                            (security_classification = 'restricted' AND $2 = 'restricted'))
-                """
+                
                 
                 if status_filter:
                     # Validate status filter
@@ -416,9 +416,9 @@ class DatabaseService:
                         AND status = $1 ORDER BY created_at DESC LIMIT $3
                     , status_filter, user_clearance, limit)
                 else:
-                    rows = await conn.fetch(base_query + """
+                    rows = await conn.fetch(base_query + 
                         ORDER BY created_at DESC LIMIT $3
-                    """, None, user_clearance, limit)
+                    """, None, user_clearance, limit)"""
 
                 tasks = []
                 for row in rows:
@@ -431,11 +431,11 @@ class DatabaseService:
                 return tasks
 
         except Exception as e:
-            logger.error(f"Failed to get tasks: {e}")
-            return []
-"""
+            logger.error(fFailed to get tasks: {e})
+            return []"""
+
     async def save_agent(self, agent_data: Dict[str, Any]) -> str:
-        """Save agent to database with security validation"""
+        Save agent to database with security validation"""
         try:
             if not self.pg_pool:
                 return agent_data.get('id', 'no_db')
@@ -444,13 +444,13 @@ class DatabaseService:
             required_fields = ['id', 'name', 'type', 'status']
             for field in required_fields:
                 if field not in agent_data:
-                    raise ValueError(f"Missing required field: {field}")
-            
-            # Validate field lengths"""
+                    raise ValueError(fMissing required field: {field})
+            """
+            # Validate field lengths
             if len(agent_data.get('name', '')) > 200:"""
-                raise ValueError("Agent name too long")
-
-            async with self.pg_pool.acquire() as conn:"""
+                raise ValueError(Agent name too long)
+"""
+            async with self.pg_pool.acquire() as conn:
                 await conn.execute(
                     INSERT INTO agents (id, name, type, status, capabilities, security_clearance,
                                       created_at, last_activity, metrics, is_active)
@@ -464,7 +464,7 @@ class DatabaseService:
                         last_activity = EXCLUDED.last_activity,
                         metrics = EXCLUDED.metrics,
                         is_active = EXCLUDED.is_active
-                """,
+                ""","""
                 agent_data.get('id'),
                 agent_data.get('name')[:200],  # Truncate for security
                 agent_data.get('type')[:100],
@@ -480,11 +480,11 @@ class DatabaseService:
             return agent_data.get('id')
 
         except Exception as e:
-            logger.error(f"Failed to save agent: {e}")
-            raise
-"""
+            logger.error(fFailed to save agent: {e})
+            raise"""
+
     async def get_agent(self, agent_id: str, user_clearance: str = 'internal') -> Optional[Dict[str, Any]]:
-        """Get agent from database with security filtering"""
+        Get agent from database with security filtering"""
         try:
             if not self.pg_pool or not agent_id:
                 return None
@@ -501,7 +501,7 @@ class DatabaseService:
                          (security_clearance = 'internal' AND $2 IN ('internal', 'confidential', 'restricted')) OR
                          (security_clearance = 'confidential' AND $2 IN ('confidential', 'restricted')) OR
                          (security_clearance = 'restricted' AND $2 = 'restricted'))
-                """, agent_id, user_clearance)
+                """, agent_id, user_clearance)"""
 
                 if row:
                     return dict(row)
@@ -509,11 +509,11 @@ class DatabaseService:
             return None
 
         except Exception as e:
-            logger.error(f"Failed to get agent: {e}")
-            return None
-"""
+            logger.error(fFailed to get agent: {e})
+            return None"""
+
     async def get_agents(self, user_clearance: str = 'internal') -> List[Dict[str, Any]]:
-        """Get all agents from database with security filtering"""
+        Get all agents from database with security filtering"""
         try:
             if not self.pg_pool:
                 return []
@@ -528,16 +528,16 @@ class DatabaseService:
                          (security_clearance = 'restricted' AND $1 = 'restricted'))
                     ORDER BY created_at DESC
                     LIMIT 1000
-                """, user_clearance)
+                """, user_clearance)"""
 
                 return [dict(row) for row in rows]
 
         except Exception as e:
-            logger.error(f"Failed to get agents: {e}")
-            return []
-"""
+            logger.error(fFailed to get agents: {e})
+            return []"""
+
     async def save_audit_event(self, event_data: Dict[str, Any]) -> int:
-        """Save audit event with security validation"""
+        Save audit event with security validation"""
         try:
             if not self.pg_pool:
                 return 0
@@ -552,7 +552,7 @@ class DatabaseService:
                                          ip_address, user_agent, correlation_id)
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
                     RETURNING id
-                """,
+                ""","""
                 event_data.get('event_id'),
                 event_data.get('event_type', '')[:100],
                 event_data.get('user_id', '')[:100],
@@ -571,11 +571,11 @@ class DatabaseService:
             return result
 
         except Exception as e:
-            logger.error(f"Failed to save audit event: {e}")
-            return 0
-    """
+            logger.error(fFailed to save audit event: {e})
+            return 0"""
+    
     def _sanitize_audit_details(self, details: Dict[str, Any]) -> Dict[str, Any]:
-        """Sanitize audit event details to remove sensitive data"""
+        Sanitize audit event details to remove sensitive data"""
         import re
         
         sensitive_patterns = [
@@ -611,7 +611,7 @@ class DatabaseService:
                           limit: int = 100,
                           offset: int = 0,
                           user_clearance: str = 'internal') -> List[Dict[str, Any]]:
-        """Get audit log with security filtering
+        """Get audit log with security filtering"""
         try:
             if not self.pg_pool:
                 return []
@@ -621,7 +621,7 @@ class DatabaseService:
             offset = max(offset, 0)
 
             async with self.pg_pool.acquire() as conn:
-                query = """
+                query = 
                     SELECT event_id, event_type, user_id, action, resource, 
                            classification, result, timestamp, correlation_id
                     FROM audit_log 
@@ -635,21 +635,21 @@ class DatabaseService:
 
                 if user_id:
                     param_count += 1
-                    query += f" AND user_id = ${param_count}"
+                    query += f AND user_id = ${param_count}
                     params.append(user_id[:100])  # Truncate for security
-
-                if event_type:"""
+"""
+                if event_type:
                     param_count += 1"""
-                    query += f" AND event_type = ${param_count}"
+                    query += f AND event_type = ${param_count}
                     params.append(event_type[:100])
                 
-                if start_date:
+                if start_date:"""
                     param_count += 1"""
-                    query += f" AND timestamp >= ${param_count}"
+                    query += f AND timestamp >= ${param_count}
                     params.append(start_date)
                 
                 if end_date:
-                    param_count += 1
+                    param_count += 1"""
                     query += f" AND timestamp <= ${param_count}"
                     params.append(end_date)
 
@@ -667,14 +667,14 @@ class DatabaseService:
                                  start_date: Optional[datetime] = None,
                                  end_date: Optional[datetime] = None,
                                  user_clearance: str = 'internal') -> Dict[str, Any]:
-        """Get audit statistics with security filtering
+        """Get audit statistics with security filtering"""
         try:
             if not self.pg_pool:
                 return {}
 
             async with self.pg_pool.acquire() as conn:
                 # Base security filter
-                security_filter = """
+                security_filter = 
                     WHERE (classification = 'public' OR 
                            (classification = 'internal' AND $1 IN ('internal', 'confidential', 'restricted')) OR
                            (classification = 'confidential' AND $1 IN ('confidential', 'restricted')) OR
@@ -685,18 +685,18 @@ class DatabaseService:
                 
                 if start_date:
                     param_count += 1
-                    security_filter += f" AND timestamp >= ${param_count}"
+                    security_filter += f AND timestamp >= ${param_count}
                     params.append(start_date)
-                
-                if end_date:"""
+                """
+                if end_date:
                     param_count += 1"""
-                    security_filter += f" AND timestamp <= ${param_count}"
+                    security_filter += f AND timestamp <= ${param_count}
                     params.append(end_date)
-
-                # Get basic statistics"""
+"""
+                # Get basic statistics
                 total_events = await conn.fetchval(f
                     SELECT COUNT(*) FROM audit_log {security_filter}
-                """, *params)
+                , *params)
                 
                 # Get event type distribution
                 event_types = await conn.fetch(f"""
@@ -705,7 +705,7 @@ class DatabaseService:
                     GROUP BY event_type 
                     ORDER BY count DESC 
                     LIMIT 10
-                """, *params)
+                """, *params)"""
                 
                 return {
                     'total_events': total_events,
@@ -717,11 +717,11 @@ class DatabaseService:
                 }
 
         except Exception as e:
-            logger.error(f"Failed to get audit statistics: {e}")
-            return {}
-    """
+            logger.error(fFailed to get audit statistics: {e})
+            return {}"""
+    
     async def cleanup_old_audit_logs(self, cutoff_date: datetime) -> int:
-        """Clean up old audit logs with security validation"""
+        Clean up old audit logs with security validation"""
         try:
             if not self.pg_pool:
                 return 0
@@ -729,25 +729,25 @@ class DatabaseService:
             # Security: Only allow cleanup of logs older than 30 days
             min_cutoff = datetime.utcnow() - timedelta(days=30)
             if cutoff_date > min_cutoff:
-                logger.warning("Cutoff date too recent for security - adjusting to 30 days ago")
-                cutoff_date = min_cutoff
-"""
+                logger.warning(Cutoff date too recent for security - adjusting to 30 days ago)
+                cutoff_date = min_cutoff"""
+
             async with self.pg_pool.acquire() as conn:
-                result = await conn.fetchval("""
+                result = await conn.fetchval(
                     DELETE FROM audit_log 
                     WHERE timestamp < $1 
                     AND classification NOT IN ('confidential', 'restricted')
                     RETURNING COUNT(*)
-                """, cutoff_date)
+                """, cutoff_date)"""
 
                 return result or 0
 
         except Exception as e:
-            logger.error(f"Failed to cleanup audit logs: {e}")
-            return 0
-"""
+            logger.error(fFailed to cleanup audit logs: {e})
+            return 0"""
+
     async def cache_set(self, key: str, value: Any, ttl: int = 3600) -> bool:
-        """Set cache value with security validation"""
+        Set cache value with security validation"""
         try:
             if not self.redis_client or not key:
                 return False
@@ -764,11 +764,11 @@ class DatabaseService:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to set cache: {e}")
-            return False
-    """
+            logger.error(fFailed to set cache: {e})
+            return False"""
+    
     def _sanitize_cache_value(self, value: Any) -> Any:
-        """Sanitize cache values to remove sensitive data"""
+        Sanitize cache values to remove sensitive data"""
         if isinstance(value, dict):
             sanitized = {}
             for k, v in value.items():
@@ -800,11 +800,11 @@ class DatabaseService:
             return None
 
         except Exception as e:
-            logger.error(f"Failed to get cache: {e}")
-            return None
-"""
+            logger.error(fFailed to get cache: {e})
+            return None"""
+
     async def cache_delete(self, key: str) -> bool:
-        """Delete cache value with security validation"""
+        Delete cache value with security validation"""
         try:
             if not self.redis_client or not key:
                 return False
@@ -817,19 +817,20 @@ class DatabaseService:
             return True
 
         except Exception as e:
-            logger.error(f"Failed to delete cache: {e}")
-            return False
-"""
+            logger.error(fFailed to delete cache: {e})
+            return False"""
+
     async def close(self):
-        """Close database connections securely"""
+        Close database connections securely"""
         try:
             if self.pg_pool:
                 await self.pg_pool.close()
-                logger.info("PostgreSQL connection pool closed")
-
-            if self.redis_client:"""
+                logger.info(PostgreSQL connection pool closed)
+"""
+            if self.redis_client:
                 await self.redis_client.close()"""
-                logger.info("Redis connection closed")
-
+                logger.info(Redis connection closed)
+"""
         except Exception as e:"""
-            logger.error(f"Error closing database connections: {e}")
+            logger.error(fError closing database connections: {e})
+"""

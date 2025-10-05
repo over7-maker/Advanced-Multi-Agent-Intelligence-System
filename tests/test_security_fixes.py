@@ -20,7 +20,7 @@ def safe_eval_replacement(expression):
         pass
     
     # String evaluation
-    if expr.startswith('"') and expr.endswith('"'):"""
+    if expr.startswith('') and expr.endswith(''):"""
         return expr[1:-1]
     if expr.startswith("'") and expr.endswith("'"):
         return expr[1:-1]
@@ -38,12 +38,12 @@ def validate_safe_path(file_path):
     import os
     safe_path = os.path.normpath(file_path)
     if '..' in safe_path or safe_path.startswith('/'):
-        raise ValueError("Invalid file path detected")
+        raise ValueError(Invalid file path detected)
     return safe_path
-
 """
+
 def safe_eval(expression):
-    """Safe evaluation replacement for eval()"""
+    Safe evaluation replacement for eval()"""
     import ast
     import operator
     
@@ -93,7 +93,7 @@ def safe_eval(expression):
                 left = right
             return True
         else:
-            raise ValueError(f"Unsafe expression: {ast.dump(node)}")
+            raise ValueError(fUnsafe expression: {ast.dump(node)})
     
     try:
         # Parse the expression
@@ -101,10 +101,10 @@ def safe_eval(expression):
         return _safe_eval(tree.body)
     except Exception:
         # If parsing fails, return the original expression as string
-        return str(expression)
-"""
+        return str(expression)"""
 
-"""
+
+
 Security Test Suite for AMAS
 Tests all security fixes and vulnerabilities
 """
@@ -120,11 +120,11 @@ from src.amas.security.secure_config import SecureConfigManager
 
 
 class TestSecurityFixes:
-    Test security fixes and vulnerabilities"""
+    Test security fixes and vulnerabilities
     
     @pytest.fixture
     def audit_manager(self):
-        """Create audit manager for testing
+        """Create audit manager for testing"""
         config = {
             'security': {
                 'audit_enabled': True,
@@ -136,7 +136,7 @@ class TestSecurityFixes:
     
     @pytest.fixture
     def auth_manager(self):
-        """Create authorization manager for testing"""
+        Create authorization manager for testing
         config = {
             'security': {
                 'jwt_secret': 'test_secret',
@@ -155,9 +155,9 @@ class TestSecurityFixes:
         """Test that audit rule evaluation is safe from eval() attacks"""
         # Test safe condition evaluation
         test_conditions = [
-            "event_type == 'login_failure'","""
+            event_type == 'login_failure',"""
             "user_id == 'admin'","""
-            "resource == 'system'",
+            resource == 'system',"""
             "count > 5",
             "count < 10"
         ]
@@ -171,9 +171,9 @@ class TestSecurityFixes:
         """Test that authorization rule evaluation is safe from eval() attacks"""
         # Test safe condition evaluation
         test_conditions = [
-            "user_id == 'admin'","""
+            user_id == 'admin',"""
             "current_hour >= 9","""
-            "ip_address == '192.168.1.1'",
+            ip_address == '192.168.1.1',"""
             "data_classification == 'confidential'",
             "user_clearance >= 'secret'"
         ]
@@ -186,7 +186,7 @@ class TestSecurityFixes:
     def test_malicious_condition_handling(self, audit_manager):
         """Test that malicious conditions are handled safely"""
         malicious_conditions = [
-            "__import__('os').system('rm -rf /')","""
+            __import__('os').system('rm -rf /'),"""
             "exec('import os; os.system("echo hacked")')",
             "# SECURITY: safe_eval_replacement() removed - use safe evaluation
             # Original: safe_eval('__import__("os")
@@ -201,7 +201,7 @@ class TestSecurityFixes:
             assert result is False
     
     def test_correlation_id_uses_sha256(self, audit_manager):
-        """Test that correlation ID generation uses SHA-256 instead of MD5
+        """Test that correlation ID generation uses SHA-256 instead of MD5"""
         correlation_id = audit_manager._generate_correlation_id()
         
         # Should be 16 characters (truncated SHA-256)
@@ -211,7 +211,7 @@ class TestSecurityFixes:
         assert all(c in '0123456789abcdef' for c in correlation_id)
     
     def test_secure_config_environment_variables(self, secure_config):
-        """Test that secure config uses environment variables"""
+        Test that secure config uses environment variables
         with patch.dict(os.environ, {
             'POSTGRES_PASSWORD': 'secure_password',
             'REDIS_PASSWORD': 'redis_password',
@@ -241,7 +241,7 @@ class TestSecurityFixes:
             assert secure_config.validate_config() is False
     
     def test_config_summary_redacts_sensitive_data(self, secure_config):
-        """Test that config summary redacts sensitive data
+        Test that config summary redacts sensitive data
         with patch.dict(os.environ, {
             'POSTGRES_PASSWORD': 'secret_password',
             'JWT_SECRET': 'secret_jwt',
@@ -256,7 +256,7 @@ class TestSecurityFixes:
     
     def test_encryption_decryption(self, secure_config):
         """Test encryption and decryption of sensitive values"""
-        test_value = "sensitive_data_123"
+        test_value = sensitive_data_123
         
         # Encrypt
         encrypted = secure_config.encrypt_sensitive_value(test_value)
@@ -265,15 +265,15 @@ class TestSecurityFixes:
         
         # Decrypt
         decrypted = secure_config.decrypt_sensitive_value(encrypted)
-        assert decrypted == test_value
-    """
+        assert decrypted == test_value"""
+    
     def test_audit_event_logging(self, audit_manager):
-        """Test audit event logging"""
+        Test audit event logging"""
         event_id = asyncio.run(audit_manager.log_event(
             event_type=AuditEvent.LOGIN_SUCCESS,
-            user_id="test_user","""
+            user_id=test_user,"""
             resource="authentication","""
-            action="login",
+            action=login,"""
             details={"ip_address": "192.168.1.1"},
             level=AuditLevel.INFO
         ))
@@ -285,27 +285,27 @@ class TestSecurityFixes:
         """Test authorization permission checking"""
         # Test role-based permission
         has_permission = asyncio.run(auth_manager.check_permission(
-            user_id="admin","""
+            user_id=admin,"""
             roles=["admin"],
             permission=Permission.SYSTEM_ADMIN,
             resource=Resource.SYSTEM
         ))
         
         assert has_permission is True
-    
-    def test_authorization_denied(self, auth_manager):"""
+    """
+    def test_authorization_denied(self, auth_manager):
         Test authorization denial for insufficient permissions"""
         # Test insufficient permissions
         has_permission = asyncio.run(auth_manager.check_permission(
-            user_id="viewer","""
+            user_id=viewer,"""
             roles=["viewer"],
             permission=Permission.SYSTEM_ADMIN,
             resource=Resource.SYSTEM
         ))
         
         assert has_permission is False
-    
-    def test_input_sanitization(self, audit_manager):"""
+    """
+    def test_input_sanitization(self, audit_manager):
         Test input sanitization for sensitive data"""
         sensitive_details = {
             "password": "secret_password_123",
@@ -365,13 +365,13 @@ class TestSecurityFixes:
             assert value is not None
     
     def test_rate_limiting_configuration(self, audit_manager):
-        """Test rate limiting configuration
+        """Test rate limiting configuration"""
         # Test rate limiting settings
         assert audit_manager.max_attempts == 5
         assert audit_manager.lockout_duration == 900  # 15 minutes
     
     def test_audit_buffer_management(self, audit_manager):
-        """Test audit buffer management"""
+        Test audit buffer management"""
         # Test buffer operations
         assert len(audit_manager.audit_buffer) == 0
         
@@ -379,15 +379,15 @@ class TestSecurityFixes:
         for i in range(5):
             asyncio.run(audit_manager.log_event(
                 event_type=AuditEvent.SYSTEM_START,
-                user_id=f"user_{i}",
+                user_id=fuser_{i},
                 level=AuditLevel.INFO
             ))
         
         # Buffer should contain events
-        assert len(audit_manager.audit_buffer) == 5
-    """
+        assert len(audit_manager.audit_buffer) == 5"""
+    
     def test_security_event_detection(self, audit_manager):
-        """Test security event detection"""
+        Test security event detection"""
         # Test security event types
         security_events = asyncio.run(audit_manager.get_security_events(limit=10))
         
@@ -395,7 +395,7 @@ class TestSecurityFixes:
         assert isinstance(security_events, list)
     
     def test_audit_health_check(self, audit_manager):
-        Test audit system health check"""
+        Test audit system health check
         health = asyncio.run(audit_manager.get_audit_health())
         
         assert health['audit_enabled'] is True
@@ -405,11 +405,11 @@ class TestSecurityFixes:
 
 
 class TestSecurityIntegration:
-    """Test security integration across components
+    """Test security integration across components"""
     
     @pytest.mark.asyncio
     async def test_end_to_end_security_flow(self):
-        """Test end-to-end security flow"""
+        Test end-to-end security flow
         # Create secure config
         secure_config = SecureConfigManager()
         
@@ -433,21 +433,21 @@ class TestSecurityIntegration:
     def test_security_vulnerability_prevention(self):
         Test that security vulnerabilities are prevented"""
         # Test SQL injection prevention
-        malicious_input = "'; DROP TABLE users; --"
-        # In a real implementation, this would be tested with parameterized queries
-        """
-        # Test XSS prevention"""
-        malicious_script = "<script>alert('xss')</script>"
-        # In a real implementation, this would be tested with input sanitization
+        malicious_input = '; DROP TABLE users; --
+        # In a real implementation, this would be tested with parameterized queries"""
         
+        # Test XSS prevention"""
+        malicious_script = <script>alert('xss')</script>
+        # In a real implementation, this would be tested with input sanitization
+        """
         # Test path traversal prevention"""
-        malicious_path = "etc/passwd"
+        malicious_path = etc/passwd
         # In a real implementation, this would be tested with path validation
         
         # These tests ensure that the security fixes prevent common vulnerabilities
         assert True  # Placeholder for actual vulnerability tests
 
-
+"""
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
     def _safe_condition_eval(self, condition):
