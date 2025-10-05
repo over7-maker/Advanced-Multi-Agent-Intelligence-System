@@ -3,7 +3,6 @@ Integration tests for AMAS system
 """
 
 import asyncio
-from typing import Any, Dict
 
 import httpx
 import pytest
@@ -29,7 +28,9 @@ class TestSystemIntegration:
         }
 
         headers = {"Authorization": "Bearer valid_token"}
-        response = await test_client.post("/tasks", json=task_data, headers=headers)
+        response = await test_client.post(
+            "/tasks", json=task_data, headers=headers
+        )
         assert response.status_code == 200
 
         task_id = response.json()["task_id"]
@@ -211,7 +212,9 @@ class TestSystemIntegration:
         assert "security" in health_status
 
     @pytest.mark.asyncio
-    async def test_workflow_execution(self, amas_app, test_client: httpx.AsyncClient):
+    async def test_workflow_execution(
+        self, amas_app, test_client: httpx.AsyncClient
+    ):
         """Test workflow execution"""
         workflow_data = {
             "workflow_id": "test_workflow",
@@ -244,7 +247,9 @@ class TestSystemIntegration:
         headers = {"Authorization": "Bearer valid_token"}
 
         # Submit task (should generate audit event)
-        response = await test_client.post("/tasks", json=task_data, headers=headers)
+        response = await test_client.post(
+            "/tasks", json=task_data, headers=headers
+        )
         assert response.status_code == 200
 
         # Get audit log
