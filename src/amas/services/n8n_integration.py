@@ -6,12 +6,13 @@ for advanced intelligence workflow orchestration.
 """
 
 import asyncio
-import logging
 import json
-import requests
-from typing import Dict, List, Any, Optional, Union
-from datetime import datetime
+import logging
 import uuid
+from datetime import datetime
+from typing import Any, Dict, List, Optional, Union
+
+import requests
 
 
 class N8NIntegration:

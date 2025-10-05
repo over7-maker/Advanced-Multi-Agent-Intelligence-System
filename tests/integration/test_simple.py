@@ -5,10 +5,10 @@ Tests basic functionality without external dependencies
 
 import asyncio
 import logging
-import sys
 import os
+import sys
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Configure logging
 logging.basicConfig(

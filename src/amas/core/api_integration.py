@@ -6,31 +6,32 @@ This module integrates the new AI API Manager with existing AMAS agents and orch
 providing seamless fallback and enhanced reliability across all AI operations.
 """
 
-import os
-import sys
 import asyncio
 import json
+import logging
+import os
+import sys
 import time
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Union
-import logging
+from typing import Any, Dict, List, Optional, Union
 
-# Import the new API manager components
-from .ai_api_manager import AIAPIManager, get_ai_response
-from .enhanced_orchestrator import EnhancedOrchestrator, execute_task, run_investigation
+from ..agents.forensics.forensics_agent import ForensicsAgent
+from ..agents.investigation.investigation_agent import InvestigationAgent
 
 # Import existing AMAS components
 from ..agents.orchestrator import (
     AgentOrchestrator,
+    AgentType,
     BaseAgent,
     Task,
     TaskStatus,
-    AgentType,
 )
 from ..agents.osint.osint_agent import OSINTAgent
-from ..agents.investigation.investigation_agent import InvestigationAgent
-from ..agents.forensics.forensics_agent import ForensicsAgent
 from ..agents.reporting.reporting_agent import ReportingAgent
+
+# Import the new API manager components
+from .ai_api_manager import AIAPIManager, get_ai_response
+from .enhanced_orchestrator import EnhancedOrchestrator, execute_task, run_investigation
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
