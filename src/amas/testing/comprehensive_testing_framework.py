@@ -834,6 +834,7 @@ class ComprehensiveTestingFramework:
 
         # Simulate authentication testing using secure random
         import secrets
+
         if secrets.randbelow(100) < 10:  # 10% chance of finding vulnerability
             vulnerabilities.append(
                 {

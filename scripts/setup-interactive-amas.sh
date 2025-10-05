@@ -68,7 +68,8 @@ python_version=$(python3 --version 2>&1 | grep -Po '(?<=Python )[0-9]+\.[0-9]+')
 required_version="3.8"
 
 if command -v python3 &> /dev/null; then
-    if [[ $(echo "$python_version >= $required_version" | bc -l 2>/dev/null) -eq 1 ]] || [[ "$python_version" > "$required_version" ]]; then
+    # Simple version comparison using Python itself
+    if python3 -c "import sys; exit(0 if sys.version_info >= (3, 8) else 1)" 2>/dev/null; then
         print_status "Python $python_version detected"
     else
         print_error "Python $required_version or higher required (found $python_version)"

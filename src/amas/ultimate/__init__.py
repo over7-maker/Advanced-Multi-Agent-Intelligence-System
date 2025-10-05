@@ -34,7 +34,7 @@ from .utils.neural_logger import NeuralLogger
 
 __all__ = [
     "QuantumAMASInterface",
-    "NeuralCommandProcessor", 
+    "NeuralCommandProcessor",
     "HolographicDisplay",
     "TelepathicCommandEngine",
     "MultiDimensionalCoordinator",
@@ -49,5 +49,5 @@ __all__ = [
     "ConsciousnessHub",
     "QuantumCollaboration",
     "QuantumConfigManager",
-    "NeuralLogger"
+    "NeuralLogger",
 ]
