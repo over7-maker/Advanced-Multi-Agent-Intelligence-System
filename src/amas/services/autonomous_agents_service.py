@@ -15,8 +15,10 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+
 class AgentType(Enum):
     """Autonomous agent type enumeration"""
+
     INTELLIGENCE_ANALYST = "intelligence_analyst"
     THREAT_HUNTER = "threat_hunter"
     DATA_SCIENTIST = "data_scientist"
@@ -26,16 +28,20 @@ class AgentType(Enum):
     LEARNING_AGENT = "learning_agent"
     ADAPTIVE_AGENT = "adaptive_agent"
 
+
 class LearningMode(Enum):
     """Learning mode enumeration"""
+
     SUPERVISED = "supervised"
     UNSUPERVISED = "unsupervised"
     REINFORCEMENT = "reinforcement"
     TRANSFER = "transfer"
     META = "meta"
 
+
 class AgentStatus(Enum):
     """Agent status enumeration"""
+
     IDLE = "idle"
     ACTIVE = "active"
     LEARNING = "learning"
@@ -43,9 +49,11 @@ class AgentStatus(Enum):
     ERROR = "error"
     RETIRED = "retired"
 
+
 @dataclass
 class AgentCapability:
     """Agent capability data structure"""
+
     capability_id: str
     name: str
     description: str
@@ -53,9 +61,11 @@ class AgentCapability:
     learning_rate: float
     last_updated: datetime
 
+
 @dataclass
 class LearningExperience:
     """Learning experience data structure"""
+
     experience_id: str
     agent_id: str
     task_type: str
@@ -65,9 +75,11 @@ class LearningExperience:
     learning_insights: List[str]
     timestamp: datetime
 
+
 @dataclass
 class AutonomousAgent:
     """Autonomous agent data structure"""
+
     agent_id: str
     agent_type: AgentType
     name: str
@@ -78,6 +90,7 @@ class AutonomousAgent:
     learning_history: List[LearningExperience]
     created_at: datetime
     last_activity: datetime
+
 
 class AutonomousAgentsService:
     """
@@ -103,84 +116,158 @@ class AutonomousAgentsService:
 
         # Autonomous configuration
         self.autonomous_config = {
-            'max_agents': config.get('max_agents', 50),
-            'learning_enabled': config.get('learning_enabled', True),
-            'adaptation_enabled': config.get('adaptation_enabled', True),
-            'autonomous_decision_threshold': config.get('autonomous_decision_threshold', 0.8),
-            'learning_rate': config.get('learning_rate', 0.1),
-            'memory_size': config.get('memory_size', 10000)
+            "max_agents": config.get("max_agents", 50),
+            "learning_enabled": config.get("learning_enabled", True),
+            "adaptation_enabled": config.get("adaptation_enabled", True),
+            "autonomous_decision_threshold": config.get(
+                "autonomous_decision_threshold", 0.8
+            ),
+            "learning_rate": config.get("learning_rate", 0.1),
+            "memory_size": config.get("memory_size", 10000),
         }
 
         # Agent types and their configurations
         self.agent_configs = {
             AgentType.INTELLIGENCE_ANALYST: {
-                'capabilities': ['data_analysis', 'pattern_recognition', 'threat_assessment'],
-                'learning_areas': ['intelligence_methodology', 'threat_landscape', 'analysis_techniques'],
-                'autonomy_level': 0.8,
-                'decision_authority': 'high'
+                "capabilities": [
+                    "data_analysis",
+                    "pattern_recognition",
+                    "threat_assessment",
+                ],
+                "learning_areas": [
+                    "intelligence_methodology",
+                    "threat_landscape",
+                    "analysis_techniques",
+                ],
+                "autonomy_level": 0.8,
+                "decision_authority": "high",
             },
             AgentType.THREAT_HUNTER: {
-                'capabilities': ['threat_detection', 'incident_response', 'forensic_analysis'],
-                'learning_areas': ['threat_indicators', 'attack_patterns', 'response_procedures'],
-                'autonomy_level': 0.9,
-                'decision_authority': 'critical'
+                "capabilities": [
+                    "threat_detection",
+                    "incident_response",
+                    "forensic_analysis",
+                ],
+                "learning_areas": [
+                    "threat_indicators",
+                    "attack_patterns",
+                    "response_procedures",
+                ],
+                "autonomy_level": 0.9,
+                "decision_authority": "critical",
             },
             AgentType.DATA_SCIENTIST: {
-                'capabilities': ['statistical_analysis', 'machine_learning', 'data_modeling'],
-                'learning_areas': ['algorithms', 'data_processing', 'model_optimization'],
-                'autonomy_level': 0.7,
-                'decision_authority': 'medium'
+                "capabilities": [
+                    "statistical_analysis",
+                    "machine_learning",
+                    "data_modeling",
+                ],
+                "learning_areas": [
+                    "algorithms",
+                    "data_processing",
+                    "model_optimization",
+                ],
+                "autonomy_level": 0.7,
+                "decision_authority": "medium",
             },
             AgentType.SECURITY_OPERATOR: {
-                'capabilities': ['security_monitoring', 'incident_handling', 'compliance_checking'],
-                'learning_areas': ['security_policies', 'incident_procedures', 'compliance_requirements'],
-                'autonomy_level': 0.6,
-                'decision_authority': 'medium'
+                "capabilities": [
+                    "security_monitoring",
+                    "incident_handling",
+                    "compliance_checking",
+                ],
+                "learning_areas": [
+                    "security_policies",
+                    "incident_procedures",
+                    "compliance_requirements",
+                ],
+                "autonomy_level": 0.6,
+                "decision_authority": "medium",
             },
             AgentType.RESEARCH_ASSISTANT: {
-                'capabilities': ['information_gathering', 'research_analysis', 'knowledge_synthesis'],
-                'learning_areas': ['research_methods', 'information_sources', 'analysis_techniques'],
-                'autonomy_level': 0.5,
-                'decision_authority': 'low'
+                "capabilities": [
+                    "information_gathering",
+                    "research_analysis",
+                    "knowledge_synthesis",
+                ],
+                "learning_areas": [
+                    "research_methods",
+                    "information_sources",
+                    "analysis_techniques",
+                ],
+                "autonomy_level": 0.5,
+                "decision_authority": "low",
             },
             AgentType.DECISION_MAKER: {
-                'capabilities': ['strategic_planning', 'risk_assessment', 'resource_allocation'],
-                'learning_areas': ['decision_theory', 'risk_management', 'strategic_planning'],
-                'autonomy_level': 0.9,
-                'decision_authority': 'critical'
+                "capabilities": [
+                    "strategic_planning",
+                    "risk_assessment",
+                    "resource_allocation",
+                ],
+                "learning_areas": [
+                    "decision_theory",
+                    "risk_management",
+                    "strategic_planning",
+                ],
+                "autonomy_level": 0.9,
+                "decision_authority": "critical",
             },
             AgentType.LEARNING_AGENT: {
-                'capabilities': ['continuous_learning', 'knowledge_extraction', 'skill_development'],
-                'learning_areas': ['learning_algorithms', 'knowledge_representation', 'skill_transfer'],
-                'autonomy_level': 0.8,
-                'decision_authority': 'high'
+                "capabilities": [
+                    "continuous_learning",
+                    "knowledge_extraction",
+                    "skill_development",
+                ],
+                "learning_areas": [
+                    "learning_algorithms",
+                    "knowledge_representation",
+                    "skill_transfer",
+                ],
+                "autonomy_level": 0.8,
+                "decision_authority": "high",
             },
             AgentType.ADAPTIVE_AGENT: {
-                'capabilities': ['environment_adaptation', 'behavior_modification', 'performance_optimization'],
-                'learning_areas': ['adaptation_strategies', 'environment_modeling', 'optimization_techniques'],
-                'autonomy_level': 0.9,
-                'decision_authority': 'high'
-            }
+                "capabilities": [
+                    "environment_adaptation",
+                    "behavior_modification",
+                    "performance_optimization",
+                ],
+                "learning_areas": [
+                    "adaptation_strategies",
+                    "environment_modeling",
+                    "optimization_techniques",
+                ],
+                "autonomy_level": 0.9,
+                "decision_authority": "high",
+            },
         }
 
         # Learning algorithms
         self.learning_algorithms = {
-            'reinforcement_learning': {
-                'algorithm': 'q_learning',
-                'parameters': {'learning_rate': 0.1, 'discount_factor': 0.9, 'epsilon': 0.1}
+            "reinforcement_learning": {
+                "algorithm": "q_learning",
+                "parameters": {
+                    "learning_rate": 0.1,
+                    "discount_factor": 0.9,
+                    "epsilon": 0.1,
+                },
             },
-            'supervised_learning': {
-                'algorithm': 'neural_network',
-                'parameters': {'hidden_layers': [100, 50], 'learning_rate': 0.01, 'epochs': 100}
+            "supervised_learning": {
+                "algorithm": "neural_network",
+                "parameters": {
+                    "hidden_layers": [100, 50],
+                    "learning_rate": 0.01,
+                    "epochs": 100,
+                },
             },
-            'unsupervised_learning': {
-                'algorithm': 'clustering',
-                'parameters': {'n_clusters': 5, 'algorithm': 'kmeans'}
+            "unsupervised_learning": {
+                "algorithm": "clustering",
+                "parameters": {"n_clusters": 5, "algorithm": "kmeans"},
             },
-            'transfer_learning': {
-                'algorithm': 'fine_tuning',
-                'parameters': {'source_domain': 'general', 'target_domain': 'specific'}
-            }
+            "transfer_learning": {
+                "algorithm": "fine_tuning",
+                "parameters": {"source_domain": "general", "target_domain": "specific"},
+            },
         }
 
         logger.info("Autonomous Agents Service initialized")
@@ -255,7 +342,7 @@ class AutonomousAgentsService:
         agent_type: AgentType,
         name: str,
         initial_capabilities: List[str] = None,
-        learning_mode: LearningMode = LearningMode.REINFORCEMENT
+        learning_mode: LearningMode = LearningMode.REINFORCEMENT,
     ) -> str:
         """
         Create a new autonomous agent.
@@ -285,20 +372,20 @@ class AutonomousAgentsService:
                         name=capability_name,
                         description=f"Capability: {capability_name}",
                         proficiency_level=0.5,  # Initial proficiency
-                        learning_rate=self.autonomous_config['learning_rate'],
-                        last_updated=datetime.utcnow()
+                        learning_rate=self.autonomous_config["learning_rate"],
+                        last_updated=datetime.utcnow(),
                     )
                     capabilities.append(capability)
             else:
                 # Use default capabilities from agent type
-                for capability_name in agent_config['capabilities']:
+                for capability_name in agent_config["capabilities"]:
                     capability = AgentCapability(
                         capability_id=str(uuid.uuid4()),
                         name=capability_name,
                         description=f"Capability: {capability_name}",
                         proficiency_level=0.5,
-                        learning_rate=self.autonomous_config['learning_rate'],
-                        last_updated=datetime.utcnow()
+                        learning_rate=self.autonomous_config["learning_rate"],
+                        last_updated=datetime.utcnow(),
                     )
                     capabilities.append(capability)
 
@@ -311,14 +398,14 @@ class AutonomousAgentsService:
                 capabilities=capabilities,
                 learning_mode=learning_mode,
                 performance_metrics={
-                    'task_completion_rate': 0.0,
-                    'learning_efficiency': 0.0,
-                    'adaptation_speed': 0.0,
-                    'decision_accuracy': 0.0
+                    "task_completion_rate": 0.0,
+                    "learning_efficiency": 0.0,
+                    "adaptation_speed": 0.0,
+                    "decision_accuracy": 0.0,
                 },
                 learning_history=[],
                 created_at=datetime.utcnow(),
-                last_activity=datetime.utcnow()
+                last_activity=datetime.utcnow(),
             )
 
             # Store agent
@@ -332,10 +419,7 @@ class AutonomousAgentsService:
             raise
 
     async def assign_task_to_agent(
-        self,
-        agent_id: str,
-        task: Dict[str, Any],
-        priority: int = 1
+        self, agent_id: str, task: Dict[str, Any], priority: int = 1
     ) -> str:
         """
         Assign a task to an autonomous agent.
@@ -356,7 +440,9 @@ class AutonomousAgentsService:
 
             # Check if agent is available
             if agent.status != AgentStatus.IDLE:
-                raise ValueError(f"Agent {agent_id} is not available (status: {agent.status.value})")
+                raise ValueError(
+                    f"Agent {agent_id} is not available (status: {agent.status.value})"
+                )
 
             # Generate task execution ID
             task_execution_id = str(uuid.uuid4())
@@ -366,7 +452,9 @@ class AutonomousAgentsService:
             agent.last_activity = datetime.utcnow()
 
             # Start task execution
-            asyncio.create_task(self._execute_agent_task(agent_id, task, task_execution_id))
+            asyncio.create_task(
+                self._execute_agent_task(agent_id, task, task_execution_id)
+            )
 
             logger.info(f"Task assigned to agent {agent_id}: {task_execution_id}")
             return task_execution_id
@@ -375,7 +463,9 @@ class AutonomousAgentsService:
             logger.error(f"Failed to assign task to agent: {e}")
             raise
 
-    async def _execute_agent_task(self, agent_id: str, task: Dict[str, Any], task_execution_id: str):
+    async def _execute_agent_task(
+        self, agent_id: str, task: Dict[str, Any], task_execution_id: str
+    ):
         """Execute agent task"""
         try:
             agent = self.autonomous_agents[agent_id]
@@ -387,15 +477,15 @@ class AutonomousAgentsService:
 
             # Generate mock results
             results = {
-                'task_id': task_execution_id,
-                'agent_id': agent_id,
-                'status': 'completed',
-                'results': f"Task completed by {agent.name}",
-                'performance_score': np.random.random(),
-                'learning_insights': [
+                "task_id": task_execution_id,
+                "agent_id": agent_id,
+                "status": "completed",
+                "results": f"Task completed by {agent.name}",
+                "performance_score": np.random.random(),
+                "learning_insights": [
                     f"Learned new pattern: {task.get('type', 'unknown')}",
-                    f"Improved efficiency in {task.get('domain', 'general')} domain"
-                ]
+                    f"Improved efficiency in {task.get('domain', 'general')} domain",
+                ],
             }
 
             # Update agent performance
@@ -421,20 +511,22 @@ class AutonomousAgentsService:
             agent = self.autonomous_agents[agent_id]
 
             # Update performance metrics
-            performance_score = results.get('performance_score', 0.0)
+            performance_score = results.get("performance_score", 0.0)
 
             # Update task completion rate
-            current_rate = agent.performance_metrics['task_completion_rate']
-            agent.performance_metrics['task_completion_rate'] = (current_rate + performance_score) / 2
+            current_rate = agent.performance_metrics["task_completion_rate"]
+            agent.performance_metrics["task_completion_rate"] = (
+                current_rate + performance_score
+            ) / 2
 
             # Update learning efficiency
-            learning_insights = results.get('learning_insights', [])
+            learning_insights = results.get("learning_insights", [])
             if learning_insights:
-                agent.performance_metrics['learning_efficiency'] += 0.1
+                agent.performance_metrics["learning_efficiency"] += 0.1
 
             # Update decision accuracy
             if performance_score > 0.8:
-                agent.performance_metrics['decision_accuracy'] += 0.05
+                agent.performance_metrics["decision_accuracy"] += 0.05
 
             logger.info(f"Updated performance for agent {agent_id}")
 
@@ -442,10 +534,7 @@ class AutonomousAgentsService:
             logger.error(f"Failed to update agent performance: {e}")
 
     async def _record_learning_experience(
-        self,
-        agent_id: str,
-        task: Dict[str, Any],
-        results: Dict[str, Any]
+        self, agent_id: str, task: Dict[str, Any], results: Dict[str, Any]
     ):
         """Record learning experience"""
         try:
@@ -453,12 +542,12 @@ class AutonomousAgentsService:
             experience = LearningExperience(
                 experience_id=str(uuid.uuid4()),
                 agent_id=agent_id,
-                task_type=task.get('type', 'unknown'),
+                task_type=task.get("type", "unknown"),
                 input_data=task,
                 output_data=results,
-                performance_score=results.get('performance_score', 0.0),
-                learning_insights=results.get('learning_insights', []),
-                timestamp=datetime.utcnow()
+                performance_score=results.get("performance_score", 0.0),
+                learning_insights=results.get("learning_insights", []),
+                timestamp=datetime.utcnow(),
             )
 
             # Store experience
@@ -469,8 +558,10 @@ class AutonomousAgentsService:
             agent.learning_history.append(experience)
 
             # Limit learning history size
-            if len(agent.learning_history) > self.autonomous_config['memory_size']:
-                agent.learning_history = agent.learning_history[-self.autonomous_config['memory_size']:]
+            if len(agent.learning_history) > self.autonomous_config["memory_size"]:
+                agent.learning_history = agent.learning_history[
+                    -self.autonomous_config["memory_size"] :
+                ]
 
             logger.info(f"Recorded learning experience for agent {agent_id}")
 
@@ -481,7 +572,7 @@ class AutonomousAgentsService:
         """Autonomous learning loop"""
         while True:
             try:
-                if self.autonomous_config['learning_enabled']:
+                if self.autonomous_config["learning_enabled"]:
                     # Process learning for each agent
                     for agent_id, agent in self.autonomous_agents.items():
                         if agent.status == AgentStatus.IDLE:
@@ -497,7 +588,7 @@ class AutonomousAgentsService:
         """Autonomous adaptation loop"""
         while True:
             try:
-                if self.autonomous_config['adaptation_enabled']:
+                if self.autonomous_config["adaptation_enabled"]:
                     # Process adaptation for each agent
                     for agent_id, agent in self.autonomous_agents.items():
                         if agent.status == AgentStatus.IDLE:
@@ -555,11 +646,13 @@ class AutonomousAgentsService:
             for capability in agent.capabilities:
                 # Simulate capability improvement
                 improvement = np.random.random() * 0.01  # Small improvement
-                capability.proficiency_level = min(1.0, capability.proficiency_level + improvement)
+                capability.proficiency_level = min(
+                    1.0, capability.proficiency_level + improvement
+                )
                 capability.last_updated = datetime.utcnow()
 
             # Update learning efficiency
-            agent.performance_metrics['learning_efficiency'] += 0.01
+            agent.performance_metrics["learning_efficiency"] += 0.01
 
             # Update agent status
             agent.status = AgentStatus.IDLE
@@ -584,7 +677,7 @@ class AutonomousAgentsService:
             await asyncio.sleep(1)  # Simulate adaptation time
 
             # Update adaptation speed
-            agent.performance_metrics['adaptation_speed'] += 0.01
+            agent.performance_metrics["adaptation_speed"] += 0.01
 
             # Update agent status
             agent.status = AgentStatus.IDLE
@@ -604,19 +697,24 @@ class AutonomousAgentsService:
             # Simulate decision making process
             decision_confidence = np.random.random()
 
-            if decision_confidence > self.autonomous_config['autonomous_decision_threshold']:
+            if (
+                decision_confidence
+                > self.autonomous_config["autonomous_decision_threshold"]
+            ):
                 # Make autonomous decision
                 decision = {
-                    'type': 'autonomous_action',
-                    'confidence': decision_confidence,
-                    'action': f"Autonomous action by {agent.name}",
-                    'timestamp': datetime.utcnow()
+                    "type": "autonomous_action",
+                    "confidence": decision_confidence,
+                    "action": f"Autonomous action by {agent.name}",
+                    "timestamp": datetime.utcnow(),
                 }
 
                 # Update decision accuracy
-                agent.performance_metrics['decision_accuracy'] += 0.01
+                agent.performance_metrics["decision_accuracy"] += 0.01
 
-                logger.info(f"Agent {agent_id} made autonomous decision: {decision['action']}")
+                logger.info(
+                    f"Agent {agent_id} made autonomous decision: {decision['action']}"
+                )
 
         except Exception as e:
             logger.error(f"Autonomous decision making failed for agent {agent_id}: {e}")
@@ -648,7 +746,9 @@ class AutonomousAgentsService:
             logger.error(f"Failed to get agent info: {e}")
             return None
 
-    async def list_agents(self, agent_type: AgentType = None, status: AgentStatus = None) -> List[AutonomousAgent]:
+    async def list_agents(
+        self, agent_type: AgentType = None, status: AgentStatus = None
+    ) -> List[AutonomousAgent]:
         """List autonomous agents"""
         try:
             agents = list(self.autonomous_agents.values())
@@ -674,11 +774,11 @@ class AutonomousAgentsService:
             agent = self.autonomous_agents[agent_id]
 
             return {
-                'agent_id': agent_id,
-                'performance_metrics': agent.performance_metrics,
-                'capability_count': len(agent.capabilities),
-                'learning_experiences': len(agent.learning_history),
-                'last_activity': agent.last_activity.isoformat()
+                "agent_id": agent_id,
+                "performance_metrics": agent.performance_metrics,
+                "capability_count": len(agent.capabilities),
+                "learning_experiences": len(agent.learning_history),
+                "last_activity": agent.last_activity.isoformat(),
             }
 
         except Exception as e:
@@ -688,14 +788,32 @@ class AutonomousAgentsService:
     async def get_autonomous_agents_status(self) -> Dict[str, Any]:
         """Get autonomous agents service status"""
         return {
-            'total_agents': len(self.autonomous_agents),
-            'active_agents': len([a for a in self.autonomous_agents.values() if a.status == AgentStatus.ACTIVE]),
-            'learning_agents': len([a for a in self.autonomous_agents.values() if a.status == AgentStatus.LEARNING]),
-            'idle_agents': len([a for a in self.autonomous_agents.values() if a.status == AgentStatus.IDLE]),
-            'total_experiences': len(self.learning_experiences),
-            'learning_enabled': self.autonomous_config['learning_enabled'],
-            'adaptation_enabled': self.autonomous_config['adaptation_enabled'],
-            'timestamp': datetime.utcnow().isoformat()
+            "total_agents": len(self.autonomous_agents),
+            "active_agents": len(
+                [
+                    a
+                    for a in self.autonomous_agents.values()
+                    if a.status == AgentStatus.ACTIVE
+                ]
+            ),
+            "learning_agents": len(
+                [
+                    a
+                    for a in self.autonomous_agents.values()
+                    if a.status == AgentStatus.LEARNING
+                ]
+            ),
+            "idle_agents": len(
+                [
+                    a
+                    for a in self.autonomous_agents.values()
+                    if a.status == AgentStatus.IDLE
+                ]
+            ),
+            "total_experiences": len(self.learning_experiences),
+            "learning_enabled": self.autonomous_config["learning_enabled"],
+            "adaptation_enabled": self.autonomous_config["adaptation_enabled"],
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
     async def shutdown(self):

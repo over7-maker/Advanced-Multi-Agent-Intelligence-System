@@ -8,8 +8,4 @@ from .intelligence_agent import IntelligenceAgent
 from .react_agent import ReactAgent
 from .agent_communication import AgentCommunication
 
-__all__ = [
-    'IntelligenceAgent',
-    'ReactAgent',
-    'AgentCommunication'
-]
+__all__ = ["IntelligenceAgent", "ReactAgent", "AgentCommunication"]

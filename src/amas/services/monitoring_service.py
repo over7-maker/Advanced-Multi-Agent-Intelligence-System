@@ -14,23 +14,29 @@ import time
 
 logger = logging.getLogger(__name__)
 
+
 class AlertLevel(Enum):
     """Alert level enumeration"""
+
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
     CRITICAL = "critical"
 
+
 class MetricType(Enum):
     """Metric type enumeration"""
+
     COUNTER = "counter"
     GAUGE = "gauge"
     HISTOGRAM = "histogram"
     SUMMARY = "summary"
 
+
 @dataclass
 class Alert:
     """Alert data structure"""
+
     id: str
     level: AlertLevel
     title: str
@@ -40,14 +46,17 @@ class Alert:
     resolved: bool = False
     resolved_at: Optional[datetime] = None
 
+
 @dataclass
 class Metric:
     """Metric data structure"""
+
     name: str
     value: float
     type: MetricType
     labels: Dict[str, str]
     timestamp: datetime
+
 
 class MonitoringService:
     """
@@ -73,21 +82,21 @@ class MonitoringService:
 
         # Performance thresholds
         self.thresholds = {
-            'cpu_usage': 80.0,
-            'memory_usage': 80.0,
-            'disk_usage': 90.0,
-            'response_time': 5.0,
-            'error_rate': 5.0,
-            'queue_size': 100
+            "cpu_usage": 80.0,
+            "memory_usage": 80.0,
+            "disk_usage": 90.0,
+            "response_time": 5.0,
+            "error_rate": 5.0,
+            "queue_size": 100,
         }
 
         # Monitoring intervals
         self.intervals = {
-            'system_metrics': 10,      # seconds
-            'service_health': 30,      # seconds
-            'performance': 60,         # seconds
-            'security': 120,           # seconds
-            'cleanup': 300             # seconds
+            "system_metrics": 10,  # seconds
+            "service_health": 30,  # seconds
+            "performance": 60,  # seconds
+            "security": 120,  # seconds
+            "cleanup": 300,  # seconds
         }
 
         # Metrics storage
@@ -124,7 +133,7 @@ class MonitoringService:
                 asyncio.create_task(self._monitor_service_health()),
                 asyncio.create_task(self._monitor_performance()),
                 asyncio.create_task(self._monitor_security()),
-                asyncio.create_task(self._cleanup_old_data())
+                asyncio.create_task(self._cleanup_old_data()),
             ]
 
             logger.info("Monitoring tasks started")
@@ -137,28 +146,28 @@ class MonitoringService:
         """Initialize metrics collection"""
         try:
             # Initialize system metrics
-            self.metrics['system'] = {
-                'cpu_usage': 0.0,
-                'memory_usage': 0.0,
-                'disk_usage': 0.0,
-                'network_io': 0.0,
-                'process_count': 0,
-                'uptime': 0.0
+            self.metrics["system"] = {
+                "cpu_usage": 0.0,
+                "memory_usage": 0.0,
+                "disk_usage": 0.0,
+                "network_io": 0.0,
+                "process_count": 0,
+                "uptime": 0.0,
             }
 
             # Initialize service metrics
-            self.metrics['services'] = {}
+            self.metrics["services"] = {}
 
             # Initialize application metrics
-            self.metrics['application'] = {
-                'active_tasks': 0,
-                'completed_tasks': 0,
-                'failed_tasks': 0,
-                'active_agents': 0,
-                'active_workflows': 0,
-                'api_requests': 0,
-                'api_errors': 0,
-                'response_time': 0.0
+            self.metrics["application"] = {
+                "active_tasks": 0,
+                "completed_tasks": 0,
+                "failed_tasks": 0,
+                "active_agents": 0,
+                "active_workflows": 0,
+                "api_requests": 0,
+                "api_errors": 0,
+                "response_time": 0.0,
             }
 
             logger.info("Metrics collection initialized")
@@ -175,7 +184,7 @@ class MonitoringService:
                 self._handle_system_alerts,
                 self._handle_service_alerts,
                 self._handle_performance_alerts,
-                self._handle_security_alerts
+                self._handle_security_alerts,
             ]
 
             logger.info("Alert system initialized")
@@ -191,26 +200,36 @@ class MonitoringService:
                 # Collect system metrics
                 cpu_usage = psutil.cpu_percent(interval=1)
                 memory = psutil.virtual_memory()
-                disk = psutil.disk_usage('/')
+                disk = psutil.disk_usage("/")
                 network = psutil.net_io_counters()
 
                 # Update metrics
-                self.metrics['system']['cpu_usage'] = cpu_usage
-                self.metrics['system']['memory_usage'] = memory.percent
-                self.metrics['system']['disk_usage'] = (disk.used / disk.total) * 100
-                self.metrics['system']['network_io'] = network.bytes_sent + network.bytes_recv
-                self.metrics['system']['process_count'] = len(psutil.pids())
-                self.metrics['system']['uptime'] = time.time() - psutil.boot_time()
+                self.metrics["system"]["cpu_usage"] = cpu_usage
+                self.metrics["system"]["memory_usage"] = memory.percent
+                self.metrics["system"]["disk_usage"] = (disk.used / disk.total) * 100
+                self.metrics["system"]["network_io"] = (
+                    network.bytes_sent + network.bytes_recv
+                )
+                self.metrics["system"]["process_count"] = len(psutil.pids())
+                self.metrics["system"]["uptime"] = time.time() - psutil.boot_time()
 
                 # Store metrics history
-                await self._store_metric('system.cpu_usage', cpu_usage, MetricType.GAUGE)
-                await self._store_metric('system.memory_usage', memory.percent, MetricType.GAUGE)
-                await self._store_metric('system.disk_usage', (disk.used / disk.total) * 100, MetricType.GAUGE)
+                await self._store_metric(
+                    "system.cpu_usage", cpu_usage, MetricType.GAUGE
+                )
+                await self._store_metric(
+                    "system.memory_usage", memory.percent, MetricType.GAUGE
+                )
+                await self._store_metric(
+                    "system.disk_usage",
+                    (disk.used / disk.total) * 100,
+                    MetricType.GAUGE,
+                )
 
                 # Check for alerts
                 await self._check_system_alerts()
 
-                await asyncio.sleep(self.intervals['system_metrics'])
+                await asyncio.sleep(self.intervals["system_metrics"])
 
             except Exception as e:
                 logger.error(f"System metrics monitoring error: {e}")
@@ -222,11 +241,11 @@ class MonitoringService:
             try:
                 # Monitor service health
                 services_to_monitor = [
-                    'llm_service',
-                    'vector_service',
-                    'knowledge_graph_service',
-                    'database_service',
-                    'security_service'
+                    "llm_service",
+                    "vector_service",
+                    "knowledge_graph_service",
+                    "database_service",
+                    "security_service",
                 ]
 
                 for service_name in services_to_monitor:
@@ -235,26 +254,36 @@ class MonitoringService:
                         health_status = await self._check_service_health(service_name)
 
                         # Update service metrics
-                        if service_name not in self.metrics['services']:
-                            self.metrics['services'][service_name] = {
-                                'status': 'unknown',
-                                'response_time': 0.0,
-                                'error_rate': 0.0,
-                                'uptime': 0.0,
-                                'last_check': datetime.utcnow()
+                        if service_name not in self.metrics["services"]:
+                            self.metrics["services"][service_name] = {
+                                "status": "unknown",
+                                "response_time": 0.0,
+                                "error_rate": 0.0,
+                                "uptime": 0.0,
+                                "last_check": datetime.utcnow(),
                             }
 
-                        self.metrics['services'][service_name].update(health_status)
+                        self.metrics["services"][service_name].update(health_status)
 
                         # Store metrics
-                        await self._store_metric(f'service.{service_name}.status', 1 if health_status['status'] == 'healthy' else 0, MetricType.GAUGE)
-                        await self._store_metric(f'service.{service_name}.response_time', health_status['response_time'], MetricType.HISTOGRAM)
+                        await self._store_metric(
+                            f"service.{service_name}.status",
+                            1 if health_status["status"] == "healthy" else 0,
+                            MetricType.GAUGE,
+                        )
+                        await self._store_metric(
+                            f"service.{service_name}.response_time",
+                            health_status["response_time"],
+                            MetricType.HISTOGRAM,
+                        )
 
                     except Exception as e:
                         logger.warning(f"Failed to monitor service {service_name}: {e}")
-                        await self._store_metric(f'service.{service_name}.status', 0, MetricType.GAUGE)
+                        await self._store_metric(
+                            f"service.{service_name}.status", 0, MetricType.GAUGE
+                        )
 
-                await asyncio.sleep(self.intervals['service_health'])
+                await asyncio.sleep(self.intervals["service_health"])
 
             except Exception as e:
                 logger.error(f"Service health monitoring error: {e}")
@@ -276,7 +305,7 @@ class MonitoringService:
                 # Check performance alerts
                 await self._check_performance_alerts()
 
-                await asyncio.sleep(self.intervals['performance'])
+                await asyncio.sleep(self.intervals["performance"])
 
             except Exception as e:
                 logger.error(f"Performance monitoring error: {e}")
@@ -298,7 +327,7 @@ class MonitoringService:
                 # Check security alerts
                 await self._check_security_alerts()
 
-                await asyncio.sleep(self.intervals['security'])
+                await asyncio.sleep(self.intervals["security"])
 
             except Exception as e:
                 logger.error(f"Security monitoring error: {e}")
@@ -313,17 +342,17 @@ class MonitoringService:
 
                 for metric_name, history in self.metrics_history.items():
                     self.metrics_history[metric_name] = [
-                        metric for metric in history
-                        if metric.timestamp > cutoff_time
+                        metric for metric in history if metric.timestamp > cutoff_time
                     ]
 
                 # Clean up old alerts
                 self.alert_history = [
-                    alert for alert in self.alert_history
+                    alert
+                    for alert in self.alert_history
                     if alert.timestamp > cutoff_time
                 ]
 
-                await asyncio.sleep(self.intervals['cleanup'])
+                await asyncio.sleep(self.intervals["cleanup"])
 
             except Exception as e:
                 logger.error(f"Data cleanup error: {e}")
@@ -341,39 +370,57 @@ class MonitoringService:
             response_time = time.time() - start_time
 
             # Simulate health status (in real implementation, this would check actual service)
-            status = 'healthy' if response_time < 1.0 else 'degraded'
+            status = "healthy" if response_time < 1.0 else "degraded"
 
             return {
-                'status': status,
-                'response_time': response_time,
-                'error_rate': 0.0,
-                'uptime': 99.9,
-                'last_check': datetime.utcnow()
+                "status": status,
+                "response_time": response_time,
+                "error_rate": 0.0,
+                "uptime": 99.9,
+                "last_check": datetime.utcnow(),
             }
 
         except Exception as e:
             logger.error(f"Service health check failed for {service_name}: {e}")
             return {
-                'status': 'unhealthy',
-                'response_time': 0.0,
-                'error_rate': 100.0,
-                'uptime': 0.0,
-                'last_check': datetime.utcnow(),
-                'error': str(e)
+                "status": "unhealthy",
+                "response_time": 0.0,
+                "error_rate": 100.0,
+                "uptime": 0.0,
+                "last_check": datetime.utcnow(),
+                "error": str(e),
             }
 
     async def _collect_application_metrics(self):
         """Collect application metrics"""
         try:
             # Update application metrics
-            self.metrics['application']['active_tasks'] = len(await self._get_active_tasks())
-            self.metrics['application']['active_agents'] = len(await self._get_active_agents())
-            self.metrics['application']['active_workflows'] = len(await self._get_active_workflows())
+            self.metrics["application"]["active_tasks"] = len(
+                await self._get_active_tasks()
+            )
+            self.metrics["application"]["active_agents"] = len(
+                await self._get_active_agents()
+            )
+            self.metrics["application"]["active_workflows"] = len(
+                await self._get_active_workflows()
+            )
 
             # Store metrics
-            await self._store_metric('application.active_tasks', self.metrics['application']['active_tasks'], MetricType.GAUGE)
-            await self._store_metric('application.active_agents', self.metrics['application']['active_agents'], MetricType.GAUGE)
-            await self._store_metric('application.active_workflows', self.metrics['application']['active_workflows'], MetricType.GAUGE)
+            await self._store_metric(
+                "application.active_tasks",
+                self.metrics["application"]["active_tasks"],
+                MetricType.GAUGE,
+            )
+            await self._store_metric(
+                "application.active_agents",
+                self.metrics["application"]["active_agents"],
+                MetricType.GAUGE,
+            )
+            await self._store_metric(
+                "application.active_workflows",
+                self.metrics["application"]["active_workflows"],
+                MetricType.GAUGE,
+            )
 
         except Exception as e:
             logger.error(f"Failed to collect application metrics: {e}")
@@ -383,14 +430,16 @@ class MonitoringService:
         try:
             # Simulate database metrics collection
             db_metrics = {
-                'connections': 10,
-                'queries_per_second': 100,
-                'average_query_time': 0.05,
-                'cache_hit_rate': 0.95
+                "connections": 10,
+                "queries_per_second": 100,
+                "average_query_time": 0.05,
+                "cache_hit_rate": 0.95,
             }
 
             for metric_name, value in db_metrics.items():
-                await self._store_metric(f'database.{metric_name}', value, MetricType.GAUGE)
+                await self._store_metric(
+                    f"database.{metric_name}", value, MetricType.GAUGE
+                )
 
         except Exception as e:
             logger.error(f"Failed to collect database metrics: {e}")
@@ -400,14 +449,14 @@ class MonitoringService:
         try:
             # Simulate API metrics collection
             api_metrics = {
-                'requests_per_second': 50,
-                'average_response_time': 0.2,
-                'error_rate': 0.01,
-                'active_connections': 25
+                "requests_per_second": 50,
+                "average_response_time": 0.2,
+                "error_rate": 0.01,
+                "active_connections": 25,
             }
 
             for metric_name, value in api_metrics.items():
-                await self._store_metric(f'api.{metric_name}', value, MetricType.GAUGE)
+                await self._store_metric(f"api.{metric_name}", value, MetricType.GAUGE)
 
         except Exception as e:
             logger.error(f"Failed to collect API metrics: {e}")
@@ -417,14 +466,16 @@ class MonitoringService:
         try:
             # Simulate authentication event monitoring
             auth_events = {
-                'successful_logins': 10,
-                'failed_logins': 2,
-                'suspicious_attempts': 0,
-                'token_refreshes': 5
+                "successful_logins": 10,
+                "failed_logins": 2,
+                "suspicious_attempts": 0,
+                "token_refreshes": 5,
             }
 
             for event_name, count in auth_events.items():
-                await self._store_metric(f'auth.{event_name}', count, MetricType.COUNTER)
+                await self._store_metric(
+                    f"auth.{event_name}", count, MetricType.COUNTER
+                )
 
         except Exception as e:
             logger.error(f"Failed to monitor auth events: {e}")
@@ -434,14 +485,16 @@ class MonitoringService:
         try:
             # Simulate access pattern monitoring
             access_patterns = {
-                'unique_users': 15,
-                'api_endpoints_accessed': 8,
-                'data_access_volume': 1000,
-                'suspicious_access': 0
+                "unique_users": 15,
+                "api_endpoints_accessed": 8,
+                "data_access_volume": 1000,
+                "suspicious_access": 0,
             }
 
             for pattern_name, value in access_patterns.items():
-                await self._store_metric(f'access.{pattern_name}', value, MetricType.GAUGE)
+                await self._store_metric(
+                    f"access.{pattern_name}", value, MetricType.GAUGE
+                )
 
         except Exception as e:
             logger.error(f"Failed to monitor access patterns: {e}")
@@ -451,14 +504,16 @@ class MonitoringService:
         try:
             # Simulate suspicious activity monitoring
             suspicious_activities = {
-                'unusual_access_patterns': 0,
-                'failed_authentication_spikes': 0,
-                'data_exfiltration_attempts': 0,
-                'privilege_escalation_attempts': 0
+                "unusual_access_patterns": 0,
+                "failed_authentication_spikes": 0,
+                "data_exfiltration_attempts": 0,
+                "privilege_escalation_attempts": 0,
             }
 
             for activity_name, count in suspicious_activities.items():
-                await self._store_metric(f'security.{activity_name}', count, MetricType.COUNTER)
+                await self._store_metric(
+                    f"security.{activity_name}", count, MetricType.COUNTER
+                )
 
         except Exception as e:
             logger.error(f"Failed to monitor suspicious activities: {e}")
@@ -466,33 +521,33 @@ class MonitoringService:
     async def _check_system_alerts(self):
         """Check for system alerts"""
         try:
-            system_metrics = self.metrics['system']
+            system_metrics = self.metrics["system"]
 
             # Check CPU usage
-            if system_metrics['cpu_usage'] > self.thresholds['cpu_usage']:
+            if system_metrics["cpu_usage"] > self.thresholds["cpu_usage"]:
                 await self._create_alert(
                     AlertLevel.WARNING,
                     "High CPU Usage",
                     f"CPU usage is {system_metrics['cpu_usage']:.1f}% (threshold: {self.thresholds['cpu_usage']}%)",
-                    "system"
+                    "system",
                 )
 
             # Check memory usage
-            if system_metrics['memory_usage'] > self.thresholds['memory_usage']:
+            if system_metrics["memory_usage"] > self.thresholds["memory_usage"]:
                 await self._create_alert(
                     AlertLevel.WARNING,
                     "High Memory Usage",
                     f"Memory usage is {system_metrics['memory_usage']:.1f}% (threshold: {self.thresholds['memory_usage']}%)",
-                    "system"
+                    "system",
                 )
 
             # Check disk usage
-            if system_metrics['disk_usage'] > self.thresholds['disk_usage']:
+            if system_metrics["disk_usage"] > self.thresholds["disk_usage"]:
                 await self._create_alert(
                     AlertLevel.CRITICAL,
                     "High Disk Usage",
                     f"Disk usage is {system_metrics['disk_usage']:.1f}% (threshold: {self.thresholds['disk_usage']}%)",
-                    "system"
+                    "system",
                 )
 
         except Exception as e:
@@ -502,26 +557,28 @@ class MonitoringService:
         """Check for performance alerts"""
         try:
             # Check application performance
-            app_metrics = self.metrics['application']
+            app_metrics = self.metrics["application"]
 
             # Check response time
-            if app_metrics['response_time'] > self.thresholds['response_time']:
+            if app_metrics["response_time"] > self.thresholds["response_time"]:
                 await self._create_alert(
                     AlertLevel.WARNING,
                     "High Response Time",
                     f"Average response time is {app_metrics['response_time']:.2f}s (threshold: {self.thresholds['response_time']}s)",
-                    "performance"
+                    "performance",
                 )
 
             # Check error rate
-            if app_metrics['api_errors'] > 0:
-                error_rate = (app_metrics['api_errors'] / max(app_metrics['api_requests'], 1)) * 100
-                if error_rate > self.thresholds['error_rate']:
+            if app_metrics["api_errors"] > 0:
+                error_rate = (
+                    app_metrics["api_errors"] / max(app_metrics["api_requests"], 1)
+                ) * 100
+                if error_rate > self.thresholds["error_rate"]:
                     await self._create_alert(
                         AlertLevel.ERROR,
                         "High Error Rate",
                         f"API error rate is {error_rate:.1f}% (threshold: {self.thresholds['error_rate']}%)",
-                        "performance"
+                        "performance",
                     )
 
         except Exception as e:
@@ -537,7 +594,9 @@ class MonitoringService:
         except Exception as e:
             logger.error(f"Failed to check security alerts: {e}")
 
-    async def _create_alert(self, level: AlertLevel, title: str, message: str, source: str):
+    async def _create_alert(
+        self, level: AlertLevel, title: str, message: str, source: str
+    ):
         """Create a new alert"""
         try:
             alert_id = f"{source}_{int(time.time())}"
@@ -548,7 +607,7 @@ class MonitoringService:
                 title=title,
                 message=message,
                 source=source,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.utcnow(),
             )
 
             # Store alert
@@ -575,7 +634,7 @@ class MonitoringService:
                 value=value,
                 type=metric_type,
                 labels={},
-                timestamp=datetime.utcnow()
+                timestamp=datetime.utcnow(),
             )
 
             if name not in self.metrics_history:
@@ -620,24 +679,27 @@ class MonitoringService:
     async def get_monitoring_status(self) -> Dict[str, Any]:
         """Get monitoring status"""
         return {
-            'monitoring_enabled': self.monitoring_enabled,
-            'active_alerts': len([a for a in self.alerts.values() if not a.resolved]),
-            'total_alerts': len(self.alert_history),
-            'metrics_collected': len(self.metrics_history),
-            'system_metrics': self.metrics['system'],
-            'application_metrics': self.metrics['application'],
-            'service_metrics': self.metrics['services'],
-            'timestamp': datetime.utcnow().isoformat()
+            "monitoring_enabled": self.monitoring_enabled,
+            "active_alerts": len([a for a in self.alerts.values() if not a.resolved]),
+            "total_alerts": len(self.alert_history),
+            "metrics_collected": len(self.metrics_history),
+            "system_metrics": self.metrics["system"],
+            "application_metrics": self.metrics["application"],
+            "service_metrics": self.metrics["services"],
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
-    async def get_metrics(self, metric_name: str = None, time_range: int = 3600) -> Dict[str, Any]:
+    async def get_metrics(
+        self, metric_name: str = None, time_range: int = 3600
+    ) -> Dict[str, Any]:
         """Get metrics data"""
         try:
             if metric_name:
                 if metric_name in self.metrics_history:
                     cutoff_time = datetime.utcnow() - timedelta(seconds=time_range)
                     metrics = [
-                        metric for metric in self.metrics_history[metric_name]
+                        metric
+                        for metric in self.metrics_history[metric_name]
                         if metric.timestamp > cutoff_time
                     ]
                     return {metric_name: metrics}
@@ -648,8 +710,7 @@ class MonitoringService:
                 result = {}
                 for name, history in self.metrics_history.items():
                     result[name] = [
-                        metric for metric in history
-                        if metric.timestamp > cutoff_time
+                        metric for metric in history if metric.timestamp > cutoff_time
                     ]
                 return result
 
@@ -657,7 +718,9 @@ class MonitoringService:
             logger.error(f"Failed to get metrics: {e}")
             return {}
 
-    async def get_alerts(self, level: AlertLevel = None, resolved: bool = None) -> List[Dict[str, Any]]:
+    async def get_alerts(
+        self, level: AlertLevel = None, resolved: bool = None
+    ) -> List[Dict[str, Any]]:
         """Get alerts"""
         try:
             alerts = []
@@ -667,16 +730,20 @@ class MonitoringService:
                 if resolved is not None and alert.resolved != resolved:
                     continue
 
-                alerts.append({
-                    'id': alert.id,
-                    'level': alert.level.value,
-                    'title': alert.title,
-                    'message': alert.message,
-                    'source': alert.source,
-                    'timestamp': alert.timestamp.isoformat(),
-                    'resolved': alert.resolved,
-                    'resolved_at': alert.resolved_at.isoformat() if alert.resolved_at else None
-                })
+                alerts.append(
+                    {
+                        "id": alert.id,
+                        "level": alert.level.value,
+                        "title": alert.title,
+                        "message": alert.message,
+                        "source": alert.source,
+                        "timestamp": alert.timestamp.isoformat(),
+                        "resolved": alert.resolved,
+                        "resolved_at": (
+                            alert.resolved_at.isoformat() if alert.resolved_at else None
+                        ),
+                    }
+                )
 
             return alerts
 

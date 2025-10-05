@@ -16,6 +16,7 @@ from .intelligence_agent import IntelligenceAgent, AgentStatus
 
 class ReasoningStep(Enum):
     """Reasoning step types in ReAct framework"""
+
     OBSERVE = "observe"
     THINK = "think"
     ACT = "act"
@@ -47,7 +48,9 @@ class ReactAgent(IntelligenceAgent):
         Returns:
             Task execution results with reasoning trace
         """
-        self.logger.info(f"Starting ReAct execution for task: {task.get('id', 'unknown')}")
+        self.logger.info(
+            f"Starting ReAct execution for task: {task.get('id', 'unknown')}"
+        )
 
         # Initialize reasoning trace
         self.reasoning_trace = []
@@ -67,14 +70,16 @@ class ReactAgent(IntelligenceAgent):
                 step_result = await self._execute_reasoning_step(task)
 
                 # Add to reasoning trace
-                self.reasoning_trace.append({
-                    'step': self.current_step.value,
-                    'timestamp': datetime.utcnow().isoformat(),
-                    'result': step_result
-                })
+                self.reasoning_trace.append(
+                    {
+                        "step": self.current_step.value,
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "result": step_result,
+                    }
+                )
 
                 # Check if task is complete
-                if step_result.get('task_complete', False):
+                if step_result.get("task_complete", False):
                     break
 
                 # Move to next reasoning step
@@ -86,14 +91,18 @@ class ReactAgent(IntelligenceAgent):
             # Compile final result
             execution_time = (datetime.utcnow() - start_time).total_seconds()
             result = {
-                'task_id': task.get('id'),
-                'status': 'completed',
-                'execution_time': execution_time,
-                'reasoning_trace': self.reasoning_trace,
-                'final_result': self.reasoning_trace[-1]['result'] if self.reasoning_trace else None
+                "task_id": task.get("id"),
+                "status": "completed",
+                "execution_time": execution_time,
+                "reasoning_trace": self.reasoning_trace,
+                "final_result": (
+                    self.reasoning_trace[-1]["result"] if self.reasoning_trace else None
+                ),
             }
 
-            self.logger.info(f"ReAct execution completed for task: {task.get('id', 'unknown')}")
+            self.logger.info(
+                f"ReAct execution completed for task: {task.get('id', 'unknown')}"
+            )
             return result
 
         except Exception as e:
@@ -102,14 +111,16 @@ class ReactAgent(IntelligenceAgent):
 
             execution_time = (datetime.utcnow() - start_time).total_seconds()
             result = {
-                'task_id': task.get('id'),
-                'status': 'failed',
-                'execution_time': execution_time,
-                'reasoning_trace': self.reasoning_trace,
-                'error': str(e)
+                "task_id": task.get("id"),
+                "status": "failed",
+                "execution_time": execution_time,
+                "reasoning_trace": self.reasoning_trace,
+                "error": str(e),
             }
 
-            self.logger.error(f"ReAct execution failed for task: {task.get('id', 'unknown')}: {e}")
+            self.logger.error(
+                f"ReAct execution failed for task: {task.get('id', 'unknown')}: {e}"
+            )
             return result
 
     async def _execute_reasoning_step(self, task: Dict[str, Any]) -> Dict[str, Any]:
@@ -147,41 +158,38 @@ class ReactAgent(IntelligenceAgent):
 
         # Gather relevant information
         observations = {
-            'task_context': task,
-            'agent_status': self.status.value,
-            'available_capabilities': self.capabilities,
-            'current_time': datetime.utcnow().isoformat()
+            "task_context": task,
+            "agent_status": self.status.value,
+            "available_capabilities": self.capabilities,
+            "current_time": datetime.utcnow().isoformat(),
         }
 
         # Query knowledge sources if available
         if self.vector_service:
             try:
                 # Search for relevant information
-                search_query = task.get('description', '')
+                search_query = task.get("description", "")
                 if search_query:
                     search_results = await self.vector_service.search(
-                        query=search_query,
-                        limit=5
+                        query=search_query, limit=5
                     )
-                    observations['vector_search_results'] = search_results
+                    observations["vector_search_results"] = search_results
             except Exception as e:
                 self.logger.warning(f"Vector search failed during observation: {e}")
 
         if self.knowledge_graph:
             try:
                 # Query knowledge graph for relevant entities
-                entities = task.get('entities', [])
+                entities = task.get("entities", [])
                 if entities:
                     graph_results = await self.knowledge_graph.query_entities(entities)
-                    observations['knowledge_graph_results'] = graph_results
+                    observations["knowledge_graph_results"] = graph_results
             except Exception as e:
-                self.logger.warning(f"Knowledge graph query failed during observation: {e}")
+                self.logger.warning(
+                    f"Knowledge graph query failed during observation: {e}"
+                )
 
-        return {
-            'step': 'observe',
-            'observations': observations,
-            'next_action': 'think'
-        }
+        return {"step": "observe", "observations": observations, "next_action": "think"}
 
     async def _think(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -196,28 +204,32 @@ class ReactAgent(IntelligenceAgent):
         self.logger.debug(f"Thinking for task: {task.get('id', 'unknown')}")
 
         # Get the latest observations
-        latest_observations = self.reasoning_trace[-1]['result']['observations'] if self.reasoning_trace else {}
+        latest_observations = (
+            self.reasoning_trace[-1]["result"]["observations"]
+            if self.reasoning_trace
+            else {}
+        )
 
         # Use LLM for reasoning if available
         if self.llm_service:
             try:
                 # Create reasoning prompt
-                reasoning_prompt = self._create_reasoning_prompt(task, latest_observations)
+                reasoning_prompt = self._create_reasoning_prompt(
+                    task, latest_observations
+                )
 
                 # Get LLM reasoning
                 reasoning_result = await self.llm_service.generate(
-                    prompt=reasoning_prompt,
-                    max_tokens=500,
-                    temperature=0.7
+                    prompt=reasoning_prompt, max_tokens=500, temperature=0.7
                 )
 
                 # Parse reasoning result
                 reasoning = self._parse_reasoning_result(reasoning_result)
 
                 return {
-                    'step': 'think',
-                    'reasoning': reasoning,
-                    'next_action': reasoning.get('next_action', 'act')
+                    "step": "think",
+                    "reasoning": reasoning,
+                    "next_action": reasoning.get("next_action", "act"),
                 }
 
             except Exception as e:
@@ -241,10 +253,12 @@ class ReactAgent(IntelligenceAgent):
         self.logger.debug(f"Acting for task: {task.get('id', 'unknown')}")
 
         # Get the latest reasoning
-        latest_reasoning = self.reasoning_trace[-1]['result'] if self.reasoning_trace else {}
+        latest_reasoning = (
+            self.reasoning_trace[-1]["result"] if self.reasoning_trace else {}
+        )
 
         # Determine actions to take
-        actions = latest_reasoning.get('reasoning', {}).get('actions', [])
+        actions = latest_reasoning.get("reasoning", {}).get("actions", [])
 
         if not actions:
             # Default action based on task type
@@ -255,28 +269,28 @@ class ReactAgent(IntelligenceAgent):
         for action in actions:
             try:
                 result = await self._execute_action(action, task)
-                action_results.append({
-                    'action': action,
-                    'result': result,
-                    'status': 'success'
-                })
+                action_results.append(
+                    {"action": action, "result": result, "status": "success"}
+                )
             except Exception as e:
                 self.logger.error(f"Action execution failed: {e}")
-                action_results.append({
-                    'action': action,
-                    'result': None,
-                    'status': 'failed',
-                    'error': str(e)
-                })
+                action_results.append(
+                    {
+                        "action": action,
+                        "result": None,
+                        "status": "failed",
+                        "error": str(e),
+                    }
+                )
 
         # Determine if task is complete
         task_complete = self._evaluate_task_completion(task, action_results)
 
         return {
-            'step': 'act',
-            'actions': action_results,
-            'task_complete': task_complete,
-            'next_action': 'reflect' if task_complete else 'observe'
+            "step": "act",
+            "actions": action_results,
+            "task_complete": task_complete,
+            "next_action": "reflect" if task_complete else "observe",
         }
 
     async def _reflect(self, task: Dict[str, Any]) -> Dict[str, Any]:
@@ -292,7 +306,9 @@ class ReactAgent(IntelligenceAgent):
         self.logger.debug(f"Reflecting for task: {task.get('id', 'unknown')}")
 
         # Get the latest action results
-        latest_actions = self.reasoning_trace[-1]['result'] if self.reasoning_trace else {}
+        latest_actions = (
+            self.reasoning_trace[-1]["result"] if self.reasoning_trace else {}
+        )
 
         # Use LLM for reflection if available
         if self.llm_service:
@@ -302,18 +318,16 @@ class ReactAgent(IntelligenceAgent):
 
                 # Get LLM reflection
                 reflection_result = await self.llm_service.generate(
-                    prompt=reflection_prompt,
-                    max_tokens=300,
-                    temperature=0.5
+                    prompt=reflection_prompt, max_tokens=300, temperature=0.5
                 )
 
                 # Parse reflection result
                 reflection = self._parse_reflection_result(reflection_result)
 
                 return {
-                    'step': 'reflect',
-                    'reflection': reflection,
-                    'next_action': reflection.get('next_action', 'observe')
+                    "step": "reflect",
+                    "reflection": reflection,
+                    "next_action": reflection.get("next_action", "observe"),
                 }
 
             except Exception as e:
@@ -326,18 +340,20 @@ class ReactAgent(IntelligenceAgent):
 
     def _get_next_step(self, step_result: Dict[str, Any]) -> ReasoningStep:
         """Determine the next reasoning step based on current result."""
-        next_action = step_result.get('next_action', 'observe')
+        next_action = step_result.get("next_action", "observe")
 
-        if next_action == 'think':
+        if next_action == "think":
             return ReasoningStep.THINK
-        elif next_action == 'act':
+        elif next_action == "act":
             return ReasoningStep.ACT
-        elif next_action == 'reflect':
+        elif next_action == "reflect":
             return ReasoningStep.REFLECT
         else:
             return ReasoningStep.OBSERVE
 
-    def _create_reasoning_prompt(self, task: Dict[str, Any], observations: Dict[str, Any]) -> str:
+    def _create_reasoning_prompt(
+        self, task: Dict[str, Any], observations: Dict[str, Any]
+    ) -> str:
         """Create a reasoning prompt for the LLM."""
         return f"""
 You are an intelligence agent analyzing a task. Based on the observations, think about what actions to take.
@@ -362,7 +378,9 @@ Provide your reasoning in JSON format:
 }}
 """
 
-    def _create_reflection_prompt(self, task: Dict[str, Any], actions: Dict[str, Any]) -> str:
+    def _create_reflection_prompt(
+        self, task: Dict[str, Any], actions: Dict[str, Any]
+    ) -> str:
         """Create a reflection prompt for the LLM."""
         return f"""
 You are an intelligence agent reflecting on completed actions. Analyze the results and determine next steps.
@@ -387,24 +405,22 @@ Provide your reflection in JSON format:
         """Parse LLM reasoning result."""
         try:
             import json
+
             return json.loads(result)
         except:
-            return {
-                "analysis": result,
-                "actions": [],
-                "next_action": "act"
-            }
+            return {"analysis": result, "actions": [], "next_action": "act"}
 
     def _parse_reflection_result(self, result: str) -> Dict[str, Any]:
         """Parse LLM reflection result."""
         try:
             import json
+
             return json.loads(result)
         except:
             return {
                 "evaluation": result,
                 "lessons_learned": "",
-                "next_action": "observe"
+                "next_action": "observe",
             }
 
     def _format_observations(self, observations: Dict[str, Any]) -> str:
@@ -417,42 +433,46 @@ Provide your reflection in JSON format:
                 formatted.append(f"{key}: {value}")
         return "\n".join(formatted)
 
-    def _simple_reasoning(self, task: Dict[str, Any], observations: Dict[str, Any]) -> Dict[str, Any]:
+    def _simple_reasoning(
+        self, task: Dict[str, Any], observations: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Simple reasoning fallback when LLM is not available."""
         return {
-            'step': 'think',
-            'reasoning': {
-                'analysis': f"Analyzing task: {task.get('description', 'No description')}",
-                'actions': ['execute_task'],
-                'next_action': 'act'
+            "step": "think",
+            "reasoning": {
+                "analysis": f"Analyzing task: {task.get('description', 'No description')}",
+                "actions": ["execute_task"],
+                "next_action": "act",
             },
-            'next_action': 'act'
+            "next_action": "act",
         }
 
-    def _simple_reflection(self, task: Dict[str, Any], actions: Dict[str, Any]) -> Dict[str, Any]:
+    def _simple_reflection(
+        self, task: Dict[str, Any], actions: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Simple reflection fallback when LLM is not available."""
         return {
-            'step': 'reflect',
-            'reflection': {
-                'evaluation': "Actions completed",
-                'lessons_learned': "Task processing completed",
-                'next_action': 'complete'
+            "step": "reflect",
+            "reflection": {
+                "evaluation": "Actions completed",
+                "lessons_learned": "Task processing completed",
+                "next_action": "complete",
             },
-            'next_action': 'complete'
+            "next_action": "complete",
         }
 
     def _get_default_actions(self, task: Dict[str, Any]) -> List[str]:
         """Get default actions based on task type."""
-        task_type = task.get('type', 'unknown')
+        task_type = task.get("type", "unknown")
 
-        if task_type == 'osint':
-            return ['collect_data', 'analyze_data', 'generate_report']
-        elif task_type == 'investigation':
-            return ['gather_evidence', 'analyze_connections', 'build_timeline']
-        elif task_type == 'forensics':
-            return ['acquire_evidence', 'extract_artifacts', 'analyze_timeline']
+        if task_type == "osint":
+            return ["collect_data", "analyze_data", "generate_report"]
+        elif task_type == "investigation":
+            return ["gather_evidence", "analyze_connections", "build_timeline"]
+        elif task_type == "forensics":
+            return ["acquire_evidence", "extract_artifacts", "analyze_timeline"]
         else:
-            return ['process_task']
+            return ["process_task"]
 
     async def _execute_action(self, action: str, task: Dict[str, Any]) -> Any:
         """Execute a specific action."""
@@ -460,9 +480,11 @@ Provide your reflection in JSON format:
         self.logger.info(f"Executing action: {action}")
         return {"action": action, "status": "completed"}
 
-    def _evaluate_task_completion(self, task: Dict[str, Any], action_results: List[Dict[str, Any]]) -> bool:
+    def _evaluate_task_completion(
+        self, task: Dict[str, Any], action_results: List[Dict[str, Any]]
+    ) -> bool:
         """Evaluate if the task is complete based on action results."""
         # Simple completion logic - subclasses should override this
         return len(action_results) > 0 and all(
-            result.get('status') == 'success' for result in action_results
+            result.get("status") == "success" for result in action_results
         )

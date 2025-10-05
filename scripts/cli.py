@@ -11,23 +11,26 @@ from datetime import datetime
 from typing import Dict, Any
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 # Import AMAS components
-sys.path.append('..')
+sys.path.append("..")
 from main import AMASIntelligenceSystem
+
 
 class AMASCLI:
     """AMAS Command Line Interface"""
 
     def __init__(self):
         self.config = {
-            'llm_service_url': 'http://localhost:11434',
-            'vector_service_url': 'http://localhost:8001',
-            'graph_service_url': 'http://localhost:7474',
-            'n8n_url': 'http://localhost:5678',
-            'n8n_api_key': 'your_api_key_here'
+            "llm_service_url": "http://localhost:11434",
+            "vector_service_url": "http://localhost:8001",
+            "graph_service_url": "http://localhost:7474",
+            "n8n_url": "http://localhost:5678",
+            "n8n_api_key": "your_api_key_here",
         }
         self.amas = None
 
@@ -41,14 +44,16 @@ class AMASCLI:
             logger.error(f"Failed to initialize AMAS: {e}")
             raise
 
-    async def submit_task(self, task_type: str, description: str, priority: int = 2) -> str:
+    async def submit_task(
+        self, task_type: str, description: str, priority: int = 2
+    ) -> str:
         """Submit a task to AMAS"""
         try:
             task_data = {
-                'type': task_type,
-                'description': description,
-                'priority': priority,
-                'metadata': {}
+                "type": task_type,
+                "description": description,
+                "priority": priority,
+                "metadata": {},
             }
 
             task_id = await self.amas.submit_intelligence_task(task_data)
@@ -75,18 +80,25 @@ class AMASCLI:
             logger.error(f"Failed to get system status: {e}")
             raise
 
+
 # CLI Commands
 @click.group()
 def cli():
     """AMAS Intelligence System CLI"""
     pass
 
+
 @cli.command()
-@click.option('--task-type', required=True, help='Type of task (osint, investigation, forensics, etc.)')
-@click.option('--description', required=True, help='Task description')
-@click.option('--priority', default=2, help='Task priority (1-4)')
+@click.option(
+    "--task-type",
+    required=True,
+    help="Type of task (osint, investigation, forensics, etc.)",
+)
+@click.option("--description", required=True, help="Task description")
+@click.option("--priority", default=2, help="Task priority (1-4)")
 def submit_task(task_type: str, description: str, priority: int):
     """Submit a new intelligence task"""
+
     async def _submit_task():
         try:
             amas_cli = AMASCLI()
@@ -101,10 +113,12 @@ def submit_task(task_type: str, description: str, priority: int):
 
     asyncio.run(_submit_task())
 
+
 @cli.command()
-@click.option('--task-id', required=True, help='Task ID to check')
+@click.option("--task-id", required=True, help="Task ID to check")
 def get_result(task_id: str):
     """Get task result"""
+
     async def _get_result():
         try:
             amas_cli = AMASCLI()
@@ -119,9 +133,11 @@ def get_result(task_id: str):
 
     asyncio.run(_get_result())
 
+
 @cli.command()
 def system_status():
     """Get system status"""
+
     async def _system_status():
         try:
             amas_cli = AMASCLI()
@@ -136,11 +152,13 @@ def system_status():
 
     asyncio.run(_system_status())
 
+
 @cli.command()
-@click.option('--workflow-type', required=True, help='Type of workflow to execute')
-@click.option('--config', help='Workflow configuration (JSON)')
+@click.option("--workflow-type", required=True, help="Type of workflow to execute")
+@click.option("--config", help="Workflow configuration (JSON)")
 def execute_workflow(workflow_type: str, config: str):
     """Execute an intelligence workflow"""
+
     async def _execute_workflow():
         try:
             amas_cli = AMASCLI()
@@ -149,9 +167,12 @@ def execute_workflow(workflow_type: str, config: str):
             workflow_config = {}
             if config:
                 import json
+
                 workflow_config = json.loads(config)
 
-            result = await amas_cli.amas.execute_intelligence_workflow(workflow_type, workflow_config)
+            result = await amas_cli.amas.execute_intelligence_workflow(
+                workflow_type, workflow_config
+            )
             click.echo(f"Workflow executed: {result}")
 
         except Exception as e:
@@ -160,9 +181,11 @@ def execute_workflow(workflow_type: str, config: str):
 
     asyncio.run(_execute_workflow())
 
+
 @cli.command()
 def list_agents():
     """List all available agents"""
+
     async def _list_agents():
         try:
             amas_cli = AMASCLI()
@@ -179,9 +202,11 @@ def list_agents():
 
     asyncio.run(_list_agents())
 
+
 @cli.command()
 def list_tasks():
     """List all tasks"""
+
     async def _list_tasks():
         try:
             amas_cli = AMASCLI()
@@ -190,7 +215,9 @@ def list_tasks():
             tasks = await amas_cli.amas.orchestrator.list_tasks()
             click.echo("Tasks:")
             for task in tasks:
-                click.echo(f"  - {task['id']}: {task['description']} ({task['status']})")
+                click.echo(
+                    f"  - {task['id']}: {task['description']} ({task['status']})"
+                )
 
         except Exception as e:
             click.echo(f"Error: {e}", err=True)
@@ -198,9 +225,11 @@ def list_tasks():
 
     asyncio.run(_list_tasks())
 
+
 @cli.command()
 def health_check():
     """Run system health check"""
+
     async def _health_check():
         try:
             # Import health check
@@ -211,12 +240,16 @@ def health_check():
 
             click.echo("Health Check Report:")
             click.echo(f"Overall Status: {report['system_health']['overall_status']}")
-            click.echo(f"Healthy Services: {report['system_health']['summary']['healthy_services']}")
-            click.echo(f"Unhealthy Services: {report['system_health']['summary']['unhealthy_services']}")
+            click.echo(
+                f"Healthy Services: {report['system_health']['summary']['healthy_services']}"
+            )
+            click.echo(
+                f"Unhealthy Services: {report['system_health']['summary']['unhealthy_services']}"
+            )
 
-            if report.get('recommendations'):
+            if report.get("recommendations"):
                 click.echo("\nRecommendations:")
-                for rec in report['recommendations']:
+                for rec in report["recommendations"]:
                     click.echo(f"  - {rec}")
 
         except Exception as e:
@@ -224,6 +257,7 @@ def health_check():
             sys.exit(1)
 
     asyncio.run(_health_check())
+
 
 if __name__ == "__main__":
     cli()

@@ -80,7 +80,7 @@ def test_specific_patterns():
         },
         {
             'name': 'Actual hardcoded password',
-            'content': 'password = "secretpassword123"',
+            'content': 'password=os.getenv('DB_PASSWORD', 'default')',
             'should_flag': True
         },
         {

@@ -10,8 +10,11 @@ import logging
 from pathlib import Path
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 class AMASSetup:
     """AMAS Intelligence System Setup"""
@@ -58,7 +61,7 @@ class AMASSetup:
             self.data_dir / "vector_index",
             self.data_dir / "knowledge_graph",
             self.data_dir / "models",
-            self.data_dir / "workflows"
+            self.data_dir / "workflows",
         ]
 
         for directory in directories:
@@ -75,7 +78,9 @@ class AMASSetup:
 
         # Check Docker
         try:
-            result = subprocess.run(['docker', '--version'], capture_output=True, text=True)
+            result = subprocess.run(
+                ["docker", "--version"], capture_output=True, text=True
+            )
             if result.returncode != 0:
                 raise Exception("Docker is not installed or not running")
             logger.info(f"Docker version: {result.stdout.strip()}")
@@ -84,7 +89,9 @@ class AMASSetup:
 
         # Check Docker Compose
         try:
-            result = subprocess.run(['docker-compose', '--version'], capture_output=True, text=True)
+            result = subprocess.run(
+                ["docker-compose", "--version"], capture_output=True, text=True
+            )
             if result.returncode != 0:
                 raise Exception("Docker Compose is not installed")
             logger.info(f"Docker Compose version: {result.stdout.strip()}")
@@ -93,7 +100,7 @@ class AMASSetup:
 
         # Check NVIDIA GPU (optional)
         try:
-            result = subprocess.run(['nvidia-smi'], capture_output=True, text=True)
+            result = subprocess.run(["nvidia-smi"], capture_output=True, text=True)
             if result.returncode == 0:
                 logger.info("NVIDIA GPU detected - GPU acceleration enabled")
             else:
@@ -109,9 +116,10 @@ class AMASSetup:
         requirements_file = self.project_root / "requirements.txt"
         if requirements_file.exists():
             logger.info("Installing Python dependencies...")
-            subprocess.run([
-                sys.executable, "-m", "pip", "install", "-r", str(requirements_file)
-            ], check=True)
+            subprocess.run(
+                [sys.executable, "-m", "pip", "install", "-r", str(requirements_file)],
+                check=True,
+            )
         else:
             logger.warning("requirements.txt not found")
 
@@ -123,9 +131,17 @@ class AMASSetup:
         docker_compose_file = self.project_root / "docker-compose.yml"
         if docker_compose_file.exists():
             logger.info("Starting Docker services...")
-            subprocess.run([
-                "docker-compose", "-f", str(docker_compose_file), "up", "-d", "--build"
-            ], check=True)
+            subprocess.run(
+                [
+                    "docker-compose",
+                    "-f",
+                    str(docker_compose_file),
+                    "up",
+                    "-d",
+                    "--build",
+                ],
+                check=True,
+            )
         else:
             logger.warning("docker-compose.yml not found")
 
@@ -153,7 +169,7 @@ class AMASSetup:
             ("http://localhost:11434", "Ollama LLM Service"),
             ("http://localhost:8001", "Vector Service"),
             ("http://localhost:7474", "Neo4j Knowledge Graph"),
-            ("http://localhost:5678", "n8n Workflow Engine")
+            ("http://localhost:5678", "n8n Workflow Engine"),
         ]
 
         for url, name in services:
@@ -175,11 +191,7 @@ class AMASSetup:
         logger.info("Downloading AI models...")
 
         # Download Ollama models
-        models = [
-            "llama3.1:8b",
-            "codellama:7b",
-            "mistral:7b"
-        ]
+        models = ["llama3.1:8b", "codellama:7b", "mistral:7b"]
 
         for model in models:
             logger.info(f"Downloading model: {model}")
@@ -194,17 +206,20 @@ class AMASSetup:
             "osint_collection",
             "threat_monitoring",
             "investigation_pipeline",
-            "reporting_generation"
+            "reporting_generation",
         ]
 
         for workflow in workflows:
             logger.info(f"Setting up workflow: {workflow}")
+
 
 async def main():
     """Main setup function"""
     setup = AMASSetup()
     await setup.setup_system()
 
+
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(main())

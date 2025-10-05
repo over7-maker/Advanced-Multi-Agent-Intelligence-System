@@ -13,6 +13,7 @@ from typing import Dict, Any
 
 logger = logging.getLogger(__name__)
 
+
 class OfflineSetup:
     """Complete offline setup for AMAS system"""
 
@@ -41,7 +42,7 @@ class OfflineSetup:
                 self.data_path / "evidence",
                 self.models_path / "llm",
                 self.models_path / "embedding",
-                self.models_path / "classification"
+                self.models_path / "classification",
             ]
 
             for directory in directories:
@@ -94,7 +95,7 @@ AMAS_LOGS_PATH=/workspace/logs
 """
 
             env_file = self.workspace_path / ".env.offline"
-            with open(env_file, 'w') as f:
+            with open(env_file, "w") as f:
                 f.write(env_content)
             logger.info(f"   ✅ Created: {env_file}")
 
@@ -138,7 +139,7 @@ rich==13.7.0
 """
 
             req_file = self.workspace_path / "requirements-offline.txt"
-            with open(req_file, 'w') as f:
+            with open(req_file, "w") as f:
                 f.write(requirements_content)
             logger.info(f"   ✅ Created: {req_file}")
 
@@ -163,7 +164,7 @@ echo "✅ AMAS Offline System started"
 """
 
             startup_file = self.workspace_path / "start_offline.sh"
-            with open(startup_file, 'w') as f:
+            with open(startup_file, "w") as f:
                 f.write(startup_script)
             os.chmod(startup_file, 0o755)
             logger.info(f"   ✅ Created: {startup_file}")
@@ -188,43 +189,44 @@ echo "✅ AMAS Offline System started"
                         "hash": "abc123def456",
                         "severity": "high",
                         "source": "local_db",
-                        "timestamp": "2024-09-26T18:00:00Z"
+                        "timestamp": "2024-09-26T18:00:00Z",
                     },
                     {
                         "name": "Ransomware.Crypto.Offline",
                         "hash": "def456ghi789",
                         "severity": "critical",
                         "source": "local_db",
-                        "timestamp": "2024-09-26T18:00:00Z"
-                    }
+                        "timestamp": "2024-09-26T18:00:00Z",
+                    },
                 ],
                 "ip_reputation": [
                     {
                         "ip": "192.168.1.100",
                         "reputation": "malicious",
                         "source": "local_db",
-                        "confidence": 0.9
+                        "confidence": 0.9,
                     },
                     {
                         "ip": "10.0.0.1",
                         "reputation": "clean",
                         "source": "local_db",
-                        "confidence": 0.95
-                    }
+                        "confidence": 0.95,
+                    },
                 ],
                 "domain_reputation": [
                     {
                         "domain": "malicious-offline.example.com",
                         "reputation": "malicious",
                         "source": "local_db",
-                        "confidence": 0.85
+                        "confidence": 0.85,
                     }
-                ]
+                ],
             }
 
             threat_file = self.data_path / "datasets" / "threat_intelligence.json"
-            with open(threat_file, 'w') as f:
+            with open(threat_file, "w") as f:
                 import json
+
                 json.dump(threat_intel, f, indent=2)
             logger.info(f"   ✅ Created: {threat_file}")
 
@@ -235,7 +237,7 @@ echo "✅ AMAS Offline System started"
                         "name": "Local Security News",
                         "url": "local://news/security",
                         "type": "offline",
-                        "last_updated": "2024-09-26T18:00:00Z"
+                        "last_updated": "2024-09-26T18:00:00Z",
                     }
                 ],
                 "social_media": [
@@ -243,7 +245,7 @@ echo "✅ AMAS Offline System started"
                         "platform": "local_forum",
                         "url": "local://forum/security",
                         "type": "offline",
-                        "last_updated": "2024-09-26T18:00:00Z"
+                        "last_updated": "2024-09-26T18:00:00Z",
                     }
                 ],
                 "web_sources": [
@@ -251,14 +253,15 @@ echo "✅ AMAS Offline System started"
                         "name": "Local Web Archive",
                         "url": "local://archive/web",
                         "type": "offline",
-                        "last_updated": "2024-09-26T18:00:00Z"
+                        "last_updated": "2024-09-26T18:00:00Z",
                     }
-                ]
+                ],
             }
 
             osint_file = self.data_path / "datasets" / "osint_sources.json"
-            with open(osint_file, 'w') as f:
+            with open(osint_file, "w") as f:
                 import json
+
                 json.dump(osint_data, f, indent=2)
             logger.info(f"   ✅ Created: {osint_file}")
 
@@ -312,7 +315,7 @@ CMD ["python3", "offline_example.py"]
 """
 
             dockerfile = self.workspace_path / "Dockerfile.offline"
-            with open(dockerfile, 'w') as f:
+            with open(dockerfile, "w") as f:
                 f.write(dockerfile_content)
             logger.info(f"   ✅ Created: {dockerfile}")
 
@@ -332,7 +335,7 @@ echo "📊 Health: http://localhost:8000/health"
 """
 
             start_script = self.workspace_path / "start_offline_docker.sh"
-            with open(start_script, 'w') as f:
+            with open(start_script, "w") as f:
                 f.write(start_offline_script)
             os.chmod(start_script, 0o755)
             logger.info(f"   ✅ Created: {start_script}")
@@ -389,6 +392,7 @@ echo "📊 Health: http://localhost:8000/health"
             logger.error(f"Error in offline setup: {e}")
             return False
 
+
 def main():
     """Main setup function"""
     try:
@@ -405,6 +409,7 @@ def main():
     except Exception as e:
         logger.error(f"Setup error: {e}")
         return 1
+
 
 if __name__ == "__main__":
     exit_code = main()

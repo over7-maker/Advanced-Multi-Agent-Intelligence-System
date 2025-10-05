@@ -13,18 +13,22 @@ from enum import Enum
 import uuid
 from dataclasses import dataclass
 
-from amas.agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
-from amas.agents.osint.osint_agent import OSINTAgent
-from amas.agents.investigation.investigation_agent import InvestigationAgent
-from amas.agents.forensics.forensics_agent import ForensicsAgent
-from amas.agents.data_analysis.data_analysis_agent import DataAnalysisAgent
-from amas.agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
-from amas.agents.metadata.metadata_agent import MetadataAgent
-from amas.agents.reporting.reporting_agent import ReportingAgent
+from ..agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
+from ..agents.osint.osint_agent import OSINTAgent
+from ..agents.investigation.investigation_agent import InvestigationAgent
+from ..agents.forensics.forensics_agent import ForensicsAgent
+from ..agents.data_analysis.data_analysis_agent import DataAnalysisAgent
+from ..agents.reverse_engineering.reverse_engineering_agent import (
+    ReverseEngineeringAgent,
+)
+from ..agents.metadata.metadata_agent import MetadataAgent
+from ..agents.reporting.reporting_agent import ReportingAgent
+from ..agents.technology_monitor.technology_monitor_agent import TechnologyMonitorAgent
 
 
 class TaskPriority(Enum):
     """Task priority levels"""
+
     LOW = 1
     MEDIUM = 2
     HIGH = 3
@@ -33,6 +37,7 @@ class TaskPriority(Enum):
 
 class TaskStatus(Enum):
     """Task status enumeration"""
+
     PENDING = "pending"
     ASSIGNED = "assigned"
     IN_PROGRESS = "in_progress"
@@ -44,6 +49,7 @@ class TaskStatus(Enum):
 @dataclass
 class IntelligenceTask:
     """Intelligence task definition"""
+
     id: str
     type: str
     description: str
@@ -77,7 +83,7 @@ class IntelligenceOrchestrator:
         llm_service: Any = None,
         vector_service: Any = None,
         knowledge_graph: Any = None,
-        security_service: Any = None
+        security_service: Any = None,
     ):
         """
         Initialize the intelligence orchestrator.
@@ -108,12 +114,12 @@ class IntelligenceOrchestrator:
 
         # Performance metrics
         self.metrics = {
-            'tasks_processed': 0,
-            'tasks_completed': 0,
-            'tasks_failed': 0,
-            'average_task_time': 0.0,
-            'active_agents': 0,
-            'active_tasks': 0
+            "tasks_processed": 0,
+            "tasks_completed": 0,
+            "tasks_failed": 0,
+            "average_task_time": 0.0,
+            "active_agents": 0,
+            "active_tasks": 0,
         }
 
         # Logging
@@ -147,7 +153,7 @@ class IntelligenceOrchestrator:
                 llm_service=self.llm_service,
                 vector_service=self.vector_service,
                 knowledge_graph=self.knowledge_graph,
-                security_service=self.security_service
+                security_service=self.security_service,
             )
             self.register_agent(osint_agent)
 
@@ -158,7 +164,7 @@ class IntelligenceOrchestrator:
                 llm_service=self.llm_service,
                 vector_service=self.vector_service,
                 knowledge_graph=self.knowledge_graph,
-                security_service=self.security_service
+                security_service=self.security_service,
             )
             self.register_agent(investigation_agent)
 
@@ -169,7 +175,7 @@ class IntelligenceOrchestrator:
                 llm_service=self.llm_service,
                 vector_service=self.vector_service,
                 knowledge_graph=self.knowledge_graph,
-                security_service=self.security_service
+                security_service=self.security_service,
             )
             self.register_agent(forensics_agent)
 
@@ -180,7 +186,7 @@ class IntelligenceOrchestrator:
                 llm_service=self.llm_service,
                 vector_service=self.vector_service,
                 knowledge_graph=self.knowledge_graph,
-                security_service=self.security_service
+                security_service=self.security_service,
             )
             self.register_agent(data_analysis_agent)
 
@@ -191,7 +197,7 @@ class IntelligenceOrchestrator:
                 llm_service=self.llm_service,
                 vector_service=self.vector_service,
                 knowledge_graph=self.knowledge_graph,
-                security_service=self.security_service
+                security_service=self.security_service,
             )
             self.register_agent(reverse_engineering_agent)
 
@@ -202,7 +208,7 @@ class IntelligenceOrchestrator:
                 llm_service=self.llm_service,
                 vector_service=self.vector_service,
                 knowledge_graph=self.knowledge_graph,
-                security_service=self.security_service
+                security_service=self.security_service,
             )
             self.register_agent(metadata_agent)
 
@@ -213,7 +219,7 @@ class IntelligenceOrchestrator:
                 llm_service=self.llm_service,
                 vector_service=self.vector_service,
                 knowledge_graph=self.knowledge_graph,
-                security_service=self.security_service
+                security_service=self.security_service,
             )
             self.register_agent(reporting_agent)
 
@@ -227,137 +233,118 @@ class IntelligenceOrchestrator:
         """Initialize workflow templates for common intelligence operations."""
         try:
             # OSINT Investigation Workflow
-            self.workflows['osint_investigation'] = {
-                'name': 'OSINT Investigation Workflow',
-                'description': 'Comprehensive OSINT investigation workflow',
-                'steps': [
+            self.workflows["osint_investigation"] = {
+                "name": "OSINT Investigation Workflow",
+                "description": "Comprehensive OSINT investigation workflow",
+                "steps": [
                     {
-                        'step_id': 'osint_collection',
-                        'agent_type': 'osint',
-                        'action': 'collect_data',
-                        'parameters': {
-                            'sources': [],
-                            'keywords': [],
-                            'filters': {}
-                        }
+                        "step_id": "osint_collection",
+                        "agent_type": "osint",
+                        "action": "collect_data",
+                        "parameters": {"sources": [], "keywords": [], "filters": {}},
                     },
                     {
-                        'step_id': 'data_analysis',
-                        'agent_type': 'data_analysis',
-                        'action': 'analyze_data',
-                        'parameters': {
-                            'analysis_type': 'correlation',
-                            'entities': []
-                        }
+                        "step_id": "data_analysis",
+                        "agent_type": "data_analysis",
+                        "action": "analyze_data",
+                        "parameters": {"analysis_type": "correlation", "entities": []},
                     },
                     {
-                        'step_id': 'investigation',
-                        'agent_type': 'investigation',
-                        'action': 'investigate_entities',
-                        'parameters': {
-                            'entities': [],
-                            'depth': 'deep'
-                        }
+                        "step_id": "investigation",
+                        "agent_type": "investigation",
+                        "action": "investigate_entities",
+                        "parameters": {"entities": [], "depth": "deep"},
                     },
                     {
-                        'step_id': 'reporting',
-                        'agent_type': 'reporting',
-                        'action': 'generate_report',
-                        'parameters': {
-                            'report_type': 'intelligence_report',
-                            'format': 'comprehensive'
-                        }
-                    }
-                ]
+                        "step_id": "reporting",
+                        "agent_type": "reporting",
+                        "action": "generate_report",
+                        "parameters": {
+                            "report_type": "intelligence_report",
+                            "format": "comprehensive",
+                        },
+                    },
+                ],
             }
 
             # Digital Forensics Workflow
-            self.workflows['digital_forensics'] = {
-                'name': 'Digital Forensics Workflow',
-                'description': 'Digital forensics investigation workflow',
-                'steps': [
+            self.workflows["digital_forensics"] = {
+                "name": "Digital Forensics Workflow",
+                "description": "Digital forensics investigation workflow",
+                "steps": [
                     {
-                        'step_id': 'evidence_acquisition',
-                        'agent_type': 'forensics',
-                        'action': 'acquire_evidence',
-                        'parameters': {
-                            'source': '',
-                            'acquisition_type': 'forensic'
-                        }
+                        "step_id": "evidence_acquisition",
+                        "agent_type": "forensics",
+                        "action": "acquire_evidence",
+                        "parameters": {"source": "", "acquisition_type": "forensic"},
                     },
                     {
-                        'step_id': 'metadata_analysis',
-                        'agent_type': 'metadata',
-                        'action': 'extract_metadata',
-                        'parameters': {
-                            'files': [],
-                            'analysis_depth': 'comprehensive'
-                        }
+                        "step_id": "metadata_analysis",
+                        "agent_type": "metadata",
+                        "action": "extract_metadata",
+                        "parameters": {"files": [], "analysis_depth": "comprehensive"},
                     },
                     {
-                        'step_id': 'timeline_reconstruction',
-                        'agent_type': 'forensics',
-                        'action': 'reconstruct_timeline',
-                        'parameters': {
-                            'evidence': [],
-                            'timeframe': 'all'
-                        }
+                        "step_id": "timeline_reconstruction",
+                        "agent_type": "forensics",
+                        "action": "reconstruct_timeline",
+                        "parameters": {"evidence": [], "timeframe": "all"},
                     },
                     {
-                        'step_id': 'reporting',
-                        'agent_type': 'reporting',
-                        'action': 'generate_report',
-                        'parameters': {
-                            'report_type': 'forensics_report',
-                            'format': 'detailed'
-                        }
-                    }
-                ]
+                        "step_id": "reporting",
+                        "agent_type": "reporting",
+                        "action": "generate_report",
+                        "parameters": {
+                            "report_type": "forensics_report",
+                            "format": "detailed",
+                        },
+                    },
+                ],
             }
 
             # Threat Intelligence Workflow
-            self.workflows['threat_intelligence'] = {
-                'name': 'Threat Intelligence Workflow',
-                'description': 'Threat intelligence collection and analysis workflow',
-                'steps': [
+            self.workflows["threat_intelligence"] = {
+                "name": "Threat Intelligence Workflow",
+                "description": "Threat intelligence collection and analysis workflow",
+                "steps": [
                     {
-                        'step_id': 'osint_monitoring',
-                        'agent_type': 'osint',
-                        'action': 'monitor_sources',
-                        'parameters': {
-                            'sources': [],
-                            'keywords': [],
-                            'monitoring_type': 'continuous'
-                        }
+                        "step_id": "osint_monitoring",
+                        "agent_type": "osint",
+                        "action": "monitor_sources",
+                        "parameters": {
+                            "sources": [],
+                            "keywords": [],
+                            "monitoring_type": "continuous",
+                        },
                     },
                     {
-                        'step_id': 'threat_analysis',
-                        'agent_type': 'data_analysis',
-                        'action': 'analyze_threats',
-                        'parameters': {
-                            'analysis_type': 'threat_assessment',
-                            'indicators': []
-                        }
+                        "step_id": "threat_analysis",
+                        "agent_type": "data_analysis",
+                        "action": "analyze_threats",
+                        "parameters": {
+                            "analysis_type": "threat_assessment",
+                            "indicators": [],
+                        },
                     },
                     {
-                        'step_id': 'correlation',
-                        'agent_type': 'investigation',
-                        'action': 'correlate_threats',
-                        'parameters': {
-                            'threat_data': [],
-                            'correlation_type': 'multi_source'
-                        }
+                        "step_id": "correlation",
+                        "agent_type": "investigation",
+                        "action": "correlate_threats",
+                        "parameters": {
+                            "threat_data": [],
+                            "correlation_type": "multi_source",
+                        },
                     },
                     {
-                        'step_id': 'reporting',
-                        'agent_type': 'reporting',
-                        'action': 'generate_report',
-                        'parameters': {
-                            'report_type': 'threat_intelligence_report',
-                            'format': 'executive_summary'
-                        }
-                    }
-                ]
+                        "step_id": "reporting",
+                        "agent_type": "reporting",
+                        "action": "generate_report",
+                        "parameters": {
+                            "report_type": "threat_intelligence_report",
+                            "format": "executive_summary",
+                        },
+                    },
+                ],
             }
 
             self.logger.info("Workflow templates initialized successfully")
@@ -392,7 +379,7 @@ class IntelligenceOrchestrator:
             await agent.start()
 
             # Update metrics
-            self.metrics['active_agents'] = len(self.agents)
+            self.metrics["active_agents"] = len(self.agents)
 
             self.logger.info(f"Agent {agent_id} registered successfully")
             return True
@@ -425,7 +412,7 @@ class IntelligenceOrchestrator:
             del self.agent_capabilities[agent_id]
 
             # Update metrics
-            self.metrics['active_agents'] = len(self.agents)
+            self.metrics["active_agents"] = len(self.agents)
 
             self.logger.info(f"Agent {agent_id} unregistered successfully")
             return True
@@ -440,7 +427,7 @@ class IntelligenceOrchestrator:
         description: str,
         parameters: Dict[str, Any],
         priority: TaskPriority = TaskPriority.MEDIUM,
-        workflow_id: Optional[str] = None
+        workflow_id: Optional[str] = None,
     ) -> str:
         """
         Submit a new intelligence task.
@@ -465,7 +452,7 @@ class IntelligenceOrchestrator:
                 description=description,
                 priority=priority,
                 parameters=parameters,
-                workflow_id=workflow_id
+                workflow_id=workflow_id,
             )
 
             # Store task
@@ -571,14 +558,19 @@ class IntelligenceOrchestrator:
             score = 1.0
 
             # Adjust based on current workload
-            active_tasks = sum(1 for task in self.active_tasks.values()
-                             if task.assigned_agent == agent_id)
+            active_tasks = sum(
+                1
+                for task in self.active_tasks.values()
+                if task.assigned_agent == agent_id
+            )
             score -= active_tasks * 0.1
 
             # Adjust based on agent performance
-            if hasattr(agent, 'metrics'):
-                success_rate = agent.metrics.get('tasks_completed', 0) / max(
-                    agent.metrics.get('tasks_completed', 0) + agent.metrics.get('tasks_failed', 0), 1
+            if hasattr(agent, "metrics"):
+                success_rate = agent.metrics.get("tasks_completed", 0) / max(
+                    agent.metrics.get("tasks_completed", 0)
+                    + agent.metrics.get("tasks_failed", 0),
+                    1,
                 )
                 score += success_rate * 0.5
 
@@ -614,7 +606,9 @@ class IntelligenceOrchestrator:
             self.logger.info(f"Task {task_id} assigned to agent {agent_id}")
 
         except Exception as e:
-            self.logger.error(f"Failed to assign task {task_id} to agent {agent_id}: {e}")
+            self.logger.error(
+                f"Failed to assign task {task_id} to agent {agent_id}: {e}"
+            )
 
     async def _execute_task(self, task_id: str, agent_id: str):
         """
@@ -632,12 +626,14 @@ class IntelligenceOrchestrator:
             task.status = TaskStatus.IN_PROGRESS
 
             # Execute task
-            result = await agent.process_task({
-                'id': task_id,
-                'type': task.type,
-                'description': task.description,
-                'parameters': task.parameters
-            })
+            result = await agent.process_task(
+                {
+                    "id": task_id,
+                    "type": task.type,
+                    "description": task.description,
+                    "parameters": task.parameters,
+                }
+            )
 
             # Update task with result
             task.result = result
@@ -649,8 +645,8 @@ class IntelligenceOrchestrator:
                 del self.active_tasks[task_id]
 
             # Update metrics
-            self.metrics['tasks_processed'] += 1
-            self.metrics['tasks_completed'] += 1
+            self.metrics["tasks_processed"] += 1
+            self.metrics["tasks_completed"] += 1
 
             execution_time = (task.completed_at - task.started_at).total_seconds()
             self._update_average_task_time(execution_time)
@@ -668,19 +664,19 @@ class IntelligenceOrchestrator:
                 del self.active_tasks[task_id]
 
             # Update metrics
-            self.metrics['tasks_processed'] += 1
-            self.metrics['tasks_failed'] += 1
+            self.metrics["tasks_processed"] += 1
+            self.metrics["tasks_failed"] += 1
 
             self.logger.error(f"Task {task_id} failed: {e}")
 
     def _update_average_task_time(self, execution_time: float):
         """Update average task execution time."""
-        total_tasks = self.metrics['tasks_processed']
+        total_tasks = self.metrics["tasks_processed"]
         if total_tasks > 0:
-            current_avg = self.metrics['average_task_time']
-            self.metrics['average_task_time'] = (
-                (current_avg * (total_tasks - 1) + execution_time) / total_tasks
-            )
+            current_avg = self.metrics["average_task_time"]
+            self.metrics["average_task_time"] = (
+                current_avg * (total_tasks - 1) + execution_time
+            ) / total_tasks
 
     async def get_task_status(self, task_id: str) -> Optional[Dict[str, Any]]:
         """
@@ -697,17 +693,19 @@ class IntelligenceOrchestrator:
 
         task = self.tasks[task_id]
         return {
-            'task_id': task_id,
-            'type': task.type,
-            'description': task.description,
-            'status': task.status.value,
-            'priority': task.priority.value,
-            'assigned_agent': task.assigned_agent,
-            'created_at': task.created_at.isoformat(),
-            'started_at': task.started_at.isoformat() if task.started_at else None,
-            'completed_at': task.completed_at.isoformat() if task.completed_at else None,
-            'result': task.result,
-            'error': task.error
+            "task_id": task_id,
+            "type": task.type,
+            "description": task.description,
+            "status": task.status.value,
+            "priority": task.priority.value,
+            "assigned_agent": task.assigned_agent,
+            "created_at": task.created_at.isoformat(),
+            "started_at": task.started_at.isoformat() if task.started_at else None,
+            "completed_at": (
+                task.completed_at.isoformat() if task.completed_at else None
+            ),
+            "result": task.result,
+            "error": task.error,
         }
 
     async def get_agent_status(self, agent_id: str) -> Optional[Dict[str, Any]]:
@@ -734,18 +732,16 @@ class IntelligenceOrchestrator:
             System status information
         """
         return {
-            'orchestrator_status': 'active',
-            'active_agents': len(self.agents),
-            'active_tasks': len(self.active_tasks),
-            'total_tasks': len(self.tasks),
-            'metrics': self.metrics,
-            'timestamp': datetime.utcnow().isoformat()
+            "orchestrator_status": "active",
+            "active_agents": len(self.agents),
+            "active_tasks": len(self.active_tasks),
+            "total_tasks": len(self.tasks),
+            "metrics": self.metrics,
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
     async def execute_workflow(
-        self,
-        workflow_id: str,
-        parameters: Dict[str, Any]
+        self, workflow_id: str, parameters: Dict[str, Any]
     ) -> str:
         """
         Execute a workflow.
@@ -766,18 +762,20 @@ class IntelligenceOrchestrator:
 
             # Create workflow instance
             self.workflow_instances[execution_id] = {
-                'workflow_id': workflow_id,
-                'status': 'running',
-                'current_step': 0,
-                'parameters': parameters,
-                'results': {},
-                'created_at': datetime.utcnow().isoformat()
+                "workflow_id": workflow_id,
+                "status": "running",
+                "current_step": 0,
+                "parameters": parameters,
+                "results": {},
+                "created_at": datetime.utcnow().isoformat(),
             }
 
             # Execute workflow steps
             asyncio.create_task(self._execute_workflow_steps(execution_id))
 
-            self.logger.info(f"Workflow {workflow_id} execution started: {execution_id}")
+            self.logger.info(
+                f"Workflow {workflow_id} execution started: {execution_id}"
+            )
             return execution_id
 
         except Exception as e:
@@ -788,37 +786,37 @@ class IntelligenceOrchestrator:
         """Execute workflow steps sequentially."""
         try:
             instance = self.workflow_instances[execution_id]
-            workflow = self.workflows[instance['workflow_id']]
+            workflow = self.workflows[instance["workflow_id"]]
 
-            for step in workflow['steps']:
+            for step in workflow["steps"]:
                 # Submit task for this step
                 task_id = await self.submit_task(
-                    task_type=step['agent_type'],
+                    task_type=step["agent_type"],
                     description=f"Workflow step: {step['step_id']}",
-                    parameters={**instance['parameters'], **step['parameters']},
-                    priority=TaskPriority.MEDIUM
+                    parameters={**instance["parameters"], **step["parameters"]},
+                    priority=TaskPriority.MEDIUM,
                 )
 
                 # Wait for task completion
                 while True:
                     task_status = await self.get_task_status(task_id)
-                    if task_status and task_status['status'] in ['completed', 'failed']:
+                    if task_status and task_status["status"] in ["completed", "failed"]:
                         break
                     await asyncio.sleep(1)
 
                 # Store step result
-                instance['results'][step['step_id']] = task_status
+                instance["results"][step["step_id"]] = task_status
 
-                if task_status['status'] == 'failed':
-                    instance['status'] = 'failed'
+                if task_status["status"] == "failed":
+                    instance["status"] = "failed"
                     break
 
-            if instance['status'] != 'failed':
-                instance['status'] = 'completed'
+            if instance["status"] != "failed":
+                instance["status"] = "completed"
 
             self.logger.info(f"Workflow execution {execution_id} completed")
 
         except Exception as e:
             self.logger.error(f"Workflow execution {execution_id} failed: {e}")
-            instance['status'] = 'failed'
-            instance['error'] = str(e)
+            instance["status"] = "failed"
+            instance["error"] = str(e)
