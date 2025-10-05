@@ -3,13 +3,14 @@ Enhanced Authentication Module for AMAS
 """
 
 import asyncio
-import logging
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
-import jwt
-import bcrypt
-import secrets
 import hashlib
+import logging
+import secrets
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+import bcrypt
+import jwt
 from passlib.context import CryptContext
 from passlib.hash import bcrypt
 
@@ -127,9 +128,10 @@ class AuthenticationManager:
         # In a real implementation, you would check against a database
         # For development/testing, use environment variables instead of hardcoded passwords
         import os
-        admin_password = os.environ.get('AMAS_ADMIN_PASSWORD', '')
-        user_password = os.environ.get('AMAS_USER_PASSWORD', '')
-        
+
+        admin_password = os.environ.get("AMAS_ADMIN_PASSWORD", "")
+        user_password = os.environ.get("AMAS_USER_PASSWORD", "")
+
         if username == "admin" and password == admin_password and admin_password:
             return {
                 "user_id": "admin",

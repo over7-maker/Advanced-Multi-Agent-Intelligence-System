@@ -5,10 +5,10 @@ This module handles inter-agent communication and coordination.
 """
 
 import asyncio
-import logging
-from typing import Dict, Any, List, Optional, Callable
-from datetime import datetime
 import json
+import logging
+from datetime import datetime
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 

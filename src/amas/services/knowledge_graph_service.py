@@ -3,10 +3,10 @@ Knowledge Graph Service Implementation for AMAS
 """
 
 import asyncio
-import logging
-from typing import Dict, Any, List, Optional, Tuple
 import json
+import logging
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     from neo4j import AsyncGraphDatabase

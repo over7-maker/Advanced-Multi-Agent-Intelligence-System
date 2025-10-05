@@ -5,9 +5,10 @@ Centralized configuration management using Pydantic settings.
 """
 
 import os
-from typing import Dict, Any, Optional, List
-from pydantic import BaseSettings, Field, validator
 from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+from pydantic import BaseSettings, Field, validator
 
 
 class DatabaseConfig(BaseSettings):

@@ -3,12 +3,12 @@
 Test Fallback System - Comprehensive test of the intelligent fallback system
 """
 
-import os
-import sys
 import json
 import logging
-from typing import Dict, List, Any, Optional
+import os
+import sys
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 # Configure logging
 logging.basicConfig(
