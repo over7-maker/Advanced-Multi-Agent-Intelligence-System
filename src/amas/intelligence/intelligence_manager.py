@@ -8,7 +8,7 @@ import asyncio
 import logging
 from typing import Dict, Any
 from .collective_learning import CollectiveIntelligenceEngine
-from .adaptive_personality import PersonalityOrchestrator
+from ..agents.adaptive_personality import PersonalityOrchestrator
 from .predictive_engine import PredictiveIntelligenceEngine
 
 class AMASIntelligenceManager:
