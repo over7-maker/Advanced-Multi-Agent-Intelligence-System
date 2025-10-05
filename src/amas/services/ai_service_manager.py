@@ -4,15 +4,16 @@ Handles 6 different AI providers with intelligent failover
 """
 
 import asyncio
+import json
 import logging
 import os
 import time
-from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass
-from enum import Enum
-import aiohttp
-import json
 from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
+
+import aiohttp
 
 logger = logging.getLogger(__name__)
 

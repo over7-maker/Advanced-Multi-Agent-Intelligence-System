@@ -17,25 +17,26 @@ Features:
 - Comprehensive error handling and retry logic
 """
 
-import os
-import sys
 import asyncio
 import json
-import time
 import logging
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union, Tuple
+import os
+import sys
+import time
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import aiohttp
-import httpx
-from openai import OpenAI, AsyncOpenAI
 import cohere
+import httpx
+from openai import AsyncOpenAI, OpenAI
 from tenacity import (
     retry,
+    retry_if_exception_type,
     stop_after_attempt,
     wait_exponential,
-    retry_if_exception_type,
 )
 
 # Configure logging

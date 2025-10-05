@@ -10,9 +10,9 @@ __author__ = "AMAS Development Team"
 __email__ = "team@amas.ai"
 __license__ = "MIT"
 
+from .config.settings import AMASConfig
 from .core.orchestrator import IntelligenceOrchestrator
 from .services.service_manager import ServiceManager
-from .config.settings import AMASConfig
 
 __all__ = [
     "IntelligenceOrchestrator",

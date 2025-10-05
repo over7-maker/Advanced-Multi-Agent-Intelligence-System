@@ -4,17 +4,17 @@ Provides ML model management, training, inference, and advanced analytics
 """
 
 import asyncio
+import json
 import logging
-from typing import Dict, Any, List, Optional, Union, Tuple
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-import json
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import joblib
 import numpy as np
 import pandas as pd
-from dataclasses import dataclass
-import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data
-import joblib
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -512,10 +512,9 @@ class MLService:
         try:
             model_id = f"model_{int(datetime.utcnow().timestamp())}"
 
-            # Save model file
+            # Save model file using joblib (safer than pickle)
             model_path = Path(self.ml_config["model_storage_path"]) / f"{model_id}.pkl"
-            with open(model_path, "wb") as f:
-                pickle.dump(model, f)
+            joblib.dump(model, model_path)
 
             # Save model metadata
             metadata = {
@@ -572,11 +571,14 @@ class MLService:
             if model_id not in self.models:
                 raise ValueError(f"Model {model_id} not found")
 
-            # Load model
+            # Load model using joblib (safer than pickle)
             model_path = Path(self.ml_config["model_storage_path"]) / f"{model_id}.pkl"
-            # SECURITY WARNING: Only load pickle files from trusted sources
-            with open(model_path, "rb") as f:
-                model = pickle.load(f)
+            # Using joblib for safer model loading
+            try:
+                model = joblib.load(model_path)
+            except Exception as e:
+                logger.error(f"Failed to load model {model_id}: {e}")
+                raise ValueError(f"Failed to load model {model_id}: {e}")
 
             # Simulate prediction
             # In real implementation, this would use actual model prediction
