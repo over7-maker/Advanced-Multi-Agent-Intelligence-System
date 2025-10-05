@@ -1,4 +1,8 @@
-"""Database service for AMAS - minimal valid version"""
+"""Database service for AMAS"""
+
 class DatabaseService:
-    def connect(self):
+    """Simple database service"""
+    
+    def connect(self) -> None:
+        """Connect to database"""
         pass

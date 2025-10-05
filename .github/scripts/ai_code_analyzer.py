@@ -284,10 +284,10 @@ Keep the analysis concise but thorough.
         import re
         security_patterns = {
             'hardcoded_secrets': [
-                (r'password\s*=\s*["\'][^"\'][email protected]+["\'']', 'hardcoded password'),
-                (r'api_key\s*=\s*["\'][^"\'][email protected]+["\'']', 'hardcoded API key'),
-                (r'secret\s*=\s*["\'][^"\'][email protected]+["\'']', 'hardcoded secret'),
-                (r'(?<!github_)token\s*=\s*["\'][^"\'][email protected]+["\'']', 'hardcoded token'),
+                (r'password\s*=\s*["\'][^"\']+["\'']', 'hardcoded password'),
+                (r'api_key\s*=\s*["\'][^"\']+["\'']', 'hardcoded API key'),
+                (r'secret\s*=\s*["\'][^"\']+["\'']', 'hardcoded secret'),
+                (r'(?<!github_)token\s*=\s*["\'][^"\']+["\'']', 'hardcoded token'),
             ],
             'sql_injection': [
                 (r'execute\s*\([^)]*\+', 'SQL injection via string concatenation'),

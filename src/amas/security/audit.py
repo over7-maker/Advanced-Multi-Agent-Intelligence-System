@@ -1,4 +1,8 @@
-"""Audit module for AMAS - minimal valid version"""
+"""Audit module for AMAS"""
+
 class AuditLogger:
-    def log(self, message):
+    """Simple audit logger"""
+    
+    def log(self, message: str) -> None:
+        """Log audit message"""
         print(f"AUDIT: {message}")

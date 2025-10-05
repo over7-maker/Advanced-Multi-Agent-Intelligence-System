@@ -1,4 +1,8 @@
-"""Authorization module for AMAS - minimal valid version"""
+"""Authorization module for AMAS"""
+
 class AuthorizationManager:
-    def authorize(self, user, action):
+    """Simple authorization manager"""
+    
+    def authorize(self, user: str, action: str) -> bool:
+        """Authorize user action"""
         return True
