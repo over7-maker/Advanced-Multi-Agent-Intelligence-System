@@ -3,9 +3,9 @@
 Test the 9-API failover system
 """
 
+import json
 import os
 import sys
-import json
 from pathlib import Path
 
 

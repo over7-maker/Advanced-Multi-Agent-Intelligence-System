@@ -6,22 +6,23 @@ This module provides comprehensive tests for the AI API Manager,
 ensuring reliability, fallback mechanisms, and performance.
 """
 
+import asyncio
+import json
 import os
 import sys
-import asyncio
-import pytest
-import json
 from datetime import datetime
-from unittest.mock import Mock, patch, AsyncMock
-from typing import Dict, List, Any
+from typing import Any, Dict, List
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 # Add src directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from amas.core.ai_api_manager import AIAPIManager, APIConfig, APIType, APIHealth
+from amas.core.ai_api_manager import AIAPIManager, APIConfig, APIHealth, APIType
 from amas.core.api_clients import APIClientFactory, OpenAICompatibleClient
-from amas.core.enhanced_orchestrator import EnhancedOrchestrator, TaskResult
 from amas.core.api_integration import EnhancedAgentOrchestrator, EnhancedOSINTAgent
+from amas.core.enhanced_orchestrator import EnhancedOrchestrator, TaskResult
 
 
 class TestAPIConfig:

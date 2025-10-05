@@ -4,22 +4,23 @@ Phase 8: Predictive analytics, machine learning models, and AI insights
 """
 
 import asyncio
+import json
 import logging
+import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data
+import warnings
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import joblib
 import numpy as np
 import pandas as pd
-from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional, Tuple, Union
-from enum import Enum
-from dataclasses import dataclass
-import json
-import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingRegressor
-from sklearn.cluster import KMeans, DBSCAN
-from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.cluster import DBSCAN, KMeans
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
+from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-import joblib
-import warnings
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 warnings.filterwarnings("ignore")
 
@@ -160,8 +161,8 @@ class AdvancedAnalyticsService:
     async def _load_existing_models(self):
         """Load existing models from storage"""
         try:
-            import os
             import glob
+            import os
 
             model_files = glob.glob(f"{self.model_storage_path}*.pkl")
 

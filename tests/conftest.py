@@ -2,18 +2,19 @@
 Test configuration and fixtures for AMAS test suite
 """
 
-import pytest
 import asyncio
-import httpx
-from typing import AsyncGenerator, Dict, Any
-import sys
 import os
+import sys
+from typing import Any, AsyncGenerator, Dict
+
+import httpx
+import pytest
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from amas.main import AMASApplication
 from amas.config.settings import get_settings
+from amas.main import AMASApplication
 
 
 @pytest.fixture(scope="session")
