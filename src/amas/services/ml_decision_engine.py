@@ -292,8 +292,9 @@ class MLDecisionEngine:
                 agent_performance = np.random.uniform(0.5, 1.0)
                 agent_load = np.random.uniform(0.0, 1.0)
 
-                # Simulate allocation decision
-                allocation_success = np.random.random() > 0.2  # 80% success rate
+                # Simulate allocation decision using secure random
+                import secrets
+                allocation_success = secrets.randbelow(100) > 20  # 80% success rate
 
                 # Performance metrics
                 completion_time = np.random.uniform(0.5, 5.0)  # hours

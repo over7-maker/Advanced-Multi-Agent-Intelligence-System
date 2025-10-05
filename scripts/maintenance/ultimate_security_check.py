@@ -57,11 +57,15 @@ def check_actual_security_issues():
                         code_part = line
 
                     # Check for dangerous patterns in actual code
+                    # Note: MD5 and SHA1 are flagged as weak cryptographic functions
+                    # Use SHA-256 or better for security-critical applications
                     dangerous_patterns = [
                         r"\beval\s*\(",
                         r"\bexec\s*\(",
                         r"hashlib\.md5\s*\(",
                         r"\.md5\s*\(",
+                        r"hashlib\.sha1\s*\(",
+                        r"\.sha1\s*\(",
                     ]
 
                     for pattern in dangerous_patterns:
