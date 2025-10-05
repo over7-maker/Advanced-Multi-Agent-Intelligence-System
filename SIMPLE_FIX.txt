@@ -3,13 +3,8 @@ SIMPLE FIX FOR THE MERGE CONFLICT
 
 1. In the GitHub conflict editor, you'll see:
 
-<<<<<<< advanced-multi-agent-improvements-70
 from amas.agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
 [... more amas.agents imports ...]
-=======
-from ..agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
-[... more ..agents imports ...]
->>>>>>> main
 
 2. DELETE everything from "<<<<<<< " to ">>>>>>> main"
 
