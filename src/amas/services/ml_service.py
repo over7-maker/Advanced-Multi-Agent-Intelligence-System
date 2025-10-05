@@ -6,6 +6,7 @@ Provides ML model management, training, inference, and advanced analytics
 import asyncio
 import json
 import logging
+import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum

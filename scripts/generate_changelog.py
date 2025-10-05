@@ -13,14 +13,24 @@ from typing import List, Dict, Any
 
 
 def main():
-    print("📝 Changelog Generator")
+    import argparse
+    
+    parser = argparse.ArgumentParser(description='Generate AI-enhanced changelog')
+    parser.add_argument('--version', help='Release version (e.g., v1.0.0)')
+    parser.add_argument('--type', help='Release type (major, minor, patch, prerelease)')
+    parser.add_argument('--custom', help='Custom changelog content')
+    parser.add_argument('--output', help='Output file path')
+    
+    args = parser.parse_args()
+    
+    print("🤖 AI-Enhanced Changelog Generator")
     print("=" * 40)
 
-    # Get arguments
-    version = os.environ.get("VERSION", "v1.0.0")
-    release_type = os.environ.get("RELEASE_TYPE", "minor")
-    custom_changelog = os.environ.get("CUSTOM_CHANGELOG", "")
-    output_file = os.environ.get("OUTPUT", "CHANGELOG.md")
+    # Get arguments from command line or environment
+    version = args.version or os.environ.get("VERSION", "v1.0.0")
+    release_type = args.type or os.environ.get("RELEASE_TYPE", "minor")
+    custom_changelog = args.custom or os.environ.get("CUSTOM_CHANGELOG", "")
+    output_file = args.output or os.environ.get("OUTPUT", "CHANGELOG.md")
 
     print(f"📋 Version: {version}")
     print(f"🏷️ Type: {release_type}")
