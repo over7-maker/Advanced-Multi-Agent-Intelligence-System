@@ -6,6 +6,8 @@ import asyncio
 import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+import tempfile
+import os
 
 from ..base.intelligence_agent import IntelligenceAgent, AgentStatus
 
@@ -178,9 +180,9 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                     {"protocol": "UDP", "remote_ip": "8.8.8.8", "port": 53},
                 ],
                 "file_operations": [
-                    {"operation": "create", "path": "/tmp/test.txt"},
+                    {"operation": "create", "path": os.path.join(tempfile.gettempdir(), "test.txt")},
                     {"operation": "read", "path": "/etc/passwd"},
-                    {"operation": "write", "path": "/tmp/output.log"},
+                    {"operation": "write", "path": os.path.join(tempfile.gettempdir(), "output.log")},
                 ],
                 "registry_operations": [
                     {"operation": "create", "key": "HKEY_CURRENT_USER\\Software\\Test"},
