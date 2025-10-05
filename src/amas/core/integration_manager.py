@@ -13,14 +13,16 @@ from dataclasses import dataclass
 import json
 
 from .orchestrator import IntelligenceOrchestrator
-from services.service_manager import ServiceManager
-from services.database_service import DatabaseService
-from services.security_service import SecurityService
+from amas.services.service_manager import ServiceManager
+from amas.services.database_service import DatabaseService
+from amas.services.security_service import SecurityService
 
 logger = logging.getLogger(__name__)
 
+
 class IntegrationStatus(Enum):
     """Integration status enumeration"""
+
     INITIALIZING = "initializing"
     CONNECTING = "connecting"
     CONNECTED = "connected"
@@ -28,8 +30,10 @@ class IntegrationStatus(Enum):
     ERROR = "error"
     MAINTENANCE = "maintenance"
 
+
 class WorkflowStatus(Enum):
     """Workflow status enumeration"""
+
     PENDING = "pending"
     RUNNING = "running"
     PAUSED = "paused"
@@ -37,9 +41,11 @@ class WorkflowStatus(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
+
 @dataclass
 class IntegrationMetrics:
     """Integration metrics data structure"""
+
     service_name: str
     status: IntegrationStatus
     response_time: float
@@ -50,9 +56,11 @@ class IntegrationMetrics:
     memory_usage: float
     cpu_usage: float
 
+
 @dataclass
 class WorkflowExecution:
     """Workflow execution data structure"""
+
     execution_id: str
     workflow_id: str
     status: WorkflowStatus
@@ -64,6 +72,7 @@ class WorkflowExecution:
     results: Dict[str, Any]
     errors: List[str]
     metrics: Dict[str, Any]
+
 
 class IntegrationManager:
     """
@@ -78,7 +87,7 @@ class IntegrationManager:
         orchestrator: IntelligenceOrchestrator,
         service_manager: ServiceManager,
         database_service: DatabaseService,
-        security_service: SecurityService
+        security_service: SecurityService,
     ):
         """
         Initialize the integration manager.
@@ -107,10 +116,10 @@ class IntegrationManager:
         # Monitoring
         self.monitoring_enabled = True
         self.alert_thresholds = {
-            'response_time': 5.0,  # seconds
-            'error_rate': 0.05,    # 5%
-            'memory_usage': 0.8,   # 80%
-            'cpu_usage': 0.8       # 80%
+            "response_time": 5.0,  # seconds
+            "error_rate": 0.05,  # 5%
+            "memory_usage": 0.8,  # 80%
+            "cpu_usage": 0.8,  # 80%
         }
 
         # Performance optimization
@@ -159,11 +168,11 @@ class IntegrationManager:
 
             # Connect to all services
             services = [
-                ('llm', self.service_manager.get_llm_service()),
-                ('vector', self.service_manager.get_vector_service()),
-                ('knowledge_graph', self.service_manager.get_knowledge_graph_service()),
-                ('database', self.database_service),
-                ('security', self.security_service)
+                ("llm", self.service_manager.get_llm_service()),
+                ("vector", self.service_manager.get_vector_service()),
+                ("knowledge_graph", self.service_manager.get_knowledge_graph_service()),
+                ("database", self.database_service),
+                ("security", self.security_service),
             ]
 
             for service_name, service in services:
@@ -171,25 +180,31 @@ class IntegrationManager:
                     try:
                         # Test connection
                         health = await service.health_check()
-                        if health.get('status') == 'healthy':
+                        if health.get("status") == "healthy":
                             self.connected_services[service_name] = {
-                                'service': service,
-                                'status': IntegrationStatus.CONNECTED,
-                                'last_health_check': datetime.utcnow(),
-                                'response_time': 0.0,
-                                'error_count': 0,
-                                'success_count': 0
+                                "service": service,
+                                "status": IntegrationStatus.CONNECTED,
+                                "last_health_check": datetime.utcnow(),
+                                "response_time": 0.0,
+                                "error_count": 0,
+                                "success_count": 0,
                             }
-                            logger.info(f"Service {service_name} connected successfully")
+                            logger.info(
+                                f"Service {service_name} connected successfully"
+                            )
                         else:
-                            logger.warning(f"Service {service_name} health check failed")
+                            logger.warning(
+                                f"Service {service_name} health check failed"
+                            )
                     except Exception as e:
-                        logger.error(f"Failed to connect to service {service_name}: {e}")
+                        logger.error(
+                            f"Failed to connect to service {service_name}: {e}"
+                        )
                         self.connected_services[service_name] = {
-                            'service': service,
-                            'status': IntegrationStatus.ERROR,
-                            'last_health_check': datetime.utcnow(),
-                            'error': str(e)
+                            "service": service,
+                            "status": IntegrationStatus.ERROR,
+                            "last_health_check": datetime.utcnow(),
+                            "error": str(e),
                         }
 
             logger.info(f"Connected to {len(self.connected_services)} services")
@@ -219,222 +234,233 @@ class IntegrationManager:
         """Load workflow templates"""
         try:
             # Advanced OSINT Investigation Workflow
-            self.workflow_templates['advanced_osint_investigation'] = {
-                'name': 'Advanced OSINT Investigation',
-                'description': 'Comprehensive OSINT investigation with multi-source intelligence',
-                'steps': [
+            self.workflow_templates["advanced_osint_investigation"] = {
+                "name": "Advanced OSINT Investigation",
+                "description": "Comprehensive OSINT investigation with multi-source intelligence",
+                "steps": [
                     {
-                        'step_id': 'data_collection',
-                        'agent_type': 'osint',
-                        'action': 'collect_multi_source_data',
-                        'parameters': {
-                            'sources': ['web', 'social_media', 'forums', 'news', 'academic'],
-                            'keywords': [],
-                            'timeframe': '30d',
-                            'depth': 'deep'
+                        "step_id": "data_collection",
+                        "agent_type": "osint",
+                        "action": "collect_multi_source_data",
+                        "parameters": {
+                            "sources": [
+                                "web",
+                                "social_media",
+                                "forums",
+                                "news",
+                                "academic",
+                            ],
+                            "keywords": [],
+                            "timeframe": "30d",
+                            "depth": "deep",
                         },
-                        'timeout': 300,
-                        'retry_count': 3
+                        "timeout": 300,
+                        "retry_count": 3,
                     },
                     {
-                        'step_id': 'data_analysis',
-                        'agent_type': 'data_analysis',
-                        'action': 'analyze_correlations',
-                        'parameters': {
-                            'analysis_type': 'multi_dimensional',
-                            'correlation_threshold': 0.7,
-                            'pattern_detection': True
+                        "step_id": "data_analysis",
+                        "agent_type": "data_analysis",
+                        "action": "analyze_correlations",
+                        "parameters": {
+                            "analysis_type": "multi_dimensional",
+                            "correlation_threshold": 0.7,
+                            "pattern_detection": True,
                         },
-                        'timeout': 180,
-                        'retry_count': 2
+                        "timeout": 180,
+                        "retry_count": 2,
                     },
                     {
-                        'step_id': 'entity_resolution',
-                        'agent_type': 'investigation',
-                        'action': 'resolve_entities',
-                        'parameters': {
-                            'entity_types': ['person', 'organization', 'location', 'event'],
-                            'confidence_threshold': 0.8,
-                            'cross_reference': True
+                        "step_id": "entity_resolution",
+                        "agent_type": "investigation",
+                        "action": "resolve_entities",
+                        "parameters": {
+                            "entity_types": [
+                                "person",
+                                "organization",
+                                "location",
+                                "event",
+                            ],
+                            "confidence_threshold": 0.8,
+                            "cross_reference": True,
                         },
-                        'timeout': 240,
-                        'retry_count': 2
+                        "timeout": 240,
+                        "retry_count": 2,
                     },
                     {
-                        'step_id': 'threat_assessment',
-                        'agent_type': 'data_analysis',
-                        'action': 'assess_threats',
-                        'parameters': {
-                            'threat_indicators': [],
-                            'risk_scoring': True,
-                            'mitigation_suggestions': True
+                        "step_id": "threat_assessment",
+                        "agent_type": "data_analysis",
+                        "action": "assess_threats",
+                        "parameters": {
+                            "threat_indicators": [],
+                            "risk_scoring": True,
+                            "mitigation_suggestions": True,
                         },
-                        'timeout': 120,
-                        'retry_count': 2
+                        "timeout": 120,
+                        "retry_count": 2,
                     },
                     {
-                        'step_id': 'report_generation',
-                        'agent_type': 'reporting',
-                        'action': 'generate_comprehensive_report',
-                        'parameters': {
-                            'report_type': 'intelligence_assessment',
-                            'format': 'executive_summary',
-                            'include_visualizations': True,
-                            'classification': 'confidential'
+                        "step_id": "report_generation",
+                        "agent_type": "reporting",
+                        "action": "generate_comprehensive_report",
+                        "parameters": {
+                            "report_type": "intelligence_assessment",
+                            "format": "executive_summary",
+                            "include_visualizations": True,
+                            "classification": "confidential",
                         },
-                        'timeout': 60,
-                        'retry_count': 1
-                    }
+                        "timeout": 60,
+                        "retry_count": 1,
+                    },
                 ],
-                'parallel_execution': True,
-                'max_concurrent_steps': 3,
-                'total_timeout': 900
+                "parallel_execution": True,
+                "max_concurrent_steps": 3,
+                "total_timeout": 900,
             }
 
             # Advanced Digital Forensics Workflow
-            self.workflow_templates['advanced_digital_forensics'] = {
-                'name': 'Advanced Digital Forensics',
-                'description': 'Comprehensive digital forensics investigation',
-                'steps': [
+            self.workflow_templates["advanced_digital_forensics"] = {
+                "name": "Advanced Digital Forensics",
+                "description": "Comprehensive digital forensics investigation",
+                "steps": [
                     {
-                        'step_id': 'evidence_acquisition',
-                        'agent_type': 'forensics',
-                        'action': 'acquire_evidence',
-                        'parameters': {
-                            'acquisition_type': 'forensic',
-                            'preserve_integrity': True,
-                            'hash_verification': True
+                        "step_id": "evidence_acquisition",
+                        "agent_type": "forensics",
+                        "action": "acquire_evidence",
+                        "parameters": {
+                            "acquisition_type": "forensic",
+                            "preserve_integrity": True,
+                            "hash_verification": True,
                         },
-                        'timeout': 600,
-                        'retry_count': 2
+                        "timeout": 600,
+                        "retry_count": 2,
                     },
                     {
-                        'step_id': 'metadata_extraction',
-                        'agent_type': 'metadata',
-                        'action': 'extract_comprehensive_metadata',
-                        'parameters': {
-                            'file_types': ['all'],
-                            'analysis_depth': 'comprehensive',
-                            'timeline_analysis': True
+                        "step_id": "metadata_extraction",
+                        "agent_type": "metadata",
+                        "action": "extract_comprehensive_metadata",
+                        "parameters": {
+                            "file_types": ["all"],
+                            "analysis_depth": "comprehensive",
+                            "timeline_analysis": True,
                         },
-                        'timeout': 300,
-                        'retry_count': 2
+                        "timeout": 300,
+                        "retry_count": 2,
                     },
                     {
-                        'step_id': 'binary_analysis',
-                        'agent_type': 'reverse_engineering',
-                        'action': 'analyze_binaries',
-                        'parameters': {
-                            'analysis_type': 'malware_detection',
-                            'behavioral_analysis': True,
-                            'signature_matching': True
+                        "step_id": "binary_analysis",
+                        "agent_type": "reverse_engineering",
+                        "action": "analyze_binaries",
+                        "parameters": {
+                            "analysis_type": "malware_detection",
+                            "behavioral_analysis": True,
+                            "signature_matching": True,
                         },
-                        'timeout': 480,
-                        'retry_count': 2
+                        "timeout": 480,
+                        "retry_count": 2,
                     },
                     {
-                        'step_id': 'timeline_reconstruction',
-                        'agent_type': 'forensics',
-                        'action': 'reconstruct_timeline',
-                        'parameters': {
-                            'timeframe': 'all',
-                            'correlation_analysis': True,
-                            'anomaly_detection': True
+                        "step_id": "timeline_reconstruction",
+                        "agent_type": "forensics",
+                        "action": "reconstruct_timeline",
+                        "parameters": {
+                            "timeframe": "all",
+                            "correlation_analysis": True,
+                            "anomaly_detection": True,
                         },
-                        'timeout': 240,
-                        'retry_count': 2
+                        "timeout": 240,
+                        "retry_count": 2,
                     },
                     {
-                        'step_id': 'report_generation',
-                        'agent_type': 'reporting',
-                        'action': 'generate_forensics_report',
-                        'parameters': {
-                            'report_type': 'forensics_analysis',
-                            'format': 'detailed',
-                            'include_evidence': True,
-                            'legal_compliance': True
+                        "step_id": "report_generation",
+                        "agent_type": "reporting",
+                        "action": "generate_forensics_report",
+                        "parameters": {
+                            "report_type": "forensics_analysis",
+                            "format": "detailed",
+                            "include_evidence": True,
+                            "legal_compliance": True,
                         },
-                        'timeout': 120,
-                        'retry_count': 1
-                    }
+                        "timeout": 120,
+                        "retry_count": 1,
+                    },
                 ],
-                'parallel_execution': False,
-                'max_concurrent_steps': 1,
-                'total_timeout': 1200
+                "parallel_execution": False,
+                "max_concurrent_steps": 1,
+                "total_timeout": 1200,
             }
 
             # Advanced Threat Intelligence Workflow
-            self.workflow_templates['advanced_threat_intelligence'] = {
-                'name': 'Advanced Threat Intelligence',
-                'description': 'Comprehensive threat intelligence collection and analysis',
-                'steps': [
+            self.workflow_templates["advanced_threat_intelligence"] = {
+                "name": "Advanced Threat Intelligence",
+                "description": "Comprehensive threat intelligence collection and analysis",
+                "steps": [
                     {
-                        'step_id': 'threat_monitoring',
-                        'agent_type': 'osint',
-                        'action': 'monitor_threat_sources',
-                        'parameters': {
-                            'sources': ['dark_web', 'forums', 'social_media', 'news'],
-                            'threat_indicators': [],
-                            'monitoring_type': 'continuous',
-                            'alert_threshold': 0.8
+                        "step_id": "threat_monitoring",
+                        "agent_type": "osint",
+                        "action": "monitor_threat_sources",
+                        "parameters": {
+                            "sources": ["dark_web", "forums", "social_media", "news"],
+                            "threat_indicators": [],
+                            "monitoring_type": "continuous",
+                            "alert_threshold": 0.8,
                         },
-                        'timeout': 360,
-                        'retry_count': 3
+                        "timeout": 360,
+                        "retry_count": 3,
                     },
                     {
-                        'step_id': 'threat_analysis',
-                        'agent_type': 'data_analysis',
-                        'action': 'analyze_threat_patterns',
-                        'parameters': {
-                            'analysis_type': 'threat_assessment',
-                            'pattern_recognition': True,
-                            'anomaly_detection': True,
-                            'predictive_modeling': True
+                        "step_id": "threat_analysis",
+                        "agent_type": "data_analysis",
+                        "action": "analyze_threat_patterns",
+                        "parameters": {
+                            "analysis_type": "threat_assessment",
+                            "pattern_recognition": True,
+                            "anomaly_detection": True,
+                            "predictive_modeling": True,
                         },
-                        'timeout': 240,
-                        'retry_count': 2
+                        "timeout": 240,
+                        "retry_count": 2,
                     },
                     {
-                        'step_id': 'threat_correlation',
-                        'agent_type': 'investigation',
-                        'action': 'correlate_threats',
-                        'parameters': {
-                            'correlation_type': 'multi_source',
-                            'confidence_scoring': True,
-                            'threat_attribution': True
+                        "step_id": "threat_correlation",
+                        "agent_type": "investigation",
+                        "action": "correlate_threats",
+                        "parameters": {
+                            "correlation_type": "multi_source",
+                            "confidence_scoring": True,
+                            "threat_attribution": True,
                         },
-                        'timeout': 180,
-                        'retry_count': 2
+                        "timeout": 180,
+                        "retry_count": 2,
                     },
                     {
-                        'step_id': 'intelligence_synthesis',
-                        'agent_type': 'data_analysis',
-                        'action': 'synthesize_intelligence',
-                        'parameters': {
-                            'synthesis_type': 'threat_intelligence',
-                            'confidence_assessment': True,
-                            'actionable_intelligence': True
+                        "step_id": "intelligence_synthesis",
+                        "agent_type": "data_analysis",
+                        "action": "synthesize_intelligence",
+                        "parameters": {
+                            "synthesis_type": "threat_intelligence",
+                            "confidence_assessment": True,
+                            "actionable_intelligence": True,
                         },
-                        'timeout': 120,
-                        'retry_count': 2
+                        "timeout": 120,
+                        "retry_count": 2,
                     },
                     {
-                        'step_id': 'threat_reporting',
-                        'agent_type': 'reporting',
-                        'action': 'generate_threat_intelligence_report',
-                        'parameters': {
-                            'report_type': 'threat_assessment',
-                            'format': 'executive_summary',
-                            'classification': 'confidential',
-                            'actionable_recommendations': True
+                        "step_id": "threat_reporting",
+                        "agent_type": "reporting",
+                        "action": "generate_threat_intelligence_report",
+                        "parameters": {
+                            "report_type": "threat_assessment",
+                            "format": "executive_summary",
+                            "classification": "confidential",
+                            "actionable_recommendations": True,
                         },
-                        'timeout': 90,
-                        'retry_count': 1
-                    }
+                        "timeout": 90,
+                        "retry_count": 1,
+                    },
                 ],
-                'parallel_execution': True,
-                'max_concurrent_steps': 2,
-                'total_timeout': 720
+                "parallel_execution": True,
+                "max_concurrent_steps": 2,
+                "total_timeout": 720,
             }
 
             logger.info(f"Loaded {len(self.workflow_templates)} workflow templates")
@@ -453,11 +479,11 @@ class IntegrationManager:
 
             # Initialize performance metrics
             self.workflow_metrics = {
-                'total_executions': 0,
-                'successful_executions': 0,
-                'failed_executions': 0,
-                'average_execution_time': 0.0,
-                'active_executions': 0
+                "total_executions": 0,
+                "successful_executions": 0,
+                "failed_executions": 0,
+                "average_execution_time": 0.0,
+                "active_executions": 0,
             }
 
             logger.info("Workflow execution engine initialized")
@@ -473,11 +499,11 @@ class IntegrationManager:
 
             # Initialize monitoring metrics
             self.monitoring_metrics = {
-                'system_health': 'healthy',
-                'service_status': {},
-                'performance_metrics': {},
-                'alert_count': 0,
-                'last_health_check': datetime.utcnow()
+                "system_health": "healthy",
+                "service_status": {},
+                "performance_metrics": {},
+                "alert_count": 0,
+                "last_health_check": datetime.utcnow(),
             }
 
             # Initialize alert handlers
@@ -485,7 +511,7 @@ class IntegrationManager:
                 self._handle_performance_alerts,
                 self._handle_error_alerts,
                 self._handle_service_alerts,
-                self._handle_security_alerts
+                self._handle_security_alerts,
             ]
 
             logger.info("Real-time monitoring system initialized")
@@ -501,22 +527,22 @@ class IntegrationManager:
 
             # Initialize connection pools
             self.connection_pools = {
-                'database': await self._create_database_pool(),
-                'redis': await self._create_redis_pool(),
-                'neo4j': await self._create_neo4j_pool()
+                "database": await self._create_database_pool(),
+                "redis": await self._create_redis_pool(),
+                "neo4j": await self._create_neo4j_pool(),
             }
 
             # Initialize load balancers
             self.load_balancers = {
-                'llm_providers': await self._create_llm_load_balancer(),
-                'agents': await self._create_agent_load_balancer()
+                "llm_providers": await self._create_llm_load_balancer(),
+                "agents": await self._create_agent_load_balancer(),
             }
 
             # Initialize performance cache
             self.performance_cache = {
-                'query_cache': {},
-                'result_cache': {},
-                'model_cache': {}
+                "query_cache": {},
+                "result_cache": {},
+                "model_cache": {},
             }
 
             logger.info("Performance optimization initialized")
@@ -535,7 +561,7 @@ class IntegrationManager:
                 asyncio.create_task(self._monitor_system_health()),
                 asyncio.create_task(self._monitor_service_performance()),
                 asyncio.create_task(self._monitor_workflow_executions()),
-                asyncio.create_task(self._monitor_security_events())
+                asyncio.create_task(self._monitor_security_events()),
             ]
 
             logger.info("Real-time monitoring started")
@@ -545,10 +571,7 @@ class IntegrationManager:
             raise
 
     async def execute_advanced_workflow(
-        self,
-        workflow_id: str,
-        parameters: Dict[str, Any],
-        user_id: str = None
+        self, workflow_id: str, parameters: Dict[str, Any], user_id: str = None
     ) -> str:
         """
         Execute an advanced workflow with enhanced capabilities.
@@ -576,11 +599,11 @@ class IntegrationManager:
                 started_at=datetime.utcnow(),
                 completed_at=None,
                 current_step=0,
-                total_steps=len(workflow['steps']),
+                total_steps=len(workflow["steps"]),
                 progress=0.0,
                 results={},
                 errors=[],
-                metrics={}
+                metrics={},
             )
 
             # Store execution
@@ -590,24 +613,30 @@ class IntegrationManager:
             # Log audit event
             if user_id:
                 await self.security_service.log_audit_event(
-                    event_type='workflow_execution',
+                    event_type="workflow_execution",
                     user_id=user_id,
-                    action='start_workflow',
-                    details=f'Started workflow {workflow_id}',
-                    classification='system'
+                    action="start_workflow",
+                    details=f"Started workflow {workflow_id}",
+                    classification="system",
                 )
 
             # Execute workflow
-            asyncio.create_task(self._execute_advanced_workflow(execution_id, parameters))
+            asyncio.create_task(
+                self._execute_advanced_workflow(execution_id, parameters)
+            )
 
-            logger.info(f"Advanced workflow {workflow_id} execution started: {execution_id}")
+            logger.info(
+                f"Advanced workflow {workflow_id} execution started: {execution_id}"
+            )
             return execution_id
 
         except Exception as e:
             logger.error(f"Failed to execute advanced workflow {workflow_id}: {e}")
             raise
 
-    async def _execute_advanced_workflow(self, execution_id: str, parameters: Dict[str, Any]):
+    async def _execute_advanced_workflow(
+        self, execution_id: str, parameters: Dict[str, Any]
+    ):
         """Execute advanced workflow with enhanced capabilities"""
         try:
             execution = self.workflow_executions[execution_id]
@@ -617,7 +646,7 @@ class IntegrationManager:
             execution.started_at = datetime.utcnow()
 
             # Execute workflow steps
-            if workflow.get('parallel_execution', False):
+            if workflow.get("parallel_execution", False):
                 await self._execute_parallel_workflow(execution_id, parameters)
             else:
                 await self._execute_sequential_workflow(execution_id, parameters)
@@ -632,14 +661,16 @@ class IntegrationManager:
             execution.progress = 100.0
 
             # Update metrics
-            self.workflow_metrics['total_executions'] += 1
+            self.workflow_metrics["total_executions"] += 1
             if execution.status == WorkflowStatus.COMPLETED:
-                self.workflow_metrics['successful_executions'] += 1
+                self.workflow_metrics["successful_executions"] += 1
             else:
-                self.workflow_metrics['failed_executions'] += 1
+                self.workflow_metrics["failed_executions"] += 1
 
             # Calculate execution time
-            execution_time = (execution.completed_at - execution.started_at).total_seconds()
+            execution_time = (
+                execution.completed_at - execution.started_at
+            ).total_seconds()
             self._update_average_execution_time(execution_time)
 
             # Remove from active workflows
@@ -655,14 +686,16 @@ class IntegrationManager:
             execution.errors.append(str(e))
             execution.completed_at = datetime.utcnow()
 
-    async def _execute_parallel_workflow(self, execution_id: str, parameters: Dict[str, Any]):
+    async def _execute_parallel_workflow(
+        self, execution_id: str, parameters: Dict[str, Any]
+    ):
         """Execute workflow steps in parallel"""
         try:
             execution = self.workflow_executions[execution_id]
             workflow = self.workflow_templates[execution.workflow_id]
 
             # Group steps for parallel execution
-            step_groups = self._group_steps_for_parallel_execution(workflow['steps'])
+            step_groups = self._group_steps_for_parallel_execution(workflow["steps"])
 
             for group in step_groups:
                 # Execute steps in parallel
@@ -679,13 +712,17 @@ class IntegrationManager:
                 # Process results
                 for i, result in enumerate(results):
                     if isinstance(result, Exception):
-                        execution.errors.append(f"Step {group[i]['step_id']} failed: {result}")
+                        execution.errors.append(
+                            f"Step {group[i]['step_id']} failed: {result}"
+                        )
                     else:
-                        execution.results[group[i]['step_id']] = result
+                        execution.results[group[i]["step_id"]] = result
 
                 # Update progress
                 execution.current_step += len(group)
-                execution.progress = (execution.current_step / execution.total_steps) * 100
+                execution.progress = (
+                    execution.current_step / execution.total_steps
+                ) * 100
 
                 # Check for errors
                 if execution.errors:
@@ -695,25 +732,31 @@ class IntegrationManager:
             logger.error(f"Parallel workflow execution failed: {e}")
             raise
 
-    async def _execute_sequential_workflow(self, execution_id: str, parameters: Dict[str, Any]):
+    async def _execute_sequential_workflow(
+        self, execution_id: str, parameters: Dict[str, Any]
+    ):
         """Execute workflow steps sequentially"""
         try:
             execution = self.workflow_executions[execution_id]
             workflow = self.workflow_templates[execution.workflow_id]
 
-            for step in workflow['steps']:
+            for step in workflow["steps"]:
                 # Execute step
-                result = await self._execute_workflow_step(execution_id, step, parameters)
+                result = await self._execute_workflow_step(
+                    execution_id, step, parameters
+                )
 
                 if isinstance(result, Exception):
                     execution.errors.append(f"Step {step['step_id']} failed: {result}")
                     break
                 else:
-                    execution.results[step['step_id']] = result
+                    execution.results[step["step_id"]] = result
 
                 # Update progress
                 execution.current_step += 1
-                execution.progress = (execution.current_step / execution.total_steps) * 100
+                execution.progress = (
+                    execution.current_step / execution.total_steps
+                ) * 100
 
                 # Check for errors
                 if execution.errors:
@@ -723,20 +766,22 @@ class IntegrationManager:
             logger.error(f"Sequential workflow execution failed: {e}")
             raise
 
-    async def _execute_workflow_step(self, execution_id: str, step: Dict[str, Any], parameters: Dict[str, Any]):
+    async def _execute_workflow_step(
+        self, execution_id: str, step: Dict[str, Any], parameters: Dict[str, Any]
+    ):
         """Execute a single workflow step"""
         try:
             # Submit task to orchestrator
             task_id = await self.orchestrator.submit_task(
-                task_type=step['agent_type'],
+                task_type=step["agent_type"],
                 description=f"Workflow step: {step['step_id']}",
-                parameters={**parameters, **step['parameters']},
-                priority=2
+                parameters={**parameters, **step["parameters"]},
+                priority=2,
             )
 
             # Wait for task completion with timeout
-            timeout = step.get('timeout', 300)
-            retry_count = step.get('retry_count', 1)
+            timeout = step.get("timeout", 300)
+            retry_count = step.get("retry_count", 1)
 
             for attempt in range(retry_count + 1):
                 try:
@@ -744,21 +789,28 @@ class IntegrationManager:
                     start_time = datetime.utcnow()
                     while (datetime.utcnow() - start_time).total_seconds() < timeout:
                         task_status = await self.orchestrator.get_task_status(task_id)
-                        if task_status and task_status['status'] in ['completed', 'failed']:
+                        if task_status and task_status["status"] in [
+                            "completed",
+                            "failed",
+                        ]:
                             break
                         await asyncio.sleep(1)
 
-                    if task_status and task_status['status'] == 'completed':
-                        return task_status.get('result', {})
-                    elif task_status and task_status['status'] == 'failed':
-                        raise Exception(f"Task failed: {task_status.get('error', 'Unknown error')}")
+                    if task_status and task_status["status"] == "completed":
+                        return task_status.get("result", {})
+                    elif task_status and task_status["status"] == "failed":
+                        raise Exception(
+                            f"Task failed: {task_status.get('error', 'Unknown error')}"
+                        )
                     else:
                         raise Exception(f"Task timeout after {timeout} seconds")
 
                 except Exception as e:
                     if attempt < retry_count:
-                        logger.warning(f"Step {step['step_id']} attempt {attempt + 1} failed, retrying: {e}")
-                        await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                        logger.warning(
+                            f"Step {step['step_id']} attempt {attempt + 1} failed, retrying: {e}"
+                        )
+                        await asyncio.sleep(2**attempt)  # Exponential backoff
                     else:
                         raise
 
@@ -766,7 +818,9 @@ class IntegrationManager:
             logger.error(f"Workflow step {step['step_id']} execution failed: {e}")
             raise
 
-    def _group_steps_for_parallel_execution(self, steps: List[Dict[str, Any]]) -> List[List[Dict[str, Any]]]:
+    def _group_steps_for_parallel_execution(
+        self, steps: List[Dict[str, Any]]
+    ) -> List[List[Dict[str, Any]]]:
         """Group workflow steps for parallel execution"""
         # Simple grouping - can be enhanced with dependency analysis
         groups = []
@@ -791,27 +845,27 @@ class IntegrationManager:
                 for service_name, service_info in self.connected_services.items():
                     try:
                         start_time = datetime.utcnow()
-                        health = await service_info['service'].health_check()
+                        health = await service_info["service"].health_check()
                         response_time = (datetime.utcnow() - start_time).total_seconds()
 
                         # Update metrics
-                        service_info['last_health_check'] = datetime.utcnow()
-                        service_info['response_time'] = response_time
+                        service_info["last_health_check"] = datetime.utcnow()
+                        service_info["response_time"] = response_time
 
-                        if health.get('status') == 'healthy':
-                            service_info['status'] = IntegrationStatus.CONNECTED
-                            service_info['success_count'] += 1
+                        if health.get("status") == "healthy":
+                            service_info["status"] = IntegrationStatus.CONNECTED
+                            service_info["success_count"] += 1
                         else:
-                            service_info['status'] = IntegrationStatus.ERROR
-                            service_info['error_count'] += 1
+                            service_info["status"] = IntegrationStatus.ERROR
+                            service_info["error_count"] += 1
 
                     except Exception as e:
-                        service_info['status'] = IntegrationStatus.ERROR
-                        service_info['error_count'] += 1
+                        service_info["status"] = IntegrationStatus.ERROR
+                        service_info["error_count"] += 1
                         logger.warning(f"Health check failed for {service_name}: {e}")
 
                 # Update monitoring metrics
-                self.monitoring_metrics['last_health_check'] = datetime.utcnow()
+                self.monitoring_metrics["last_health_check"] = datetime.utcnow()
 
                 await asyncio.sleep(30)  # Check every 30 seconds
 
@@ -826,20 +880,23 @@ class IntegrationManager:
                 # Collect performance metrics
                 for service_name, service_info in self.connected_services.items():
                     # Calculate error rate
-                    total_requests = service_info['success_count'] + service_info['error_count']
-                    error_rate = service_info['error_count'] / max(total_requests, 1)
+                    total_requests = (
+                        service_info["success_count"] + service_info["error_count"]
+                    )
+                    error_rate = service_info["error_count"] / max(total_requests, 1)
 
                     # Update integration metrics
                     self.integration_metrics[service_name] = IntegrationMetrics(
                         service_name=service_name,
-                        status=service_info['status'],
-                        response_time=service_info['response_time'],
+                        status=service_info["status"],
+                        response_time=service_info["response_time"],
                         error_rate=error_rate,
-                        throughput=service_info['success_count'] / 60,  # requests per minute
-                        last_health_check=service_info['last_health_check'],
+                        throughput=service_info["success_count"]
+                        / 60,  # requests per minute
+                        last_health_check=service_info["last_health_check"],
                         uptime=1.0 - error_rate,
                         memory_usage=0.0,  # Placeholder
-                        cpu_usage=0.0     # Placeholder
+                        cpu_usage=0.0,  # Placeholder
                     )
 
                 # Check for alerts
@@ -856,14 +913,16 @@ class IntegrationManager:
         while self.monitoring_enabled:
             try:
                 # Update workflow metrics
-                self.workflow_metrics['active_executions'] = len(self.active_workflows)
+                self.workflow_metrics["active_executions"] = len(self.active_workflows)
 
                 # Check for stuck workflows
                 current_time = datetime.utcnow()
                 for execution_id, execution in list(self.active_workflows.items()):
                     if execution.status == WorkflowStatus.RUNNING:
                         # Check for timeout
-                        if (current_time - execution.started_at).total_seconds() > 3600:  # 1 hour timeout
+                        if (
+                            current_time - execution.started_at
+                        ).total_seconds() > 3600:  # 1 hour timeout
                             execution.status = WorkflowStatus.FAILED
                             execution.errors.append("Workflow execution timeout")
                             del self.active_workflows[execution_id]
@@ -893,20 +952,32 @@ class IntegrationManager:
         try:
             for service_name, metrics in self.integration_metrics.items():
                 # Check response time
-                if metrics.response_time > self.alert_thresholds['response_time']:
-                    await self._trigger_alert('performance', f"High response time for {service_name}: {metrics.response_time}s")
+                if metrics.response_time > self.alert_thresholds["response_time"]:
+                    await self._trigger_alert(
+                        "performance",
+                        f"High response time for {service_name}: {metrics.response_time}s",
+                    )
 
                 # Check error rate
-                if metrics.error_rate > self.alert_thresholds['error_rate']:
-                    await self._trigger_alert('performance', f"High error rate for {service_name}: {metrics.error_rate:.2%}")
+                if metrics.error_rate > self.alert_thresholds["error_rate"]:
+                    await self._trigger_alert(
+                        "performance",
+                        f"High error rate for {service_name}: {metrics.error_rate:.2%}",
+                    )
 
                 # Check memory usage
-                if metrics.memory_usage > self.alert_thresholds['memory_usage']:
-                    await self._trigger_alert('performance', f"High memory usage for {service_name}: {metrics.memory_usage:.2%}")
+                if metrics.memory_usage > self.alert_thresholds["memory_usage"]:
+                    await self._trigger_alert(
+                        "performance",
+                        f"High memory usage for {service_name}: {metrics.memory_usage:.2%}",
+                    )
 
                 # Check CPU usage
-                if metrics.cpu_usage > self.alert_thresholds['cpu_usage']:
-                    await self._trigger_alert('performance', f"High CPU usage for {service_name}: {metrics.cpu_usage:.2%}")
+                if metrics.cpu_usage > self.alert_thresholds["cpu_usage"]:
+                    await self._trigger_alert(
+                        "performance",
+                        f"High CPU usage for {service_name}: {metrics.cpu_usage:.2%}",
+                    )
 
         except Exception as e:
             logger.error(f"Performance alert check failed: {e}")
@@ -928,15 +999,15 @@ class IntegrationManager:
             logger.warning(f"ALERT [{alert_type}]: {message}")
 
             # Update alert count
-            self.monitoring_metrics['alert_count'] += 1
+            self.monitoring_metrics["alert_count"] += 1
 
             # Log alert
             await self.security_service.log_audit_event(
-                event_type='system_alert',
-                user_id='system',
-                action='trigger_alert',
+                event_type="system_alert",
+                user_id="system",
+                action="trigger_alert",
                 details=message,
-                classification='system'
+                classification="system",
             )
 
         except Exception as e:
@@ -985,22 +1056,22 @@ class IntegrationManager:
 
     def _update_average_execution_time(self, execution_time: float):
         """Update average execution time"""
-        total_executions = self.workflow_metrics['total_executions']
+        total_executions = self.workflow_metrics["total_executions"]
         if total_executions > 0:
-            current_avg = self.workflow_metrics['average_execution_time']
-            self.workflow_metrics['average_execution_time'] = (
-                (current_avg * (total_executions - 1) + execution_time) / total_executions
-            )
+            current_avg = self.workflow_metrics["average_execution_time"]
+            self.workflow_metrics["average_execution_time"] = (
+                current_avg * (total_executions - 1) + execution_time
+            ) / total_executions
 
     async def get_integration_status(self) -> Dict[str, Any]:
         """Get integration status"""
         return {
-            'integration_status': self.integration_status.value,
-            'connected_services': len(self.connected_services),
-            'active_workflows': len(self.active_workflows),
-            'monitoring_enabled': self.monitoring_enabled,
-            'metrics': self.monitoring_metrics,
-            'timestamp': datetime.utcnow().isoformat()
+            "integration_status": self.integration_status.value,
+            "connected_services": len(self.connected_services),
+            "active_workflows": len(self.active_workflows),
+            "monitoring_enabled": self.monitoring_enabled,
+            "metrics": self.monitoring_metrics,
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
     async def get_workflow_status(self, execution_id: str) -> Optional[Dict[str, Any]]:
@@ -1010,17 +1081,19 @@ class IntegrationManager:
 
         execution = self.workflow_executions[execution_id]
         return {
-            'execution_id': execution_id,
-            'workflow_id': execution.workflow_id,
-            'status': execution.status.value,
-            'progress': execution.progress,
-            'current_step': execution.current_step,
-            'total_steps': execution.total_steps,
-            'started_at': execution.started_at.isoformat(),
-            'completed_at': execution.completed_at.isoformat() if execution.completed_at else None,
-            'results': execution.results,
-            'errors': execution.errors,
-            'metrics': execution.metrics
+            "execution_id": execution_id,
+            "workflow_id": execution.workflow_id,
+            "status": execution.status.value,
+            "progress": execution.progress,
+            "current_step": execution.current_step,
+            "total_steps": execution.total_steps,
+            "started_at": execution.started_at.isoformat(),
+            "completed_at": (
+                execution.completed_at.isoformat() if execution.completed_at else None
+            ),
+            "results": execution.results,
+            "errors": execution.errors,
+            "metrics": execution.metrics,
         }
 
     async def shutdown(self):

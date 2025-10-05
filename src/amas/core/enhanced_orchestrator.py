@@ -1,750 +1,589 @@
 #!/usr/bin/env python3
 """
-AMAS Enhanced Multi-Agent Orchestrator with Intelligent API Management
-Comprehensive orchestrator with 16 AI provider fallback system
+AMAS Enhanced Orchestrator with Multi-API Fallback
+
+This module provides an enhanced orchestrator that integrates with the AI API Manager
+to ensure maximum reliability and performance across all AI operations.
 """
 
 import os
 import sys
 import asyncio
 import json
-import logging
-import uuid
+import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union
+from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
-from enum import Enum
+import logging
 
-# Import our intelligent API manager
-from .ai_api_manager import (
-    IntelligentAPIManager, APIProvider, TaskType, 
-    generate_ai_response, get_api_manager
-)
+from .ai_api_manager import AIAPIManager, get_ai_response
+from .api_clients import APIClientFactory, get_client
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class AgentRole(Enum):
-    """Agent roles in the intelligence system"""
-    OSINT_COLLECTOR = "osint_collector"
-    INTELLIGENCE_ANALYST = "intelligence_analyst"
-    STRATEGIC_ADVISOR = "strategic_advisor"
-    CODE_SPECIALIST = "code_specialist"
-    FORENSICS_EXPERT = "forensics_expert"
-    DATA_ANALYST = "data_analyst"
-    REPORTING_AGENT = "reporting_agent"
-    COORDINATION_AGENT = "coordination_agent"
-
-class InvestigationPhase(Enum):
-    """Investigation phases"""
-    INITIALIZATION = "initialization"
-    OSINT_COLLECTION = "osint_collection"
-    DEEP_ANALYSIS = "deep_analysis"
-    TECHNICAL_ASSESSMENT = "technical_assessment"
-    STRATEGIC_EVALUATION = "strategic_evaluation"
-    REPORT_GENERATION = "report_generation"
-    COMPLETION = "completion"
-
-class TaskStatus(Enum):
-    """Task execution status"""
-    PENDING = "pending"
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
-    FAILED = "failed"
-    RETRYING = "retrying"
 
 @dataclass
-class InvestigationTask:
-    """Investigation task data structure"""
-    id: str
-    phase: InvestigationPhase
-    description: str
-    assigned_agent: AgentRole
-    preferred_provider: Optional[APIProvider] = None
-    task_type: TaskType = TaskType.CHAT_COMPLETION
-    status: TaskStatus = TaskStatus.PENDING
-    created_at: datetime = field(default_factory=datetime.now)
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    result: Optional[Dict[str, Any]] = None
+class TaskResult:
+    """Result of a task execution"""
+
+    task_id: str
+    task_type: str
+    success: bool
+    result: Optional[Dict] = None
     error: Optional[str] = None
+    api_used: Optional[str] = None
+    execution_time: float = 0.0
+    timestamp: str = ""
     retry_count: int = 0
-    max_retries: int = 3
-    context: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
-class Agent:
-    """Intelligent agent with API provider preferences"""
-    id: str
-    role: AgentRole
+class AgentCapability:
+    """Agent capability definition"""
+
     name: str
     description: str
-    preferred_providers: List[APIProvider] = field(default_factory=list)
-    capabilities: List[TaskType] = field(default_factory=list)
-    current_task: Optional[str] = None
-    status: str = "idle"
-    total_tasks: int = 0
-    successful_tasks: int = 0
-    failed_tasks: int = 0
-    average_response_time: float = 0.0
+    task_types: List[str]
+    preferred_apis: List[str]
+    max_retries: int = 3
+    timeout: int = 30
 
-class EnhancedMultiAgentOrchestrator:
-    """Enhanced orchestrator with intelligent API management"""
-    
-    def __init__(self, config: Dict[str, Any] = None):
-        self.config = config or {}
-        self.api_manager = get_api_manager()
-        
-        # Agent management
-        self.agents: Dict[str, Agent] = {}
-        self.tasks: Dict[str, InvestigationTask] = {}
-        self.investigation_history: List[Dict[str, Any]] = []
-        
-        # Performance tracking
-        self.total_investigations = 0
-        self.successful_investigations = 0
-        self.average_investigation_time = 0.0
-        
-        # Initialize agents
-        self._initialize_agents()
-        
-        # Start health monitoring
-        asyncio.create_task(self._start_monitoring())
-        
-        logger.info("Enhanced Multi-Agent Orchestrator initialized with intelligent API management")
-    
-    def _initialize_agents(self):
-        """Initialize the agent fleet with optimized provider preferences"""
-        
-        # OSINT Collector - Fast, reliable providers for data gathering
-        self.agents["osint_001"] = Agent(
-            id="osint_001",
-            role=AgentRole.OSINT_COLLECTOR,
-            name="OSINT Collector Alpha",
-            description="Open source intelligence gathering and preliminary analysis",
-            preferred_providers=[
-                APIProvider.DEEPSEEK,     # Fast and reliable
-                APIProvider.GROQAI,      # High speed processing
-                APIProvider.GLM,         # Good for data analysis
-                APIProvider.CEREBRAS     # High performance
-            ],
-            capabilities=[TaskType.CHAT_COMPLETION, TaskType.TEXT_GENERATION, TaskType.QUESTION_ANSWERING]
-        )
-        
-        # Intelligence Analyst - Reasoning-focused providers
-        self.agents["analyst_001"] = Agent(
-            id="analyst_001",
-            role=AgentRole.INTELLIGENCE_ANALYST,
-            name="Intelligence Analyst Prime",
-            description="Deep analysis, pattern recognition, and threat assessment",
-            preferred_providers=[
-                APIProvider.CEREBRAS,     # Excellent reasoning
-                APIProvider.NVIDIA,      # Advanced reasoning models
-                APIProvider.GROK,        # Strategic thinking
-                APIProvider.GEMINIAI     # Advanced analysis
-            ],
-            capabilities=[TaskType.REASONING, TaskType.QUESTION_ANSWERING, TaskType.TEXT_GENERATION]
-        )
-        
-        # Strategic Advisor - High-level reasoning providers
-        self.agents["advisor_001"] = Agent(
-            id="advisor_001",
-            role=AgentRole.STRATEGIC_ADVISOR,
-            name="Strategic Advisor Omega",
-            description="Strategic synthesis, recommendations, and risk assessment",
-            preferred_providers=[
-                APIProvider.GROK,        # Strategic insights
-                APIProvider.CEREBRAS,    # Advanced reasoning
-                APIProvider.GEMINI2,     # Latest capabilities
-                APIProvider.NVIDIA       # High-end reasoning
-            ],
-            capabilities=[TaskType.REASONING, TaskType.SUMMARIZATION, TaskType.QUESTION_ANSWERING]
-        )
-        
-        # Code Specialist - Code-focused providers
-        self.agents["coder_001"] = Agent(
-            id="coder_001",
-            role=AgentRole.CODE_SPECIALIST,
-            name="Code Intelligence Specialist",
-            description="Technical code analysis, vulnerability detection, and software assessment",
-            preferred_providers=[
-                APIProvider.CODESTRAL,   # Specialized for code
-                APIProvider.QWEN,       # Code analysis
-                APIProvider.NVIDIA,     # Technical reasoning
-                APIProvider.DEEPSEEK    # Code understanding
-            ],
-            capabilities=[TaskType.CODE_ANALYSIS, TaskType.REASONING, TaskType.TEXT_GENERATION]
-        )
-        
-        # Forensics Expert - Detailed analysis providers
-        self.agents["forensics_001"] = Agent(
-            id="forensics_001",
-            role=AgentRole.FORENSICS_EXPERT,
-            name="Digital Forensics Expert",
-            description="Forensic analysis, evidence examination, and detailed investigation",
-            preferred_providers=[
-                APIProvider.CEREBRAS,    # Detailed analysis
-                APIProvider.NVIDIA,     # Technical depth
-                APIProvider.CODESTRAL,  # Technical understanding
-                APIProvider.GLM         # Methodical analysis
-            ],
-            capabilities=[TaskType.REASONING, TaskType.TEXT_GENERATION, TaskType.QUESTION_ANSWERING]
-        )
-        
-        # Data Analyst - Pattern recognition providers
-        self.agents["data_001"] = Agent(
-            id="data_001",
-            role=AgentRole.DATA_ANALYST,
-            name="Data Pattern Analyst",
-            description="Data pattern recognition, statistical analysis, and correlation detection",
-            preferred_providers=[
-                APIProvider.GLM,        # Data processing
-                APIProvider.QWEN,      # Pattern recognition
-                APIProvider.CEREBRAS,  # Complex analysis
-                APIProvider.COHERE     # Text analysis
-            ],
-            capabilities=[TaskType.TEXT_GENERATION, TaskType.REASONING, TaskType.SUMMARIZATION]
-        )
-        
-        # Reporting Agent - Communication-focused providers
-        self.agents["reporter_001"] = Agent(
-            id="reporter_001",
-            role=AgentRole.REPORTING_AGENT,
-            name="Intelligence Reporter",
-            description="Report generation, communication, and documentation",
-            preferred_providers=[
-                APIProvider.COHERE,     # Excellent text generation
-                APIProvider.GLM,       # Clear communication
-                APIProvider.GROQAI,    # Fast generation
-                APIProvider.CHUTES     # Alternative text gen
-            ],
-            capabilities=[TaskType.TEXT_GENERATION, TaskType.SUMMARIZATION, TaskType.TRANSLATION]
-        )
-        
-        # Coordination Agent - Reliable, fast providers
-        self.agents["coordinator_001"] = Agent(
-            id="coordinator_001",
-            role=AgentRole.COORDINATION_AGENT,
-            name="Investigation Coordinator",
-            description="Investigation coordination, task management, and workflow optimization",
-            preferred_providers=[
-                APIProvider.DEEPSEEK,   # Reliable and fast
-                APIProvider.GROQAI,    # Quick responses
-                APIProvider.GLM,       # Good reasoning
-                APIProvider.GPTOSS     # Backup option
-            ],
-            capabilities=[TaskType.CHAT_COMPLETION, TaskType.REASONING, TaskType.TEXT_GENERATION]
-        )
-        
-        logger.info(f"Initialized {len(self.agents)} intelligent agents")
-    
-    async def conduct_investigation(self, topic: str, investigation_type: str = "comprehensive") -> Dict[str, Any]:
-        """Conduct a comprehensive multi-agent investigation"""
-        investigation_id = str(uuid.uuid4())
-        start_time = datetime.now()
-        
-        logger.info(f"🚀 Starting investigation: {topic}")
-        logger.info(f"📋 Investigation ID: {investigation_id}")
-        
-        investigation_result = {
-            'id': investigation_id,
-            'topic': topic,
-            'type': investigation_type,
-            'started_at': start_time.isoformat(),
-            'phases': [],
-            'agents_used': [],
-            'api_usage': {},
-            'performance_metrics': {},
-            'final_report': None,
-            'status': 'in_progress'
+
+class EnhancedOrchestrator:
+    """Enhanced orchestrator with multi-API fallback and intelligent task routing"""
+
+    def __init__(self):
+        """Initialize the enhanced orchestrator"""
+        self.api_manager = AIAPIManager()
+        self.task_queue: List[Dict] = []
+        self.results: Dict[str, TaskResult] = {}
+        self.agent_capabilities: Dict[str, AgentCapability] = {}
+
+        # Initialize agent capabilities
+        self._setup_agent_capabilities()
+
+        logger.info("Enhanced Orchestrator initialized")
+
+    def _setup_agent_capabilities(self):
+        """Setup agent capabilities and their preferred APIs"""
+
+        self.agent_capabilities = {
+            "osint_agent": AgentCapability(
+                name="OSINT Agent",
+                description="Open Source Intelligence collection and analysis",
+                task_types=["osint", "data_gathering", "source_validation"],
+                preferred_apis=["deepseek", "grok", "codestral", "nvidia"],
+                max_retries=3,
+                timeout=45,
+            ),
+            "analysis_agent": AgentCapability(
+                name="Analysis Agent",
+                description="Deep analysis and pattern recognition",
+                task_types=["analysis", "pattern_recognition", "threat_assessment"],
+                preferred_apis=["glm", "grok", "deepseek", "nvidia"],
+                max_retries=3,
+                timeout=60,
+            ),
+            "code_agent": AgentCapability(
+                name="Code Intelligence Agent",
+                description="Code analysis and vulnerability detection",
+                task_types=[
+                    "code_analysis",
+                    "vulnerability_detection",
+                    "technical_assessment",
+                ],
+                preferred_apis=["codestral", "nvidia", "deepseek", "qwen"],
+                max_retries=2,
+                timeout=30,
+            ),
+            "reporting_agent": AgentCapability(
+                name="Reporting Agent",
+                description="Report generation and synthesis",
+                task_types=["reporting", "synthesis", "documentation"],
+                preferred_apis=["grok", "glm", "deepseek", "gemini"],
+                max_retries=3,
+                timeout=45,
+            ),
+            "forensics_agent": AgentCapability(
+                name="Forensics Agent",
+                description="Digital forensics and investigation",
+                task_types=["forensics", "investigation", "evidence_analysis"],
+                preferred_apis=["deepseek", "nvidia", "codestral", "grok"],
+                max_retries=3,
+                timeout=60,
+            ),
+            "general_agent": AgentCapability(
+                name="General Agent",
+                description="General purpose AI assistance",
+                task_types=["general", "reasoning", "analysis"],
+                preferred_apis=["deepseek", "glm", "grok", "nvidia"],
+                max_retries=3,
+                timeout=30,
+            ),
         }
-        
-        try:
-            # Phase 1: Initialization and Planning
-            await self._execute_phase(
-                investigation_result, 
-                InvestigationPhase.INITIALIZATION,
-                "coordinator_001",
-                f"Initialize comprehensive investigation on: {topic}. Create investigation plan, identify key areas to explore, and set priorities.",
-                TaskType.REASONING
-            )
-            
-            # Phase 2: OSINT Collection
-            await self._execute_phase(
-                investigation_result,
-                InvestigationPhase.OSINT_COLLECTION,
-                "osint_001",
-                f"Conduct comprehensive OSINT collection on: {topic}. Gather information from public sources, social media, news, technical reports, and identify key indicators.",
-                TaskType.QUESTION_ANSWERING
-            )
-            
-            # Phase 3: Deep Analysis
-            await self._execute_phase(
-                investigation_result,
-                InvestigationPhase.DEEP_ANALYSIS,
-                "analyst_001",
-                f"Perform deep intelligence analysis on: {topic}. Analyze patterns, identify threats, assess TTPs, and evaluate risks based on collected data.",
-                TaskType.REASONING
-            )
-            
-            # Phase 4: Technical Assessment (if relevant)
-            if any(keyword in topic.lower() for keyword in ['code', 'software', 'vulnerability', 'security', 'malware', 'exploit']):
-                await self._execute_phase(
-                    investigation_result,
-                    InvestigationPhase.TECHNICAL_ASSESSMENT,
-                    "coder_001",
-                    f"Perform technical code and security analysis for: {topic}. Identify vulnerabilities, assess technical risks, and provide technical recommendations.",
-                    TaskType.CODE_ANALYSIS
-                )
-            
-            # Phase 5: Strategic Evaluation
-            await self._execute_phase(
-                investigation_result,
-                InvestigationPhase.STRATEGIC_EVALUATION,
-                "advisor_001",
-                f"Provide strategic assessment and recommendations for: {topic}. Synthesize findings, assess overall impact, and recommend actionable strategies.",
-                TaskType.REASONING
-            )
-            
-            # Phase 6: Report Generation
-            await self._execute_phase(
-                investigation_result,
-                InvestigationPhase.REPORT_GENERATION,
-                "reporter_001",
-                f"Generate comprehensive investigation report for: {topic}. Compile all findings into executive summary, detailed analysis, and actionable recommendations.",
-                TaskType.SUMMARIZATION
-            )
-            
-            # Phase 7: Completion
-            investigation_result['completed_at'] = datetime.now().isoformat()
-            investigation_result['status'] = 'completed'
-            investigation_result['duration'] = (datetime.now() - start_time).total_seconds()
-            
-            # Generate performance metrics
-            investigation_result['performance_metrics'] = await self._generate_performance_metrics(investigation_result)
-            
-            # Update statistics
-            self.total_investigations += 1
-            self.successful_investigations += 1
-            
-            logger.info(f"✅ Investigation completed successfully in {investigation_result['duration']:.2f} seconds")
-            
-            # Save investigation
-            self.investigation_history.append(investigation_result)
-            
-            return investigation_result
-            
-        except Exception as e:
-            investigation_result['status'] = 'failed'
-            investigation_result['error'] = str(e)
-            investigation_result['completed_at'] = datetime.now().isoformat()
-            
-            logger.error(f"❌ Investigation failed: {e}")
-            return investigation_result
-    
-    async def _execute_phase(
+
+    async def execute_task(
         self,
-        investigation: Dict[str, Any],
-        phase: InvestigationPhase,
-        agent_id: str,
+        task_id: str,
+        task_type: str,
         prompt: str,
-        task_type: TaskType
-    ):
-        """Execute a single investigation phase"""
-        
-        task_id = str(uuid.uuid4())
-        agent = self.agents[agent_id]
-        
-        # Create task
-        task = InvestigationTask(
-            id=task_id,
-            phase=phase,
-            description=prompt,
-            assigned_agent=agent.role,
-            task_type=task_type,
-            status=TaskStatus.IN_PROGRESS
+        system_prompt: str = None,
+        agent_type: str = None,
+        max_retries: int = None,
+        timeout: int = None,
+    ) -> TaskResult:
+        """
+        Execute a task with intelligent API selection and fallback
+
+        Args:
+            task_id: Unique identifier for the task
+            task_type: Type of task (osint, analysis, code_analysis, etc.)
+            prompt: Task prompt
+            system_prompt: System prompt (optional)
+            agent_type: Specific agent type to use (optional)
+            max_retries: Maximum retry attempts (optional)
+            timeout: Task timeout (optional)
+
+        Returns:
+            TaskResult with execution details
+        """
+        start_time = time.time()
+
+        # Determine agent type if not specified
+        if not agent_type:
+            agent_type = self._determine_agent_type(task_type)
+
+        # Get agent capabilities
+        agent_cap = self.agent_capabilities.get(
+            agent_type, self.agent_capabilities["general_agent"]
         )
-        
-        # Add context from previous phases
-        context = self._build_context(investigation)
-        if context:
-            enhanced_prompt = f"Context from previous analysis:\n{context}\n\nTask: {prompt}"
-        else:
-            enhanced_prompt = prompt
-        
-        self.tasks[task_id] = task
-        agent.current_task = task_id
-        agent.status = "busy"
-        task.started_at = datetime.now()
-        
-        logger.info(f"🤖 Executing {phase.value} with {agent.name}")
-        
-        try:
-            # Prepare messages
-            messages = [
+
+        # Set retry and timeout parameters
+        max_retries = max_retries or agent_cap.max_retries
+        timeout = timeout or agent_cap.timeout
+
+        # Create task result
+        result = TaskResult(
+            task_id=task_id,
+            task_type=task_type,
+            success=False,
+            timestamp=datetime.now().isoformat(),
+        )
+
+        # Execute with retries
+        for attempt in range(max_retries + 1):
+            try:
+                logger.info(
+                    f"Executing task {task_id} (attempt {attempt + 1}/{max_retries + 1})"
+                )
+
+                # Get AI response with fallback
+                ai_response = await self.api_manager.generate_response(
+                    prompt=prompt,
+                    system_prompt=system_prompt
+                    or self._get_system_prompt(agent_type, task_type),
+                    task_type=task_type,
+                    max_tokens=4000,
+                    temperature=0.7,
+                    timeout=timeout,
+                )
+
+                # Update result with success
+                result.success = True
+                result.result = ai_response
+                result.api_used = ai_response.get("api_used", "unknown")
+                result.execution_time = time.time() - start_time
+                result.retry_count = attempt
+
+                logger.info(
+                    f"Task {task_id} completed successfully using {result.api_used}"
+                )
+                break
+
+            except Exception as e:
+                result.error = str(e)
+                result.retry_count = attempt
+
+                if attempt < max_retries:
+                    wait_time = min(2**attempt, 10)  # Exponential backoff
+                    logger.warning(
+                        f"Task {task_id} attempt {attempt + 1} failed: {e}. Retrying in {wait_time}s..."
+                    )
+                    await asyncio.sleep(wait_time)
+                else:
+                    logger.error(
+                        f"Task {task_id} failed after {max_retries + 1} attempts: {e}"
+                    )
+
+        result.execution_time = time.time() - start_time
+        self.results[task_id] = result
+
+        return result
+
+    def _determine_agent_type(self, task_type: str) -> str:
+        """Determine the best agent type for a given task type"""
+
+        # Map task types to agent types
+        task_agent_map = {
+            "osint": "osint_agent",
+            "data_gathering": "osint_agent",
+            "source_validation": "osint_agent",
+            "analysis": "analysis_agent",
+            "pattern_recognition": "analysis_agent",
+            "threat_assessment": "analysis_agent",
+            "code_analysis": "code_agent",
+            "vulnerability_detection": "code_agent",
+            "technical_assessment": "code_agent",
+            "reporting": "reporting_agent",
+            "synthesis": "reporting_agent",
+            "documentation": "reporting_agent",
+            "forensics": "forensics_agent",
+            "investigation": "forensics_agent",
+            "evidence_analysis": "forensics_agent",
+        }
+
+        return task_agent_map.get(task_type, "general_agent")
+
+    def _get_system_prompt(self, agent_type: str, task_type: str) -> str:
+        """Get appropriate system prompt for agent type and task"""
+
+        system_prompts = {
+            "osint_agent": """You are an OSINT (Open Source Intelligence) specialist. Your role is to:
+1. Collect and analyze open source information
+2. Validate sources and assess credibility
+3. Identify patterns and connections
+4. Provide actionable intelligence
+
+Focus on accuracy, source verification, and comprehensive analysis.""",
+            "analysis_agent": """You are an Intelligence Analysis specialist. Your role is to:
+1. Perform deep analysis of information
+2. Identify patterns, trends, and anomalies
+3. Assess threats and risks
+4. Provide strategic insights
+
+Focus on analytical rigor, pattern recognition, and strategic thinking.""",
+            "code_agent": """You are a Code Intelligence specialist. Your role is to:
+1. Analyze code for vulnerabilities and issues
+2. Assess technical architecture and design
+3. Provide security recommendations
+4. Evaluate code quality and maintainability
+
+Focus on technical accuracy, security best practices, and actionable recommendations.""",
+            "reporting_agent": """You are a Reporting and Synthesis specialist. Your role is to:
+1. Synthesize complex information into clear reports
+2. Create executive summaries and briefings
+3. Organize information logically
+4. Ensure clarity and actionable insights
+
+Focus on clarity, organization, and executive-level communication.""",
+            "forensics_agent": """You are a Digital Forensics specialist. Your role is to:
+1. Analyze digital evidence and artifacts
+2. Investigate security incidents
+3. Trace attack vectors and timelines
+4. Provide forensic insights
+
+Focus on technical accuracy, evidence preservation, and investigative methodology.""",
+            "general_agent": """You are a general-purpose AI assistant specialized in intelligence and analysis. Your role is to:
+1. Provide accurate and helpful responses
+2. Analyze information thoroughly
+3. Offer insights and recommendations
+4. Maintain professional standards
+
+Focus on accuracy, helpfulness, and professional communication.""",
+        }
+
+        return system_prompts.get(agent_type, system_prompts["general_agent"])
+
+    async def execute_parallel_tasks(
+        self, tasks: List[Dict], max_concurrent: int = 5
+    ) -> List[TaskResult]:
+        """
+        Execute multiple tasks in parallel with concurrency control
+
+        Args:
+            tasks: List of task dictionaries with required fields
+            max_concurrent: Maximum concurrent task execution
+
+        Returns:
+            List of TaskResult objects
+        """
+        semaphore = asyncio.Semaphore(max_concurrent)
+
+        async def execute_with_semaphore(task):
+            async with semaphore:
+                return await self.execute_task(**task)
+
+        # Execute all tasks
+        results = await asyncio.gather(
+            *[execute_with_semaphore(task) for task in tasks], return_exceptions=True
+        )
+
+        # Filter out exceptions and return valid results
+        valid_results = []
+        for result in results:
+            if isinstance(result, TaskResult):
+                valid_results.append(result)
+            else:
+                logger.error(f"Task execution failed with exception: {result}")
+
+        return valid_results
+
+    async def run_investigation_workflow(
+        self, topic: str, investigation_type: str = "comprehensive"
+    ) -> Dict[str, Any]:
+        """
+        Run a comprehensive investigation workflow
+
+        Args:
+            topic: Investigation topic
+            investigation_type: Type of investigation (comprehensive, focused, rapid)
+
+        Returns:
+            Investigation results and report
+        """
+        logger.info(f"Starting {investigation_type} investigation: {topic}")
+
+        # Define investigation phases based on type
+        if investigation_type == "comprehensive":
+            phases = [
                 {
-                    "role": "system",
-                    "content": f"You are {agent.name}, a {agent.description}. Provide detailed, actionable intelligence analysis."
+                    "task_id": f"osint_{int(time.time())}",
+                    "task_type": "osint",
+                    "prompt": f"Conduct comprehensive OSINT collection on: {topic}. Focus on recent developments, key players, and threat indicators.",
+                    "agent_type": "osint_agent",
                 },
                 {
-                    "role": "user", 
-                    "content": enhanced_prompt
+                    "task_id": f"analysis_{int(time.time())}",
+                    "task_type": "analysis",
+                    "prompt": f"Perform deep analysis of the OSINT findings for: {topic}. Identify patterns, threats, and strategic implications.",
+                    "agent_type": "analysis_agent",
+                },
+                {
+                    "task_id": f"technical_{int(time.time())}",
+                    "task_type": "technical_assessment",
+                    "prompt": f"Provide technical assessment of: {topic}. Focus on technical vulnerabilities, attack vectors, and mitigation strategies.",
+                    "agent_type": "code_agent",
+                },
+                {
+                    "task_id": f"report_{int(time.time())}",
+                    "task_type": "reporting",
+                    "prompt": f"Synthesize all findings into a comprehensive intelligence report on: {topic}. Include executive summary, key findings, and recommendations.",
+                    "agent_type": "reporting_agent",
+                },
+            ]
+        elif investigation_type == "focused":
+            phases = [
+                {
+                    "task_id": f"focused_analysis_{int(time.time())}",
+                    "task_type": "analysis",
+                    "prompt": f"Perform focused analysis on: {topic}. Provide detailed assessment with specific recommendations.",
+                    "agent_type": "analysis_agent",
+                },
+                {
+                    "task_id": f"focused_report_{int(time.time())}",
+                    "task_type": "reporting",
+                    "prompt": f"Create a focused intelligence report on: {topic}. Include key findings and actionable recommendations.",
+                    "agent_type": "reporting_agent",
+                },
+            ]
+        else:  # rapid
+            phases = [
+                {
+                    "task_id": f"rapid_assessment_{int(time.time())}",
+                    "task_type": "analysis",
+                    "prompt": f"Provide rapid assessment of: {topic}. Focus on immediate threats and urgent recommendations.",
+                    "agent_type": "analysis_agent",
                 }
             ]
-            
-            # Execute with preferred providers
-            response = await generate_ai_response(
-                messages=messages,
-                task_type=task_type,
-                preferred_provider=agent.preferred_providers[0] if agent.preferred_providers else None,
-                max_tokens=4000,
-                temperature=0.7
+
+        # Execute phases sequentially (each phase depends on previous results)
+        investigation_results = {
+            "topic": topic,
+            "investigation_type": investigation_type,
+            "started_at": datetime.now().isoformat(),
+            "phases": [],
+            "final_report": None,
+        }
+
+        context = ""
+        for i, phase in enumerate(phases):
+            logger.info(f"Executing phase {i + 1}: {phase['task_type']}")
+
+            # Add context from previous phases
+            if context:
+                phase["prompt"] = (
+                    f"Context from previous analysis:\n{context}\n\n{phase['prompt']}"
+                )
+
+            # Execute phase
+            result = await self.execute_task(**phase)
+            investigation_results["phases"].append(
+                {"phase": i + 1, "task_type": phase["task_type"], "result": result}
             )
-            
-            # Record success
-            task.status = TaskStatus.COMPLETED
-            task.completed_at = datetime.now()
-            task.result = response
-            
-            agent.total_tasks += 1
-            agent.successful_tasks += 1
-            agent.status = "idle"
-            agent.current_task = None
-            
-            # Update investigation
-            phase_result = {
-                'phase': phase.value,
-                'agent': agent.name,
-                'task_id': task_id,
-                'started_at': task.started_at.isoformat(),
-                'completed_at': task.completed_at.isoformat(),
-                'duration': (task.completed_at - task.started_at).total_seconds(),
-                'response': response['content'],
-                'provider_used': response['provider'],
-                'model_used': response['model'],
-                'response_time': response['response_time'],
-                'fallback_attempts': response.get('fallback_attempts', 1)
-            }
-            
-            investigation['phases'].append(phase_result)
-            
-            # Track agent usage
-            if agent.role.value not in investigation['agents_used']:
-                investigation['agents_used'].append(agent.role.value)
-            
-            # Track API usage
-            provider = response['provider']
-            if provider not in investigation['api_usage']:
-                investigation['api_usage'][provider] = 0
-            investigation['api_usage'][provider] += 1
-            
-            logger.info(f"✅ {phase.value} completed using {provider} in {response['response_time']:.2f}s")
-            
-        except Exception as e:
-            # Record failure
-            task.status = TaskStatus.FAILED
-            task.error = str(e)
-            task.completed_at = datetime.now()
-            
-            agent.total_tasks += 1
-            agent.failed_tasks += 1
-            agent.status = "idle"
-            agent.current_task = None
-            
-            logger.error(f"❌ {phase.value} failed: {e}")
-            
-            # Retry logic
-            if task.retry_count < task.max_retries:
-                task.retry_count += 1
-                task.status = TaskStatus.RETRYING
-                logger.info(f"🔄 Retrying {phase.value} (attempt {task.retry_count + 1})")
-                await asyncio.sleep(2)  # Brief delay before retry
-                await self._execute_phase(investigation, phase, agent_id, prompt, task_type)
-            else:
-                raise Exception(f"Phase {phase.value} failed after {task.max_retries} retries: {e}")
-    
-    def _build_context(self, investigation: Dict[str, Any]) -> str:
-        """Build context from previous phases"""
-        context_parts = []
-        
-        for phase_result in investigation['phases']:
-            if phase_result.get('response'):
-                context_parts.append(f"{phase_result['phase']}: {phase_result['response'][:500]}...")
-        
-        return "\n\n".join(context_parts)
-    
-    async def _generate_performance_metrics(self, investigation: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate comprehensive performance metrics"""
-        
-        # Calculate phase durations
-        phase_durations = {phase['phase']: phase['duration'] for phase in investigation['phases']}
-        
-        # Calculate API performance
-        api_stats = {}
-        for phase in investigation['phases']:
-            provider = phase.get('provider_used')
-            if provider:
-                if provider not in api_stats:
-                    api_stats[provider] = {
-                        'usage_count': 0,
-                        'total_response_time': 0,
-                        'fallback_attempts': 0
-                    }
-                api_stats[provider]['usage_count'] += 1
-                api_stats[provider]['total_response_time'] += phase.get('response_time', 0)
-                api_stats[provider]['fallback_attempts'] += phase.get('fallback_attempts', 1) - 1
-        
-        # Calculate average response times
-        for provider_stats in api_stats.values():
-            if provider_stats['usage_count'] > 0:
-                provider_stats['average_response_time'] = provider_stats['total_response_time'] / provider_stats['usage_count']
-        
-        # Agent performance
-        agent_performance = {}
-        for agent_id, agent in self.agents.items():
-            if agent.total_tasks > 0:
-                agent_performance[agent_id] = {
-                    'success_rate': (agent.successful_tasks / agent.total_tasks) * 100,
-                    'total_tasks': agent.total_tasks,
-                    'successful_tasks': agent.successful_tasks,
-                    'failed_tasks': agent.failed_tasks
+
+            # Add successful results to context
+            if result.success and result.result:
+                context += f"\n{phase['task_type'].title()} Results:\n{result.result.get('content', '')}\n"
+
+        investigation_results["completed_at"] = datetime.now().isoformat()
+
+        # Generate final report
+        if investigation_results["phases"]:
+            final_phase = investigation_results["phases"][-1]
+            if final_phase["result"].success:
+                investigation_results["final_report"] = final_phase[
+                    "result"
+                ].result.get("content", "")
+
+        return investigation_results
+
+    def get_performance_stats(self) -> Dict[str, Any]:
+        """Get performance statistics"""
+        if not self.results:
+            return {"message": "No tasks executed yet"}
+
+        total_tasks = len(self.results)
+        successful_tasks = len([r for r in self.results.values() if r.success])
+        failed_tasks = total_tasks - successful_tasks
+
+        # API usage statistics
+        api_usage = {}
+        for result in self.results.values():
+            if result.api_used:
+                api_usage[result.api_used] = api_usage.get(result.api_used, 0) + 1
+
+        # Average execution time
+        avg_execution_time = (
+            sum(r.execution_time for r in self.results.values()) / total_tasks
+        )
+
+        # Task type statistics
+        task_type_stats = {}
+        for result in self.results.values():
+            task_type = result.task_type
+            if task_type not in task_type_stats:
+                task_type_stats[task_type] = {"total": 0, "successful": 0}
+            task_type_stats[task_type]["total"] += 1
+            if result.success:
+                task_type_stats[task_type]["successful"] += 1
+
+        return {
+            "total_tasks": total_tasks,
+            "successful_tasks": successful_tasks,
+            "failed_tasks": failed_tasks,
+            "success_rate": (
+                (successful_tasks / total_tasks) * 100 if total_tasks > 0 else 0
+            ),
+            "average_execution_time": avg_execution_time,
+            "api_usage": api_usage,
+            "task_type_stats": task_type_stats,
+            "health_status": self.api_manager.get_health_status(),
+        }
+
+    async def health_check(self) -> Dict[str, Any]:
+        """Perform comprehensive health check"""
+        logger.info("Performing comprehensive health check...")
+
+        # Check API manager health
+        api_health = await self.api_manager.health_check()
+
+        # Test each agent capability
+        agent_tests = {}
+        for agent_name, agent_cap in self.agent_capabilities.items():
+            try:
+                test_result = await self.execute_task(
+                    task_id=f"health_check_{agent_name}",
+                    task_type=agent_cap.task_types[0],
+                    prompt="This is a health check. Please respond with 'OK'.",
+                    agent_type=agent_name,
+                    max_retries=1,
+                    timeout=10,
+                )
+                agent_tests[agent_name] = {
+                    "status": "healthy" if test_result.success else "unhealthy",
+                    "api_used": test_result.api_used,
+                    "execution_time": test_result.execution_time,
                 }
-        
+            except Exception as e:
+                agent_tests[agent_name] = {"status": "unhealthy", "error": str(e)}
+
         return {
-            'total_duration': investigation.get('duration', 0),
-            'phase_durations': phase_durations,
-            'api_performance': api_stats,
-            'agent_performance': agent_performance,
-            'total_phases': len(investigation['phases']),
-            'successful_phases': len([p for p in investigation['phases'] if 'response' in p]),
-            'unique_providers_used': len(set(p.get('provider_used') for p in investigation['phases'] if p.get('provider_used')))
+            "api_health": api_health,
+            "agent_tests": agent_tests,
+            "timestamp": datetime.now().isoformat(),
         }
-    
-    async def get_system_status(self) -> Dict[str, Any]:
-        """Get comprehensive system status"""
-        
-        # Get API manager statistics
-        api_stats = self.api_manager.get_provider_statistics()
-        
-        # Agent statistics
-        agent_stats = {}
-        for agent_id, agent in self.agents.items():
-            agent_stats[agent_id] = {
-                'name': agent.name,
-                'role': agent.role.value,
-                'status': agent.status,
-                'current_task': agent.current_task,
-                'total_tasks': agent.total_tasks,
-                'successful_tasks': agent.successful_tasks,
-                'failed_tasks': agent.failed_tasks,
-                'success_rate': (agent.successful_tasks / agent.total_tasks * 100) if agent.total_tasks > 0 else 0,
-                'preferred_providers': [p.value for p in agent.preferred_providers]
-            }
-        
-        # Investigation statistics
-        investigation_stats = {
-            'total_investigations': self.total_investigations,
-            'successful_investigations': self.successful_investigations,
-            'success_rate': (self.successful_investigations / self.total_investigations * 100) if self.total_investigations > 0 else 0,
-            'average_duration': self.average_investigation_time
-        }
-        
-        return {
-            'timestamp': datetime.now().isoformat(),
-            'api_manager': api_stats,
-            'agents': agent_stats,
-            'investigations': investigation_stats,
-            'active_tasks': len([t for t in self.tasks.values() if t.status == TaskStatus.IN_PROGRESS]),
-            'system_health': 'healthy' if api_stats['overview']['healthy_providers'] > 0 else 'degraded'
-        }
-    
-    async def _start_monitoring(self):
-        """Start background monitoring tasks"""
-        
-        async def health_monitor():
-            """Monitor system health"""
-            while True:
-                try:
-                    await self.api_manager.health_check_all_providers()
-                    await asyncio.sleep(300)  # Check every 5 minutes
-                except Exception as e:
-                    logger.error(f"Health monitoring error: {e}")
-                    await asyncio.sleep(60)
-        
-        async def performance_optimizer():
-            """Optimize performance based on metrics"""
-            while True:
-                try:
-                    await self.api_manager.optimize_provider_usage()
-                    await asyncio.sleep(600)  # Optimize every 10 minutes
-                except Exception as e:
-                    logger.error(f"Performance optimization error: {e}")
-                    await asyncio.sleep(120)
-        
-        # Start monitoring tasks
-        asyncio.create_task(health_monitor())
-        asyncio.create_task(performance_optimizer())
-        
-        logger.info("Background monitoring started")
-    
-    async def generate_comprehensive_report(self, investigation: Dict[str, Any]) -> str:
-        """Generate a comprehensive investigation report"""
-        
-        report_sections = []
-        
-        # Header
-        report_sections.extend([
-            "# 🔍 AMAS Enhanced Intelligence Investigation Report",
-            "",
-            f"**Investigation Topic:** {investigation['topic']}",
-            f"**Investigation ID:** {investigation['id']}",
-            f"**Type:** {investigation['type']}",
-            f"**Started:** {investigation['started_at']}",
-            f"**Completed:** {investigation.get('completed_at', 'In Progress')}",
-            f"**Duration:** {investigation.get('duration', 0):.2f} seconds",
-            f"**Status:** {investigation['status'].upper()}",
-            "",
-            "---",
-            ""
-        ])
-        
-        # Executive Summary
-        if investigation['phases']:
-            last_phase = investigation['phases'][-1]
-            if 'response' in last_phase:
-                report_sections.extend([
-                    "## 📊 Executive Summary",
-                    "",
-                    last_phase['response'][:1000] + "..." if len(last_phase['response']) > 1000 else last_phase['response'],
-                    "",
-                    "---",
-                    ""
-                ])
-        
-        # Detailed Phase Analysis
-        report_sections.extend([
-            "## 🔍 Detailed Phase Analysis",
-            ""
-        ])
-        
-        for phase in investigation['phases']:
-            report_sections.extend([
-                f"### {phase['phase'].replace('_', ' ').title()}",
-                f"**Agent:** {phase['agent']}",
-                f"**Duration:** {phase['duration']:.2f} seconds",
-                f"**Provider:** {phase.get('provider_used', 'Unknown')}",
-                f"**Model:** {phase.get('model_used', 'Unknown')}",
-                f"**Response Time:** {phase.get('response_time', 0):.2f} seconds",
-                "",
-                "#### Analysis:",
-                phase.get('response', 'No response available'),
-                "",
-                "---",
-                ""
-            ])
-        
-        # Performance Metrics
-        if 'performance_metrics' in investigation:
-            metrics = investigation['performance_metrics']
-            report_sections.extend([
-                "## 📈 Performance Metrics",
-                "",
-                f"**Total Duration:** {metrics.get('total_duration', 0):.2f} seconds",
-                f"**Total Phases:** {metrics.get('total_phases', 0)}",
-                f"**Successful Phases:** {metrics.get('successful_phases', 0)}",
-                f"**Unique Providers Used:** {metrics.get('unique_providers_used', 0)}",
-                "",
-                "### API Performance:",
-                ""
-            ])
-            
-            for provider, stats in metrics.get('api_performance', {}).items():
-                report_sections.append(f"- **{provider}**: {stats['usage_count']} requests, avg {stats.get('average_response_time', 0):.2f}s")
-            
-            report_sections.extend(["", "---", ""])
-        
-        # API Usage Summary
-        report_sections.extend([
-            "## 🤖 API Usage Summary",
-            "",
-            f"**Total API Calls:** {sum(investigation.get('api_usage', {}).values())}",
-            f"**Agents Used:** {', '.join(investigation.get('agents_used', []))}",
-            "",
-            "### Provider Usage:"
-        ])
-        
-        for provider, count in investigation.get('api_usage', {}).items():
-            report_sections.append(f"- **{provider}**: {count} requests")
-        
-        report_sections.extend([
-            "",
-            "---",
-            "",
-            "## 🎯 Recommendations",
-            "",
-            "Based on this investigation, we recommend:",
-            "1. Continuous monitoring of identified indicators",
-            "2. Implementation of recommended security measures",
-            "3. Regular reassessment of threat landscape",
-            "4. Stakeholder briefings on findings",
-            "",
-            "---",
-            "",
-            f"*Report generated by AMAS Enhanced Multi-Agent Intelligence System*",
-            f"*Timestamp: {datetime.now().isoformat()}*",
-            f"*API Providers Available: {len(self.api_manager.endpoints)}*"
-        ])
-        
-        return "\n".join(report_sections)
 
-# Global instance
-_orchestrator = None
 
-def get_orchestrator() -> EnhancedMultiAgentOrchestrator:
-    """Get the global orchestrator instance"""
-    global _orchestrator
-    if _orchestrator is None:
-        _orchestrator = EnhancedMultiAgentOrchestrator()
-    return _orchestrator
+# Global orchestrator instance
+orchestrator = EnhancedOrchestrator()
 
-async def conduct_ai_investigation(topic: str, investigation_type: str = "comprehensive") -> Dict[str, Any]:
-    """Convenience function to conduct an investigation"""
-    orchestrator = get_orchestrator()
-    return await orchestrator.conduct_investigation(topic, investigation_type)
+
+# Convenience functions
+async def execute_task(
+    task_id: str, task_type: str, prompt: str, **kwargs
+) -> TaskResult:
+    """Execute a single task using the global orchestrator"""
+    return await orchestrator.execute_task(task_id, task_type, prompt, **kwargs)
+
+
+async def run_investigation(
+    topic: str, investigation_type: str = "comprehensive"
+) -> Dict[str, Any]:
+    """Run an investigation using the global orchestrator"""
+    return await orchestrator.run_investigation_workflow(topic, investigation_type)
+
+
+# Example usage
+async def main():
+    """Example usage of the Enhanced Orchestrator"""
+    print("🚀 AMAS Enhanced Orchestrator - Multi-API Fallback System")
+    print("=" * 60)
+
+    try:
+        # Test single task execution
+        print("\n🧪 Testing single task execution...")
+        result = await execute_task(
+            task_id="test_001",
+            task_type="analysis",
+            prompt="Analyze the current state of AI security threats and provide key recommendations.",
+            agent_type="analysis_agent",
+        )
+
+        print(f"✅ Task completed: {result.success}")
+        print(f"🔧 API used: {result.api_used}")
+        print(f"⏱️ Execution time: {result.execution_time:.2f}s")
+        if result.success:
+            print(f"📝 Response preview: {result.result['content'][:200]}...")
+
+        # Test investigation workflow
+        print(f"\n🔍 Testing investigation workflow...")
+        investigation = await run_investigation(
+            topic="Advanced Persistent Threats targeting software supply chains",
+            investigation_type="focused",
+        )
+
+        print(f"✅ Investigation completed")
+        print(f"📊 Phases executed: {len(investigation['phases'])}")
+        print(
+            f"📄 Final report available: {'Yes' if investigation['final_report'] else 'No'}"
+        )
+
+        # Get performance stats
+        print(f"\n📈 Performance Statistics:")
+        stats = orchestrator.get_performance_stats()
+        print(f"  Total tasks: {stats['total_tasks']}")
+        print(f"  Success rate: {stats['success_rate']:.1f}%")
+        print(f"  Average execution time: {stats['average_execution_time']:.2f}s")
+        print(f"  API usage: {stats['api_usage']}")
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+
+        traceback.print_exc()
+
 
 if __name__ == "__main__":
-    async def test_orchestrator():
-        """Test the enhanced orchestrator"""
-        orchestrator = EnhancedMultiAgentOrchestrator()
-        
-        # Get system status
-        status = await orchestrator.get_system_status()
-        print(f"System Status: {json.dumps(status, indent=2)}")
-        
-        # Conduct test investigation
-        try:
-            investigation = await orchestrator.conduct_investigation(
-                "Recent cybersecurity threats targeting software supply chains",
-                "comprehensive"
-            )
-            
-            # Generate report
-            report = await orchestrator.generate_comprehensive_report(investigation)
-            
-            # Save outputs
-            os.makedirs('artifacts', exist_ok=True)
-            
-            with open('artifacts/enhanced_investigation_report.md', 'w') as f:
-                f.write(report)
-            
-            with open('artifacts/enhanced_investigation_data.json', 'w') as f:
-                json.dump(investigation, f, indent=2)
-            
-            print("✅ Test investigation completed successfully!")
-            print(f"📄 Report saved to artifacts/enhanced_investigation_report.md")
-            
-        except Exception as e:
-            print(f"❌ Test investigation failed: {e}")
-    
-    asyncio.run(test_orchestrator())
+    asyncio.run(main())

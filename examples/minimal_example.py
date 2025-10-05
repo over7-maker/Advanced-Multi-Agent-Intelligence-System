@@ -14,16 +14,15 @@ from cryptography.fernet import Fernet
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout)],
 )
 
 logger = logging.getLogger(__name__)
 
 # Import AMAS system
 from main import AMASIntelligenceSystem
+
 
 class MinimalAMASExample:
     """Minimal example demonstrating AMAS functionality"""
@@ -38,34 +37,36 @@ class MinimalAMASExample:
 
             # Minimal configuration - no external services required
             config = {
-                'llm_service_url': 'http://localhost:11434',  # Will use fallback
-                'vector_service_url': 'http://localhost:8001',  # Will use fallback
-                'graph_service_url': 'bolt://localhost:7687',  # Will use fallback
-                'postgres_host': 'localhost',
-                'postgres_port': 5432,
-                'postgres_user': 'amas',
-                'postgres_password': 'amas123',
-                'postgres_db': 'amas',
-                'redis_host': 'localhost',
-                'redis_port': 6379,
-                'redis_db': 0,
-                'neo4j_username': 'neo4j',
-                'neo4j_password': 'amas123',
-                'neo4j_database': 'neo4j',
-                'jwt_secret': 'amas_jwt_secret_key_2024_secure',
-                'encryption_key': Fernet.generate_key(),
-                'deepseek_api_key': 'demo_key',
-                'glm_api_key': 'demo_key',
-                'grok_api_key': 'demo_key',
-                'n8n_url': 'http://localhost:5678',
-                'n8n_api_key': 'demo_key'
+                "llm_service_url": "http://localhost:11434",  # Will use fallback
+                "vector_service_url": "http://localhost:8001",  # Will use fallback
+                "graph_service_url": "bolt://localhost:7687",  # Will use fallback
+                "postgres_host": "localhost",
+                "postgres_port": 5432,
+                "postgres_user": "amas",
+                "postgres_password": "amas123",
+                "postgres_db": "amas",
+                "redis_host": "localhost",
+                "redis_port": 6379,
+                "redis_db": 0,
+                "neo4j_username": "neo4j",
+                "neo4j_password": "amas123",
+                "neo4j_database": "neo4j",
+                "jwt_secret": "amas_jwt_secret_key_2024_secure",
+                "encryption_key": Fernet.generate_key(),
+                "deepseek_api_key": "demo_key",
+                "glm_api_key": "demo_key",
+                "grok_api_key": "demo_key",
+                "n8n_url": "http://localhost:5678",
+                "n8n_api_key": "demo_key",
             }
 
             # Initialize AMAS system
             self.amas_system = AMASIntelligenceSystem(config)
             await self.amas_system.initialize()
 
-            logger.info("AMAS Intelligence System initialized successfully (Minimal Mode)")
+            logger.info(
+                "AMAS Intelligence System initialized successfully (Minimal Mode)"
+            )
             return True
 
         except Exception as e:
@@ -79,14 +80,14 @@ class MinimalAMASExample:
 
             # Create OSINT task
             task_data = {
-                'type': 'osint',
-                'description': 'Collect intelligence on emerging cyber threats',
-                'parameters': {
-                    'keywords': ['cyber', 'threat', 'security'],
-                    'sources': ['news', 'social_media'],
-                    'time_range': '24h'
+                "type": "osint",
+                "description": "Collect intelligence on emerging cyber threats",
+                "parameters": {
+                    "keywords": ["cyber", "threat", "security"],
+                    "sources": ["news", "social_media"],
+                    "time_range": "24h",
                 },
-                'priority': 2
+                "priority": 2,
             }
 
             # Submit task
@@ -110,14 +111,14 @@ class MinimalAMASExample:
 
             # Create investigation task
             task_data = {
-                'type': 'investigation',
-                'description': 'Investigate suspicious network activity',
-                'parameters': {
-                    'target': 'suspicious_entity',
-                    'analysis_type': 'network',
-                    'time_range': '7d'
+                "type": "investigation",
+                "description": "Investigate suspicious network activity",
+                "parameters": {
+                    "target": "suspicious_entity",
+                    "analysis_type": "network",
+                    "time_range": "7d",
                 },
-                'priority': 3
+                "priority": 3,
             }
 
             # Submit task
@@ -147,20 +148,20 @@ class MinimalAMASExample:
             # Demonstrate task submission
             tasks = [
                 {
-                    'type': 'osint',
-                    'description': 'Monitor social media for security threats',
-                    'priority': 2
+                    "type": "osint",
+                    "description": "Monitor social media for security threats",
+                    "priority": 2,
                 },
                 {
-                    'type': 'investigation',
-                    'description': 'Analyze network traffic patterns',
-                    'priority': 3
+                    "type": "investigation",
+                    "description": "Analyze network traffic patterns",
+                    "priority": 3,
                 },
                 {
-                    'type': 'forensics',
-                    'description': 'Examine digital evidence',
-                    'priority': 4
-                }
+                    "type": "forensics",
+                    "description": "Examine digital evidence",
+                    "priority": 4,
+                },
             ]
 
             submitted_tasks = []
@@ -212,6 +213,7 @@ class MinimalAMASExample:
             if self.amas_system:
                 await self.amas_system.shutdown()
 
+
 async def main():
     """Main function"""
     try:
@@ -219,7 +221,9 @@ async def main():
         success = await example.run_demonstration()
 
         if success:
-            logger.info("AMAS Intelligence System demonstration completed successfully!")
+            logger.info(
+                "AMAS Intelligence System demonstration completed successfully!"
+            )
             return 0
         else:
             logger.error("AMAS Intelligence System demonstration failed!")
@@ -228,6 +232,7 @@ async def main():
     except Exception as e:
         logger.error(f"Application error: {e}")
         return 1
+
 
 if __name__ == "__main__":
     exit_code = asyncio.run(main())

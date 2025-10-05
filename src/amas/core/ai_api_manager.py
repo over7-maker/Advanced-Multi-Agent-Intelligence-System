@@ -1,910 +1,877 @@
 #!/usr/bin/env python3
 """
-AMAS Intelligent AI API Manager
-Comprehensive fallback system for maximum reliability across 16 AI providers
+AMAS AI API Manager - Comprehensive Multi-API Fallback System
+
+This module provides a robust, intelligent API manager that handles multiple AI providers
+with automatic fallback, health monitoring, and performance optimization.
+
+Supported APIs:
+- Cerebras, Codestral, DeepSeek, GeminiAI, GLM, GPTOSS, Grok, GroqAI, Kimi, NVIDIA, Qwen
+- Gemini2, NVIDIA2, Groq2, Cohere, Chutes
+
+Features:
+- Automatic failover between APIs
+- Health monitoring and performance tracking
+- Rate limiting and quota management
+- Intelligent API selection based on task type
+- Comprehensive error handling and retry logic
 """
 
 import os
 import sys
 import asyncio
-import aiohttp
 import json
 import time
-import random
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Union, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-from abc import ABC, abstractmethod
-import backoff
+import aiohttp
+import httpx
 from openai import OpenAI, AsyncOpenAI
 import cohere
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential,
+    retry_if_exception_type,
+)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class APIProvider(Enum):
-    """All supported AI API providers"""
+
+class APIType(Enum):
+    """API provider types"""
+
+    OPENAI_COMPATIBLE = "openai_compatible"
     CEREBRAS = "cerebras"
-    CODESTRAL = "codestral"
-    DEEPSEEK = "deepseek"
-    GEMINIAI = "geminiai"
-    GLM = "glm"
-    GPTOSS = "gptoss"
-    GROK = "grok"
-    GROQAI = "groqai"
-    KIMI = "kimi"
-    NVIDIA = "nvidia"
-    QWEN = "qwen"
-    GEMINI2 = "gemini2"
-    GROQ2 = "groq2"
     COHERE = "cohere"
     CHUTES = "chutes"
+    GEMINI = "gemini"
+    NVIDIA = "nvidia"
 
-class APIStatus(Enum):
-    """API provider status"""
-    HEALTHY = "healthy"
-    DEGRADED = "degraded"
-    UNHEALTHY = "unhealthy"
-    RATE_LIMITED = "rate_limited"
-    DISABLED = "disabled"
-    UNKNOWN = "unknown"
-
-class TaskType(Enum):
-    """Types of AI tasks"""
-    CHAT_COMPLETION = "chat_completion"
-    CODE_ANALYSIS = "code_analysis"
-    TEXT_GENERATION = "text_generation"
-    REASONING = "reasoning"
-    TRANSLATION = "translation"
-    SUMMARIZATION = "summarization"
-    QUESTION_ANSWERING = "question_answering"
 
 @dataclass
-class APIEndpoint:
-    """Configuration for an API endpoint"""
-    provider: APIProvider
+class APIHealth:
+    """API health status tracking"""
+
+    is_healthy: bool = True
+    last_success: Optional[datetime] = None
+    last_failure: Optional[datetime] = None
+    consecutive_failures: int = 0
+    total_requests: int = 0
+    successful_requests: int = 0
+    average_response_time: float = 0.0
+    error_rate: float = 0.0
+    quota_remaining: Optional[int] = None
+    rate_limit_until: Optional[datetime] = None
+
+
+@dataclass
+class APIConfig:
+    """API configuration"""
+
     name: str
     api_key: str
     base_url: str
     model: str
+    api_type: APIType
     max_tokens: int = 4000
     temperature: float = 0.7
     timeout: int = 30
-    rate_limit_rpm: int = 60  # requests per minute
-    priority: int = 1  # 1 = highest priority
-    enabled: bool = True
-    specialty: List[TaskType] = field(default_factory=list)
-    
-    # Health monitoring
-    status: APIStatus = APIStatus.UNKNOWN
-    last_success: Optional[datetime] = None
-    last_failure: Optional[datetime] = None
-    consecutive_failures: int = 0
-    response_times: List[float] = field(default_factory=list)
-    
-    # Rate limiting
-    requests_made: int = 0
-    window_start: datetime = field(default_factory=datetime.now)
-    
-    def reset_rate_limit_window(self):
-        """Reset rate limiting window"""
-        if datetime.now() - self.window_start > timedelta(minutes=1):
-            self.requests_made = 0
-            self.window_start = datetime.now()
-    
-    def can_make_request(self) -> bool:
-        """Check if we can make a request within rate limits"""
-        self.reset_rate_limit_window()
-        return self.requests_made < self.rate_limit_rpm
-    
-    def record_request(self):
-        """Record a request for rate limiting"""
-        self.reset_rate_limit_window()
-        self.requests_made += 1
-    
-    def record_success(self, response_time: float):
-        """Record successful request"""
-        self.last_success = datetime.now()
-        self.consecutive_failures = 0
-        self.status = APIStatus.HEALTHY
-        self.response_times.append(response_time)
-        
-        # Keep only last 10 response times
-        if len(self.response_times) > 10:
-            self.response_times = self.response_times[-10:]
-    
-    def record_failure(self, error: str = None):
-        """Record failed request"""
-        self.last_failure = datetime.now()
-        self.consecutive_failures += 1
-        
-        # Update status based on failure count
-        if self.consecutive_failures >= 5:
-            self.status = APIStatus.UNHEALTHY
-        elif self.consecutive_failures >= 3:
-            self.status = APIStatus.DEGRADED
-        
-        logger.warning(f"API {self.provider.value} failure #{self.consecutive_failures}: {error}")
-    
-    def get_average_response_time(self) -> float:
-        """Get average response time"""
-        return sum(self.response_times) / len(self.response_times) if self.response_times else 0.0
+    retry_attempts: int = 3
+    priority: int = 1  # Lower number = higher priority
+    capabilities: List[str] = field(default_factory=list)
+    cost_per_token: float = 0.0
+    rate_limit_per_minute: int = 60
 
-class APIClient(ABC):
-    """Abstract base class for API clients"""
-    
-    def __init__(self, endpoint: APIEndpoint):
-        self.endpoint = endpoint
-    
-    @abstractmethod
-    async def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
-        """Generate response from the API"""
-        pass
-    
-    @abstractmethod
-    async def health_check(self) -> bool:
-        """Perform health check"""
-        pass
 
-class OpenAICompatibleClient(APIClient):
-    """Client for OpenAI-compatible APIs"""
-    
-    def __init__(self, endpoint: APIEndpoint):
-        super().__init__(endpoint)
-        self.client = AsyncOpenAI(
-            base_url=endpoint.base_url,
-            api_key=endpoint.api_key,
-            timeout=endpoint.timeout
-        )
-    
-    async def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
-        """Generate response using OpenAI-compatible API"""
-        try:
-            start_time = time.time()
-            
-            response = await self.client.chat.completions.create(
-                model=self.endpoint.model,
-                messages=messages,
-                max_tokens=kwargs.get('max_tokens', self.endpoint.max_tokens),
-                temperature=kwargs.get('temperature', self.endpoint.temperature),
-                timeout=self.endpoint.timeout
-            )
-            
-            response_time = time.time() - start_time
-            self.endpoint.record_success(response_time)
-            
-            return {
-                'content': response.choices[0].message.content,
-                'model': self.endpoint.model,
-                'provider': self.endpoint.provider.value,
-                'response_time': response_time,
-                'usage': response.usage.dict() if response.usage else None
-            }
-            
-        except Exception as e:
-            self.endpoint.record_failure(str(e))
-            raise
-    
-    async def health_check(self) -> bool:
-        """Perform health check"""
-        try:
-            await self.generate_response([{"role": "user", "content": "Hello"}])
-            return True
-        except:
-            return False
+class AIAPIManager:
+    """Comprehensive AI API Manager with intelligent fallback"""
 
-class CerebrasClient(APIClient):
-    """Client for Cerebras API"""
-    
-    def __init__(self, endpoint: APIEndpoint):
-        super().__init__(endpoint)
-        # Use specific Cerebras SDK if available, otherwise OpenAI-compatible
-        self.client = AsyncOpenAI(
-            base_url="https://api.cerebras.ai/v1",
-            api_key=endpoint.api_key,
-            timeout=endpoint.timeout
-        )
-    
-    async def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
-        """Generate response using Cerebras API"""
-        try:
-            start_time = time.time()
-            
-            response = await self.client.chat.completions.create(
-                model=self.endpoint.model,
-                messages=messages,
-                max_completion_tokens=kwargs.get('max_tokens', self.endpoint.max_tokens),
-                temperature=kwargs.get('temperature', self.endpoint.temperature),
-                stream=False
-            )
-            
-            response_time = time.time() - start_time
-            self.endpoint.record_success(response_time)
-            
-            return {
-                'content': response.choices[0].message.content,
-                'model': self.endpoint.model,
-                'provider': self.endpoint.provider.value,
-                'response_time': response_time,
-                'usage': response.usage.dict() if response.usage else None
-            }
-            
-        except Exception as e:
-            self.endpoint.record_failure(str(e))
-            raise
-    
-    async def health_check(self) -> bool:
-        """Perform health check"""
-        try:
-            await self.generate_response([{"role": "user", "content": "Hello"}])
-            return True
-        except:
-            return False
-
-class GeminiClient(APIClient):
-    """Client for Google Gemini API"""
-    
-    def __init__(self, endpoint: APIEndpoint):
-        super().__init__(endpoint)
-        self.session = None
-    
-    async def _get_session(self):
-        """Get or create aiohttp session"""
-        if not self.session:
-            self.session = aiohttp.ClientSession()
-        return self.session
-    
-    async def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
-        """Generate response using Gemini API"""
-        try:
-            start_time = time.time()
-            session = await self._get_session()
-            
-            # Convert messages to Gemini format
-            text = "\n".join([f"{msg['role']}: {msg['content']}" for msg in messages])
-            
-            url = f"{self.endpoint.base_url}/models/{self.endpoint.model}:generateContent"
-            headers = {
-                'Content-Type': 'application/json',
-                'X-goog-api-key': self.endpoint.api_key
-            }
-            
-            payload = {
-                "contents": [{"parts": [{"text": text}]}],
-                "generationConfig": {
-                    "maxOutputTokens": kwargs.get('max_tokens', self.endpoint.max_tokens),
-                    "temperature": kwargs.get('temperature', self.endpoint.temperature)
-                }
-            }
-            
-            async with session.post(url, headers=headers, json=payload, timeout=self.endpoint.timeout) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    content = data['candidates'][0]['content']['parts'][0]['text']
-                    
-                    response_time = time.time() - start_time
-                    self.endpoint.record_success(response_time)
-                    
-                    return {
-                        'content': content,
-                        'model': self.endpoint.model,
-                        'provider': self.endpoint.provider.value,
-                        'response_time': response_time,
-                        'usage': data.get('usageMetadata', {})
-                    }
-                else:
-                    error_text = await response.text()
-                    self.endpoint.record_failure(f"HTTP {response.status}: {error_text}")
-                    raise Exception(f"Gemini API error: {response.status} - {error_text}")
-                    
-        except Exception as e:
-            self.endpoint.record_failure(str(e))
-            raise
-    
-    async def health_check(self) -> bool:
-        """Perform health check"""
-        try:
-            await self.generate_response([{"role": "user", "content": "Hello"}])
-            return True
-        except:
-            return False
-
-class CohereClient(APIClient):
-    """Client for Cohere API"""
-    
-    def __init__(self, endpoint: APIEndpoint):
-        super().__init__(endpoint)
-        self.client = cohere.AsyncClientV2(api_key=endpoint.api_key)
-    
-    async def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
-        """Generate response using Cohere API"""
-        try:
-            start_time = time.time()
-            
-            response = await self.client.chat(
-                model=self.endpoint.model,
-                messages=messages,
-                max_tokens=kwargs.get('max_tokens', self.endpoint.max_tokens),
-                temperature=kwargs.get('temperature', self.endpoint.temperature)
-            )
-            
-            response_time = time.time() - start_time
-            self.endpoint.record_success(response_time)
-            
-            return {
-                'content': response.message.content[0].text,
-                'model': self.endpoint.model,
-                'provider': self.endpoint.provider.value,
-                'response_time': response_time,
-                'usage': response.usage.dict() if hasattr(response, 'usage') else None
-            }
-            
-        except Exception as e:
-            self.endpoint.record_failure(str(e))
-            raise
-    
-    async def health_check(self) -> bool:
-        """Perform health check"""
-        try:
-            await self.generate_response([{"role": "user", "content": "Hello"}])
-            return True
-        except:
-            return False
-
-class ChutesClient(APIClient):
-    """Client for Chutes API"""
-    
-    def __init__(self, endpoint: APIEndpoint):
-        super().__init__(endpoint)
-        self.session = None
-    
-    async def _get_session(self):
-        """Get or create aiohttp session"""
-        if not self.session:
-            self.session = aiohttp.ClientSession()
-        return self.session
-    
-    async def generate_response(self, messages: List[Dict[str, str]], **kwargs) -> Dict[str, Any]:
-        """Generate response using Chutes API"""
-        try:
-            start_time = time.time()
-            session = await self._get_session()
-            
-            headers = {
-                "Authorization": f"Bearer {self.endpoint.api_key}",
-                "Content-Type": "application/json"
-            }
-            
-            payload = {
-                "model": self.endpoint.model,
-                "messages": messages,
-                "stream": False,
-                "max_tokens": kwargs.get('max_tokens', self.endpoint.max_tokens),
-                "temperature": kwargs.get('temperature', self.endpoint.temperature)
-            }
-            
-            async with session.post(
-                f"{self.endpoint.base_url}/chat/completions",
-                headers=headers,
-                json=payload,
-                timeout=self.endpoint.timeout
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    content = data['choices'][0]['message']['content']
-                    
-                    response_time = time.time() - start_time
-                    self.endpoint.record_success(response_time)
-                    
-                    return {
-                        'content': content,
-                        'model': self.endpoint.model,
-                        'provider': self.endpoint.provider.value,
-                        'response_time': response_time,
-                        'usage': data.get('usage', {})
-                    }
-                else:
-                    error_text = await response.text()
-                    self.endpoint.record_failure(f"HTTP {response.status}: {error_text}")
-                    raise Exception(f"Chutes API error: {response.status} - {error_text}")
-                    
-        except Exception as e:
-            self.endpoint.record_failure(str(e))
-            raise
-    
-    async def health_check(self) -> bool:
-        """Perform health check"""
-        try:
-            await self.generate_response([{"role": "user", "content": "Hello"}])
-            return True
-        except:
-            return False
-
-class IntelligentAPIManager:
-    """Intelligent AI API Manager with comprehensive fallback system"""
-    
     def __init__(self):
-        self.endpoints: Dict[APIProvider, APIEndpoint] = {}
-        self.clients: Dict[APIProvider, APIClient] = {}
-        self.last_health_check = datetime.now()
-        self.health_check_interval = timedelta(minutes=5)
-        
-        # Load configurations
-        self._load_api_configurations()
-        self._initialize_clients()
-        
-        # Statistics
-        self.total_requests = 0
-        self.successful_requests = 0
-        self.failed_requests = 0
-        self.fallback_usage = {provider: 0 for provider in APIProvider}
-        
-        logger.info(f"Initialized AI API Manager with {len(self.endpoints)} providers")
-    
-    def _load_api_configurations(self):
-        """Load all API configurations"""
-        configs = [
-            # Cerebras
-            {
-                'provider': APIProvider.CEREBRAS,
-                'name': 'Cerebras',
-                'api_key_env': 'CEREBRAS_API_KEY',
-                'base_url': 'https://api.cerebras.ai/v1',
-                'model': 'qwen-3-235b-a22b-instruct-2507',
-                'priority': 1,
-                'specialty': [TaskType.REASONING, TaskType.CODE_ANALYSIS]
-            },
-            # Codestral
-            {
-                'provider': APIProvider.CODESTRAL,
-                'name': 'Codestral (Mistral)',
-                'api_key_env': 'CODESTRAL_API_KEY',
-                'base_url': 'https://codestral.mistral.ai/v1',
-                'model': 'codestral-latest',
-                'priority': 2,
-                'specialty': [TaskType.CODE_ANALYSIS, TaskType.TEXT_GENERATION]
-            },
-            # DeepSeek
-            {
-                'provider': APIProvider.DEEPSEEK,
-                'name': 'DeepSeek',
-                'api_key_env': 'DEEPSEEK_API_KEY',
-                'base_url': 'https://api.deepseek.com/v1',
-                'model': 'deepseek-chat',
-                'priority': 3,
-                'specialty': [TaskType.REASONING, TaskType.CHAT_COMPLETION]
-            },
-            # Gemini AI
-            {
-                'provider': APIProvider.GEMINIAI,
-                'name': 'Gemini AI',
-                'api_key_env': 'GEMINIAI_API_KEY',
-                'base_url': 'https://generativelanguage.googleapis.com/v1beta',
-                'model': 'gemini-2.0-flash',
-                'priority': 4,
-                'specialty': [TaskType.REASONING, TaskType.QUESTION_ANSWERING]
-            },
-            # GLM
-            {
-                'provider': APIProvider.GLM,
-                'name': 'GLM',
-                'api_key_env': 'GLM_API_KEY',
-                'base_url': 'https://openrouter.ai/api/v1',
-                'model': 'zai-org/GLM-4.5-Air',
-                'priority': 5,
-                'specialty': [TaskType.CHAT_COMPLETION, TaskType.TEXT_GENERATION]
-            },
-            # GPT OSS
-            {
-                'provider': APIProvider.GPTOSS,
-                'name': 'GPT OSS',
-                'api_key_env': 'GPTOSS_API_KEY',
-                'base_url': 'https://openrouter.ai/api/v1',
-                'model': 'openai/gpt-oss-120b',
-                'priority': 6,
-                'specialty': [TaskType.CHAT_COMPLETION, TaskType.TEXT_GENERATION]
-            },
-            # Grok
-            {
-                'provider': APIProvider.GROK,
-                'name': 'Grok',
-                'api_key_env': 'GROK_API_KEY',
-                'base_url': 'https://openrouter.ai/api/v1',
-                'model': 'x-ai/grok-4-fast',
-                'priority': 7,
-                'specialty': [TaskType.REASONING, TaskType.QUESTION_ANSWERING]
-            },
-            # Groq AI
-            {
-                'provider': APIProvider.GROQAI,
-                'name': 'Groq AI',
-                'api_key_env': 'GROQAI_API_KEY',
-                'base_url': 'https://api.groq.com/openai/v1',
-                'model': 'llama-3.3-70b-versatile',
-                'priority': 8,
-                'specialty': [TaskType.CHAT_COMPLETION, TaskType.TEXT_GENERATION]
-            },
-            # Kimi
-            {
-                'provider': APIProvider.KIMI,
-                'name': 'Kimi',
-                'api_key_env': 'KIMI_API_KEY',
-                'base_url': 'https://openrouter.ai/api/v1',
-                'model': 'moonshotai/kimi-k2',
-                'priority': 9,
-                'specialty': [TaskType.CHAT_COMPLETION, TaskType.TRANSLATION]
-            },
-            # NVIDIA
-            {
-                'provider': APIProvider.NVIDIA,
-                'name': 'NVIDIA',
-                'api_key_env': 'NVIDIA_API_KEY',
-                'base_url': 'https://integrate.api.nvidia.com/v1',
-                'model': 'deepseek-ai/deepseek-r1',
-                'priority': 10,
-                'specialty': [TaskType.REASONING, TaskType.CODE_ANALYSIS]
-            },
-            # Qwen
-            {
-                'provider': APIProvider.QWEN,
-                'name': 'Qwen',
-                'api_key_env': 'QWEN_API_KEY',
-                'base_url': 'https://openrouter.ai/api/v1',
-                'model': 'qwen/qwen2.5-coder-32b-instruct',
-                'priority': 11,
-                'specialty': [TaskType.CODE_ANALYSIS, TaskType.TEXT_GENERATION]
-            },
-            # Gemini 2
-            {
-                'provider': APIProvider.GEMINI2,
-                'name': 'Gemini 2',
-                'api_key_env': 'GEMINI2_API_KEY',
-                'base_url': 'https://generativelanguage.googleapis.com/v1beta',
-                'model': 'gemini-2.0-flash',
-                'priority': 12,
-                'specialty': [TaskType.REASONING, TaskType.QUESTION_ANSWERING]
-            },
-            # Groq 2
-            {
-                'provider': APIProvider.GROQ2,
-                'name': 'Groq 2',
-                'api_key_env': 'GROQ2_API_KEY',
-                'base_url': 'https://api.groq.com/openai/v1',
-                'model': 'llama-3.3-70b-versatile',
-                'priority': 13,
-                'specialty': [TaskType.CHAT_COMPLETION, TaskType.TEXT_GENERATION]
-            },
-            # Cohere
-            {
-                'provider': APIProvider.COHERE,
-                'name': 'Cohere',
-                'api_key_env': 'COHERE_API_KEY',
-                'base_url': 'https://api.cohere.ai/v1',
-                'model': 'command-a-03-2025',
-                'priority': 14,
-                'specialty': [TaskType.CHAT_COMPLETION, TaskType.SUMMARIZATION]
-            },
-            # Chutes
-            {
-                'provider': APIProvider.CHUTES,
-                'name': 'Chutes',
-                'api_key_env': 'CHUTES_API_KEY',
-                'base_url': 'https://llm.chutes.ai/v1',
-                'model': 'zai-org/GLM-4.5-Air',
-                'priority': 15,
-                'specialty': [TaskType.CHAT_COMPLETION, TaskType.TEXT_GENERATION]
+        """Initialize the AI API Manager"""
+        self.apis: Dict[str, APIConfig] = {}
+        self.health_status: Dict[str, APIHealth] = {}
+        self.session: Optional[aiohttp.ClientSession] = None
+        self.http_client: Optional[httpx.AsyncClient] = None
+
+        # Initialize all API configurations
+        self._setup_apis()
+
+        # Health monitoring
+        self.health_check_interval = 300  # 5 minutes
+        self.max_consecutive_failures = 3
+
+        logger.info(f"AI API Manager initialized with {len(self.apis)} APIs")
+
+    def _setup_apis(self):
+        """Setup all available API configurations"""
+
+        # Cerebras API
+        if os.getenv("CEREBRAS_API_KEY"):
+            self.apis["cerebras"] = APIConfig(
+                name="Cerebras",
+                api_key=os.getenv("CEREBRAS_API_KEY"),
+                base_url="https://api.cerebras.ai/v1",
+                model="qwen-3-235b-a22b-instruct-2507",
+                api_type=APIType.CEREBRAS,
+                capabilities=["reasoning", "code_generation", "analysis"],
+                priority=1,
+            )
+
+        # Codestral API
+        if os.getenv("CODESTRAL_API_KEY"):
+            self.apis["codestral"] = APIConfig(
+                name="Codestral",
+                api_key=os.getenv("CODESTRAL_API_KEY"),
+                base_url="https://codestral.mistral.ai/v1",
+                model="codestral-latest",
+                api_type=APIType.OPENAI_COMPATIBLE,
+                capabilities=[
+                    "code_analysis",
+                    "vulnerability_detection",
+                    "technical_assessment",
+                ],
+                priority=2,
+            )
+
+        # DeepSeek API
+        if os.getenv("DEEPSEEK_API_KEY"):
+            self.apis["deepseek"] = APIConfig(
+                name="DeepSeek",
+                api_key=os.getenv("DEEPSEEK_API_KEY"),
+                base_url="https://api.deepseek.com/v1",
+                model="deepseek-chat",
+                api_type=APIType.OPENAI_COMPATIBLE,
+                capabilities=["reasoning", "analysis", "code_generation"],
+                priority=3,
+            )
+
+        # Gemini AI API
+        if os.getenv("GEMINIAI_API_KEY"):
+            self.apis["gemini"] = APIConfig(
+                name="Gemini",
+                api_key=os.getenv("GEMINIAI_API_KEY"),
+                base_url="https://generativelanguage.googleapis.com/v1beta",
+                model="gemini-pro",
+                api_type=APIType.GEMINI,
+                capabilities=["reasoning", "analysis", "multimodal"],
+                priority=4,
+            )
+
+        # GLM API (via OpenRouter)
+        if os.getenv("GLM_API_KEY"):
+            self.apis["glm"] = APIConfig(
+                name="GLM",
+                api_key=os.getenv("GLM_API_KEY"),
+                base_url="https://openrouter.ai/api/v1",
+                model="deepseek/deepseek-chat",
+                api_type=APIType.OPENAI_COMPATIBLE,
+                capabilities=["reasoning", "analysis", "code_generation"],
+                priority=5,
+            )
+
+        # GPTOSS API
+        if os.getenv("GPTOSS_API_KEY"):
+            self.apis["gptoss"] = APIConfig(
+                name="GPTOSS",
+                api_key=os.getenv("GPTOSS_API_KEY"),
+                base_url="https://api.openai.com/v1",
+                model="gpt-4",
+                api_type=APIType.OPENAI_COMPATIBLE,
+                capabilities=["reasoning", "analysis", "code_generation"],
+                priority=6,
+            )
+
+        # Grok API (via OpenRouter)
+        if os.getenv("GROK_API_KEY"):
+            self.apis["grok"] = APIConfig(
+                name="Grok",
+                api_key=os.getenv("GROK_API_KEY"),
+                base_url="https://openrouter.ai/api/v1",
+                model="x-ai/grok-beta",
+                api_type=APIType.OPENAI_COMPATIBLE,
+                capabilities=["reasoning", "analysis", "synthesis"],
+                priority=7,
+            )
+
+        # GroqAI API
+        if os.getenv("GROQAI_API_KEY"):
+            self.apis["groqai"] = APIConfig(
+                name="GroqAI",
+                api_key=os.getenv("GROQAI_API_KEY"),
+                base_url="https://api.groq.com/openai/v1",
+                model="llama3-8b-8192",
+                api_type=APIType.OPENAI_COMPATIBLE,
+                capabilities=["fast_inference", "reasoning", "analysis"],
+                priority=8,
+            )
+
+        # Kimi API
+        if os.getenv("KIMI_API_KEY"):
+            self.apis["kimi"] = APIConfig(
+                name="Kimi",
+                api_key=os.getenv("KIMI_API_KEY"),
+                base_url="https://api.moonshot.cn/v1",
+                model="moonshot-v1-8k",
+                api_type=APIType.OPENAI_COMPATIBLE,
+                capabilities=["reasoning", "analysis", "chinese_support"],
+                priority=9,
+            )
+
+        # NVIDIA API
+        if os.getenv("NVIDIA_API_KEY"):
+            self.apis["nvidia"] = APIConfig(
+                name="NVIDIA",
+                api_key=os.getenv("NVIDIA_API_KEY"),
+                base_url="https://integrate.api.nvidia.com/v1",
+                model="deepseek-ai/deepseek-r1",
+                api_type=APIType.NVIDIA,
+                capabilities=["reasoning", "code_generation", "analysis"],
+                priority=10,
+            )
+
+        # Qwen API
+        if os.getenv("QWEN_API_KEY"):
+            self.apis["qwen"] = APIConfig(
+                name="Qwen",
+                api_key=os.getenv("QWEN_API_KEY"),
+                base_url="https://dashscope.aliyuncs.com/api/v1",
+                model="qwen-turbo",
+                api_type=APIType.OPENAI_COMPATIBLE,
+                capabilities=["reasoning", "analysis", "chinese_support"],
+                priority=11,
+            )
+
+        # Gemini2 API
+        if os.getenv("GEMINI2_API_KEY"):
+            self.apis["gemini2"] = APIConfig(
+                name="Gemini2",
+                api_key=os.getenv("GEMINI2_API_KEY"),
+                base_url="https://generativelanguage.googleapis.com/v1beta",
+                model="gemini-2.0-flash",
+                api_type=APIType.GEMINI,
+                capabilities=["reasoning", "analysis", "multimodal"],
+                priority=12,
+            )
+
+        # NVIDIA2 API
+        if os.getenv("NVIDIA_API_KEY"):
+            self.apis["nvidia2"] = APIConfig(
+                name="NVIDIA2",
+                api_key=os.getenv("NVIDIA_API_KEY"),
+                base_url="https://integrate.api.nvidia.com/v1",
+                model="qwen/qwen2.5-coder-32b-instruct",
+                api_type=APIType.NVIDIA,
+                capabilities=["code_generation", "analysis", "technical"],
+                priority=13,
+            )
+
+        # Groq2 API
+        if os.getenv("GROQ2_API_KEY"):
+            self.apis["groq2"] = APIConfig(
+                name="Groq2",
+                api_key=os.getenv("GROQ2_API_KEY"),
+                base_url="https://api.groq.com/openai/v1",
+                model="llama3-70b-8192",
+                api_type=APIType.OPENAI_COMPATIBLE,
+                capabilities=["fast_inference", "reasoning", "analysis"],
+                priority=14,
+            )
+
+        # Cohere API
+        if os.getenv("COHERE_API_KEY"):
+            self.apis["cohere"] = APIConfig(
+                name="Cohere",
+                api_key=os.getenv("COHERE_API_KEY"),
+                base_url="https://api.cohere.ai/v1",
+                model="command-a-03-2025",
+                api_type=APIType.COHERE,
+                capabilities=["reasoning", "analysis", "text_generation"],
+                priority=15,
+            )
+
+        # Chutes API
+        if os.getenv("CHUTES_API_KEY"):
+            self.apis["chutes"] = APIConfig(
+                name="Chutes",
+                api_key=os.getenv("CHUTES_API_KEY"),
+                base_url="https://llm.chutes.ai/v1",
+                model="zai-org/GLM-4.5-Air",
+                api_type=APIType.CHUTES,
+                capabilities=["reasoning", "analysis", "code_generation"],
+                priority=16,
+            )
+
+        # Initialize health status for all APIs
+        for api_name in self.apis:
+            self.health_status[api_name] = APIHealth()
+
+        logger.info(f"Configured {len(self.apis)} APIs: {list(self.apis.keys())}")
+
+    async def __aenter__(self):
+        """Async context manager entry"""
+        self.session = aiohttp.ClientSession()
+        self.http_client = httpx.AsyncClient(timeout=30.0)
+        return self
+
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """Async context manager exit"""
+        if self.session:
+            await self.session.close()
+        if self.http_client:
+            await self.http_client.aclose()
+
+    def get_available_apis(self, task_type: str = None) -> List[str]:
+        """Get list of available APIs, optionally filtered by task type"""
+        available = []
+
+        for api_name, api_config in self.apis.items():
+            health = self.health_status[api_name]
+
+            # Skip if API is unhealthy
+            if not health.is_healthy:
+                continue
+
+            # Skip if rate limited
+            if health.rate_limit_until and health.rate_limit_until > datetime.now():
+                continue
+
+            # Filter by task type if specified
+            if task_type and task_type not in api_config.capabilities:
+                continue
+
+            available.append(api_name)
+
+        # Sort by priority
+        available.sort(key=lambda x: self.apis[x].priority)
+        return available
+
+    async def _make_openai_request(
+        self, api_name: str, messages: List[Dict], **kwargs
+    ) -> Dict:
+        """Make request to OpenAI-compatible API"""
+        api_config = self.apis[api_name]
+
+        client = AsyncOpenAI(base_url=api_config.base_url, api_key=api_config.api_key)
+
+        response = await client.chat.completions.create(
+            model=api_config.model,
+            messages=messages,
+            max_tokens=kwargs.get("max_tokens", api_config.max_tokens),
+            temperature=kwargs.get("temperature", api_config.temperature),
+            timeout=kwargs.get("timeout", api_config.timeout),
+        )
+
+        return {
+            "content": response.choices[0].message.content,
+            "usage": response.usage.dict() if response.usage else None,
+            "model": response.model,
+        }
+
+    async def _make_cerebras_request(
+        self, api_name: str, messages: List[Dict], **kwargs
+    ) -> Dict:
+        """Make request to Cerebras API"""
+        api_config = self.apis[api_name]
+
+        # Convert messages to Cerebras format
+        system_content = ""
+        user_content = ""
+
+        for msg in messages:
+            if msg["role"] == "system":
+                system_content = msg["content"]
+            elif msg["role"] == "user":
+                user_content = msg["content"]
+
+        payload = {
+            "messages": [{"role": "user", "content": user_content}],
+            "model": api_config.model,
+            "stream": False,
+            "max_completion_tokens": kwargs.get("max_tokens", api_config.max_tokens),
+            "temperature": kwargs.get("temperature", api_config.temperature),
+        }
+
+        if system_content:
+            payload["messages"].insert(0, {"role": "system", "content": system_content})
+
+        async with self.http_client.post(
+            f"{api_config.base_url}/chat/completions",
+            headers={"Authorization": f"Bearer {api_config.api_key}"},
+            json=payload,
+        ) as response:
+            result = await response.json()
+
+            return {
+                "content": result["choices"][0]["message"]["content"],
+                "usage": result.get("usage"),
+                "model": result["model"],
             }
-        ]
-        
-        for config in configs:
-            api_key = os.getenv(config['api_key_env'])
-            if api_key:
-                endpoint = APIEndpoint(
-                    provider=config['provider'],
-                    name=config['name'],
-                    api_key=api_key,
-                    base_url=config['base_url'],
-                    model=config['model'],
-                    priority=config['priority'],
-                    specialty=config.get('specialty', []),
-                    enabled=True
-                )
-                self.endpoints[config['provider']] = endpoint
-                logger.info(f"✅ {config['name']} API configured")
+
+    async def _make_cohere_request(
+        self, api_name: str, messages: List[Dict], **kwargs
+    ) -> Dict:
+        """Make request to Cohere API"""
+        api_config = self.apis[api_name]
+
+        # Convert messages to Cohere format
+        user_content = ""
+        for msg in messages:
+            if msg["role"] == "user":
+                user_content = msg["content"]
+                break
+
+        payload = {
+            "model": api_config.model,
+            "messages": [{"role": "user", "content": user_content}],
+            "max_tokens": kwargs.get("max_tokens", api_config.max_tokens),
+            "temperature": kwargs.get("temperature", api_config.temperature),
+        }
+
+        async with self.http_client.post(
+            f"{api_config.base_url}/chat",
+            headers={"Authorization": f"Bearer {api_config.api_key}"},
+            json=payload,
+        ) as response:
+            result = await response.json()
+
+            return {
+                "content": result["text"],
+                "usage": result.get("meta"),
+                "model": api_config.model,
+            }
+
+    async def _make_chutes_request(
+        self, api_name: str, messages: List[Dict], **kwargs
+    ) -> Dict:
+        """Make request to Chutes API"""
+        api_config = self.apis[api_name]
+
+        payload = {
+            "model": api_config.model,
+            "messages": messages,
+            "stream": False,
+            "max_tokens": kwargs.get("max_tokens", api_config.max_tokens),
+            "temperature": kwargs.get("temperature", api_config.temperature),
+        }
+
+        async with self.http_client.post(
+            f"{api_config.base_url}/chat/completions",
+            headers={"Authorization": f"Bearer {api_config.api_key}"},
+            json=payload,
+        ) as response:
+            result = await response.json()
+
+            return {
+                "content": result["choices"][0]["message"]["content"],
+                "usage": result.get("usage"),
+                "model": result["model"],
+            }
+
+    async def _make_gemini_request(
+        self, api_name: str, messages: List[Dict], **kwargs
+    ) -> Dict:
+        """Make request to Gemini API"""
+        api_config = self.apis[api_name]
+
+        # Convert messages to Gemini format
+        user_content = ""
+        for msg in messages:
+            if msg["role"] == "user":
+                user_content = msg["content"]
+                break
+
+        payload = {
+            "contents": [{"parts": [{"text": user_content}]}],
+            "generationConfig": {
+                "maxOutputTokens": kwargs.get("max_tokens", api_config.max_tokens),
+                "temperature": kwargs.get("temperature", api_config.temperature),
+            },
+        }
+
+        async with self.http_client.post(
+            f"{api_config.base_url}/models/{api_config.model}:generateContent",
+            headers={"X-goog-api-key": api_config.api_key},
+            json=payload,
+        ) as response:
+            result = await response.json()
+
+            return {
+                "content": result["candidates"][0]["content"]["parts"][0]["text"],
+                "usage": result.get("usageMetadata"),
+                "model": api_config.model,
+            }
+
+    async def _make_nvidia_request(
+        self, api_name: str, messages: List[Dict], **kwargs
+    ) -> Dict:
+        """Make request to NVIDIA API"""
+        api_config = self.apis[api_name]
+
+        client = AsyncOpenAI(base_url=api_config.base_url, api_key=api_config.api_key)
+
+        response = await client.chat.completions.create(
+            model=api_config.model,
+            messages=messages,
+            max_tokens=kwargs.get("max_tokens", api_config.max_tokens),
+            temperature=kwargs.get("temperature", api_config.temperature),
+            timeout=kwargs.get("timeout", api_config.timeout),
+        )
+
+        return {
+            "content": response.choices[0].message.content,
+            "usage": response.usage.dict() if response.usage else None,
+            "model": response.model,
+        }
+
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=4, max=10),
+        retry=retry_if_exception_type(
+            (aiohttp.ClientError, httpx.RequestError, asyncio.TimeoutError)
+        ),
+    )
+    async def _call_api(self, api_name: str, messages: List[Dict], **kwargs) -> Dict:
+        """Make API call with retry logic"""
+        api_config = self.apis[api_name]
+        start_time = time.time()
+
+        try:
+            if api_config.api_type == APIType.OPENAI_COMPATIBLE:
+                result = await self._make_openai_request(api_name, messages, **kwargs)
+            elif api_config.api_type == APIType.CEREBRAS:
+                result = await self._make_cerebras_request(api_name, messages, **kwargs)
+            elif api_config.api_type == APIType.COHERE:
+                result = await self._make_cohere_request(api_name, messages, **kwargs)
+            elif api_config.api_type == APIType.CHUTES:
+                result = await self._make_chutes_request(api_name, messages, **kwargs)
+            elif api_config.api_type == APIType.GEMINI:
+                result = await self._make_gemini_request(api_name, messages, **kwargs)
+            elif api_config.api_type == APIType.NVIDIA:
+                result = await self._make_nvidia_request(api_name, messages, **kwargs)
             else:
-                logger.warning(f"❌ {config['name']} API key not found in environment")
-    
-    def _initialize_clients(self):
-        """Initialize API clients for each endpoint"""
-        for provider, endpoint in self.endpoints.items():
-            try:
-                if provider in [APIProvider.CEREBRAS]:
-                    self.clients[provider] = CerebrasClient(endpoint)
-                elif provider in [APIProvider.GEMINIAI, APIProvider.GEMINI2]:
-                    self.clients[provider] = GeminiClient(endpoint)
-                elif provider in [APIProvider.COHERE]:
-                    self.clients[provider] = CohereClient(endpoint)
-                elif provider in [APIProvider.CHUTES]:
-                    self.clients[provider] = ChutesClient(endpoint)
-                else:
-                    # Default to OpenAI-compatible client
-                    self.clients[provider] = OpenAICompatibleClient(endpoint)
-                
-                logger.info(f"✅ {endpoint.name} client initialized")
-                
-            except Exception as e:
-                logger.error(f"❌ Failed to initialize {endpoint.name} client: {e}")
-                endpoint.enabled = False
-    
-    def get_available_providers(self, task_type: TaskType = None) -> List[APIProvider]:
-        """Get available providers, optionally filtered by task type"""
-        providers = []
-        
-        for provider, endpoint in self.endpoints.items():
-            if not endpoint.enabled or endpoint.status == APIStatus.UNHEALTHY:
-                continue
-            
-            if task_type and task_type not in endpoint.specialty and endpoint.specialty:
-                continue
-            
-            if not endpoint.can_make_request():
-                continue
-            
-            providers.append(provider)
-        
-        # Sort by priority and health status
-        def sort_key(provider):
-            endpoint = self.endpoints[provider]
-            status_priority = {
-                APIStatus.HEALTHY: 0,
-                APIStatus.DEGRADED: 1,
-                APIStatus.RATE_LIMITED: 2,
-                APIStatus.UNKNOWN: 3,
-                APIStatus.UNHEALTHY: 4,
-                APIStatus.DISABLED: 5
-            }
-            return (status_priority.get(endpoint.status, 10), endpoint.priority)
-        
-        providers.sort(key=sort_key)
-        return providers
-    
-    @backoff.on_exception(backoff.expo, Exception, max_tries=3, max_time=30)
-    async def generate_response_with_fallback(
+                raise ValueError(f"Unsupported API type: {api_config.api_type}")
+
+            # Update health status
+            response_time = time.time() - start_time
+            self._update_health_success(api_name, response_time)
+
+            return result
+
+        except Exception as e:
+            self._update_health_failure(api_name, str(e))
+            raise
+
+    def _update_health_success(self, api_name: str, response_time: float):
+        """Update health status after successful request"""
+        health = self.health_status[api_name]
+        health.last_success = datetime.now()
+        health.consecutive_failures = 0
+        health.total_requests += 1
+        health.successful_requests += 1
+
+        # Update average response time
+        if health.average_response_time == 0:
+            health.average_response_time = response_time
+        else:
+            health.average_response_time = (
+                health.average_response_time + response_time
+            ) / 2
+
+        # Update error rate
+        health.error_rate = 1 - (health.successful_requests / health.total_requests)
+
+        # Mark as healthy if it was unhealthy
+        if not health.is_healthy and health.consecutive_failures == 0:
+            health.is_healthy = True
+            logger.info(f"API {api_name} is now healthy")
+
+    def _update_health_failure(self, api_name: str, error: str):
+        """Update health status after failed request"""
+        health = self.health_status[api_name]
+        health.last_failure = datetime.now()
+        health.consecutive_failures += 1
+        health.total_requests += 1
+
+        # Update error rate
+        health.error_rate = 1 - (health.successful_requests / health.total_requests)
+
+        # Mark as unhealthy if too many consecutive failures
+        if health.consecutive_failures >= self.max_consecutive_failures:
+            health.is_healthy = False
+            logger.warning(
+                f"API {api_name} marked as unhealthy after {health.consecutive_failures} consecutive failures"
+            )
+
+        # Check for rate limiting
+        if "rate limit" in error.lower() or "quota" in error.lower():
+            health.rate_limit_until = datetime.now() + timedelta(minutes=5)
+            logger.warning(
+                f"API {api_name} rate limited until {health.rate_limit_until}"
+            )
+
+    async def generate_response(
         self,
-        messages: List[Dict[str, str]],
-        task_type: TaskType = TaskType.CHAT_COMPLETION,
-        preferred_provider: APIProvider = None,
-        **kwargs
+        prompt: str,
+        system_prompt: str = None,
+        task_type: str = None,
+        max_tokens: int = None,
+        temperature: float = None,
+        timeout: int = None,
     ) -> Dict[str, Any]:
-        """Generate response with intelligent fallback"""
-        self.total_requests += 1
-        
-        # Get available providers
-        available_providers = self.get_available_providers(task_type)
-        
-        if not available_providers:
-            self.failed_requests += 1
-            raise Exception("No available API providers")
-        
-        # Try preferred provider first if specified
-        if preferred_provider and preferred_provider in available_providers:
-            available_providers.remove(preferred_provider)
-            available_providers.insert(0, preferred_provider)
-        
+        """
+        Generate response using available APIs with automatic fallback
+
+        Args:
+            prompt: User prompt
+            system_prompt: System prompt (optional)
+            task_type: Type of task for API selection
+            max_tokens: Maximum tokens to generate
+            temperature: Temperature for generation
+            timeout: Request timeout
+
+        Returns:
+            Dict containing response, metadata, and API used
+        """
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        # Get available APIs
+        available_apis = self.get_available_apis(task_type)
+
+        if not available_apis:
+            raise Exception("No healthy APIs available")
+
+        # Try each API in order of priority
         last_error = None
-        
-        for provider in available_providers:
+
+        for api_name in available_apis:
             try:
-                endpoint = self.endpoints[provider]
-                client = self.clients[provider]
-                
-                logger.info(f"🔄 Trying {endpoint.name} for {task_type.value}")
-                
-                # Record request for rate limiting
-                endpoint.record_request()
-                
-                # Generate response
-                response = await client.generate_response(messages, **kwargs)
-                
-                # Record success
-                self.successful_requests += 1
-                self.fallback_usage[provider] += 1
-                
+                logger.info(f"Attempting API: {api_name}")
+
+                result = await self._call_api(
+                    api_name,
+                    messages,
+                    max_tokens=max_tokens,
+                    temperature=temperature,
+                    timeout=timeout,
+                )
+
                 # Add metadata
-                response['fallback_attempts'] = available_providers.index(provider) + 1
-                response['total_available'] = len(available_providers)
-                
-                logger.info(f"✅ {endpoint.name} succeeded in {response['response_time']:.2f}s")
-                return response
-                
+                result["api_used"] = api_name
+                result["api_config"] = self.apis[api_name].name
+                result["timestamp"] = datetime.now().isoformat()
+
+                logger.info(f"Successfully used API: {api_name}")
+                return result
+
             except Exception as e:
                 last_error = e
-                logger.warning(f"❌ {self.endpoints[provider].name} failed: {e}")
+                logger.warning(f"API {api_name} failed: {e}")
                 continue
-        
-        # All providers failed
-        self.failed_requests += 1
-        raise Exception(f"All API providers failed. Last error: {last_error}")
-    
-    async def health_check_all_providers(self) -> Dict[APIProvider, bool]:
-        """Perform health check on all providers"""
-        results = {}
-        
-        tasks = []
-        for provider, client in self.clients.items():
-            task = asyncio.create_task(self._health_check_provider(provider, client))
-            tasks.append(task)
-        
-        health_results = await asyncio.gather(*tasks, return_exceptions=True)
-        
-        for i, provider in enumerate(self.clients.keys()):
-            result = health_results[i]
-            if isinstance(result, Exception):
-                results[provider] = False
-                self.endpoints[provider].record_failure(str(result))
-            else:
-                results[provider] = result
-                if result:
-                    self.endpoints[provider].status = APIStatus.HEALTHY
-                else:
-                    self.endpoints[provider].record_failure("Health check failed")
-        
-        self.last_health_check = datetime.now()
-        logger.info(f"Health check completed. Healthy providers: {sum(results.values())}/{len(results)}")
-        
-        return results
-    
-    async def _health_check_provider(self, provider: APIProvider, client: APIClient) -> bool:
-        """Health check for a single provider"""
-        try:
-            return await client.health_check()
-        except Exception as e:
-            logger.warning(f"Health check failed for {provider.value}: {e}")
-            return False
-    
-    def get_provider_statistics(self) -> Dict[str, Any]:
-        """Get comprehensive statistics"""
-        healthy_providers = sum(1 for ep in self.endpoints.values() if ep.status == APIStatus.HEALTHY)
-        total_providers = len(self.endpoints)
-        
-        provider_stats = {}
-        for provider, endpoint in self.endpoints.items():
-            provider_stats[provider.value] = {
-                'name': endpoint.name,
-                'status': endpoint.status.value,
-                'enabled': endpoint.enabled,
-                'priority': endpoint.priority,
-                'consecutive_failures': endpoint.consecutive_failures,
-                'last_success': endpoint.last_success.isoformat() if endpoint.last_success else None,
-                'last_failure': endpoint.last_failure.isoformat() if endpoint.last_failure else None,
-                'average_response_time': endpoint.get_average_response_time(),
-                'usage_count': self.fallback_usage[provider],
-                'rate_limit_remaining': endpoint.rate_limit_rpm - endpoint.requests_made,
-                'specialty': [t.value for t in endpoint.specialty]
-            }
-        
-        return {
-            'overview': {
-                'total_requests': self.total_requests,
-                'successful_requests': self.successful_requests,
-                'failed_requests': self.failed_requests,
-                'success_rate': (self.successful_requests / self.total_requests * 100) if self.total_requests > 0 else 0,
-                'healthy_providers': healthy_providers,
-                'total_providers': total_providers,
-                'health_percentage': (healthy_providers / total_providers * 100) if total_providers > 0 else 0
-            },
-            'providers': provider_stats,
-            'last_health_check': self.last_health_check.isoformat()
-        }
-    
-    async def auto_health_monitoring(self):
-        """Automatic health monitoring loop"""
-        while True:
+
+        # If all APIs failed
+        raise Exception(f"All APIs failed. Last error: {last_error}")
+
+    async def generate_streaming_response(
+        self,
+        prompt: str,
+        system_prompt: str = None,
+        task_type: str = None,
+        max_tokens: int = None,
+        temperature: float = None,
+    ):
+        """
+        Generate streaming response using available APIs
+
+        Note: Not all APIs support streaming, so this will fallback to non-streaming
+        """
+        messages = []
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+        messages.append({"role": "user", "content": prompt})
+
+        available_apis = self.get_available_apis(task_type)
+
+        if not available_apis:
+            raise Exception("No healthy APIs available")
+
+        for api_name in available_apis:
             try:
-                if datetime.now() - self.last_health_check > self.health_check_interval:
-                    await self.health_check_all_providers()
-                
-                await asyncio.sleep(60)  # Check every minute
-                
+                # For now, we'll use non-streaming and yield the result
+                # In a full implementation, you'd implement streaming for each API type
+                result = await self._call_api(
+                    api_name, messages, max_tokens=max_tokens, temperature=temperature
+                )
+
+                # Yield the complete response
+                yield {
+                    "content": result["content"],
+                    "api_used": api_name,
+                    "api_config": self.apis[api_name].name,
+                    "timestamp": datetime.now().isoformat(),
+                }
+                return
+
             except Exception as e:
-                logger.error(f"Error in health monitoring: {e}")
-                await asyncio.sleep(60)
-    
-    def disable_provider(self, provider: APIProvider):
-        """Disable a specific provider"""
-        if provider in self.endpoints:
-            self.endpoints[provider].enabled = False
-            self.endpoints[provider].status = APIStatus.DISABLED
-            logger.info(f"Disabled provider: {provider.value}")
-    
-    def enable_provider(self, provider: APIProvider):
-        """Enable a specific provider"""
-        if provider in self.endpoints:
-            self.endpoints[provider].enabled = True
-            self.endpoints[provider].status = APIStatus.UNKNOWN
-            logger.info(f"Enabled provider: {provider.value}")
-    
-    async def optimize_provider_usage(self):
-        """Optimize provider usage based on performance"""
-        # Sort providers by performance metrics
-        performance_scores = {}
-        
-        for provider, endpoint in self.endpoints.items():
-            if not endpoint.enabled or endpoint.status == APIStatus.UNHEALTHY:
+                logger.warning(f"API {api_name} failed: {e}")
                 continue
-            
-            # Calculate performance score
-            success_rate = max(0, 10 - endpoint.consecutive_failures)
-            response_time_score = max(0, 10 - endpoint.get_average_response_time())
-            health_score = {
-                APIStatus.HEALTHY: 10,
-                APIStatus.DEGRADED: 5,
-                APIStatus.RATE_LIMITED: 3,
-                APIStatus.UNKNOWN: 1,
-                APIStatus.UNHEALTHY: 0,
-                APIStatus.DISABLED: 0
-            }.get(endpoint.status, 0)
-            
-            performance_scores[provider] = (success_rate + response_time_score + health_score) / 3
-        
-        # Adjust priorities based on performance
-        sorted_providers = sorted(performance_scores.items(), key=lambda x: x[1], reverse=True)
-        
-        for i, (provider, score) in enumerate(sorted_providers):
-            self.endpoints[provider].priority = i + 1
-        
-        logger.info("Provider priorities optimized based on performance")
 
-# Global instance
-_api_manager = None
+        raise Exception("All APIs failed for streaming request")
 
-def get_api_manager() -> IntelligentAPIManager:
-    """Get the global API manager instance"""
-    global _api_manager
-    if _api_manager is None:
-        _api_manager = IntelligentAPIManager()
-    return _api_manager
+    def get_health_status(self) -> Dict[str, Any]:
+        """Get comprehensive health status of all APIs"""
+        status = {
+            "total_apis": len(self.apis),
+            "healthy_apis": 0,
+            "unhealthy_apis": 0,
+            "rate_limited_apis": 0,
+            "apis": {},
+        }
 
-async def generate_ai_response(
-    messages: List[Dict[str, str]],
-    task_type: TaskType = TaskType.CHAT_COMPLETION,
-    preferred_provider: APIProvider = None,
-    **kwargs
+        for api_name, health in self.health_status.items():
+            api_status = {
+                "name": self.apis[api_name].name,
+                "is_healthy": health.is_healthy,
+                "consecutive_failures": health.consecutive_failures,
+                "total_requests": health.total_requests,
+                "successful_requests": health.successful_requests,
+                "error_rate": health.error_rate,
+                "average_response_time": health.average_response_time,
+                "last_success": (
+                    health.last_success.isoformat() if health.last_success else None
+                ),
+                "last_failure": (
+                    health.last_failure.isoformat() if health.last_failure else None
+                ),
+                "rate_limited_until": (
+                    health.rate_limit_until.isoformat()
+                    if health.rate_limit_until
+                    else None
+                ),
+            }
+
+            status["apis"][api_name] = api_status
+
+            if health.is_healthy:
+                status["healthy_apis"] += 1
+            else:
+                status["unhealthy_apis"] += 1
+
+            if health.rate_limit_until and health.rate_limit_until > datetime.now():
+                status["rate_limited_apis"] += 1
+
+        return status
+
+    async def health_check(self) -> Dict[str, Any]:
+        """Perform comprehensive health check on all APIs"""
+        health_results = {}
+
+        for api_name in self.apis:
+            try:
+                # Simple test request
+                result = await self.generate_response(
+                    "Hello, this is a health check. Please respond with 'OK'.",
+                    max_tokens=10,
+                    temperature=0.1,
+                )
+
+                health_results[api_name] = {
+                    "status": "healthy",
+                    "response_time": result.get("response_time", 0),
+                    "timestamp": datetime.now().isoformat(),
+                }
+
+            except Exception as e:
+                health_results[api_name] = {
+                    "status": "unhealthy",
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+
+        return health_results
+
+    def reset_api_health(self, api_name: str = None):
+        """Reset health status for specific API or all APIs"""
+        if api_name:
+            if api_name in self.health_status:
+                self.health_status[api_name] = APIHealth()
+                logger.info(f"Reset health status for API: {api_name}")
+        else:
+            for api_name in self.health_status:
+                self.health_status[api_name] = APIHealth()
+            logger.info("Reset health status for all APIs")
+
+
+# Global instance for easy access
+ai_api_manager = AIAPIManager()
+
+
+async def get_ai_response(
+    prompt: str, system_prompt: str = None, task_type: str = None, **kwargs
 ) -> Dict[str, Any]:
-    """Convenience function to generate AI response with fallback"""
-    manager = get_api_manager()
-    return await manager.generate_response_with_fallback(
-        messages=messages,
-        task_type=task_type,
-        preferred_provider=preferred_provider,
-        **kwargs
-    )
+    """
+    Convenience function to get AI response using the global API manager
+
+    Args:
+        prompt: User prompt
+        system_prompt: System prompt (optional)
+        task_type: Type of task for API selection
+        **kwargs: Additional parameters (max_tokens, temperature, timeout)
+
+    Returns:
+        Dict containing response and metadata
+    """
+    async with ai_api_manager:
+        return await ai_api_manager.generate_response(
+            prompt=prompt, system_prompt=system_prompt, task_type=task_type, **kwargs
+        )
+
+
+# Example usage and testing
+async def main():
+    """Example usage of the AI API Manager"""
+    print("🚀 AMAS AI API Manager - Testing Multi-API Fallback")
+    print("=" * 60)
+
+    # Test basic functionality
+    try:
+        async with ai_api_manager:
+            # Test health status
+            health = ai_api_manager.get_health_status()
+            print(f"📊 Health Status:")
+            print(f"  Total APIs: {health['total_apis']}")
+            print(f"  Healthy APIs: {health['healthy_apis']}")
+            print(f"  Unhealthy APIs: {health['unhealthy_apis']}")
+            print(f"  Rate Limited APIs: {health['rate_limited_apis']}")
+
+            # Test API call
+            print(f"\n🤖 Testing API Call...")
+            result = await ai_api_manager.generate_response(
+                prompt="Explain artificial intelligence in one sentence.",
+                system_prompt="You are a helpful AI assistant.",
+                max_tokens=100,
+                temperature=0.7,
+            )
+
+            print(f"✅ Success! Used API: {result['api_used']}")
+            print(f"📝 Response: {result['content']}")
+            print(f"🔧 Model: {result['model']}")
+            print(f"⏰ Timestamp: {result['timestamp']}")
+
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+
+        traceback.print_exc()
+
 
 if __name__ == "__main__":
-    async def test_api_manager():
-        """Test the API manager"""
-        manager = IntelligentAPIManager()
-        
-        # Health check
-        print("Performing health checks...")
-        health_results = await manager.health_check_all_providers()
-        print(f"Health check results: {health_results}")
-        
-        # Test generation
-        try:
-            response = await manager.generate_response_with_fallback(
-                messages=[{"role": "user", "content": "Hello, how are you?"}],
-                task_type=TaskType.CHAT_COMPLETION
-            )
-            print(f"Response: {response}")
-        except Exception as e:
-            print(f"Generation failed: {e}")
-        
-        # Get statistics
-        stats = manager.get_provider_statistics()
-        print(f"Statistics: {json.dumps(stats, indent=2)}")
-    
-    asyncio.run(test_api_manager())
+    asyncio.run(main())

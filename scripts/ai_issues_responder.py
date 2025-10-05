@@ -19,7 +19,7 @@ import requests
 sys.path.append(str(Path(__file__).parent.parent))
 
 # Import ultimate fallback system
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'services'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "services"))
 from ultimate_fallback_system import (
     generate_ai_response,
     get_fallback_stats,
@@ -28,10 +28,10 @@ from ultimate_fallback_system import (
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class AIIssuesResponder:
     """AI-powered GitHub issues responder"""
@@ -45,24 +45,30 @@ class AIIssuesResponder:
         """Initialize the issues responder with ultimate fallback"""
         try:
             # Ultimate fallback system is already initialized globally
-            logger.info("🚀 Initializing Ultimate AI Issues Responder with 9-Provider Fallback...")
+            logger.info(
+                "🚀 Initializing Ultimate AI Issues Responder with 9-Provider Fallback..."
+            )
 
             # Check provider health
             health = get_provider_health()
-            active_providers = [p for p, info in health.items() if info['status'] == 'active']
+            active_providers = [
+                p for p, info in health.items() if info["status"] == "active"
+            ]
             logger.info(f"✅ Active providers: {len(active_providers)}")
 
             for provider_id, info in health.items():
-                if info['status'] == 'active':
+                if info["status"] == "active":
                     logger.info(f"  ✅ {info['name']}: {info['status']}")
                 else:
                     logger.warning(f"  ⚠️ {info['name']}: {info['status']}")
 
             # Get fallback stats
             stats = get_fallback_stats()
-            logger.info(f"📊 Fallback system ready: {stats['active_providers']} providers active")
-            self.github_token = os.getenv('GITHUB_TOKEN')
-            self.repository = os.getenv('GITHUB_REPOSITORY')
+            logger.info(
+                f"📊 Fallback system ready: {stats['active_providers']} providers active"
+            )
+            self.github_token = os.getenv("GITHUB_TOKEN")
+            self.repository = os.getenv("GITHUB_REPOSITORY")
 
             logger.info("AI Issues Responder initialized successfully")
 
@@ -70,7 +76,9 @@ class AIIssuesResponder:
             logger.error(f"Error initializing AI Issues Responder: {e}")
             raise
 
-    async def analyze_issue(self, issue_title: str, issue_body: str, issue_number: int) -> Dict[str, Any]:
+    async def analyze_issue(
+        self, issue_title: str, issue_body: str, issue_number: int
+    ) -> Dict[str, Any]:
         """Analyze an issue and generate a response"""
         try:
             # Create analysis prompt
@@ -99,27 +107,28 @@ Format the response as a structured analysis with clear sections."""
             logger.info("🚀 Analyzing issue using ultimate fallback system...")
             result = await generate_ai_response(analysis_prompt, max_tokens=3000)
 
-            if result['success']:
-                logger.info(f"✅ Issue analysis successful with {result['provider_name']} in {result['response_time']:.2f}s")
+            if result["success"]:
+                logger.info(
+                    f"✅ Issue analysis successful with {result['provider_name']} in {result['response_time']:.2f}s"
+                )
                 return {
-                    'analysis': result['content'],
-                    'provider': result['provider'],
-                    'provider_name': result['provider_name'],
-                    'response_time': result['response_time'],
-                    'success': True
+                    "analysis": result["content"],
+                    "provider": result["provider"],
+                    "provider_name": result["provider_name"],
+                    "response_time": result["response_time"],
+                    "success": True,
                 }
             else:
                 logger.error(f"❌ Issue analysis failed: {result['error']}")
-                return {
-                    'error': result['error'],
-                    'success': False
-                }
+                return {"error": result["error"], "success": False}
 
         except Exception as e:
             logger.error(f"Error analyzing issue: {e}")
-            return {'error': str(e), 'success': False}
+            return {"error": str(e), "success": False}
 
-    async def generate_issue_response(self, issue_title: str, issue_body: str, issue_number: int) -> Dict[str, Any]:
+    async def generate_issue_response(
+        self, issue_title: str, issue_body: str, issue_number: int
+    ) -> Dict[str, Any]:
         """Generate a response for an issue"""
         try:
             # Create response prompt
@@ -148,28 +157,29 @@ Make the response:
 - Keep it concise but comprehensive"""
 
             # Use ultimate fallback system
-            logger.info("🚀 Generating issue response using ultimate fallback system...")
+            logger.info(
+                "🚀 Generating issue response using ultimate fallback system..."
+            )
             result = await generate_ai_response(response_prompt, max_tokens=2000)
 
-            if result['success']:
-                logger.info(f"✅ Issue response generated successfully with {result['provider_name']} in {result['response_time']:.2f}s")
+            if result["success"]:
+                logger.info(
+                    f"✅ Issue response generated successfully with {result['provider_name']} in {result['response_time']:.2f}s"
+                )
                 return {
-                    'response': result['content'],
-                    'provider': result['provider'],
-                    'provider_name': result['provider_name'],
-                    'response_time': result['response_time'],
-                    'success': True
+                    "response": result["content"],
+                    "provider": result["provider"],
+                    "provider_name": result["provider_name"],
+                    "response_time": result["response_time"],
+                    "success": True,
                 }
             else:
                 logger.error(f"❌ Issue response generation failed: {result['error']}")
-                return {
-                    'error': result['error'],
-                    'success': False
-                }
+                return {"error": result["error"], "success": False}
 
         except Exception as e:
             logger.error(f"Error generating issue response: {e}")
-            return {'error': str(e), 'success': False}
+            return {"error": str(e), "success": False}
 
     async def suggest_labels(self, issue_title: str, issue_body: str) -> List[str]:
         """Suggest labels for an issue"""
@@ -192,15 +202,17 @@ Return only the label names, one per line, without explanations."""
             logger.info("🚀 Suggesting labels using ultimate fallback system...")
             result = await generate_ai_response(prompt, max_tokens=500)
 
-            if result['success']:
-                logger.info(f"✅ Labels suggested successfully with {result['provider_name']} in {result['response_time']:.2f}s")
+            if result["success"]:
+                logger.info(
+                    f"✅ Labels suggested successfully with {result['provider_name']} in {result['response_time']:.2f}s"
+                )
                 # Parse labels from response
                 labels = []
-                for line in result['content'].split('\n'):
+                for line in result["content"].split("\n"):
                     line = line.strip()
-                    if line and not line.startswith('#') and not line.startswith('-'):
+                    if line and not line.startswith("#") and not line.startswith("-"):
                         # Clean up the label
-                        label = re.sub(r'[^\w-]', '', line.lower())
+                        label = re.sub(r"[^\w-]", "", line.lower())
                         if label:
                             labels.append(label)
 
@@ -233,13 +245,19 @@ Suggest 1-3 potential assignees with brief reasoning."""
             logger.info("🚀 Suggesting assignees using ultimate fallback system...")
             result = await generate_ai_response(prompt, max_tokens=500)
 
-            if result['success']:
-                logger.info(f"✅ Assignees suggested successfully with {result['provider_name']} in {result['response_time']:.2f}s")
+            if result["success"]:
+                logger.info(
+                    f"✅ Assignees suggested successfully with {result['provider_name']} in {result['response_time']:.2f}s"
+                )
                 # Extract assignee suggestions from response
                 assignees = []
-                lines = result['content'].split('\n')
+                lines = result["content"].split("\n")
                 for line in lines:
-                    if 'assignee' in line.lower() or 'developer' in line.lower() or 'engineer' in line.lower():
+                    if (
+                        "assignee" in line.lower()
+                        or "developer" in line.lower()
+                        or "engineer" in line.lower()
+                    ):
                         # Extract potential assignee names
                         words = line.split()
                         for word in words:
@@ -264,14 +282,12 @@ Suggest 1-3 potential assignees with brief reasoning."""
 
             url = f"https://api.github.com/repos/{self.repository}/issues/{issue_number}/comments"
             headers = {
-                'Authorization': f'token {self.github_token}',
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'AMAS-AI-Issues-Responder'
+                "Authorization": f"token {self.github_token}",
+                "Accept": "application/vnd.github.v3+json",
+                "User-Agent": "AMAS-AI-Issues-Responder",
             }
 
-            data = {
-                'body': comment
-            }
+            data = {"body": comment}
 
             response = requests.post(url, headers=headers, json=data)
 
@@ -279,7 +295,9 @@ Suggest 1-3 potential assignees with brief reasoning."""
                 logger.info(f"Successfully posted comment to issue #{issue_number}")
                 return True
             else:
-                logger.error(f"Failed to post comment: {response.status_code} - {response.text}")
+                logger.error(
+                    f"Failed to post comment: {response.status_code} - {response.text}"
+                )
                 return False
 
         except Exception as e:
@@ -295,29 +313,33 @@ Suggest 1-3 potential assignees with brief reasoning."""
 
             url = f"https://api.github.com/repos/{self.repository}/issues/{issue_number}/labels"
             headers = {
-                'Authorization': f'token {self.github_token}',
-                'Accept': 'application/vnd.github.v3+json',
-                'User-Agent': 'AMAS-AI-Issues-Responder'
+                "Authorization": f"token {self.github_token}",
+                "Accept": "application/vnd.github.v3+json",
+                "User-Agent": "AMAS-AI-Issues-Responder",
             }
 
-            data = {
-                'labels': labels
-            }
+            data = {"labels": labels}
 
             response = requests.post(url, headers=headers, json=data)
 
             if response.status_code == 200:
-                logger.info(f"Successfully added labels to issue #{issue_number}: {labels}")
+                logger.info(
+                    f"Successfully added labels to issue #{issue_number}: {labels}"
+                )
                 return True
             else:
-                logger.error(f"Failed to add labels: {response.status_code} - {response.text}")
+                logger.error(
+                    f"Failed to add labels: {response.status_code} - {response.text}"
+                )
                 return False
 
         except Exception as e:
             logger.error(f"Error adding issue labels: {e}")
             return False
 
-    async def process_issue(self, issue_number: int, issue_title: str, issue_body: str, action: str) -> Dict[str, Any]:
+    async def process_issue(
+        self, issue_number: int, issue_title: str, issue_body: str, action: str
+    ) -> Dict[str, Any]:
         """Process a GitHub issue"""
         try:
             logger.info(f"Processing issue #{issue_number}: {issue_title}")
@@ -325,21 +347,23 @@ Suggest 1-3 potential assignees with brief reasoning."""
             # Analyze the issue
             analysis = await self.analyze_issue(issue_title, issue_body, issue_number)
 
-            if not analysis.get('success'):
+            if not analysis.get("success"):
                 return {
-                    'success': False,
-                    'error': analysis.get('error', 'Analysis failed'),
-                    'issue_number': issue_number
+                    "success": False,
+                    "error": analysis.get("error", "Analysis failed"),
+                    "issue_number": issue_number,
                 }
 
             # Generate response
-            response = await self.generate_issue_response(issue_title, issue_body, issue_number)
+            response = await self.generate_issue_response(
+                issue_title, issue_body, issue_number
+            )
 
-            if not response.get('success'):
+            if not response.get("success"):
                 return {
-                    'success': False,
-                    'error': response.get('error', 'Response generation failed'),
-                    'issue_number': issue_number
+                    "success": False,
+                    "error": response.get("error", "Response generation failed"),
+                    "issue_number": issue_number,
                 }
 
             # Suggest labels
@@ -374,39 +398,44 @@ Suggest 1-3 potential assignees with brief reasoning."""
                 labels_added = self.add_issue_labels(issue_number, suggested_labels)
 
             return {
-                'success': True,
-                'issue_number': issue_number,
-                'comment_posted': comment_posted,
-                'labels_added': labels_added,
-                'suggested_labels': suggested_labels,
-                'suggested_assignees': suggested_assignees,
-                'analysis_provider': analysis.get('provider'),
-                'response_provider': response.get('provider'),
-                'timestamp': datetime.now().isoformat()
+                "success": True,
+                "issue_number": issue_number,
+                "comment_posted": comment_posted,
+                "labels_added": labels_added,
+                "suggested_labels": suggested_labels,
+                "suggested_assignees": suggested_assignees,
+                "analysis_provider": analysis.get("provider"),
+                "response_provider": response.get("provider"),
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error processing issue #{issue_number}: {e}")
-            return {
-                'success': False,
-                'error': str(e),
-                'issue_number': issue_number
-            }
+            return {"success": False, "error": str(e), "issue_number": issue_number}
 
     async def shutdown(self):
         """Shutdown the issues responder"""
         if self.ai_service:
             await self.ai_service.shutdown()
 
+
 async def main():
     """Main function"""
-    parser = argparse.ArgumentParser(description='AI Issues Responder')
-    parser.add_argument('--issue-number', type=int, required=True, help='GitHub issue number')
-    parser.add_argument('--issue-title', required=True, help='Issue title')
-    parser.add_argument('--issue-body', required=True, help='Issue body')
-    parser.add_argument('--repository', required=True, help='GitHub repository (owner/repo)')
-    parser.add_argument('--action', required=True, help='GitHub action (opened, edited, etc.)')
-    parser.add_argument('--output', default='issue_response.json', help='Output file for response')
+    parser = argparse.ArgumentParser(description="AI Issues Responder")
+    parser.add_argument(
+        "--issue-number", type=int, required=True, help="GitHub issue number"
+    )
+    parser.add_argument("--issue-title", required=True, help="Issue title")
+    parser.add_argument("--issue-body", required=True, help="Issue body")
+    parser.add_argument(
+        "--repository", required=True, help="GitHub repository (owner/repo)"
+    )
+    parser.add_argument(
+        "--action", required=True, help="GitHub action (opened, edited, etc.)"
+    )
+    parser.add_argument(
+        "--output", default="issue_response.json", help="Output file for response"
+    )
 
     args = parser.parse_args()
 
@@ -417,27 +446,28 @@ async def main():
 
         # Process the issue
         result = await responder.process_issue(
-            args.issue_number,
-            args.issue_title,
-            args.issue_body,
-            args.action
+            args.issue_number, args.issue_title, args.issue_body, args.action
         )
 
         # Save result
-        with open(args.output, 'w', encoding='utf-8') as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             json.dump(result, f, indent=2, ensure_ascii=False)
 
         # Print result
-        if result.get('success'):
+        if result.get("success"):
             print(f"✅ Successfully processed issue #{args.issue_number}")
             print(f"Comment posted: {result.get('comment_posted', False)}")
             print(f"Labels added: {result.get('labels_added', False)}")
-            if result.get('suggested_labels'):
+            if result.get("suggested_labels"):
                 print(f"Suggested labels: {', '.join(result['suggested_labels'])}")
-            if result.get('suggested_assignees'):
-                print(f"Suggested assignees: {', '.join(result['suggested_assignees'])}")
+            if result.get("suggested_assignees"):
+                print(
+                    f"Suggested assignees: {', '.join(result['suggested_assignees'])}"
+                )
         else:
-            print(f"❌ Failed to process issue #{args.issue_number}: {result.get('error', 'Unknown error')}")
+            print(
+                f"❌ Failed to process issue #{args.issue_number}: {result.get('error', 'Unknown error')}"
+            )
 
         logger.info(f"Issue processing complete for issue #{args.issue_number}")
 
@@ -447,6 +477,7 @@ async def main():
 
     finally:
         await responder.shutdown()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -1,3 +1,1 @@
-"""
-AMAS Tests Package
-"""
+# AMAS Test Suite

@@ -12,6 +12,7 @@ from pathlib import Path
 
 class DatabaseConfig(BaseSettings):
     """Database configuration"""
+
     host: str = Field(default="localhost", env="AMAS_DB_HOST")
     port: int = Field(default=5432, env="AMAS_DB_PORT")
     user: str = Field(default="amas", env="AMAS_DB_USER")
@@ -25,6 +26,7 @@ class DatabaseConfig(BaseSettings):
 
 class RedisConfig(BaseSettings):
     """Redis configuration"""
+
     host: str = Field(default="localhost", env="AMAS_REDIS_HOST")
     port: int = Field(default=6379, env="AMAS_REDIS_PORT")
     db: int = Field(default=0, env="AMAS_REDIS_DB")
@@ -38,6 +40,7 @@ class RedisConfig(BaseSettings):
 
 class Neo4jConfig(BaseSettings):
     """Neo4j configuration"""
+
     host: str = Field(default="localhost", env="AMAS_NEO4J_HOST")
     port: int = Field(default=7687, env="AMAS_NEO4J_PORT")
     user: str = Field(default="neo4j", env="AMAS_NEO4J_USER")
@@ -51,6 +54,7 @@ class Neo4jConfig(BaseSettings):
 
 class LLMConfig(BaseSettings):
     """LLM service configuration"""
+
     host: str = Field(default="localhost", env="AMAS_LLM_HOST")
     port: int = Field(default=11434, env="AMAS_LLM_PORT")
     model: str = Field(default="llama3.1:70b", env="AMAS_LLM_MODEL")
@@ -63,8 +67,13 @@ class LLMConfig(BaseSettings):
 
 class SecurityConfig(BaseSettings):
     """Security configuration"""
-    jwt_secret: str = Field(default="amas_jwt_secret_key_2024_secure", env="AMAS_JWT_SECRET")
-    encryption_key: str = Field(default="amas_encryption_key_2024_secure_32_chars", env="AMAS_ENCRYPTION_KEY")
+
+    jwt_secret: str = Field(
+        default="amas_jwt_secret_key_2024_secure", env="AMAS_JWT_SECRET"
+    )
+    encryption_key: str = Field(
+        default="amas_encryption_key_2024_secure_32_chars", env="AMAS_ENCRYPTION_KEY"
+    )
     audit_enabled: bool = Field(default=True, env="AMAS_AUDIT_ENABLED")
     rate_limit_requests: int = Field(default=1000, env="AMAS_RATE_LIMIT_REQUESTS")
     rate_limit_window: int = Field(default=3600, env="AMAS_RATE_LIMIT_WINDOW")
@@ -72,11 +81,14 @@ class SecurityConfig(BaseSettings):
 
 class APIConfig(BaseSettings):
     """API configuration"""
-    host: str = Field(default="0.0.0.0", env="AMAS_API_HOST")
+
+    host: str = Field(default="127.0.0.1", env="AMAS_API_HOST")
     port: int = Field(default=8000, env="AMAS_API_PORT")
     workers: int = Field(default=4, env="AMAS_API_WORKERS")
     reload: bool = Field(default=False, env="AMAS_API_RELOAD")
-    cors_origins: List[str] = Field(default=["http://localhost:3000"], env="AMAS_CORS_ORIGINS")
+    cors_origins: List[str] = Field(
+        default=["http://localhost:3000"], env="AMAS_CORS_ORIGINS"
+    )
 
 
 class AMASConfig(BaseSettings):
@@ -92,7 +104,10 @@ class AMASConfig(BaseSettings):
 
     # Logging
     log_level: str = Field(default="INFO", env="AMAS_LOG_LEVEL")
-    log_format: str = Field(default="%(asctime)s - %(name)s - %(levelname)s - %(message)s", env="AMAS_LOG_FORMAT")
+    log_format: str = Field(
+        default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        env="AMAS_LOG_FORMAT",
+    )
 
     # Directories
     data_dir: Path = Field(default=Path("data"), env="AMAS_DATA_DIR")
@@ -120,18 +135,18 @@ class AMASConfig(BaseSettings):
         env_file_encoding = "utf-8"
         case_sensitive = False
 
-    @validator('log_level')
+    @validator("log_level")
     def validate_log_level(cls, v):
-        valid_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+        valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in valid_levels:
-            raise ValueError(f'Log level must be one of {valid_levels}')
+            raise ValueError(f"Log level must be one of {valid_levels}")
         return v.upper()
 
-    @validator('environment')
+    @validator("environment")
     def validate_environment(cls, v):
-        valid_envs = ['development', 'staging', 'production']
+        valid_envs = ["development", "staging", "production"]
         if v.lower() not in valid_envs:
-            raise ValueError(f'Environment must be one of {valid_envs}')
+            raise ValueError(f"Environment must be one of {valid_envs}")
         return v.lower()
 
     def create_directories(self):

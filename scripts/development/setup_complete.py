@@ -13,11 +13,11 @@ from typing import Dict, Any
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
+
 
 def install_requirements():
     """Install required packages"""
@@ -25,12 +25,23 @@ def install_requirements():
         logger.info("Installing required packages...")
 
         # Install base requirements
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
+        subprocess.check_call(
+            [sys.executable, "-m", "pip", "install", "-r", "requirements.txt"]
+        )
         logger.info("Base requirements installed successfully")
 
         # Install phase 2 requirements if available
         if Path("requirements-phase2.txt").exists():
-            subprocess.check_call([sys.executable, "-m", "pip", "install", "-r", "requirements-phase2.txt"])
+            subprocess.check_call(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "-r",
+                    "requirements-phase2.txt",
+                ]
+            )
             logger.info("Phase 2 requirements installed successfully")
 
         # Install additional packages for enhanced functionality
@@ -41,7 +52,7 @@ def install_requirements():
             "pydantic-settings",
             "structlog",
             "rich",
-            "typer"
+            "typer",
         ]
 
         for package in additional_packages:
@@ -56,6 +67,7 @@ def install_requirements():
     except subprocess.CalledProcessError as e:
         logger.error(f"Error installing requirements: {e}")
         sys.exit(1)
+
 
 def create_directories():
     """Create necessary directories"""
@@ -73,12 +85,13 @@ def create_directories():
         "threat_intel",
         "osint_data",
         "forensics_data",
-        "analysis_results"
+        "analysis_results",
     ]
 
     for directory in directories:
         Path(directory).mkdir(exist_ok=True)
         logger.info(f"Created directory: {directory}")
+
 
 def setup_environment():
     """Setup environment variables and configuration"""
@@ -86,16 +99,17 @@ def setup_environment():
         # Load environment variables from .env file
         if Path(".env").exists():
             from dotenv import load_dotenv
+
             load_dotenv()
             logger.info("Environment variables loaded from .env file")
         else:
             logger.warning(".env file not found. Using default configuration.")
 
         # Set environment variables
-        os.environ.setdefault('AMAS_MODE', 'development')
-        os.environ.setdefault('AMAS_OFFLINE_MODE', 'true')
-        os.environ.setdefault('AMAS_GPU_ENABLED', 'true')
-        os.environ.setdefault('AMAS_LOG_LEVEL', 'INFO')
+        os.environ.setdefault("AMAS_MODE", "development")
+        os.environ.setdefault("AMAS_OFFLINE_MODE", "true")
+        os.environ.setdefault("AMAS_GPU_ENABLED", "true")
+        os.environ.setdefault("AMAS_LOG_LEVEL", "INFO")
 
         logger.info("Environment setup completed")
 
@@ -103,19 +117,26 @@ def setup_environment():
         logger.error(f"Error setting up environment: {e}")
         raise
 
+
 def check_docker_services():
     """Check if Docker services are running"""
     try:
         # Check if docker-compose is available
-        result = subprocess.run(['docker-compose', '--version'], capture_output=True, text=True)
+        result = subprocess.run(
+            ["docker-compose", "--version"], capture_output=True, text=True
+        )
         if result.returncode == 0:
             logger.info(f"Docker Compose available: {result.stdout.strip()}")
         else:
-            logger.warning("Docker Compose not found. Please install Docker and Docker Compose.")
+            logger.warning(
+                "Docker Compose not found. Please install Docker and Docker Compose."
+            )
             return False
 
         # Check if services are running
-        result = subprocess.run(['docker-compose', 'ps'], capture_output=True, text=True)
+        result = subprocess.run(
+            ["docker-compose", "ps"], capture_output=True, text=True
+        )
         if result.returncode == 0:
             logger.info("Docker services status:")
             logger.info(result.stdout)
@@ -128,11 +149,14 @@ def check_docker_services():
         logger.error(f"Error checking Docker services: {e}")
         return False
 
+
 def start_docker_services():
     """Start Docker services"""
     try:
         logger.info("Starting Docker services...")
-        result = subprocess.run(['docker-compose', 'up', '-d'], capture_output=True, text=True)
+        result = subprocess.run(
+            ["docker-compose", "up", "-d"], capture_output=True, text=True
+        )
         if result.returncode == 0:
             logger.info("Docker services started successfully")
             return True
@@ -143,6 +167,7 @@ def start_docker_services():
     except Exception as e:
         logger.error(f"Error starting Docker services: {e}")
         return False
+
 
 def create_docker_compose_override():
     """Create docker-compose.override.yml for development"""
@@ -229,6 +254,7 @@ volumes:
 
     logger.info("Created docker-compose.override.yml for development")
 
+
 async def test_system_components():
     """Test system components"""
     try:
@@ -237,6 +263,7 @@ async def test_system_components():
         # Test imports
         try:
             from main import AMASIntelligenceSystem
+
             logger.info("✅ Main system import successful")
         except Exception as e:
             logger.error(f"❌ Main system import failed: {e}")
@@ -249,6 +276,7 @@ async def test_system_components():
             from services.knowledge_graph_service import KnowledgeGraphService
             from services.database_service import DatabaseService
             from services.security_service import SecurityService
+
             logger.info("✅ Service imports successful")
         except Exception as e:
             logger.error(f"❌ Service imports failed: {e}")
@@ -259,6 +287,7 @@ async def test_system_components():
             from agents.osint.osint_agent import OSINTAgent
             from agents.investigation.investigation_agent import InvestigationAgent
             from agents.forensics.forensics_agent import ForensicsAgent
+
             logger.info("✅ Agent imports successful")
         except Exception as e:
             logger.error(f"❌ Agent imports failed: {e}")
@@ -267,6 +296,7 @@ async def test_system_components():
         # Test API
         try:
             from api.main import app
+
             logger.info("✅ API import successful")
         except Exception as e:
             logger.error(f"❌ API import failed: {e}")
@@ -278,6 +308,7 @@ async def test_system_components():
     except Exception as e:
         logger.error(f"System component test failed: {e}")
         return False
+
 
 def create_startup_scripts():
     """Create startup scripts for different environments"""
@@ -362,6 +393,7 @@ echo "Tests completed!"
 
     logger.info("Created startup scripts: start_dev.sh, start_prod.sh, run_tests.sh")
 
+
 def main():
     """Main setup function"""
     logger.info("Setting up AMAS Intelligence System...")
@@ -404,7 +436,9 @@ def main():
             else:
                 logger.warning("⚠️ Docker services failed to start")
         else:
-            logger.warning("⚠️ Docker not available. Please install Docker and Docker Compose.")
+            logger.warning(
+                "⚠️ Docker not available. Please install Docker and Docker Compose."
+            )
 
         # Summary
         logger.info("=" * 60)
@@ -415,8 +449,12 @@ def main():
         logger.info(f"✅ Environment configured")
         logger.info(f"✅ Docker override created")
         logger.info(f"✅ Startup scripts created")
-        logger.info(f"✅ System components: {'PASSED' if component_test_passed else 'FAILED'}")
-        logger.info(f"✅ Docker services: {'AVAILABLE' if docker_available else 'NOT AVAILABLE'}")
+        logger.info(
+            f"✅ System components: {'PASSED' if component_test_passed else 'FAILED'}"
+        )
+        logger.info(
+            f"✅ Docker services: {'AVAILABLE' if docker_available else 'NOT AVAILABLE'}"
+        )
 
         if component_test_passed:
             logger.info("🎉 AMAS Intelligence System setup completed successfully!")
@@ -433,8 +471,10 @@ def main():
     except Exception as e:
         logger.error(f"Setup failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

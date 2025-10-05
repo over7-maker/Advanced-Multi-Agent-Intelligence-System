@@ -20,10 +20,10 @@ from services.ai_service_manager import AIServiceManager, AIProvider
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class AITestGenerator:
     """AI-powered test generator"""
@@ -36,12 +36,12 @@ class AITestGenerator:
         """Initialize the test generator"""
         try:
             config = {
-                'deepseek_api_key': os.getenv('DEEPSEEK_API_KEY'),
-                'glm_api_key': os.getenv('GLM_API_KEY'),
-                'grok_api_key': os.getenv('GROK_API_KEY'),
-                'kimi_api_key': os.getenv('KIMI_API_KEY'),
-                'qwen_api_key': os.getenv('QWEN_API_KEY'),
-                'gptoss_api_key': os.getenv('GPTOSS_API_KEY')
+                "deepseek_api_key": os.getenv("DEEPSEEK_API_KEY"),
+                "glm_api_key": os.getenv("GLM_API_KEY"),
+                "grok_api_key": os.getenv("GROK_API_KEY"),
+                "kimi_api_key": os.getenv("KIMI_API_KEY"),
+                "qwen_api_key": os.getenv("QWEN_API_KEY"),
+                "gptoss_api_key": os.getenv("GPTOSS_API_KEY"),
             }
 
             self.ai_service = AIServiceManager(config)
@@ -52,10 +52,12 @@ class AITestGenerator:
             logger.error(f"Error initializing AI Test Generator: {e}")
             raise
 
-    async def generate_tests_for_file(self, file_path: str, test_type: str = "comprehensive") -> Dict[str, Any]:
+    async def generate_tests_for_file(
+        self, file_path: str, test_type: str = "comprehensive"
+    ) -> Dict[str, Any]:
         """Generate tests for a single file"""
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
 
             file_ext = Path(file_path).suffix.lower()
@@ -63,10 +65,10 @@ class AITestGenerator:
 
             # Get file info
             file_info = {
-                'path': file_path,
-                'language': language,
-                'size': len(content),
-                'lines': len(content.splitlines())
+                "path": file_path,
+                "language": language,
+                "size": len(content),
+                "lines": len(content.splitlines()),
             }
 
             # Generate tests
@@ -74,70 +76,78 @@ class AITestGenerator:
 
             if not test_response.success:
                 return {
-                    'file_info': file_info,
-                    'error': test_response.error,
-                    'timestamp': datetime.now().isoformat()
+                    "file_info": file_info,
+                    "error": test_response.error,
+                    "timestamp": datetime.now().isoformat(),
                 }
 
             # Extract test code from response
-            test_content = self._extract_code_from_response(test_response.content, language)
+            test_content = self._extract_code_from_response(
+                test_response.content, language
+            )
 
             # Generate test analysis
-            analysis_response = await self.ai_service.analyze_code(test_content, language)
+            analysis_response = await self.ai_service.analyze_code(
+                test_content, language
+            )
 
             return {
-                'file_info': file_info,
-                'original_content': content,
-                'test_content': test_content,
-                'test_analysis': analysis_response.content if analysis_response.success else analysis_response.error,
-                'test_type': test_type,
-                'provider_used': test_response.provider,
-                'response_time': test_response.response_time,
-                'timestamp': datetime.now().isoformat()
+                "file_info": file_info,
+                "original_content": content,
+                "test_content": test_content,
+                "test_analysis": (
+                    analysis_response.content
+                    if analysis_response.success
+                    else analysis_response.error
+                ),
+                "test_type": test_type,
+                "provider_used": test_response.provider,
+                "response_time": test_response.response_time,
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error generating tests for file {file_path}: {e}")
             return {
-                'file_info': {'path': file_path, 'error': str(e)},
-                'timestamp': datetime.now().isoformat()
+                "file_info": {"path": file_path, "error": str(e)},
+                "timestamp": datetime.now().isoformat(),
             }
 
     def _get_language_from_extension(self, ext: str) -> str:
         """Get programming language from file extension"""
         language_map = {
-            '.py': 'python',
-            '.js': 'javascript',
-            '.ts': 'typescript',
-            '.java': 'java',
-            '.cpp': 'cpp',
-            '.c': 'c',
-            '.cs': 'csharp',
-            '.go': 'go',
-            '.rs': 'rust',
-            '.php': 'php',
-            '.rb': 'ruby',
-            '.swift': 'swift',
-            '.kt': 'kotlin',
-            '.scala': 'scala',
-            '.r': 'r',
-            '.m': 'matlab',
-            '.sh': 'bash',
-            '.sql': 'sql',
-            '.html': 'html',
-            '.css': 'css',
-            '.scss': 'scss',
-            '.less': 'less',
-            '.xml': 'xml',
-            '.json': 'json',
-            '.yaml': 'yaml',
-            '.yml': 'yaml',
-            '.toml': 'toml',
-            '.ini': 'ini',
-            '.cfg': 'ini',
-            '.conf': 'ini'
+            ".py": "python",
+            ".js": "javascript",
+            ".ts": "typescript",
+            ".java": "java",
+            ".cpp": "cpp",
+            ".c": "c",
+            ".cs": "csharp",
+            ".go": "go",
+            ".rs": "rust",
+            ".php": "php",
+            ".rb": "ruby",
+            ".swift": "swift",
+            ".kt": "kotlin",
+            ".scala": "scala",
+            ".r": "r",
+            ".m": "matlab",
+            ".sh": "bash",
+            ".sql": "sql",
+            ".html": "html",
+            ".css": "css",
+            ".scss": "scss",
+            ".less": "less",
+            ".xml": "xml",
+            ".json": "json",
+            ".yaml": "yaml",
+            ".yml": "yaml",
+            ".toml": "toml",
+            ".ini": "ini",
+            ".cfg": "ini",
+            ".conf": "ini",
         }
-        return language_map.get(ext, 'unknown')
+        return language_map.get(ext, "unknown")
 
     def _extract_code_from_response(self, response_content: str, language: str) -> str:
         """Extract code from AI response"""
@@ -163,20 +173,24 @@ class AITestGenerator:
             logger.warning(f"Error extracting code: {e}")
             return response_content
 
-    async def generate_tests_for_directory(self, directory: str, output_dir: str,
-                                         test_type: str = "comprehensive",
-                                         extensions: List[str] = None) -> Dict[str, Any]:
+    async def generate_tests_for_directory(
+        self,
+        directory: str,
+        output_dir: str,
+        test_type: str = "comprehensive",
+        extensions: List[str] = None,
+    ) -> Dict[str, Any]:
         """Generate tests for all files in a directory"""
         if extensions is None:
-            extensions = ['.py', '.js', '.ts', '.java', '.cpp', '.c', '.go', '.rs']
+            extensions = [".py", ".js", ".ts", ".java", ".cpp", ".c", ".go", ".rs"]
 
         results = {
-            'directory': directory,
-            'output_directory': output_dir,
-            'files_tested': 0,
-            'generated_tests': [],
-            'summary': {},
-            'timestamp': datetime.now().isoformat()
+            "directory": directory,
+            "output_directory": output_dir,
+            "files_tested": 0,
+            "generated_tests": [],
+            "summary": {},
+            "timestamp": datetime.now().isoformat(),
         }
 
         try:
@@ -196,40 +210,46 @@ class AITestGenerator:
 
             for file_path in files:
                 logger.info(f"Generating tests for {file_path}")
-                test_result = await self.generate_tests_for_file(str(file_path), test_type)
-                results['generated_tests'].append(test_result)
+                test_result = await self.generate_tests_for_file(
+                    str(file_path), test_type
+                )
+                results["generated_tests"].append(test_result)
 
-                if 'test_content' in test_result:
+                if "test_content" in test_result:
                     # Save test file
                     relative_path = file_path.relative_to(directory_path)
                     test_file_name = f"test_{relative_path.stem}.py"
                     output_file = output_path / test_file_name
 
-                    with open(output_file, 'w', encoding='utf-8') as f:
-                        f.write(test_result['test_content'])
+                    with open(output_file, "w", encoding="utf-8") as f:
+                        f.write(test_result["test_content"])
 
-                    results['files_tested'] += 1
+                    results["files_tested"] += 1
 
             # Generate summary
-            results['summary'] = await self._generate_test_summary(results['generated_tests'])
+            results["summary"] = await self._generate_test_summary(
+                results["generated_tests"]
+            )
 
         except Exception as e:
             logger.error(f"Error generating tests for directory {directory}: {e}")
-            results['error'] = str(e)
+            results["error"] = str(e)
 
         return results
 
-    async def _generate_test_summary(self, test_results: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def _generate_test_summary(
+        self, test_results: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """Generate summary of test generation"""
         try:
             # Collect test analyses
             analyses = []
             for test_result in test_results:
-                if 'test_analysis' in test_result:
-                    analyses.append(test_result['test_analysis'])
+                if "test_analysis" in test_result:
+                    analyses.append(test_result["test_analysis"])
 
             if not analyses:
-                return {'error': 'No tests available for summary'}
+                return {"error": "No tests available for summary"}
 
             # Create summary prompt
             summary_prompt = f"""Create a comprehensive summary of generated tests:
@@ -248,24 +268,21 @@ Provide:
 
             if response.success:
                 return {
-                    'summary': response.content,
-                    'provider': response.provider,
-                    'total_files': len(test_results)
+                    "summary": response.content,
+                    "provider": response.provider,
+                    "total_files": len(test_results),
                 }
             else:
-                return {
-                    'error': response.error,
-                    'total_files': len(test_results)
-                }
+                return {"error": response.error, "total_files": len(test_results)}
 
         except Exception as e:
             logger.error(f"Error generating test summary: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
     def save_test_report(self, results: Dict[str, Any], output_file: str):
         """Save test generation report to file"""
         try:
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(results, f, indent=2, ensure_ascii=False)
             logger.info(f"Test report saved to {output_file}")
         except Exception as e:
@@ -276,18 +293,28 @@ Provide:
         if self.ai_service:
             await self.ai_service.shutdown()
 
+
 async def main():
     """Main function"""
-    parser = argparse.ArgumentParser(description='AI Test Generator')
-    parser.add_argument('--files', nargs='+', help='Files to generate tests for')
-    parser.add_argument('--directory', help='Directory to generate tests for')
-    parser.add_argument('--output', help='Output directory for test files')
-    parser.add_argument('--test-type', default='comprehensive',
-                      choices=['comprehensive', 'unit', 'integration', 'performance', 'security'],
-                      help='Type of tests to generate')
-    parser.add_argument('--extensions', nargs='+', default=['.py', '.js', '.ts'],
-                      help='File extensions to generate tests for')
-    parser.add_argument('--report', default='test_generation_report.json', help='Report file')
+    parser = argparse.ArgumentParser(description="AI Test Generator")
+    parser.add_argument("--files", nargs="+", help="Files to generate tests for")
+    parser.add_argument("--directory", help="Directory to generate tests for")
+    parser.add_argument("--output", help="Output directory for test files")
+    parser.add_argument(
+        "--test-type",
+        default="comprehensive",
+        choices=["comprehensive", "unit", "integration", "performance", "security"],
+        help="Type of tests to generate",
+    )
+    parser.add_argument(
+        "--extensions",
+        nargs="+",
+        default=[".py", ".js", ".ts"],
+        help="File extensions to generate tests for",
+    )
+    parser.add_argument(
+        "--report", default="test_generation_report.json", help="Report file"
+    )
 
     args = parser.parse_args()
 
@@ -299,20 +326,24 @@ async def main():
         if args.files:
             # Generate tests for specific files
             results = {
-                'files_tested': 0,
-                'generated_tests': [],
-                'timestamp': datetime.now().isoformat()
+                "files_tested": 0,
+                "generated_tests": [],
+                "timestamp": datetime.now().isoformat(),
             }
 
             for file_path in args.files:
                 logger.info(f"Generating tests for {file_path}")
-                test_result = await generator.generate_tests_for_file(file_path, args.test_type)
-                results['generated_tests'].append(test_result)
-                if 'test_content' in test_result:
-                    results['files_tested'] += 1
+                test_result = await generator.generate_tests_for_file(
+                    file_path, args.test_type
+                )
+                results["generated_tests"].append(test_result)
+                if "test_content" in test_result:
+                    results["files_tested"] += 1
 
             # Generate summary
-            results['summary'] = await generator._generate_test_summary(results['generated_tests'])
+            results["summary"] = await generator._generate_test_summary(
+                results["generated_tests"]
+            )
 
         elif args.directory and args.output:
             # Generate tests for directory
@@ -328,14 +359,16 @@ async def main():
         generator.save_test_report(results, args.report)
 
         # Print summary
-        if 'summary' in results and 'summary' in results['summary']:
-            print("\n" + "="*50)
+        if "summary" in results and "summary" in results["summary"]:
+            print("\n" + "=" * 50)
             print("AI TEST GENERATION SUMMARY")
-            print("="*50)
-            print(results['summary']['summary'])
-            print("="*50)
+            print("=" * 50)
+            print(results["summary"]["summary"])
+            print("=" * 50)
 
-        logger.info(f"Test generation complete. {results['files_tested']} test files generated.")
+        logger.info(
+            f"Test generation complete. {results['files_tested']} test files generated."
+        )
 
     except Exception as e:
         logger.error(f"Error in main: {e}")
@@ -343,6 +376,7 @@ async def main():
 
     finally:
         await generator.shutdown()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

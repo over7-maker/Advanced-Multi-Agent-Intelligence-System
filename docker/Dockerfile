@@ -1,10 +1,5 @@
-# AMAS Docker Image
-# Multi-stage build for optimized production image
-
-# ============================================================================
-# Builder Stage - Install dependencies and build the application
-# ============================================================================
-FROM python:3.11-slim as builder
+# Multi-stage Dockerfile for AMAS API
+FROM python:3.11-slim as base
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -15,95 +10,61 @@ ENV PYTHONUNBUFFERED=1 \
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     build-essential \
-    gcc \
-    g++ \
-    libpq-dev \
-    libffi-dev \
-    libssl-dev \
     curl \
+    git \
     && rm -rf /var/lib/apt/lists/*
 
-# Create application directory
+# Create app user
+RUN groupadd -r amas && useradd -r -g amas amas
+
+# Set work directory
 WORKDIR /app
 
-# Copy requirements and install Python dependencies
+# Copy requirements first for better caching
 COPY requirements.txt .
+
+# Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ============================================================================
-# Runtime Stage - Create the final production image
-# ============================================================================
-FROM python:3.11-slim as production
+# Development stage
+FROM base as development
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1 \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONPATH=/app/src
+# Install development dependencies
+COPY requirements-dev.txt .
+RUN pip install --no-cache-dir -r requirements-dev.txt
 
-# Install runtime dependencies
-RUN apt-get update && apt-get install -y \
-    libpq5 \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && groupadd -r amas \
-    && useradd -r -g amas -d /app -s /bin/bash amas
+# Copy source code
+COPY . .
 
-# Copy Python packages from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-
-# Create application directory and set ownership
-WORKDIR /app
+# Change ownership to app user
 RUN chown -R amas:amas /app
-
-# Copy application code
-COPY --chown=amas:amas src/ ./src/
-COPY --chown=amas:amas config/ ./config/
-COPY --chown=amas:amas docker/entrypoint.sh ./entrypoint.sh
-
-# Create data directories
-RUN mkdir -p logs data models && \
-    chown -R amas:amas logs data models
-
-# Make entrypoint executable
-RUN chmod +x entrypoint.sh
-
-# Switch to non-root user
 USER amas
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
 
 # Expose port
 EXPOSE 8000
 
-# Set entrypoint
-ENTRYPOINT ["./entrypoint.sh"]
+# Development command
+CMD ["python", "-m", "uvicorn", "src.amas.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
-# Default command
-CMD ["uvicorn", "amas.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Production stage
+FROM base as production
 
-# ============================================================================
-# Development Stage - For development with hot reload
-# ============================================================================
-FROM production as development
+# Copy source code
+COPY . .
 
-# Switch back to root for development tools installation
-USER root
-
-# Install development dependencies
-RUN pip install pytest black flake8 mypy pre-commit
-
-# Install development tools
-RUN apt-get update && apt-get install -y \
-    git \
-    vim \
-    htop \
-    && rm -rf /var/lib/apt/lists/*
-
-# Switch back to amas user
+# Change ownership to app user
+RUN chown -R amas:amas /app
 USER amas
 
-# Override command for development
-CMD ["uvicorn", "amas.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Create necessary directories
+RUN mkdir -p /app/logs /app/data
+
+# Expose port
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+# Production command
+CMD ["python", "-m", "uvicorn", "src.amas.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

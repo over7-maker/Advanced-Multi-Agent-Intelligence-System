@@ -10,6 +10,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+
 def main():
     """Final comprehensive workflow verification"""
     print("🎉 AMAS Intelligence System - Final Workflow Verification")
@@ -17,39 +18,35 @@ def main():
 
     # Check all critical components
     components = {
-        'Core System': [
-            'main_phase5_complete.py',
-            'core/orchestrator.py',
-            'services/security_service.py',
-            'services/security_monitoring_service.py',
-            'services/audit_logging_service.py',
-            'services/incident_response_service.py',
-            'services/monitoring_service.py',
-            'services/performance_service.py'
+        "Core System": [
+            "main_phase5_complete.py",
+            "core/orchestrator.py",
+            "services/security_service.py",
+            "services/security_monitoring_service.py",
+            "services/audit_logging_service.py",
+            "services/incident_response_service.py",
+            "services/monitoring_service.py",
+            "services/performance_service.py",
         ],
-        'Intelligence Agents': [
-            'agents/osint/osint_agent.py',
-            'agents/investigation/investigation_agent.py',
-            'agents/forensics/forensics_agent.py',
-            'agents/data_analysis/data_analysis_agent.py',
-            'agents/reverse_engineering/reverse_engineering_agent.py',
-            'agents/metadata/metadata_agent.py',
-            'agents/reporting/reporting_agent.py',
-            'agents/technology_monitor/technology_monitor_agent.py'
+        "Intelligence Agents": [
+            "agents/osint/osint_agent.py",
+            "agents/investigation/investigation_agent.py",
+            "agents/forensics/forensics_agent.py",
+            "agents/data_analysis/data_analysis_agent.py",
+            "agents/reverse_engineering/reverse_engineering_agent.py",
+            "agents/metadata/metadata_agent.py",
+            "agents/reporting/reporting_agent.py",
+            "agents/technology_monitor/technology_monitor_agent.py",
         ],
-        'Configuration': [
-            'docker-compose.yml',
-            'requirements.txt',
-            'README.md'
+        "Configuration": ["docker-compose.yml", "requirements.txt", "README.md"],
+        "Testing & Verification": [
+            "test_phase5_complete.py",
+            "verify_workflows.py",
+            "check_workflow_configuration.py",
+            "check_workflow_status.py",
+            "run_workflow_tests.py",
+            "simple_workflow_check.py",
         ],
-        'Testing & Verification': [
-            'test_phase5_complete.py',
-            'verify_workflows.py',
-            'check_workflow_configuration.py',
-            'check_workflow_status.py',
-            'run_workflow_tests.py',
-            'simple_workflow_check.py'
-        ]
     }
 
     total_checks = 0
@@ -75,15 +72,15 @@ def main():
     print(f"\n🔄 Workflow Templates")
     print("-" * 50)
 
-    orchestrator_path = 'core/orchestrator.py'
+    orchestrator_path = "core/orchestrator.py"
     if Path(orchestrator_path).exists():
-        with open(orchestrator_path, 'r') as f:
+        with open(orchestrator_path, "r") as f:
             content = f.read()
 
         workflow_templates = [
-            'osint_investigation',
-            'digital_forensics',
-            'threat_intelligence'
+            "osint_investigation",
+            "digital_forensics",
+            "threat_intelligence",
         ]
 
         for template in workflow_templates:
@@ -99,16 +96,16 @@ def main():
     print(f"\n🔒 Security Workflows")
     print("-" * 50)
 
-    main_app_path = 'main_phase5_complete.py'
+    main_app_path = "main_phase5_complete.py"
     if Path(main_app_path).exists():
-        with open(main_app_path, 'r') as f:
+        with open(main_app_path, "r") as f:
             content = f.read()
 
         security_workflows = [
-            'execute_security_workflow',
-            '_execute_threat_hunting_workflow',
-            '_execute_incident_response_workflow',
-            '_execute_security_assessment_workflow'
+            "execute_security_workflow",
+            "_execute_threat_hunting_workflow",
+            "_execute_incident_response_workflow",
+            "_execute_security_assessment_workflow",
         ]
 
         for workflow in security_workflows:
@@ -178,31 +175,32 @@ def main():
 
     # Save final report
     report = {
-        'final_verification_suite': 'AMAS Final Workflow Verification',
-        'timestamp': datetime.utcnow().isoformat(),
-        'summary': {
-            'total_checks': total_checks,
-            'passed_checks': total_passed,
-            'failed_checks': failed_checks,
-            'success_rate': success_rate
+        "final_verification_suite": "AMAS Final Workflow Verification",
+        "timestamp": datetime.utcnow().isoformat(),
+        "summary": {
+            "total_checks": total_checks,
+            "passed_checks": total_passed,
+            "failed_checks": failed_checks,
+            "success_rate": success_rate,
         },
-        'system_status': {
-            'production_ready': success_rate == 100.0,
-            'all_workflows_operational': success_rate == 100.0,
-            'all_components_verified': success_rate == 100.0,
-            'deployment_ready': success_rate == 100.0
-        }
+        "system_status": {
+            "production_ready": success_rate == 100.0,
+            "all_workflows_operational": success_rate == 100.0,
+            "all_components_verified": success_rate == 100.0,
+            "deployment_ready": success_rate == 100.0,
+        },
     }
 
     # Ensure logs directory exists
-    os.makedirs('logs', exist_ok=True)
+    os.makedirs("logs", exist_ok=True)
 
-    with open('logs/final_workflow_verification_report.json', 'w') as f:
+    with open("logs/final_workflow_verification_report.json", "w") as f:
         json.dump(report, f, indent=2)
 
     print(f"\n📄 Final report saved: logs/final_workflow_verification_report.json")
 
     return 0 if success_rate == 100.0 else 1
+
 
 if __name__ == "__main__":
     exit_code = main()
