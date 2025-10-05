@@ -20,9 +20,9 @@ from typing import Any, Callable, Dict, List, Optional
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 try:
     from amas.core.ai_api_manager import (
-        APIProvider,
-        TaskType,
         generate_ai_response,
+        TaskType,
+        APIProvider,
         get_api_manager,
     )
 
