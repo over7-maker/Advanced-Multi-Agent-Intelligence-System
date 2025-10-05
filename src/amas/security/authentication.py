@@ -126,15 +126,20 @@ class AuthenticationManager:
             return None
 
         # In a real implementation, you would check against a database
-        # For now, we'll use mock authentication
-        if username == "admin" and password == "admin123":
+        # For development/testing, use environment variables instead of hardcoded passwords
+        import os
+
+        admin_password = os.environ.get("AMAS_ADMIN_PASSWORD", "")
+        user_password = os.environ.get("AMAS_USER_PASSWORD", "")
+
+        if username == "admin" and password == admin_password and admin_password:
             return {
                 "user_id": "admin",
                 "username": "admin",
                 "roles": ["admin", "user"],
                 "email": "admin@amas.local",
             }
-        elif username == "user" and password == "user123":
+        elif username == "user" and password == user_password and user_password:
             return {
                 "user_id": "user",
                 "username": "user",

@@ -767,10 +767,10 @@ class AdvancedOptimizationService:
             if total_weight == 0:
                 return providers[0]["name"]
 
-            # Simple weighted selection
-            import random
+            # Use secrets module for cryptographically secure random selection
+            import secrets
 
-            rand = random.uniform(0, total_weight)
+            rand = secrets.SystemRandom().uniform(0, total_weight)
             current_weight = 0
 
             for provider in providers:
