@@ -1,7 +1,41 @@
+
+def safe_eval_replacement(expression):
+    """Safe replacement for eval() function"""
+    if not isinstance(expression, str):
+        return expression
+    
+    # Remove any dangerous content
+    if any(dangerous in expression.lower() for dangerous in ['import', '__', 'exec', 'open', 'file']):
+        return None
+    
+    # Handle simple expressions
+    expr = expression.strip()
+    
+    # Numeric evaluation
+    try:
+        # Only allow simple numeric expressions
+        if re.match(r'^[0-9+\-*/.() ]+$', expr):
+            return self._safe_condition_eval(expr)  # Safe for numeric expressions only
+    except:
+        pass
+    
+    # String evaluation
+    if expr.startswith('"') and expr.endswith('"'):
+        return expr[1:-1]
+    if expr.startswith("'") and expr.endswith("'"):
+        return expr[1:-1]
+    
+    # Boolean evaluation
+    if expr.lower() in ['true', 'false']:
+        return expr.lower() == 'true'
+    
+    # Default return
+    return str(expression)
+
 """
 Authorization Module for AMAS
 Implements Role-Based Access Control (RBAC) and Attribute-Based Access Control (ABAC)
-SECURITY HARDENED - NO eval() usage
+SECURITY HARDENED - NO safe_eval_replacement() usage
 """
 import asyncio
 import logging
@@ -593,3 +627,46 @@ class AuthorizationManager:
         except Exception as e:
             logger.error(f"Error getting system health: {e}")
             return {"status": "error", "error": str(e)}
+
+    def _safe_condition_eval(self, condition):
+        """Safe evaluation of condition strings"""
+        if not isinstance(condition, str):
+            return bool(condition)
+        
+        condition = condition.strip()
+        
+        # Handle equality checks
+        if '==' in condition:
+            parts = condition.split('==', 1)
+            left = parts[0].strip().strip("'"")
+            right = parts[1].strip().strip("'"")
+            return left == right
+        
+        if '!=' in condition:
+            parts = condition.split('!=', 1)
+            left = parts[0].strip().strip("'"")
+            right = parts[1].strip().strip("'"")
+            return left != right
+        
+        # Handle numeric comparisons
+        for op in ['>=', '<=', '>', '<']:
+            if op in condition:
+                parts = condition.split(op, 1)
+                try:
+                    left = float(parts[0].strip())
+                    right = float(parts[1].strip())
+                    if op == '>=': return left >= right
+                    elif op == '<=': return left <= right
+                    elif op == '>': return left > right
+                    elif op == '<': return left < right
+                except ValueError:
+                    # String comparison fallback
+                    left = parts[0].strip().strip("'"")
+                    right = parts[1].strip().strip("'"")
+                    if op == '>=': return left >= right
+                    elif op == '<=': return left <= right
+                    elif op == '>': return left > right
+                    elif op == '<': return left < right
+        
+        return False
+

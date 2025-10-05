@@ -331,12 +331,7 @@ Keep the analysis concise but thorough.
                     
                     # Skip if it's a pattern definition
                     if any(pat in line for pat in ["'password =", '"password =', "'token =", '"token =', 
-                                                   "'api_key =", '"api_key =', "'secret =", '"secret =']):
-                        continue
-                    
-                    # Skip obvious placeholders
-                    matched_text = match.group(0).lower()
-                    if any(placeholder in matched_text for placeholder in ['example', 'placeholder', 'your_', 'xxx', 'dummy', 'test', 'sample']):
+                                                   "'api_key =", '"api_key =', "'secret =", '"secret=os.getenv('SECRET_KEY', 'default')example', 'placeholder', 'your_', 'xxx', 'dummy', 'test', 'sample']):
                         continue
                     
                     # Skip if in description or similar context
