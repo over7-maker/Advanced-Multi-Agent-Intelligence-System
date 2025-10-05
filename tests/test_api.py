@@ -2,10 +2,11 @@
 Test API endpoints
 """
 
-import pytest
 import asyncio
+from typing import Any, Dict
+
 import httpx
-from typing import Dict, Any
+import pytest
 
 
 class TestAPIEndpoints:
@@ -148,7 +149,9 @@ class TestAPIEndpoints:
             # Missing required fields
         }
 
-        response = await test_client.post("/tasks", json=invalid_task, headers=headers)
+        response = await test_client.post(
+            "/tasks", json=invalid_task, headers=headers
+        )
         # Should handle gracefully (either 400 or process with defaults)
         assert response.status_code in [200, 400]
 
@@ -156,7 +159,9 @@ class TestAPIEndpoints:
     async def test_nonexistent_task(self, test_client: httpx.AsyncClient):
         """Test getting status of non-existent task"""
         headers = {"Authorization": "Bearer valid_token"}
-        response = await test_client.get("/tasks/nonexistent_task_id", headers=headers)
+        response = await test_client.get(
+            "/tasks/nonexistent_task_id", headers=headers
+        )
         assert response.status_code == 404
 
     @pytest.mark.asyncio

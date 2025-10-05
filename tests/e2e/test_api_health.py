@@ -1,16 +1,17 @@
 """End-to-end tests for AMAS API health endpoints"""
 
-import os
-import pytest
-import httpx
 import asyncio
+import os
+
+import httpx
+import pytest
 
 
 @pytest.mark.asyncio
 async def test_health_endpoint():
     """Test the health endpoint"""
     api_url = os.getenv("AMAS_API_URL", "http://localhost:8000")
-    
+
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(f"{api_url}/health")
@@ -27,7 +28,7 @@ async def test_health_endpoint():
 async def test_api_info():
     """Test the API info endpoint"""
     api_url = os.getenv("AMAS_API_URL", "http://localhost:8000")
-    
+
     async with httpx.AsyncClient() as client:
         try:
             response = await client.get(f"{api_url}/")

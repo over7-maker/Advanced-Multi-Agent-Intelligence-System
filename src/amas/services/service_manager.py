@@ -1,39 +1,84 @@
 """
 Service Manager for AMAS Intelligence System
+
+This module provides centralized management of all AMAS services,
+including initialization, health monitoring, and graceful shutdown.
 """
 
 import asyncio
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from datetime import datetime
+from contextlib import asynccontextmanager
 
-from .llm_service import LLMService
-from .vector_service import VectorService
-from .knowledge_graph_service import KnowledgeGraphService
 from .database_service import DatabaseService
+from .knowledge_graph_service import KnowledgeGraphService
+from .llm_service import LLMService
 from .security_service import SecurityService
+from .vector_service import VectorService
 
 logger = logging.getLogger(__name__)
 
 
 class ServiceManager:
-    """Central service manager for AMAS Intelligence System"""
+    """
+    Central service manager for AMAS Intelligence System.
 
-    def __init__(self, config: Any):
-        self.config = config.__dict__ if hasattr(config, "__dict__") else config
-        self.llm_service = None
-        self.vector_service = None
-        self.knowledge_graph_service = None
-        self.database_service = None
-        self.security_service = None
-        self.services_initialized = False
+    This class manages the lifecycle of all AMAS services, including
+    initialization, health monitoring, and graceful shutdown.
+    """
 
-    async def initialize_all_services(self):
-        """Initialize all services"""
+    def __init__(self, config: Any) -> None:
+        """
+        Initialize the service manager.
+
+        Args:
+            config: Configuration object or dictionary
+        """
+        self.config: Dict[str, Any] = (
+            config.__dict__ if hasattr(config, "__dict__") else config
+        )
+        self.llm_service: Optional[LLMService] = None
+        self.vector_service: Optional[VectorService] = None
+        self.knowledge_graph_service: Optional[KnowledgeGraphService] = None
+        self.database_service: Optional[DatabaseService] = None
+        self.security_service: Optional[SecurityService] = None
+        self.services_initialized: bool = False
+        self._initialization_errors: List[str] = []
+
+    async def initialize_all_services(self) -> None:
+        """
+        Initialize all services with proper error handling.
+
+        Raises:
+            RuntimeError: If critical services fail to initialize
+        """
+        if self.services_initialized:
+            logger.warning("Services already initialized")
+            return
+
         try:
             logger.info("Initializing all services...")
+            self._initialization_errors.clear()
 
-            # Initialize LLM service
+            # Initialize services in order of dependency
+            await self._initialize_llm_service()
+            await self._initialize_vector_service()
+            await self._initialize_knowledge_graph_service()
+            await self._initialize_database_service()
+            await self._initialize_security_service()
+
+            self.services_initialized = True
+            logger.info("All services initialized successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to initialize services: {e}")
+            await self._cleanup_failed_services()
+            raise RuntimeError(f"Service initialization failed: {e}") from e
+
+    async def _initialize_llm_service(self) -> None:
+        """Initialize LLM service."""
+        try:
             self.llm_service = LLMService(
                 {
                     "llm_service_url": self.config.get("llm", {}).get(
@@ -46,8 +91,15 @@ class ServiceManager:
             )
             await self.llm_service.initialize()
             logger.info("LLM service initialized")
+        except Exception as e:
+            error_msg = f"LLM service initialization failed: {e}"
+            logger.error(error_msg)
+            self._initialization_errors.append(error_msg)
+            raise
 
-            # Initialize Vector service
+    async def _initialize_vector_service(self) -> None:
+        """Initialize Vector service."""
+        try:
             self.vector_service = VectorService(
                 {
                     "vector_service_url": self.config.get(
@@ -61,8 +113,15 @@ class ServiceManager:
             )
             await self.vector_service.initialize()
             logger.info("Vector service initialized")
+        except Exception as e:
+            error_msg = f"Vector service initialization failed: {e}"
+            logger.error(error_msg)
+            self._initialization_errors.append(error_msg)
+            raise
 
-            # Initialize Knowledge Graph service
+    async def _initialize_knowledge_graph_service(self) -> None:
+        """Initialize Knowledge Graph service."""
+        try:
             self.knowledge_graph_service = KnowledgeGraphService(
                 {
                     "graph_service_url": self.config.get("neo4j", {}).get(
@@ -75,23 +134,53 @@ class ServiceManager:
             )
             await self.knowledge_graph_service.initialize()
             logger.info("Knowledge Graph service initialized")
+        except Exception as e:
+            error_msg = f"Knowledge Graph service initialization failed: {e}"
+            logger.error(error_msg)
+            self._initialization_errors.append(error_msg)
+            raise
 
-            # Initialize Database service
+    async def _initialize_database_service(self) -> None:
+        """Initialize Database service."""
+        try:
             self.database_service = DatabaseService(self.config)
             await self.database_service.initialize()
             logger.info("Database service initialized")
+        except Exception as e:
+            error_msg = f"Database service initialization failed: {e}"
+            logger.error(error_msg)
+            self._initialization_errors.append(error_msg)
+            raise
 
-            # Initialize Security service
+    async def _initialize_security_service(self) -> None:
+        """Initialize Security service."""
+        try:
             self.security_service = SecurityService(self.config)
             await self.security_service.initialize()
             logger.info("Security service initialized")
-
-            self.services_initialized = True
-            logger.info("All services initialized successfully")
-
         except Exception as e:
-            logger.error(f"Failed to initialize services: {e}")
+            error_msg = f"Security service initialization failed: {e}"
+            logger.error(error_msg)
+            self._initialization_errors.append(error_msg)
             raise
+
+    async def _cleanup_failed_services(self) -> None:
+        """Cleanup services that were partially initialized."""
+        services = [
+            ("llm_service", self.llm_service),
+            ("vector_service", self.vector_service),
+            ("knowledge_graph_service", self.knowledge_graph_service),
+            ("database_service", self.database_service),
+            ("security_service", self.security_service),
+        ]
+
+        for service_name, service in services:
+            if service:
+                try:
+                    await service.close()
+                    logger.info(f"Cleaned up {service_name}")
+                except Exception as e:
+                    logger.error(f"Error cleaning up {service_name}: {e}")
 
     async def health_check_all_services(self) -> Dict[str, Any]:
         """Check health of all services"""

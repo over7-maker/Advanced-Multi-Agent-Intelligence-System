@@ -6,16 +6,17 @@ This module provides specialized client adapters for each AI provider,
 handling their unique requirements, authentication, and response formats.
 """
 
-import os
 import asyncio
 import json
+import os
 import time
-from typing import Dict, List, Optional, Any, AsyncGenerator
 from dataclasses import dataclass
+from typing import Any, AsyncGenerator, Dict, List, Optional
+
 import aiohttp
+import cohere
 import httpx
 from openai import AsyncOpenAI
-import cohere
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 
