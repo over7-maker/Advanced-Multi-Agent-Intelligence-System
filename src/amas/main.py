@@ -20,7 +20,7 @@ from .services.service_manager import ServiceManager
 class AMASApplication:
     """
     Main AMAS Application class.
-    
+
     This class manages the lifecycle of the AMAS Intelligence System,
     including initialization, configuration, and graceful shutdown.
     """
@@ -28,7 +28,7 @@ class AMASApplication:
     def __init__(self, config_override: Optional[Dict[str, Any]] = None) -> None:
         """
         Initialize the AMAS application.
-        
+
         Args:
             config_override: Optional configuration overrides to apply
         """
@@ -45,7 +45,7 @@ class AMASApplication:
     def _apply_config_overrides(self, overrides: Dict[str, Any]) -> None:
         """
         Apply configuration overrides to the current config.
-        
+
         Args:
             overrides: Dictionary of configuration overrides
         """
@@ -58,7 +58,7 @@ class AMASApplication:
     def _setup_logging(self) -> logging.Logger:
         """
         Setup application logging with proper configuration.
-        
+
         Returns:
             Configured logger instance
         """
@@ -84,7 +84,7 @@ class AMASApplication:
     async def initialize(self) -> None:
         """
         Initialize all system components.
-        
+
         Raises:
             RuntimeError: If initialization fails
         """
@@ -130,7 +130,7 @@ class AMASApplication:
     async def start(self) -> None:
         """
         Start the AMAS system and begin operation.
-        
+
         This method initializes the system and keeps it running until
         a shutdown signal is received.
         """
@@ -179,13 +179,13 @@ class AMASApplication:
     async def submit_task(self, task_data: Dict[str, Any]) -> str:
         """
         Submit a task to the system.
-        
+
         Args:
             task_data: Task definition containing type, description, parameters, and priority
-            
+
         Returns:
             Task ID for tracking
-            
+
         Raises:
             RuntimeError: If system is not initialized
             ValueError: If task data is invalid
@@ -211,13 +211,13 @@ class AMASApplication:
     async def get_task_result(self, task_id: str) -> Dict[str, Any]:
         """
         Get task result by task ID.
-        
+
         Args:
             task_id: Unique task identifier
-            
+
         Returns:
             Task result data
-            
+
         Raises:
             RuntimeError: If system is not initialized
             ValueError: If task_id is invalid
@@ -233,7 +233,7 @@ class AMASApplication:
     async def get_system_status(self) -> Dict[str, Any]:
         """
         Get current system status.
-        
+
         Returns:
             System status information
         """
@@ -245,7 +245,7 @@ class AMASApplication:
     async def shutdown(self) -> None:
         """
         Shutdown the system gracefully.
-        
+
         This method ensures all resources are properly cleaned up
         and all services are stopped in the correct order.
         """
@@ -277,7 +277,7 @@ class AMASApplication:
     async def context(self):
         """
         Context manager for AMAS application.
-        
+
         Usage:
             async with AMASApplication().context() as app:
                 # Use app here
@@ -293,7 +293,7 @@ class AMASApplication:
 async def main() -> None:
     """
     Main application entry point.
-    
+
     This function creates and starts the AMAS application.
     """
     app = AMASApplication()

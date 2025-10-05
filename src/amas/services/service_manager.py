@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 class ServiceManager:
     """
     Central service manager for AMAS Intelligence System.
-    
+
     This class manages the lifecycle of all AMAS services, including
     initialization, health monitoring, and graceful shutdown.
     """
@@ -31,11 +31,13 @@ class ServiceManager:
     def __init__(self, config: Any) -> None:
         """
         Initialize the service manager.
-        
+
         Args:
             config: Configuration object or dictionary
         """
-        self.config: Dict[str, Any] = config.__dict__ if hasattr(config, "__dict__") else config
+        self.config: Dict[str, Any] = (
+            config.__dict__ if hasattr(config, "__dict__") else config
+        )
         self.llm_service: Optional[LLMService] = None
         self.vector_service: Optional[VectorService] = None
         self.knowledge_graph_service: Optional[KnowledgeGraphService] = None
@@ -47,7 +49,7 @@ class ServiceManager:
     async def initialize_all_services(self) -> None:
         """
         Initialize all services with proper error handling.
-        
+
         Raises:
             RuntimeError: If critical services fail to initialize
         """
@@ -77,14 +79,16 @@ class ServiceManager:
     async def _initialize_llm_service(self) -> None:
         """Initialize LLM service."""
         try:
-            self.llm_service = LLMService({
-                "llm_service_url": self.config.get("llm", {}).get(
-                    "url", "http://localhost:11434"
-                ),
-                "deepseek_api_key": self.config.get("deepseek_api_key"),
-                "glm_api_key": self.config.get("glm_api_key"),
-                "grok_api_key": self.config.get("grok_api_key"),
-            })
+            self.llm_service = LLMService(
+                {
+                    "llm_service_url": self.config.get("llm", {}).get(
+                        "url", "http://localhost:11434"
+                    ),
+                    "deepseek_api_key": self.config.get("deepseek_api_key"),
+                    "glm_api_key": self.config.get("glm_api_key"),
+                    "grok_api_key": self.config.get("grok_api_key"),
+                }
+            )
             await self.llm_service.initialize()
             logger.info("LLM service initialized")
         except Exception as e:
@@ -96,15 +100,17 @@ class ServiceManager:
     async def _initialize_vector_service(self) -> None:
         """Initialize Vector service."""
         try:
-            self.vector_service = VectorService({
-                "vector_service_url": self.config.get(
-                    "vector_service_url", "/app/faiss_index"
-                ),
-                "embedding_model": self.config.get(
-                    "embedding_model", "sentence-transformers/all-MiniLM-L6-v2"
-                ),
-                "index_path": self.config.get("index_path", "/app/faiss_index"),
-            })
+            self.vector_service = VectorService(
+                {
+                    "vector_service_url": self.config.get(
+                        "vector_service_url", "/app/faiss_index"
+                    ),
+                    "embedding_model": self.config.get(
+                        "embedding_model", "sentence-transformers/all-MiniLM-L6-v2"
+                    ),
+                    "index_path": self.config.get("index_path", "/app/faiss_index"),
+                }
+            )
             await self.vector_service.initialize()
             logger.info("Vector service initialized")
         except Exception as e:
@@ -116,14 +122,16 @@ class ServiceManager:
     async def _initialize_knowledge_graph_service(self) -> None:
         """Initialize Knowledge Graph service."""
         try:
-            self.knowledge_graph_service = KnowledgeGraphService({
-                "graph_service_url": self.config.get("neo4j", {}).get(
-                    "uri", "bolt://localhost:7687"
-                ),
-                "username": self.config.get("neo4j", {}).get("user", "neo4j"),
-                "password": self.config.get("neo4j", {}).get("password", "amas123"),
-                "database": self.config.get("neo4j", {}).get("database", "neo4j"),
-            })
+            self.knowledge_graph_service = KnowledgeGraphService(
+                {
+                    "graph_service_url": self.config.get("neo4j", {}).get(
+                        "uri", "bolt://localhost:7687"
+                    ),
+                    "username": self.config.get("neo4j", {}).get("user", "neo4j"),
+                    "password": self.config.get("neo4j", {}).get("password", "amas123"),
+                    "database": self.config.get("neo4j", {}).get("database", "neo4j"),
+                }
+            )
             await self.knowledge_graph_service.initialize()
             logger.info("Knowledge Graph service initialized")
         except Exception as e:

@@ -14,39 +14,34 @@ from pathlib import Path
 class DatabaseConfig(BaseSettings):
     """
     Database configuration settings.
-    
+
     Manages PostgreSQL database connection parameters with validation.
     """
 
     host: str = Field(
-        default="localhost", 
-        env="AMAS_DB_HOST",
-        description="Database host address"
+        default="localhost", env="AMAS_DB_HOST", description="Database host address"
     )
     port: int = Field(
-        default=5432, 
+        default=5432,
         env="AMAS_DB_PORT",
-        ge=1, 
+        ge=1,
         le=65535,
-        description="Database port number"
+        description="Database port number",
     )
     user: str = Field(
-        default="amas", 
+        default="amas",
         env="AMAS_DB_USER",
         min_length=1,
-        description="Database username"
+        description="Database username",
     )
     password: str = Field(
-        default="amas123", 
+        default="amas123",
         env="AMAS_DB_PASSWORD",
         min_length=1,
-        description="Database password"
+        description="Database password",
     )
     database: str = Field(
-        default="amas", 
-        env="AMAS_DB_NAME",
-        min_length=1,
-        description="Database name"
+        default="amas", env="AMAS_DB_NAME", min_length=1, description="Database name"
     )
 
     @property
@@ -54,44 +49,36 @@ class DatabaseConfig(BaseSettings):
         """Get database connection URL."""
         return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
-    @validator('port')
+    @validator("port")
     def validate_port(cls, v):
         """Validate port number."""
         if not 1 <= v <= 65535:
-            raise ValueError('Port must be between 1 and 65535')
+            raise ValueError("Port must be between 1 and 65535")
         return v
 
 
 class RedisConfig(BaseSettings):
     """
     Redis configuration settings.
-    
+
     Manages Redis cache connection parameters with validation.
     """
 
     host: str = Field(
-        default="localhost", 
-        env="AMAS_REDIS_HOST",
-        description="Redis host address"
+        default="localhost", env="AMAS_REDIS_HOST", description="Redis host address"
     )
     port: int = Field(
-        default=6379, 
+        default=6379,
         env="AMAS_REDIS_PORT",
-        ge=1, 
+        ge=1,
         le=65535,
-        description="Redis port number"
+        description="Redis port number",
     )
     db: int = Field(
-        default=0, 
-        env="AMAS_REDIS_DB",
-        ge=0, 
-        le=15,
-        description="Redis database number"
+        default=0, env="AMAS_REDIS_DB", ge=0, le=15, description="Redis database number"
     )
     password: Optional[str] = Field(
-        default=None, 
-        env="AMAS_REDIS_PASSWORD",
-        description="Redis password (optional)"
+        default=None, env="AMAS_REDIS_PASSWORD", description="Redis password (optional)"
     )
 
     @property
@@ -100,18 +87,18 @@ class RedisConfig(BaseSettings):
         auth = f":{self.password}@" if self.password else ""
         return f"redis://{auth}{self.host}:{self.port}/{self.db}"
 
-    @validator('port')
+    @validator("port")
     def validate_port(cls, v):
         """Validate port number."""
         if not 1 <= v <= 65535:
-            raise ValueError('Port must be between 1 and 65535')
+            raise ValueError("Port must be between 1 and 65535")
         return v
 
-    @validator('db')
+    @validator("db")
     def validate_db(cls, v):
         """Validate database number."""
         if not 0 <= v <= 15:
-            raise ValueError('Redis database must be between 0 and 15')
+            raise ValueError("Redis database must be between 0 and 15")
         return v
 
 
@@ -171,132 +158,97 @@ class APIConfig(BaseSettings):
 class AMASConfig(BaseSettings):
     """
     Main AMAS configuration class.
-    
+
     This class manages all configuration settings for the AMAS system,
     including validation, environment variable loading, and directory management.
     """
 
     # Application settings
     app_name: str = Field(
-        default="AMAS", 
-        env="AMAS_APP_NAME",
-        description="Application name"
+        default="AMAS", env="AMAS_APP_NAME", description="Application name"
     )
     version: str = Field(
-        default="1.0.0", 
-        env="AMAS_VERSION",
-        description="Application version"
+        default="1.0.0", env="AMAS_VERSION", description="Application version"
     )
     environment: str = Field(
-        default="development", 
+        default="development",
         env="AMAS_ENVIRONMENT",
-        description="Deployment environment"
+        description="Deployment environment",
     )
     debug: bool = Field(
-        default=False, 
-        env="AMAS_DEBUG",
-        description="Enable debug mode"
+        default=False, env="AMAS_DEBUG", description="Enable debug mode"
     )
     offline_mode: bool = Field(
-        default=True, 
-        env="AMAS_OFFLINE_MODE",
-        description="Enable offline mode"
+        default=True, env="AMAS_OFFLINE_MODE", description="Enable offline mode"
     )
     gpu_enabled: bool = Field(
-        default=True, 
-        env="AMAS_GPU_ENABLED",
-        description="Enable GPU acceleration"
+        default=True, env="AMAS_GPU_ENABLED", description="Enable GPU acceleration"
     )
 
     # Logging configuration
     log_level: str = Field(
-        default="INFO", 
-        env="AMAS_LOG_LEVEL",
-        description="Logging level"
+        default="INFO", env="AMAS_LOG_LEVEL", description="Logging level"
     )
     log_format: str = Field(
         default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         env="AMAS_LOG_FORMAT",
-        description="Log message format"
+        description="Log message format",
     )
 
     # Directory configuration
     data_dir: Path = Field(
-        default=Path("data"), 
-        env="AMAS_DATA_DIR",
-        description="Data directory path"
+        default=Path("data"), env="AMAS_DATA_DIR", description="Data directory path"
     )
     logs_dir: Path = Field(
-        default=Path("logs"), 
-        env="AMAS_LOGS_DIR",
-        description="Logs directory path"
+        default=Path("logs"), env="AMAS_LOGS_DIR", description="Logs directory path"
     )
     models_dir: Path = Field(
-        default=Path("models"), 
+        default=Path("models"),
         env="AMAS_MODELS_DIR",
-        description="Models directory path"
+        description="Models directory path",
     )
 
     # Component configurations
     database: DatabaseConfig = Field(
-        default_factory=DatabaseConfig,
-        description="Database configuration"
+        default_factory=DatabaseConfig, description="Database configuration"
     )
     redis: RedisConfig = Field(
-        default_factory=RedisConfig,
-        description="Redis configuration"
+        default_factory=RedisConfig, description="Redis configuration"
     )
     neo4j: Neo4jConfig = Field(
-        default_factory=Neo4jConfig,
-        description="Neo4j configuration"
+        default_factory=Neo4jConfig, description="Neo4j configuration"
     )
     llm: LLMConfig = Field(
-        default_factory=LLMConfig,
-        description="LLM service configuration"
+        default_factory=LLMConfig, description="LLM service configuration"
     )
     security: SecurityConfig = Field(
-        default_factory=SecurityConfig,
-        description="Security configuration"
+        default_factory=SecurityConfig, description="Security configuration"
     )
-    api: APIConfig = Field(
-        default_factory=APIConfig,
-        description="API configuration"
-    )
+    api: APIConfig = Field(default_factory=APIConfig, description="API configuration")
 
     # External API keys (loaded from environment)
     deepseek_api_key: Optional[str] = Field(
-        default=None, 
-        env="DEEPSEEK_API_KEY",
-        description="DeepSeek API key"
+        default=None, env="DEEPSEEK_API_KEY", description="DeepSeek API key"
     )
     glm_api_key: Optional[str] = Field(
-        default=None, 
-        env="GLM_API_KEY",
-        description="GLM API key"
+        default=None, env="GLM_API_KEY", description="GLM API key"
     )
     grok_api_key: Optional[str] = Field(
-        default=None, 
-        env="GROK_API_KEY",
-        description="Grok API key"
+        default=None, env="GROK_API_KEY", description="Grok API key"
     )
     kimi_api_key: Optional[str] = Field(
-        default=None, 
-        env="KIMI_API_KEY",
-        description="Kimi API key"
+        default=None, env="KIMI_API_KEY", description="Kimi API key"
     )
     qwen_api_key: Optional[str] = Field(
-        default=None, 
-        env="QWEN_API_KEY",
-        description="Qwen API key"
+        default=None, env="QWEN_API_KEY", description="Qwen API key"
     )
     gptoss_api_key: Optional[str] = Field(
-        default=None, 
-        env="GPTOSS_API_KEY",
-        description="GPToss API key"
+        default=None, env="GPTOSS_API_KEY", description="GPToss API key"
     )
 
     class Config:
         """Pydantic configuration."""
+
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = False
@@ -332,10 +284,13 @@ class AMASConfig(BaseSettings):
         if values.get("environment") == "production":
             if values.get("debug", False):
                 raise ValueError("Debug mode cannot be enabled in production")
-            if not values.get("security", {}).get("jwt_secret") or \
-               values.get("security", {}).get("jwt_secret") == "amas_jwt_secret_key_2024_secure":
+            if (
+                not values.get("security", {}).get("jwt_secret")
+                or values.get("security", {}).get("jwt_secret")
+                == "amas_jwt_secret_key_2024_secure"
+            ):
                 raise ValueError("Production requires secure JWT secret")
-        
+
         return values
 
     def create_directories(self) -> None:
