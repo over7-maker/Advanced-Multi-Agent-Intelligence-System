@@ -99,10 +99,10 @@ jobs:
           # Add project to path
           sys.path.insert(0, str(Path.cwd()))
           
-          from standalone_universal_ai_manager import get_manager as get_universal_ai_manager
+          from standalone_universal_ai_manager import get_manager
           
           async def main():
-              manager = get_universal_ai_manager()
+              manager = get_manager()
               
               # Show configuration
               print(manager.get_config_summary())
@@ -120,12 +120,12 @@ jobs:
                       max_tokens=100
                   )
                   
-                  if result['success']:
-                      print(f"✅ {strategy.upper()} - Success with {result['provider_name']}")
-                      print(f"   Response: {result['content'][:100]}...")
-                      print(f"   Time: {result['response_time']:.2f}s")
+                  if result and result.get('success', False):
+                      print(f"✅ {strategy.upper()} - Success with {result.get('provider_name', 'Unknown')}")
+                      print(f"   Response: {result.get('content', 'No content')[:100]}...")
+                      print(f"   Time: {result.get('response_time', 0):.2f}s")
                   else:
-                      print(f"❌ {strategy.upper()} - Failed: {result['error']}")
+                      print(f"❌ {strategy.upper()} - Failed: {result.get('error', 'Unknown error') if result else 'No result returned'}")
                   print()
               
               # Show final stats

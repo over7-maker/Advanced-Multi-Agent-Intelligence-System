@@ -537,7 +537,15 @@ class StandaloneUniversalAIManager:
             try:
                 result = await self._make_request(provider_id, messages, **kwargs)
 
-                if result["success"]:
+                if not result:
+                    logger.error(f"❌ {config.name} returned None result")
+                    config.failure_count += 1
+                    config.consecutive_failures += 1
+                    config.last_error = "Provider returned None result"
+                    config.status = ProviderStatus.FAILED
+                    continue
+
+                if result.get("success", False):
                     config.success_count += 1
                     config.consecutive_failures = 0
                     config.last_used = datetime.now()
