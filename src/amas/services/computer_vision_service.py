@@ -16,8 +16,10 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+
 class VisionTask(Enum):
     """Computer vision task enumeration"""
+
     OBJECT_DETECTION = "object_detection"
     FACE_RECOGNITION = "face_recognition"
     TEXT_EXTRACTION = "text_extraction"
@@ -29,34 +31,42 @@ class VisionTask(Enum):
     OPTICAL_CHARACTER_RECOGNITION = "optical_character_recognition"
     IMAGE_SEGMENTATION = "image_segmentation"
 
+
 class ImageFormat(Enum):
     """Image format enumeration"""
+
     JPEG = "jpeg"
     PNG = "png"
     BMP = "bmp"
     TIFF = "tiff"
     WEBP = "webp"
 
+
 @dataclass
 class BoundingBox:
     """Bounding box data structure"""
+
     x: int
     y: int
     width: int
     height: int
     confidence: float
 
+
 @dataclass
 class DetectedObject:
     """Detected object data structure"""
+
     class_name: str
     confidence: float
     bounding_box: BoundingBox
     attributes: Dict[str, Any]
 
+
 @dataclass
 class ImageAnalysisResult:
     """Image analysis result data structure"""
+
     analysis_id: str
     task: VisionTask
     image_format: ImageFormat
@@ -66,14 +76,17 @@ class ImageAnalysisResult:
     processing_time: float
     timestamp: datetime
 
+
 @dataclass
 class Face:
     """Face data structure"""
+
     face_id: str
     bounding_box: BoundingBox
     landmarks: List[Tuple[int, int]]
     attributes: Dict[str, Any]
     embedding: List[float]
+
 
 class ComputerVisionService:
     """
@@ -99,55 +112,74 @@ class ComputerVisionService:
 
         # Vision configuration
         self.vision_config = {
-            'max_image_size': config.get('max_image_size', (4096, 4096)),
-            'confidence_threshold': config.get('confidence_threshold', 0.7),
-            'supported_formats': config.get('supported_formats', [ImageFormat.JPEG, ImageFormat.PNG]),
-            'batch_size': config.get('batch_size', 10),
-            'cache_results': config.get('cache_results', True)
+            "max_image_size": config.get("max_image_size", (4096, 4096)),
+            "confidence_threshold": config.get("confidence_threshold", 0.7),
+            "supported_formats": config.get(
+                "supported_formats", [ImageFormat.JPEG, ImageFormat.PNG]
+            ),
+            "batch_size": config.get("batch_size", 10),
+            "cache_results": config.get("cache_results", True),
         }
 
         # Vision models and their configurations
         self.vision_models = {
             VisionTask.OBJECT_DETECTION: {
-                'model_type': 'yolo',
-                'classes': ['person', 'car', 'truck', 'bus', 'motorcycle', 'bicycle', 'dog', 'cat'],
-                'confidence_threshold': 0.5,
-                'nms_threshold': 0.4
+                "model_type": "yolo",
+                "classes": [
+                    "person",
+                    "car",
+                    "truck",
+                    "bus",
+                    "motorcycle",
+                    "bicycle",
+                    "dog",
+                    "cat",
+                ],
+                "confidence_threshold": 0.5,
+                "nms_threshold": 0.4,
             },
             VisionTask.FACE_RECOGNITION: {
-                'model_type': 'face_net',
-                'embedding_size': 512,
-                'confidence_threshold': 0.8,
-                'distance_threshold': 0.6
+                "model_type": "face_net",
+                "embedding_size": 512,
+                "confidence_threshold": 0.8,
+                "distance_threshold": 0.6,
             },
             VisionTask.TEXT_EXTRACTION: {
-                'model_type': 'ocr',
-                'languages': ['en', 'zh', 'es', 'fr', 'de'],
-                'confidence_threshold': 0.7
+                "model_type": "ocr",
+                "languages": ["en", "zh", "es", "fr", "de"],
+                "confidence_threshold": 0.7,
             },
             VisionTask.SCENE_ANALYSIS: {
-                'model_type': 'scene_classifier',
-                'categories': ['indoor', 'outdoor', 'urban', 'rural', 'office', 'home', 'street'],
-                'confidence_threshold': 0.6
+                "model_type": "scene_classifier",
+                "categories": [
+                    "indoor",
+                    "outdoor",
+                    "urban",
+                    "rural",
+                    "office",
+                    "home",
+                    "street",
+                ],
+                "confidence_threshold": 0.6,
             },
             VisionTask.IMAGE_CLASSIFICATION: {
-                'model_type': 'resnet',
-                'num_classes': 1000,
-                'confidence_threshold': 0.5
+                "model_type": "resnet",
+                "num_classes": 1000,
+                "confidence_threshold": 0.5,
             },
             VisionTask.ANOMALY_DETECTION: {
-                'model_type': 'autoencoder',
-                'anomaly_threshold': 0.8,
-                'confidence_threshold': 0.7
-            }
+                "model_type": "autoencoder",
+                "anomaly_threshold": 0.8,
+                "confidence_threshold": 0.7,
+            },
         }
 
         # Image preprocessing parameters
         self.preprocessing_config = {
-            'resize_method': 'bilinear',
-            'normalization': 'imagenet',
-            'augmentation': True,
-            'grayscale': False
+            "resize_method": "bilinear",
+            "normalization": "imagenet",
+            "augmentation": True,
+            "grayscale": False,
         }
 
         logger.info("Computer Vision Service initialized")
@@ -218,7 +250,7 @@ class ComputerVisionService:
         self,
         image_data: str,  # Base64 encoded image
         task: VisionTask,
-        image_format: ImageFormat = ImageFormat.JPEG
+        image_format: ImageFormat = ImageFormat.JPEG,
     ) -> ImageAnalysisResult:
         """
         Analyze image using computer vision.
@@ -239,7 +271,10 @@ class ComputerVisionService:
 
             # Validate image size
             height, width = image_array.shape[:2]
-            if height > self.vision_config['max_image_size'][0] or width > self.vision_config['max_image_size'][1]:
+            if (
+                height > self.vision_config["max_image_size"][0]
+                or width > self.vision_config["max_image_size"][1]
+            ):
                 raise ValueError(f"Image too large: {width}x{height}")
 
             # Generate analysis ID
@@ -278,14 +313,14 @@ class ComputerVisionService:
                 task=task,
                 image_format=image_format,
                 image_size=(width, height),
-                confidence=results.get('confidence', 0.0),
+                confidence=results.get("confidence", 0.0),
                 results=results,
                 processing_time=processing_time,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.utcnow(),
             )
 
             # Store result if caching is enabled
-            if self.vision_config['cache_results']:
+            if self.vision_config["cache_results"]:
                 self.analysis_results[analysis_id] = analysis_result
 
             logger.info(f"Image analysis completed: {analysis_id}")
@@ -295,7 +330,9 @@ class ComputerVisionService:
             logger.error(f"Failed to analyze image: {e}")
             raise
 
-    async def _decode_image(self, image_data: str, image_format: ImageFormat) -> np.ndarray:
+    async def _decode_image(
+        self, image_data: str, image_format: ImageFormat
+    ) -> np.ndarray:
         """Decode base64 image data"""
         try:
             # Decode base64 image data
@@ -308,7 +345,9 @@ class ComputerVisionService:
             # Create mock image array
             height, width = 480, 640
             channels = 3 if image_format != ImageFormat.PNG else 4
-            image_array = np.random.randint(0, 255, (height, width, channels), dtype=np.uint8)
+            image_array = np.random.randint(
+                0, 255, (height, width, channels), dtype=np.uint8
+            )
 
             return image_array
 
@@ -316,7 +355,9 @@ class ComputerVisionService:
             logger.error(f"Image decoding failed: {e}")
             raise
 
-    async def _perform_object_detection(self, image_array: np.ndarray) -> Dict[str, Any]:
+    async def _perform_object_detection(
+        self, image_array: np.ndarray
+    ) -> Dict[str, Any]:
         """Perform object detection"""
         try:
             # Simulate object detection
@@ -325,30 +366,36 @@ class ComputerVisionService:
             # Generate mock detected objects
             objects = [
                 DetectedObject(
-                    class_name='person',
+                    class_name="person",
                     confidence=0.85,
-                    bounding_box=BoundingBox(x=100, y=150, width=80, height=120, confidence=0.85),
-                    attributes={'age': 'adult', 'gender': 'male'}
+                    bounding_box=BoundingBox(
+                        x=100, y=150, width=80, height=120, confidence=0.85
+                    ),
+                    attributes={"age": "adult", "gender": "male"},
                 ),
                 DetectedObject(
-                    class_name='car',
+                    class_name="car",
                     confidence=0.78,
-                    bounding_box=BoundingBox(x=300, y=200, width=150, height=80, confidence=0.78),
-                    attributes={'color': 'blue', 'type': 'sedan'}
-                )
+                    bounding_box=BoundingBox(
+                        x=300, y=200, width=150, height=80, confidence=0.78
+                    ),
+                    attributes={"color": "blue", "type": "sedan"},
+                ),
             ]
 
             return {
-                'objects': [obj.__dict__ for obj in objects],
-                'object_count': len(objects),
-                'confidence': 0.82
+                "objects": [obj.__dict__ for obj in objects],
+                "object_count": len(objects),
+                "confidence": 0.82,
             }
 
         except Exception as e:
             logger.error(f"Object detection failed: {e}")
             raise
 
-    async def _perform_face_recognition(self, image_array: np.ndarray) -> Dict[str, Any]:
+    async def _perform_face_recognition(
+        self, image_array: np.ndarray
+    ) -> Dict[str, Any]:
         """Perform face recognition"""
         try:
             # Simulate face recognition
@@ -357,18 +404,20 @@ class ComputerVisionService:
             # Generate mock faces
             faces = [
                 Face(
-                    face_id='face_001',
-                    bounding_box=BoundingBox(x=120, y=100, width=60, height=80, confidence=0.9),
+                    face_id="face_001",
+                    bounding_box=BoundingBox(
+                        x=120, y=100, width=60, height=80, confidence=0.9
+                    ),
                     landmarks=[(150, 130), (160, 140), (140, 150)],
-                    attributes={'age': 25, 'gender': 'male', 'emotion': 'neutral'},
-                    embedding=[0.1, 0.2, 0.3] * 170  # 512-dimensional embedding
+                    attributes={"age": 25, "gender": "male", "emotion": "neutral"},
+                    embedding=[0.1, 0.2, 0.3] * 170,  # 512-dimensional embedding
                 )
             ]
 
             return {
-                'faces': [face.__dict__ for face in faces],
-                'face_count': len(faces),
-                'confidence': 0.88
+                "faces": [face.__dict__ for face in faces],
+                "face_count": len(faces),
+                "confidence": 0.88,
             }
 
         except Exception as e:
@@ -385,21 +434,25 @@ class ComputerVisionService:
             extracted_text = "Sample extracted text from image"
             text_regions = [
                 {
-                    'text': 'Sample',
-                    'bounding_box': BoundingBox(x=50, y=50, width=100, height=30, confidence=0.9),
-                    'confidence': 0.9
+                    "text": "Sample",
+                    "bounding_box": BoundingBox(
+                        x=50, y=50, width=100, height=30, confidence=0.9
+                    ),
+                    "confidence": 0.9,
                 },
                 {
-                    'text': 'extracted',
-                    'bounding_box': BoundingBox(x=160, y=50, width=120, height=30, confidence=0.85),
-                    'confidence': 0.85
-                }
+                    "text": "extracted",
+                    "bounding_box": BoundingBox(
+                        x=160, y=50, width=120, height=30, confidence=0.85
+                    ),
+                    "confidence": 0.85,
+                },
             ]
 
             return {
-                'extracted_text': extracted_text,
-                'text_regions': text_regions,
-                'confidence': 0.87
+                "extracted_text": extracted_text,
+                "text_regions": text_regions,
+                "confidence": 0.87,
             }
 
         except Exception as e:
@@ -414,22 +467,24 @@ class ComputerVisionService:
 
             # Generate mock scene analysis
             scene_categories = [
-                {'category': 'indoor', 'confidence': 0.8},
-                {'category': 'office', 'confidence': 0.7},
-                {'category': 'modern', 'confidence': 0.6}
+                {"category": "indoor", "confidence": 0.8},
+                {"category": "office", "confidence": 0.7},
+                {"category": "modern", "confidence": 0.6},
             ]
 
             return {
-                'scene_categories': scene_categories,
-                'primary_scene': 'indoor',
-                'confidence': 0.8
+                "scene_categories": scene_categories,
+                "primary_scene": "indoor",
+                "confidence": 0.8,
             }
 
         except Exception as e:
             logger.error(f"Scene analysis failed: {e}")
             raise
 
-    async def _perform_image_classification(self, image_array: np.ndarray) -> Dict[str, Any]:
+    async def _perform_image_classification(
+        self, image_array: np.ndarray
+    ) -> Dict[str, Any]:
         """Perform image classification"""
         try:
             # Simulate image classification
@@ -437,22 +492,24 @@ class ComputerVisionService:
 
             # Generate mock classification results
             classifications = [
-                {'class': 'computer', 'confidence': 0.85},
-                {'class': 'electronics', 'confidence': 0.78},
-                {'class': 'technology', 'confidence': 0.72}
+                {"class": "computer", "confidence": 0.85},
+                {"class": "electronics", "confidence": 0.78},
+                {"class": "technology", "confidence": 0.72},
             ]
 
             return {
-                'classifications': classifications,
-                'top_class': 'computer',
-                'confidence': 0.85
+                "classifications": classifications,
+                "top_class": "computer",
+                "confidence": 0.85,
             }
 
         except Exception as e:
             logger.error(f"Image classification failed: {e}")
             raise
 
-    async def _perform_anomaly_detection(self, image_array: np.ndarray) -> Dict[str, Any]:
+    async def _perform_anomaly_detection(
+        self, image_array: np.ndarray
+    ) -> Dict[str, Any]:
         """Perform anomaly detection"""
         try:
             # Simulate anomaly detection
@@ -463,16 +520,18 @@ class ComputerVisionService:
             anomaly_score = np.random.random()
 
             return {
-                'is_anomaly': is_anomaly,
-                'anomaly_score': anomaly_score,
-                'confidence': 0.8 if is_anomaly else 0.9
+                "is_anomaly": is_anomaly,
+                "anomaly_score": anomaly_score,
+                "confidence": 0.8 if is_anomaly else 0.9,
             }
 
         except Exception as e:
             logger.error(f"Anomaly detection failed: {e}")
             raise
 
-    async def _perform_feature_extraction(self, image_array: np.ndarray) -> Dict[str, Any]:
+    async def _perform_feature_extraction(
+        self, image_array: np.ndarray
+    ) -> Dict[str, Any]:
         """Perform feature extraction"""
         try:
             # Simulate feature extraction
@@ -482,16 +541,18 @@ class ComputerVisionService:
             features = np.random.randn(2048).tolist()  # 2048-dimensional feature vector
 
             return {
-                'features': features,
-                'feature_dimension': len(features),
-                'confidence': 0.9
+                "features": features,
+                "feature_dimension": len(features),
+                "confidence": 0.9,
             }
 
         except Exception as e:
             logger.error(f"Feature extraction failed: {e}")
             raise
 
-    async def _perform_image_enhancement(self, image_array: np.ndarray) -> Dict[str, Any]:
+    async def _perform_image_enhancement(
+        self, image_array: np.ndarray
+    ) -> Dict[str, Any]:
         """Perform image enhancement"""
         try:
             # Simulate image enhancement
@@ -499,16 +560,16 @@ class ComputerVisionService:
 
             # Generate mock enhancement results
             enhancement_metrics = {
-                'brightness_improvement': 0.15,
-                'contrast_improvement': 0.12,
-                'sharpness_improvement': 0.08,
-                'noise_reduction': 0.20
+                "brightness_improvement": 0.15,
+                "contrast_improvement": 0.12,
+                "sharpness_improvement": 0.08,
+                "noise_reduction": 0.20,
             }
 
             return {
-                'enhancement_metrics': enhancement_metrics,
-                'overall_improvement': 0.14,
-                'confidence': 0.85
+                "enhancement_metrics": enhancement_metrics,
+                "overall_improvement": 0.14,
+                "confidence": 0.85,
             }
 
         except Exception as e:
@@ -525,28 +586,34 @@ class ComputerVisionService:
             ocr_text = "Sample OCR text recognition"
             text_blocks = [
                 {
-                    'text': 'Sample',
-                    'confidence': 0.9,
-                    'bounding_box': BoundingBox(x=50, y=50, width=80, height=25, confidence=0.9)
+                    "text": "Sample",
+                    "confidence": 0.9,
+                    "bounding_box": BoundingBox(
+                        x=50, y=50, width=80, height=25, confidence=0.9
+                    ),
                 },
                 {
-                    'text': 'OCR',
-                    'confidence': 0.85,
-                    'bounding_box': BoundingBox(x=140, y=50, width=40, height=25, confidence=0.85)
-                }
+                    "text": "OCR",
+                    "confidence": 0.85,
+                    "bounding_box": BoundingBox(
+                        x=140, y=50, width=40, height=25, confidence=0.85
+                    ),
+                },
             ]
 
             return {
-                'ocr_text': ocr_text,
-                'text_blocks': text_blocks,
-                'confidence': 0.87
+                "ocr_text": ocr_text,
+                "text_blocks": text_blocks,
+                "confidence": 0.87,
             }
 
         except Exception as e:
             logger.error(f"OCR failed: {e}")
             raise
 
-    async def _perform_image_segmentation(self, image_array: np.ndarray) -> Dict[str, Any]:
+    async def _perform_image_segmentation(
+        self, image_array: np.ndarray
+    ) -> Dict[str, Any]:
         """Perform image segmentation"""
         try:
             # Simulate image segmentation
@@ -555,30 +622,32 @@ class ComputerVisionService:
             # Generate mock segmentation results
             segments = [
                 {
-                    'segment_id': 'seg_001',
-                    'class': 'person',
-                    'mask': np.random.randint(0, 2, (100, 100)).tolist(),
-                    'confidence': 0.85
+                    "segment_id": "seg_001",
+                    "class": "person",
+                    "mask": np.random.randint(0, 2, (100, 100)).tolist(),
+                    "confidence": 0.85,
                 },
                 {
-                    'segment_id': 'seg_002',
-                    'class': 'background',
-                    'mask': np.random.randint(0, 2, (100, 100)).tolist(),
-                    'confidence': 0.9
-                }
+                    "segment_id": "seg_002",
+                    "class": "background",
+                    "mask": np.random.randint(0, 2, (100, 100)).tolist(),
+                    "confidence": 0.9,
+                },
             ]
 
             return {
-                'segments': segments,
-                'segment_count': len(segments),
-                'confidence': 0.87
+                "segments": segments,
+                "segment_count": len(segments),
+                "confidence": 0.87,
             }
 
         except Exception as e:
             logger.error(f"Image segmentation failed: {e}")
             raise
 
-    async def _perform_general_analysis(self, image_array: np.ndarray) -> Dict[str, Any]:
+    async def _perform_general_analysis(
+        self, image_array: np.ndarray
+    ) -> Dict[str, Any]:
         """Perform general image analysis"""
         try:
             # Simulate general analysis
@@ -589,10 +658,10 @@ class ComputerVisionService:
             total_pixels = height * width
 
             return {
-                'image_dimensions': (width, height),
-                'channels': channels,
-                'total_pixels': total_pixels,
-                'confidence': 0.95
+                "image_dimensions": (width, height),
+                "channels": channels,
+                "total_pixels": total_pixels,
+                "confidence": 0.95,
             }
 
         except Exception as e:
@@ -621,7 +690,9 @@ class ComputerVisionService:
                 logger.error(f"Vision model update error: {e}")
                 await asyncio.sleep(7200)
 
-    async def get_analysis_result(self, analysis_id: str) -> Optional[ImageAnalysisResult]:
+    async def get_analysis_result(
+        self, analysis_id: str
+    ) -> Optional[ImageAnalysisResult]:
         """Get analysis result by ID"""
         try:
             return self.analysis_results.get(analysis_id)
@@ -630,7 +701,9 @@ class ComputerVisionService:
             logger.error(f"Failed to get analysis result: {e}")
             return None
 
-    async def list_analysis_results(self, task: VisionTask = None) -> List[ImageAnalysisResult]:
+    async def list_analysis_results(
+        self, task: VisionTask = None
+    ) -> List[ImageAnalysisResult]:
         """List analysis results"""
         try:
             results = list(self.analysis_results.values())
@@ -647,13 +720,13 @@ class ComputerVisionService:
     async def get_vision_status(self) -> Dict[str, Any]:
         """Get computer vision service status"""
         return {
-            'total_analyses': len(self.analysis_results),
-            'supported_tasks': len(self.vision_models),
-            'supported_formats': len(self.vision_config['supported_formats']),
-            'max_image_size': self.vision_config['max_image_size'],
-            'confidence_threshold': self.vision_config['confidence_threshold'],
-            'cache_enabled': self.vision_config['cache_results'],
-            'timestamp': datetime.utcnow().isoformat()
+            "total_analyses": len(self.analysis_results),
+            "supported_tasks": len(self.vision_models),
+            "supported_formats": len(self.vision_config["supported_formats"]),
+            "max_image_size": self.vision_config["max_image_size"],
+            "confidence_threshold": self.vision_config["confidence_threshold"],
+            "cache_enabled": self.vision_config["cache_results"],
+            "timestamp": datetime.utcnow().isoformat(),
         }
 
     async def shutdown(self):

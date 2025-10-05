@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 class AuditLevel(Enum):
     """Audit log levels"""
-    DEBUG = "debug"
+    DEBUG = "debug""""
     INFO = "info"
     WARNING = "warning"
     ERROR = "error"
@@ -27,7 +27,7 @@ class AuditLevel(Enum):
 class AuditEvent(Enum):
     """Audit event types"""
     # Authentication events
-    LOGIN_SUCCESS = "login_success"
+    LOGIN_SUCCESS = "login_success""""
     LOGIN_FAILURE = "login_failure"
     LOGOUT = "logout"
     PASSWORD_CHANGE = "password_change"
@@ -102,7 +102,7 @@ class SecureRuleEngine:
             # Parse condition safely
             return SecureRuleEngine._parse_simple_condition(condition, context)
             
-        except Exception as e:
+        except Exception as e:"""
             logger.error(f"Error in secure condition evaluation: {e}")
             return False
     
@@ -264,7 +264,7 @@ class AuditManager:
             event_id = str(uuid.uuid4())
             
             # Create audit record
-            audit_record = {
+            audit_record = {"""
                 "event_id": event_id,
                 "timestamp": datetime.utcnow().isoformat(),
                 "event_type": event_type.value,
@@ -317,7 +317,7 @@ class AuditManager:
         
         for key, value in details.items():
             # Sanitize keys that might contain sensitive data
-            if any(sensitive in key.lower() for sensitive in ['password', 'token', 'key', 'secret', 'auth']):
+            if any(sensitive in key.lower() for sensitive in ['password', 'token', 'key', 'secret', 'auth']):"""
                 sanitized[key] = "[REDACTED]"
             else:
                 sanitized[key] = sanitize_value(value)
@@ -334,7 +334,7 @@ class AuditManager:
         # Use SHA-256 with full length for better security
         return hashlib.sha256(f"{datetime.utcnow()}{uuid.uuid4()}".encode()).hexdigest()[:32]
     
-    async def _flush_buffer(self):
+    async def _flush_buffer(self):"""
         """Flush audit buffer to storage"""
         if not self.audit_buffer:
             return
@@ -351,7 +351,7 @@ class AuditManager:
         except Exception as e:
             logger.error(f"Error flushing audit buffer: {e}")
     
-    async def _check_audit_rules(self, audit_record: Dict[str, Any]):
+    async def _check_audit_rules(self, audit_record: Dict[str, Any]):"""
         """Check audit rules using secure evaluation"""
         try:
             for rule in self.audit_rules:
@@ -361,7 +361,7 @@ class AuditManager:
         except Exception as e:
             logger.error(f"Error checking audit rules: {e}")
     
-    async def _evaluate_rule_secure(self, rule: Dict[str, Any], audit_record: Dict[str, Any]) -> bool:
+    async def _evaluate_rule_secure(self, rule: Dict[str, Any], audit_record: Dict[str, Any]) -> bool:"""
         """Securely evaluate an audit rule - NO eval() usage"""
         try:
             condition = rule["condition"]
@@ -387,14 +387,14 @@ class AuditManager:
             # Use secure rule engine
             return self.rule_engine.evaluate_condition(condition, context)
             
-        except Exception as e:
+        except Exception as e:"""
             logger.error(f"Error evaluating rule {rule['name']}: {e}")
             return False
     
     async def _execute_rule_action(self, rule: Dict[str, Any], audit_record: Dict[str, Any]):
         """Execute rule action"""
         try:
-            action = rule["action"]
+            action = rule["action"]"""
             severity = rule["severity"]
             
             if action == "alert":
@@ -461,7 +461,7 @@ class AuditManager:
         self,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Any]:"""
         """Get audit statistics"""
         try:
             if self.database_service:
@@ -472,7 +472,7 @@ class AuditManager:
             
             # Return basic stats if no database
             return {
-                "total_events": len(self.audit_buffer),
+                "total_events": len(self.audit_buffer),"""
                 "buffer_size": len(self.audit_buffer),
                 "status": "active"
             }
@@ -500,7 +500,7 @@ class AuditManager:
                 end_date=end_date,
                 limit=10000
             )
-            
+            """
             if format == "json":
                 return json.dumps(audit_log, indent=2, default=str)
             elif format == "csv":
@@ -536,11 +536,11 @@ class AuditManager:
             logger.error(f"Error cleaning up audit logs: {e}")
             return 0
     
-    async def get_security_events(self, limit: int = 100) -> List[Dict[str, Any]]:
+    async def get_security_events(self, limit: int = 100) -> List[Dict[str, Any]]:"""
         """Get security-related events"""
         try:
             security_event_types = [
-                "login_failure",
+                "login_failure","""
                 "unauthorized_access",
                 "security_violation",
                 "suspicious_activity",
@@ -575,7 +575,7 @@ class AuditManager:
                 limit=min(limit, 1000)  # Cap the limit for security
             )
             
-        except Exception as e:
+        except Exception as e:"""
             logger.error(f"Error getting user activity: {e}")
             return []
     
@@ -583,7 +583,7 @@ class AuditManager:
         """Get audit system health"""
         try:
             return {
-                "audit_enabled": self.audit_enabled,
+                "audit_enabled": self.audit_enabled,"""
                 "buffer_size": len(self.audit_buffer),
                 "retention_days": self.retention_days,
                 "batch_size": self.batch_size,

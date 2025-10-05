@@ -7,9 +7,11 @@ Demonstrates basic multi-agent orchestration
 import asyncio
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import AMASIntelligenceSystem
+
 
 async def basic_orchestration_example():
     """Basic orchestration example"""
@@ -18,11 +20,11 @@ async def basic_orchestration_example():
 
     # Configuration
     config = {
-        'llm_service_url': 'http://localhost:11434',
-        'vector_service_url': 'http://localhost:8001',
-        'graph_service_url': 'http://localhost:7474',
-        'n8n_url': 'http://localhost:5678',
-        'n8n_api_key': 'your_api_key_here'
+        "llm_service_url": "http://localhost:11434",
+        "vector_service_url": "http://localhost:8001",
+        "graph_service_url": "http://localhost:7474",
+        "n8n_url": "http://localhost:5678",
+        "n8n_api_key": "your_api_key_here",
     }
 
     try:
@@ -35,13 +37,13 @@ async def basic_orchestration_example():
         # Submit OSINT task
         print("\n📊 Submitting OSINT task...")
         osint_task = {
-            'type': 'osint',
-            'description': 'Collect intelligence on emerging cyber threats',
-            'priority': 2,
-            'metadata': {
-                'sources': ['news', 'social_media', 'forums'],
-                'keywords': ['cyber', 'threat', 'security']
-            }
+            "type": "osint",
+            "description": "Collect intelligence on emerging cyber threats",
+            "priority": 2,
+            "metadata": {
+                "sources": ["news", "social_media", "forums"],
+                "keywords": ["cyber", "threat", "security"],
+            },
         }
 
         task_id = await amas.submit_intelligence_task(osint_task)
@@ -50,13 +52,10 @@ async def basic_orchestration_example():
         # Submit Investigation task
         print("\n🔍 Submitting Investigation task...")
         investigation_task = {
-            'type': 'investigation',
-            'description': 'Investigate suspicious network activity',
-            'priority': 3,
-            'metadata': {
-                'target': 'suspicious_entity',
-                'timeframe': 'last_7_days'
-            }
+            "type": "investigation",
+            "description": "Investigate suspicious network activity",
+            "priority": 3,
+            "metadata": {"target": "suspicious_entity", "timeframe": "last_7_days"},
         }
 
         task_id = await amas.submit_intelligence_task(investigation_task)
@@ -65,13 +64,13 @@ async def basic_orchestration_example():
         # Submit Forensics task
         print("\n🔬 Submitting Forensics task...")
         forensics_task = {
-            'type': 'forensics',
-            'description': 'Analyze digital evidence from security incident',
-            'priority': 4,
-            'metadata': {
-                'evidence_path': '/path/to/evidence',
-                'incident_id': 'INC-2024-001'
-            }
+            "type": "forensics",
+            "description": "Analyze digital evidence from security incident",
+            "priority": 4,
+            "metadata": {
+                "evidence_path": "/path/to/evidence",
+                "incident_id": "INC-2024-001",
+            },
         }
 
         task_id = await amas.submit_intelligence_task(forensics_task)
@@ -107,6 +106,7 @@ async def basic_orchestration_example():
         print("✅ AMAS system shutdown complete")
 
     return True
+
 
 if __name__ == "__main__":
     asyncio.run(basic_orchestration_example())

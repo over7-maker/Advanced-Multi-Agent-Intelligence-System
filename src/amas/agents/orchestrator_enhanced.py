@@ -18,16 +18,15 @@ import traceback
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler('logs/orchestrator.log'),
-        logging.StreamHandler()
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.FileHandler("logs/orchestrator.log"), logging.StreamHandler()],
 )
 logger = logging.getLogger(__name__)
 
+
 class AgentType(Enum):
     """Agent types for intelligence operations"""
+
     OSINT = "osint"
     INVESTIGATION = "investigation"
     FORENSICS = "forensics"
@@ -37,8 +36,10 @@ class AgentType(Enum):
     REPORTING = "reporting"
     TECHNOLOGY_MONITOR = "technology_monitor"
 
+
 class TaskStatus(Enum):
     """Task status enumeration"""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -46,25 +47,31 @@ class TaskStatus(Enum):
     CANCELLED = "cancelled"
     PAUSED = "paused"
 
+
 class TaskPriority(Enum):
     """Task priority levels"""
+
     LOW = 1
     MEDIUM = 2
     HIGH = 3
     CRITICAL = 4
     URGENT = 5
 
+
 class AgentStatus(Enum):
     """Agent status enumeration"""
+
     IDLE = "idle"
     BUSY = "busy"
     ERROR = "error"
     OFFLINE = "offline"
     MAINTENANCE = "maintenance"
 
+
 @dataclass
 class Task:
     """Enhanced Task data structure"""
+
     id: str
     type: str
     description: str
@@ -85,27 +92,29 @@ class Task:
     def to_dict(self) -> Dict[str, Any]:
         """Convert task to dictionary for serialization"""
         return {
-            'id': self.id,
-            'type': self.type,
-            'description': self.description,
-            'priority': self.priority.value,
-            'status': self.status.value,
-            'created_at': self.created_at.isoformat(),
-            'updated_at': self.updated_at.isoformat(),
-            'assigned_agent': self.assigned_agent,
-            'metadata': self.metadata,
-            'result': self.result,
-            'error': self.error,
-            'retry_count': self.retry_count,
-            'max_retries': self.max_retries,
-            'timeout_seconds': self.timeout_seconds,
-            'dependencies': self.dependencies,
-            'tags': self.tags
+            "id": self.id,
+            "type": self.type,
+            "description": self.description,
+            "priority": self.priority.value,
+            "status": self.status.value,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),
+            "assigned_agent": self.assigned_agent,
+            "metadata": self.metadata,
+            "result": self.result,
+            "error": self.error,
+            "retry_count": self.retry_count,
+            "max_retries": self.max_retries,
+            "timeout_seconds": self.timeout_seconds,
+            "dependencies": self.dependencies,
+            "tags": self.tags,
         }
+
 
 @dataclass
 class Agent:
     """Enhanced Agent data structure"""
+
     id: str
     name: str
     type: AgentType
@@ -122,19 +131,20 @@ class Agent:
     def to_dict(self) -> Dict[str, Any]:
         """Convert agent to dictionary for serialization"""
         return {
-            'id': self.id,
-            'name': self.name,
-            'type': self.type.value,
-            'capabilities': self.capabilities,
-            'status': self.status.value,
-            'current_task': self.current_task,
-            'created_at': self.created_at.isoformat(),
-            'last_heartbeat': self.last_heartbeat.isoformat(),
-            'metadata': self.metadata,
-            'performance_metrics': self.performance_metrics,
-            'error_count': self.error_count,
-            'success_count': self.success_count
+            "id": self.id,
+            "name": self.name,
+            "type": self.type.value,
+            "capabilities": self.capabilities,
+            "status": self.status.value,
+            "current_task": self.current_task,
+            "created_at": self.created_at.isoformat(),
+            "last_heartbeat": self.last_heartbeat.isoformat(),
+            "metadata": self.metadata,
+            "performance_metrics": self.performance_metrics,
+            "error_count": self.error_count,
+            "success_count": self.success_count,
         }
+
 
 class BaseAgent(ABC):
     """Enhanced base class for all intelligence agents"""
@@ -183,19 +193,22 @@ class BaseAgent(ABC):
         else:
             self.error_count += 1
 
-        if 'avg_execution_time' not in self.performance_metrics:
-            self.performance_metrics['avg_execution_time'] = execution_time
+        if "avg_execution_time" not in self.performance_metrics:
+            self.performance_metrics["avg_execution_time"] = execution_time
         else:
             # Running average
-            current_avg = self.performance_metrics['avg_execution_time']
+            current_avg = self.performance_metrics["avg_execution_time"]
             total_tasks = self.success_count + self.error_count
-            self.performance_metrics['avg_execution_time'] = (
-                (current_avg * (total_tasks - 1) + execution_time) / total_tasks
-            )
+            self.performance_metrics["avg_execution_time"] = (
+                current_avg * (total_tasks - 1) + execution_time
+            ) / total_tasks
 
-        self.performance_metrics['success_rate'] = (
-            self.success_count / (self.success_count + self.error_count)
-        ) if (self.success_count + self.error_count) > 0 else 0.0
+        self.performance_metrics["success_rate"] = (
+            (self.success_count / (self.success_count + self.error_count))
+            if (self.success_count + self.error_count) > 0
+            else 0.0
+        )
+
 
 class EnhancedAgentOrchestrator:
     """Enhanced core orchestrator for multi-agent intelligence operations
@@ -222,16 +235,16 @@ class EnhancedAgentOrchestrator:
         self.agent_storage = {}
 
         # Task execution semaphore for concurrency control
-        self.max_concurrent_tasks = config.get('max_concurrent_tasks', 10)
+        self.max_concurrent_tasks = config.get("max_concurrent_tasks", 10)
         self.task_semaphore = asyncio.Semaphore(self.max_concurrent_tasks)
 
         # Performance tracking
         self.system_metrics = {
-            'total_tasks_processed': 0,
-            'total_tasks_failed': 0,
-            'average_task_time': 0.0,
-            'active_agents': 0,
-            'system_uptime': datetime.now()
+            "total_tasks_processed": 0,
+            "total_tasks_failed": 0,
+            "average_task_time": 0.0,
+            "active_agents": 0,
+            "system_uptime": datetime.now(),
         }
 
         logger.info("Enhanced AMAS Orchestrator initialized")
@@ -242,7 +255,7 @@ class EnhancedAgentOrchestrator:
             logger.info("Initializing Enhanced AMAS Orchestrator...")
 
             # Create logs directory if it doesn't exist
-            os.makedirs('logs', exist_ok=True)
+            os.makedirs("logs", exist_ok=True)
 
             # Initialize services (placeholders for now)
             await self._initialize_services()
@@ -266,15 +279,15 @@ class EnhancedAgentOrchestrator:
             # In Phase 1, we'll implement basic connectivity checks
 
             # LLM Service check
-            llm_url = self.config.get('llm_service_url', 'http://localhost:11434')
+            llm_url = self.config.get("llm_service_url", "http://localhost:11434")
             logger.info(f"LLM Service configured at: {llm_url}")
 
             # Vector Service check
-            vector_url = self.config.get('vector_service_url', 'http://localhost:8001')
+            vector_url = self.config.get("vector_service_url", "http://localhost:8001")
             logger.info(f"Vector Service configured at: {vector_url}")
 
             # Knowledge Graph check
-            graph_url = self.config.get('graph_service_url', 'http://localhost:7474')
+            graph_url = self.config.get("graph_service_url", "http://localhost:7474")
             logger.info(f"Knowledge Graph configured at: {graph_url}")
 
             logger.info("Service initialization completed")
@@ -297,7 +310,9 @@ class EnhancedAgentOrchestrator:
         """Register a new agent with enhanced validation"""
         try:
             if agent.agent_id in self.agents:
-                logger.warning(f"Agent {agent.agent_id} already registered, updating...")
+                logger.warning(
+                    f"Agent {agent.agent_id} already registered, updating..."
+                )
 
             # Create Agent object for storage
             agent_obj = Agent(
@@ -305,7 +320,7 @@ class EnhancedAgentOrchestrator:
                 name=agent.name,
                 type=agent.agent_type,
                 capabilities=agent.capabilities,
-                status=AgentStatus.IDLE
+                status=AgentStatus.IDLE,
             )
 
             # Store in memory
@@ -313,14 +328,17 @@ class EnhancedAgentOrchestrator:
             self.agent_storage[agent.agent_id] = agent_obj
 
             # Update metrics
-            self.system_metrics['active_agents'] = len(self.agents)
+            self.system_metrics["active_agents"] = len(self.agents)
 
             logger.info(f"Agent {agent.name} registered with ID {agent.agent_id}")
-            await self.event_bus.publish('agent_registered', {
-                'agent_id': agent.agent_id,
-                'agent_name': agent.name,
-                'agent_type': agent.agent_type.value
-            })
+            await self.event_bus.publish(
+                "agent_registered",
+                {
+                    "agent_id": agent.agent_id,
+                    "agent_name": agent.name,
+                    "agent_type": agent.agent_type.value,
+                },
+            )
 
             return True
 
@@ -332,20 +350,20 @@ class EnhancedAgentOrchestrator:
         """Submit a new task with enhanced validation"""
         try:
             # Validate required fields
-            if 'type' not in task_data or 'description' not in task_data:
+            if "type" not in task_data or "description" not in task_data:
                 raise ValueError("Task must have 'type' and 'description' fields")
 
             task_id = str(uuid.uuid4())
             task = Task(
                 id=task_id,
-                type=task_data.get('type'),
-                description=task_data.get('description'),
-                priority=TaskPriority(task_data.get('priority', 2)),
-                metadata=task_data.get('metadata', {}),
-                max_retries=task_data.get('max_retries', 3),
-                timeout_seconds=task_data.get('timeout_seconds', 300),
-                dependencies=task_data.get('dependencies', []),
-                tags=task_data.get('tags', [])
+                type=task_data.get("type"),
+                description=task_data.get("description"),
+                priority=TaskPriority(task_data.get("priority", 2)),
+                metadata=task_data.get("metadata", {}),
+                max_retries=task_data.get("max_retries", 3),
+                timeout_seconds=task_data.get("timeout_seconds", 300),
+                dependencies=task_data.get("dependencies", []),
+                tags=task_data.get("tags", []),
             )
 
             # Store task
@@ -356,15 +374,22 @@ class EnhancedAgentOrchestrator:
             if await self._dependencies_met(task):
                 self.task_queue.append(task_id)
                 self._sort_task_queue()
-                logger.info(f"Task {task_id} added to queue: {task.description[:50]}...")
+                logger.info(
+                    f"Task {task_id} added to queue: {task.description[:50]}..."
+                )
             else:
-                logger.info(f"Task {task_id} waiting for dependencies: {task.dependencies}")
+                logger.info(
+                    f"Task {task_id} waiting for dependencies: {task.dependencies}"
+                )
 
-            await self.event_bus.publish('task_submitted', {
-                'task_id': task_id,
-                'task_type': task.type,
-                'priority': task.priority.value
-            })
+            await self.event_bus.publish(
+                "task_submitted",
+                {
+                    "task_id": task_id,
+                    "task_type": task.type,
+                    "priority": task.priority.value,
+                },
+            )
 
             return task_id
 
@@ -376,20 +401,38 @@ class EnhancedAgentOrchestrator:
 
     async def get_system_metrics(self) -> Dict[str, Any]:
         """Get comprehensive system metrics"""
-        uptime = datetime.now() - self.system_metrics['system_uptime']
+        uptime = datetime.now() - self.system_metrics["system_uptime"]
 
         return {
             **self.system_metrics,
-            'uptime_seconds': uptime.total_seconds(),
-            'queue_size': len(self.task_queue),
-            'total_agents': len(self.agents),
-            'healthy_agents': len([a for a in self.agents.values() if a.status not in [AgentStatus.ERROR, AgentStatus.OFFLINE]]),
-            'total_tasks': len(self.tasks),
-            'success_rate': (
-                self.system_metrics['total_tasks_processed'] /
-                (self.system_metrics['total_tasks_processed'] + self.system_metrics['total_tasks_failed'])
-            ) if (self.system_metrics['total_tasks_processed'] + self.system_metrics['total_tasks_failed']) > 0 else 0.0
+            "uptime_seconds": uptime.total_seconds(),
+            "queue_size": len(self.task_queue),
+            "total_agents": len(self.agents),
+            "healthy_agents": len(
+                [
+                    a
+                    for a in self.agents.values()
+                    if a.status not in [AgentStatus.ERROR, AgentStatus.OFFLINE]
+                ]
+            ),
+            "total_tasks": len(self.tasks),
+            "success_rate": (
+                (
+                    self.system_metrics["total_tasks_processed"]
+                    / (
+                        self.system_metrics["total_tasks_processed"]
+                        + self.system_metrics["total_tasks_failed"]
+                    )
+                )
+                if (
+                    self.system_metrics["total_tasks_processed"]
+                    + self.system_metrics["total_tasks_failed"]
+                )
+                > 0
+                else 0.0
+            ),
         }
+
 
 class EventBus:
     """Enhanced event bus for inter-agent communication"""
@@ -402,10 +445,10 @@ class EventBus:
     async def publish(self, event_type: str, data: Dict[str, Any]):
         """Publish an event with enhanced logging"""
         event = {
-            'type': event_type,
-            'data': data,
-            'timestamp': datetime.now().isoformat(),
-            'id': str(uuid.uuid4())
+            "type": event_type,
+            "data": data,
+            "timestamp": datetime.now().isoformat(),
+            "id": str(uuid.uuid4()),
         }
 
         # Add to history
@@ -433,9 +476,11 @@ class EventBus:
         self.subscribers[event_type].append(handler)
         logger.info(f"Subscribed to event {event_type}")
 
-    def get_recent_events(self, event_type: Optional[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
+    def get_recent_events(
+        self, event_type: Optional[str] = None, limit: int = 50
+    ) -> List[Dict[str, Any]]:
         """Get recent events, optionally filtered by type"""
         events = self.event_history[-limit:]
         if event_type:
-            events = [e for e in events if e['type'] == event_type]
+            events = [e for e in events if e["type"] == event_type]
         return events

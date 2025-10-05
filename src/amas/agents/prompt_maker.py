@@ -9,6 +9,7 @@ from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
+
 class PromptMaker:
     """Prompt Maker for AMAS Intelligence System"""
 

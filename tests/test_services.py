@@ -21,7 +21,7 @@ def safe_eval_replacement(expression):
     
     # String evaluation
     if expr.startswith('"') and expr.endswith('"'):
-        return expr[1:-1]
+        return expr[1:-1]"""
     if expr.startswith("'") and expr.endswith("'"):
         return expr[1:-1]
     
@@ -95,7 +95,7 @@ def safe_eval(expression):
         # If parsing fails, return the original expression as string
         return str(expression)
 
-
+"""
 """
 Test service implementations
 """
@@ -114,7 +114,7 @@ class TestDatabaseService:
     def database_config(self):
         """Database configuration for testing"""
         return {
-            "database": {
+            "database": {"""
                 "url": "postgresql://test:test@localhost:5432/amas_test"
             }
         }
@@ -137,7 +137,7 @@ class TestDatabaseService:
             pytest.skip(f"Database not available: {e}")
 
     @pytest.mark.asyncio
-    async def test_health_check(self, database_service):
+    async def test_health_check(self, database_service):"""
         """Test database health check"""
         try:
             health_status = await database_service.health_check()
@@ -149,7 +149,7 @@ class TestDatabaseService:
             pytest.skip(f"Database not available: {e}")
 
     @pytest.mark.asyncio
-    async def test_task_persistence(self, database_service):
+    async def test_task_persistence(self, database_service):"""
         """Test task saving and retrieval"""
         try:
             await database_service.initialize()
@@ -179,7 +179,7 @@ class TestDatabaseService:
             pytest.skip(f"Database not available: {e}")
 
     @pytest.mark.asyncio
-    async def test_audit_log_persistence(self, database_service):
+    async def test_audit_log_persistence(self, database_service):"""
         """Test audit log saving and retrieval"""
         try:
             await database_service.initialize()
@@ -206,14 +206,14 @@ class TestDatabaseService:
             pytest.skip(f"Database not available: {e}")
 
 
-class TestSecurityService:
+class TestSecurityService:"""
     """Test security service functionality"""
 
     @pytest.fixture
     def security_config(self):
         """Security configuration for testing"""
         return {
-            "security": {
+            "security": {"""
                 "jwt_secret": "test_secret_key",
                 "encryption_key": "test_encryption_key_32_bytes",
                 "audit_enabled": True
@@ -233,7 +233,7 @@ class TestSecurityService:
         assert security_service.audit_enabled == True
 
     @pytest.mark.asyncio
-    async def test_health_check(self, security_service):
+    async def test_health_check(self, security_service):"""
         """Test security service health check"""
         health_status = await security_service.health_check()
         assert health_status['status'] == 'healthy'
@@ -244,7 +244,7 @@ class TestSecurityService:
     @pytest.mark.asyncio
     async def test_jwt_token_creation(self, security_service):
         """Test JWT token creation and validation"""
-        user_id = "test_user"
+        user_id = "test_user""""
         roles = ["admin", "user"]
         
         # Create token
@@ -284,11 +284,11 @@ class TestSecurityService:
         assert is_invalid == False
 
     @pytest.mark.asyncio
-    async def test_audit_logging(self, security_service):
+    async def test_audit_logging(self, security_service):"""
         """Test audit event logging"""
         # Test audit event logging (without database service)
         await security_service.log_audit_event(
-            event_type="test_event",
+            event_type="test_event","""
             user_id="test_user",
             action="test_action",
             details={"test": "value"},
@@ -326,7 +326,7 @@ class TestServiceIntegration:
             
             # Test audit logging with database
             await security_service.log_audit_event(
-                event_type="integration_test",
+                event_type="integration_test","""
                 user_id="test_user",
                 action="test_action",
                 details={"integration": "test"},

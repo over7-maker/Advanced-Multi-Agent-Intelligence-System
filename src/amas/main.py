@@ -41,12 +41,14 @@ class AMASApplication:
             format=self.config.log_format,
             handlers=[
                 logging.FileHandler(self.config.logs_dir / "amas.log"),
-                logging.StreamHandler(sys.stdout)
-            ]
+                logging.StreamHandler(sys.stdout),
+            ],
         )
 
         logger = logging.getLogger(__name__)
-        logger.info(f"AMAS v{self.config.version} starting in {self.config.environment} mode")
+        logger.info(
+            f"AMAS v{self.config.version} starting in {self.config.environment} mode"
+        )
         return logger
 
     async def initialize(self) -> None:
@@ -64,7 +66,7 @@ class AMASApplication:
                 llm_service=self.service_manager.get_llm_service(),
                 vector_service=self.service_manager.get_vector_service(),
                 knowledge_graph=self.service_manager.get_knowledge_graph_service(),
-                security_service=self.service_manager.get_security_service()
+                security_service=self.service_manager.get_security_service(),
             )
             await self.orchestrator.initialize()
 
@@ -87,7 +89,7 @@ class AMASApplication:
                 # Perform health checks
                 if self.orchestrator:
                     status = await self.orchestrator.get_system_status()
-                    if status.get('status') != 'operational':
+                    if status.get("status") != "operational":
                         self.logger.warning(f"System status: {status}")
 
         except KeyboardInterrupt:
@@ -104,10 +106,10 @@ class AMASApplication:
             raise RuntimeError("System not initialized")
 
         return await self.orchestrator.submit_task(
-            task_type=task_data.get('type', 'general'),
-            description=task_data.get('description', ''),
-            parameters=task_data.get('parameters', {}),
-            priority=task_data.get('priority', 2)
+            task_type=task_data.get("type", "general"),
+            description=task_data.get("description", ""),
+            parameters=task_data.get("parameters", {}),
+            priority=task_data.get("priority", 2),
         )
 
     async def get_task_result(self, task_id: str) -> Dict[str, Any]:

@@ -1,6 +1,7 @@
 import os
 from agents.openrouter_clients import deepseek_chat, zai_glm_chat, xai_grok_chat
 
+
 def main():
     # Create output file path
     output_file = os.path.join(os.path.dirname(__file__), "test_output.txt")
@@ -25,6 +26,7 @@ def main():
         f.write(response3 + "\n")
 
     print(f"✅ Output saved to: {output_file}")
+
 
 if __name__ == "__main__":
     main()

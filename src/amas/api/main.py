@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="AMAS Intelligence System API",
     description="Advanced Multi-Agent Intelligence System API",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Add CORS middleware
@@ -41,6 +41,7 @@ security = HTTPBearer()
 # Global AMAS instance
 amas_app = None
 
+
 # Pydantic models
 class TaskRequest(BaseModel):
     type: str
@@ -48,10 +49,12 @@ class TaskRequest(BaseModel):
     parameters: Dict[str, Any] = {}
     priority: int = 2
 
+
 class TaskResponse(BaseModel):
     task_id: str
     status: str
     message: str
+
 
 class SystemStatus(BaseModel):
     status: str
@@ -60,10 +63,12 @@ class SystemStatus(BaseModel):
     total_tasks: int
     timestamp: str
 
+
 class HealthCheck(BaseModel):
     status: str
     services: Dict[str, Any]
     timestamp: str
+
 
 # Dependency to get AMAS system
 async def get_amas_system():
@@ -72,12 +77,16 @@ async def get_amas_system():
         raise HTTPException(status_code=503, detail="AMAS system not initialized")
     return amas_app
 
+
 # Dependency to verify authentication
 async def verify_auth(credentials: HTTPAuthorizationCredentials = Depends(security)):
     # Mock authentication - in production, this would verify JWT tokens
     if credentials.credentials != "valid_token":
-        raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+        raise HTTPException(
+            status_code=401, detail="Invalid authentication credentials"
+        )
     return {"user_id": "admin", "role": "admin"}
+
 
 # Startup event
 @app.on_event("startup")
@@ -96,6 +105,7 @@ async def startup_event():
         logger.error(f"Failed to initialize AMAS system: {e}")
         raise
 
+
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -103,6 +113,7 @@ async def shutdown_event():
     if amas_app:
         await amas_app.shutdown()
         logger.info("AMAS Intelligence System shutdown complete")
+
 
 # Health check endpoint
 @app.get("/health", response_model=HealthCheck)
@@ -115,9 +126,9 @@ async def health_check():
         service_health = await amas.service_manager.health_check_all_services()
 
         return HealthCheck(
-            status=service_health.get('overall_status', 'unknown'),
-            services=service_health.get('services', {}),
-            timestamp=datetime.utcnow().isoformat()
+            status=service_health.get("overall_status", "unknown"),
+            services=service_health.get("services", {}),
+            timestamp=datetime.utcnow().isoformat(),
         )
 
     except Exception as e:
@@ -125,8 +136,9 @@ async def health_check():
         return HealthCheck(
             status="unhealthy",
             services={"error": str(e)},
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.utcnow().isoformat(),
         )
+
 
 # System status endpoint
 @app.get("/status", response_model=SystemStatus)
@@ -137,23 +149,24 @@ async def get_system_status():
         status = await amas.orchestrator.get_system_status()
 
         return SystemStatus(
-            status=status.get('orchestrator_status', 'unknown'),
-            agents=status.get('active_agents', 0),
-            active_tasks=status.get('active_tasks', 0),
-            total_tasks=status.get('total_tasks', 0),
-            timestamp=status.get('timestamp', datetime.utcnow().isoformat())
+            status=status.get("orchestrator_status", "unknown"),
+            agents=status.get("active_agents", 0),
+            active_tasks=status.get("active_tasks", 0),
+            total_tasks=status.get("total_tasks", 0),
+            timestamp=status.get("timestamp", datetime.utcnow().isoformat()),
         )
 
     except Exception as e:
         logger.error(f"Error getting system status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # Submit task endpoint
 @app.post("/tasks", response_model=TaskResponse)
 async def submit_task(
     task_request: TaskRequest,
     background_tasks: BackgroundTasks,
-    auth: dict = Depends(verify_auth)
+    auth: dict = Depends(verify_auth),
 ):
     """Submit a new intelligence task"""
     try:
@@ -164,29 +177,28 @@ async def submit_task(
             task_type=task_request.type,
             description=task_request.description,
             parameters=task_request.parameters,
-            priority=task_request.priority
+            priority=task_request.priority,
         )
 
         # Log audit event
         security_service = amas.service_manager.get_security_service()
         if security_service:
             await security_service.log_audit_event(
-                event_type='task_submission',
-                user_id=auth['user_id'],
-                action='submit_task',
-                details=f'Task submitted: {task_request.type}',
-                classification='system'
+                event_type="task_submission",
+                user_id=auth["user_id"],
+                action="submit_task",
+                details=f"Task submitted: {task_request.type}",
+                classification="system",
             )
 
         return TaskResponse(
-            task_id=task_id,
-            status="submitted",
-            message="Task submitted successfully"
+            task_id=task_id, status="submitted", message="Task submitted successfully"
         )
 
     except Exception as e:
         logger.error(f"Error submitting task: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # Get task status endpoint
 @app.get("/tasks/{task_id}")
@@ -208,6 +220,7 @@ async def get_task_status(task_id: str, auth: dict = Depends(verify_auth)):
         logger.error(f"Error getting task status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # Get agents endpoint
 @app.get("/agents")
 async def get_agents(auth: dict = Depends(verify_auth)):
@@ -217,11 +230,12 @@ async def get_agents(auth: dict = Depends(verify_auth)):
 
         # Get agents from orchestrator
         agents = await amas.orchestrator.list_agents()
-        return {'agents': agents}
+        return {"agents": agents}
 
     except Exception as e:
         logger.error(f"Error getting agents: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # Get agent status endpoint
 @app.get("/agents/{agent_id}")
@@ -243,13 +257,14 @@ async def get_agent_status(agent_id: str, auth: dict = Depends(verify_auth)):
         logger.error(f"Error getting agent status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # Execute workflow endpoint
 @app.post("/workflows/{workflow_id}/execute")
 async def execute_workflow(
     workflow_id: str,
     parameters: Dict[str, Any],
     background_tasks: BackgroundTasks,
-    auth: dict = Depends(verify_auth)
+    auth: dict = Depends(verify_auth),
 ):
     """Execute a workflow"""
     try:
@@ -262,11 +277,11 @@ async def execute_workflow(
         security_service = amas.service_manager.get_security_service()
         if security_service:
             await security_service.log_audit_event(
-                event_type='workflow_execution',
-                user_id=auth['user_id'],
-                action='execute_workflow',
-                details=f'Workflow executed: {workflow_id}',
-                classification='system'
+                event_type="workflow_execution",
+                user_id=auth["user_id"],
+                action="execute_workflow",
+                details=f"Workflow executed: {workflow_id}",
+                classification="system",
             )
 
         return result
@@ -275,13 +290,14 @@ async def execute_workflow(
         logger.error(f"Error executing workflow: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 # Get audit log endpoint
 @app.get("/audit")
 async def get_audit_log(
     user_id: Optional[str] = None,
     event_type: Optional[str] = None,
     limit: int = 100,
-    auth: dict = Depends(verify_auth)
+    auth: dict = Depends(verify_auth),
 ):
     """Get audit log"""
     try:
@@ -290,21 +306,23 @@ async def get_audit_log(
         # Get audit log
         security_service = amas.service_manager.get_security_service()
         if not security_service:
-            raise HTTPException(status_code=503, detail="Security service not available")
-            
+            raise HTTPException(
+                status_code=503, detail="Security service not available"
+            )
+
         audit_log = await security_service.get_audit_log(
-            user_id=user_id,
-            event_type=event_type
+            user_id=user_id, event_type=event_type
         )
 
         # Limit results
         audit_log = audit_log[:limit]
 
-        return {'audit_log': audit_log}
+        return {"audit_log": audit_log}
 
     except Exception as e:
         logger.error(f"Error getting audit log: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # Root endpoint
 @app.get("/")
@@ -314,14 +332,11 @@ async def root():
         "message": "AMAS Intelligence System API",
         "version": "1.0.0",
         "status": "operational",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
+
 if __name__ == "__main__":
-        uvicorn.run(
-            "api.main:app",
-            host="127.0.0.1",
-            port=8000,
-        reload=True,
-        log_level="info"
+    uvicorn.run(
+        "api.main:app", host="127.0.0.1", port=8000, reload=True, log_level="info"
     )

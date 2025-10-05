@@ -7,9 +7,11 @@ Demonstrates AI-powered code generation capabilities
 import asyncio
 import sys
 import os
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import AMASIntelligenceSystem
+
 
 async def code_generation_example():
     """Code generation example"""
@@ -18,11 +20,11 @@ async def code_generation_example():
 
     # Configuration
     config = {
-        'llm_service_url': 'http://localhost:11434',
-        'vector_service_url': 'http://localhost:8001',
-        'graph_service_url': 'http://localhost:7474',
-        'n8n_url': 'http://localhost:5678',
-        'n8n_api_key': 'your_api_key_here'
+        "llm_service_url": "http://localhost:11434",
+        "vector_service_url": "http://localhost:8001",
+        "graph_service_url": "http://localhost:7474",
+        "n8n_url": "http://localhost:5678",
+        "n8n_api_key": "your_api_key_here",
     }
 
     try:
@@ -35,38 +37,38 @@ async def code_generation_example():
         # Code generation tasks
         code_tasks = [
             {
-                'type': 'code_generation',
-                'description': 'Generate a Python function for data encryption using AES',
-                'priority': 2,
-                'metadata': {
-                    'language': 'python',
-                    'framework': 'cryptography',
-                    'function_type': 'encryption',
-                    'algorithm': 'AES-GCM'
-                }
+                "type": "code_generation",
+                "description": "Generate a Python function for data encryption using AES",
+                "priority": 2,
+                "metadata": {
+                    "language": "python",
+                    "framework": "cryptography",
+                    "function_type": "encryption",
+                    "algorithm": "AES-GCM",
+                },
             },
             {
-                'type': 'code_generation',
-                'description': 'Create a REST API endpoint for user authentication',
-                'priority': 2,
-                'metadata': {
-                    'language': 'python',
-                    'framework': 'fastapi',
-                    'endpoint_type': 'authentication',
-                    'method': 'POST'
-                }
+                "type": "code_generation",
+                "description": "Create a REST API endpoint for user authentication",
+                "priority": 2,
+                "metadata": {
+                    "language": "python",
+                    "framework": "fastapi",
+                    "endpoint_type": "authentication",
+                    "method": "POST",
+                },
             },
             {
-                'type': 'code_generation',
-                'description': 'Generate a machine learning model for threat detection',
-                'priority': 3,
-                'metadata': {
-                    'language': 'python',
-                    'framework': 'scikit-learn',
-                    'model_type': 'classification',
-                    'use_case': 'threat_detection'
-                }
-            }
+                "type": "code_generation",
+                "description": "Generate a machine learning model for threat detection",
+                "priority": 3,
+                "metadata": {
+                    "language": "python",
+                    "framework": "scikit-learn",
+                    "model_type": "classification",
+                    "use_case": "threat_detection",
+                },
+            },
         ]
 
         print("\n💻 Code Generation Tasks:")
@@ -88,14 +90,14 @@ async def code_generation_example():
         # Demonstrate code analysis
         print("\n🔍 Code Analysis Example:")
         analysis_task = {
-            'type': 'code_analysis',
-            'description': 'Analyze security vulnerabilities in Python code',
-            'priority': 2,
-            'metadata': {
-                'analysis_type': 'security',
-                'language': 'python',
-                'focus': 'vulnerabilities'
-            }
+            "type": "code_analysis",
+            "description": "Analyze security vulnerabilities in Python code",
+            "priority": 2,
+            "metadata": {
+                "analysis_type": "security",
+                "language": "python",
+                "focus": "vulnerabilities",
+            },
         }
 
         analysis_task_id = await amas.submit_intelligence_task(analysis_task)
@@ -104,14 +106,14 @@ async def code_generation_example():
         # Demonstrate code optimization
         print("\n⚡ Code Optimization Example:")
         optimization_task = {
-            'type': 'code_optimization',
-            'description': 'Optimize Python code for performance',
-            'priority': 2,
-            'metadata': {
-                'optimization_type': 'performance',
-                'language': 'python',
-                'target': 'execution_speed'
-            }
+            "type": "code_optimization",
+            "description": "Optimize Python code for performance",
+            "priority": 2,
+            "metadata": {
+                "optimization_type": "performance",
+                "language": "python",
+                "target": "execution_speed",
+            },
         }
 
         optimization_task_id = await amas.submit_intelligence_task(optimization_task)
@@ -149,6 +151,7 @@ async def code_generation_example():
         print("✅ AMAS system shutdown complete")
 
     return True
+
 
 if __name__ == "__main__":
     asyncio.run(code_generation_example())

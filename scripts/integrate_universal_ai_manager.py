@@ -17,43 +17,43 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 def find_python_files_using_ai() -> List[Path]:
     """Find all Python files that use AI APIs"""
     ai_files = []
-    
+
     # Directories to search
     search_dirs = [
-        Path('.github/scripts'),
-        Path('src/amas'),
-        Path('scripts'),
-        Path('examples')
+        Path(".github/scripts"),
+        Path("src/amas"),
+        Path("scripts"),
+        Path("examples"),
     ]
-    
+
     for search_dir in search_dirs:
         if not search_dir.exists():
             continue
-        
-        for py_file in search_dir.rglob('*.py'):
+
+        for py_file in search_dir.rglob("*.py"):
             try:
-                with open(py_file, 'r', encoding='utf-8') as f:
+                with open(py_file, "r", encoding="utf-8") as f:
                     content = f.read()
-                    
+
                     # Check if file uses AI APIs
                     ai_patterns = [
-                        r'from openai import',
-                        r'OpenAI\(',
-                        r'DEEPSEEK_API_KEY',
-                        r'GLM_API_KEY',
-                        r'GROK_API_KEY',
-                        r'chat\.completions\.create',
-                        r'ai_clients',
-                        r'AIFallbackManager',
-                        r'IntelligentFallbackSystem'
+                        r"from openai import",
+                        r"OpenAI\(",
+                        r"DEEPSEEK_API_KEY",
+                        r"GLM_API_KEY",
+                        r"GROK_API_KEY",
+                        r"chat\.completions\.create",
+                        r"ai_clients",
+                        r"AIFallbackManager",
+                        r"IntelligentFallbackSystem",
                     ]
-                    
+
                     if any(re.search(pattern, content) for pattern in ai_patterns):
                         ai_files.append(py_file)
-            
+
             except Exception as e:
                 print(f"  ⚠️  Error reading {py_file}: {e}")
-    
+
     return ai_files
 
 
@@ -376,32 +376,32 @@ def main():
     print("🤖 UNIVERSAL AI MANAGER INTEGRATION")
     print("=" * 80)
     print()
-    
+
     # Find files using AI
     print("📁 Finding Python files using AI APIs...")
     ai_files = find_python_files_using_ai()
-    
+
     print(f"✅ Found {len(ai_files)} files using AI APIs:")
     for f in ai_files:
         print(f"  - {f}")
     print()
-    
+
     # Create integration guide
     print("📝 Creating integration guide...")
-    guide_path = Path('UNIVERSAL_AI_MANAGER_GUIDE.md')
-    with open(guide_path, 'w') as f:
+    guide_path = Path("UNIVERSAL_AI_MANAGER_GUIDE.md")
+    with open(guide_path, "w") as f:
         f.write(create_integration_guide())
     print(f"✅ Created: {guide_path}")
     print()
-    
+
     # Create migration template
     print("📝 Creating migration template...")
-    template_path = Path('MIGRATION_TEMPLATE.py')
-    with open(template_path, 'w') as f:
+    template_path = Path("MIGRATION_TEMPLATE.py")
+    with open(template_path, "w") as f:
         f.write(generate_migration_template())
     print(f"✅ Created: {template_path}")
     print()
-    
+
     print("=" * 80)
     print("✅ INTEGRATION COMPLETE!")
     print("=" * 80)

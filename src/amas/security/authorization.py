@@ -21,7 +21,7 @@ def safe_eval_replacement(expression):
     
     # String evaluation
     if expr.startswith('"') and expr.endswith('"'):
-        return expr[1:-1]
+        return expr[1:-1]"""
     if expr.startswith("'") and expr.endswith("'"):
         return expr[1:-1]
     
@@ -50,7 +50,7 @@ logger = logging.getLogger(__name__)
 class Permission(Enum):
     """System permissions"""
     # System permissions
-    SYSTEM_ADMIN = "system:admin"
+    SYSTEM_ADMIN = "system:admin""""
     SYSTEM_READ = "system:read"
     SYSTEM_WRITE = "system:write"
     
@@ -95,7 +95,7 @@ class Permission(Enum):
 
 class Role(Enum):
     """System roles"""
-    SUPER_ADMIN = "super_admin"
+    SUPER_ADMIN = "super_admin""""
     ADMIN = "admin"
     MANAGER = "manager"
     ANALYST = "analyst"
@@ -104,7 +104,7 @@ class Role(Enum):
 
 class Resource(Enum):
     """System resources"""
-    SYSTEM = "system"
+    SYSTEM = "system""""
     USERS = "users"
     AGENTS = "agents"
     TASKS = "tasks"
@@ -153,7 +153,7 @@ class SecureConditionEvaluator:
             # Parse and evaluate condition
             return cls._parse_condition(condition.strip(), context)
             
-        except Exception as e:
+        except Exception as e:"""
             logger.error(f"Error evaluating condition: {e}")
             return False
     
@@ -373,7 +373,7 @@ class AuthorizationManager:
             
             return True
             
-        except Exception as e:
+        except Exception as e:"""
             logger.error(f"Error checking permission: {e}")
             return False
     
@@ -458,7 +458,7 @@ class AuthorizationManager:
         except Exception as e:
             logger.error(f"Error getting user permissions: {e}")
             return []
-    
+    """
     async def create_role(self, role_name: str, permissions: List[Permission], description: str = "") -> bool:
         """Create a new role"""
         try:
@@ -476,7 +476,7 @@ class AuthorizationManager:
                 return True
             return False
             
-        except Exception as e:
+        except Exception as e:"""
             logger.error(f"Error creating role: {e}")
             return False
     
@@ -494,7 +494,7 @@ class AuthorizationManager:
             logger.info(f"Updated permissions for role: {role_name}")
             return True
             
-        except Exception as e:
+        except Exception as e:"""
             logger.error(f"Error updating role permissions: {e}")
             return False
     
@@ -516,7 +516,7 @@ class AuthorizationManager:
                 return False
             
             # Limit total rules for performance
-            if len(self.policy_rules) >= 100:
+            if len(self.policy_rules) >= 100:"""
                 logger.warning("Maximum policy rules reached")
                 return False
             
@@ -538,7 +538,7 @@ class AuthorizationManager:
             initial_count = len(self.policy_rules)
             self.policy_rules = [rule for rule in self.policy_rules if rule["name"] != rule_name]
             
-            if len(self.policy_rules) < initial_count:
+            if len(self.policy_rules) < initial_count:"""
                 logger.info(f"Removed policy rule: {rule_name}")
                 return True
             return False
@@ -560,7 +560,7 @@ class AuthorizationManager:
             # In production, query database
             # Return basic audit entry
             return [{
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.utcnow().isoformat(),"""
                 "user_id": user_id or "system",
                 "action": "permission_check",
                 "resource": "system",
@@ -614,7 +614,7 @@ class AuthorizationManager:
         """Get authorization system health"""
         try:
             return {
-                "total_roles": len(Role),
+                "total_roles": len(Role),"""
                 "total_permissions": len(Permission),
                 "total_resources": len(Resource),
                 "policy_rules": len(self.policy_rules),

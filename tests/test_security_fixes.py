@@ -21,7 +21,7 @@ def safe_eval_replacement(expression):
     
     # String evaluation
     if expr.startswith('"') and expr.endswith('"'):
-        return expr[1:-1]
+        return expr[1:-1]"""
     if expr.startswith("'") and expr.endswith("'"):
         return expr[1:-1]
     
@@ -42,7 +42,7 @@ def validate_safe_path(file_path):
     return safe_path
 
 
-def safe_eval(expression):
+def safe_eval(expression):"""
     """Safe evaluation replacement for eval()"""
     import ast
     import operator
@@ -103,7 +103,7 @@ def safe_eval(expression):
         # If parsing fails, return the original expression as string
         return str(expression)
 
-
+"""
 """
 Security Test Suite for AMAS
 Tests all security fixes and vulnerabilities
@@ -155,7 +155,7 @@ class TestSecurityFixes:
         """Test that audit rule evaluation is safe from eval() attacks"""
         # Test safe condition evaluation
         test_conditions = [
-            "event_type == 'login_failure'",
+            "event_type == 'login_failure'","""
             "user_id == 'admin'",
             "resource == 'system'",
             "count > 5",
@@ -171,7 +171,7 @@ class TestSecurityFixes:
         """Test that authorization rule evaluation is safe from eval() attacks"""
         # Test safe condition evaluation
         test_conditions = [
-            "user_id == 'admin'",
+            "user_id == 'admin'","""
             "current_hour >= 9",
             "ip_address == '192.168.1.1'",
             "data_classification == 'confidential'",
@@ -186,7 +186,7 @@ class TestSecurityFixes:
     def test_malicious_condition_handling(self, audit_manager):
         """Test that malicious conditions are handled safely"""
         malicious_conditions = [
-            "__import__('os').system('rm -rf /')",
+            "__import__('os').system('rm -rf /')","""
             "exec('import os; os.system(\"echo hacked\")')",
             "# SECURITY: safe_eval_replacement() removed - use safe evaluation
             # Original: safe_eval('__import__(\"os\")
@@ -267,11 +267,11 @@ class TestSecurityFixes:
         decrypted = secure_config.decrypt_sensitive_value(encrypted)
         assert decrypted == test_value
     
-    def test_audit_event_logging(self, audit_manager):
+    def test_audit_event_logging(self, audit_manager):"""
         """Test audit event logging"""
         event_id = asyncio.run(audit_manager.log_event(
             event_type=AuditEvent.LOGIN_SUCCESS,
-            user_id="test_user",
+            user_id="test_user","""
             resource="authentication",
             action="login",
             details={"ip_address": "192.168.1.1"},
@@ -285,7 +285,7 @@ class TestSecurityFixes:
         """Test authorization permission checking"""
         # Test role-based permission
         has_permission = asyncio.run(auth_manager.check_permission(
-            user_id="admin",
+            user_id="admin","""
             roles=["admin"],
             permission=Permission.SYSTEM_ADMIN,
             resource=Resource.SYSTEM
@@ -297,7 +297,7 @@ class TestSecurityFixes:
         """Test authorization denial for insufficient permissions"""
         # Test insufficient permissions
         has_permission = asyncio.run(auth_manager.check_permission(
-            user_id="viewer",
+            user_id="viewer","""
             roles=["viewer"],
             permission=Permission.SYSTEM_ADMIN,
             resource=Resource.SYSTEM
@@ -386,7 +386,7 @@ class TestSecurityFixes:
         # Buffer should contain events
         assert len(audit_manager.audit_buffer) == 5
     
-    def test_security_event_detection(self, audit_manager):
+    def test_security_event_detection(self, audit_manager):"""
         """Test security event detection"""
         # Test security event types
         security_events = asyncio.run(audit_manager.get_security_events(limit=10))
@@ -436,7 +436,7 @@ class TestSecurityIntegration:
         malicious_input = "'; DROP TABLE users; --"
         # In a real implementation, this would be tested with parameterized queries
         
-        # Test XSS prevention
+        # Test XSS prevention"""
         malicious_script = "<script>alert('xss')</script>"
         # In a real implementation, this would be tested with input sanitization
         

@@ -21,10 +21,10 @@ from config.ai_config import get_ai_config
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 class AIIntegrationSetup:
     """AI Integration Setup Manager"""
@@ -39,12 +39,12 @@ class AIIntegrationSetup:
         try:
             # Load configuration
             config = {
-                'deepseek_api_key': os.getenv('DEEPSEEK_API_KEY', ''),
-                'glm_api_key': os.getenv('GLM_API_KEY', ''),
-                'grok_api_key': os.getenv('GROK_API_KEY', ''),
-                'kimi_api_key': os.getenv('KIMI_API_KEY', ''),
-                'qwen_api_key': os.getenv('QWEN_API_KEY', ''),
-                'gptoss_api_key': os.getenv('GPTOSS_API_KEY', '')
+                "deepseek_api_key": os.getenv("DEEPSEEK_API_KEY", ""),
+                "glm_api_key": os.getenv("GLM_API_KEY", ""),
+                "grok_api_key": os.getenv("GROK_API_KEY", ""),
+                "kimi_api_key": os.getenv("KIMI_API_KEY", ""),
+                "qwen_api_key": os.getenv("QWEN_API_KEY", ""),
+                "gptoss_api_key": os.getenv("GPTOSS_API_KEY", ""),
             }
 
             self.ai_service = AIServiceManager(config)
@@ -74,37 +74,43 @@ class AIIntegrationSetup:
                         # Test with simple request
                         test_response = await self.ai_service.generate_response(
                             "Hello, this is a connectivity test. Respond with 'OK'.",
-                            preferred_provider=provider
+                            preferred_provider=provider,
                         )
 
                         provider_tests[provider.value] = {
-                            'status': 'success' if test_response.success else 'failed',
-                            'response_time': test_response.response_time,
-                            'error': test_response.error if not test_response.success else None,
-                            'provider_used': test_response.provider
+                            "status": "success" if test_response.success else "failed",
+                            "response_time": test_response.response_time,
+                            "error": (
+                                test_response.error
+                                if not test_response.success
+                                else None
+                            ),
+                            "provider_used": test_response.provider,
                         }
 
                         if test_response.success:
                             logger.info(f"✓ {provider.value} test successful")
                         else:
-                            logger.warning(f"✗ {provider.value} test failed: {test_response.error}")
+                            logger.warning(
+                                f"✗ {provider.value} test failed: {test_response.error}"
+                            )
 
                     except Exception as e:
                         provider_tests[provider.value] = {
-                            'status': 'error',
-                            'error': str(e)
+                            "status": "error",
+                            "error": str(e),
                         }
                         logger.error(f"✗ {provider.value} test error: {e}")
 
             return {
-                'config_validation': config_validation,
-                'provider_tests': provider_tests,
-                'timestamp': datetime.now().isoformat()
+                "config_validation": config_validation,
+                "provider_tests": provider_tests,
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error validating AI providers: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
     async def test_ai_capabilities(self) -> Dict[str, Any]:
         """Test AI capabilities across all providers"""
@@ -112,22 +118,22 @@ class AIIntegrationSetup:
             logger.info("Testing AI capabilities...")
 
             capabilities = {
-                'code_generation': await self._test_code_generation(),
-                'code_analysis': await self._test_code_analysis(),
-                'code_improvement': await self._test_code_improvement(),
-                'test_generation': await self._test_test_generation(),
-                'documentation': await self._test_documentation(),
-                'security_analysis': await self._test_security_analysis()
+                "code_generation": await self._test_code_generation(),
+                "code_analysis": await self._test_code_analysis(),
+                "code_improvement": await self._test_code_improvement(),
+                "test_generation": await self._test_test_generation(),
+                "documentation": await self._test_documentation(),
+                "security_analysis": await self._test_security_analysis(),
             }
 
             return {
-                'capabilities': capabilities,
-                'timestamp': datetime.now().isoformat()
+                "capabilities": capabilities,
+                "timestamp": datetime.now().isoformat(),
             }
 
         except Exception as e:
             logger.error(f"Error testing AI capabilities: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
     async def _test_code_generation(self) -> Dict[str, Any]:
         """Test code generation capability"""
@@ -138,15 +144,15 @@ Include proper error handling and documentation."""
             response = await self.ai_service.generate_code(prompt, "python")
 
             return {
-                'success': response.success,
-                'provider': response.provider,
-                'response_time': response.response_time,
-                'content_length': len(response.content) if response.success else 0,
-                'error': response.error if not response.success else None
+                "success": response.success,
+                "provider": response.provider,
+                "response_time": response.response_time,
+                "content_length": len(response.content) if response.success else 0,
+                "error": response.error if not response.success else None,
             }
 
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     async def _test_code_analysis(self) -> Dict[str, Any]:
         """Test code analysis capability"""
@@ -163,15 +169,15 @@ def calculate_factorial(n):
             response = await self.ai_service.analyze_code(code, "python")
 
             return {
-                'success': response.success,
-                'provider': response.provider,
-                'response_time': response.response_time,
-                'content_length': len(response.content) if response.success else 0,
-                'error': response.error if not response.success else None
+                "success": response.success,
+                "provider": response.provider,
+                "response_time": response.response_time,
+                "content_length": len(response.content) if response.success else 0,
+                "error": response.error if not response.success else None,
             }
 
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     async def _test_code_improvement(self) -> Dict[str, Any]:
         """Test code improvement capability"""
@@ -188,15 +194,15 @@ def calc_fact(n):
             response = await self.ai_service.improve_code(code, "python", "general")
 
             return {
-                'success': response.success,
-                'provider': response.provider,
-                'response_time': response.response_time,
-                'content_length': len(response.content) if response.success else 0,
-                'error': response.error if not response.success else None
+                "success": response.success,
+                "provider": response.provider,
+                "response_time": response.response_time,
+                "content_length": len(response.content) if response.success else 0,
+                "error": response.error if not response.success else None,
             }
 
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     async def _test_test_generation(self) -> Dict[str, Any]:
         """Test test generation capability"""
@@ -213,15 +219,15 @@ def calculate_factorial(n):
             response = await self.ai_service.generate_tests(code, "python")
 
             return {
-                'success': response.success,
-                'provider': response.provider,
-                'response_time': response.response_time,
-                'content_length': len(response.content) if response.success else 0,
-                'error': response.error if not response.success else None
+                "success": response.success,
+                "provider": response.provider,
+                "response_time": response.response_time,
+                "content_length": len(response.content) if response.success else 0,
+                "error": response.error if not response.success else None,
             }
 
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     async def _test_documentation(self) -> Dict[str, Any]:
         """Test documentation generation capability"""
@@ -232,15 +238,15 @@ Include function signature, parameters, return value, examples, and usage notes.
             response = await self.ai_service.generate_response(prompt)
 
             return {
-                'success': response.success,
-                'provider': response.provider,
-                'response_time': response.response_time,
-                'content_length': len(response.content) if response.success else 0,
-                'error': response.error if not response.success else None
+                "success": response.success,
+                "provider": response.provider,
+                "response_time": response.response_time,
+                "content_length": len(response.content) if response.success else 0,
+                "error": response.error if not response.success else None,
             }
 
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     async def _test_security_analysis(self) -> Dict[str, Any]:
         """Test security analysis capability"""
@@ -268,15 +274,15 @@ Code:
             response = await self.ai_service.generate_response(prompt)
 
             return {
-                'success': response.success,
-                'provider': response.provider,
-                'response_time': response.response_time,
-                'content_length': len(response.content) if response.success else 0,
-                'error': response.error if not response.success else None
+                "success": response.success,
+                "provider": response.provider,
+                "response_time": response.response_time,
+                "content_length": len(response.content) if response.success else 0,
+                "error": response.error if not response.success else None,
             }
 
         except Exception as e:
-            return {'success': False, 'error': str(e)}
+            return {"success": False, "error": str(e)}
 
     async def setup_github_actions(self) -> Dict[str, Any]:
         """Setup GitHub Actions integration"""
@@ -291,14 +297,14 @@ Code:
             ai_workflow = workflows_dir / "ai_development.yml"
             if ai_workflow.exists():
                 logger.info("✓ AI development workflow already exists")
-                return {'status': 'exists', 'workflow_file': str(ai_workflow)}
+                return {"status": "exists", "workflow_file": str(ai_workflow)}
             else:
                 logger.warning("✗ AI development workflow not found")
-                return {'status': 'missing', 'workflow_file': str(ai_workflow)}
+                return {"status": "missing", "workflow_file": str(ai_workflow)}
 
         except Exception as e:
             logger.error(f"Error setting up GitHub Actions: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
     async def generate_setup_report(self) -> Dict[str, Any]:
         """Generate comprehensive setup report"""
@@ -321,75 +327,101 @@ Code:
             health_check = await self.ai_service.health_check()
 
             report = {
-                'setup_timestamp': datetime.now().isoformat(),
-                'provider_validation': provider_validation,
-                'capability_tests': capability_tests,
-                'github_setup': github_setup,
-                'provider_stats': provider_stats,
-                'health_check': health_check,
-                'summary': self._generate_summary(provider_validation, capability_tests, health_check)
+                "setup_timestamp": datetime.now().isoformat(),
+                "provider_validation": provider_validation,
+                "capability_tests": capability_tests,
+                "github_setup": github_setup,
+                "provider_stats": provider_stats,
+                "health_check": health_check,
+                "summary": self._generate_summary(
+                    provider_validation, capability_tests, health_check
+                ),
             }
 
             return report
 
         except Exception as e:
             logger.error(f"Error generating setup report: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
-    def _generate_summary(self, provider_validation: Dict[str, Any],
-                         capability_tests: Dict[str, Any],
-                         health_check: Dict[str, Any]) -> Dict[str, Any]:
+    def _generate_summary(
+        self,
+        provider_validation: Dict[str, Any],
+        capability_tests: Dict[str, Any],
+        health_check: Dict[str, Any],
+    ) -> Dict[str, Any]:
         """Generate setup summary"""
         try:
             # Count successful providers
-            successful_providers = len([
-                p for p in provider_validation.get('provider_tests', {}).values()
-                if p.get('status') == 'success'
-            ])
+            successful_providers = len(
+                [
+                    p
+                    for p in provider_validation.get("provider_tests", {}).values()
+                    if p.get("status") == "success"
+                ]
+            )
 
             # Count successful capabilities
-            successful_capabilities = len([
-                c for c in capability_tests.get('capabilities', {}).values()
-                if c.get('success', False)
-            ])
+            successful_capabilities = len(
+                [
+                    c
+                    for c in capability_tests.get("capabilities", {}).values()
+                    if c.get("success", False)
+                ]
+            )
 
             # Overall health
-            overall_health = health_check.get('overall_health', 'unknown')
+            overall_health = health_check.get("overall_health", "unknown")
 
             return {
-                'total_providers': len(provider_validation.get('provider_tests', {})),
-                'successful_providers': successful_providers,
-                'total_capabilities': len(capability_tests.get('capabilities', {})),
-                'successful_capabilities': successful_capabilities,
-                'overall_health': overall_health,
-                'setup_status': 'complete' if successful_providers > 0 else 'incomplete',
-                'recommendations': self._generate_recommendations(
+                "total_providers": len(provider_validation.get("provider_tests", {})),
+                "successful_providers": successful_providers,
+                "total_capabilities": len(capability_tests.get("capabilities", {})),
+                "successful_capabilities": successful_capabilities,
+                "overall_health": overall_health,
+                "setup_status": (
+                    "complete" if successful_providers > 0 else "incomplete"
+                ),
+                "recommendations": self._generate_recommendations(
                     successful_providers, successful_capabilities, overall_health
-                )
+                ),
             }
 
         except Exception as e:
             logger.error(f"Error generating summary: {e}")
-            return {'error': str(e)}
+            return {"error": str(e)}
 
-    def _generate_recommendations(self, successful_providers: int,
-                                 successful_capabilities: int,
-                                 overall_health: str) -> list:
+    def _generate_recommendations(
+        self,
+        successful_providers: int,
+        successful_capabilities: int,
+        overall_health: str,
+    ) -> list:
         """Generate setup recommendations"""
         recommendations = []
 
         if successful_providers == 0:
-            recommendations.append("No AI providers are working. Check API keys and network connectivity.")
+            recommendations.append(
+                "No AI providers are working. Check API keys and network connectivity."
+            )
         elif successful_providers < 3:
-            recommendations.append("Only a few AI providers are working. Consider adding more API keys for better reliability.")
+            recommendations.append(
+                "Only a few AI providers are working. Consider adding more API keys for better reliability."
+            )
 
         if successful_capabilities < 3:
-            recommendations.append("Some AI capabilities are not working. Check provider configurations.")
+            recommendations.append(
+                "Some AI capabilities are not working. Check provider configurations."
+            )
 
-        if overall_health == 'critical':
-            recommendations.append("System health is critical. Immediate attention required.")
-        elif overall_health == 'degraded':
-            recommendations.append("System health is degraded. Consider optimizing configurations.")
+        if overall_health == "critical":
+            recommendations.append(
+                "System health is critical. Immediate attention required."
+            )
+        elif overall_health == "degraded":
+            recommendations.append(
+                "System health is degraded. Consider optimizing configurations."
+            )
 
         if not recommendations:
             recommendations.append("AI integration setup is complete and healthy!")
@@ -399,7 +431,7 @@ Code:
     def save_setup_report(self, report: Dict[str, Any], output_file: str):
         """Save setup report to file"""
         try:
-            with open(output_file, 'w', encoding='utf-8') as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(report, f, indent=2, ensure_ascii=False)
             logger.info(f"Setup report saved to {output_file}")
         except Exception as e:
@@ -410,12 +442,19 @@ Code:
         if self.ai_service:
             await self.ai_service.shutdown()
 
+
 async def main():
     """Main function"""
-    parser = argparse.ArgumentParser(description='AI Integration Setup')
-    parser.add_argument('--output', default='ai_setup_report.json', help='Output file for setup report')
-    parser.add_argument('--validate-only', action='store_true', help='Only validate providers')
-    parser.add_argument('--test-only', action='store_true', help='Only test capabilities')
+    parser = argparse.ArgumentParser(description="AI Integration Setup")
+    parser.add_argument(
+        "--output", default="ai_setup_report.json", help="Output file for setup report"
+    )
+    parser.add_argument(
+        "--validate-only", action="store_true", help="Only validate providers"
+    )
+    parser.add_argument(
+        "--test-only", action="store_true", help="Only test capabilities"
+    )
 
     args = parser.parse_args()
 
@@ -427,24 +466,24 @@ async def main():
         if args.validate_only:
             # Only validate providers
             results = await setup.validate_ai_providers()
-            print("\n" + "="*50)
+            print("\n" + "=" * 50)
             print("AI PROVIDER VALIDATION RESULTS")
-            print("="*50)
-            for provider, test in results.get('provider_tests', {}).items():
-                status = "✓" if test.get('status') == 'success' else "✗"
+            print("=" * 50)
+            for provider, test in results.get("provider_tests", {}).items():
+                status = "✓" if test.get("status") == "success" else "✗"
                 print(f"{status} {provider}: {test.get('status', 'unknown')}")
-            print("="*50)
+            print("=" * 50)
 
         elif args.test_only:
             # Only test capabilities
             results = await setup.test_ai_capabilities()
-            print("\n" + "="*50)
+            print("\n" + "=" * 50)
             print("AI CAPABILITY TEST RESULTS")
-            print("="*50)
-            for capability, test in results.get('capabilities', {}).items():
-                status = "✓" if test.get('success') else "✗"
+            print("=" * 50)
+            for capability, test in results.get("capabilities", {}).items():
+                status = "✓" if test.get("success") else "✗"
                 print(f"{status} {capability}: {test.get('success', False)}")
-            print("="*50)
+            print("=" * 50)
 
         else:
             # Full setup report
@@ -452,21 +491,23 @@ async def main():
             setup.save_setup_report(results, args.output)
 
             # Print summary
-            if 'summary' in results:
-                summary = results['summary']
-                print("\n" + "="*50)
+            if "summary" in results:
+                summary = results["summary"]
+                print("\n" + "=" * 50)
                 print("AI INTEGRATION SETUP SUMMARY")
-                print("="*50)
+                print("=" * 50)
                 print(f"Total Providers: {summary.get('total_providers', 0)}")
                 print(f"Successful Providers: {summary.get('successful_providers', 0)}")
                 print(f"Total Capabilities: {summary.get('total_capabilities', 0)}")
-                print(f"Successful Capabilities: {summary.get('successful_capabilities', 0)}")
+                print(
+                    f"Successful Capabilities: {summary.get('successful_capabilities', 0)}"
+                )
                 print(f"Overall Health: {summary.get('overall_health', 'unknown')}")
                 print(f"Setup Status: {summary.get('setup_status', 'unknown')}")
                 print("\nRecommendations:")
-                for rec in summary.get('recommendations', []):
+                for rec in summary.get("recommendations", []):
                     print(f"- {rec}")
-                print("="*50)
+                print("=" * 50)
 
             logger.info("AI integration setup complete.")
 
@@ -476,6 +517,7 @@ async def main():
 
     finally:
         await setup.shutdown()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

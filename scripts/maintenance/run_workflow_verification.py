@@ -13,14 +13,15 @@ from datetime import datetime
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler('logs/workflow_verification_runner.log'),
-        logging.StreamHandler(sys.stdout)
-    ]
+        logging.FileHandler("logs/workflow_verification_runner.log"),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 
 logger = logging.getLogger(__name__)
+
 
 async def run_verification_script(script_name: str) -> bool:
     """Run a verification script"""
@@ -29,9 +30,10 @@ async def run_verification_script(script_name: str) -> bool:
 
         # Run the script
         process = await asyncio.create_subprocess_exec(
-            sys.executable, script_name,
+            sys.executable,
+            script_name,
             stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
+            stderr=asyncio.subprocess.PIPE,
         )
 
         stdout, stderr = await process.communicate()
@@ -40,13 +42,16 @@ async def run_verification_script(script_name: str) -> bool:
             logger.info(f"✓ {script_name} completed successfully")
             return True
         else:
-            logger.error(f"✗ {script_name} failed with return code {process.returncode}")
+            logger.error(
+                f"✗ {script_name} failed with return code {process.returncode}"
+            )
             logger.error(f"Error output: {stderr.decode()}")
             return False
 
     except Exception as e:
         logger.error(f"Error running {script_name}: {e}")
         return False
+
 
 async def main():
     """Main verification runner"""
@@ -55,10 +60,10 @@ async def main():
 
         # List of verification scripts to run
         verification_scripts = [
-            'verify_workflows.py',
-            'check_workflow_configuration.py',
-            'check_workflow_status.py',
-            'run_workflow_tests.py'
+            "verify_workflows.py",
+            "check_workflow_configuration.py",
+            "check_workflow_status.py",
+            "run_workflow_tests.py",
         ]
 
         # Run each verification script
@@ -101,6 +106,7 @@ async def main():
     except Exception as e:
         logger.error(f"Workflow verification runner failed: {e}")
         return 1
+
 
 if __name__ == "__main__":
     exit_code = asyncio.run(main())
