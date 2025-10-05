@@ -8,12 +8,13 @@ def test_project_structure():
     """Test that basic project structure exists"""
     assert Path("src/amas").exists()
     assert Path("src/amas/__init__.py").exists()
-    
+
 
 def test_imports():
     """Test that basic imports work"""
     try:
         import amas
+
         assert amas is not None
     except ImportError:
         # Skip if not installed
@@ -29,15 +30,15 @@ def test_configuration():
 
 class TestBasicFunctionality:
     """Test basic functionality"""
-    
+
     def test_truth(self):
         """Basic truth test"""
         assert True
-    
+
     def test_arithmetic(self):
         """Basic arithmetic test"""
         assert 1 + 1 == 2
-    
+
     def test_string_operations(self):
         """Basic string test"""
         assert "AMAS".lower() == "amas"

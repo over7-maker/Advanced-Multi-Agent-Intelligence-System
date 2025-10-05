@@ -17,11 +17,15 @@ import sys
 import traceback
 
 # Import the new intelligent API management system
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 try:
     from amas.core.ai_api_manager import (
-        generate_ai_response, TaskType, APIProvider, get_api_manager
+        generate_ai_response,
+        TaskType,
+        APIProvider,
+        get_api_manager,
     )
+
     API_MANAGER_AVAILABLE = True
 except ImportError:
     logger.warning("New API manager not available, using fallback mode")
