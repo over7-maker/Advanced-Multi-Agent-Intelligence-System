@@ -3,18 +3,18 @@ Unified Multi-Agent Orchestrator
 Combines functionality from all orchestrator implementations
 """
 
-import os
 import asyncio
+import json
 import logging
-from typing import Dict, List, Any, Optional, Tuple
+import os
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-import json
-import uuid
+from typing import Any, Dict, List, Optional, Tuple
 
-from ..agents.unified_ai_router import get_ai_router, agent_complete
 from ..agents.base.intelligence_agent import IntelligenceAgent
+from ..agents.unified_ai_router import agent_complete, get_ai_router
 
 logger = logging.getLogger(__name__)
 

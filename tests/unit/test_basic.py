@@ -1,7 +1,8 @@
 """Basic unit tests for AMAS"""
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 
 def test_project_structure():

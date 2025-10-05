@@ -3,13 +3,14 @@ Enhanced Authentication Module for AMAS
 """
 
 import asyncio
-import logging
-from typing import Dict, Any, Optional, List
-from datetime import datetime, timedelta
-import jwt
-import bcrypt
-import secrets
 import hashlib
+import logging
+import secrets
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+import bcrypt
+import jwt
 from passlib.context import CryptContext
 from passlib.hash import bcrypt
 

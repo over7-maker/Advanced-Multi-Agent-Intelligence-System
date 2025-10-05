@@ -1,6 +1,6 @@
 """Performance load tests for AMAS using Locust"""
 
-from locust import HttpUser, task, between
+from locust import HttpUser, between, task
 
 
 class AMASUser(HttpUser):

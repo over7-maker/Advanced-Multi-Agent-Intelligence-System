@@ -2,10 +2,11 @@
 Test API endpoints
 """
 
-import pytest
 import asyncio
+from typing import Any, Dict
+
 import httpx
-from typing import Dict, Any
+import pytest
 
 
 class TestAPIEndpoints:
