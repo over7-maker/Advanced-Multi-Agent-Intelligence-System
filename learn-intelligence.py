@@ -34,7 +34,7 @@ async def train_with_sample_data():
             'execution_time': random.uniform(30, 300),
             'success_rate': random.uniform(0.7, 1.0),
             'solution_quality': random.uniform(0.6, 1.0),
-            'error_patterns': [] if random.random() > 0.2 else ['timeout_error'],
+            'error_patterns': [] if random.uniform(0, 1) > 0.2 else ['timeout_error'],
             'user_feedback': {
                 'rating': random.randint(3, 5),
                 'comments': random.choice([

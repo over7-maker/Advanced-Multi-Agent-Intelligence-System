@@ -135,8 +135,20 @@ class CollectiveIntelligenceEngine:
     
     def generate_context_hash(self, task_type: str, target: str, parameters: Dict[str, Any]) -> str:
         """Generate a hash representing the task context"""
+        # Input validation
+        if not task_type or not isinstance(task_type, str):
+            raise ValueError("task_type must be a non-empty string")
+        if not target or not isinstance(target, str):
+            raise ValueError("target must be a non-empty string")
+        if not isinstance(parameters, dict):
+            raise ValueError("parameters must be a dictionary")
+        
+        # Sanitize inputs
+        task_type = task_type.strip().lower()
+        target = target.strip()
+        
         context_string = f"{task_type}:{target}:{json.dumps(parameters, sort_keys=True)}"
-        return hashlib.md5(context_string.encode()).hexdigest()
+        return hashlib.sha256(context_string.encode('utf-8')).hexdigest()
     
     async def record_task_execution(self, task_id: str, task_type: str, target: str,
                                   parameters: Dict[str, Any], agents_used: List[str],
@@ -144,7 +156,23 @@ class CollectiveIntelligenceEngine:
                                   error_patterns: List[str], solution_quality: float):
         """Record a completed task execution for learning"""
         
-        context_hash = self.generate_context_hash(task_type, target, parameters)
+        # Input validation
+        if not task_id or not isinstance(task_id, str):
+            raise ValueError("task_id must be a non-empty string")
+        if not isinstance(agents_used, list):
+            raise ValueError("agents_used must be a list")
+        if not (0 <= success_rate <= 1):
+            raise ValueError("success_rate must be between 0 and 1")
+        if not (0 <= solution_quality <= 1):
+            raise ValueError("solution_quality must be between 0 and 1")
+        if execution_time < 0:
+            raise ValueError("execution_time must be non-negative")
+        
+        try:
+            context_hash = self.generate_context_hash(task_type, target, parameters)
+        except Exception as e:
+            self.logger.error(f"❌ Error generating context hash: {e}")
+            raise
         
         task_pattern = TaskPattern(
             task_id=task_id,
