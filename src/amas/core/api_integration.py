@@ -31,8 +31,7 @@ from ..agents.reporting.reporting_agent import ReportingAgent
 
 # Import the new API manager components
 from .ai_api_manager import AIAPIManager, get_ai_response
-
-# from .enhanced_orchestrator import EnhancedOrchestrator, execute_task, run_investigation # Module not found
+from .enhanced_orchestrator import EnhancedOrchestrator, execute_task, run_investigation
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -44,7 +43,7 @@ class EnhancedLLMService:
 
     def __init__(self):
         self.api_manager = AIAPIManager()
-        # self.orchestrator = EnhancedOrchestrator()
+        self.orchestrator = EnhancedOrchestrator()
 
     async def generate_response(
         self, prompt: str, system_prompt: str = None, task_type: str = None, **kwargs
@@ -133,12 +132,12 @@ class EnhancedAgent(BaseAgent):
         """Execute fallback task with simplified approach"""
         try:
             # Use the enhanced orchestrator for fallback
-            result = {
-                "success": False,
-                "result": "EnhancedOrchestrator not found",
-                "api_used": "fallback",
-                "execution_time": 0,
-            }
+            result = await execute_task(
+                task_id=task.id,
+                task_type=task.type,
+                prompt=task.description,
+                agent_type=self._get_agent_type_for_fallback(),
+            )
 
             return {
                 "success": result.success,
@@ -184,12 +183,12 @@ class EnhancedOSINTAgent(EnhancedAgent):
         """Execute OSINT task with enhanced capabilities"""
         try:
             # Use the enhanced orchestrator for OSINT tasks
-            result = {
-                "success": False,
-                "result": "EnhancedOrchestrator not found",
-                "api_used": "fallback",
-                "execution_time": 0,
-            }
+            result = await execute_task(
+                task_id=task.id,
+                task_type="osint",
+                prompt=task.description,
+                agent_type="osint_agent",
+            )
 
             return {
                 "success": result.success,
@@ -291,12 +290,12 @@ class EnhancedInvestigationAgent(EnhancedAgent):
         """Execute investigation task with enhanced capabilities"""
         try:
             # Use the enhanced orchestrator for investigation tasks
-            result = {
-                "success": False,
-                "result": "EnhancedOrchestrator not found",
-                "api_used": "fallback",
-                "execution_time": 0,
-            }
+            result = await execute_task(
+                task_id=task.id,
+                task_type="analysis",
+                prompt=task.description,
+                agent_type="analysis_agent",
+            )
 
             return {
                 "success": result.success,
@@ -391,12 +390,12 @@ class EnhancedForensicsAgent(EnhancedAgent):
         """Execute forensics task with enhanced capabilities"""
         try:
             # Use the enhanced orchestrator for forensics tasks
-            result = {
-                "success": False,
-                "result": "EnhancedOrchestrator not found",
-                "api_used": "fallback",
-                "execution_time": 0,
-            }
+            result = await execute_task(
+                task_id=task.id,
+                task_type="forensics",
+                prompt=task.description,
+                agent_type="forensics_agent",
+            )
 
             return {
                 "success": result.success,
@@ -490,12 +489,12 @@ class EnhancedReportingAgent(EnhancedAgent):
         """Execute reporting task with enhanced capabilities"""
         try:
             # Use the enhanced orchestrator for reporting tasks
-            result = {
-                "success": False,
-                "result": "EnhancedOrchestrator not found",
-                "api_used": "fallback",
-                "execution_time": 0,
-            }
+            result = await execute_task(
+                task_id=task.id,
+                task_type="reporting",
+                prompt=task.description,
+                agent_type="reporting_agent",
+            )
 
             return {
                 "success": result.success,
