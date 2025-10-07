@@ -109,8 +109,6 @@ class TestOSINTAgent:
         assert "data" in result
         assert result["domain"] == "suspicious.example.com"
 
-        )
-
     @pytest.mark.asyncio
     async def test_agent_initialization(self, investigation_agent):
         """Test agent initialization"""
