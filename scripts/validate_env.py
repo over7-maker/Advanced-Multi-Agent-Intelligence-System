@@ -1,22 +1,27 @@
 #!/usr/bin/env python3
 """
+
 AMAS Environment Validation Script
 Validates API keys and provider configuration
 """
 
 import json
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
 import os
 import sys
 from pathlib import Path
+
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from amas.providers.manager import provider_manager, validate_environment
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
 
 
 def main():
     """Main validation function"""
+
     print("🔍 AMAS Environment Validation")
     print("=" * 50)
 
@@ -111,3 +116,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098

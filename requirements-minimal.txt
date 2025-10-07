@@ -1,0 +1,24 @@
+# Minimal requirements for CI testing
+# This file contains only the essential dependencies needed for basic functionality
+
+# Core dependencies
+asyncio
+aiohttp>=3.8.0
+pydantic>=2.0.0
+pydantic-settings>=2.0.0
+
+# Basic data processing
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Web scraping (for OSINT)
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Testing
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+
+# Development tools
+black>=23.0.0
+flake8>=6.0.0
