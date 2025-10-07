@@ -41,7 +41,6 @@ pyjwt>=2.8.0
 cryptography>=41.0.0
 bandit>=1.7.0
 safety>=2.3.0
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
 
 # HTTP and Networking
 httpx>=0.25.0
@@ -53,7 +52,6 @@ requests>=2.31.0
 networkx>=3.2.0
 joblib>=1.3.0
 python-multipart>=0.0.6
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
 
 # Development and Testing
 pytest>=7.4.0
@@ -94,4 +92,3 @@ cohere>=4.37.0
 # chromadb>=0.4.0
 # pinecone-client>=2.2.0
 # weaviate-client>=3.25.0
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
