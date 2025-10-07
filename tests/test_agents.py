@@ -200,8 +200,6 @@ class TestOSINTAgent:
         assert "files_analyzed" in result
         assert "analysis_results" in result
 
-        )
-
     @pytest.mark.asyncio
     async def test_agent_initialization(self, data_analysis_agent):
         """Test agent initialization"""

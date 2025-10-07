@@ -137,13 +137,13 @@ class IntelligenceOrchestrator:
         self.logger = logging.getLogger("amas.orchestrator")
 
         # Initialize core services
-        self._initialize_services()
+        # Note: This will be called in the initialize() method
 
-    def _initialize_services(self):
+    async def _initialize_services(self):
         """Initialize core services and agents."""
         try:
             # Initialize specialized agents
-            self._register_specialized_agents()
+            await self._register_specialized_agents()
 
             # Initialize workflow templates
             self._initialize_workflow_templates()
@@ -154,7 +154,7 @@ class IntelligenceOrchestrator:
             self.logger.error(f"Failed to initialize orchestrator: {e}")
             raise
 
-    def _register_specialized_agents(self):
+    async def _register_specialized_agents(self):
         """Register specialized intelligence agents."""
         try:
             # OSINT Agent
@@ -166,7 +166,7 @@ class IntelligenceOrchestrator:
                 knowledge_graph=self.knowledge_graph,
                 security_service=self.security_service,
             )
-            self.register_agent(osint_agent)
+            await self.register_agent(osint_agent)
 
             # Investigation Agent
             investigation_agent = InvestigationAgent(
@@ -177,7 +177,7 @@ class IntelligenceOrchestrator:
                 knowledge_graph=self.knowledge_graph,
                 security_service=self.security_service,
             )
-            self.register_agent(investigation_agent)
+            await self.register_agent(investigation_agent)
 
             # Forensics Agent
             forensics_agent = ForensicsAgent(
@@ -188,7 +188,7 @@ class IntelligenceOrchestrator:
                 knowledge_graph=self.knowledge_graph,
                 security_service=self.security_service,
             )
-            self.register_agent(forensics_agent)
+            await self.register_agent(forensics_agent)
 
             # Data Analysis Agent
             data_analysis_agent = DataAnalysisAgent(
@@ -199,7 +199,7 @@ class IntelligenceOrchestrator:
                 knowledge_graph=self.knowledge_graph,
                 security_service=self.security_service,
             )
-            self.register_agent(data_analysis_agent)
+            await self.register_agent(data_analysis_agent)
 
             # Reverse Engineering Agent
             reverse_engineering_agent = ReverseEngineeringAgent(
@@ -210,7 +210,7 @@ class IntelligenceOrchestrator:
                 knowledge_graph=self.knowledge_graph,
                 security_service=self.security_service,
             )
-            self.register_agent(reverse_engineering_agent)
+            await self.register_agent(reverse_engineering_agent)
 
             # Metadata Agent
             metadata_agent = MetadataAgent(
@@ -221,7 +221,7 @@ class IntelligenceOrchestrator:
                 knowledge_graph=self.knowledge_graph,
                 security_service=self.security_service,
             )
-            self.register_agent(metadata_agent)
+            await self.register_agent(metadata_agent)
 
             # Reporting Agent
             reporting_agent = ReportingAgent(
@@ -232,7 +232,7 @@ class IntelligenceOrchestrator:
                 knowledge_graph=self.knowledge_graph,
                 security_service=self.security_service,
             )
-            self.register_agent(reporting_agent)
+            await self.register_agent(reporting_agent)
 
             self.logger.info("Specialized agents registered successfully")
 
@@ -860,7 +860,7 @@ class IntelligenceOrchestrator:
             self.logger.info("Initializing Intelligence Orchestrator...")
 
             # Initialize core services
-            self._initialize_services()
+            await self._initialize_services()
 
             self.logger.info("Intelligence Orchestrator initialized successfully")
 
