@@ -27,7 +27,6 @@ alembic>=1.13.0
 redis>=5.0.0
 aioredis>=2.0.0
 neo4j>=5.15.0
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
 
 # Monitoring and Performance
 psutil>=5.9.0
