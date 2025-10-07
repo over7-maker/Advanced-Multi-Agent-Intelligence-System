@@ -148,7 +148,6 @@ rich==13.7.0
 # AMAS Offline Startup Script
 
 echo "🔒 Starting AMAS Offline System..."
-echo "=================================="
 
 # Set offline environment
 export AMAS_MODE=offline
@@ -324,7 +323,6 @@ CMD ["python3", "offline_example.py"]
 # AMAS Offline Docker Startup
 
 echo "🔒 Starting AMAS Offline System with Docker..."
-echo "=============================================="
 
 # Start offline services
 docker-compose -f docker-compose-offline.yml up -d

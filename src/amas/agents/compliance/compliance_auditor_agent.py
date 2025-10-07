@@ -931,7 +931,6 @@ class ComplianceAuditorAgent:
         try:
             text_report = f"""
             COMPLIANCE AUDIT REPORT
-            ========================
             
             Report ID: {report.id}
             Framework: {report.framework.value}
@@ -939,23 +938,19 @@ class ComplianceAuditorAgent:
             Valid Until: {report.valid_until.strftime('%Y-%m-%d %H:%M:%S')}
             
             OVERALL COMPLIANCE
-            ==================
             Score: {report.overall_score:.1f}%
             Level: {report.compliance_level.value.upper()}
             
             SUMMARY
-            =======
             {report.summary}
             
             RECOMMENDATIONS
-            ===============
             """
 
             for i, rec in enumerate(report.recommendations, 1):
                 text_report += f"{i}. {rec}\n"
 
             text_report += "\n\nDETAILED FINDINGS\n"
-            text_report += "==================\n"
 
             for check in report.checks:
                 text_report += f"\nRule: {check.rule_id}\n"

@@ -119,7 +119,6 @@ AMAS supports various specialized task types:
 ### Task Submission
 
 #### Via CLI
->>>>>>> pr-168
 ```bash
 🤖 AMAS> show results
 ```

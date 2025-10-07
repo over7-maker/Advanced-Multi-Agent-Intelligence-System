@@ -60,9 +60,7 @@ def find_python_files_using_ai() -> List[Path]:
 def generate_migration_template() -> str:
     """Generate template code for migrating to Universal AI Manager"""
     return '''
-# ========================================
 # MIGRATION TO UNIVERSAL AI MANAGER
-# ========================================
 # Replace your old AI client initialization with this:
 
 import sys
