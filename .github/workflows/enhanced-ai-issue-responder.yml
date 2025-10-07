@@ -55,7 +55,10 @@ jobs:
         cache: 'pip'
     
     - name: 📦 Install dependencies with caching
-      run: |
+      run: |      python -m ensurepip --upgrade
+        python -m pip install --upgrade pippython -m ensurepip --upgrade
+
+
         python -m pip install --upgrade pip
         python -m pip install --upgrade setuptools wheel
         if [ -f requirements.txt ]; then
