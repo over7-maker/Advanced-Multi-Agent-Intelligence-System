@@ -46,6 +46,41 @@ class ForensicsAgent(IntelligenceAgent):
 
         self.evidence_store = {}
         self.analysis_results = {}
+        self._initialized = False
+
+    async def initialize(self) -> None:
+        """Initialize the forensics agent with proper validation"""
+        try:
+            # Validate dependencies
+            if not self.llm_service:
+                logger.warning("ForensicsAgent: No LLM service provided")
+
+            # Initialize evidence store
+            self.evidence_store = {}
+            self.analysis_results = {}
+
+            # Mark as initialized
+            self._initialized = True
+            logger.info(f"ForensicsAgent {self.agent_id} initialized successfully")
+
+        except Exception as e:
+            logger.error(f"Failed to initialize ForensicsAgent: {e}")
+            raise
+
+    async def shutdown(self) -> None:
+        """Gracefully shutdown the forensics agent"""
+        try:
+            # Clear evidence store to free memory
+            self.evidence_store.clear()
+            self.analysis_results.clear()
+
+            # Mark as not initialized
+            self._initialized = False
+
+            logger.info(f"ForensicsAgent {self.agent_id} shutdown complete")
+
+        except Exception as e:
+            logger.error(f"Error during ForensicsAgent shutdown: {e}")
 
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Execute forensics task"""

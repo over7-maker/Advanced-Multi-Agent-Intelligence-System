@@ -1,57 +1,73 @@
-# AMAS User Guide - Production Ready System
+# 📖 AMAS User Guide
 
 > **Version**: 2.0.0 | **Status**: ✅ Fully Integrated and Production Ready
 
-Welcome to the Advanced Multi-Agent Intelligence System (AMAS) user documentation. This guide will help you get started and make the most of AMAS's powerful AI capabilities.
+## Welcome to AMAS!
+
+The Advanced Multi-Agent Intelligence System (AMAS) is a powerful AI platform that leverages multiple intelligent agents to perform complex tasks. This guide will help you get the most out of AMAS, whether you're using it for security analysis, data processing, or research.
 
 **✅ 100% Implementation Verified** - All critical improvements from the project audit have been implemented and verified.
 
-## Table of Contents
+## 📋 Table of Contents
 
-1. [Getting Started](#getting-started)
-2. [User Interfaces](#user-interfaces)
-3. [Task Management](#task-management)
-4. [Agent Types](#agent-types)
-5. [Use Cases](#use-cases)
-6. [Best Practices](#best-practices)
-7. [Troubleshooting](#troubleshooting)
+1. [Quick Start](#quick-start)
+2. [Interactive Mode](#interactive-mode)
+3. [Command Reference](#command-reference)
+4. [Task Types](#task-types)
+5. [Working with Results](#working-with-results)
+6. [Web Interface](#web-interface)
+7. [API Usage](#api-usage)
+8. [Best Practices](#best-practices)
+9. [Troubleshooting](#troubleshooting)
+10. [FAQ](#faq)
 
-## Getting Started
+---
 
-### First Time Setup
+## 🚀 Quick Start
 
-1. **Environment Validation**
-   ```bash
-   # Validate your setup with minimal configuration
-   python scripts/validate_env.py --mode basic --verbose
-   ```
+### Getting Started with AMAS
 
-2. **Minimal Configuration (3 API Keys)**
-   ```bash
-   # Set minimal required API keys
-   export DEEPSEEK_API_KEY="your_deepseek_key"
-   export GLM_API_KEY="your_glm_key"
-   export GROK_API_KEY="your_grok_key"
-   ```
+#### 1. Environment Validation
+```bash
+# Validate your setup with minimal configuration
+python scripts/validate_env.py --mode basic --verbose
+```
 
-3. **Start AMAS**
-   ```bash
-   # Development environment
-   docker-compose -f docker-compose.dev.yml up -d
-   
-   # Or run locally
-   python -m uvicorn src.amas.api.main:app --reload
-   ```
+#### 2. Minimal Configuration (3 API Keys)
+```bash
+# Set minimal required API keys
+export DEEPSEEK_API_KEY="your_deepseek_key"
+export GLM_API_KEY="your_glm_key"
+export GROK_API_KEY="your_grok_key"
+```
 
-4. **Verify Installation**
-   ```bash
-   # Run comprehensive verification
-   python scripts/verify_implementation.py
-   ```
+#### 3. Start AMAS
+```bash
+# Interactive Mode (Recommended for beginners)
+./start-amas-interactive.sh
 
-### Quick Test
+# Or use Docker
+docker-compose up -d
 
-Submit your first task to verify everything works:
+# Or run locally
+python -m uvicorn src.amas.api.main:app --reload
+```
+
+#### 4. Try Your First Command
+```bash
+🤖 AMAS> scan example.com
+```
+
+#### 5. View Results
+```bash
+🤖 AMAS> show results
+```
+
+That's it! You've just performed your first security scan with AMAS.
+
+### Quick Test with Python API
+
+Submit your first task programmatically:
 
 ```python
 # Python API with new unified orchestrator
@@ -77,284 +93,627 @@ async def test_amas():
 asyncio.run(test_amas())
 ```
 
-## User Interfaces
+---
 
-### 1. Web Interface (Development Server)
+## 🗣️ Interactive Mode
 
-Access: `http://localhost:8000`
+Interactive Mode provides a natural language interface to AMAS, making it easy to use without remembering complex commands.
 
-**Features:**
-- Interactive API documentation at `/docs`
-- System health monitoring at `/health`
-- Real-time task management via API
-- Agent status and performance metrics
+### Starting Interactive Mode
 
-**API Endpoints:**
-- **GET /docs**: Interactive API documentation
-- **GET /health**: System health status
-- **POST /tasks**: Submit new tasks
-- **GET /tasks/{id}**: Get task status and results
-
-### 2. Command Line Interface (CLI)
-
-Perfect for automation and advanced users.
-
-**Environment & Validation:**
 ```bash
-# Environment validation
-python scripts/validate_env.py --mode basic --verbose
+# Using the startup script
+./start-amas-interactive.sh
 
-# System verification
-python scripts/verify_implementation.py
-
-# Benchmarking
-python scripts/benchmark_system.py --mode basic --output results.json
-
-# Testing
-python scripts/run_tests.py --all --verbose
+# Or directly with Python
+python simple-amas-interactive.py
 ```
 
-### 3. Development Environment
+### Natural Language Commands
 
-Complete Docker-based development setup.
+AMAS understands plain English commands:
 
-**Features:**
-- Complete development environment with all services
-- Health checks for all components
-- Development tools included (PgAdmin, Redis Commander)
-- Hot-reloading for development
-- Environment validation on startup
-
-## Task Management
-
-### Task Types
-
-AMAS supports various specialized task types:
-
-| Task Type | Description | Use Cases |
-|-----------|-------------|-----------|
-| `research` | Autonomous research and analysis | Literature review, trend analysis |
-| `osint` | Open-source intelligence gathering | Threat assessment, information collection |
-| `forensics` | Digital forensics and investigation | Evidence analysis, incident response |
-| `data_analysis` | Advanced data processing | Pattern recognition, statistical analysis |
-| `reporting` | Automated report generation | Executive summaries, technical reports |
-
-### Task Submission
-
-#### Via CLI
 ```bash
-# Basic task
-amas submit-task research "Analyze cryptocurrency market trends"
+# Security scanning
+🤖 AMAS> scan google.com for vulnerabilities
+🤖 AMAS> check security of my-website.com
+🤖 AMAS> find open ports on 192.168.1.1
 
-# Task with parameters
-amas submit-task osint "Investigate domain threats" --params '{"domains": ["example.com"]}'
+# Code analysis
+🤖 AMAS> analyze code quality of github.com/user/repo
+🤖 AMAS> review security of my python project
+🤖 AMAS> check for bugs in src/main.py
 
-# High priority task
-amas submit-task forensics "Analyze malware sample" --priority 1 --wait
+# Research and intelligence
+🤖 AMAS> research latest AI security threats
+🤖 AMAS> gather intelligence on ransomware trends
+🤖 AMAS> find information about zero-day exploits
+
+# Data analysis
+🤖 AMAS> analyze trends in dataset.csv
+🤖 AMAS> create report from sales_data.json
+🤖 AMAS> visualize network traffic patterns
 ```
 
-#### Via Python API
+### Interactive Features
+
+#### Real-time Progress
+Watch agents work in real-time:
+```
+⠋ Security Expert Agent working...
+⠋ OSINT Agent gathering data...
+⠋ Analysis Agent processing...
+✅ Task completed in 4.32 seconds
+```
+
+#### Rich Output Display
+Results are displayed in beautiful, easy-to-read tables:
+```
+┏━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Attribute       ┃ Value                        ┃
+┡━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ Target          │ example.com                  │
+│ Security Score  │ A+ (95/100)                  │
+│ Vulnerabilities │ 2 Low, 0 Medium, 0 High      │
+│ SSL Grade       │ A+                           │
+│ Headers         │ ✓ Secure                     │
+└─────────────────┴──────────────────────────────┘
+```
+
+#### Command History
+Use arrow keys to navigate through previous commands:
+- ↑ Previous command
+- ↓ Next command
+- Ctrl+R Search history
+
+---
+
+## 📚 Command Reference
+
+### Core Commands
+
+#### System Commands
+| Command | Description | Example |
+|---------|-------------|---------|
+| `help` | Show available commands | `help` |
+| `status` | Show system status | `status` |
+| `agents` | List available agents | `agents` |
+| `providers` | Show AI providers | `providers` |
+| `config` | View configuration | `config` |
+| `exit/quit` | Exit AMAS | `exit` |
+
+#### Task Commands
+| Command | Description | Example |
+|---------|-------------|---------|
+| `scan` | Security scan | `scan example.com` |
+| `analyze` | Analyze code/data | `analyze repo.git` |
+| `research` | Research topics | `research AI trends` |
+| `monitor` | Monitor resources | `monitor server-01` |
+| `report` | Generate reports | `report security audit` |
+
+#### Result Commands
+| Command | Description | Example |
+|---------|-------------|---------|
+| `show` | Show task results | `show task-abc123` |
+| `list` | List recent tasks | `list tasks` |
+| `export` | Export results | `export pdf report.pdf` |
+| `share` | Share results | `share via email` |
+
+### Advanced Commands
+
+#### Batch Operations
+```bash
+# Process multiple targets
+🤖 AMAS> scan example.com, test.com, demo.com
+
+# Analyze multiple repositories
+🤖 AMAS> analyze github.com/org/* for security issues
+
+# Generate comparative report
+🤖 AMAS> compare security between prod and staging
+```
+
+#### Scheduled Tasks
+```bash
+# Schedule daily scans
+🤖 AMAS> schedule daily scan of production servers at 2am
+
+# Weekly reports
+🤖 AMAS> schedule weekly security report every monday
+
+# Monitor continuously
+🤖 AMAS> monitor api.example.com every 5 minutes
+```
+
+#### Custom Workflows
+```bash
+# Create workflow
+🤖 AMAS> create workflow "security-audit" with steps:
+         1. scan all servers
+         2. analyze vulnerabilities
+         3. generate report
+         4. send to security team
+
+# Run workflow
+🤖 AMAS> run workflow security-audit
+```
+
+---
+
+## 🎯 Task Types
+
+### Security Tasks
+
+#### Vulnerability Scanning
+```bash
+# Basic scan
+🤖 AMAS> scan example.com
+
+# Comprehensive scan
+🤖 AMAS> deep scan example.com including subdomains
+
+# Specific checks
+🤖 AMAS> check example.com for SQL injection vulnerabilities
+🤖 AMAS> scan network 192.168.1.0/24 for open ports
+```
+
+#### Security Analysis
+```bash
+# Code security review
+🤖 AMAS> analyze security of github.com/user/repo
+
+# Configuration audit
+🤖 AMAS> audit nginx configuration for security issues
+
+# Compliance check
+🤖 AMAS> check GDPR compliance of user-service
+```
+
+### Intelligence Gathering
+
+#### OSINT Operations
+```bash
+# Domain intelligence
+🤖 AMAS> gather intelligence on example.com
+
+# Threat research
+🤖 AMAS> research latest ransomware campaigns
+
+# Technology stack discovery
+🤖 AMAS> identify technologies used by competitor.com
+```
+
+#### Threat Intelligence
+```bash
+# Threat monitoring
+🤖 AMAS> monitor for threats targeting financial sector
+
+# IOC analysis
+🤖 AMAS> analyze IOCs from threat-intel-feed.json
+
+# Attack pattern analysis
+🤖 AMAS> identify attack patterns in security logs
+```
+
+### Data Analysis
+
+#### Pattern Recognition
+```bash
+# Anomaly detection
+🤖 AMAS> find anomalies in access_logs.csv
+
+# Trend analysis
+🤖 AMAS> analyze trends in sales_data_2024.json
+
+# Behavioral analysis
+🤖 AMAS> analyze user behavior patterns in app_logs
+```
+
+#### Reporting
+```bash
+# Executive summary
+🤖 AMAS> create executive summary of security posture
+
+# Detailed reports
+🤖 AMAS> generate detailed vulnerability report for web-app
+
+# Custom reports
+🤖 AMAS> create custom report with charts from analytics_data
+```
+
+---
+
+## 📊 Working with Results
+
+### Understanding Results
+
+#### Result Structure
+Every task returns structured results:
+```json
+{
+  "task_id": "task-abc123",
+  "status": "completed",
+  "summary": {
+    "security_score": 85,
+    "vulnerabilities": {
+      "critical": 0,
+      "high": 1,
+      "medium": 3,
+      "low": 5
+    }
+  },
+  "details": {
+    // Detailed findings
+  },
+  "recommendations": [
+    // Actionable recommendations
+  ]
+}
+```
+
+#### Interpreting Security Scores
+- **A+ (95-100)**: Excellent security posture
+- **A (90-94)**: Very good security
+- **B (80-89)**: Good with minor issues
+- **C (70-79)**: Moderate security concerns
+- **D (60-69)**: Significant vulnerabilities
+- **F (0-59)**: Critical security issues
+
+### Exporting Results
+
+#### Export Formats
+```bash
+# PDF report
+🤖 AMAS> export results to pdf security_audit.pdf
+
+# JSON data
+🤖 AMAS> export results to json data_export.json
+
+# CSV for analysis
+🤖 AMAS> export vulnerabilities to csv vulns.csv
+
+# HTML report
+🤖 AMAS> export results to html report.html
+```
+
+#### Integration Options
+```bash
+# Send to ticketing system
+🤖 AMAS> create jira tickets from vulnerabilities
+
+# Update dashboard
+🤖 AMAS> push results to grafana dashboard
+
+# Notify team
+🤖 AMAS> send results to security-team@company.com
+```
+
+---
+
+## 💻 Web Interface
+
+### Accessing the Web UI
+
+1. Open your browser to: `http://localhost:3000`
+2. Login with your credentials
+3. Navigate using the intuitive interface
+
+### Web UI Features
+
+#### Dashboard
+- **System Overview**: Real-time system status
+- **Active Tasks**: Currently running operations
+- **Recent Results**: Latest completed tasks
+- **Performance Metrics**: System performance graphs
+
+#### Task Management
+- **Create Tasks**: Visual task builder
+- **Task Templates**: Pre-configured task templates
+- **Batch Operations**: Run multiple tasks
+- **Schedule Tasks**: Set up recurring tasks
+
+#### Results Viewer
+- **Interactive Reports**: Drill-down into findings
+- **Visualizations**: Charts and graphs
+- **Export Options**: Download in various formats
+- **Sharing**: Share results with team members
+
+#### Settings
+- **API Keys**: Manage your API keys
+- **Notifications**: Configure alerts
+- **Integrations**: Connect third-party services
+- **Preferences**: Customize your experience
+
+---
+
+## 🔌 API Usage
+
+### Quick API Example
+
+```bash
+# Submit a task via API
+curl -X POST http://localhost:8000/api/v1/tasks \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-api-key" \
+  -d '{
+    "task_type": "security_scan",
+    "parameters": {
+      "target": "example.com"
+    }
+  }'
+
+# Get results
+curl -H "X-API-Key: your-api-key" \
+  http://localhost:8000/api/v1/tasks/task-abc123/results
+```
+
+### SDK Usage
+
+#### Python SDK
 ```python
-import asyncio
-from amas import AMASApplication
+from amas_sdk import AMASClient
 
-async def submit_research_task():
-    app = AMASApplication()
-    await app.initialize()
-    
-    task_id = await app.submit_task({
-        'type': 'research',
-        'description': 'Research quantum computing applications in cybersecurity',
-        'priority': 2,
-        'parameters': {
-            'depth': 'comprehensive',
-            'sources': ['academic', 'industry', 'news'],
-            'timeframe': '2023-2024'
-        }
-    })
-    
-    print(f"Task submitted: {task_id}")
-    await app.shutdown()
+# Initialize client
+client = AMASClient(api_key="your-api-key")
 
-asyncio.run(submit_research_task())
+# Submit task
+task = client.create_task(
+    task_type="security_scan",
+    parameters={"target": "example.com"}
+)
+
+# Wait for completion
+result = task.wait_for_completion()
+
+# Process results
+print(f"Security Score: {result.security_score}")
+for vuln in result.vulnerabilities:
+    print(f"- {vuln.severity}: {vuln.description}")
 ```
 
-### Task Monitoring
+#### JavaScript SDK
+```javascript
+const { AMASClient } = require('@amas/sdk');
 
-Track task progress in real-time:
+// Initialize client
+const client = new AMASClient({ apiKey: 'your-api-key' });
 
+// Submit task
+const task = await client.createTask({
+  taskType: 'security_scan',
+  parameters: { target: 'example.com' }
+});
+
+// Get results
+const result = await task.waitForCompletion();
+console.log(`Security Score: ${result.securityScore}`);
+```
+
+---
+
+## 💡 Best Practices
+
+### Task Optimization
+
+#### 1. Use Specific Commands
 ```bash
-# Check specific task
-amas get-result <task-id>
+# Good - Specific and clear
+🤖 AMAS> scan example.com for XSS vulnerabilities in contact forms
 
-# Monitor all active tasks
-amas list-tasks --status active
-
-# Get detailed task history
-amas task-history <task-id>
+# Less optimal - Too general
+🤖 AMAS> check example.com
 ```
 
-## Agent Types
-
-### Research Agent
-**Capabilities:** Literature review, trend analysis, data synthesis
-**Best For:** Academic research, market analysis, technology scouting
-
-### OSINT Agent
-**Capabilities:** Information gathering, source verification, threat assessment
-**Best For:** Security analysis, competitive intelligence, risk assessment
-
-### Forensics Agent
-**Capabilities:** Digital evidence analysis, malware investigation, incident response
-**Best For:** Cybersecurity, legal investigations, compliance audits
-
-### Data Analysis Agent
-**Capabilities:** Statistical analysis, pattern recognition, predictive modeling
-**Best For:** Business intelligence, scientific analysis, performance optimization
-
-### Reporting Agent
-**Capabilities:** Automated report generation, data visualization, executive summaries
-**Best For:** Business reporting, compliance documentation, executive briefings
-
-## Use Cases
-
-### 1. Autonomous Research Pipeline
-
-**Scenario:** Comprehensive research on emerging AI technologies
-
-```python
-# Multi-stage research workflow
-tasks = [
-    {'type': 'research', 'description': 'Literature review on quantum AI'},
-    {'type': 'osint', 'description': 'Industry analysis of quantum AI companies'},
-    {'type': 'data_analysis', 'description': 'Trend analysis of quantum AI publications'},
-    {'type': 'reporting', 'description': 'Generate comprehensive quantum AI report'}
-]
-
-for task in tasks:
-    task_id = await app.submit_task(task)
-    result = await app.get_task_result(task_id)
-```
-
-### 2. Security Threat Assessment
-
-**Scenario:** Continuous monitoring and threat assessment
-
+#### 2. Batch Similar Tasks
 ```bash
-# Setup automated threat monitoring
-amas submit-task osint "Monitor cybersecurity threats" --params '{
-    "sources": ["threat_feeds", "social_media", "dark_web"],
-    "keywords": ["zero-day", "ransomware", "apt"],
-    "continuous": true
-}'
+# Good - Batch processing
+🤖 AMAS> scan all production servers: prod-01, prod-02, prod-03
+
+# Less optimal - Individual tasks
+🤖 AMAS> scan prod-01
+🤖 AMAS> scan prod-02
+🤖 AMAS> scan prod-03
 ```
 
-### 3. Business Intelligence Dashboard
+#### 3. Use Templates
+```bash
+# Create template
+🤖 AMAS> save template "weekly-audit" from last scan
 
-**Scenario:** Real-time business intelligence and analytics
-
-```python
-# Business intelligence pipeline
-business_tasks = [
-    {'type': 'data_analysis', 'description': 'Analyze sales performance Q4 2024'},
-    {'type': 'research', 'description': 'Market trend analysis for 2025'},
-    {'type': 'reporting', 'description': 'Generate executive dashboard'}
-]
+# Reuse template
+🤖 AMAS> run template weekly-audit on staging environment
 ```
 
-## Best Practices
+### Security Best Practices
 
-### Task Design
+1. **Regular Scans**: Schedule regular security scans
+2. **Monitor Changes**: Track security score trends
+3. **Act on Findings**: Address vulnerabilities promptly
+4. **Document Actions**: Keep audit trail of remediation
 
-1. **Be Specific**: Provide clear, detailed task descriptions
-2. **Set Priorities**: Use priority levels effectively (1=urgent, 5=low)
-3. **Use Parameters**: Leverage task parameters for customization
-4. **Monitor Progress**: Check task status regularly
+### Performance Tips
 
-### System Management
+1. **Off-Peak Scanning**: Run intensive scans during off-peak hours
+2. **Incremental Scans**: Use incremental scans for large targets
+3. **Result Caching**: Leverage cached results when appropriate
+4. **Resource Limits**: Set appropriate resource limits
 
-1. **Regular Health Checks**: Monitor system health daily
-2. **Log Monitoring**: Review logs for issues and insights
-3. **Resource Management**: Monitor CPU, memory, and GPU usage
-4. **Backup Strategy**: Regular data and configuration backups
+---
 
-### Security
-
-1. **Regular Updates**: Keep AMAS and dependencies updated
-2. **Access Control**: Use RBAC to limit user permissions
-3. **Audit Monitoring**: Review audit logs regularly
-4. **Network Security**: Use VPNs and firewalls appropriately
-
-## Troubleshooting
+## 🔧 Troubleshooting
 
 ### Common Issues
 
-#### 1. System Won't Start
+#### Connection Issues
 ```bash
-# Check service dependencies
-amas health --check-services
+# Check system status
+🤖 AMAS> status
 
-# Check logs
-tail -f logs/amas.log
+# Test connectivity
+🤖 AMAS> test connection to api
 
-# Restart services
-docker-compose restart
+# View detailed logs
+🤖 AMAS> show logs --level debug
 ```
 
-#### 2. Task Submission Fails
+#### Task Failures
 ```bash
-# Verify system status
-amas status
+# View task details
+🤖 AMAS> show task task-abc123 --verbose
 
-# Check agent availability
-amas list-agents
+# Retry failed task
+🤖 AMAS> retry task task-abc123
 
-# Review task parameters
-amas validate-task <task-description>
+# Check agent status
+🤖 AMAS> show agent security-agent status
 ```
 
-#### 3. Poor Performance
+#### Performance Issues
 ```bash
-# Monitor resources
-amas monitor --resources
+# Check system resources
+🤖 AMAS> show system resources
 
-# Check GPU utilization
-nvidia-smi
+# View performance metrics
+🤖 AMAS> show performance metrics
 
-# Optimize configuration
-amas config-optimize
+# Optimize task
+🤖 AMAS> optimize task for speed
 ```
 
 ### Getting Help
 
-1. **Check Logs**: `logs/amas.log` contains detailed information
-2. **System Health**: Run `amas health --check-all`
-3. **Documentation**: Comprehensive docs in `docs/` directory
-4. **Community**: GitHub Issues and Discussions
-
-### Advanced Troubleshooting
-
-For complex issues, enable debug mode:
-
 ```bash
-# Enable debug logging
-export AMAS_LOG_LEVEL=DEBUG
-amas start
+# Built-in help
+🤖 AMAS> help [command]
 
-# Generate diagnostic report
-amas generate-diagnostic-report
+# Show examples
+🤖 AMAS> examples security scan
+
+# Contact support
+🤖 AMAS> support "describe your issue"
 ```
-
-## What's Next?
-
-1. **Explore Examples**: Check out `examples/` directory
-2. **Customize Agents**: Create specialized agents for your needs
-3. **Build Workflows**: Design complex multi-agent processes
-4. **Integrate APIs**: Connect AMAS to your existing systems
-5. **Scale Deployment**: Move to production infrastructure
-
-For more advanced topics, see the [Developer Guide](../developer/README.md).
 
 ---
 
-**Need help?** Check our [FAQ](FAQ.md) or [contact support](SUPPORT.md).
+## 🌟 Advanced Features
+
+### ML-Powered Intelligence
+AMAS uses machine learning to optimize every aspect of operation:
+
+```bash
+# Let ML decide the best approach
+🤖 AMAS> optimize my security scan workflow
+
+# View ML decision insights
+🤖 AMAS> show ml decision for task-abc123
+
+# Enable intelligent mode
+🤖 AMAS> set mode intelligent
+```
+
+### Multi-Provider AI Fallback
+Never experience AI failures with our 15+ provider system:
+
+```bash
+# Check provider status
+🤖 AMAS> show ai providers
+
+# Force specific provider
+🤖 AMAS> use provider deepseek for next task
+
+# View provider performance
+🤖 AMAS> show provider stats
+```
+
+### Reinforcement Learning Optimization
+AMAS continuously improves itself:
+
+```bash
+# View optimization status
+🤖 AMAS> show rl optimizer status
+
+# Enable aggressive optimization
+🤖 AMAS> enable optimization mode aggressive
+
+# View performance improvements
+🤖 AMAS> show optimization history
+```
+
+### Enterprise Compliance
+Built-in compliance for regulated industries:
+
+```bash
+# Run compliance check
+🤖 AMAS> check compliance for HIPAA
+
+# Generate compliance report
+🤖 AMAS> generate SOC2 compliance report
+
+# Enable compliance mode
+🤖 AMAS> enable compliance mode GDPR
+```
+
+---
+
+## ❓ FAQ
+
+### General Questions
+
+**Q: What makes AMAS different from other security tools?**
+A: AMAS uses multiple AI agents working together, providing more comprehensive analysis than single-purpose tools. It also features intelligent fallback across 16 AI providers, ensuring reliable operation.
+
+**Q: Can I use AMAS offline?**
+A: Yes! AMAS supports offline operation for sensitive environments. See the [Offline Guide](OFFLINE_SYSTEM_GUIDE.md).
+
+**Q: How do I integrate AMAS with my existing tools?**
+A: AMAS provides REST APIs, webhooks, and SDKs for easy integration. It also supports common formats like JIRA, Slack, and email notifications.
+
+### Technical Questions
+
+**Q: What AI providers does AMAS support?**
+A: AMAS supports 16 AI providers including DeepSeek, GLM, Grok, and more. It automatically fails over between providers for maximum reliability.
+
+**Q: How secure is AMAS?**
+A: AMAS implements enterprise-grade security including encryption, authentication, and compliance with GDPR, SOC2, HIPAA, and other frameworks.
+
+**Q: Can I add custom agents?**
+A: Yes! AMAS is extensible. See the [Developer Guide](../developer/README.md) for creating custom agents.
+
+### Operational Questions
+
+**Q: How do I monitor AMAS performance?**
+A: AMAS includes built-in monitoring with Prometheus and Grafana. Access dashboards at `http://localhost:3000`.
+
+**Q: What are the system requirements?**
+A: Minimum: 8GB RAM, 4 CPU cores, 50GB storage. Recommended: 16GB+ RAM, 8+ CPU cores, 100GB+ SSD storage.
+
+**Q: How do I update AMAS?**
+A: Use the update command: `docker-compose pull && docker-compose up -d` or follow the [Update Guide](../deployment/UPDATE_GUIDE.md).
+
+---
+
+## 📚 Additional Resources
+
+### Guides
+- [Setup Guide](SETUP_GUIDE.md) - Detailed installation instructions
+- [API Documentation](../api/README.md) - Complete API reference
+- [Security Guide](../security/SECURITY.md) - Security best practices
+- [Performance Guide](DOCKER_OPTIMIZATION_GUIDE.md) - Performance optimization
+
+### Examples
+- [Example Scripts](../../examples/) - Sample code and scripts
+- [Use Cases](../../docs/USE_CASES.md) - Real-world scenarios
+- [Tutorials](../../docs/TUTORIALS.md) - Step-by-step tutorials
+
+### Support
+- [GitHub Issues](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues)
+- [Community Discord](https://discord.gg/amas)
+- [Documentation](https://docs.amas.ai)
+- Email: support@amas.ai
+
+---
+
+**Happy Analyzing with AMAS! 🚀🤖✨**
+
+**Last Updated**: January 2025  
+**Version**: 1.1.0
