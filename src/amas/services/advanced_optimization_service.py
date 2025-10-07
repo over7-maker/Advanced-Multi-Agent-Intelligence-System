@@ -9,7 +9,7 @@ import gzip
 import hashlib
 import json
 import logging
-import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data
+import pickle
 import threading
 import time
 from collections import OrderedDict
@@ -767,10 +767,10 @@ class AdvancedOptimizationService:
             if total_weight == 0:
                 return providers[0]["name"]
 
-            # Use secrets module for cryptographically secure random selection
-            import secrets
+            # Simple weighted selection
+            import random
 
-            rand = secrets.SystemRandom().uniform(0, total_weight)
+            rand = random.uniform(0, total_weight)
             current_weight = 0
 
             for provider in providers:

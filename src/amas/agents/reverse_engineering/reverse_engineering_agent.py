@@ -30,10 +30,10 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             "static_analysis",
             "dynamic_analysis",
             "malware_analysis",
-            "binary_analysis",
-            "code_decompilation",
-            "behavior_analysis",
-            "threat_classification",
+            "code_deobfuscation",
+            "protocol_analysis",
+            "firmware_analysis",
+            "sandbox_execution",
         ]
 
         super().__init__(
@@ -59,16 +59,16 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 f"Executing reverse engineering task {task_id} of type {task_type}"
             )
 
-            if task_type == "static_analysis":
-                return await self._perform_static_analysis(task)
-            elif task_type == "dynamic_analysis":
-                return await self._perform_dynamic_analysis(task)
+            if task_type == "binary_analysis":
+                return await self._analyze_binary(task)
             elif task_type == "malware_analysis":
                 return await self._analyze_malware(task)
-            elif task_type == "binary_analysis":
-                return await self._analyze_binary(task)
-            elif task_type == "code_decompilation":
-                return await self._decompile_code(task)
+            elif task_type == "code_deobfuscation":
+                return await self._deobfuscate_code(task)
+            elif task_type == "protocol_analysis":
+                return await self._analyze_protocol(task)
+            elif task_type == "firmware_analysis":
+                return await self._analyze_firmware(task)
             else:
                 return await self._perform_general_reverse_engineering(task)
 
@@ -82,16 +82,27 @@ class ReverseEngineeringAgent(IntelligenceAgent):
 
     async def validate_task(self, task: Dict[str, Any]) -> bool:
         """Validate if this agent can handle the task"""
+        re_keywords = [
+            "reverse",
+            "engineering",
+            "binary",
+            "malware",
+            "deobfuscation",
+            "protocol",
+            "firmware",
+            "sandbox",
+        ]
+
         reverse_engineering_keywords = [
             "reverse",
             "engineering",
-            "static",
-            "dynamic",
-            "malware",
             "binary",
-            "decompile",
             "analysis",
             "disassembly",
+            "decompilation",
+            "malware",
+            "firmware",
+            "sandbox",
         ]
 
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
@@ -101,42 +112,30 @@ class ReverseEngineeringAgent(IntelligenceAgent):
         """Perform static analysis on binary"""
         try:
             binary_path = task.get("parameters", {}).get("binary_path", "")
-            analysis_depth = task.get("parameters", {}).get("depth", "comprehensive")
+            analysis_depth = task.get("parameters", {}).get(
+                "analysis_depth", "standard"
+            )
 
-            # Mock static analysis
-            static_results = {
+            # Mock binary analysis
+            analysis_result = {
                 "binary_path": binary_path,
-                "file_info": {
-                    "size": 1024000,
-                    "architecture": "x86_64",
-                    "platform": "linux",
-                    "compiler": "gcc",
-                    "stripped": False,
-                },
-                "strings": [
-                    "Hello World",
-                    "Error: Invalid input",
-                    "Debug mode enabled",
-                ],
-                "imports": ["printf", "malloc", "free", "strcpy"],
-                "exports": ["main", "init", "cleanup"],
+                "file_type": "PE32",
+                "architecture": "x86_64",
+                "entry_point": "0x401000",
                 "sections": [
-                    {"name": ".text", "size": 4096, "permissions": "r-x"},
-                    {"name": ".data", "size": 1024, "permissions": "rw-"},
-                    {"name": ".bss", "size": 512, "permissions": "rw-"},
+                    {"name": ".text", "size": 4096, "characteristics": "executable"},
+                    {"name": ".data", "size": 2048, "characteristics": "readable"},
+                    {"name": ".rdata", "size": 1024, "characteristics": "readable"},
                 ],
-                "functions": [
-                    {"name": "main", "address": "0x400000", "size": 256},
-                    {"name": "init", "address": "0x400100", "size": 128},
-                ],
+                "imports": ["kernel32.dll", "user32.dll", "ntdll.dll"],
+                "strings": ["Hello World", "Error", "Success"],
                 "analysis_depth": analysis_depth,
             }
 
             return {
                 "success": True,
-                "task_type": "static_analysis",
-                "binary_path": binary_path,
-                "results": static_results,
+                "task_type": "binary_analysis",
+                "result": analysis_result,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
@@ -224,48 +223,33 @@ class ReverseEngineeringAgent(IntelligenceAgent):
         """Analyze malware sample"""
         try:
             sample_path = task.get("parameters", {}).get("sample_path", "")
-            analysis_type = task.get("parameters", {}).get(
-                "analysis_type", "comprehensive"
-            )
+            sandbox_mode = task.get("parameters", {}).get("sandbox_mode", True)
 
             # Mock malware analysis
-            malware_results = {
+            malware_result = {
                 "sample_path": sample_path,
-                "threat_classification": {
-                    "family": "Trojan.Generic",
-                    "type": "Trojan",
-                    "severity": "High",
-                    "confidence": 0.85,
-                },
+                "threat_level": "high",
+                "malware_family": "Trojan.Generic",
                 "behavior_analysis": {
-                    "persistence_mechanisms": ["registry_run", "startup_folder"],
-                    "network_behavior": ["c2_communication", "data_exfiltration"],
-                    "file_system_behavior": ["file_encryption", "backdoor_creation"],
-                    "anti_analysis": ["vm_detection", "debugger_detection"],
+                    "network_activity": ["connects to C2 server"],
+                    "file_system_changes": [
+                        "creates registry keys",
+                        "modifies system files",
+                    ],
+                    "process_creation": ["spawns child processes"],
                 },
+                "sandbox_mode": sandbox_mode,
                 "indicators_of_compromise": [
-                    {"type": "ip", "value": "192.168.1.100", "confidence": 0.9},
-                    {
-                        "type": "domain",
-                        "value": "malicious.example.com",
-                        "confidence": 0.8,
-                    },
-                    {"type": "hash", "value": "abc123def456", "confidence": 1.0},
+                    "IP: 192.168.1.100",
+                    "Domain: malicious.com",
+                    "File hash: abc123def456",
                 ],
-                "capabilities": [
-                    "keylogging",
-                    "screen_capture",
-                    "file_encryption",
-                    "network_communication",
-                ],
-                "analysis_type": analysis_type,
             }
 
             return {
                 "success": True,
                 "task_type": "malware_analysis",
-                "sample_path": sample_path,
-                "results": malware_results,
+                "result": malware_result,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
@@ -280,100 +264,108 @@ class ReverseEngineeringAgent(IntelligenceAgent):
     async def _analyze_binary(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze binary file"""
         try:
-            binary_path = task.get("parameters", {}).get("binary_path", "")
-            analysis_scope = task.get("parameters", {}).get("scope", "full")
+            code = task.get("parameters", {}).get("code", "")
+            obfuscation_type = task.get("parameters", {}).get(
+                "obfuscation_type", "unknown"
+            )
 
-            # Mock binary analysis
-            binary_results = {
-                "binary_path": binary_path,
-                "file_format": "ELF",
-                "architecture": "x86_64",
-                "entry_point": "0x400000",
-                "sections": [
-                    {"name": ".text", "address": "0x400000", "size": 4096},
-                    {"name": ".data", "address": "0x401000", "size": 1024},
-                    {"name": ".bss", "address": "0x401400", "size": 512},
+            # Mock deobfuscation
+            deobfuscated_result = {
+                "original_code": code,
+                "deobfuscated_code": 'def main():\n    print("Hello World")',
+                "obfuscation_type": obfuscation_type,
+                "deobfuscation_techniques": [
+                    "string replacement",
+                    "control flow analysis",
                 ],
-                "symbols": [
-                    {"name": "main", "address": "0x400000", "type": "function"},
-                    {"name": "printf", "address": "0x400010", "type": "import"},
-                    {"name": "global_var", "address": "0x401000", "type": "variable"},
-                ],
-                "relocations": [
-                    {"address": "0x400020", "type": "R_X86_64_64", "symbol": "printf"}
-                ],
-                "analysis_scope": analysis_scope,
+                "confidence": 0.8,
             }
 
             return {
                 "success": True,
-                "task_type": "binary_analysis",
-                "binary_path": binary_path,
-                "results": binary_results,
+                "task_type": "code_deobfuscation",
+                "result": deobfuscated_result,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
         except Exception as e:
-            logger.error(f"Error in binary analysis: {e}")
+            logger.error(f"Error in code deobfuscation: {e}")
             return {
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _decompile_code(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Decompile binary code"""
+    async def _analyze_protocol(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze network protocols"""
         try:
-            binary_path = task.get("parameters", {}).get("binary_path", "")
-            decompiler = task.get("parameters", {}).get("decompiler", "ghidra")
+            protocol_data = task.get("parameters", {}).get("protocol_data", "")
+            protocol_type = task.get("parameters", {}).get("protocol_type", "unknown")
 
-            # Mock code decompilation
-            decompilation_results = {
-                "binary_path": binary_path,
-                "decompiler": decompiler,
-                "functions": [
-                    {
-                        "name": "main",
-                        "address": "0x400000",
-                        "source_code": """
-int main(int argc, char** argv) {
-    printf("Hello World\\n");
-    return 0;
-}
-                        """,
-                        "complexity": "low",
-                    },
-                    {
-                        "name": "init",
-                        "address": "0x400100",
-                        "source_code": """
-void init() {
-    // Initialize global variables
-    global_var = 0;
-}
-                        """,
-                        "complexity": "low",
-                    },
-                ],
-                "global_variables": [
-                    {"name": "global_var", "type": "int", "address": "0x401000"}
-                ],
-                "strings": [
-                    {"value": "Hello World", "address": "0x401100"},
-                    {"value": "Error: Invalid input", "address": "0x401200"},
-                ],
+            # Mock protocol analysis
+            protocol_result = {
+                "protocol_type": protocol_type,
+                "packet_structure": {
+                    "header_size": 20,
+                    "payload_size": 100,
+                    "checksum": "0x1234",
+                },
+                "message_types": ["request", "response", "error"],
+                "encryption": "AES-256",
+                "authentication": "HMAC-SHA256",
             }
 
             return {
                 "success": True,
-                "task_type": "code_decompilation",
-                "binary_path": binary_path,
-                "results": decompilation_results,
+                "task_type": "protocol_analysis",
+                "result": protocol_result,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
         except Exception as e:
-            logger.error(f"Error in code decompilation: {e}")
+            logger.error(f"Error in protocol analysis: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+    async def _analyze_firmware(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze firmware files"""
+        try:
+            firmware_path = task.get("parameters", {}).get("firmware_path", "")
+            analysis_type = task.get("parameters", {}).get("analysis_type", "static")
+
+            # Mock firmware analysis
+            firmware_result = {
+                "firmware_path": firmware_path,
+                "firmware_type": "UEFI",
+                "version": "1.0.0",
+                "vendor": "Mock Vendor",
+                "vulnerabilities": [
+                    {
+                        "cve": "CVE-2023-1234",
+                        "severity": "high",
+                        "description": "Buffer overflow",
+                    },
+                    {
+                        "cve": "CVE-2023-5678",
+                        "severity": "medium",
+                        "description": "Information disclosure",
+                    },
+                ],
+                "analysis_type": analysis_type,
+            }
+
+            return {
+                "success": True,
+                "task_type": "firmware_analysis",
+                "result": firmware_result,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+        except Exception as e:
+            logger.error(f"Error in binary analysis: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -389,18 +381,18 @@ void init() {
             parameters = task.get("parameters", {})
 
             # Mock general reverse engineering
-            reverse_engineering_result = {
-                "analysis_id": f"reverse_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            re_result = {
+                "analysis_id": f"re_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
                 "description": description,
                 "status": "completed",
                 "findings": [
-                    "Reverse engineering analysis completed successfully",
-                    "No malicious code detected",
-                    "Binary appears to be legitimate",
+                    "Reverse engineering analysis completed",
+                    "No malicious behavior detected",
+                    "Code structure is well-organized",
                 ],
                 "recommendations": [
-                    "Continue monitoring for suspicious behavior",
-                    "Update analysis tools and techniques",
+                    "Continue monitoring for changes",
+                    "Update analysis tools",
                 ],
                 "confidence": 0.85,
             }
@@ -408,7 +400,7 @@ void init() {
             return {
                 "success": True,
                 "task_type": "general_reverse_engineering",
-                "result": reverse_engineering_result,
+                "result": re_result,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 

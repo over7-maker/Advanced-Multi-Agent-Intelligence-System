@@ -2,10 +2,10 @@
 Virtual Environment Setup Script for AMAS Intelligence System
 """
 
+import logging
+import os
 import subprocess
 import sys
-import os
-import logging
 from pathlib import Path
 
 # Configure logging

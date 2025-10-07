@@ -4,6 +4,7 @@ FastAPI Main Application for AMAS Intelligence System
 
 import asyncio
 import logging
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -96,9 +97,38 @@ async def startup_event():
     try:
         logger.info("Initializing AMAS Intelligence System...")
 
-        # Initialize AMAS application
-        amas_app = AMASApplication()
-        await amas_app.initialize()
+        # Configuration
+        config = {
+            "llm_service_url": "http://localhost:11434",
+            "vector_service_url": "http://localhost:8001",
+            "graph_service_url": "bolt://localhost:7687",
+            "postgres_host": "localhost",
+            "postgres_port": 5432,
+            "postgres_user": "amas",
+            "postgres_password": "amas123",
+            "postgres_db": "amas",
+            "redis_host": "localhost",
+            "redis_port": 6379,
+            "redis_db": 0,
+            "neo4j_username": "neo4j",
+            "neo4j_password": "amas123",
+            "neo4j_database": "neo4j",
+            "jwt_secret": os.environ.get(
+                "AMAS_JWT_SECRET", "amas_jwt_secret_key_2024_secure"
+            ),
+            "encryption_key": os.environ.get(
+                "AMAS_ENCRYPTION_KEY", "amas_encryption_key_2024_secure_32_chars"
+            ),
+            "deepseek_api_key": os.environ.get("DEEPSEEK_API_KEY"),
+            "glm_api_key": os.environ.get("GLM_API_KEY"),
+            "grok_api_key": os.environ.get("GROK_API_KEY"),
+            "n8n_url": os.environ.get("N8N_URL", "http://localhost:5678"),
+            "n8n_api_key": os.environ.get("N8N_API_KEY"),
+        }
+
+        # Initialize AMAS system
+        amas_system = AMASApplication(config)
+        await amas_system.initialize()
 
         logger.info("AMAS Intelligence System initialized successfully")
 
@@ -150,8 +180,8 @@ async def get_system_status():
         status = await amas.orchestrator.get_system_status()
 
         return SystemStatus(
-            status=status.get("orchestrator_status", "unknown"),
-            agents=status.get("active_agents", 0),
+            status=status.get("status", "unknown"),
+            agents=status.get("agents", 0),
             active_tasks=status.get("active_tasks", 0),
             total_tasks=status.get("total_tasks", 0),
             timestamp=status.get("timestamp", datetime.utcnow().isoformat()),
@@ -174,11 +204,22 @@ async def submit_task(
         amas = await get_amas_system()
 
         # Submit task
-        task_id = await amas.orchestrator.submit_task(
-            task_type=task_request.type,
-            description=task_request.description,
-            parameters=task_request.parameters,
-            priority=task_request.priority,
+        task_id = await amas.submit_task(
+            {
+                "type": task_request.type,
+                "description": task_request.description,
+                "parameters": task_request.parameters,
+                "priority": task_request.priority,
+            }
+        )
+
+        # Log audit event
+        await amas.security_service.log_audit_event(
+            event_type="task_submission",
+            user_id=auth["user_id"],
+            action="submit_task",
+            details=f"Task submitted: {task_request.type}",
+            classification="system",
         )
 
         # Log audit event
@@ -208,12 +249,12 @@ async def get_task_status(task_id: str, auth: dict = Depends(verify_auth)):
     try:
         amas = await get_amas_system()
 
-        # Get task status from orchestrator
-        task_status = await amas.orchestrator.get_task_status(task_id)
-        if not task_status:
-            raise HTTPException(status_code=404, detail="Task not found")
+        # Get task result
+        task_result = await amas.get_task_result(task_id)
+        if "error" in task_result:
+            raise HTTPException(status_code=404, detail=task_result["error"])
 
-        return task_status
+        return task_result
 
     except HTTPException:
         raise
@@ -229,8 +270,21 @@ async def get_agents(auth: dict = Depends(verify_auth)):
     try:
         amas = await get_amas_system()
 
-        # Get agents from orchestrator
-        agents = await amas.orchestrator.list_agents()
+        agents = []
+        if hasattr(amas, "orchestrator") and amas.orchestrator:
+            for agent_id, agent in amas.orchestrator.agents.items():
+                agent_status = await agent.get_status()
+                agents.append(
+                    {
+                        "agent_id": agent_id,
+                        "name": agent_status.get("name", ""),
+                        "status": agent_status.get("status", "unknown"),
+                        "capabilities": agent_status.get("capabilities", []),
+                        "last_activity": agent_status.get("last_activity", ""),
+                        "metrics": agent_status.get("metrics", {}),
+                    }
+                )
+
         return {"agents": agents}
 
     except Exception as e:
@@ -245,12 +299,16 @@ async def get_agent_status(agent_id: str, auth: dict = Depends(verify_auth)):
     try:
         amas = await get_amas_system()
 
-        # Get agent status from orchestrator
-        agent_status = await amas.orchestrator.get_agent_status(agent_id)
-        if not agent_status:
+        if not hasattr(amas, "orchestrator") or not amas.orchestrator:
+            raise HTTPException(status_code=503, detail="Orchestrator not available")
+
+        if agent_id not in amas.orchestrator.agents:
             raise HTTPException(status_code=404, detail="Agent not found")
 
-        return agent_status
+        agent = amas.orchestrator.agents[agent_id]
+        status = await agent.get_status()
+
+        return status
 
     except HTTPException:
         raise
@@ -275,15 +333,13 @@ async def execute_workflow(
         result = await amas.orchestrator.execute_workflow(workflow_id, parameters)
 
         # Log audit event
-        security_service = amas.service_manager.get_security_service()
-        if security_service:
-            await security_service.log_audit_event(
-                event_type="workflow_execution",
-                user_id=auth["user_id"],
-                action="execute_workflow",
-                details=f"Workflow executed: {workflow_id}",
-                classification="system",
-            )
+        await amas.security_service.log_audit_event(
+            event_type="workflow_execution",
+            user_id=auth["user_id"],
+            action="execute_workflow",
+            details=f"Workflow executed: {workflow_id}",
+            classification="system",
+        )
 
         return result
 
@@ -305,13 +361,7 @@ async def get_audit_log(
         amas = await get_amas_system()
 
         # Get audit log
-        security_service = amas.service_manager.get_security_service()
-        if not security_service:
-            raise HTTPException(
-                status_code=503, detail="Security service not available"
-            )
-
-        audit_log = await security_service.get_audit_log(
+        audit_log = await amas.security_service.get_audit_log(
             user_id=user_id, event_type=event_type
         )
 
@@ -339,5 +389,5 @@ async def root():
 
 if __name__ == "__main__":
     uvicorn.run(
-        "api.main:app", host="127.0.0.1", port=8000, reload=True, log_level="info"
+        "api.main:app", host="0.0.0.0", port=8000, reload=True, log_level="info"
     )

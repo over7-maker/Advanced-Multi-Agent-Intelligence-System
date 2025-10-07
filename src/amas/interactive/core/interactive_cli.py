@@ -9,58 +9,58 @@ agent coordination, and comprehensive task management.
 """
 
 import asyncio
-import sys
-import os
 import json
-import time
-import uuid
+import os
 import signal
+import sys
 import threading
-from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Union, Callable
-from dataclasses import dataclass, asdict
-from enum import Enum
+import time
 import traceback
+import uuid
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
+
+from rich import print as rprint
+from rich.align import Align
+from rich.columns import Columns
 
 # Rich console for beautiful output
-from rich.console import Console
+from rich.console import Console, Group
+from rich.layout import Layout
+from rich.live import Live
+from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.table import Table
 from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
     Progress,
     SpinnerColumn,
     TextColumn,
-    BarColumn,
     TimeElapsedColumn,
-    MofNCompleteColumn,
 )
+from rich.prompt import Confirm, IntPrompt, Prompt
 from rich.syntax import Syntax
-from rich.markdown import Markdown
-from rich.layout import Layout
-from rich.live import Live
+from rich.table import Table
 from rich.text import Text
-from rich.align import Align
-from rich import print as rprint
-from rich.prompt import Prompt, Confirm, IntPrompt
-from rich.console import Group
-from rich.columns import Columns
 
 # Add AMAS modules to path
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 
 try:
-    from amas.core.orchestrator import AMASOrchestrator
-    from amas.services.ai_service_manager import AIServiceManager
     from amas.agents.orchestrator_enhanced import EnhancedOrchestrator
-    from amas.utils.security_utils import SecurityUtils
-    from amas.interactive.ai.nlp_engine import NLPEngine
+    from amas.core.orchestrator import AMASOrchestrator
     from amas.interactive.ai.intent_classifier import IntentClassifier
+    from amas.interactive.ai.nlp_engine import NLPEngine
     from amas.interactive.core.agent_coordinator import AgentCoordinator
     from amas.interactive.core.task_manager import TaskManager
     from amas.interactive.core.visual_interface import VisualInterface
     from amas.interactive.utils.config_manager import ConfigManager
     from amas.interactive.utils.logger import InteractiveLogger
+    from amas.services.ai_service_manager import AIServiceManager
+    from amas.utils.security_utils import SecurityUtils
 except ImportError as e:
     print(f"⚠️ Import error: {e}")
     print("Please ensure AMAS is properly installed and configured")

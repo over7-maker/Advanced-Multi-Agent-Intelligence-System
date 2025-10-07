@@ -24,19 +24,18 @@ class AgentCommunication:
     async def publish(self, event_type: str, data: Dict[str, Any]):
         """Publish an event to subscribers"""
         try:
-            message = {
-                "event_type": event_type,
+            message_data = {
+                "from": self.agent_id,
                 "data": data,
-                "sender": self.agent_id,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-            self.message_queue.append(message)
+            self.message_queue.append(message_data)
 
             if event_type in self.subscribers:
                 for handler in self.subscribers[event_type]:
                     try:
-                        await handler(message)
+                        await handler(data)
                     except Exception as e:
                         logger.error(f"Error in event handler for {event_type}: {e}")
 
@@ -52,21 +51,25 @@ class AgentCommunication:
         self.subscribers[event_type].append(handler)
         logger.info(f"Agent {self.agent_id} subscribed to {event_type}")
 
-    async def send_message(self, target_agent: str, message: Dict[str, Any]):
-        """Send a direct message to another agent"""
+    async def broadcast_message(
+        self, message: Dict[str, Any], topic: str = "general"
+    ) -> bool:
+        """Broadcast message to all subscribers"""
         try:
-            direct_message = {
-                "target_agent": target_agent,
-                "sender": self.agent_id,
+            message_data = {
+                "from": self.agent_id,
+                "topic": topic,
                 "message": message,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-            self.message_queue.append(direct_message)
-            logger.info(f"Sent message to {target_agent} from {self.agent_id}")
+            self.message_queue.append(message_data)
+            logger.info(f"Broadcasted message on topic {topic} from {self.agent_id}")
+            return True
 
         except Exception as e:
-            logger.error(f"Error sending message to {target_agent}: {e}")
+            logger.error(f"Error broadcasting message: {e}")
+            return False
 
     async def get_messages(self, limit: int = 100) -> List[Dict[str, Any]]:
         """Get recent messages"""

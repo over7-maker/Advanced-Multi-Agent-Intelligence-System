@@ -9,50 +9,52 @@ with AI agents through quantum entanglement principles.
 """
 
 import asyncio
-import numpy as np
 import json
+import math
+import queue
+import threading
 import time
 import uuid
-from typing import Dict, List, Optional, Any, Union, Tuple
-from dataclasses import dataclass, asdict
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-import threading
-import queue
-from concurrent.futures import ThreadPoolExecutor
-import math
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
 
 # Quantum-inspired libraries
 try:
     import qiskit
-    from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
+    from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
     from qiskit.visualization import plot_bloch_multivector
 
     QUANTUM_AVAILABLE = True
 except ImportError:
     QUANTUM_AVAILABLE = False
 
+from rich import print as rprint
+from rich.align import Align
+from rich.columns import Columns
+
 # Advanced UI libraries
 from rich.console import Console
 from rich.layout import Layout
+from rich.live import Live
+from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.table import Table
 from rich.progress import (
+    BarColumn,
     Progress,
     SpinnerColumn,
     TextColumn,
-    BarColumn,
     TimeElapsedColumn,
 )
-from rich.live import Live
-from rich.align import Align
-from rich.columns import Columns
-from rich.tree import Tree
 from rich.status import Status
-from rich.text import Text
 from rich.syntax import Syntax
-from rich.markdown import Markdown
-from rich import print as rprint
+from rich.table import Table
+from rich.text import Text
+from rich.tree import Tree
 
 # Neural processing
 try:

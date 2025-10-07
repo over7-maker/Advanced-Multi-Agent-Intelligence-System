@@ -3,16 +3,17 @@
 AI Issues Responder - Automatically responds to GitHub issues using AI
 """
 
-import asyncio
 import argparse
+import asyncio
+import json
 import logging
 import os
-import sys
-import json
 import re
-from pathlib import Path
-from typing import Dict, Any, List, Optional
+import sys
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
 import requests
 
 # Add project root to path

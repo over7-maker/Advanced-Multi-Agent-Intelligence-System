@@ -6,8 +6,8 @@ Simple script to run all workflow verification checks
 
 import asyncio
 import logging
-import sys
 import subprocess
+import sys
 from datetime import datetime
 
 # Configure logging

@@ -6,51 +6,29 @@ This module provides type-safe configuration with validation and environment var
 """
 
 import os
-from typing import Dict, Any, Optional, List, Union
-from pydantic import Field, validator, root_validator
-from pydantic_settings import BaseSettings
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
+
+from pydantic import Field, field_validator, model_validator
+from pydantic_settings import BaseSettings
 
 
 class DatabaseConfig(BaseSettings):
-    """
-    Database configuration settings.
+    """Database configuration"""
 
-    Manages PostgreSQL database connection parameters with validation.
-    """
-
-    host: str = Field(
-        default="localhost", env="AMAS_DB_HOST", description="Database host address"
-    )
-    port: int = Field(
-        default=5432,
-        env="AMAS_DB_PORT",
-        ge=1,
-        le=65535,
-        description="Database port number",
-    )
-    user: str = Field(
-        default="amas",
-        env="AMAS_DB_USER",
-        min_length=1,
-        description="Database username",
-    )
-    password: str = Field(
-        default="amas123",
-        env="AMAS_DB_PASSWORD",
-        min_length=1,
-        description="Database password",
-    )
-    database: str = Field(
-        default="amas", env="AMAS_DB_NAME", min_length=1, description="Database name"
-    )
+    host: str = Field(default="localhost", env="AMAS_DB_HOST")
+    port: int = Field(default=5432, env="AMAS_DB_PORT")
+    user: str = Field(default="amas", env="AMAS_DB_USER")
+    password: str = Field(default="amas123", env="AMAS_DB_PASSWORD")
+    database: str = Field(default="amas", env="AMAS_DB_NAME")
 
     @property
     def url(self) -> str:
         """Get database connection URL."""
         return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
-    @validator("port")
+    @field_validator("port")
+    @classmethod
     def validate_port(cls, v):
         """Validate port number."""
         if not 1 <= v <= 65535:
@@ -59,28 +37,12 @@ class DatabaseConfig(BaseSettings):
 
 
 class RedisConfig(BaseSettings):
-    """
-    Redis configuration settings.
+    """Redis configuration"""
 
-    Manages Redis cache connection parameters with validation.
-    """
-
-    host: str = Field(
-        default="localhost", env="AMAS_REDIS_HOST", description="Redis host address"
-    )
-    port: int = Field(
-        default=6379,
-        env="AMAS_REDIS_PORT",
-        ge=1,
-        le=65535,
-        description="Redis port number",
-    )
-    db: int = Field(
-        default=0, env="AMAS_REDIS_DB", ge=0, le=15, description="Redis database number"
-    )
-    password: Optional[str] = Field(
-        default=None, env="AMAS_REDIS_PASSWORD", description="Redis password (optional)"
-    )
+    host: str = Field(default="localhost", env="AMAS_REDIS_HOST")
+    port: int = Field(default=6379, env="AMAS_REDIS_PORT")
+    db: int = Field(default=0, env="AMAS_REDIS_DB")
+    password: Optional[str] = Field(default=None, env="AMAS_REDIS_PASSWORD")
 
     @property
     def url(self) -> str:
@@ -88,14 +50,16 @@ class RedisConfig(BaseSettings):
         auth = f":{self.password}@" if self.password else ""
         return f"redis://{auth}{self.host}:{self.port}/{self.db}"
 
-    @validator("port")
+    @field_validator("port")
+    @classmethod
     def validate_port(cls, v):
         """Validate port number."""
         if not 1 <= v <= 65535:
             raise ValueError("Port must be between 1 and 65535")
         return v
 
-    @validator("db")
+    @field_validator("db")
+    @classmethod
     def validate_db(cls, v):
         """Validate database number."""
         if not 0 <= v <= 15:
@@ -147,7 +111,7 @@ class SecurityConfig(BaseSettings):
 class APIConfig(BaseSettings):
     """API configuration"""
 
-    host: str = Field(default="127.0.0.1", env="AMAS_API_HOST")
+    host: str = Field(default="0.0.0.0", env="AMAS_API_HOST")
     port: int = Field(default=8000, env="AMAS_API_PORT")
     workers: int = Field(default=4, env="AMAS_API_WORKERS")
     reload: bool = Field(default=False, env="AMAS_API_RELOAD")
@@ -186,14 +150,11 @@ class AMASConfig(BaseSettings):
         default=True, env="AMAS_GPU_ENABLED", description="Enable GPU acceleration"
     )
 
-    # Logging configuration
-    log_level: str = Field(
-        default="INFO", env="AMAS_LOG_LEVEL", description="Logging level"
-    )
+    # Logging
+    log_level: str = Field(default="INFO", env="AMAS_LOG_LEVEL")
     log_format: str = Field(
         default="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         env="AMAS_LOG_FORMAT",
-        description="Log message format",
     )
 
     # Directory configuration
@@ -254,45 +215,46 @@ class AMASConfig(BaseSettings):
         env_file_encoding = "utf-8"
         case_sensitive = False
         validate_assignment = True
+        extra = "ignore"  # Ignore extra fields
 
-    @validator("log_level")
-    def validate_log_level(cls, v: str) -> str:
-        """Validate log level."""
+    @field_validator("log_level")
+    @classmethod
+    def validate_log_level(cls, v):
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in valid_levels:
             raise ValueError(f"Log level must be one of {valid_levels}")
         return v.upper()
 
-    @validator("environment")
-    def validate_environment(cls, v: str) -> str:
-        """Validate environment."""
+    @field_validator("environment")
+    @classmethod
+    def validate_environment(cls, v):
         valid_envs = ["development", "staging", "production"]
         if v.lower() not in valid_envs:
             raise ValueError(f"Environment must be one of {valid_envs}")
         return v.lower()
 
-    @validator("data_dir", "logs_dir", "models_dir")
+    @field_validator("data_dir", "logs_dir", "models_dir")
+    @classmethod
     def validate_directories(cls, v: Path) -> Path:
         """Validate and convert directory paths."""
         if isinstance(v, str):
             return Path(v)
         return v
 
-    @root_validator
-    def validate_configuration(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    @model_validator(mode="after")
+    def validate_configuration(self) -> "AMASConfig":
         """Validate overall configuration."""
         # Check if we're in production mode
-        if values.get("environment") == "production":
-            if values.get("debug", False):
+        if self.environment == "production":
+            if self.debug:
                 raise ValueError("Debug mode cannot be enabled in production")
             if (
-                not values.get("security", {}).get("jwt_secret")
-                or values.get("security", {}).get("jwt_secret")
-                == "amas_jwt_secret_key_2024_secure"
+                not self.security.jwt_secret
+                or self.security.jwt_secret == "amas_jwt_secret_key_2024_secure"
             ):
                 raise ValueError("Production requires secure JWT secret")
 
-        return values
+        return self
 
     def create_directories(self) -> None:
         """Create necessary directories if they don't exist."""

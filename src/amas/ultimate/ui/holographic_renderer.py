@@ -9,49 +9,51 @@ quantum states, and multi-dimensional data structures.
 """
 
 import asyncio
-import numpy as np
 import json
-import time
 import math
-from typing import Dict, List, Optional, Any, Tuple, Union
-from dataclasses import dataclass, asdict
+import queue
+import threading
+import time
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
-import threading
-import queue
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
 
 # Advanced visualization libraries
 try:
+    import matplotlib.animation as animation
     import matplotlib.pyplot as plt
     from mpl_toolkits.mplot3d import Axes3D
-    import matplotlib.animation as animation
 
     MATPLOTLIB_AVAILABLE = True
 except ImportError:
     MATPLOTLIB_AVAILABLE = False
 
 try:
-    import plotly.graph_objects as go
     import plotly.express as px
+    import plotly.graph_objects as go
     from plotly.subplots import make_subplots
 
     PLOTLY_AVAILABLE = True
 except ImportError:
     PLOTLY_AVAILABLE = False
 
+from rich import print as rprint
+from rich.align import Align
+from rich.columns import Columns
+
 # Rich for console rendering
 from rich.console import Console
 from rich.layout import Layout
-from rich.panel import Panel
-from rich.table import Table
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from rich.live import Live
-from rich.align import Align
-from rich.columns import Columns
-from rich.tree import Tree
-from rich.text import Text
+from rich.panel import Panel
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 from rich.syntax import Syntax
-from rich import print as rprint
+from rich.table import Table
+from rich.text import Text
+from rich.tree import Tree
 
 
 class HolographicMode(Enum):

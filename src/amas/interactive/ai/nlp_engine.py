@@ -7,13 +7,13 @@ for interpreting user commands and extracting meaningful information
 for agent coordination and task execution.
 """
 
-import re
 import asyncio
 import json
-from typing import Dict, List, Optional, Any, Tuple, Union
+import logging
+import re
 from dataclasses import dataclass
 from datetime import datetime
-import logging
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # NLP libraries
 try:
@@ -26,10 +26,10 @@ except ImportError:
 
 try:
     import nltk
-    from nltk.corpus import stopwords
-    from nltk.tokenize import word_tokenize, sent_tokenize
     from nltk.chunk import ne_chunk
+    from nltk.corpus import stopwords
     from nltk.tag import pos_tag
+    from nltk.tokenize import sent_tokenize, word_tokenize
 
     NLTK_AVAILABLE = True
 except ImportError:
@@ -37,8 +37,8 @@ except ImportError:
 
 # Rich for enhanced output
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 
 
 @dataclass

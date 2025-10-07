@@ -11,7 +11,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from ..agents.base.intelligence_agent import AgentStatus, IntelligenceAgent
 from ..agents.data_analysis.data_analysis_agent import DataAnalysisAgent
@@ -23,7 +23,6 @@ from ..agents.reporting.reporting_agent import ReportingAgent
 from ..agents.reverse_engineering.reverse_engineering_agent import (
     ReverseEngineeringAgent,
 )
-from ..agents.technology_monitor.technology_monitor_agent import TechnologyMonitorAgent
 
 
 class TaskPriority(Enum):
@@ -80,6 +79,8 @@ class IntelligenceOrchestrator:
 
     def __init__(
         self,
+        config: Any = None,
+        service_manager: Any = None,
         llm_service: Any = None,
         vector_service: Any = None,
         knowledge_graph: Any = None,
@@ -89,14 +90,24 @@ class IntelligenceOrchestrator:
         Initialize the intelligence orchestrator.
 
         Args:
+            config: AMAS configuration object
+            service_manager: Service manager instance
             llm_service: LLM service for AI operations
             vector_service: Vector service for semantic search
             knowledge_graph: Knowledge graph service
             security_service: Security service for access control
         """
-        self.llm_service = llm_service
-        self.vector_service = vector_service
-        self.knowledge_graph = knowledge_graph
+        self.config = config
+        self.service_manager = service_manager
+        self.llm_service = llm_service or (
+            service_manager.get_llm_service() if service_manager else None
+        )
+        self.vector_service = vector_service or (
+            service_manager.get_vector_service() if service_manager else None
+        )
+        self.knowledge_graph = knowledge_graph or (
+            service_manager.get_knowledge_graph_service() if service_manager else None
+        )
         self.security_service = security_service
 
         # Agent registry
@@ -820,3 +831,53 @@ class IntelligenceOrchestrator:
             self.logger.error(f"Workflow execution {execution_id} failed: {e}")
             instance["status"] = "failed"
             instance["error"] = str(e)
+
+    async def get_task_result(self, task_id: str) -> Dict[str, Any]:
+        """Get task result"""
+        if task_id not in self.tasks:
+            return {"error": "Task not found", "task_id": task_id}
+
+        task = self.tasks[task_id]
+        return {
+            "task_id": task_id,
+            "type": task.type,
+            "description": task.description,
+            "status": task.status.value,
+            "priority": task.priority.value,
+            "assigned_agent": task.assigned_agent,
+            "created_at": task.created_at.isoformat(),
+            "started_at": task.started_at.isoformat() if task.started_at else None,
+            "completed_at": (
+                task.completed_at.isoformat() if task.completed_at else None
+            ),
+            "result": task.result,
+            "error": task.error,
+        }
+
+    async def initialize(self) -> None:
+        """Initialize the orchestrator"""
+        try:
+            self.logger.info("Initializing Intelligence Orchestrator...")
+
+            # Initialize core services
+            self._initialize_services()
+
+            self.logger.info("Intelligence Orchestrator initialized successfully")
+
+        except Exception as e:
+            self.logger.error(f"Failed to initialize orchestrator: {e}")
+            raise
+
+    async def shutdown(self) -> None:
+        """Shutdown the orchestrator"""
+        try:
+            self.logger.info("Shutting down Intelligence Orchestrator...")
+
+            # Stop all agents
+            for agent in self.agents.values():
+                await agent.stop()
+
+            self.logger.info("Intelligence Orchestrator shutdown complete")
+
+        except Exception as e:
+            self.logger.error(f"Error during orchestrator shutdown: {e}")

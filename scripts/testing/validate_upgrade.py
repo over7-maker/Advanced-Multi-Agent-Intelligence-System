@@ -4,10 +4,10 @@ Simple validation script for Enhanced AI Issues Responder v2.0 upgrade
 Validates file structure, syntax, and basic functionality without external dependencies
 """
 
-import os
-import sys
 import ast
 import json
+import os
+import sys
 from pathlib import Path
 
 

@@ -7,18 +7,18 @@ and pattern matching to understand user commands and determine appropriate
 agent coordination strategies.
 """
 
-import re
 import asyncio
 import json
-from typing import Dict, List, Optional, Any, Tuple
+import logging
+import re
 from dataclasses import dataclass
 from datetime import datetime
-import logging
+from typing import Any, Dict, List, Optional, Tuple
 
 # Rich for enhanced output
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 
 
 @dataclass
