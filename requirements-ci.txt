@@ -1,0 +1,38 @@
+# CI-specific requirements with compatible versions
+# This file is optimized for CI environments with Python 3.11+
+
+# Core dependencies
+asyncio
+aiohttp>=3.8.0,<4.0.0
+pydantic>=2.0.0,<3.0.0
+pydantic-settings>=2.0.0,<3.0.0
+
+# Web framework
+fastapi>=0.100.0,<1.0.0
+uvicorn[standard]>=0.20.0,<1.0.0
+
+# Data processing
+numpy>=1.24.0,<2.0.0
+pandas>=2.0.0,<3.0.0
+scipy>=1.10.0,<2.0.0
+
+# Web scraping
+beautifulsoup4>=4.12.0,<5.0.0
+lxml>=4.9.0,<5.0.0
+
+# Database (optional for CI)
+psycopg2-binary>=2.9.0,<3.0.0
+redis>=4.0.0,<6.0.0
+
+# Testing
+pytest>=7.0.0,<8.0.0
+pytest-asyncio>=0.21.0,<1.0.0
+pytest-cov>=4.0.0,<5.0.0
+
+# Development tools
+black>=23.0.0,<24.0.0
+flake8>=6.0.0,<7.0.0
+mypy>=1.0.0,<2.0.0
+
+# Security
+cryptography>=40.0.0,<44.0.0

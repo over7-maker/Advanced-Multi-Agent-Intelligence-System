@@ -38,8 +38,10 @@ COPY . .
 
 # Change ownership to app user
 RUN chown -R amas:amas /app
+
 USER amas
 
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
 # Expose port
 EXPOSE 8000
 
