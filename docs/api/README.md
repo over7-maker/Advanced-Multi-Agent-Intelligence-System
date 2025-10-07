@@ -1,4 +1,5 @@
 # 🔌 AMAS API Documentation - Fully Integrated (January 2025)
+# 🔌 AMAS API Documentation
 
 > **Integration Status**: ✅ All endpoints verified and operational following PR #162 fixes
 
@@ -358,17 +359,21 @@ GET /api/v1/ai-providers
 **Response:**
 ```json
 {
+  "total_providers": 15,
+  "active_providers": 12,
   "providers": [
     {
       "id": "deepseek",
       "name": "DeepSeek V3.1",
       "status": "active",
       "priority": 1,
+      "provider_type": "openai_compatible",
       "health": {
         "status": "healthy",
         "success_rate": 0.99,
         "avg_response_time": 1.2,
-        "last_checked": "2025-01-07T12:00:00Z"
+        "last_checked": "2025-01-07T12:00:00Z",
+        "consecutive_failures": 0
       }
     },
     {
@@ -376,13 +381,17 @@ GET /api/v1/ai-providers
       "name": "GLM 4.5 Air",
       "status": "active",
       "priority": 2,
+      "provider_type": "openai_compatible",
       "health": {
         "status": "healthy",
         "success_rate": 0.98,
-        "avg_response_time": 1.5
+        "avg_response_time": 1.5,
+        "rate_limited": false
       }
     }
-  ]
+  ],
+  "fallback_chain": ["deepseek", "glm", "grok", "kimi", "qwen"],
+  "selection_strategy": "priority"
 }
 ```
 
@@ -437,6 +446,76 @@ POST /api/v1/ai-providers/{provider_id}/test
     "authentication": "pass",
     "model_access": "pass",
     "response_quality": "pass"
+  }
+}
+```
+
+---
+
+## 🧠 ML & Optimization
+
+### Get ML Decision Engine Status
+Retrieve ML decision engine metrics and performance.
+
+```http
+GET /api/v1/ml/decision-engine/status
+```
+
+**Response:**
+```json
+{
+  "status": "active",
+  "model_version": "1.2.0",
+  "metrics": {
+    "accuracy": 0.95,
+    "predictions_made": 15420,
+    "avg_decision_time": 0.023,
+    "optimization_score": 0.87
+  },
+  "recent_decisions": [
+    {
+      "task_id": "task-abc123",
+      "decision": "allocate_to_security_agent",
+      "confidence": 0.92,
+      "factors": ["task_type", "agent_availability", "performance_history"]
+    }
+  ]
+}
+```
+
+### Get RL Optimizer Status
+Get Reinforcement Learning optimizer performance and actions.
+
+```http
+GET /api/v1/rl/optimizer/status
+```
+
+**Response:**
+```json
+{
+  "status": "optimizing",
+  "environment": "amas_gym_v1",
+  "metrics": {
+    "episodes_completed": 5420,
+    "avg_reward": 0.82,
+    "optimization_actions_taken": 1523,
+    "performance_improvement": 0.52
+  },
+  "recent_optimizations": [
+    {
+      "action": "scale_up_workers",
+      "reward": 0.91,
+      "impact": "15% throughput increase"
+    },
+    {
+      "action": "enable_caching",
+      "reward": 0.78,
+      "impact": "23% latency reduction"
+    }
+  ],
+  "current_policy": {
+    "exploration_rate": 0.1,
+    "learning_rate": 0.001
   }
 }
 ```

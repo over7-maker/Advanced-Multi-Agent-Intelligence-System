@@ -1,4 +1,5 @@
 # 👨‍💻 AMAS Developer Guide - Complete Integration Documentation
+# 👨‍💻 AMAS Developer Guide
 
 > **Last Updated**: January 2025 | **Integration Status**: ✅ Fully Integrated
 
@@ -177,7 +178,7 @@ make lint
 
 ## 🔧 Core Components
 
-### 1. Agent Orchestrator
+### 1. Unified Orchestrator
 
 The heart of AMAS that coordinates all agent activities.
 
@@ -185,6 +186,18 @@ The heart of AMAS that coordinates all agent activities.
 # src/amas/orchestrator/orchestrator.py
 class AgentOrchestrator:
     """Coordinates multi-agent operations and workflows."""
+The heart of AMAS, implementing the unified orchestrator with provider management.
+
+```python
+# src/amas/core/unified_orchestrator.py
+class UnifiedIntelligenceOrchestrator:
+    """
+    Unified orchestrator with provider management and circuit breakers:
+    - Provider Management: Multi-AI provider support with fallback
+    - Circuit Breakers: Robust error handling and recovery
+    - Task Queue: Priority-based task management
+    - Performance Monitoring: Real-time metrics and health tracking
+    """
     
     def __init__(self, service_manager: ServiceManager):
         self.service_manager = service_manager
@@ -382,17 +395,38 @@ class CustomAgent(IntelligenceAgent):
         self.agents = {}
         self.task_queue = TaskQueue()
         self.event_bus = EventBus()
+        self.provider_manager = ProviderManager()
+        self.ml_engine = MLDecisionEngine()
+        
+    async def submit_task(self, agent_type: str, description: str, priority: int = 2) -> str:
+        """Submit a task to the unified orchestrator."""
+        task = IntelligenceTask(
+            agent_type=agent_type,
+            description=description,
+            priority=priority,
+            status=TaskStatus.PENDING
+        )
+        
+        # Add to priority queue
+        await self.task_queue.put(task)
+        return task.task_id
         
     async def execute_task(self, task: Task) -> TaskResult:
-        """Execute a task using appropriate agents."""
+        """Execute a task using appropriate agents with ML optimization."""
         # Task allocation using ML decision engine
-        agents = await self.allocate_agents(task)
+        agents = await self.ml_engine.allocate_agents(task)
         
-        # Create workflow
-        workflow = self.create_workflow(task, agents)
+        # Select optimal AI provider
+        provider = await self.provider_manager.get_optimal_provider(task)
         
-        # Execute workflow
+        # Create workflow with optimizations
+        workflow = self.create_workflow(task, agents, provider)
+        
+        # Execute workflow with monitoring
         results = await workflow.execute()
+        
+        # Learn from execution
+        await self.ml_engine.record_execution(task, results)
         
         return TaskResult(task_id=task.id, results=results)
 ```
@@ -714,10 +748,14 @@ pytest
 
 # Run with coverage
 pytest --cov=src --cov-report=html
+pytest --cov=src/amas --cov-report=html
 
 # Run specific test category
 pytest tests/unit/
 pytest tests/integration/
+
+# Run specific test file
+pytest tests/test_unified_orchestrator.py
 
 # Run tests in parallel
 pytest -n auto
@@ -1299,6 +1337,14 @@ pytest
 - [ ] Documentation is updated
 - [ ] Security review completed
 - [ ] Performance impact assessed
+
+### Test Coverage Goals
+
+- **Unit Tests**: 85%+ coverage
+- **Integration Tests**: Critical paths covered
+- **Performance Tests**: Baseline metrics established
+- **Security Tests**: OWASP Top 10 covered
+- **E2E Tests**: User workflows covered
 
 ---
 

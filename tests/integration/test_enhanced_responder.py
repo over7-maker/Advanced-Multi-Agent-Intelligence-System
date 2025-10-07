@@ -20,7 +20,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 sys.path.append(str(Path(__file__).parent))
 
 # Import the enhanced responder
-from ai_issues_responder_v2 import (
+from scripts.development.ai_issues_responder_v2 import (
     EnhancedAIIssuesResponder,
     IssueType,
     Priority,
