@@ -38,7 +38,7 @@ jobs:
     - name: 📦 Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[dev]
+        pip install -e .[ci]
     
     - name: 🎨 Code formatting check
       run: |
@@ -117,7 +117,7 @@ jobs:
     - name: 📦 Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[dev]
+        pip install -e .[ci]
     
     - name: 🏗️ Setup test environment
       run: |
@@ -227,7 +227,7 @@ jobs:
     
     - name: 📦 Install test dependencies
       run: |
-        pip install -e .[dev]
+        pip install -e .[ci]
     
     - name: 🎭 Run E2E tests
       run: |

@@ -3,22 +3,22 @@
 # Updated with all new implementations and security improvements
 
 # Web Framework & API
-fastapi==0.104.1
-uvicorn[standard]==0.24.0
-pydantic==2.5.0
-pydantic-settings==2.1.0
+fastapi>=0.104.0,<1.0.0
+uvicorn[standard]>=0.24.0,<1.0.0
+pydantic>=2.5.0,<3.0.0
+pydantic-settings>=2.1.0,<3.0.0
 
 # Async & HTTP
-aiohttp==3.9.1
-httpx==0.25.2
-anyio>=3.7.1,<4.0.0
+aiohttp>=3.9.0,<4.0.0
+httpx>=0.25.0,<1.0.0
+anyio>=3.7.0,<4.0.0
 
 # Database & Storage
-asyncpg==0.29.0
-psycopg2-binary==2.9.9
-sqlalchemy==2.0.23
-alembic==1.13.1
-redis[hiredis]==5.0.1
+asyncpg>=0.29.0,<1.0.0
+psycopg2-binary>=2.9.0,<3.0.0
+sqlalchemy>=2.0.0,<3.0.0
+alembic>=1.13.0,<2.0.0
+redis[hiredis]>=5.0.0,<6.0.0
 
 # Graph Database
 neo4j==5.15.0
@@ -28,8 +28,8 @@ py2neo==2021.2.4
 torch>=2.2.0,<3.0
 transformers==4.36.0
 sentence-transformers==2.2.2
-numpy==1.24.3
-scikit-learn==1.3.0
+numpy>=1.24.3,<2.0.0
+scikit-learn>=1.3.0,<2.0.0
 
 # Vector Search
 faiss-cpu==1.7.4
@@ -39,8 +39,8 @@ spacy==3.7.2
 nltk==3.8.1
 
 # Data Processing
-pandas==2.1.4
-scipy==1.11.4
+pandas>=2.1.4,<3.0.0
+scipy>=1.11.4,<2.0.0
 
 # Security & Encryption
 cryptography>=40.0.0,<44.0.0
@@ -89,7 +89,7 @@ bandit==1.7.5
 pre-commit==3.5.0
 
 # New Implementation Dependencies
-circuit-breaker==1.4.0
+# Note: Custom circuit breaker implementation in unified_orchestrator.py
 
 # Documentation
 sphinx==7.2.6
