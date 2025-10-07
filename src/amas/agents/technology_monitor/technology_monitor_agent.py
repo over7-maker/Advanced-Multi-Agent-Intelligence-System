@@ -2,12 +2,11 @@
 Technology Monitor Agent Implementation
 """
 
-import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
+from ..base.intelligence_agent import IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 
@@ -86,16 +85,29 @@ class TechnologyMonitorAgent(IntelligenceAgent):
 
     async def validate_task(self, task: Dict[str, Any]) -> bool:
         """Validate if this agent can handle the task"""
-        monitoring_keywords = [
+        # monitoring_keywords = [
+        #     "technology",
+        #     "trends",
+        #     "monitoring",
+        #     "academic",
+        #     "github",
+        #     "news",
+        #     "patent",
+        #     "innovation",
+        #     "research",
+        # ]
+
+        technology_keywords = [
             "technology",
+            "monitor",
+            "tracking",
             "trends",
-            "monitoring",
-            "academic",
-            "github",
-            "news",
-            "patent",
             "innovation",
+            "development",
             "research",
+            "patent",
+            "startup",
+            "funding",
         ]
 
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
@@ -108,7 +120,8 @@ class TechnologyMonitorAgent(IntelligenceAgent):
             time_range = task.get("parameters", {}).get("time_range", "30d")
 
             # Mock technology tracking
-            tracking_results = []
+            # tracking_results = []
+            trends = []
             for tech in technologies:
                 trends.append(
                     {
@@ -360,7 +373,7 @@ class TechnologyMonitorAgent(IntelligenceAgent):
         """Perform general technology monitoring"""
         try:
             description = task.get("description", "")
-            parameters = task.get("parameters", {})
+            # parameters = task.get("parameters", {})
 
             # Mock general technology monitoring
             monitoring_result = {

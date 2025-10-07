@@ -4,6 +4,8 @@ Reverse Engineering Agent Implementation
 
 import asyncio
 import logging
+import os
+import tempfile
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -91,6 +93,18 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             "sandbox",
         ]
 
+        reverse_engineering_keywords = [
+            "reverse",
+            "engineering",
+            "binary",
+            "analysis",
+            "disassembly",
+            "decompilation",
+            "malware",
+            "firmware",
+            "sandbox",
+        ]
+        
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
         return any(keyword in task_text for keyword in reverse_engineering_keywords)
 

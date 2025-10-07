@@ -26,17 +26,16 @@ class AgentCommunication:
         try:
             message_data = {
                 "from": self.agent_id,
-                "to": target_agent,
-                "message": message,
+                "data": data,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-            self.message_queue.append(message)
+            self.message_queue.append(message_data)
 
             if event_type in self.subscribers:
                 for handler in self.subscribers[event_type]:
                     try:
-                        await handler(message)
+                        await handler(data)
                     except Exception as e:
                         logger.error(f"Error in event handler for {event_type}: {e}")
 
@@ -64,11 +63,13 @@ class AgentCommunication:
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-            self.message_queue.append(direct_message)
-            logger.info(f"Sent message to {target_agent} from {self.agent_id}")
+            self.message_queue.append(message_data)
+            logger.info(f"Broadcasted message on topic {topic} from {self.agent_id}")
+            return True
 
         except Exception as e:
-            logger.error(f"Error sending message to {target_agent}: {e}")
+            logger.error(f"Error broadcasting message: {e}")
+            return False
 
     async def get_messages(self, limit: int = 100) -> List[Dict[str, Any]]:
         """Get recent messages"""

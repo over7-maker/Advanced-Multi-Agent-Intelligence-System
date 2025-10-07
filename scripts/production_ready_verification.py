@@ -83,6 +83,7 @@ def check_weak_cryptography():
     """Check for weak cryptographic algorithms"""
     print("🔍 Checking for weak cryptography...")
 
+    # SECURITY_SCANNER_PATTERNS: These are detection patterns, not vulnerabilities
     weak_patterns = [
         r"hashlib\.md5\s*\(",
         r"hashlib\.sha1\s*\(",
