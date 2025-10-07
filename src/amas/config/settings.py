@@ -241,8 +241,8 @@ class AMASConfig(BaseSettings):
             return Path(v)
         return v
 
-    @model_validator(mode='after')
-    def validate_configuration(self) -> 'AMASConfig':
+    @model_validator(mode="after")
+    def validate_configuration(self) -> "AMASConfig":
         """Validate overall configuration."""
         # Check if we're in production mode
         if self.environment == "production":

@@ -185,6 +185,7 @@ The security scanner is detecting its own pattern definitions as vulnerabilities
 
         return report
 
+
 def main():
     # Sample security report for testing
     sample_report = """

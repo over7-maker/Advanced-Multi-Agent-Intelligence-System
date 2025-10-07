@@ -4,27 +4,28 @@ Provides adaptive performance optimization using RL algorithms
 """
 
 import asyncio
-import logging
-import numpy as np
 import json
-import time
+import logging
+import os
+import pickle
+import queue
 import random
-from typing import Dict, Any, List, Optional, Tuple, Union
+import threading
+import time
+from collections import deque
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from dataclasses import dataclass, field
-import threading
-import queue
-from collections import deque
-import pickle
-import os
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
 
 # RL Libraries (would be installed in production)
 try:
     import gym
-    from stable_baselines3 import PPO, DQN, A2C
-    from stable_baselines3.common.env_util import make_vec_env
+    from stable_baselines3 import A2C, DQN, PPO
     from stable_baselines3.common.callbacks import EvalCallback
+    from stable_baselines3.common.env_util import make_vec_env
     from stable_baselines3.common.monitor import Monitor
 
     RL_AVAILABLE = True

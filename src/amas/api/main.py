@@ -43,7 +43,6 @@ security = HTTPBearer()
 amas_app = None
 
 
-
 # Pydantic models
 class TaskRequest(BaseModel):
     type: str
@@ -78,7 +77,6 @@ async def get_amas_system():
     if amas_app is None:
         raise HTTPException(status_code=503, detail="AMAS system not initialized")
     return amas_app
-
 
 
 # Dependency to verify authentication
@@ -268,7 +266,7 @@ async def get_agents(auth: dict = Depends(verify_auth)):
         amas = await get_amas_system()
 
         agents = []
-        if hasattr(amas, 'orchestrator') and amas.orchestrator:
+        if hasattr(amas, "orchestrator") and amas.orchestrator:
             for agent_id, agent in amas.orchestrator.agents.items():
                 agent_status = await agent.get_status()
                 agents.append(
@@ -296,9 +294,9 @@ async def get_agent_status(agent_id: str, auth: dict = Depends(verify_auth)):
     try:
         amas = await get_amas_system()
 
-        if not hasattr(amas, 'orchestrator') or not amas.orchestrator:
+        if not hasattr(amas, "orchestrator") or not amas.orchestrator:
             raise HTTPException(status_code=503, detail="Orchestrator not available")
-            
+
         if agent_id not in amas.orchestrator.agents:
             raise HTTPException(status_code=404, detail="Agent not found")
 

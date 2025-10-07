@@ -7,20 +7,20 @@ interactive system with structured logging, performance tracking, and
 enhanced console output.
 """
 
-import logging
 import json
+import logging
 import sys
-from pathlib import Path
-from typing import Dict, List, Optional, Any, Union
-from datetime import datetime
-from dataclasses import dataclass, asdict
 import traceback
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 # Rich for enhanced console output
 from rich.console import Console
 from rich.logging import RichHandler
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 
 

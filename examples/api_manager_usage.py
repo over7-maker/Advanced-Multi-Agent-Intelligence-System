@@ -6,25 +6,25 @@ This module demonstrates how to use the AMAS AI API Manager with all 16 API prov
 and showcases the robust fallback mechanisms for maximum reliability.
 """
 
-import os
-import sys
 import asyncio
 import json
+import os
+import sys
 from datetime import datetime
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 # Add src directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from amas.core.ai_api_manager import AIAPIManager, get_ai_response
+from amas.core.api_integration import (
+    EnhancedAgentOrchestrator,
+    initialize_enhanced_system,
+)
 from amas.core.enhanced_orchestrator import (
     EnhancedOrchestrator,
     execute_task,
     run_investigation,
-)
-from amas.core.api_integration import (
-    EnhancedAgentOrchestrator,
-    initialize_enhanced_system,
 )
 
 

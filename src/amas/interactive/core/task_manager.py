@@ -7,21 +7,21 @@ task queuing, scheduling, monitoring, and lifecycle management.
 """
 
 import asyncio
-import uuid
 import json
+import logging
 import time
-from typing import Dict, List, Optional, Any, Callable, Union
-from dataclasses import dataclass, asdict
+import uuid
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-import logging
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Union
 
 # Rich for enhanced output
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 
 
 class TaskStatus(Enum):

@@ -9,27 +9,28 @@ multi-dimensional awareness, and transcendent evolution capabilities.
 """
 
 import asyncio
-import numpy as np
 import json
+import math
+import queue
+import threading
 import time
 import uuid
-from typing import Dict, List, Optional, Any, Tuple, Union
-from dataclasses import dataclass, asdict
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-import threading
-import queue
-from concurrent.futures import ThreadPoolExecutor
-import math
+from typing import Any, Dict, List, Optional, Tuple, Union
+
+import numpy as np
+from rich import print as rprint
 
 # Rich for enhanced output
 from rich.console import Console
 from rich.panel import Panel
-from rich.table import Table
-from rich.tree import Tree
-from rich.text import Text
 from rich.syntax import Syntax
-from rich import print as rprint
+from rich.table import Table
+from rich.text import Text
+from rich.tree import Tree
 
 
 class ConsciousnessState(Enum):

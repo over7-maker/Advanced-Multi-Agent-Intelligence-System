@@ -12,7 +12,6 @@ from datetime import datetime
 from pathlib import Path
 
 
-
 class AISystemTester:
     def __init__(self):
         self.test_results = {

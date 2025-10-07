@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 
 
-
 class FileStructureVerifier:
     """Verify all project files and documentation are in the correct locations"""
 

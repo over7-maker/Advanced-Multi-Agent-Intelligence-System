@@ -12,7 +12,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from .config.settings import get_settings, AMASConfig
+from .config.settings import AMASConfig, get_settings
 from .core.orchestrator import IntelligenceOrchestrator
 from .services.service_manager import ServiceManager
 

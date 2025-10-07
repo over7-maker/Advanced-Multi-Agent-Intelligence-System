@@ -7,7 +7,6 @@ import json
 
 # Configure logging
 import logging
-<<<<<<< HEAD
 import os
 import sys
 from datetime import datetime
@@ -15,8 +14,6 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 import yaml
-=======
->>>>>>> origin/main
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"

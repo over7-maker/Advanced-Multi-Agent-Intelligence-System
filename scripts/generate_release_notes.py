@@ -15,52 +15,53 @@ import requests
 
 def main():
     """Main function"""
-    parser = argparse.ArgumentParser(description='Generate AI-enhanced release notes')
-    parser.add_argument('--version', required=True, help='Release version (e.g., v1.0.0)')
-    parser.add_argument('--output', default='RELEASE_NOTES.md', help='Output file path')
-    parser.add_argument('--github-token', help='GitHub token (or use GITHUB_TOKEN env var)')
-    parser.add_argument('--repo', help='Repository name (or use REPO_NAME env var)')
-    
+    parser = argparse.ArgumentParser(description="Generate AI-enhanced release notes")
+    parser.add_argument(
+        "--version", required=True, help="Release version (e.g., v1.0.0)"
+    )
+    parser.add_argument("--output", default="RELEASE_NOTES.md", help="Output file path")
+    parser.add_argument(
+        "--github-token", help="GitHub token (or use GITHUB_TOKEN env var)"
+    )
+    parser.add_argument("--repo", help="Repository name (or use REPO_NAME env var)")
+
     args = parser.parse_args()
-    
+
     # Get GitHub token and repo name
-    github_token = args.github_token or os.environ.get('GITHUB_TOKEN')
-    repo_name = args.repo or os.environ.get('REPO_NAME')
-    
+    github_token = args.github_token or os.environ.get("GITHUB_TOKEN")
+    repo_name = args.repo or os.environ.get("REPO_NAME")
+
     if not github_token:
         print("❌ Error: GitHub token is required")
         print("Set GITHUB_TOKEN environment variable or use --github-token")
         sys.exit(1)
-    
+
     if not repo_name:
         print("❌ Error: Repository name is required")
         print("Set REPO_NAME environment variable or use --repo")
         sys.exit(1)
-    
+
     try:
         print(f"🤖 AI-Enhanced Release Notes Generator")
         print(f"📦 Repository: {repo_name}")
         print(f"🏷️ Version: {args.version}")
         print(f"📄 Output: {args.output}")
         print("=" * 50)
-        
+
         # Generate release notes
         release_notes = generate_release_notes(
-            args.version, 
-            github_token, 
-            repo_name, 
-            args.output
+            args.version, github_token, repo_name, args.output
         )
-        
+
         # Write to file
-        with open(args.output, 'w', encoding='utf-8') as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             f.write(release_notes)
-        
+
         print(f"✅ Release notes generated successfully: {args.output}")
         print(f"📊 File size: {len(release_notes)} characters")
-        
+
         return True
-        
+
     except Exception as e:
         print(f"❌ Error generating release notes: {e}")
         return False

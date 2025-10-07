@@ -4,23 +4,24 @@ Provides predictive analytics, anomaly detection, and intelligent alerting
 """
 
 import asyncio
+import hashlib
+import json
 import logging
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple
+import os
+import time
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-import json
-import time
-import hashlib
-from dataclasses import dataclass, field
-from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
+from typing import Any, Dict, List, Optional, Tuple
+
+import joblib
+import numpy as np
+import pandas as pd
 from sklearn.cluster import DBSCAN
+from sklearn.ensemble import IsolationForest
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
-import joblib
-import os
+from sklearn.preprocessing import StandardScaler
 
 logger = logging.getLogger(__name__)
 
