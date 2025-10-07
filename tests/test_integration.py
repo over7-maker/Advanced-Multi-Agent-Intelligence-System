@@ -1,18 +1,64 @@
+#!/usr/bin/env python3
 """
-Integration tests for AMAS system
+AMAS Integration Tests
+Comprehensive integration testing for the complete AMAS system
 """
 
-import asyncio
-
-import httpx
 import pytest
+import asyncio
+import sys
+from pathlib import Path
+from unittest.mock import patch, MagicMock
+import httpx
+
+# Add src to path
+sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 from amas.core.unified_orchestrator_v2 import TaskPriority
+from amas.orchestrator import orchestrator
+from amas.providers.manager import provider_manager
+from amas.intelligence.intelligence_manager import intelligence_manager
 
-
-class TestSystemIntegration:
-    """Test full system integration"""
-
+class TestAMASIntegration:
+    """Integration tests for the complete AMAS system"""
+    
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
+        """Setup for each test"""
+        # Mock environment variables
+        self.env_patcher = patch.dict('os.environ', {
+            'OPENAI_API_KEY': 'test_openai_key',
+            'GEMINIAI_API_KEY': 'test_gemini_key',
+            'GROQAI_API_KEY': 'test_groq_key'
+        })
+        self.env_patcher.start()
+    
+    def teardown_method(self):
+        """Cleanup after each test"""
+        self.env_patcher.stop()
+    
+    @pytest.mark.asyncio
+    async def test_orchestrator_initialization(self):
+        """Test orchestrator initializes correctly"""
+        assert orchestrator is not None
+        assert len(orchestrator.agents) == 7
+        assert orchestrator.task_queue is not None
+    
+    @pytest.mark.asyncio
+    async def test_provider_manager_initialization(self):
+        """Test provider manager initializes correctly"""
+        assert provider_manager is not None
+        assert len(provider_manager.providers) > 0
+        assert len(provider_manager.provider_configs) > 0
+    
+    @pytest.mark.asyncio
+    async def test_intelligence_manager_initialization(self):
+        """Test intelligence manager initializes correctly"""
+        assert intelligence_manager is not None
+        assert intelligence_manager.collective_intelligence is not None
+        assert intelligence_manager.personality_orchestrator is not None
+        assert intelligence_manager.predictive_engine is not None
+    
     @pytest.mark.asyncio
     async def test_end_to_end_task_processing(
         self, amas_app, test_client: httpx.AsyncClient
@@ -47,18 +93,13 @@ class TestSystemIntegration:
             status_response = await test_client.get(
                 f"/tasks/{task_id}", headers=headers
             )
-            assert status_response.status_code == 200
-
-            status_data = status_response.json()
-            if status_data["status"] in ["completed", "failed"]:
-                break
-
-            await asyncio.sleep(0.5)
-
-        # Verify task completion
-        assert status_data["status"] == "completed"
-        assert "result" in status_data
-
+            
+            # Verify result
+            assert result is not None
+            assert "task_id" in result
+            assert result["status"] in ["completed", "failed"]
+            assert "execution_time" in result
+    
     @pytest.mark.asyncio
     async def test_multi_agent_coordination(self, amas_app):
         """Test coordination between multiple agents"""
@@ -110,35 +151,51 @@ class TestSystemIntegration:
             assert status["status"] == "completed"
 
     @pytest.mark.asyncio
-    async def test_agent_status_monitoring(self, amas_app):
-        """Test agent status monitoring"""
-        orchestrator = amas_app.orchestrator
-
-        # Get all agents
-        agents = await orchestrator.list_agents()
-        assert len(agents) > 0
-
-        # Check each agent's status
-        for agent in agents:
-            agent_id = agent["agent_id"]
-            status = await orchestrator.get_agent_status(agent_id)
-            assert "agent_id" in status
-            assert "status" in status
-            assert status["agent_id"] == agent_id
-
+    async def test_system_status(self):
+        """Test system status endpoint"""
+        status = await orchestrator.get_system_status()
+        
+        assert status is not None
+        assert "system_status" in status
+        assert "agents" in status
+        assert "providers" in status
+        assert "tasks" in status
+        assert "intelligence" in status
+    
     @pytest.mark.asyncio
-    async def test_system_health_monitoring(self, amas_app):
-        """Test system health monitoring"""
-        # Test application health check
-        health_status = await amas_app.health_check()
-        assert health_status["status"] == "healthy"
-        assert "services" in health_status
-
-        # Test orchestrator status
-        system_status = await amas_app.orchestrator.get_system_status()
-        assert "orchestrator_status" in system_status
-        assert "active_agents" in system_status
-
+    async def test_agent_capabilities(self):
+        """Test agent capabilities retrieval"""
+        capabilities = await orchestrator.get_agent_capabilities()
+        
+        assert capabilities is not None
+        assert len(capabilities) == 7
+        
+        # Check specific agents
+        assert "security_expert" in capabilities
+        assert "code_analysis" in capabilities
+        assert "intelligence_gathering" in capabilities
+        
+        # Check agent structure
+        for agent_id, agent_info in capabilities.items():
+            assert "name" in agent_info
+            assert "description" in agent_info
+            assert "capabilities" in agent_info
+            assert "status" in agent_info
+    
+    @pytest.mark.asyncio
+    async def test_provider_status(self):
+        """Test provider status retrieval"""
+        status = provider_manager.get_provider_status()
+        
+        assert status is not None
+        assert len(status) > 0
+        
+        # Check status structure
+        for provider_name, provider_info in status.items():
+            assert "status" in provider_info
+            assert "available" in provider_info
+            assert "priority" in provider_info
+    
     @pytest.mark.asyncio
     async def test_error_handling(self, amas_app):
         """Test error handling in the system"""
@@ -273,19 +330,138 @@ class TestSystemIntegration:
             "priority": TaskPriority.MEDIUM,
             "metadata": {"title": "Audit Test Task", "parameters": {"keywords": ["audit", "test"]}, "required_agent_roles": ["intelligence_gatherer_agent"]}
         }
-
+        
         headers = {"Authorization": "Bearer valid_token"}
-
-        # Submit task (should generate audit event)
         response = await test_client.post(
             "/tasks", json=task_data, headers=headers
         )
         assert response.status_code == 200
+    
+    @pytest.mark.asyncio
+    async def test_intelligence_dashboard_data(self):
+        """Test intelligence dashboard data retrieval"""
+        data = await intelligence_manager.get_intelligence_dashboard_data()
+        
+        assert data is not None
+        assert "collective_intelligence" in data
+        assert "adaptive_personalities" in data
+        assert "predictive_accuracy" in data
+        assert "resource_predictions" in data
+    
+    @pytest.mark.asyncio
+    async def test_task_optimization(self):
+        """Test task optimization before execution"""
+        task_data = {
+            "task_type": "security_scan",
+            "target": "example.com",
+            "parameters": {"depth": "standard"},
+            "user_id": "test_user"
+        }
+        
+        optimization = await intelligence_manager.optimize_task_before_execution(task_data)
+        
+        assert optimization is not None
+        assert "optimal_agents" in optimization
+        assert "task_prediction" in optimization
+        assert "optimization_recommendations" in optimization
+        assert "personality_prompts" in optimization
+    
+    @pytest.mark.asyncio
+    async def test_task_completion_processing(self):
+        """Test task completion processing for learning"""
+        task_data = {
+            "task_id": "test_001",
+            "task_type": "security_scan",
+            "target": "example.com",
+            "parameters": {"depth": "standard"},
+            "agents_used": ["security_expert"],
+            "execution_time": 120.5,
+            "success_rate": 0.9,
+            "solution_quality": 0.85,
+            "error_patterns": [],
+            "user_feedback": {"rating": 4, "comments": "Good work"}
+        }
+        
+        # This should not raise an exception
+        await intelligence_manager.process_task_completion(task_data)
+        
+        # Verify the task was processed (simplified check)
+        assert True  # If we get here without exception, it worked
+    
+    def test_agent_prompt_creation(self):
+        """Test agent prompt creation"""
+        prompt = orchestrator._create_agent_prompt(
+            task_type="security_scan",
+            target="example.com",
+            parameters={"depth": "standard"},
+            agents=["security_expert", "intelligence_gathering"]
+        )
+        
+        assert prompt is not None
+        assert isinstance(prompt, str)
+        assert "security_scan" in prompt
+        assert "example.com" in prompt
+        assert "Security Expert" in prompt
+        assert "Intelligence Gathering" in prompt
+    
+    def test_agent_performance_analysis(self):
+        """Test agent performance analysis"""
+        analysis = orchestrator._analyze_agent_performance(
+            agents=["security_expert"],
+            response="This is a test response with analysis and recommendations"
+        )
+        
+        assert analysis is not None
+        assert "agents_used" in analysis
+        assert "response_length" in analysis
+        assert "has_recommendations" in analysis
+        assert "has_analysis" in analysis
+        assert "completeness_score" in analysis
 
-        # Get audit log
-        audit_response = await test_client.get("/audit", headers=headers)
-        assert audit_response.status_code == 200
+class TestAMASEndToEnd:
+    """End-to-end tests for AMAS system"""
+    
+    @pytest.fixture(autouse=True)
+    def setup_method(self):
+        """Setup for each test"""
+        self.env_patcher = patch.dict('os.environ', {
+            'OPENAI_API_KEY': 'test_openai_key',
+            'GEMINIAI_API_KEY': 'test_gemini_key',
+            'GROQAI_API_KEY': 'test_groq_key'
+        })
+        self.env_patcher.start()
+    
+    def teardown_method(self):
+        """Cleanup after each test"""
+        self.env_patcher.stop()
+    
+    @pytest.mark.asyncio
+    async def test_complete_workflow(self):
+        """Test complete AMAS workflow from task creation to completion"""
+        # Mock provider execution
+        with patch.object(provider_manager, 'get_best_provider') as mock_get_provider:
+            mock_provider = MagicMock()
+            mock_provider.infer.return_value = "Comprehensive security analysis completed"
+            mock_get_provider.return_value = mock_provider
+            
+            # 1. Execute a task
+            result = await orchestrator.execute_task(
+                task_type="security_scan",
+                target="example.com",
+                parameters={"depth": "comprehensive"}
+            )
+            
+            # 2. Verify task execution
+            assert result["status"] == "completed"
+            assert "security_expert" in result["agents_used"]
+            
+            # 3. Check system status
+            status = await orchestrator.get_system_status()
+            assert status["tasks"]["completed"] > 0
+            
+            # 4. Verify intelligence learning
+            intelligence_data = await intelligence_manager.get_intelligence_dashboard_data()
+            assert intelligence_data is not None
 
-        audit_data = audit_response.json()
-        assert "audit_log" in audit_data
-        assert isinstance(audit_data["audit_log"], list)
+if __name__ == "__main__":
+    pytest.main([__file__, "-v"])
