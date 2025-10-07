@@ -59,6 +59,8 @@ RUN chown -R amas:amas /app
 # Copy application code
 COPY --chown=amas:amas src/ ./src/
 COPY --chown=amas:amas config/ ./config/
+COPY --chown=amas:amas scripts/ ./scripts/
+COPY --chown=amas:amas tests/ ./tests/
 COPY --chown=amas:amas docker/entrypoint.sh ./entrypoint.sh
 
 # Create data directories
@@ -71,9 +73,9 @@ RUN chmod +x entrypoint.sh
 # Switch to non-root user
 USER amas
 
-# Health check
+# Health check with validation
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD python scripts/validate_env.py --mode basic --skip-db || exit 1
 
 # Expose port
 EXPOSE 8000

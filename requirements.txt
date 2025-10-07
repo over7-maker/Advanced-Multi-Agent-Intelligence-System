@@ -1,5 +1,6 @@
 # AMAS - Advanced Multi-Agent Intelligence System
 # Professional Requirements File - Core Dependencies
+# Updated with all new implementations and security improvements
 
 # Web Framework & API
 fastapi==0.104.1
@@ -70,20 +71,25 @@ tenacity==8.2.3
 python-dateutil==2.8.2
 requests==2.31.0
 
-# Web Scraping (for OSINT)
+# Web Scraping (for OSINT) - Real Implementation
 beautifulsoup4==4.12.2
 selenium==4.15.2
+lxml==4.9.3
 
 # Development Dependencies (Optional)
 pytest==7.4.3
 pytest-asyncio==0.21.1
 pytest-cov==4.1.0
+pytest-benchmark==4.0.0
 black==23.11.0
 flake8==6.1.0
 mypy==1.7.1
 isort==5.12.0
 bandit==1.7.5
 pre-commit==3.5.0
+
+# New Implementation Dependencies
+circuit-breaker==1.4.0
 
 # Documentation
 sphinx==7.2.6

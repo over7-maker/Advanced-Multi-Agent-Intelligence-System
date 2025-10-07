@@ -29,12 +29,17 @@ logger = logging.getLogger(__name__)
 
 def check_python_version():
     """Check if Python version is compatible"""
-    if sys.version_info < (3, 8):
-        logger.error("Python 3.8 or higher is required")
+    try:
+        if sys.version_info < (3, 8):
+            logger.error("❌ Python 3.8 or higher is required")
+            logger.error(f"   Current version: {sys.version}")
+            return False
+        
+        logger.info(f"✅ Python version: {sys.version}")
+        return True
+    except Exception as e:
+        logger.error(f"❌ Error checking Python version: {e}")
         return False
-    
-    logger.info(f"Python version: {sys.version}")
-    return True
 
 
 def check_dependencies():
