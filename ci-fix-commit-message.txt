@@ -1,0 +1,29 @@
+fix: Update GitHub Actions workflow to resolve CI failures
+
+- Upgrade all GitHub Actions to latest versions:
+  - actions/checkout@v3 → v4
+  - actions/setup-python@v4 → v5  
+  - actions/upload-artifact@v3 → v4
+  - actions/github-script@v6 → v7
+  - codecov/codecov-action@v3 → v4
+
+- Fix pip installation issue:
+  - Add explicit pip installation step using ensurepip
+  - Include fallback installation method
+  - Upgrade pip, setuptools, and wheel
+
+- Improve workflow reliability:
+  - Add virtual environment setup
+  - Include dependency caching
+  - Add continue-on-error for non-critical steps
+  - Ensure artifact upload doesn't fail on missing files
+
+- Update artifact upload configuration:
+  - Use unique artifact names with run number
+  - Set retention days to 30
+  - Use 'warn' instead of 'error' for missing files
+
+This resolves the deprecated action warnings and pip module errors
+that were preventing the CI pipeline from running successfully.
+
+Fixes GitHub Actions failures in PR #157
