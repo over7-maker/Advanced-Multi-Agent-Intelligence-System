@@ -37,6 +37,7 @@ jobs:
     
     - name: 📦 Install dependencies
       run: |
+        python -m ensurepip --upgrade
         python -m pip install --upgrade pip
         pip install -e .[dev]
     
@@ -116,6 +117,7 @@ jobs:
     
     - name: 📦 Install dependencies
       run: |
+        python -m ensurepip --upgrade
         python -m pip install --upgrade pip
         pip install -e .[dev]
     
@@ -227,6 +229,7 @@ jobs:
     
     - name: 📦 Install test dependencies
       run: |
+        python -m ensurepip --upgrade
         pip install -e .[dev]
     
     - name: 🎭 Run E2E tests
@@ -277,6 +280,7 @@ jobs:
     
     - name: ⚡ Run performance tests
       run: |
+        python -m ensurepip --upgrade
         pip install locust
         locust -f tests/performance/load_test.py --host=http://localhost:8000 --users=50 --spawn-rate=5 --run-time=5m --html=performance-report.html --csv=performance
     
@@ -309,6 +313,7 @@ jobs:
     
     - name: 📦 Install documentation dependencies
       run: |
+        python -m ensurepip --upgrade
         pip install -e .[docs]
     
     - name: 📖 Build documentation
@@ -344,6 +349,7 @@ jobs:
     
     - name: 📦 Install build dependencies
       run: |
+        python -m ensurepip --upgrade
         python -m pip install --upgrade pip build twine
     
     - name: 🏗️ Build package
