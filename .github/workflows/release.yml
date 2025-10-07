@@ -58,6 +58,7 @@ jobs:
     
     - name: 📦 Install dependencies
       run: |
+        python -m ensurepip --upgrade
         python -m pip install --upgrade pip
         pip install requests pyyaml setuptools wheel
         pip install -e .

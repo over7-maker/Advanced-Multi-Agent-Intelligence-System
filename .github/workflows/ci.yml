@@ -26,6 +26,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m ensurepip --upgrade
           python -m pip install --upgrade pip
           pip install setuptools wheel
           pip install -r requirements.txt
@@ -78,6 +79,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m ensurepip --upgrade
           python -m pip install --upgrade pip
           pip install setuptools wheel
           pip install -r requirements.txt
@@ -149,6 +151,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m ensurepip --upgrade
           python -m pip install --upgrade pip
           pip install setuptools wheel
           pip install -r requirements.txt
@@ -183,6 +186,7 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m ensurepip --upgrade
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install bandit safety
