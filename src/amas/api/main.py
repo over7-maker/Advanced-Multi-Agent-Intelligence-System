@@ -4,6 +4,7 @@ FastAPI Main Application for AMAS Intelligence System
 
 import asyncio
 import logging
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -112,13 +113,13 @@ async def startup_event():
             "neo4j_username": "neo4j",
             "neo4j_password": "amas123",
             "neo4j_database": "neo4j",
-            "jwt_secret": "amas_jwt_secret_key_2024_secure",
-            "encryption_key": "amas_encryption_key_2024_secure_32_chars",
-            "deepseek_api_key": "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",
-            "glm_api_key": "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",
-            "grok_api_key": "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",
-            "n8n_url": "http://localhost:5678",
-            "n8n_api_key": "your_n8n_api_key_here",
+            "jwt_secret": os.environ.get("AMAS_JWT_SECRET", "amas_jwt_secret_key_2024_secure"),
+            "encryption_key": os.environ.get("AMAS_ENCRYPTION_KEY", "amas_encryption_key_2024_secure_32_chars"),
+            "deepseek_api_key": os.environ.get("DEEPSEEK_API_KEY"),
+            "glm_api_key": os.environ.get("GLM_API_KEY"),
+            "grok_api_key": os.environ.get("GROK_API_KEY"),
+            "n8n_url": os.environ.get("N8N_URL", "http://localhost:5678"),
+            "n8n_api_key": os.environ.get("N8N_API_KEY"),
         }
 
         # Initialize AMAS system

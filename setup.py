@@ -16,7 +16,7 @@ def run_command(command, description):
     print(f"🔄 {description}...")
     try:
         result = subprocess.run(
-            command, shell=True, check=True, capture_output=True, text=True
+            command.split(), check=True, capture_output=True, text=True
         )
         print(f"✅ {description} completed")
         return True
