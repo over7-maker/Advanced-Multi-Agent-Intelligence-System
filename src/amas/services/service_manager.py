@@ -10,8 +10,10 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
 
+from .database_service import DatabaseService
 from .knowledge_graph_service import KnowledgeGraphService
 from .llm_service import LLMService
+from .security_service import SecurityService
 from .vector_service import VectorService
 
 logger = logging.getLogger(__name__)

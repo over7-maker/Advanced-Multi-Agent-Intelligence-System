@@ -215,6 +215,7 @@ class AMASConfig(BaseSettings):
         env_file_encoding = "utf-8"
         case_sensitive = False
         validate_assignment = True
+        extra = "ignore"  # Ignore extra fields
 
     @field_validator("log_level")
     @classmethod
