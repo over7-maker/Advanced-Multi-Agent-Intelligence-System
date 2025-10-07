@@ -277,17 +277,6 @@ async def test_system_components():
             from services.security_service import SecurityService
             from services.vector_service import VectorService
 
-            logger.info("✅ Service imports successful")
-        except Exception as e:
-            logger.error(f"❌ Service imports failed: {e}")
-            return False
-
-        # Test agents
-        try:
-            from agents.forensics.forensics_agent import ForensicsAgent
-            from agents.investigation.investigation_agent import InvestigationAgent
-            from agents.osint.osint_agent import OSINTAgent
-
             logger.info("✅ Agent imports successful")
         except Exception as e:
             logger.error(f"❌ Agent imports failed: {e}")

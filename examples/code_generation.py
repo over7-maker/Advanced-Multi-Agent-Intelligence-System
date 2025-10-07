@@ -6,7 +6,10 @@ Demonstrates AI-powered code generation capabilities
 
 import asyncio
 import os
+<<<<<<< HEAD
 import sys
+=======
+>>>>>>> origin/main
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 

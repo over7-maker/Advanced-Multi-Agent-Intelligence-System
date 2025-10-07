@@ -823,6 +823,7 @@ class IntelligenceOrchestrator:
             self.logger.error(f"Workflow execution {execution_id} failed: {e}")
             instance["status"] = "failed"
             instance["error"] = str(e)
+<<<<<<< HEAD
 
     async def get_task_result(self, task_id: str) -> Dict[str, Any]:
         """Get task result"""
@@ -871,3 +872,5 @@ class IntelligenceOrchestrator:
             
         except Exception as e:
             self.logger.error(f"Error during orchestrator shutdown: {e}")
+=======
+>>>>>>> origin/main

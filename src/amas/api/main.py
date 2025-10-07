@@ -40,7 +40,8 @@ app.add_middleware(
 security = HTTPBearer()
 
 # Global AMAS instance
-amas_system = None
+amas_app = None
+
 
 
 # Pydantic models
@@ -73,10 +74,11 @@ class HealthCheck(BaseModel):
 
 # Dependency to get AMAS system
 async def get_amas_system():
-    global amas_system
-    if amas_system is None:
+    global amas_app
+    if amas_app is None:
         raise HTTPException(status_code=503, detail="AMAS system not initialized")
-    return amas_system
+    return amas_app
+
 
 
 # Dependency to verify authentication
@@ -92,7 +94,7 @@ async def verify_auth(credentials: HTTPAuthorizationCredentials = Depends(securi
 # Startup event
 @app.on_event("startup")
 async def startup_event():
-    global amas_system
+    global amas_app
     try:
         logger.info("Initializing AMAS Intelligence System...")
 
@@ -135,9 +137,9 @@ async def startup_event():
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_event():
-    global amas_system
-    if amas_system:
-        await amas_system.shutdown()
+    global amas_app
+    if amas_app:
+        await amas_app.shutdown()
         logger.info("AMAS Intelligence System shutdown complete")
 
 
@@ -172,7 +174,7 @@ async def get_system_status():
     """Get system status"""
     try:
         amas = await get_amas_system()
-        status = await amas.get_system_status()
+        status = await amas.orchestrator.get_system_status()
 
         return SystemStatus(
             status=status.get("status", "unknown"),
@@ -216,6 +218,17 @@ async def submit_task(
             details=f"Task submitted: {task_request.type}",
             classification="system",
         )
+
+        # Log audit event
+        security_service = amas.service_manager.get_security_service()
+        if security_service:
+            await security_service.log_audit_event(
+                event_type="task_submission",
+                user_id=auth["user_id"],
+                action="submit_task",
+                details=f"Task submitted: {task_request.type}",
+                classification="system",
+            )
 
         return TaskResponse(
             task_id=task_id, status="submitted", message="Task submitted successfully"
@@ -314,7 +327,7 @@ async def execute_workflow(
         amas = await get_amas_system()
 
         # Execute workflow
-        result = await amas.execute_intelligence_workflow(workflow_id, parameters)
+        result = await amas.orchestrator.execute_workflow(workflow_id, parameters)
 
         # Log audit event
         await amas.security_service.log_audit_event(

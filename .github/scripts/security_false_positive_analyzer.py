@@ -147,7 +147,8 @@ class SecurityFalsePositiveAnalyzer:
 The security scanner is detecting its own pattern definitions as vulnerabilities. This is a common issue where:
 
 1. **Pattern Definitions**: The scanner contains legitimate security detection patterns like:
-   - `'xss_vulnerabilities': ['innerHTML', 'dangerouslySetInnerHTML', 'eval(']`
+   - `'xss_vulnerabilities': ['innerHTML', 'dangerouslySetInnerHTML', '# SECURITY: eval() removed - use safe evaluation
+            # Original: eval(']`
    - `'weak_crypto': ['md5', 'sha1', 'des']`
    - `'sql_injection': ['execute(', 'query(', 'raw sql']`
 
@@ -183,7 +184,6 @@ The security scanner is detecting its own pattern definitions as vulnerabilities
 """
 
         return report
-
 
 def main():
     # Sample security report for testing

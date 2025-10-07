@@ -27,7 +27,7 @@ class ReportingAgent(IntelligenceAgent):
         capabilities = [
             "report_generation",
             "data_visualization",
-            "executive_summary",
+            "executive_summaries",
             "technical_documentation",
             "intelligence_briefing",
             "threat_assessment",
@@ -123,6 +123,9 @@ class ReportingAgent(IntelligenceAgent):
                 "format": output_format,
             }
 
+            # Store report
+            self.generated_reports[report_content["report_id"]] = report_content
+
             return {
                 "success": True,
                 "task_type": "report_generation",
@@ -143,10 +146,14 @@ class ReportingAgent(IntelligenceAgent):
         """Create data visualization"""
         try:
             data = task.get("parameters", {}).get("data", [])
+=======
+            visualization_type = task.get("parameters", {}).get("type", "chart")
+>>>>>>> origin/main
             chart_type = task.get("parameters", {}).get("chart_type", "bar")
 
             # Mock visualization creation
             visualization = {
+<<<<<<< HEAD
                 "chart_type": chart_type,
                 "data_points": len(data),
                 "title": "Data Visualization",
@@ -259,7 +266,7 @@ class ReportingAgent(IntelligenceAgent):
                 "briefing_level", "confidential"
             )
 
-            # Mock intelligence briefing
+            # Mock briefing preparation
             briefing = {
                 "title": "Intelligence Briefing",
                 "classification": briefing_level,
@@ -281,15 +288,15 @@ class ReportingAgent(IntelligenceAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in intelligence briefing creation: {e}")
+            logger.error(f"Error in briefing preparation: {e}")
             return {
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _create_threat_assessment(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Create threat assessment"""
+    async def _create_charts(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Create charts and graphs"""
         try:
             threat_data = task.get("parameters", {}).get("threat_data", {})
             assessment_scope = task.get("parameters", {}).get(
@@ -326,7 +333,7 @@ class ReportingAgent(IntelligenceAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in threat assessment creation: {e}")
+            logger.error(f"Error in chart creation: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -334,7 +341,7 @@ class ReportingAgent(IntelligenceAgent):
             }
 
     async def _perform_general_reporting(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Perform general reporting"""
+        """Perform general reporting tasks"""
         try:
             description = task.get("description", "")
             parameters = task.get("parameters", {})

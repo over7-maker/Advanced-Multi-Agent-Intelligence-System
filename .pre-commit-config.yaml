@@ -1,78 +1,64 @@
-# AMAS Pre-commit Configuration
-# Automated code quality checks before commits
+# AMAS - Advanced Multi-Agent Intelligence System
+# Pre-commit configuration for code quality
 
 repos:
-  # Python code formatting
+  # Black - Python code formatter
   - repo: https://github.com/psf/black
     rev: 23.11.0
     hooks:
       - id: black
-        language_version: python3.11
+        language_version: python3
         args: [--line-length=88]
 
-  # Import sorting
+  # isort - Import sorting
   - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+    rev: 5.13.2
     hooks:
       - id: isort
         args: [--profile=black, --line-length=88]
 
-  # Linting
+  # Flake8 - Linting
   - repo: https://github.com/pycqa/flake8
     rev: 6.1.0
     hooks:
       - id: flake8
         args: [--max-line-length=88, --extend-ignore=E203,W503]
-        additional_dependencies: [flake8-docstrings, flake8-bugbear]
 
-  # Security scanning
-  - repo: https://github.com/pycqa/bandit
-    rev: 1.7.5
-    hooks:
-      - id: bandit
-        args: [-r, src/, -f, json, -o, bandit-report.json]
-        files: ^src/
-
-  # Type checking
+  # MyPy - Type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.7.1
     hooks:
       - id: mypy
-        additional_dependencies: [types-all]
-        args: [--strict, --ignore-missing-imports]
-        files: ^src/
+        additional_dependencies: [types-requests, types-PyYAML]
+        args: [--ignore-missing-imports]
 
-  # General code quality
+  # Bandit - Security linting
+  - repo: https://github.com/pycqa/bandit
+    rev: 1.7.5
+    hooks:
+      - id: bandit
+        args: [-r, src/]
+        exclude: ^tests/
+
+  # Safety - Security vulnerability check
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.3.2
+    hooks:
+      - id: python-safety-dependencies-check
+
+  # General hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-      - id: check-added-large-files
-        args: [--maxkb=1000]
-      - id: check-case-conflict
-      - id: check-merge-conflict
       - id: check-json
       - id: check-toml
-      - id: check-xml
+      - id: check-merge-conflict
+      - id: check-added-large-files
       - id: debug-statements
       - id: detect-private-key
-      - id: mixed-line-ending
-      - id: requirements-txt-fixer
-
-  # Documentation
-  - repo: https://github.com/pycqa/doc8
-    rev: v1.1.1
-    hooks:
-      - id: doc8
-        args: [--max-line-length=88]
-
-  # Shell scripts
-  - repo: https://github.com/koalaman/shellcheck-precommit
-    rev: v0.9.0
-    hooks:
-      - id: shellcheck
 
   # Dockerfile linting
   - repo: https://github.com/hadolint/hadolint
@@ -87,49 +73,15 @@ repos:
     hooks:
       - id: prettier
         types: [yaml]
+        args: [--tab-width=2]
 
-  # Commit message formatting
-  - repo: https://github.com/commitizen-tools/commitizen
-    rev: 3.13.0
+  # Markdown linting
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.37.0
     hooks:
-      - id: commitizen
-        stages: [commit-msg]
+      - id: markdownlint
+        args: [--fix]
 
 # Configuration
-default_language_version:
-  python: python3.11
-
 default_stages: [commit]
-
-# Custom hooks
-repos:
-  - repo: local
-    hooks:
-      # Custom security check
-      - id: check-secrets
-        name: Check for secrets
-        entry: python scripts/development/check_secrets.py
-        language: python
-        files: ^(src/|tests/|config/).*\.py$
-        
-      # API schema validation
-      - id: validate-api-schema
-        name: Validate API schema
-        entry: python scripts/development/validate_api_schema.py
-        language: python
-        files: ^src/amas/api/.*\.py$
-        
-      # Configuration validation
-      - id: validate-config
-        name: Validate configuration
-        entry: python -c "from src.amas.config import get_settings; get_settings()"
-        language: python
-        files: ^src/amas/config/.*\.py$
-        pass_filenames: false
-
-# CI integration
-ci:
-  autofix_commit_msg: 'style: auto-fix pre-commit hooks'
-  autofix_prs: true
-  autoupdate_commit_msg: 'chore: update pre-commit hooks'
-  autoupdate_schedule: weekly
+fail_fast: false

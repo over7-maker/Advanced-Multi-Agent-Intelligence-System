@@ -1,0 +1,24 @@
+SIMPLE FIX FOR THE MERGE CONFLICT
+==================================
+
+1. In the GitHub conflict editor, you'll see:
+
+from amas.agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
+[... more amas.agents imports ...]
+
+2. DELETE everything from "<<<<<<< " to ">>>>>>> main"
+
+3. REPLACE with just these lines:
+
+from amas.agents.base.intelligence_agent import IntelligenceAgent, AgentStatus
+from amas.agents.osint.osint_agent import OSINTAgent
+from amas.agents.investigation.investigation_agent import InvestigationAgent
+from amas.agents.forensics.forensics_agent import ForensicsAgent
+from amas.agents.data_analysis.data_analysis_agent import DataAnalysisAgent
+from amas.agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
+from amas.agents.metadata.metadata_agent import MetadataAgent
+from amas.agents.reporting.reporting_agent import ReportingAgent
+
+4. Click "Mark as resolved"
+
+That's it! You're keeping the absolute imports (amas.agents) and discarding the relative imports (..agents).

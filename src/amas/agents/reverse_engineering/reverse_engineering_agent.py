@@ -25,7 +25,8 @@ class ReverseEngineeringAgent(IntelligenceAgent):
         security_service: Any = None,
     ):
         capabilities = [
-            "binary_analysis",
+            "static_analysis",
+            "dynamic_analysis",
             "malware_analysis",
             "code_deobfuscation",
             "protocol_analysis",
@@ -43,8 +44,8 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             security_service=security_service,
         )
 
-        self.sandbox_path = "/app/sandbox"
-        self.analysis_results = {}
+        self.analysis_cache = {}
+        self.threat_database = {}
 
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Execute reverse engineering task"""
@@ -91,10 +92,10 @@ class ReverseEngineeringAgent(IntelligenceAgent):
         ]
 
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
-        return any(keyword in task_text for keyword in re_keywords)
+        return any(keyword in task_text for keyword in reverse_engineering_keywords)
 
-    async def _analyze_binary(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze binary files"""
+    async def _perform_static_analysis(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Perform static analysis on binary"""
         try:
             binary_path = task.get("parameters", {}).get("binary_path", "")
             analysis_depth = task.get("parameters", {}).get(
@@ -125,17 +126,92 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in binary analysis: {e}")
+            logger.error(f"Error in static analysis: {e}")
             return {
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
+=======
+            }
+
+    async def _perform_dynamic_analysis(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Perform dynamic analysis on binary"""
+        try:
+            binary_path = task.get("parameters", {}).get("binary_path", "")
+            execution_time = task.get("parameters", {}).get("execution_time", 60)
+
+            # Mock dynamic analysis
+            dynamic_results = {
+                "binary_path": binary_path,
+                "execution_time": execution_time,
+                "api_calls": [
+                    {
+                        "api": "CreateFile",
+                        "count": 5,
+                        "timestamp": "2024-01-01T10:00:00Z",
+                    },
+                    {
+                        "api": "ReadFile",
+                        "count": 10,
+                        "timestamp": "2024-01-01T10:00:01Z",
+                    },
+                    {
+                        "api": "WriteFile",
+                        "count": 3,
+                        "timestamp": "2024-01-01T10:00:02Z",
+                    },
+                ],
+                "network_activity": [
+                    {"protocol": "TCP", "remote_ip": "192.168.1.100", "port": 80},
+                    {"protocol": "UDP", "remote_ip": "8.8.8.8", "port": 53},
+                ],
+                "file_operations": [
+                    {
+                        "operation": "create",
+                        "path": os.path.join(tempfile.gettempdir(), "test.txt"),
+                    },
+                    {"operation": "read", "path": "/etc/passwd"},
+                    {
+                        "operation": "write",
+                        "path": os.path.join(tempfile.gettempdir(), "output.log"),
+                    },
+                ],
+                "registry_operations": [
+                    {"operation": "create", "key": "HKEY_CURRENT_USER\\Software\\Test"},
+                    {"operation": "write", "key": "HKEY_LOCAL_MACHINE\\System\\Test"},
+                ],
+                "process_creation": [
+                    {"process": "notepad.exe", "pid": 1234, "parent_pid": 5678}
+                ],
+                "behavior_indicators": [
+                    "file_creation",
+                    "network_communication",
+                    "process_injection",
+                ],
+            }
+
+            return {
+                "success": True,
+                "task_type": "dynamic_analysis",
+                "binary_path": binary_path,
+                "results": dynamic_results,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+        except Exception as e:
+            logger.error(f"Error in dynamic analysis: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
+>>>>>>> origin/main
             }
 
     async def _analyze_malware(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze malware samples"""
+        """Analyze malware sample"""
         try:
             sample_path = task.get("parameters", {}).get("sample_path", "")
+<<<<<<< HEAD
             sandbox_mode = task.get("parameters", {}).get("sandbox_mode", True)
 
             # Mock malware analysis
@@ -174,8 +250,8 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _deobfuscate_code(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Deobfuscate obfuscated code"""
+    async def _analyze_binary(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze binary file"""
         try:
             code = task.get("parameters", {}).get("code", "")
             obfuscation_type = task.get("parameters", {}).get(
@@ -278,13 +354,74 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in firmware analysis: {e}")
+            logger.error(f"Error in binary analysis: {e}")
             return {
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
+=======
+    async def _decompile_code(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Decompile binary code"""
+        try:
+            binary_path = task.get("parameters", {}).get("binary_path", "")
+            decompiler = task.get("parameters", {}).get("decompiler", "ghidra")
+
+            # Mock code decompilation
+            decompilation_results = {
+                "binary_path": binary_path,
+                "decompiler": decompiler,
+                "functions": [
+                    {
+                        "name": "main",
+                        "address": "0x400000",
+                        "source_code": """
+int main(int argc, char** argv) {
+    printf("Hello World\\n");
+    return 0;
+}
+                        """,
+                        "complexity": "low",
+                    },
+                    {
+                        "name": "init",
+                        "address": "0x400100",
+                        "source_code": """
+void init() {
+    // Initialize global variables
+    global_var = 0;
+}
+                        """,
+                        "complexity": "low",
+                    },
+                ],
+                "global_variables": [
+                    {"name": "global_var", "type": "int", "address": "0x401000"}
+                ],
+                "strings": [
+                    {"value": "Hello World", "address": "0x401100"},
+                    {"value": "Error: Invalid input", "address": "0x401200"},
+                ],
+            }
+
+            return {
+                "success": True,
+                "task_type": "code_decompilation",
+                "binary_path": binary_path,
+                "results": decompilation_results,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+        except Exception as e:
+            logger.error(f"Error in code decompilation: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+>>>>>>> origin/main
     async def _perform_general_reverse_engineering(
         self, task: Dict[str, Any]
     ) -> Dict[str, Any]:
@@ -294,6 +431,7 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             parameters = task.get("parameters", {})
 
             # Mock general reverse engineering
+<<<<<<< HEAD
             re_result = {
                 "analysis_id": f"re_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
                 "description": description,
