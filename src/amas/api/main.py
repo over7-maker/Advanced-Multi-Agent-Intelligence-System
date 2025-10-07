@@ -113,8 +113,12 @@ async def startup_event():
             "neo4j_username": "neo4j",
             "neo4j_password": "amas123",
             "neo4j_database": "neo4j",
-            "jwt_secret": os.environ.get("AMAS_JWT_SECRET", "amas_jwt_secret_key_2024_secure"),
-            "encryption_key": os.environ.get("AMAS_ENCRYPTION_KEY", "amas_encryption_key_2024_secure_32_chars"),
+            "jwt_secret": os.environ.get(
+                "AMAS_JWT_SECRET", "amas_jwt_secret_key_2024_secure"
+            ),
+            "encryption_key": os.environ.get(
+                "AMAS_ENCRYPTION_KEY", "amas_encryption_key_2024_secure_32_chars"
+            ),
             "deepseek_api_key": os.environ.get("DEEPSEEK_API_KEY"),
             "glm_api_key": os.environ.get("GLM_API_KEY"),
             "grok_api_key": os.environ.get("GROK_API_KEY"),
