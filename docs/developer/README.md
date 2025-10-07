@@ -517,6 +517,35 @@ pytest -v
 pytest -n auto
 ```
 
+#### New Test Infrastructure
+```bash
+# Run comprehensive test suite
+python scripts/run_tests.py --all --verbose
+
+# Run specific test types
+python scripts/run_tests.py --unit --verbose
+python scripts/run_tests.py --integration --verbose
+python scripts/run_tests.py --benchmark --verbose
+
+# Run tests with coverage
+python scripts/run_tests.py --all --coverage
+
+# Run specific test file
+python scripts/run_tests.py --test tests/test_unified_orchestrator.py
+```
+
+#### Real Functionality Tests
+```bash
+# Test real OSINT functionality
+python -m pytest tests/test_unified_orchestrator.py::TestOSINTAgentRealImplementation -v
+
+# Test real forensics functionality
+python -m pytest tests/test_unified_orchestrator.py::TestForensicsAgentRealImplementation -v
+
+# Test unified orchestrator
+python -m pytest tests/test_unified_orchestrator.py::TestUnifiedIntelligenceOrchestrator -v
+```
+
 #### Performance Benchmarking
 ```bash
 # Run comprehensive benchmarks
@@ -986,6 +1015,40 @@ spec:
 
 ### Development Setup
 
+#### Quick Start with Docker
+```bash
+# Clone repository
+git clone <repository-url>
+cd Advanced-Multi-Agent-Intelligence-System
+
+# Set minimal API keys
+export DEEPSEEK_API_KEY="your_key"
+export GLM_API_KEY="your_key"
+export GROK_API_KEY="your_key"
+
+# Start complete development environment
+docker-compose -f docker-compose.dev.yml up -d
+
+# Verify setup
+python scripts/verify_implementation.py
+```
+
+#### Local Development Setup
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Validate environment
+python scripts/validate_env.py --mode basic --verbose
+
+# Run tests
+python scripts/run_tests.py --all --verbose
+
+# Start development server
+python -m uvicorn src.amas.api.main:app --reload
+```
+
+#### Traditional Setup
 ```bash
 # Clone repository
 git clone <repository-url>
