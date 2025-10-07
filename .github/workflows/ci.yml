@@ -179,11 +179,10 @@ jobs:
 
       - name: Run Bandit security scan
         run: |
-          bandit -r src/ -f json -o bandit-report.json --skip B101,B601,B311,B403,B301,B108,B112,B105 || echo "Bandit scan completed with issues"
-          # Create empty report if bandit fails
-          if [ ! -f bandit-report.json ]; then
-            echo '{"results": [], "errors": []}' > bandit-report.json
-          fi
+          # Always create the report file first
+          echo '{"results": [], "errors": []}' > bandit-report.json
+          # Run bandit and update the file
+          bandit -r src/ -f json -o bandit-report.json --skip B101,B601,B311,B403,B301,B108,B112,B105 || true
 
       - name: Run Safety check
         run: |
