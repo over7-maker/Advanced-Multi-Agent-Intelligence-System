@@ -6,19 +6,14 @@ This module provides type-safe configuration with validation and environment var
 """
 
 import os
-=======
-from typing import Dict, Any, Optional, List, Union
-from pydantic import Field, validator, root_validator
-from pydantic_settings import BaseSettings
->>>>>>> origin/main
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
-from pydantic import BaseSettings, Field, validator
+from pydantic import Field, field_validator, model_validator
+from pydantic_settings import BaseSettings
 
 
 class DatabaseConfig(BaseSettings):
-<<<<<<< HEAD
     """Database configuration"""
 
     host: str = Field(default="localhost", env="AMAS_DB_HOST")
@@ -32,7 +27,8 @@ class DatabaseConfig(BaseSettings):
         """Get database connection URL."""
         return f"postgresql://{self.user}:{self.password}@{self.host}:{self.port}/{self.database}"
 
-    @validator("port")
+    @field_validator("port")
+    @classmethod
     def validate_port(cls, v):
         """Validate port number."""
         if not 1 <= v <= 65535:
@@ -54,14 +50,16 @@ class RedisConfig(BaseSettings):
         auth = f":{self.password}@" if self.password else ""
         return f"redis://{auth}{self.host}:{self.port}/{self.db}"
 
-    @validator("port")
+    @field_validator("port")
+    @classmethod
     def validate_port(cls, v):
         """Validate port number."""
         if not 1 <= v <= 65535:
             raise ValueError("Port must be between 1 and 65535")
         return v
 
-    @validator("db")
+    @field_validator("db")
+    @classmethod
     def validate_db(cls, v):
         """Validate database number."""
         if not 0 <= v <= 15:
@@ -218,42 +216,44 @@ class AMASConfig(BaseSettings):
         case_sensitive = False
         validate_assignment = True
 
-    @validator("log_level")
+    @field_validator("log_level")
+    @classmethod
     def validate_log_level(cls, v):
         valid_levels = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
         if v.upper() not in valid_levels:
             raise ValueError(f"Log level must be one of {valid_levels}")
         return v.upper()
 
-    @validator("environment")
+    @field_validator("environment")
+    @classmethod
     def validate_environment(cls, v):
         valid_envs = ["development", "staging", "production"]
         if v.lower() not in valid_envs:
             raise ValueError(f"Environment must be one of {valid_envs}")
         return v.lower()
 
-    @validator("data_dir", "logs_dir", "models_dir")
+    @field_validator("data_dir", "logs_dir", "models_dir")
+    @classmethod
     def validate_directories(cls, v: Path) -> Path:
         """Validate and convert directory paths."""
         if isinstance(v, str):
             return Path(v)
         return v
 
-    @root_validator
-    def validate_configuration(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    @model_validator(mode='after')
+    def validate_configuration(self) -> 'AMASConfig':
         """Validate overall configuration."""
         # Check if we're in production mode
-        if values.get("environment") == "production":
-            if values.get("debug", False):
+        if self.environment == "production":
+            if self.debug:
                 raise ValueError("Debug mode cannot be enabled in production")
             if (
-                not values.get("security", {}).get("jwt_secret")
-                or values.get("security", {}).get("jwt_secret")
-                == "amas_jwt_secret_key_2024_secure"
+                not self.security.jwt_secret
+                or self.security.jwt_secret == "amas_jwt_secret_key_2024_secure"
             ):
                 raise ValueError("Production requires secure JWT secret")
 
-        return values
+        return self
 
     def create_directories(self) -> None:
         """Create necessary directories if they don't exist."""

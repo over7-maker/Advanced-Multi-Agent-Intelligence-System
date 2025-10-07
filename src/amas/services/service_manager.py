@@ -241,8 +241,6 @@ class ServiceManager:
                 health_status["services"]["knowledge_graph"] = kg_health
                 if kg_health.get("status") != "healthy":
                     health_status["overall_status"] = "degraded"
-<<<<<<< HEAD
-=======
 
             # Check Database service
             if self.database_service:
@@ -257,7 +255,6 @@ class ServiceManager:
                 health_status["services"]["security"] = sec_health
                 if sec_health.get("status") != "healthy":
                     health_status["overall_status"] = "degraded"
->>>>>>> origin/main
 
             return health_status
 

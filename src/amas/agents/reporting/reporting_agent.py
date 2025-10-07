@@ -146,14 +146,11 @@ class ReportingAgent(IntelligenceAgent):
         """Create data visualization"""
         try:
             data = task.get("parameters", {}).get("data", [])
-=======
             visualization_type = task.get("parameters", {}).get("type", "chart")
->>>>>>> origin/main
             chart_type = task.get("parameters", {}).get("chart_type", "bar")
 
             # Mock visualization creation
             visualization = {
-<<<<<<< HEAD
                 "chart_type": chart_type,
                 "data_points": len(data),
                 "title": "Data Visualization",

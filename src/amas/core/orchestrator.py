@@ -13,14 +13,14 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from agents.base.intelligence_agent import AgentStatus, IntelligenceAgent
-from agents.data_analysis.data_analysis_agent import DataAnalysisAgent
-from agents.forensics.forensics_agent import ForensicsAgent
-from agents.investigation.investigation_agent import InvestigationAgent
-from agents.metadata.metadata_agent import MetadataAgent
-from agents.osint.osint_agent import OSINTAgent
-from agents.reporting.reporting_agent import ReportingAgent
-from agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
+from ..agents.base.intelligence_agent import AgentStatus, IntelligenceAgent
+from ..agents.data_analysis.data_analysis_agent import DataAnalysisAgent
+from ..agents.forensics.forensics_agent import ForensicsAgent
+from ..agents.investigation.investigation_agent import InvestigationAgent
+from ..agents.metadata.metadata_agent import MetadataAgent
+from ..agents.osint.osint_agent import OSINTAgent
+from ..agents.reporting.reporting_agent import ReportingAgent
+from ..agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
 
 
 class TaskPriority(Enum):
@@ -823,7 +823,6 @@ class IntelligenceOrchestrator:
             self.logger.error(f"Workflow execution {execution_id} failed: {e}")
             instance["status"] = "failed"
             instance["error"] = str(e)
-<<<<<<< HEAD
 
     async def get_task_result(self, task_id: str) -> Dict[str, Any]:
         """Get task result"""
@@ -872,5 +871,3 @@ class IntelligenceOrchestrator:
             
         except Exception as e:
             self.logger.error(f"Error during orchestrator shutdown: {e}")
-=======
->>>>>>> origin/main

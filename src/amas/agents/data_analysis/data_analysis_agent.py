@@ -287,7 +287,6 @@ class DataAnalysisAgent(IntelligenceAgent):
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
-=======
             }
 
     async def _build_predictive_model(self, task: Dict[str, Any]) -> Dict[str, Any]:
@@ -387,7 +386,6 @@ class DataAnalysisAgent(IntelligenceAgent):
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
->>>>>>> origin/main
             }
 
     async def _perform_general_analysis(self, task: Dict[str, Any]) -> Dict[str, Any]:
@@ -403,7 +401,6 @@ class DataAnalysisAgent(IntelligenceAgent):
                 "status": "completed",
                 "findings": [
                     "Data analysis completed successfully",
-<<<<<<< HEAD
                     "No significant patterns detected",
                     "Data quality is good",
                 ],

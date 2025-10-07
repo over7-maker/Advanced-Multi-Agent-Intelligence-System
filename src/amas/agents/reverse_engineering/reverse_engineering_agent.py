@@ -131,7 +131,6 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
-=======
             }
 
     async def _perform_dynamic_analysis(self, task: Dict[str, Any]) -> Dict[str, Any]:
@@ -204,14 +203,12 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
->>>>>>> origin/main
             }
 
     async def _analyze_malware(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze malware sample"""
         try:
             sample_path = task.get("parameters", {}).get("sample_path", "")
-<<<<<<< HEAD
             sandbox_mode = task.get("parameters", {}).get("sandbox_mode", True)
 
             # Mock malware analysis
@@ -361,67 +358,6 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-=======
-    async def _decompile_code(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Decompile binary code"""
-        try:
-            binary_path = task.get("parameters", {}).get("binary_path", "")
-            decompiler = task.get("parameters", {}).get("decompiler", "ghidra")
-
-            # Mock code decompilation
-            decompilation_results = {
-                "binary_path": binary_path,
-                "decompiler": decompiler,
-                "functions": [
-                    {
-                        "name": "main",
-                        "address": "0x400000",
-                        "source_code": """
-int main(int argc, char** argv) {
-    printf("Hello World\\n");
-    return 0;
-}
-                        """,
-                        "complexity": "low",
-                    },
-                    {
-                        "name": "init",
-                        "address": "0x400100",
-                        "source_code": """
-void init() {
-    // Initialize global variables
-    global_var = 0;
-}
-                        """,
-                        "complexity": "low",
-                    },
-                ],
-                "global_variables": [
-                    {"name": "global_var", "type": "int", "address": "0x401000"}
-                ],
-                "strings": [
-                    {"value": "Hello World", "address": "0x401100"},
-                    {"value": "Error: Invalid input", "address": "0x401200"},
-                ],
-            }
-
-            return {
-                "success": True,
-                "task_type": "code_decompilation",
-                "binary_path": binary_path,
-                "results": decompilation_results,
-                "timestamp": datetime.utcnow().isoformat(),
-            }
-
-        except Exception as e:
-            logger.error(f"Error in code decompilation: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
-            }
-
->>>>>>> origin/main
     async def _perform_general_reverse_engineering(
         self, task: Dict[str, Any]
     ) -> Dict[str, Any]:
@@ -431,7 +367,6 @@ void init() {
             parameters = task.get("parameters", {})
 
             # Mock general reverse engineering
-<<<<<<< HEAD
             re_result = {
                 "analysis_id": f"re_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
                 "description": description,
