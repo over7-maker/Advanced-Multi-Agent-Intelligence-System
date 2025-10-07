@@ -104,7 +104,7 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             "firmware",
             "sandbox",
         ]
-        
+
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
         return any(keyword in task_text for keyword in reverse_engineering_keywords)
 
