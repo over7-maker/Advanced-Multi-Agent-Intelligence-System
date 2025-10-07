@@ -7,39 +7,39 @@ progress tracking, and beautiful console output for the AMAS interactive system.
 """
 
 import asyncio
-import time
-from typing import Dict, List, Optional, Any, Union
-from datetime import datetime, timedelta
-from dataclasses import dataclass
-from enum import Enum
 import json
+import time
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
+
+from rich import print as rprint
+from rich.align import Align
+from rich.columns import Columns
 
 # Rich for advanced console UI
-from rich.console import Console
+from rich.console import Console, Group
+from rich.layout import Layout
+from rich.live import Live
+from rich.markdown import Markdown
 from rich.panel import Panel
-from rich.table import Table
 from rich.progress import (
+    BarColumn,
+    MofNCompleteColumn,
     Progress,
     SpinnerColumn,
     TextColumn,
-    BarColumn,
     TimeElapsedColumn,
-    MofNCompleteColumn,
 )
-from rich.layout import Layout
-from rich.live import Live
-from rich.text import Text
-from rich.align import Align
-from rich.columns import Columns
-from rich.markdown import Markdown
-from rich.syntax import Syntax
-from rich.tree import Tree
-from rich import print as rprint
-from rich.console import Group
-from rich.prompt import Prompt, Confirm, IntPrompt
-from rich.status import Status
-from rich.spinner import Spinner
+from rich.prompt import Confirm, IntPrompt, Prompt
 from rich.rule import Rule
+from rich.spinner import Spinner
+from rich.status import Status
+from rich.syntax import Syntax
+from rich.table import Table
+from rich.text import Text
+from rich.tree import Tree
 
 
 class DisplayMode(Enum):

@@ -8,17 +8,17 @@ across multiple interactions.
 """
 
 import json
-import time
-from typing import Dict, List, Optional, Any, Tuple
-from dataclasses import dataclass, asdict
-from datetime import datetime, timedelta
-from collections import deque
 import logging
+import time
+from collections import deque
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
 
 # Rich for enhanced output
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
+from rich.table import Table
 
 
 @dataclass

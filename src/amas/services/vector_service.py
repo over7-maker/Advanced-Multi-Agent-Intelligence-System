@@ -7,7 +7,7 @@ import asyncio
 import json
 import logging
 import os
-import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data
+import pickle
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 

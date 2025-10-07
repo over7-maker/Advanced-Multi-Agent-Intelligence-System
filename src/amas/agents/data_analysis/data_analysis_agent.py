@@ -29,9 +29,7 @@ class DataAnalysisAgent(IntelligenceAgent):
             "pattern_recognition",
             "correlation_analysis",
             "anomaly_detection",
-            "predictive_modeling",
             "data_visualization",
-            "trend_analysis",
         ]
 
         super().__init__(
@@ -57,16 +55,14 @@ class DataAnalysisAgent(IntelligenceAgent):
 
             if task_type == "statistical_analysis":
                 return await self._perform_statistical_analysis(task)
-            elif task_type == "pattern_recognition":
-                return await self._perform_pattern_recognition(task)
+            elif task_type == "predictive_modeling":
+                return await self._perform_predictive_modeling(task)
             elif task_type == "correlation_analysis":
                 return await self._perform_correlation_analysis(task)
+            elif task_type == "pattern_recognition":
+                return await self._perform_pattern_recognition(task)
             elif task_type == "anomaly_detection":
-                return await self._detect_anomalies(task)
-            elif task_type == "predictive_modeling":
-                return await self._build_predictive_model(task)
-            elif task_type == "trend_analysis":
-                return await self._analyze_trends(task)
+                return await self._perform_anomaly_detection(task)
             else:
                 return await self._perform_general_analysis(task)
 
@@ -82,13 +78,13 @@ class DataAnalysisAgent(IntelligenceAgent):
         """Validate if this agent can handle the task"""
         analysis_keywords = [
             "analysis",
-            "statistical",
-            "pattern",
-            "correlation",
-            "anomaly",
-            "prediction",
-            "trend",
             "data",
+            "statistical",
+            "predictive",
+            "correlation",
+            "pattern",
+            "anomaly",
+            "modeling",
         ]
 
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
@@ -105,35 +101,22 @@ class DataAnalysisAgent(IntelligenceAgent):
             )
 
             # Mock statistical analysis
-            stats_results = {
-                "data_points": len(data),
-                "descriptive_stats": {
-                    "mean": 0.5,
-                    "median": 0.5,
-                    "mode": 0.5,
-                    "std_dev": 0.1,
-                    "variance": 0.01,
-                    "min": 0.0,
-                    "max": 1.0,
-                    "range": 1.0,
-                },
-                "distribution": {
-                    "skewness": 0.0,
-                    "kurtosis": 0.0,
-                    "normality_test": "passed",
-                },
-                "confidence_intervals": {
-                    "95_percent": [0.4, 0.6],
-                    "99_percent": [0.35, 0.65],
-                },
-                "analysis_type": analysis_type,
+            stats = {
+                "mean": sum(data) / len(data) if data else 0,
+                "median": sorted(data)[len(data) // 2] if data else 0,
+                "std_dev": 1.5,  # Mock value
+                "variance": 2.25,  # Mock value
+                "min": min(data) if data else 0,
+                "max": max(data) if data else 0,
+                "count": len(data),
             }
 
             return {
                 "success": True,
                 "task_type": "statistical_analysis",
+                "analysis_type": analysis_type,
+                "statistics": stats,
                 "data_points": len(data),
-                "results": stats_results,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
@@ -145,38 +128,35 @@ class DataAnalysisAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _perform_pattern_recognition(
+    async def _perform_predictive_modeling(
         self, task: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Perform pattern recognition analysis"""
+        """Perform predictive modeling"""
         try:
-            data = task.get("parameters", {}).get("data", [])
-            pattern_type = task.get("parameters", {}).get("pattern_type", "general")
+            training_data = task.get("parameters", {}).get("training_data", [])
+            model_type = task.get("parameters", {}).get(
+                "model_type", "linear_regression"
+            )
 
-            # Mock pattern recognition
-            patterns_found = []
-            for i in range(min(5, len(data))):
-                pattern = {
-                    "pattern_id": f"pattern_{i}",
-                    "pattern_type": pattern_type,
-                    "confidence": 0.8 - (i * 0.1),
-                    "description": f"Pattern {i} identified in data",
-                    "frequency": 10 + i,
-                    "significance": "high" if i < 2 else "medium",
-                }
-                patterns_found.append(pattern)
+            # Mock predictive modeling
+            model_result = {
+                "model_type": model_type,
+                "accuracy": 0.85,
+                "predictions": [1, 2, 3, 4, 5],  # Mock predictions
+                "confidence_interval": [0.7, 0.9],
+                "feature_importance": {"feature1": 0.6, "feature2": 0.4},
+            }
 
             return {
                 "success": True,
-                "task_type": "pattern_recognition",
-                "data_points": len(data),
-                "patterns_found": len(patterns_found),
-                "patterns": patterns_found,
+                "task_type": "predictive_modeling",
+                "model_result": model_result,
+                "training_samples": len(training_data),
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
         except Exception as e:
-            logger.error(f"Error in pattern recognition: {e}")
+            logger.error(f"Error in predictive modeling: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -197,23 +177,24 @@ class DataAnalysisAgent(IntelligenceAgent):
             correlations = []
             for i, var1 in enumerate(variables):
                 for j, var2 in enumerate(variables[i + 1 :], i + 1):
-                    correlation = {
-                        "variable1": var1,
-                        "variable2": var2,
-                        "correlation_coefficient": 0.5 + (i * 0.1),
-                        "p_value": 0.05,
-                        "significance": "significant",
-                        "correlation_type": correlation_type,
-                        "strength": "moderate",
-                    }
-                    correlations.append(correlation)
+                    correlation = 0.7  # Mock correlation value
+                    correlations.append(
+                        {
+                            "variable1": var1,
+                            "variable2": var2,
+                            "correlation": correlation,
+                            "significance": (
+                                "high" if abs(correlation) > 0.7 else "medium"
+                            ),
+                        }
+                    )
 
             return {
                 "success": True,
                 "task_type": "correlation_analysis",
-                "variables_analyzed": len(variables),
-                "correlations_found": len(correlations),
+                "correlation_type": correlation_type,
                 "correlations": correlations,
+                "variables_analyzed": len(variables),
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
@@ -225,33 +206,78 @@ class DataAnalysisAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _detect_anomalies(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Detect anomalies in data"""
+    async def _perform_pattern_recognition(
+        self, task: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Perform pattern recognition"""
         try:
             data = task.get("parameters", {}).get("data", [])
-            detection_method = task.get("parameters", {}).get("method", "statistical")
+            pattern_type = task.get("parameters", {}).get("pattern_type", "temporal")
+
+            # Mock pattern recognition
+            patterns = [
+                {
+                    "pattern_id": "pattern_1",
+                    "type": "trend",
+                    "description": "Upward trend detected",
+                    "confidence": 0.8,
+                    "frequency": "daily",
+                },
+                {
+                    "pattern_id": "pattern_2",
+                    "type": "seasonal",
+                    "description": "Seasonal variation detected",
+                    "confidence": 0.7,
+                    "frequency": "weekly",
+                },
+            ]
+
+            return {
+                "success": True,
+                "task_type": "pattern_recognition",
+                "pattern_type": pattern_type,
+                "patterns_found": len(patterns),
+                "patterns": patterns,
+                "data_points": len(data),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+        except Exception as e:
+            logger.error(f"Error in pattern recognition: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+    async def _perform_correlation_analysis(
+        self, task: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Perform correlation analysis"""
+        try:
+            data = task.get("parameters", {}).get("data", [])
+            threshold = task.get("parameters", {}).get("threshold", 0.8)
 
             # Mock anomaly detection
             anomalies = []
-            for i in range(min(3, len(data))):
-                anomaly = {
-                    "anomaly_id": f"anomaly_{i}",
-                    "data_point": data[i] if i < len(data) else 0,
-                    "anomaly_score": 0.8 + (i * 0.1),
-                    "severity": "high" if i == 0 else "medium",
-                    "description": f"Anomaly {i} detected",
-                    "detection_method": detection_method,
-                    "confidence": 0.9 - (i * 0.1),
-                }
-                anomalies.append(anomaly)
+            for i, value in enumerate(data):
+                if abs(value - 5.0) > 2:  # Mock anomaly condition
+                    anomalies.append(
+                        {
+                            "index": i,
+                            "value": value,
+                            "anomaly_score": 0.9,
+                            "type": "outlier",
+                        }
+                    )
 
             return {
                 "success": True,
                 "task_type": "anomaly_detection",
-                "data_points": len(data),
-                "anomalies_detected": len(anomalies),
+                "anomalies_found": len(anomalies),
                 "anomalies": anomalies,
-                "detection_method": detection_method,
+                "threshold": threshold,
+                "data_points": len(data),
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
@@ -375,14 +401,14 @@ class DataAnalysisAgent(IntelligenceAgent):
                 "status": "completed",
                 "findings": [
                     "Data analysis completed successfully",
-                    "No significant anomalies detected",
+                    "No significant patterns detected",
                     "Data quality is good",
                 ],
                 "recommendations": [
                     "Continue monitoring data quality",
-                    "Consider additional analysis methods",
+                    "Consider additional data sources",
                 ],
-                "confidence": 0.85,
+                "confidence": 0.8,
             }
 
             return {

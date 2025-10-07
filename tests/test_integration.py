@@ -4,20 +4,22 @@ AMAS Integration Tests
 Comprehensive integration testing for the complete AMAS system
 """
 
-import pytest
 import asyncio
 import sys
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 import httpx
 
+import pytest
+
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 from amas.core.unified_orchestrator_v2 import TaskPriority
+from amas.intelligence.intelligence_manager import intelligence_manager
 from amas.orchestrator import orchestrator
 from amas.providers.manager import provider_manager
-from amas.intelligence.intelligence_manager import intelligence_manager
+
 
 class TestAMASIntegration:
     """Integration tests for the complete AMAS system"""

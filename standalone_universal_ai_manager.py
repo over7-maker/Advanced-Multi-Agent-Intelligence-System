@@ -4,16 +4,17 @@ Standalone Universal AI Manager - No dependencies on AMAS package
 Can be used independently in any project
 """
 
-import os
 import asyncio
-import aiohttp
-import time
-import random
 import logging
-from typing import Dict, List, Any, Optional
+import os
+import random
+import time
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+import aiohttp
 
 # Configure logging
 logging.basicConfig(

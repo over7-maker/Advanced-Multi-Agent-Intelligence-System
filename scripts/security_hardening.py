@@ -3,12 +3,12 @@
 Security Hardening Script for AMAS
 Ensures all security measures are properly implemented
 """
-import os
-import sys
-import subprocess
 import logging
+import os
+import subprocess
+import sys
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))

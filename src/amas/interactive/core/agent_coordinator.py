@@ -8,20 +8,20 @@ real-time performance monitoring.
 """
 
 import asyncio
+import json
+import logging
 import time
 import uuid
-from typing import Dict, List, Optional, Any, Tuple, Callable
 from dataclasses import dataclass, field
-from enum import Enum
-import logging
 from datetime import datetime, timedelta
-import json
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 # Rich for enhanced output
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
+from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
+from rich.table import Table
 
 
 class AgentStatus(Enum):

@@ -6,7 +6,7 @@ Phase 8: Predictive analytics, machine learning models, and AI insights
 import asyncio
 import json
 import logging
-import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data
+import pickle
 import warnings
 from dataclasses import dataclass
 from datetime import datetime, timedelta

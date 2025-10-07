@@ -3,13 +3,13 @@
 AI Fallback Integration - Integrate fallback system with all AI scripts
 """
 
-import os
-import sys
 import asyncio
 import json
 import logging
-from typing import Dict, List, Any, Optional
+import os
+import sys
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 # Add services to path
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "services"))

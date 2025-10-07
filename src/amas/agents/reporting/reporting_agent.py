@@ -29,9 +29,8 @@ class ReportingAgent(IntelligenceAgent):
             "data_visualization",
             "executive_summaries",
             "technical_documentation",
-            "briefing_preparation",
-            "chart_creation",
-            "narrative_analysis",
+            "intelligence_briefing",
+            "threat_assessment",
         ]
 
         super().__init__(
@@ -45,7 +44,7 @@ class ReportingAgent(IntelligenceAgent):
         )
 
         self.report_templates = {}
-        self.generated_reports = {}
+        self.output_formats = ["pdf", "html", "json", "markdown"]
 
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Execute reporting task"""
@@ -63,10 +62,10 @@ class ReportingAgent(IntelligenceAgent):
                 return await self._create_executive_summary(task)
             elif task_type == "technical_documentation":
                 return await self._create_technical_documentation(task)
-            elif task_type == "briefing_preparation":
-                return await self._prepare_briefing(task)
-            elif task_type == "chart_creation":
-                return await self._create_charts(task)
+            elif task_type == "intelligence_briefing":
+                return await self._create_intelligence_briefing(task)
+            elif task_type == "threat_assessment":
+                return await self._create_threat_assessment(task)
             else:
                 return await self._perform_general_reporting(task)
 
@@ -82,13 +81,13 @@ class ReportingAgent(IntelligenceAgent):
         """Validate if this agent can handle the task"""
         reporting_keywords = [
             "report",
-            "summary",
             "documentation",
+            "summary",
             "briefing",
             "visualization",
-            "chart",
-            "narrative",
+            "assessment",
             "analysis",
+            "presentation",
         ]
 
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
@@ -97,65 +96,31 @@ class ReportingAgent(IntelligenceAgent):
     async def _generate_report(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Generate comprehensive report"""
         try:
-            report_type = task.get("parameters", {}).get(
-                "report_type", "intelligence_report"
-            )
             data = task.get("parameters", {}).get("data", {})
-            format_type = task.get("parameters", {}).get("format", "comprehensive")
+            report_type = task.get("parameters", {}).get("report_type", "intelligence")
+            output_format = task.get("parameters", {}).get("output_format", "pdf")
 
             # Mock report generation
             report_content = {
-                "report_id": f"report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
-                "report_type": report_type,
-                "title": "Intelligence Analysis Report",
-                "executive_summary": {
-                    "key_findings": [
-                        "Analysis completed successfully",
-                        "No significant threats detected",
-                        "Recommendations provided",
-                    ],
-                    "recommendations": [
-                        "Continue monitoring",
-                        "Update security measures",
-                    ],
-                    "confidence_level": "High",
-                },
-                "detailed_analysis": {
-                    "methodology": "Multi-source intelligence analysis",
-                    "data_sources": [
-                        "OSINT",
-                        "Technical Analysis",
-                        "Human Intelligence",
-                    ],
-                    "findings": [
-                        {
-                            "category": "Threat Assessment",
-                            "finding": "No active threats detected",
-                            "confidence": 0.9,
-                            "evidence": ["Source 1", "Source 2"],
-                        }
-                    ],
-                    "correlations": [
-                        {
-                            "entities": ["Entity A", "Entity B"],
-                            "relationship": "Associated",
-                            "strength": 0.8,
-                        }
-                    ],
-                },
-                "visualizations": [
-                    {"type": "timeline", "title": "Event Timeline", "data": []},
+                "title": f"{report_type.title()} Report",
+                "date": datetime.utcnow().isoformat(),
+                "summary": "This is a comprehensive intelligence report",
+                "sections": [
                     {
-                        "type": "network_graph",
-                        "title": "Entity Relationships",
-                        "data": [],
+                        "title": "Executive Summary",
+                        "content": "Key findings and recommendations",
+                    },
+                    {
+                        "title": "Analysis",
+                        "content": "Detailed analysis of collected data",
+                    },
+                    {
+                        "title": "Recommendations",
+                        "content": "Actionable recommendations based on findings",
                     },
                 ],
-                "appendices": [
-                    {"title": "Raw Data", "content": "Detailed data analysis results"}
-                ],
-                "format": format_type,
-                "generated_at": datetime.utcnow().isoformat(),
+                "data": data,
+                "format": output_format,
             }
 
             # Store report
@@ -164,8 +129,8 @@ class ReportingAgent(IntelligenceAgent):
             return {
                 "success": True,
                 "task_type": "report_generation",
-                "report_id": report_content["report_id"],
                 "report_content": report_content,
+                "output_format": output_format,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
@@ -186,28 +151,13 @@ class ReportingAgent(IntelligenceAgent):
 
             # Mock visualization creation
             visualization = {
-                "visualization_id": f"viz_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
-                "type": visualization_type,
                 "chart_type": chart_type,
-                "title": "Data Visualization",
                 "data_points": len(data),
-                "chart_config": {
-                    "x_axis": "Time",
-                    "y_axis": "Value",
-                    "colors": ["#1f77b4", "#ff7f0e", "#2ca02c"],
-                    "legend": True,
-                    "grid": True,
-                },
-                "data": [
-                    {"x": "2024-01-01", "y": 100},
-                    {"x": "2024-01-02", "y": 120},
-                    {"x": "2024-01-03", "y": 110},
-                ],
-                "insights": [
-                    "Data shows increasing trend",
-                    "Peak value observed on 2024-01-02",
-                ],
-                "created_at": datetime.utcnow().isoformat(),
+                "title": "Data Visualization",
+                "x_axis": "Categories",
+                "y_axis": "Values",
+                "data": data,
+                "format": "png",
             }
 
             return {
@@ -229,48 +179,29 @@ class ReportingAgent(IntelligenceAgent):
         """Create executive summary"""
         try:
             data = task.get("parameters", {}).get("data", {})
-            summary_type = task.get("parameters", {}).get("summary_type", "executive")
+            audience = task.get("parameters", {}).get("audience", "executives")
 
             # Mock executive summary
-            executive_summary = {
-                "summary_id": f"summary_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
-                "type": summary_type,
+            summary = {
                 "title": "Executive Summary",
-                "key_points": [
-                    "Analysis completed successfully",
-                    "No critical issues identified",
-                    "Recommendations provided",
-                ],
-                "findings": [
-                    {
-                        "finding": "System performance is optimal",
-                        "impact": "Low",
-                        "confidence": 0.9,
-                    }
+                "audience": audience,
+                "key_findings": [
+                    "Critical security vulnerability identified",
+                    "Recommendation to implement additional controls",
+                    "Budget impact: $50,000",
                 ],
                 "recommendations": [
-                    {
-                        "recommendation": "Continue current monitoring",
-                        "priority": "Medium",
-                        "timeline": "Ongoing",
-                    }
+                    "Immediate action required",
+                    "Long-term strategic planning needed",
                 ],
-                "risk_assessment": {
-                    "overall_risk": "Low",
-                    "risk_factors": [],
-                    "mitigation_strategies": [],
-                },
-                "next_steps": [
-                    "Review findings with stakeholders",
-                    "Implement recommendations",
-                ],
-                "created_at": datetime.utcnow().isoformat(),
+                "risk_level": "high",
+                "confidence": 0.9,
             }
 
             return {
                 "success": True,
                 "task_type": "executive_summary",
-                "summary": executive_summary,
+                "summary": summary,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
@@ -287,54 +218,30 @@ class ReportingAgent(IntelligenceAgent):
     ) -> Dict[str, Any]:
         """Create technical documentation"""
         try:
-            data = task.get("parameters", {}).get("data", {})
-            doc_type = task.get("parameters", {}).get("doc_type", "technical")
+            technical_data = task.get("parameters", {}).get("technical_data", {})
+            documentation_type = task.get("parameters", {}).get(
+                "documentation_type", "api"
+            )
 
             # Mock technical documentation
-            technical_doc = {
-                "doc_id": f"tech_doc_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
-                "type": doc_type,
-                "title": "Technical Documentation",
+            documentation = {
+                "title": f"{documentation_type.title()} Documentation",
+                "version": "1.0.0",
                 "sections": [
                     {
-                        "section": "Overview",
+                        "title": "Overview",
                         "content": "System overview and architecture",
                     },
-                    {
-                        "section": "Methodology",
-                        "content": "Analysis methodology and approach",
-                    },
-                    {"section": "Results", "content": "Detailed analysis results"},
-                    {
-                        "section": "Recommendations",
-                        "content": "Technical recommendations",
-                    },
+                    {"title": "API Reference", "content": "Detailed API documentation"},
+                    {"title": "Examples", "content": "Usage examples and code samples"},
                 ],
-                "code_examples": [
-                    {
-                        "language": "python",
-                        "code": "def analyze_data(data):\n    return data.analyze()",
-                        "description": "Data analysis function",
-                    }
-                ],
-                "diagrams": [
-                    {
-                        "type": "flowchart",
-                        "title": "Analysis Process",
-                        "content": "Process flow diagram",
-                    }
-                ],
-                "references": [
-                    "Reference 1: Technical Standard",
-                    "Reference 2: Best Practice Guide",
-                ],
-                "created_at": datetime.utcnow().isoformat(),
+                "technical_data": technical_data,
             }
 
             return {
                 "success": True,
                 "task_type": "technical_documentation",
-                "documentation": technical_doc,
+                "documentation": documentation,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
@@ -346,60 +253,33 @@ class ReportingAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _prepare_briefing(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Prepare briefing materials"""
+    async def _create_intelligence_briefing(
+        self, task: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Create intelligence briefing"""
         try:
-            audience = task.get("parameters", {}).get("audience", "executive")
-            duration = task.get("parameters", {}).get("duration", 30)
-            data = task.get("parameters", {}).get("data", {})
+            intelligence_data = task.get("parameters", {}).get("intelligence_data", {})
+            briefing_level = task.get("parameters", {}).get(
+                "briefing_level", "confidential"
+            )
 
             # Mock briefing preparation
             briefing = {
-                "briefing_id": f"briefing_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
-                "audience": audience,
-                "duration": duration,
-                "slides": [
-                    {
-                        "slide_number": 1,
-                        "title": "Executive Summary",
-                        "content": "Key findings and recommendations",
-                        "duration": 5,
-                    },
-                    {
-                        "slide_number": 2,
-                        "title": "Threat Assessment",
-                        "content": "Current threat landscape",
-                        "duration": 10,
-                    },
-                    {
-                        "slide_number": 3,
-                        "title": "Recommendations",
-                        "content": "Action items and next steps",
-                        "duration": 10,
-                    },
+                "title": "Intelligence Briefing",
+                "classification": briefing_level,
+                "key_intelligence": [
+                    "Threat actor identified",
+                    "Attack vector analyzed",
+                    "Mitigation strategies recommended",
                 ],
-                "talking_points": [
-                    "System is operating normally",
-                    "No critical issues identified",
-                    "Recommendations for improvement",
-                ],
-                "questions_answers": [
-                    {
-                        "question": "What is the current threat level?",
-                        "answer": "Low - no active threats detected",
-                    }
-                ],
-                "materials": [
-                    "Executive Summary",
-                    "Detailed Analysis Report",
-                    "Visualization Charts",
-                ],
-                "created_at": datetime.utcnow().isoformat(),
+                "threat_level": "high",
+                "confidence": 0.85,
+                "intelligence_data": intelligence_data,
             }
 
             return {
                 "success": True,
-                "task_type": "briefing_preparation",
+                "task_type": "intelligence_briefing",
                 "briefing": briefing,
                 "timestamp": datetime.utcnow().isoformat(),
             }
@@ -415,34 +295,37 @@ class ReportingAgent(IntelligenceAgent):
     async def _create_charts(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Create charts and graphs"""
         try:
-            data = task.get("parameters", {}).get("data", [])
-            chart_types = task.get("parameters", {}).get("chart_types", ["bar", "line"])
+            threat_data = task.get("parameters", {}).get("threat_data", {})
+            assessment_scope = task.get("parameters", {}).get(
+                "assessment_scope", "comprehensive"
+            )
 
-            # Mock chart creation
-            charts = []
-            for i, chart_type in enumerate(chart_types):
-                chart = {
-                    "chart_id": f"chart_{i}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
-                    "type": chart_type,
-                    "title": f"{chart_type.title()} Chart",
-                    "data": [
-                        {"x": "Category A", "y": 100},
-                        {"x": "Category B", "y": 150},
-                        {"x": "Category C", "y": 120},
-                    ],
-                    "config": {
-                        "width": 800,
-                        "height": 600,
-                        "colors": ["#1f77b4", "#ff7f0e", "#2ca02c"],
+            # Mock threat assessment
+            assessment = {
+                "title": "Threat Assessment Report",
+                "scope": assessment_scope,
+                "threats_identified": [
+                    {"threat": "Malware", "severity": "high", "likelihood": "medium"},
+                    {"threat": "Phishing", "severity": "medium", "likelihood": "high"},
+                    {
+                        "threat": "Insider Threat",
+                        "severity": "high",
+                        "likelihood": "low",
                     },
-                    "insights": [f"{chart_type.title()} chart shows data distribution"],
-                }
-                charts.append(chart)
+                ],
+                "overall_risk": "medium",
+                "recommendations": [
+                    "Implement additional security controls",
+                    "Conduct security awareness training",
+                    "Regular security assessments",
+                ],
+                "threat_data": threat_data,
+            }
 
             return {
                 "success": True,
-                "task_type": "chart_creation",
-                "charts": charts,
+                "task_type": "threat_assessment",
+                "assessment": assessment,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
@@ -461,26 +344,26 @@ class ReportingAgent(IntelligenceAgent):
             parameters = task.get("parameters", {})
 
             # Mock general reporting
-            reporting_result = {
-                "reporting_id": f"reporting_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+            report_result = {
+                "report_id": f"report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
                 "description": description,
                 "status": "completed",
                 "findings": [
                     "Reporting task completed successfully",
-                    "All required documents generated",
-                    "Quality assurance passed",
+                    "All data processed and analyzed",
+                    "Report generated in multiple formats",
                 ],
                 "recommendations": [
-                    "Review generated reports",
-                    "Distribute to stakeholders",
+                    "Continue monitoring data quality",
+                    "Update reporting templates regularly",
                 ],
-                "confidence": 0.85,
+                "confidence": 0.9,
             }
 
             return {
                 "success": True,
                 "task_type": "general_reporting",
-                "result": reporting_result,
+                "result": report_result,
                 "timestamp": datetime.utcnow().isoformat(),
             }
 

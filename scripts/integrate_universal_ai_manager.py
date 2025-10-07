@@ -5,8 +5,8 @@ Updates workflows, scripts, and services to use the new centralized AI manager
 """
 
 import os
-import sys
 import re
+import sys
 from pathlib import Path
 from typing import List, Tuple
 

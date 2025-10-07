@@ -4,24 +4,26 @@ Simple Working Auto-Responder
 A guaranteed working auto-response system that doesn't rely on external APIs
 """
 
-import os
-import requests
 import json
+import os
 import re
 from datetime import datetime
+
+import requests
+
 
 def main():
     print("🤖 Simple Working Auto-Responder")
     print("=" * 50)
-    
+
     # Get environment variables
-    token = os.environ.get('GITHUB_TOKEN')
-    repo = os.environ.get('GITHUB_REPOSITORY')
-    issue_number = os.environ.get('ISSUE_NUMBER')
-    title = os.environ.get('ISSUE_TITLE', '')
-    body = os.environ.get('ISSUE_BODY', '')
-    author = os.environ.get('ISSUE_AUTHOR', '')
-    
+    token = os.environ.get("GITHUB_TOKEN")
+    repo = os.environ.get("GITHUB_REPOSITORY")
+    issue_number = os.environ.get("ISSUE_NUMBER")
+    title = os.environ.get("ISSUE_TITLE", "")
+    body = os.environ.get("ISSUE_BODY", "")
+    author = os.environ.get("ISSUE_AUTHOR", "")
+
     # Validate required variables
     if not all([token, repo, issue_number]):
         print("❌ Missing required environment variables")
@@ -29,76 +31,109 @@ def main():
         print(f"Repo: {'✅' if repo else '❌'}")
         print(f"Issue: {'✅' if issue_number else '❌'}")
         return False
-    
+
     print(f"📋 Processing issue #{issue_number}: {title}")
     print(f"👤 Author: {author}")
     print(f"🏠 Repository: {repo}")
-    
+
     # Categorize issue based on content
     content = f"{title} {body}".lower()
     category = categorize_issue(content)
     print(f"🏷️ Category: {category}")
-    
+
     # Generate appropriate response
     response = generate_response(category, author, issue_number, title)
-    
+
     # Post comment
     if post_comment(token, repo, issue_number, response):
         print("✅ Comment posted successfully")
     else:
         print("❌ Failed to post comment")
         return False
-    
+
     # Add labels
     if add_labels(token, repo, issue_number, category):
         print(f"✅ Labels added: ai-analyzed, auto-response, {category}")
     else:
         print("❌ Failed to add labels")
-    
+
     print("🎉 Auto-response completed successfully!")
     return True
 
+
 def categorize_issue(content):
     """Categorize issue based on content analysis"""
-    
+
     # Bug indicators
-    bug_keywords = ['bug', 'error', 'crash', 'broken', 'issue', 'problem', 'fix', 'not working']
+    bug_keywords = [
+        "bug",
+        "error",
+        "crash",
+        "broken",
+        "issue",
+        "problem",
+        "fix",
+        "not working",
+    ]
     if any(keyword in content for keyword in bug_keywords):
-        return 'bug'
-    
+        return "bug"
+
     # Feature request indicators
-    feature_keywords = ['feature', 'enhancement', 'request', 'add', 'new', 'improve', 'suggest']
+    feature_keywords = [
+        "feature",
+        "enhancement",
+        "request",
+        "add",
+        "new",
+        "improve",
+        "suggest",
+    ]
     if any(keyword in content for keyword in feature_keywords):
-        return 'feature'
-    
+        return "feature"
+
     # Question indicators
-    question_keywords = ['question', 'how', 'what', 'why', 'help', 'support', 'guide']
+    question_keywords = ["question", "how", "what", "why", "help", "support", "guide"]
     if any(keyword in content for keyword in question_keywords):
-        return 'question'
-    
+        return "question"
+
     # Security indicators
-    security_keywords = ['security', 'vulnerability', 'attack', 'hack', 'safe', 'secure']
+    security_keywords = [
+        "security",
+        "vulnerability",
+        "attack",
+        "hack",
+        "safe",
+        "secure",
+    ]
     if any(keyword in content for keyword in security_keywords):
-        return 'security'
-    
+        return "security"
+
     # Performance indicators
-    performance_keywords = ['performance', 'slow', 'fast', 'optimize', 'speed', 'memory']
+    performance_keywords = [
+        "performance",
+        "slow",
+        "fast",
+        "optimize",
+        "speed",
+        "memory",
+    ]
     if any(keyword in content for keyword in performance_keywords):
-        return 'performance'
-    
+        return "performance"
+
     # Documentation indicators
-    doc_keywords = ['documentation', 'docs', 'readme', 'guide', 'tutorial', 'example']
+    doc_keywords = ["documentation", "docs", "readme", "guide", "tutorial", "example"]
     if any(keyword in content for keyword in doc_keywords):
-        return 'documentation'
-    
-    return 'general'
+        return "documentation"
+
+    return "general"
+
 
 def generate_response(category, author, issue_number, title):
     """Generate appropriate response based on category"""
-    
+
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    
-    if category == 'bug':
+
+    if category == "bug":
         return f"""## 🐛 Bug Report Acknowledged
 
 Thank you for reporting this issue, @{author}! 
@@ -120,7 +155,7 @@ We appreciate your patience as we work to resolve this! 🙏
 ---
 *🤖 Auto-generated response - AMAS AI System*"""
 
-    elif category == 'feature':
+    elif category == "feature":
         return f"""## ✨ Feature Request Received
 
 Great suggestion, @{author}! 
@@ -142,7 +177,7 @@ Thanks for helping improve AMAS! 🚀
 ---
 *🤖 Auto-generated response - AMAS AI System*"""
 
-    elif category == 'question':
+    elif category == "question":
         return f"""## ❓ Question Received
 
 Hello @{author}! Thanks for your question.
@@ -164,7 +199,7 @@ We'll get back to you soon! 🤝
 ---
 *🤖 Auto-generated response - AMAS AI System*"""
 
-    elif category == 'security':
+    elif category == "security":
         return f"""## 🔒 Security Issue Reported
 
 Thank you for reporting this security concern, @{author}! 
@@ -186,7 +221,7 @@ Security is our top priority! 🛡️
 ---
 *🤖 Auto-generated response - AMAS AI System*"""
 
-    elif category == 'performance':
+    elif category == "performance":
         return f"""## ⚡ Performance Issue Reported
 
 Thanks for reporting this performance issue, @{author}! 
@@ -208,7 +243,7 @@ We'll optimize this for you! 🚀
 ---
 *🤖 Auto-generated response - AMAS AI System*"""
 
-    elif category == 'documentation':
+    elif category == "documentation":
         return f"""## 📚 Documentation Issue Reported
 
 Thank you for improving our documentation, @{author}! 
@@ -252,17 +287,18 @@ Thanks for contributing to AMAS! 🙏
 ---
 *🤖 Auto-generated response - AMAS AI System*"""
 
+
 def post_comment(token, repo, issue_number, response):
     """Post comment to GitHub issue"""
-    
+
     url = f"https://api.github.com/repos/{repo}/issues/{issue_number}/comments"
     headers = {
-        'Authorization': f'Bearer {token}',
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
     }
-    data = {'body': response}
-    
+    data = {"body": response}
+
     try:
         response_req = requests.post(url, headers=headers, json=data)
         if response_req.status_code == 201:
@@ -275,25 +311,26 @@ def post_comment(token, repo, issue_number, response):
         print(f"❌ Error posting comment: {e}")
         return False
 
+
 def add_labels(token, repo, issue_number, category):
     """Add labels to GitHub issue"""
-    
+
     labels_url = f"https://api.github.com/repos/{repo}/issues/{issue_number}/labels"
     headers = {
-        'Authorization': f'Bearer {token}',
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
     }
-    
+
     # Base labels
-    labels = ['ai-analyzed', 'auto-response']
-    
+    labels = ["ai-analyzed", "auto-response"]
+
     # Add category-specific label
-    if category != 'general':
+    if category != "general":
         labels.append(category)
-    
-    labels_data = {'labels': labels}
-    
+
+    labels_data = {"labels": labels}
+
     try:
         labels_req = requests.post(labels_url, headers=headers, json=labels_data)
         if labels_req.status_code == 200:
@@ -304,6 +341,7 @@ def add_labels(token, repo, issue_number, category):
     except Exception as e:
         print(f"❌ Error adding labels: {e}")
         return False
+
 
 if __name__ == "__main__":
     main()

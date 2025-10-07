@@ -8,9 +8,8 @@ including initialization, health monitoring, and graceful shutdown.
 
 import asyncio
 import logging
-from typing import Dict, Any, Optional, List
 from datetime import datetime
-from contextlib import asynccontextmanager
+from typing import Any, Dict, Optional
 
 from .database_service import DatabaseService
 from .knowledge_graph_service import KnowledgeGraphService
@@ -309,6 +308,10 @@ class ServiceManager:
             #     await self.universal_ai_manager.close()
             #     logger.info("Universal AI Manager closed")
 
+            if self.vector_service:
+                await self.vector_service.close()
+                logger.info("Vector service closed")
+
             if self.knowledge_graph_service and self.knowledge_graph_service.is_initialized:
                 await self.knowledge_graph_service.close()
                 logger.info("Knowledge Graph service closed")
@@ -329,6 +332,22 @@ class ServiceManager:
 
         except Exception as e:
             logger.error(f"Error closing services: {e}")
+
+    def get_llm_service(self) -> Optional[LLMService]:
+        """Get LLM service instance"""
+        return self.llm_service
+
+    def get_knowledge_graph_service(self) -> Optional[KnowledgeGraphService]:
+        """Get Knowledge Graph service instance"""
+        return self.knowledge_graph_service
+
+    def get_database_service(self) -> Optional[DatabaseService]:
+        """Get Database service instance"""
+        return self.database_service
+
+    def get_security_service(self) -> Optional[SecurityService]:
+        """Get Security service instance"""
+        return self.security_service
 
     async def shutdown(self):
         """
