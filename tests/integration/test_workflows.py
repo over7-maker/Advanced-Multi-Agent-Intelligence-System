@@ -19,7 +19,7 @@ import yaml
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from services.ai_service_manager import AIProvider, AIServiceManager
+from amas.services.ai_service_manager import AIProvider, AIServiceManager
 
 # Configure logging
 logging.basicConfig(
