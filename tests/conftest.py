@@ -1,4 +1,5 @@
 """
+
 Test configuration and fixtures for AMAS test suite
 """
 
@@ -26,6 +27,7 @@ def event_loop():
 
 
 @pytest.fixture
+
 async def amas_app() -> AsyncGenerator[AMASApplication, None]:
     """Create and initialize AMAS application for testing"""
     app = AMASApplication()
@@ -67,6 +69,7 @@ def test_config() -> Dict[str, Any]:
 
 
 @pytest.fixture
+
 def sample_task() -> Dict[str, Any]:
     """Sample task for testing"""
     return {

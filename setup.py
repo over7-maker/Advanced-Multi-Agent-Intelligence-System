@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+
 AMAS Setup Script
 Complete installation and configuration for AMAS
 """

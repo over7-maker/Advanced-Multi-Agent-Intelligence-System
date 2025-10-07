@@ -5,6 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "amas"
 version = "1.0.0"
+
 description = "Advanced Multi-Agent Intelligence System - Sophisticated autonomous AI system for offline operation"
 readme = "README.md"
 license = {text = "MIT"}
@@ -22,6 +23,7 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
@@ -29,6 +31,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: System :: Distributed Computing",
@@ -64,10 +67,12 @@ dependencies = [
     "structlog>=23.2.0",
     "prometheus-client>=0.19.0",
     "tenacity>=8.2.3",
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
 ]
 
 [project.optional-dependencies]
 dev = [
+
     "pytest>=7.4.3",
     "pytest-asyncio>=0.21.1",
     "pytest-cov>=4.1.0",
@@ -122,9 +127,11 @@ Changelog = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-Sy
 [project.scripts]
 amas = "amas.cli:main"
 amas-setup = "amas.setup:main"
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
 
 [tool.setuptools.package-data]
 amas = [
@@ -134,6 +141,7 @@ amas = [
 ]
 
 # Black configuration
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
 [tool.black]
 line-length = 88
 target-version = ['py311']

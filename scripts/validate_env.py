@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+
 AMAS Environment Validation Script
 Validates API keys and provider configuration
 """
@@ -9,6 +10,7 @@ import os
 import sys
 from pathlib import Path
 
+
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
@@ -17,6 +19,7 @@ from amas.providers.manager import provider_manager, validate_environment
 
 def main():
     """Main validation function"""
+
     print("🔍 AMAS Environment Validation")
     print("=" * 50)
 
