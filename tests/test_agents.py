@@ -51,9 +51,10 @@ class TestOSINTAgent:
         """Test task execution"""
         task = {
             "id": "test_task_1",
-            "type": "intelligence_collection",
             "description": "Collect intelligence on target",
-            "parameters": {"target": "test_target", "sources": ["web", "social_media"]},
+            "task_type": "intelligence_collection",
+            "priority": "MEDIUM",
+            "metadata": {"title": "OSINT Collection", "parameters": {"target": "test_target", "sources": ["web", "social_media"]}}
         }
 
         result = await osint_agent.execute_task(task)
@@ -84,9 +85,10 @@ class TestInvestigationAgent:
         """Test task execution"""
         task = {
             "id": "test_task_2",
-            "type": "case_management",
             "description": "Manage investigation case",
-            "parameters": {"case_id": "case_001", "priority": "high"},
+            "task_type": "case_management",
+            "priority": "HIGH",
+            "metadata": {"title": "Investigation Case Management", "parameters": {"case_id": "case_001", "priority": "high"}}
         }
 
         result = await investigation_agent.execute_task(task)
@@ -115,9 +117,10 @@ class TestForensicsAgent:
         """Test evidence acquisition task"""
         task = {
             "id": "test_task_3",
-            "type": "evidence_acquisition",
             "description": "Acquire evidence from disk",
-            "parameters": {"source": "/dev/sda1", "acquisition_type": "disk_image"},
+            "task_type": "evidence_acquisition",
+            "priority": "HIGH",
+            "metadata": {"title": "Evidence Acquisition", "parameters": {"source": "/dev/sda1", "acquisition_type": "disk_image"}}
         }
 
         result = await forensics_agent.execute_task(task)
@@ -149,16 +152,17 @@ class TestDataAnalysisAgent:
         """Test statistical analysis task"""
         task = {
             "id": "test_task_4",
-            "type": "statistical_analysis",
             "description": "Perform statistical analysis",
-            "parameters": {
+            "task_type": "statistical_analysis",
+            "priority": "MEDIUM",
+            "metadata": {"title": "Statistical Analysis", "parameters": {
                 "dataset_id": "test_data",
                 "data": [
                     {"value": i, "category": "A" if i % 2 == 0 else "B"}
                     for i in range(10)
                 ],
                 "column": "value",
-            },
+            }}
         }
 
         result = await data_analysis_agent.execute_task(task)
@@ -189,9 +193,10 @@ class TestReverseEngineeringAgent:
         """Test static analysis task"""
         task = {
             "id": "test_task_5",
-            "type": "static_analysis",
             "description": "Perform static analysis",
-            "parameters": {"target": "malware.exe"},
+            "task_type": "static_analysis",
+            "priority": "HIGH",
+            "metadata": {"title": "Static Analysis", "parameters": {"target": "malware.exe"}}
         }
 
         result = await reverse_engineering_agent.execute_task(task)
@@ -220,9 +225,10 @@ class TestMetadataAgent:
         """Test metadata extraction task"""
         task = {
             "id": "test_task_6",
-            "type": "metadata_extraction",
             "description": "Extract metadata from files",
-            "parameters": {"file_paths": ["/path/to/file1.txt", "/path/to/file2.pdf"]},
+            "task_type": "metadata_extraction",
+            "priority": "MEDIUM",
+            "metadata": {"title": "Metadata Extraction", "parameters": {"file_paths": ["/path/to/file1.txt", "/path/to/file2.pdf"]}}
         }
 
         result = await metadata_agent.execute_task(task)
@@ -251,13 +257,14 @@ class TestReportingAgent:
         """Test report generation task"""
         task = {
             "id": "test_task_7",
-            "type": "report_generation",
             "description": "Generate intelligence report",
-            "parameters": {
+            "task_type": "report_generation",
+            "priority": "HIGH",
+            "metadata": {"title": "Report Generation", "parameters": {
                 "report_type": "intelligence_report",
                 "data": {"findings": ["Finding 1", "Finding 2"]},
                 "format": "pdf",
-            },
+            }}
         }
 
         result = await reporting_agent.execute_task(task)
@@ -288,12 +295,13 @@ class TestTechnologyMonitorAgent:
         """Test technology trend monitoring task"""
         task = {
             "id": "test_task_8",
-            "type": "technology_trend_monitoring",
             "description": "Monitor technology trends",
-            "parameters": {
+            "task_type": "technology_trend_monitoring",
+            "priority": "MEDIUM",
+            "metadata": {"title": "Technology Trend Monitoring", "parameters": {
                 "technologies": ["AI", "Quantum Computing"],
                 "timeframe": "monthly",
-            },
+            }}
         }
 
         result = await technology_monitor_agent.execute_task(task)

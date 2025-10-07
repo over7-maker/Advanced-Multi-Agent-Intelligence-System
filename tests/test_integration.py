@@ -7,6 +7,8 @@ import asyncio
 import httpx
 import pytest
 
+from amas.core.unified_orchestrator_v2 import TaskPriority
+
 
 class TestSystemIntegration:
     """Test full system integration"""
@@ -18,13 +20,17 @@ class TestSystemIntegration:
         """Test complete task processing workflow"""
         # Submit a task via API
         task_data = {
-            "type": "osint",
             "description": "Collect intelligence on AI advancements",
-            "parameters": {
-                "keywords": ["AI", "machine learning", "advancements"],
-                "sources": ["web", "academic"],
-            },
+            "task_type": "osint",
             "priority": 1,
+            "metadata": {
+                "title": "Collect AI Advancements",
+                "parameters": {
+                    "keywords": ["AI", "machine learning", "advancements"],
+                    "sources": ["web", "academic"],
+                },
+                "required_agent_roles": ["intelligence_gatherer_agent"]
+            }
         }
 
         headers = {"Authorization": "Bearer valid_token"}
@@ -61,29 +67,36 @@ class TestSystemIntegration:
         # Submit multiple tasks of different types
         tasks = [
             {
-                "type": "osint",
                 "description": "OSINT task",
-                "parameters": {"keywords": ["test"]},
+                "task_type": "osint",
                 "priority": 1,
+                "metadata": {"title": "OSINT Task", "parameters": {"keywords": ["test"]}, "required_agent_roles": ["intelligence_gatherer_agent"]}
             },
             {
-                "type": "forensics",
                 "description": "Forensics task",
-                "parameters": {"source": "/dev/sda1"},
+                "task_type": "forensics",
                 "priority": 2,
+                "metadata": {"title": "Forensics Task", "parameters": {"source": "/dev/sda1"}, "required_agent_roles": ["forensics_agent"]}
             },
             {
-                "type": "data_analysis",
                 "description": "Data analysis task",
-                "parameters": {"data": [{"value": 1}]},
+                "task_type": "data_analysis",
                 "priority": 3,
+                "metadata": {"title": "Data Analysis Task", "parameters": {"data": [{"value": 1}]}, "required_agent_roles": ["data_agent"]}
             },
         ]
 
         task_ids = []
-        for task in tasks:
-            task_id = await orchestrator.submit_task(task)
+        for task_data in tasks:
+            task_id = await orchestrator.submit_task(
+                description=task_data["description"],
+                task_type=task_data["task_type"],
+                priority=TaskPriority(task_data["priority"]),
+                metadata=task_data["metadata"],
+            )
+
             task_ids.append(task_id)
+
 
         # Wait for all tasks to complete
         for task_id in task_ids:
@@ -132,11 +145,22 @@ class TestSystemIntegration:
         orchestrator = amas_app.orchestrator
 
         # Test invalid task submission
-        invalid_task = {"type": "invalid_type", "description": "Invalid task"}
+        invalid_task = {
+            "description": "Invalid task",
+            "task_type": "invalid_type",
+            "priority": "LOW",
+            "metadata": {"title": "Invalid Task"}
+        }
 
         # Should handle gracefully
         try:
-            task_id = await orchestrator.submit_task(invalid_task)
+            task_id = await orchestrator.submit_task(
+                description=invalid_task["description"],
+                task_type=invalid_task["task_type"],
+                priority=TaskPriority(invalid_task["priority"]),
+                metadata=invalid_task["metadata"],
+            )
+
             # If it doesn't raise an exception, check the result
             if task_id:
                 status = await orchestrator.get_task_status(task_id)
@@ -154,19 +178,25 @@ class TestSystemIntegration:
         # Submit multiple tasks concurrently
         tasks = [
             {
-                "type": "osint",
                 "description": f"OSINT task {i}",
-                "parameters": {"keywords": [f"keyword_{i}"]},
-                "priority": i,
+                "task_type": "osint",
+                "priority": TaskPriority.MEDIUM, # Use a valid TaskPriority enum member
+                "metadata": {"title": f"OSINT Task {i}", "parameters": {"keywords": [f"keyword_{i}"]}, "required_agent_roles": ["intelligence_gatherer_agent"]}
             }
             for i in range(5)
         ]
 
         # Submit all tasks
         task_ids = []
-        for task in tasks:
-            task_id = await orchestrator.submit_task(task)
+        for task_data in tasks:
+            task_id = await orchestrator.submit_task(
+                description=task_data["description"],
+                task_type=task_data["task_type"],
+                priority=task_data["priority"],
+                metadata=task_data["metadata"],
+            )
             task_ids.append(task_id)
+
 
         # Wait for all tasks to complete
         completed_tasks = 0
@@ -238,10 +268,10 @@ class TestSystemIntegration:
         """Test audit trail functionality"""
         # Perform some actions that should generate audit events
         task_data = {
-            "type": "osint",
             "description": "Audit test task",
-            "parameters": {"keywords": ["audit", "test"]},
-            "priority": 1,
+            "task_type": "osint",
+            "priority": TaskPriority.MEDIUM,
+            "metadata": {"title": "Audit Test Task", "parameters": {"keywords": ["audit", "test"]}, "required_agent_roles": ["intelligence_gatherer_agent"]}
         }
 
         headers = {"Authorization": "Bearer valid_token"}

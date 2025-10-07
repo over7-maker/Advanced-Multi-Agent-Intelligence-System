@@ -7,7 +7,7 @@ This module provides type-safe configuration with validation and environment var
 
 import os
 from typing import Dict, Any, Optional, List, Union
-from pydantic import Field, validator, root_validator
+from pydantic import Field, validator, model_validator
 from pydantic_settings import BaseSettings
 from pathlib import Path
 
@@ -278,21 +278,20 @@ class AMASConfig(BaseSettings):
             return Path(v)
         return v
 
-    @root_validator
-    def validate_configuration(cls, values: Dict[str, Any]) -> Dict[str, Any]:
+    @model_validator(mode="after")
+    def validate_configuration(self) -> "AMASConfig":
         """Validate overall configuration."""
         # Check if we're in production mode
-        if values.get("environment") == "production":
-            if values.get("debug", False):
+        if self.environment == "production":
+            if self.debug:
                 raise ValueError("Debug mode cannot be enabled in production")
             if (
-                not values.get("security", {}).get("jwt_secret")
-                or values.get("security", {}).get("jwt_secret")
-                == "amas_jwt_secret_key_2024_secure"
+                not self.security.jwt_secret
+                or self.security.jwt_secret == "amas_jwt_secret_key_2024_secure"
             ):
                 raise ValueError("Production requires secure JWT secret")
 
-        return values
+        return self
 
     def create_directories(self) -> None:
         """Create necessary directories if they don't exist."""

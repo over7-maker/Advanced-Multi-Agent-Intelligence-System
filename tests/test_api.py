@@ -8,6 +8,8 @@ from typing import Any, Dict
 import httpx
 import pytest
 
+from amas.common.models import TaskPriority
+
 
 class TestAPIEndpoints:
     """Test FastAPI endpoints"""
@@ -40,6 +42,8 @@ class TestAPIEndpoints:
         """Test task submission endpoint"""
         headers = {"Authorization": "Bearer valid_token"}
         response = await test_client.post("/tasks", json=sample_task, headers=headers)
+        # The sample_task fixture now returns a dictionary that directly matches the expected payload for submit_task
+        # No changes needed here, as the fixture itself was updated.
         assert response.status_code == 200
 
         data = response.json()
@@ -137,6 +141,8 @@ class TestAPIEndpoints:
         # Test with invalid token
         headers = {"Authorization": "Bearer invalid_token"}
         response = await test_client.post("/tasks", json=sample_task, headers=headers)
+        # The sample_task fixture now returns a dictionary that directly matches the expected payload for submit_task
+        # No changes needed here, as the fixture itself was updated.
         assert response.status_code == 401
 
     @pytest.mark.asyncio
@@ -144,9 +150,11 @@ class TestAPIEndpoints:
         """Test handling of invalid task data"""
         headers = {"Authorization": "Bearer valid_token"}
         invalid_task = {
-            "type": "invalid_type",
             "description": "Invalid task",
-            # Missing required fields
+            "task_type": "invalid_type",
+            "priority": "LOW",
+            "metadata": {"title": "Invalid Task"}
+            # Missing other required fields like priority
         }
 
         response = await test_client.post(

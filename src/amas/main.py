@@ -13,7 +13,7 @@ from typing import Dict, Any, Optional, Union
 from contextlib import asynccontextmanager
 
 from .config.settings import get_settings, AMASConfig
-from .core.orchestrator import IntelligenceOrchestrator
+from .core.unified_orchestrator_v2 import UnifiedOrchestratorV2 as IntelligenceOrchestrator
 from .services.service_manager import ServiceManager
 
 
