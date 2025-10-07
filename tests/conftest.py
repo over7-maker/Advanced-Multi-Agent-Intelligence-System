@@ -85,9 +85,6 @@ def mock_service_manager(mock_vector_service, mock_knowledge_graph_service):
 
 @pytest.fixture
 async def mock_orchestrator(mock_universal_ai_manager, mock_service_manager, mock_message_bus):
-
-
-
     """
     Mock UnifiedOrchestratorV2 instance with mocked dependencies.
     """
@@ -124,41 +121,37 @@ def mock_task():
 
 @pytest.fixture
 async def rag_agent(mock_orchestrator, mock_message_bus, agent_config):
-    orchestrator = await mock_orchestrator
     """RAGAgent instance for testing."""
+    orchestrator = await mock_orchestrator
     agent = RAGAgent("rag_agent_001", agent_config, orchestrator, mock_message_bus)
-
     return agent
 
 @pytest.fixture
 async def tool_agent(mock_orchestrator, mock_message_bus, agent_config):
-    orchestrator = await mock_orchestrator
     """ToolAgent instance for testing."""
+    orchestrator = await mock_orchestrator
     agent = ToolAgent("tool_agent_001", agent_config, orchestrator, mock_message_bus)
-
     return agent
 
 @pytest.fixture
 async def planning_agent(mock_orchestrator, mock_message_bus, agent_config):
-    orchestrator = await mock_orchestrator
     """PlanningAgent instance for testing."""
+    orchestrator = await mock_orchestrator
     agent = PlanningAgent("planning_agent_001", agent_config, orchestrator, mock_message_bus)
-
     return agent
 
 @pytest.fixture
 async def code_agent(mock_orchestrator, mock_message_bus, agent_config):
-    orchestrator = await mock_orchestrator
     """CodeAgent instance for testing."""
+    orchestrator = await mock_orchestrator
     agent = CodeAgent("code_agent_001", agent_config, orchestrator, mock_message_bus)
     return agent
 
 @pytest.fixture
 async def data_agent(mock_orchestrator, mock_message_bus, agent_config):
-    orchestrator = await mock_orchestrator
     """DataAgent instance for testing."""
+    orchestrator = await mock_orchestrator
     agent = DataAgent("data_agent_001", agent_config, orchestrator, mock_message_bus)
-
     return agent
 
 
