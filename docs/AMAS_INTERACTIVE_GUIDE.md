@@ -16,6 +16,7 @@ Welcome to the most advanced interactive command interface for AI agent coordina
 8. [Troubleshooting](#troubleshooting)
 9. [Examples](#examples)
 10. [API Reference](#api-reference)
+11. [Integration Verification](#integration-verification)
 
 ## 🚀 Quick Start
 
@@ -664,7 +665,79 @@ AMAS Interactive Mode provides a powerful, intuitive interface for commanding yo
 - **📝 Comprehensive Logging**: Track everything for analysis
 - **🔄 Context Aware**: Remembers and builds on previous commands
 
-### Next Steps
+### Integration Verification
+
+### Running Integration Tests
+
+The AMAS system includes comprehensive integration verification to ensure all components are properly connected:
+
+```bash
+# Run the integration verification script
+python verify_integration.py
+
+# Run with specific tests
+python verify_integration.py --test api --test agents --test services
+```
+
+### What Gets Verified
+
+The integration verification script checks:
+
+1. **API Connectivity**
+   - All endpoints are accessible
+   - Proper response formats
+   - Authentication working correctly
+
+2. **Agent Communication**
+   - Agents can send/receive messages
+   - Event propagation working
+   - Coordination protocols functional
+
+3. **Service Health**
+   - All services starting correctly
+   - Proper resource allocation
+   - Graceful shutdown procedures
+
+4. **Data Flow**
+   - Messages routing correctly
+   - No data loss or corruption
+   - Proper error handling
+
+### Recent Integration Fixes (PR #162)
+
+This release includes critical integration fixes:
+
+- ✅ Fixed incorrect API endpoint references
+- ✅ Resolved orchestrator initialization issues
+- ✅ Implemented proper service shutdown logic
+- ✅ Updated all documentation to reflect current state
+- ✅ Added automated integration verification
+
+### Troubleshooting Integration Issues
+
+If you encounter integration problems:
+
+1. **Check Service Status**
+   ```bash
+   python scripts/health_check.py
+   ```
+
+2. **Verify Configuration**
+   ```bash
+   python scripts/validate_env.py
+   ```
+
+3. **Review Logs**
+   ```bash
+   tail -f logs/amas.log
+   ```
+
+4. **Run Diagnostics**
+   ```bash
+   python verify_integration.py --verbose
+   ```
+
+## Next Steps
 
 1. **Explore Commands**: Try different commands to see what's possible
 2. **Customize Configuration**: Adjust settings to your preferences

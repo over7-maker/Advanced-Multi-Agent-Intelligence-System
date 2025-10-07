@@ -1,5 +1,7 @@
 # AMAS API Documentation - Updated & Verified
 
+> **Recent Updates (PR #162)**: Fixed critical integration issues including API endpoint references, orchestrator initialization, and service shutdown logic. All endpoints have been verified and tested.
+
 ## 🌐 **Base URL**
 
 ```
