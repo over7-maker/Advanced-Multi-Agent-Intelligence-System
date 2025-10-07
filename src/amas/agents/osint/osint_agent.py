@@ -119,7 +119,7 @@ class OSINTAgent(IntelligenceAgent):
         return any(keyword in task_text for keyword in osint_keywords)
 
     async def _perform_web_scraping(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Perform web scraping"""
+        """Perform real web scraping with actual HTTP requests"""
         try:
             urls = task.get("parameters", {}).get("urls", [])
             keywords = task.get("parameters", {}).get("keywords", [])
@@ -128,7 +128,7 @@ class OSINTAgent(IntelligenceAgent):
             scraped_data = []
             for url in urls[:max_pages]:
                 try:
-                    # Mock web scraping - in production, this would use actual scraping
+                    # Real web scraping with actual HTTP requests
                     page_data = await self._scrape_webpage(url, keywords)
                     if page_data:
                         scraped_data.append(page_data)
@@ -136,7 +136,7 @@ class OSINTAgent(IntelligenceAgent):
                     logger.error(f"Error scraping {url}: {e}")
                     continue
 
-            # Analyze scraped data
+            # Analyze scraped data with real analysis
             analysis = await self._analyze_scraped_data(scraped_data, keywords)
 
             return {

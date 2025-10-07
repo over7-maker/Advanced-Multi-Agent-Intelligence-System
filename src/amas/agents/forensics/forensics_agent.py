@@ -129,22 +129,37 @@ class ForensicsAgent(IntelligenceAgent):
 
 
     async def _acquire_evidence(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Acquire digital evidence"""
+        """Acquire digital evidence with real file operations"""
         try:
             source = task.get("parameters", {}).get("source", "")
             acquisition_type = task.get("parameters", {}).get(
                 "acquisition_type", "forensic"
             )
 
-            # Mock evidence acquisition
+            # Real evidence acquisition
+            evidence_id = f"evid_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+            
+            # Calculate real hashes if source is a file
+            md5_hash = ""
+            sha256_hash = ""
+            size_bytes = 0
+            
+            if source and os.path.exists(source):
+                import hashlib
+                with open(source, 'rb') as f:
+                    content = f.read()
+                    size_bytes = len(content)
+                    md5_hash = hashlib.md5(content).hexdigest()
+                    sha256_hash = hashlib.sha256(content).hexdigest()
+            
             evidence_data = {
-                "evidence_id": f"evid_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+                "evidence_id": evidence_id,
                 "source": source,
                 "acquisition_type": acquisition_type,
                 "acquisition_time": datetime.utcnow().isoformat(),
-                "hash_md5": "mock_md5_hash",
-                "hash_sha256": "mock_sha256_hash",
-                "size_bytes": 1024000,
+                "hash_md5": md5_hash,
+                "hash_sha256": sha256_hash,
+                "size_bytes": size_bytes,
                 "chain_of_custody": {
                     "acquired_by": self.agent_id,
                     "timestamp": datetime.utcnow().isoformat(),
@@ -179,28 +194,56 @@ class ForensicsAgent(IntelligenceAgent):
                 "analysis_type", "comprehensive"
             )
 
-            # Mock file analysis
+            # Real file analysis
             analysis_results = []
             for file_path in files:
-                file_analysis = {
-                    "file_path": file_path,
-                    "file_type": "unknown",
-                    "size_bytes": 1024,
-                    "created_time": datetime.utcnow().isoformat(),
-                    "modified_time": datetime.utcnow().isoformat(),
-                    "accessed_time": datetime.utcnow().isoformat(),
-                    "permissions": "rw-r--r--",
-                    "owner": "user",
-                    "group": "group",
-                    "metadata": {
-                        "exif_data": {},
-                        "file_signature": "mock_signature",
-                        "entropy": 0.5,
-                    },
-                    "threat_indicators": [],
-                    "analysis_confidence": 0.8,
-                }
-                analysis_results.append(file_analysis)
+                try:
+                    if not os.path.exists(file_path):
+                        analysis_results.append({
+                            "file_path": file_path,
+                            "error": "File not found",
+                            "status": "failed"
+                        })
+                        continue
+                    
+                    # Get real file statistics
+                    stat = os.stat(file_path)
+                    
+                    # Calculate real hashes
+                    import hashlib
+                    md5_hash = ""
+                    sha256_hash = ""
+                    with open(file_path, 'rb') as f:
+                        content = f.read()
+                        md5_hash = hashlib.md5(content).hexdigest()
+                        sha256_hash = hashlib.sha256(content).hexdigest()
+                    
+                    file_analysis = {
+                        "file_path": file_path,
+                        "file_name": os.path.basename(file_path),
+                        "file_extension": os.path.splitext(file_path)[1],
+                        "size_bytes": stat.st_size,
+                        "created_time": datetime.fromtimestamp(stat.st_ctime).isoformat(),
+                        "modified_time": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+                        "accessed_time": datetime.fromtimestamp(stat.st_atime).isoformat(),
+                        "permissions": oct(stat.st_mode)[-3:],
+                        "owner_uid": stat.st_uid,
+                        "group_gid": stat.st_gid,
+                        "hashes": {
+                            "md5": md5_hash,
+                            "sha256": sha256_hash
+                        },
+                        "analysis_time": datetime.utcnow().isoformat(),
+                        "status": "completed"
+                    }
+                    analysis_results.append(file_analysis)
+                    
+                except Exception as e:
+                    analysis_results.append({
+                        "file_path": file_path,
+                        "error": str(e),
+                        "status": "failed"
+                    })
 
             return {
                 "success": True,
