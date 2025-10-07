@@ -65,6 +65,34 @@ python -m uvicorn src.amas.api.main:app --reload
 
 That's it! You've just performed your first security scan with AMAS.
 
+### Quick Test with Python API
+
+Submit your first task programmatically:
+
+```python
+# Python API with new unified orchestrator
+import asyncio
+from src.amas.core.unified_orchestrator import UnifiedIntelligenceOrchestrator
+
+async def test_amas():
+    orchestrator = UnifiedIntelligenceOrchestrator()
+    await orchestrator.initialize()
+    
+    # Submit OSINT task
+    task_id = await orchestrator.submit_task(
+        agent_type="osint",
+        description="Analyze security threats from example.com",
+        priority=1
+    )
+    
+    result = await orchestrator.get_task_result(task_id)
+    print(f"Task result: {result}")
+    
+    await orchestrator.shutdown()
+
+asyncio.run(test_amas())
+```
+
 ---
 
 ## 🗣️ Interactive Mode
@@ -563,6 +591,66 @@ console.log(`Security Score: ${result.securityScore}`);
 
 # Contact support
 🤖 AMAS> support "describe your issue"
+```
+
+---
+
+## 🌟 Advanced Features
+
+### ML-Powered Intelligence
+AMAS uses machine learning to optimize every aspect of operation:
+
+```bash
+# Let ML decide the best approach
+🤖 AMAS> optimize my security scan workflow
+
+# View ML decision insights
+🤖 AMAS> show ml decision for task-abc123
+
+# Enable intelligent mode
+🤖 AMAS> set mode intelligent
+```
+
+### Multi-Provider AI Fallback
+Never experience AI failures with our 15+ provider system:
+
+```bash
+# Check provider status
+🤖 AMAS> show ai providers
+
+# Force specific provider
+🤖 AMAS> use provider deepseek for next task
+
+# View provider performance
+🤖 AMAS> show provider stats
+```
+
+### Reinforcement Learning Optimization
+AMAS continuously improves itself:
+
+```bash
+# View optimization status
+🤖 AMAS> show rl optimizer status
+
+# Enable aggressive optimization
+🤖 AMAS> enable optimization mode aggressive
+
+# View performance improvements
+🤖 AMAS> show optimization history
+```
+
+### Enterprise Compliance
+Built-in compliance for regulated industries:
+
+```bash
+# Run compliance check
+🤖 AMAS> check compliance for HIPAA
+
+# Generate compliance report
+🤖 AMAS> generate SOC2 compliance report
+
+# Enable compliance mode
+🤖 AMAS> enable compliance mode GDPR
 ```
 
 ---

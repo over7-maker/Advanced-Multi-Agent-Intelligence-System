@@ -197,17 +197,38 @@ class UnifiedIntelligenceOrchestrator:
         self.agents = {}
         self.task_queue = TaskQueue()
         self.event_bus = EventBus()
+        self.provider_manager = ProviderManager()
+        self.ml_engine = MLDecisionEngine()
+        
+    async def submit_task(self, agent_type: str, description: str, priority: int = 2) -> str:
+        """Submit a task to the unified orchestrator."""
+        task = IntelligenceTask(
+            agent_type=agent_type,
+            description=description,
+            priority=priority,
+            status=TaskStatus.PENDING
+        )
+        
+        # Add to priority queue
+        await self.task_queue.put(task)
+        return task.task_id
         
     async def execute_task(self, task: Task) -> TaskResult:
-        """Execute a task using appropriate agents."""
+        """Execute a task using appropriate agents with ML optimization."""
         # Task allocation using ML decision engine
-        agents = await self.allocate_agents(task)
+        agents = await self.ml_engine.allocate_agents(task)
         
-        # Create workflow
-        workflow = self.create_workflow(task, agents)
+        # Select optimal AI provider
+        provider = await self.provider_manager.get_optimal_provider(task)
         
-        # Execute workflow
+        # Create workflow with optimizations
+        workflow = self.create_workflow(task, agents, provider)
+        
+        # Execute workflow with monitoring
         results = await workflow.execute()
+        
+        # Learn from execution
+        await self.ml_engine.record_execution(task, results)
         
         return TaskResult(task_id=task.id, results=results)
 ```
