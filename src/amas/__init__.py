@@ -11,11 +11,11 @@ __email__ = "team@amas.ai"
 __license__ = "MIT"
 
 from .config.settings import AMASConfig
-from .core.unified_orchestrator_v2 import UnifiedOrchestratorV2
+from .core.orchestrator import IntelligenceOrchestrator
 from .services.service_manager import ServiceManager
 
 __all__ = [
-    "UnifiedOrchestratorV2",
+    "IntelligenceOrchestrator",
     "ServiceManager",
     "AMASConfig",
     "__version__",

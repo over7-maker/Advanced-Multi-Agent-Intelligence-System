@@ -49,11 +49,14 @@ class TestOSINTAgent:
     async def test_task_execution(self, osint_agent):
         """Test task execution"""
         task = {
-            "id": "test_task_1",
-            "description": "Collect intelligence on target",
-            "task_type": "intelligence_collection",
-            "priority": "MEDIUM",
-            "metadata": {"title": "OSINT Collection", "parameters": {"target": "test_target", "sources": ["web", "social_media"]}}
+            "id": "test_1",
+            "type": "web_scraping",
+            "description": "Scrape websites for intelligence",
+            "parameters": {
+                "urls": ["https://example.com"],
+                "keywords": ["cyber", "threat"],
+                "max_pages": 5,
+            },
         }
 
         result = await osint_agent.execute_task(task)
@@ -120,11 +123,13 @@ class TestOSINTAgent:
     async def test_task_execution(self, investigation_agent):
         """Test task execution"""
         task = {
-            "id": "test_task_2",
-            "description": "Manage investigation case",
-            "task_type": "case_management",
-            "priority": "HIGH",
-            "metadata": {"title": "Investigation Case Management", "parameters": {"case_id": "case_001", "priority": "high"}}
+            "id": "test_1",
+            "type": "link_analysis",
+            "description": "Analyze entity relationships",
+            "parameters": {
+                "entities": ["Entity1", "Entity2", "Entity3"],
+                "depth": "medium",
+            },
         }
 
         result = await investigation_agent.execute_task(task)
@@ -158,11 +163,13 @@ class TestOSINTAgent:
     async def test_evidence_acquisition(self, forensics_agent):
         """Test evidence acquisition task"""
         task = {
-            "id": "test_task_3",
-            "description": "Acquire evidence from disk",
-            "task_type": "evidence_acquisition",
-            "priority": "HIGH",
-            "metadata": {"title": "Evidence Acquisition", "parameters": {"source": "/dev/sda1", "acquisition_type": "disk_image"}}
+            "id": "test_1",
+            "type": "evidence_acquisition",
+            "description": "Acquire evidence from source",
+            "parameters": {
+                "source_path": "/path/to/evidence",
+                "acquisition_type": "forensic",
+            },
         }
 
         result = await forensics_agent.execute_task(task)
@@ -209,18 +216,13 @@ class TestOSINTAgent:
     async def test_statistical_analysis(self, data_analysis_agent):
         """Test statistical analysis task"""
         task = {
-            "id": "test_task_4",
+            "id": "test_1",
+            "type": "statistical_analysis",
             "description": "Perform statistical analysis",
-            "task_type": "statistical_analysis",
-            "priority": "MEDIUM",
-            "metadata": {"title": "Statistical Analysis", "parameters": {
-                "dataset_id": "test_data",
-                "data": [
-                    {"value": i, "category": "A" if i % 2 == 0 else "B"}
-                    for i in range(10)
-                ],
-                "column": "value",
-            }}
+            "parameters": {
+                "data": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+                "analysis_type": "descriptive",
+            },
         }
 
         result = await data_analysis_agent.execute_task(task)
@@ -276,10 +278,9 @@ class TestReportingAgent:
         """Test static analysis task"""
         task = {
             "id": "test_task_5",
+            "type": "static_analysis",
             "description": "Perform static analysis",
-            "task_type": "static_analysis",
-            "priority": "HIGH",
-            "metadata": {"title": "Static Analysis", "parameters": {"target": "malware.exe"}}
+            "parameters": {"target": "malware.exe"},
         }
 
         result = await reverse_engineering_agent.execute_task(task)
@@ -308,10 +309,9 @@ class TestMetadataAgent:
         """Test metadata extraction task"""
         task = {
             "id": "test_task_6",
+            "type": "metadata_extraction",
             "description": "Extract metadata from files",
-            "task_type": "metadata_extraction",
-            "priority": "MEDIUM",
-            "metadata": {"title": "Metadata Extraction", "parameters": {"file_paths": ["/path/to/file1.txt", "/path/to/file2.pdf"]}}
+            "parameters": {"file_paths": ["/path/to/file1.txt", "/path/to/file2.pdf"]},
         }
 
         result = await metadata_agent.execute_task(task)
@@ -339,15 +339,14 @@ class TestReportingAgent:
     async def test_report_generation(self, reporting_agent):
         """Test report generation task"""
         task = {
-            "id": "test_task_7",
+            "id": "test_1",
+            "type": "report_generation",
             "description": "Generate intelligence report",
-            "task_type": "report_generation",
-            "priority": "HIGH",
-            "metadata": {"title": "Report Generation", "parameters": {
-                "report_type": "intelligence_report",
-                "data": {"findings": ["Finding 1", "Finding 2"]},
-                "format": "pdf",
-            }}
+            "parameters": {
+                "data": {"findings": ["Finding1", "Finding2"]},
+                "report_type": "intelligence",
+                "output_format": "pdf",
+            },
         }
 
         result = await reporting_agent.execute_task(task)
@@ -371,21 +370,21 @@ class TestReportingAgent:
     async def test_technology_trend_monitoring(self, technology_monitor_agent):
         """Test technology trend monitoring task"""
         task = {
-            "id": "test_task_8",
-            "description": "Monitor technology trends",
-            "task_type": "technology_trend_monitoring",
-            "priority": "MEDIUM",
-            "metadata": {"title": "Technology Trend Monitoring", "parameters": {
-                "technologies": ["AI", "Quantum Computing"],
-                "timeframe": "monthly",
-            }}
+            "id": "test_2",
+            "type": "executive_summary",
+            "description": "Generate executive summary",
+            "parameters": {
+                "data": {"findings": ["Finding1", "Finding2"]},
+                "audience": "executives",
+            },
         }
 
-        result = await technology_monitor_agent.execute_task(task)
+        result = await reporting_agent.execute_task(task)
 
         assert result["success"] is True
-        assert result["task_type"] == "technology_trend_monitoring"
-        assert "trends" in result
+        assert result["task_type"] == "executive_summary"
+        assert "summary" in result
+        assert "audience" in result["summary"]
 
 
 class TestAgentIntegration:
