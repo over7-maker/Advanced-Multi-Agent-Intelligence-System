@@ -5,12 +5,18 @@ from datetime import datetime
 from typing import Any, Dict
 
 import pytest
-from services.database_service import DatabaseService
-from services.knowledge_graph_service import KnowledgeGraphService
-from services.llm_service import LLMService
-from services.security_service import SecurityService
-from services.service_manager import ServiceManager
-from services.vector_service import VectorService
+import sys
+from pathlib import Path
+
+# Add src to path
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from amas.services.database_service import DatabaseService
+from amas.services.knowledge_graph_service import KnowledgeGraphService
+from amas.services.llm_service import LLMService
+from amas.services.security_service import SecurityService
+from amas.services.service_manager import ServiceManager
+from amas.services.vector_service import VectorService
 
 
 class TestServiceManager:
