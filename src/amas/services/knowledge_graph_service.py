@@ -1,4 +1,3 @@
-
 """
 Knowledge Graph Service Implementation for AMAS
 """
@@ -50,8 +49,10 @@ class KnowledgeGraphService:
                 self.is_initialized = True
                 logger.info("Knowledge graph service initialized successfully.")
             else:
-                logger.warning("Neo4j driver not available, knowledge graph service operating in fallback (simulated) mode.")
-                self.is_initialized = True # Mark as initialized even in fallback
+                logger.warning(
+                    "Neo4j driver not available, knowledge graph service operating in fallback (simulated) mode."
+                )
+                self.is_initialized = True  # Mark as initialized even in fallback
 
         except Exception as e:
             logger.error(f"Failed to initialize knowledge graph service: {e}")
@@ -89,7 +90,7 @@ class KnowledgeGraphService:
         """
         status = "healthy" if self.is_initialized else "uninitialized"
         if NEO4J_AVAILABLE and self.driver is None:
-            status = "degraded" # Driver not initialized yet
+            status = "degraded"  # Driver not initialized yet
 
         try:
             if self.driver:
@@ -122,7 +123,11 @@ class KnowledgeGraphService:
         Add an entity to the knowledge graph.
         """
         if not self.is_initialized or not NEO4J_AVAILABLE or not self.driver:
-            return {"success": False, "error": "Knowledge graph service not fully operational.", "timestamp": datetime.utcnow().isoformat()}
+            return {
+                "success": False,
+                "error": "Knowledge graph service not fully operational.",
+                "timestamp": datetime.utcnow().isoformat(),
+            }
 
         try:
             async with self.driver.session(database=self.database) as session:
@@ -176,7 +181,11 @@ class KnowledgeGraphService:
         Add a relationship between entities.
         """
         if not self.is_initialized or not NEO4J_AVAILABLE or not self.driver:
-            return {"success": False, "error": "Knowledge graph service not fully operational.", "timestamp": datetime.utcnow().isoformat()}
+            return {
+                "success": False,
+                "error": "Knowledge graph service not fully operational.",
+                "timestamp": datetime.utcnow().isoformat(),
+            }
 
         try:
             async with self.driver.session(database=self.database) as session:
@@ -232,8 +241,15 @@ class KnowledgeGraphService:
         Query entities from the knowledge graph.
         """
         if not self.is_initialized or not NEO4J_AVAILABLE or not self.driver:
-            logger.warning("Knowledge graph service not fully operational for entity query. Returning simulated results.")
-            return {"success": True, "entities": [], "count": 0, "timestamp": datetime.utcnow().isoformat()}
+            logger.warning(
+                "Knowledge graph service not fully operational for entity query. Returning simulated results."
+            )
+            return {
+                "success": True,
+                "entities": [],
+                "count": 0,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
 
         try:
             async with self.driver.session(database=self.database) as session:
@@ -281,8 +297,15 @@ class KnowledgeGraphService:
         Find path between two entities.
         """
         if not self.is_initialized or not NEO4J_AVAILABLE or not self.driver:
-            logger.warning("Knowledge graph service not fully operational for path finding. Returning simulated results.")
-            return {"success": True, "paths": [], "path_count": 0, "timestamp": datetime.utcnow().isoformat()}
+            logger.warning(
+                "Knowledge graph service not fully operational for path finding. Returning simulated results."
+            )
+            return {
+                "success": True,
+                "paths": [],
+                "path_count": 0,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
 
         try:
             async with self.driver.session(database=self.database) as session:
@@ -325,38 +348,74 @@ class KnowledgeGraphService:
         """
         Simulates semantic query on the knowledge graph.
         """
-        logger.info(f"KnowledgeGraphService: Performing semantic query for \'{query}\' (limit={limit})")
+        logger.info(
+            f"KnowledgeGraphService: Performing semantic query for '{query}' (limit={limit})"
+        )
         if not self.is_initialized:
-            logger.warning("KnowledgeGraphService not connected. Returning empty results.")
+            logger.warning(
+                "KnowledgeGraphService not connected. Returning empty results."
+            )
             return []
         # Placeholder for actual knowledge graph query logic
         return [
-            {"content": f"KG Semantic Result 1 for {query}", "score": 0.95, "metadata": {"source": "kg_node_a"}, "entities": ["concept1"]},
-            {"content": f"KG Semantic Result 2 for {query}", "score": 0.90, "metadata": {"source": "kg_node_b"}, "entities": ["concept2"]},
+            {
+                "content": f"KG Semantic Result 1 for {query}",
+                "score": 0.95,
+                "metadata": {"source": "kg_node_a"},
+                "entities": ["concept1"],
+            },
+            {
+                "content": f"KG Semantic Result 2 for {query}",
+                "score": 0.90,
+                "metadata": {"source": "kg_node_b"},
+                "entities": ["concept2"],
+            },
         ]
 
-    async def keyword_query(self, keywords: List[str], limit: int = 10) -> List[Dict[str, Any]]:
+    async def keyword_query(
+        self, keywords: List[str], limit: int = 10
+    ) -> List[Dict[str, Any]]:
         """
         Simulates keyword query on the knowledge graph.
         """
-        logger.info(f"KnowledgeGraphService: Performing keyword query for {keywords} (limit={limit})")
+        logger.info(
+            f"KnowledgeGraphService: Performing keyword query for {keywords} (limit={limit})"
+        )
         if not self.is_initialized:
-            logger.warning("KnowledgeGraphService not connected. Returning empty results.")
+            logger.warning(
+                "KnowledgeGraphService not connected. Returning empty results."
+            )
             return []
         return [
-            {"content": f"KG Keyword Result 1 for {keywords[0]}", "score": 0.8, "metadata": {"source": "kg_node_c"}, "entities": ["concept3"]},
+            {
+                "content": f"KG Keyword Result 1 for {keywords[0]}",
+                "score": 0.8,
+                "metadata": {"source": "kg_node_c"},
+                "entities": ["concept3"],
+            },
         ]
 
-    async def contextual_query(self, query: str, context: Dict[str, Any], limit: int = 10) -> List[Dict[str, Any]]:
+    async def contextual_query(
+        self, query: str, context: Dict[str, Any], limit: int = 10
+    ) -> List[Dict[str, Any]]:
         """
         Simulates contextual query on the knowledge graph.
         """
-        logger.info(f"KnowledgeGraphService: Performing contextual query for \'{query}\' with context {context} (limit={limit})")
+        logger.info(
+            f"KnowledgeGraphService: Performing contextual query for '{query}' with context {context} (limit={limit})"
+        )
         if not self.is_initialized:
-            logger.warning("KnowledgeGraphService not connected. Returning empty results.")
+            logger.warning(
+                "KnowledgeGraphService not connected. Returning empty results."
+            )
             return []
         return [
-            {"content": f"KG Contextual Result 1 for {query}", "score": 0.88, "metadata": {"source": "kg_node_d"}, "entities": ["concept4"]},
+            {
+                "content": f"KG Contextual Result 1 for {query}",
+                "score": 0.88,
+                "metadata": {"source": "kg_node_d"},
+                "entities": ["concept4"],
+            },
         ]
 
     async def query(self, query: str, limit: int = 10) -> List[Dict[str, Any]]:
@@ -370,7 +429,11 @@ class KnowledgeGraphService:
         Get knowledge graph service statistics.
         """
         if not self.is_initialized or not NEO4J_AVAILABLE or not self.driver:
-            return {"success": False, "error": "Knowledge graph service not fully operational.", "timestamp": datetime.utcnow().isoformat()}
+            return {
+                "success": False,
+                "error": "Knowledge graph service not fully operational.",
+                "timestamp": datetime.utcnow().isoformat(),
+            }
 
         try:
             async with self.driver.session(database=self.database) as session:
@@ -411,5 +474,3 @@ class KnowledgeGraphService:
             await self.driver.close()
         self.is_initialized = False
         logger.info("KnowledgeGraphService closed.")
-
-

@@ -1,4 +1,3 @@
-
 """
 Service Manager for AMAS Intelligence System
 
@@ -13,8 +12,11 @@ from typing import Any, Dict, Optional
 
 from .database_service import DatabaseService
 from .knowledge_graph_service import KnowledgeGraphService
-from .universal_ai_manager import UniversalAIManager, get_universal_ai_manager # Import UniversalAIManager
 from .security_service import SecurityService
+from .universal_ai_manager import (  # Import UniversalAIManager
+    UniversalAIManager,
+    get_universal_ai_manager,
+)
 from .vector_service import VectorService
 
 logger = logging.getLogger(__name__)
@@ -38,7 +40,9 @@ class ServiceManager:
         self.config: Dict[str, Any] = (
             config.__dict__ if hasattr(config, "__dict__") else config
         )
-        self.universal_ai_manager: Optional[UniversalAIManager] = None # Use UniversalAIManager
+        self.universal_ai_manager: Optional[UniversalAIManager] = (
+            None  # Use UniversalAIManager
+        )
         self.vector_service: Optional[VectorService] = None
         self.knowledge_graph_service: Optional[KnowledgeGraphService] = None
         self.database_service: Optional[DatabaseService] = None
@@ -101,7 +105,9 @@ class ServiceManager:
                     "embedding_model": self.config.get(
                         "embedding_model", "sentence-transformers/all-MiniLM-L6-v2"
                     ),
-                    "index_path": self.config.get("vector_index_path", "/app/faiss_index"),
+                    "index_path": self.config.get(
+                        "vector_index_path", "/app/faiss_index"
+                    ),
                 }
             )
             await self.vector_service.initialize()
@@ -179,7 +185,9 @@ class ServiceManager:
             if service:
                 try:
                     # UniversalAIManager does not have a close method, it's a singleton
-                    if service_name != "universal_ai_manager" and hasattr(service, "close"):
+                    if service_name != "universal_ai_manager" and hasattr(
+                        service, "close"
+                    ):
                         await service.close()
                         logger.info(f"Cleaned up {service_name}")
                 except Exception as e:
@@ -250,7 +258,9 @@ class ServiceManager:
 
             # Get Universal AI Manager stats
             if self.universal_ai_manager:
-                stats["services"]["universal_ai_manager"] = self.universal_ai_manager.get_stats()
+                stats["services"][
+                    "universal_ai_manager"
+                ] = self.universal_ai_manager.get_stats()
 
             # Get Vector service stats
             if self.vector_service:
@@ -312,7 +322,10 @@ class ServiceManager:
                 await self.vector_service.close()
                 logger.info("Vector service closed")
 
-            if self.knowledge_graph_service and self.knowledge_graph_service.is_initialized:
+            if (
+                self.knowledge_graph_service
+                and self.knowledge_graph_service.is_initialized
+            ):
                 await self.knowledge_graph_service.close()
                 logger.info("Knowledge Graph service closed")
 
@@ -358,5 +371,3 @@ class ServiceManager:
             logger.info("All services shutdown successfully")
         except Exception as e:
             logger.error(f"Error during service shutdown: {e}")
-
-

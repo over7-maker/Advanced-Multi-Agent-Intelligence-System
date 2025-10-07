@@ -31,6 +31,7 @@ from ..agents.reporting.reporting_agent import ReportingAgent
 
 # Import the new API manager components
 from .ai_api_manager import AIAPIManager, get_ai_response
+
 # from .enhanced_orchestrator import EnhancedOrchestrator, execute_task, run_investigation # Module not found
 
 # Configure logging
@@ -132,7 +133,12 @@ class EnhancedAgent(BaseAgent):
         """Execute fallback task with simplified approach"""
         try:
             # Use the enhanced orchestrator for fallback
-            result = {"success": False, "result": "EnhancedOrchestrator not found", "api_used": "fallback", "execution_time": 0}
+            result = {
+                "success": False,
+                "result": "EnhancedOrchestrator not found",
+                "api_used": "fallback",
+                "execution_time": 0,
+            }
 
             return {
                 "success": result.success,
@@ -178,7 +184,12 @@ class EnhancedOSINTAgent(EnhancedAgent):
         """Execute OSINT task with enhanced capabilities"""
         try:
             # Use the enhanced orchestrator for OSINT tasks
-            result = {"success": False, "result": "EnhancedOrchestrator not found", "api_used": "fallback", "execution_time": 0}
+            result = {
+                "success": False,
+                "result": "EnhancedOrchestrator not found",
+                "api_used": "fallback",
+                "execution_time": 0,
+            }
 
             return {
                 "success": result.success,
@@ -280,7 +291,12 @@ class EnhancedInvestigationAgent(EnhancedAgent):
         """Execute investigation task with enhanced capabilities"""
         try:
             # Use the enhanced orchestrator for investigation tasks
-            result = {"success": False, "result": "EnhancedOrchestrator not found", "api_used": "fallback", "execution_time": 0}
+            result = {
+                "success": False,
+                "result": "EnhancedOrchestrator not found",
+                "api_used": "fallback",
+                "execution_time": 0,
+            }
 
             return {
                 "success": result.success,
@@ -375,7 +391,12 @@ class EnhancedForensicsAgent(EnhancedAgent):
         """Execute forensics task with enhanced capabilities"""
         try:
             # Use the enhanced orchestrator for forensics tasks
-            result = {"success": False, "result": "EnhancedOrchestrator not found", "api_used": "fallback", "execution_time": 0}
+            result = {
+                "success": False,
+                "result": "EnhancedOrchestrator not found",
+                "api_used": "fallback",
+                "execution_time": 0,
+            }
 
             return {
                 "success": result.success,
@@ -469,7 +490,12 @@ class EnhancedReportingAgent(EnhancedAgent):
         """Execute reporting task with enhanced capabilities"""
         try:
             # Use the enhanced orchestrator for reporting tasks
-            result = {"success": False, "result": "EnhancedOrchestrator not found", "api_used": "fallback", "execution_time": 0}
+            result = {
+                "success": False,
+                "result": "EnhancedOrchestrator not found",
+                "api_used": "fallback",
+                "execution_time": 0,
+            }
 
             return {
                 "success": result.success,

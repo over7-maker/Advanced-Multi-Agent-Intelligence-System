@@ -1,15 +1,22 @@
 from __future__ import annotations
+
 import asyncio
 import logging
 import uuid
-from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Dict, Optional
 
-from amas.common.models import OrchestratorTask, TaskPriority, TaskStatus, AgentConfig, AgentStatus
+from amas.agents.base.intelligence_agent import IntelligenceAgent
+from amas.common.models import (
+    AgentConfig,
+    AgentStatus,
+    OrchestratorTask,
+    TaskPriority,
+    TaskStatus,
+)
+
 from ..services.universal_ai_manager import UniversalAIManager, get_universal_ai_manager
 from .message_bus import MessageBus
-
 
 logger = logging.getLogger(__name__)
 
@@ -43,9 +50,9 @@ class UnifiedOrchestratorV2:
         self.knowledge_graph = knowledge_graph
         self.security_service = security_service
 
-        self.message_bus = MessageBus() # Initialize MessageBus
+        self.message_bus = MessageBus()  # Initialize MessageBus
 
-        self.agents: Dict[str, 'IntelligenceAgent'] = {}
+        self.agents: Dict[str, IntelligenceAgent] = {}
         self.agent_configs: Dict[str, AgentConfig] = {}
         self.tasks: Dict[str, OrchestratorTask] = {}
         self.task_queue = asyncio.PriorityQueue()
@@ -83,9 +90,17 @@ class UnifiedOrchestratorV2:
                     "name": "RAG Agent",
                     "description": "Retrieval-Augmented Generation agent for knowledge retrieval and synthesis.",
                     "specialization": "Information retrieval, document summarization, knowledge synthesis.",
-                    "capabilities": ["information_retrieval", "document_qa", "knowledge_synthesis"],
-                    "preferred_models": ["deepseek/deepseek-chat", "openai/gpt-4", "meta-llama/llama-3.1-70b"],
-                }
+                    "capabilities": [
+                        "information_retrieval",
+                        "document_qa",
+                        "knowledge_synthesis",
+                    ],
+                    "preferred_models": [
+                        "deepseek/deepseek-chat",
+                        "openai/gpt-4",
+                        "meta-llama/llama-3.1-70b",
+                    ],
+                },
             ),
             AgentConfig(
                 agent_id="tool_agent",
@@ -94,9 +109,13 @@ class UnifiedOrchestratorV2:
                     "name": "Tool Agent",
                     "description": "Agent capable of executing external tools and APIs.",
                     "specialization": "Tool execution, API interaction, external system control.",
-                    "capabilities": ["tool_execution", "api_interaction", "external_control"],
+                    "capabilities": [
+                        "tool_execution",
+                        "api_interaction",
+                        "external_control",
+                    ],
                     "preferred_models": ["deepseek/deepseek-chat", "openai/gpt-4"],
-                }
+                },
             ),
             AgentConfig(
                 agent_id="planning_agent",
@@ -105,9 +124,13 @@ class UnifiedOrchestratorV2:
                     "name": "Planning Agent",
                     "description": "Agent for generating, refining, and optimizing task plans.",
                     "specialization": "Task decomposition, plan generation, resource allocation.",
-                    "capabilities": ["task_planning", "plan_refinement", "resource_allocation"],
+                    "capabilities": [
+                        "task_planning",
+                        "plan_refinement",
+                        "resource_allocation",
+                    ],
                     "preferred_models": ["openai/gpt-4", "anthropic/claude-3-opus"],
-                }
+                },
             ),
             AgentConfig(
                 agent_id="code_agent",
@@ -116,9 +139,13 @@ class UnifiedOrchestratorV2:
                     "name": "Code Agent",
                     "description": "Agent for writing, debugging, and executing code.",
                     "specialization": "Code generation, debugging, testing, script execution.",
-                    "capabilities": ["code_generation", "code_execution", "code_debugging"],
+                    "capabilities": [
+                        "code_generation",
+                        "code_execution",
+                        "code_debugging",
+                    ],
                     "preferred_models": ["deepseek/deepseek-coder", "openai/gpt-4"],
-                }
+                },
             ),
             AgentConfig(
                 agent_id="data_agent",
@@ -127,9 +154,16 @@ class UnifiedOrchestratorV2:
                     "name": "Data Agent",
                     "description": "Agent for data analysis, processing, and visualization.",
                     "specialization": "Data analysis, statistical modeling, visualization.",
-                    "capabilities": ["data_analysis", "data_processing", "data_visualization"],
-                    "preferred_models": ["meta-llama/llama-3.1-70b", "deepseek/deepseek-chat"],
-                }
+                    "capabilities": [
+                        "data_analysis",
+                        "data_processing",
+                        "data_visualization",
+                    ],
+                    "preferred_models": [
+                        "meta-llama/llama-3.1-70b",
+                        "deepseek/deepseek-chat",
+                    ],
+                },
             ),
             # Existing logical agents for orchestrator's internal use (e.g., for workflow steps)
             AgentConfig(
@@ -139,9 +173,18 @@ class UnifiedOrchestratorV2:
                     "name": "Code Analysis Agent",
                     "description": "Analyzes code quality, architecture, and best practices",
                     "specialization": "Code quality, performance, and architecture analysis",
-                    "capabilities": ["code_analysis", "code_review", "performance_analysis", "architecture_assessment"],
-                    "preferred_models": ["deepseek/deepseek-chat", "openai/gpt-4", "meta-llama/llama-3.1-70b"],
-                }
+                    "capabilities": [
+                        "code_analysis",
+                        "code_review",
+                        "performance_analysis",
+                        "architecture_assessment",
+                    ],
+                    "preferred_models": [
+                        "deepseek/deepseek-chat",
+                        "openai/gpt-4",
+                        "meta-llama/llama-3.1-70b",
+                    ],
+                },
             ),
             AgentConfig(
                 agent_id="security_expert_agent",
@@ -150,9 +193,18 @@ class UnifiedOrchestratorV2:
                     "name": "Security Expert Agent",
                     "description": "Identifies vulnerabilities and security issues",
                     "specialization": "Security scanning, vulnerability assessment, threat analysis",
-                    "capabilities": ["security_scan", "vulnerability_assessment", "threat_analysis", "security_recommendations"],
-                    "preferred_models": ["openai/gpt-4", "anthropic/claude-3-opus", "deepseek/deepseek-chat"],
-                }
+                    "capabilities": [
+                        "security_scan",
+                        "vulnerability_assessment",
+                        "threat_analysis",
+                        "security_recommendations",
+                    ],
+                    "preferred_models": [
+                        "openai/gpt-4",
+                        "anthropic/claude-3-opus",
+                        "deepseek/deepseek-chat",
+                    ],
+                },
             ),
             AgentConfig(
                 agent_id="intelligence_gatherer_agent",
@@ -161,9 +213,18 @@ class UnifiedOrchestratorV2:
                     "name": "Intelligence Gathering Agent",
                     "description": "Collects and analyzes intelligence from various sources",
                     "specialization": "OSINT collection, threat intelligence, information gathering",
-                    "capabilities": ["osint_collection", "threat_intelligence", "data_aggregation", "investigation"],
-                    "preferred_models": ["deepseek/deepseek-chat", "openai/gpt-3.5-turbo", "meta-llama/llama-3.1-70b"],
-                }
+                    "capabilities": [
+                        "osint_collection",
+                        "threat_intelligence",
+                        "data_aggregation",
+                        "investigation",
+                    ],
+                    "preferred_models": [
+                        "deepseek/deepseek-chat",
+                        "openai/gpt-3.5-turbo",
+                        "meta-llama/llama-3.1-70b",
+                    ],
+                },
             ),
             AgentConfig(
                 agent_id="reporting_agent",
@@ -172,9 +233,13 @@ class UnifiedOrchestratorV2:
                     "name": "Reporting Agent",
                     "description": "Synthesizes information into clear, actionable reports",
                     "specialization": "Report generation, executive summaries, documentation",
-                    "capabilities": ["reporting", "synthesis", "documentation_generation"],
+                    "capabilities": [
+                        "reporting",
+                        "synthesis",
+                        "documentation_generation",
+                    ],
                     "preferred_models": ["grok", "glm", "deepseek", "gemini"],
-                }
+                },
             ),
             AgentConfig(
                 agent_id="forensics_agent",
@@ -183,9 +248,13 @@ class UnifiedOrchestratorV2:
                     "name": "Forensics Agent",
                     "description": "Performs digital forensics and evidence analysis",
                     "specialization": "Digital forensics, incident investigation, evidence analysis",
-                    "capabilities": ["forensics", "evidence_analysis", "timeline_reconstruction"],
+                    "capabilities": [
+                        "forensics",
+                        "evidence_analysis",
+                        "timeline_reconstruction",
+                    ],
                     "preferred_models": ["deepseek", "nvidia", "codestral", "grok"],
-                }
+                },
             ),
             AgentConfig(
                 agent_id="technology_monitor_agent",
@@ -194,9 +263,13 @@ class UnifiedOrchestratorV2:
                     "name": "Technology Monitor Agent",
                     "description": "Monitors technology trends and emerging threats",
                     "specialization": "Technology watch, trend analysis, competitive intelligence",
-                    "capabilities": ["technology_monitoring", "trend_analysis", "competitive_intelligence"],
+                    "capabilities": [
+                        "technology_monitoring",
+                        "trend_analysis",
+                        "competitive_intelligence",
+                    ],
                     "preferred_models": ["deepseek", "glm", "grok"],
-                }
+                },
             ),
             AgentConfig(
                 agent_id="ml_decision_agent",
@@ -205,9 +278,13 @@ class UnifiedOrchestratorV2:
                     "name": "ML Decision Agent",
                     "description": "Uses ML for intelligent task allocation and decision making",
                     "specialization": "Machine learning, task routing, predictive analytics",
-                    "capabilities": ["ml_decision", "task_allocation", "predictive_analytics"],
+                    "capabilities": [
+                        "ml_decision",
+                        "task_allocation",
+                        "predictive_analytics",
+                    ],
                     "preferred_models": ["deepseek/deepseek-chat", "openai/gpt-4"],
-                }
+                },
             ),
             AgentConfig(
                 agent_id="rl_optimizer_agent",
@@ -216,9 +293,13 @@ class UnifiedOrchestratorV2:
                     "name": "RL Optimizer Agent",
                     "description": "Applies reinforcement learning for system optimization",
                     "specialization": "Reinforcement learning, system optimization, adaptive control",
-                    "capabilities": ["rl_optimization", "adaptive_learning", "performance_tuning"],
+                    "capabilities": [
+                        "rl_optimization",
+                        "adaptive_learning",
+                        "performance_tuning",
+                    ],
                     "preferred_models": ["openai/gpt-4", "anthropic/claude-3-opus"],
-                }
+                },
             ),
         ]
 
@@ -257,13 +338,16 @@ class UnifiedOrchestratorV2:
                     "step_id": "reporting",
                     "agent_role": "reporting_agent",
                     "action": "generate_report",
-                    "parameters": {"report_type": "intelligence_report", "format": "comprehensive"},
+                    "parameters": {
+                        "report_type": "intelligence_report",
+                        "format": "comprehensive",
+                    },
                 },
             ],
         }
         self.logger.info("Workflow templates initialized successfully")
 
-    async def register_agent(self, agent: 'IntelligenceAgent') -> bool:
+    async def register_agent(self, agent: IntelligenceAgent) -> bool:
         """
         Register an actual IntelligenceAgent instance with the orchestrator.
         Also registers the agent with the message bus.
@@ -330,7 +414,9 @@ class UnifiedOrchestratorV2:
         payload = message.get("payload")
         task_id = message.get("task_id")
 
-        self.logger.debug(f"Orchestrator received message from {sender_id}: {message_type} for task {task_id}")
+        self.logger.debug(
+            f"Orchestrator received message from {sender_id}: {message_type} for task {task_id}"
+        )
 
         if message_type == "task_update" and task_id in self.tasks:
             task = self.tasks[task_id]
@@ -345,7 +431,11 @@ class UnifiedOrchestratorV2:
             if error:
                 task.error = error
 
-            if task.status in [TaskStatus.COMPLETED, TaskStatus.FAILED, TaskStatus.CANCELLED]:
+            if task.status in [
+                TaskStatus.COMPLETED,
+                TaskStatus.FAILED,
+                TaskStatus.CANCELLED,
+            ]:
                 task.completed_at = datetime.utcnow()
                 if task.id in self.active_tasks:
                     del self.active_tasks[task.id]
@@ -353,9 +443,13 @@ class UnifiedOrchestratorV2:
                     self.metrics["tasks_completed"] += 1
                 elif task.status == TaskStatus.FAILED:
                     self.metrics["tasks_failed"] += 1
-                self.logger.info(f"Task {task_id} updated to {task.status.value}. Result: {result}, Error: {error}")
+                self.logger.info(
+                    f"Task {task_id} updated to {task.status.value}. Result: {result}, Error: {error}"
+                )
             else:
-                self.logger.debug(f"Task {task_id} status updated to {task.status.value}.")
+                self.logger.debug(
+                    f"Task {task_id} status updated to {task.status.value}."
+                )
 
         elif message_type == "request_subtask":
             # An agent requests the orchestrator to create a subtask
@@ -368,8 +462,12 @@ class UnifiedOrchestratorV2:
 
             parent_task = self.tasks.get(task_id)
             # Extract workflow_id and workflow_step_id from parent_task's metadata
-            workflow_id = parent_task.metadata.get("workflow_id") if parent_task else None
-            workflow_step_id = parent_task.metadata.get("workflow_step_id") if parent_task else None
+            workflow_id = (
+                parent_task.metadata.get("workflow_id") if parent_task else None
+            )
+            workflow_step_id = (
+                parent_task.metadata.get("workflow_step_id") if parent_task else None
+            )
 
             new_task_id = await self.submit_task(
                 description=subtask_description,
@@ -381,20 +479,31 @@ class UnifiedOrchestratorV2:
                     "required_agent_roles": subtask_required_agent_roles,
                     "workflow_id": workflow_id,
                     "workflow_step_id": workflow_step_id,
-                }
+                },
             )
 
-            self.logger.info(f"Agent {sender_id} requested subtask {new_task_id} for task {task_id}.")
+            self.logger.info(
+                f"Agent {sender_id} requested subtask {new_task_id} for task {task_id}."
+            )
             # Optionally, send a message back to the requesting agent with the new task ID
             await self.message_bus.send_direct_message(
-                sender_id, {"type": "subtask_created", "payload": {"original_task_id": task_id, "new_task_id": new_task_id}}
+                sender_id,
+                {
+                    "type": "subtask_created",
+                    "payload": {
+                        "original_task_id": task_id,
+                        "new_task_id": new_task_id,
+                    },
+                },
             )
 
         elif message_type == "task_feedback":
             await self._handle_feedback_message(message)
 
         else:
-            self.logger.warning(f"Orchestrator received unhandled message type: {message_type} from {sender_id}")
+            self.logger.warning(
+                f"Orchestrator received unhandled message type: {message_type} from {sender_id}"
+            )
 
     async def submit_task(
         self,
@@ -405,7 +514,9 @@ class UnifiedOrchestratorV2:
     ) -> str:
         # Extract title, required_agent_roles, parameters, workflow_id, workflow_step_id from metadata
         title = metadata.get("title", "Untitled Task") if metadata else "Untitled Task"
-        required_agent_roles = metadata.get("required_agent_roles", []) if metadata else []
+        required_agent_roles = (
+            metadata.get("required_agent_roles", []) if metadata else []
+        )
         parameters = metadata.get("parameters", {}) if metadata else {}
         workflow_id = metadata.get("workflow_id") if metadata else None
         workflow_step_id = metadata.get("workflow_step_id") if metadata else None
@@ -441,9 +552,13 @@ class UnifiedOrchestratorV2:
         )
 
         self.tasks[task_id] = task
-        await self.task_queue.put((task.priority.value, task.created_at, task_id)) # Use created_at for tie-breaking
+        await self.task_queue.put(
+            (task.priority.value, task.created_at, task_id)
+        )  # Use created_at for tie-breaking
         self.metrics["tasks_processed"] += 1
-        self.logger.info(f"Task {task_id} '{title}' submitted with priority {priority.name}.")
+        self.logger.info(
+            f"Task {task_id} '{title}' submitted with priority {priority.name}."
+        )
         asyncio.create_task(self._process_task_queue())
         return task_id
 
@@ -462,10 +577,16 @@ class UnifiedOrchestratorV2:
             assigned = await self._assign_task_to_agent(task)
 
             if not assigned:
-                self.logger.warning(f"No suitable agent found for task {task.id}. Re-queueing.")
+                self.logger.warning(
+                    f"No suitable agent found for task {task.id}. Re-queueing."
+                )
                 # Re-queue with lower priority or after a delay
-                await self.task_queue.put((TaskPriority.LOW.value, datetime.utcnow(), task.id))
-                task.status = TaskStatus.PENDING # Ensure status is PENDING if re-queued
+                await self.task_queue.put(
+                    (TaskPriority.LOW.value, datetime.utcnow(), task.id)
+                )
+                task.status = (
+                    TaskStatus.PENDING
+                )  # Ensure status is PENDING if re-queued
 
     async def _assign_task_to_agent(self, task: OrchestratorTask) -> bool:
         """
@@ -479,10 +600,13 @@ class UnifiedOrchestratorV2:
         """
         suitable_agents = []
         for agent_id, agent_instance in self.agents.items():
-            agent_config = self.agent_configs.get(agent_id) # Get the logical config
+            agent_config = self.agent_configs.get(agent_id)  # Get the logical config
             if agent_instance.status == AgentStatus.IDLE and agent_config:
                 # Check if agent has required capabilities
-                if all(role in agent_config.capabilities for role in task.required_agent_roles):
+                if all(
+                    role in agent_config.capabilities
+                    for role in task.required_agent_roles
+                ):
                     suitable_agents.append((agent_instance, agent_config))
 
         if not suitable_agents:
@@ -504,10 +628,12 @@ class UnifiedOrchestratorV2:
                 "sender_id": "orchestrator",
                 "type": "assign_task",
                 "task_id": task.id,
-                "payload": {"task_data": task.to_dict()}
-            }
+                "payload": {"task_data": task.to_dict()},
+            },
         )
-        self.logger.info(f"Task {task.id} '{task.title}' assigned to agent {chosen_agent_instance.agent_id}.")
+        self.logger.info(
+            f"Task {task.id} '{task.title}' assigned to agent {chosen_agent_instance.agent_id}."
+        )
         return True
 
     async def get_system_status(self) -> Dict[str, Any]:
@@ -534,7 +660,9 @@ class UnifiedOrchestratorV2:
         """
         Subscribes the orchestrator to the feedback channel from agents.
         """
-        await self.message_bus.subscribe("orchestrator_feedback", self._handle_feedback_message)
+        await self.message_bus.subscribe(
+            "orchestrator_feedback", self._handle_feedback_message
+        )
         self.logger.info("Orchestrator subscribed to agent feedback.")
 
     async def _handle_feedback_message(self, message: Dict[str, Any]):
@@ -544,10 +672,11 @@ class UnifiedOrchestratorV2:
         sender_id = message.get("sender_id")
         task_id = message.get("task_id")
         success = message.get("payload", {}).get("success")
-        details = message.get("payload", {}).get("details")
         agent_metrics = message.get("payload", {}).get("metrics", {})
 
-        self.logger.info(f"Received feedback for task {task_id} from agent {sender_id}: success={success}")
+        self.logger.info(
+            f"Received feedback for task {task_id} from agent {sender_id}: success={success}"
+        )
 
         agent = self.agents.get(sender_id)
         if agent:
@@ -586,7 +715,9 @@ class UnifiedOrchestratorV2:
             "created_at": datetime.utcnow(),
             "steps": workflow_template["steps"],
         }
-        self.logger.info(f"Workflow '{workflow_name}' started with ID: {workflow_instance_id}")
+        self.logger.info(
+            f"Workflow '{workflow_name}' started with ID: {workflow_instance_id}"
+        )
 
         # Start the first step of the workflow
         asyncio.create_task(self._process_workflow_step(workflow_instance_id, 0))
@@ -610,15 +741,19 @@ class UnifiedOrchestratorV2:
             return
 
         step = steps[step_index]
-        self.logger.info(f"Processing workflow {workflow_instance_id}, step {step_index}: {step['step_id']}")
+        self.logger.info(
+            f"Processing workflow {workflow_instance_id}, step {step_index}: {step['step_id']}"
+        )
 
         # Prepare task for the agent specified in the workflow step
         task_title = f"Workflow {workflow_instance_id} - Step {step['step_id']}"
-        task_description = f"Execute action '{step['action']}' for workflow step '{step['step_id']}'."
-        task_type = step.get("action", "general") # Use action as task_type
+        task_description = (
+            f"Execute action '{step['action']}' for workflow step '{step['step_id']}'."
+        )
+        task_type = step.get("action", "general")  # Use action as task_type
         task_parameters = {
-            **workflow_instance["parameters"], # Pass workflow parameters to task
-            **step.get("parameters", {}), # Override with step-specific parameters
+            **workflow_instance["parameters"],  # Pass workflow parameters to task
+            **step.get("parameters", {}),  # Override with step-specific parameters
             "workflow_instance_id": workflow_instance_id,
             "workflow_step_id": step["step_id"],
         }
@@ -652,11 +787,13 @@ class UnifiedOrchestratorV2:
         workflow_step_id = task.workflow_step_id
 
         if not workflow_instance_id or not workflow_step_id:
-            return # Not a workflow task
+            return  # Not a workflow task
 
         workflow_instance = self.workflow_instances.get(workflow_instance_id)
         if not workflow_instance:
-            self.logger.error(f"Workflow instance {workflow_instance_id} not found for completed task {task.id}.")
+            self.logger.error(
+                f"Workflow instance {workflow_instance_id} not found for completed task {task.id}."
+            )
             return
 
         # Store result of the step
@@ -671,9 +808,15 @@ class UnifiedOrchestratorV2:
 
         if current_step_index != -1:
             # Proceed to the next step
-            asyncio.create_task(self._process_workflow_step(workflow_instance_id, current_step_index + 1))
+            asyncio.create_task(
+                self._process_workflow_step(
+                    workflow_instance_id, current_step_index + 1
+                )
+            )
         else:
-            self.logger.error(f"Completed task {task.id} belongs to unknown workflow step {workflow_step_id} in workflow {workflow_instance_id}.")
+            self.logger.error(
+                f"Completed task {task.id} belongs to unknown workflow step {workflow_step_id} in workflow {workflow_instance_id}."
+            )
 
     async def _on_task_failed_for_workflow(self, task: OrchestratorTask):
         """
@@ -681,14 +824,19 @@ class UnifiedOrchestratorV2:
         """
         workflow_instance_id = task.workflow_id
         if not workflow_instance_id:
-            return # Not a workflow task
+            return  # Not a workflow task
 
         workflow_instance = self.workflow_instances.get(workflow_instance_id)
         if workflow_instance:
             workflow_instance["status"] = "failed"
             workflow_instance["completed_at"] = datetime.utcnow()
-            workflow_instance["error"] = f"Step {task.workflow_step_id} failed: {task.error}"
-            self.logger.error(f"Workflow {workflow_instance_id} failed at step {task.workflow_step_id} due to task {task.id}.")
+            workflow_instance["error"] = (
+                f"Step {task.workflow_step_id} failed: {task.error}"
+            )
+            self.logger.error(
+                f"Workflow {workflow_instance_id} failed at step {task.workflow_step_id} due to task {task.id}."
+            )
+
 
 # --- Singleton instance ---
 
@@ -703,4 +851,3 @@ def get_unified_orchestrator() -> UnifiedOrchestratorV2:
     if _unified_orchestrator_instance is None:
         _unified_orchestrator_instance = UnifiedOrchestratorV2()
     return _unified_orchestrator_instance
-

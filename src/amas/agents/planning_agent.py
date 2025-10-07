@@ -4,10 +4,16 @@ import logging
 from typing import Any, Dict, List, Optional
 
 from amas.agents.base.intelligence_agent import IntelligenceAgent
-from amas.core.unified_orchestrator_v2 import UnifiedOrchestratorV2, OrchestratorTask, TaskPriority, TaskStatus
 from amas.core.message_bus import MessageBus
+from amas.core.unified_orchestrator_v2 import (
+    OrchestratorTask,
+    TaskPriority,
+    TaskStatus,
+    UnifiedOrchestratorV2,
+)
 
 logger = logging.getLogger(__name__)
+
 
 class PlanningAgent(IntelligenceAgent):
     """
@@ -26,13 +32,17 @@ class PlanningAgent(IntelligenceAgent):
     ):
         super().__init__(agent_id, config, orchestrator, message_bus)
         self.name = config.get("name", "Planning Agent")
-        self.capabilities = config.get("capabilities", ["task_planning", "plan_refinement", "resource_allocation"])
-        logger.info(f"PlanningAgent {self.agent_id} initialized with capabilities: {self.capabilities}")
+        self.capabilities = config.get(
+            "capabilities", ["task_planning", "plan_refinement", "resource_allocation"]
+        )
+        logger.info(
+            f"PlanningAgent {self.agent_id} initialized with capabilities: {self.capabilities}"
+        )
 
     async def execute_task(self, task: OrchestratorTask) -> Dict[str, Any]:
         """
         Executes a planning task.
-        Expected task parameters: {"goal": "...", "context": {...}, "existing_plan": [...]} 
+        Expected task parameters: {"goal": "...", "context": {...}, "existing_plan": [...]}
         """
         goal = task.parameters.get("goal")
         context = task.parameters.get("context", {})
@@ -43,18 +53,26 @@ class PlanningAgent(IntelligenceAgent):
 
         try:
             if existing_plan:
-                logger.info(f"PlanningAgent {self.agent_id} refining existing plan for goal: {goal}")
+                logger.info(
+                    f"PlanningAgent {self.agent_id} refining existing plan for goal: {goal}"
+                )
                 new_plan = await self._refine_plan(goal, context, existing_plan)
             else:
-                logger.info(f"PlanningAgent {self.agent_id} generating new plan for goal: {goal}")
+                logger.info(
+                    f"PlanningAgent {self.agent_id} generating new plan for goal: {goal}"
+                )
                 new_plan = await self._generate_plan(goal, context)
-            
+
             return {"success": True, "plan": new_plan}
         except Exception as e:
-            logger.error(f"PlanningAgent {self.agent_id} failed to execute task {task.id}: {e}")
+            logger.error(
+                f"PlanningAgent {self.agent_id} failed to execute task {task.id}: {e}"
+            )
             return {"success": False, "error": str(e)}
 
-    async def _generate_plan(self, goal: str, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+    async def _generate_plan(
+        self, goal: str, context: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """
         Generates a new task plan using the Universal AI Manager.
         """
@@ -87,13 +105,17 @@ Ensure the plan is comprehensive, logical, and covers all aspects of achieving t
                 plan = json.loads(response["content"])
                 return plan
             except json.JSONDecodeError:
-                logger.error(f"Failed to parse AI manager response for plan generation: {response['content']}")
+                logger.error(
+                    f"Failed to parse AI manager response for plan generation: {response['content']}"
+                )
                 return []
         else:
             logger.error(f"AI manager failed for plan generation: {response['error']}")
             return []
 
-    async def _refine_plan(self, goal: str, context: Dict[str, Any], existing_plan: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def _refine_plan(
+        self, goal: str, context: Dict[str, Any], existing_plan: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         Refines an existing task plan using the Universal AI Manager.
         """
@@ -128,9 +150,10 @@ Ensure the refined plan is comprehensive, logical, and covers all aspects of ach
                 refined_plan = json.loads(response["content"])
                 return refined_plan
             except json.JSONDecodeError:
-                logger.error(f"Failed to parse AI manager response for plan refinement: {response['content']}")
-                return existing_plan 
+                logger.error(
+                    f"Failed to parse AI manager response for plan refinement: {response['content']}"
+                )
+                return existing_plan
         else:
             logger.error(f"AI manager failed for plan refinement: {response['error']}")
-            return existing_plan 
-
+            return existing_plan

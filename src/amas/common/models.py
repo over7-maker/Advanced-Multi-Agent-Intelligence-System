@@ -1,14 +1,15 @@
-
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, Optional
-from dataclasses import dataclass, field
+
 
 class TaskPriority(Enum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     URGENT = "urgent"
+
 
 class TaskStatus(Enum):
     PENDING = "pending"
@@ -18,11 +19,13 @@ class TaskStatus(Enum):
     CANCELLED = "cancelled"
     PAUSED = "paused"
 
+
 class AgentStatus(Enum):
     IDLE = "idle"
     PROCESSING = "processing"
     ERROR = "error"
     OFFLINE = "offline"
+
 
 @dataclass
 class OrchestratorTask:
@@ -57,11 +60,16 @@ class OrchestratorTask:
             task_type=data["task_type"],
             priority=TaskPriority(data.get("priority", TaskPriority.MEDIUM.value)),
             status=TaskStatus(data.get("status", TaskStatus.PENDING.value)),
-            created_at=datetime.fromisoformat(data["created_at"]) if "created_at" in data else datetime.now(),
+            created_at=(
+                datetime.fromisoformat(data["created_at"])
+                if "created_at" in data
+                else datetime.now()
+            ),
             assigned_agent_id=data.get("assigned_agent_id"),
             result=data.get("result"),
             metadata=data.get("metadata", {}),
         )
+
 
 @dataclass
 class AgentConfig:
@@ -83,4 +91,3 @@ class AgentConfig:
             agent_type=data["agent_type"],
             config=data["config"],
         )
-

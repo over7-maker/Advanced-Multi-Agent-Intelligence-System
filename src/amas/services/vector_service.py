@@ -1,4 +1,3 @@
-
 """
 Vector Service Implementation for AMAS
 """
@@ -60,8 +59,10 @@ class VectorService:
                 self.is_initialized = True
                 logger.info("Vector service initialized successfully.")
             else:
-                logger.warning("FAISS not available, vector service operating in fallback (simulated) mode.")
-                self.is_initialized = True # Mark as initialized even in fallback
+                logger.warning(
+                    "FAISS not available, vector service operating in fallback (simulated) mode."
+                )
+                self.is_initialized = True  # Mark as initialized even in fallback
 
         except Exception as e:
             logger.error(f"Failed to initialize vector service: {e}")
@@ -84,9 +85,13 @@ class VectorService:
                     with open(metadata_file, "r") as f:
                         self.metadata = json.load(f)
 
-                logger.info(f"Loaded existing FAISS index with {self.index.ntotal} vectors.")
+                logger.info(
+                    f"Loaded existing FAISS index with {self.index.ntotal} vectors."
+                )
             else:
-                self.index = faiss.IndexFlatIP(self.dimension)  # Inner product for cosine similarity
+                self.index = faiss.IndexFlatIP(
+                    self.dimension
+                )  # Inner product for cosine similarity
                 logger.info("Created new FAISS index.")
 
         except Exception as e:
@@ -116,7 +121,7 @@ class VectorService:
         """
         status = "healthy" if self.is_initialized else "uninitialized"
         if FAISS_AVAILABLE and self.index is None:
-            status = "degraded" # Index not loaded/created yet
+            status = "degraded"  # Index not loaded/created yet
 
         return {
             "status": status,
@@ -133,7 +138,11 @@ class VectorService:
         Add documents to the vector index.
         """
         if not self.is_initialized or not FAISS_AVAILABLE or not self.embedding_model:
-            return {"success": False, "error": "Vector service not fully operational.", "timestamp": datetime.utcnow().isoformat()}
+            return {
+                "success": False,
+                "error": "Vector service not fully operational.",
+                "timestamp": datetime.utcnow().isoformat(),
+            }
 
         try:
             texts = [doc.get("content", "") for doc in documents]
@@ -164,24 +173,44 @@ class VectorService:
 
         except Exception as e:
             logger.error(f"Error adding documents: {e}")
-            return {"success": False, "error": str(e), "timestamp": datetime.utcnow().isoformat()}
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
 
-    async def semantic_search(self, query: str, limit: int = 10, threshold: float = 0.7) -> List[Dict[str, Any]]:
+    async def semantic_search(
+        self, query: str, limit: int = 10, threshold: float = 0.7
+    ) -> List[Dict[str, Any]]:
         """
         Perform semantic search using vector embeddings.
         """
         if not self.is_initialized or not FAISS_AVAILABLE or not self.embedding_model:
-            logger.warning("Vector service not fully operational for semantic search. Returning simulated results.")
+            logger.warning(
+                "Vector service not fully operational for semantic search. Returning simulated results."
+            )
             return [
-                {"content": f"Simulated semantic result 1 for {query}", "score": 0.9, "metadata": {"source": "simulated"}, "entities": []},
-                {"content": f"Simulated semantic result 2 for {query}", "score": 0.8, "metadata": {"source": "simulated"}, "entities": []},
+                {
+                    "content": f"Simulated semantic result 1 for {query}",
+                    "score": 0.9,
+                    "metadata": {"source": "simulated"},
+                    "entities": [],
+                },
+                {
+                    "content": f"Simulated semantic result 2 for {query}",
+                    "score": 0.8,
+                    "metadata": {"source": "simulated"},
+                    "entities": [],
+                },
             ]
 
         try:
             query_embedding = self.embedding_model.encode([query])
             faiss.normalize_L2(query_embedding)
 
-            scores, indices = self.index.search(query_embedding.astype("float32"), limit)
+            scores, indices = self.index.search(
+                query_embedding.astype("float32"), limit
+            )
 
             results = []
             for score, idx in zip(scores[0], indices[0]):
@@ -202,27 +231,52 @@ class VectorService:
             logger.error(f"Error during semantic search: {e}")
             return []
 
-    async def keyword_search(self, query: str, limit: int = 10, threshold: float = 0.6) -> List[Dict[str, Any]]:
+    async def keyword_search(
+        self, query: str, limit: int = 10, threshold: float = 0.6
+    ) -> List[Dict[str, Any]]:
         """
         Perform keyword search (simulated for now, could integrate with a text search engine).
         """
-        logger.info(f"VectorService: Performing keyword search for \'{query}\' (limit={limit}, threshold={threshold})")
+        logger.info(
+            f"VectorService: Performing keyword search for '{query}' (limit={limit}, threshold={threshold})"
+        )
         # This is a placeholder. In a real system, this would integrate with a dedicated text search engine (e.g., Elasticsearch, Lucene)
         return [
-            {"content": f"Simulated keyword result 1 for {query}", "score": 0.75, "metadata": {"source": "simulated"}, "entities": []},
+            {
+                "content": f"Simulated keyword result 1 for {query}",
+                "score": 0.75,
+                "metadata": {"source": "simulated"},
+                "entities": [],
+            },
         ]
 
-    async def hybrid_search(self, semantic_query: str, keyword_query: str, limit: int = 10, threshold: float = 0.65) -> List[Dict[str, Any]]:
+    async def hybrid_search(
+        self,
+        semantic_query: str,
+        keyword_query: str,
+        limit: int = 10,
+        threshold: float = 0.65,
+    ) -> List[Dict[str, Any]]:
         """
         Perform hybrid search combining semantic and keyword approaches.
         """
-        logger.info(f"VectorService: Performing hybrid search for semantic=\'{semantic_query}\' keyword=\'{keyword_query}\'")
-        semantic_results = await self.semantic_search(semantic_query, limit // 2, threshold)
-        keyword_results = await self.keyword_search(keyword_query, limit // 2, threshold)
+        logger.info(
+            f"VectorService: Performing hybrid search for semantic='{semantic_query}' keyword='{keyword_query}'"
+        )
+        semantic_results = await self.semantic_search(
+            semantic_query, limit // 2, threshold
+        )
+        keyword_results = await self.keyword_search(
+            keyword_query, limit // 2, threshold
+        )
         # Simple merge, more advanced fusion logic could be applied
-        return list({v['content']:v for v in semantic_results + keyword_results}.values())
+        return list(
+            {v["content"]: v for v in semantic_results + keyword_results}.values()
+        )
 
-    async def search(self, query: str, limit: int = 10, threshold: float = 0.7) -> List[Dict[str, Any]]:
+    async def search(
+        self, query: str, limit: int = 10, threshold: float = 0.7
+    ) -> List[Dict[str, Any]]:
         """
         Generic search method, defaults to semantic search.
         """
@@ -269,5 +323,3 @@ class VectorService:
         self.metadata = []
         self.is_initialized = False
         logger.info("VectorService closed.")
-
-

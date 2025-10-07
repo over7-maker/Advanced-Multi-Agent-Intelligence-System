@@ -6,8 +6,8 @@ from typing import Any, Dict
 
 import pytest
 
-from amas.main import AMASApplication
 from amas.common.models import TaskPriority
+from amas.main import AMASApplication
 
 
 class TestAMASApplication:

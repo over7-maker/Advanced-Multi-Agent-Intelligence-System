@@ -71,9 +71,11 @@ class ProviderConfig:
     max_retries: int = 3
     max_tokens: int = 4096
     temperature: float = 0.7
-    model_capabilities: List[str] = field(default_factory=list) # e.g., ['text_generation', 'code_completion']
-    cost_per_token_input: float = 0.0 # Placeholder for cost management
-    cost_per_token_output: float = 0.0 # Placeholder for cost management
+    model_capabilities: List[str] = field(
+        default_factory=list
+    )  # e.g., ['text_generation', 'code_completion']
+    cost_per_token_input: float = 0.0  # Placeholder for cost management
+    cost_per_token_output: float = 0.0  # Placeholder for cost management
     status: ProviderStatus = ProviderStatus.UNKNOWN
     last_used: Optional[datetime] = None
     success_count: int = 0
@@ -160,7 +162,7 @@ class UniversalAIManager:
                 provider_type=ProviderType.OPENAI_COMPATIBLE,
                 priority=1,
                 max_tokens=8192,
-                model_capabilities=['text_generation', 'code_generation', 'reasoning'],
+                model_capabilities=["text_generation", "code_generation", "reasoning"],
             ),
         )
 
@@ -175,7 +177,7 @@ class UniversalAIManager:
                 provider_type=ProviderType.OPENAI_COMPATIBLE,
                 priority=2,
                 max_tokens=8192,
-                model_capabilities=['text_generation', 'multilingual', 'summarization'],
+                model_capabilities=["text_generation", "multilingual", "summarization"],
             ),
         )
 
@@ -190,7 +192,7 @@ class UniversalAIManager:
                 provider_type=ProviderType.OPENAI_COMPATIBLE,
                 priority=3,
                 max_tokens=4096,
-                model_capabilities=['text_generation', 'creative_writing', 'humor'],
+                model_capabilities=["text_generation", "creative_writing", "humor"],
             ),
         )
 
@@ -205,7 +207,7 @@ class UniversalAIManager:
                 provider_type=ProviderType.OPENAI_COMPATIBLE,
                 priority=4,
                 max_tokens=8192,
-                model_capabilities=['long_context', 'summarization', 'qa'],
+                model_capabilities=["long_context", "summarization", "qa"],
             ),
         )
 
@@ -220,7 +222,11 @@ class UniversalAIManager:
                 provider_type=ProviderType.OPENAI_COMPATIBLE,
                 priority=5,
                 max_tokens=8192,
-                model_capabilities=['text_generation', 'multilingual', 'code_generation'],
+                model_capabilities=[
+                    "text_generation",
+                    "multilingual",
+                    "code_generation",
+                ],
             ),
         )
 
@@ -235,7 +241,7 @@ class UniversalAIManager:
                 provider_type=ProviderType.OPENAI_COMPATIBLE,
                 priority=6,
                 max_tokens=4096,
-                model_capabilities=['text_generation', 'reasoning', 'multimodal'],
+                model_capabilities=["text_generation", "reasoning", "multimodal"],
             ),
         )
 
@@ -250,7 +256,11 @@ class UniversalAIManager:
                 provider_type=ProviderType.GROQ,
                 priority=7,
                 max_tokens=8192,
-                model_capabilities=['fast_inference', 'text_generation', 'code_generation'],
+                model_capabilities=[
+                    "fast_inference",
+                    "text_generation",
+                    "code_generation",
+                ],
             ),
         )
 
@@ -265,7 +275,7 @@ class UniversalAIManager:
                 provider_type=ProviderType.CEREBRAS,
                 priority=8,
                 max_tokens=8192,
-                model_capabilities=['text_generation', 'research'],
+                model_capabilities=["text_generation", "research"],
             ),
         )
 
@@ -280,7 +290,7 @@ class UniversalAIManager:
                 provider_type=ProviderType.GEMINI,
                 priority=9,
                 max_tokens=8192,
-                model_capabilities=['multimodal', 'text_generation', 'reasoning'],
+                model_capabilities=["multimodal", "text_generation", "reasoning"],
             ),
         )
 
@@ -295,7 +305,7 @@ class UniversalAIManager:
                 provider_type=ProviderType.CODESTRAL,
                 priority=10,
                 max_tokens=4096,
-                model_capabilities=['code_generation', 'code_completion', 'debugging'],
+                model_capabilities=["code_generation", "code_completion", "debugging"],
             ),
         )
 
@@ -306,11 +316,15 @@ class UniversalAIManager:
                 name="NVIDIA AI",
                 api_key=os.getenv("NVIDIA_API_KEY", ""),
                 base_url="https://integrate.api.nvidia.com/v1",
-                model="deepseek-ai/deepseek-r1", # Example model
+                model="deepseek-ai/deepseek-r1",  # Example model
                 provider_type=ProviderType.NVIDIA,
                 priority=11,
                 max_tokens=4096,
-                model_capabilities=['text_generation', 'gpu_optimized', 'high_performance'],
+                model_capabilities=[
+                    "text_generation",
+                    "gpu_optimized",
+                    "high_performance",
+                ],
             ),
         )
 
@@ -325,7 +339,7 @@ class UniversalAIManager:
                 provider_type=ProviderType.GEMINI,
                 priority=12,
                 max_tokens=8192,
-                model_capabilities=['multimodal', 'text_generation'],
+                model_capabilities=["multimodal", "text_generation"],
             ),
         )
 
@@ -340,7 +354,7 @@ class UniversalAIManager:
                 provider_type=ProviderType.GROQ,
                 priority=13,
                 max_tokens=8192,
-                model_capabilities=['fast_inference', 'text_generation'],
+                model_capabilities=["fast_inference", "text_generation"],
             ),
         )
 
@@ -355,7 +369,11 @@ class UniversalAIManager:
                 provider_type=ProviderType.COHERE,
                 priority=14,
                 max_tokens=4096,
-                model_capabilities=['text_generation', 'summarization', 'enterprise_grade'],
+                model_capabilities=[
+                    "text_generation",
+                    "summarization",
+                    "enterprise_grade",
+                ],
             ),
         )
 
@@ -370,7 +388,7 @@ class UniversalAIManager:
                 provider_type=ProviderType.CHUTES,
                 priority=15,
                 max_tokens=1024,
-                model_capabilities=['text_generation', 'specialized_tasks'],
+                model_capabilities=["text_generation", "specialized_tasks"],
             ),
         )
 
@@ -385,7 +403,7 @@ class UniversalAIManager:
                 provider_type=ProviderType.ANTHROPIC,
                 priority=16,
                 max_tokens=4096,
-                model_capabilities=['text_generation', 'reasoning', 'safety'],
+                model_capabilities=["text_generation", "reasoning", "safety"],
             ),
         )
 
@@ -400,7 +418,11 @@ class UniversalAIManager:
                 provider_type=ProviderType.MISTRAL,
                 priority=17,
                 max_tokens=8192,
-                model_capabilities=['text_generation', 'code_generation', 'multilingual'],
+                model_capabilities=[
+                    "text_generation",
+                    "code_generation",
+                    "multilingual",
+                ],
             ),
         )
 
@@ -415,7 +437,7 @@ class UniversalAIManager:
                 provider_type=ProviderType.PERPLEXITY,
                 priority=18,
                 max_tokens=8192,
-                model_capabilities=['realtime_search', 'qa', 'summarization'],
+                model_capabilities=["realtime_search", "qa", "summarization"],
             ),
         )
 
@@ -430,7 +452,7 @@ class UniversalAIManager:
                 provider_type=ProviderType.OPENAI,
                 priority=19,
                 max_tokens=4096,
-                model_capabilities=['text_generation', 'reasoning', 'multimodal'],
+                model_capabilities=["text_generation", "reasoning", "multimodal"],
             ),
         )
 
@@ -440,12 +462,16 @@ class UniversalAIManager:
             ProviderConfig(
                 name="Azure OpenAI",
                 api_key=os.getenv("AZURE_OPENAI_API_KEY", ""),
-                base_url=os.getenv("AZURE_OPENAI_BASE_URL", ""), # Azure requires full endpoint URL
-                model=os.getenv("AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4o-deployment"), # Deployment name is the model
+                base_url=os.getenv(
+                    "AZURE_OPENAI_BASE_URL", ""
+                ),  # Azure requires full endpoint URL
+                model=os.getenv(
+                    "AZURE_OPENAI_DEPLOYMENT_NAME", "gpt-4o-deployment"
+                ),  # Deployment name is the model
                 provider_type=ProviderType.AZURE_OPENAI,
                 priority=20,
                 max_tokens=4096,
-                model_capabilities=['text_generation', 'enterprise_grade', 'security'],
+                model_capabilities=["text_generation", "enterprise_grade", "security"],
             ),
         )
 
@@ -454,13 +480,19 @@ class UniversalAIManager:
             "aws_bedrock",
             ProviderConfig(
                 name="AWS Bedrock (Claude)",
-                api_key=os.getenv("AWS_ACCESS_KEY_ID", ""), # AWS keys are different
-                base_url=os.getenv("AWS_REGION_NAME", "us-east-1"), # Region is base_url here
+                api_key=os.getenv("AWS_ACCESS_KEY_ID", ""),  # AWS keys are different
+                base_url=os.getenv(
+                    "AWS_REGION_NAME", "us-east-1"
+                ),  # Region is base_url here
                 model="anthropic.claude-3-sonnet-v1:0",
                 provider_type=ProviderType.AWS_BEDROCK,
                 priority=21,
                 max_tokens=4096,
-                model_capabilities=['text_generation', 'enterprise_grade', 'scalability'],
+                model_capabilities=[
+                    "text_generation",
+                    "enterprise_grade",
+                    "scalability",
+                ],
             ),
         )
 
@@ -469,13 +501,19 @@ class UniversalAIManager:
             "google_cloud",
             ProviderConfig(
                 name="Google Cloud Vertex AI (Gemini)",
-                api_key=os.getenv("GOOGLE_APPLICATION_CREDENTIALS", ""), # Path to service account key file
-                base_url=os.getenv("GOOGLE_CLOUD_PROJECT_ID", ""), # Project ID
+                api_key=os.getenv(
+                    "GOOGLE_APPLICATION_CREDENTIALS", ""
+                ),  # Path to service account key file
+                base_url=os.getenv("GOOGLE_CLOUD_PROJECT_ID", ""),  # Project ID
                 model="gemini-1.5-flash-001",
                 provider_type=ProviderType.GOOGLE_CLOUD,
                 priority=22,
                 max_tokens=8192,
-                model_capabilities=['text_generation', 'multimodal', 'enterprise_grade'],
+                model_capabilities=[
+                    "text_generation",
+                    "multimodal",
+                    "enterprise_grade",
+                ],
             ),
         )
 
@@ -486,22 +524,26 @@ class UniversalAIManager:
                 name="HuggingFace Inference API",
                 api_key=os.getenv("HUGGINGFACE_API_KEY", ""),
                 base_url="https://api-inference.huggingface.co/models",
-                model="mistralai/Mistral-7B-Instruct-v0.2", # Example model
+                model="mistralai/Mistral-7B-Instruct-v0.2",  # Example model
                 provider_type=ProviderType.HUGGINGFACE,
                 priority=23,
                 max_tokens=4096,
-                model_capabilities=['text_generation', 'open_source'],
+                model_capabilities=["text_generation", "open_source"],
             ),
         )
 
         if not self.providers:
-            logger.error("🚨 No AI providers were loaded. Please check your environment variables.")
+            logger.error(
+                "🚨 No AI providers were loaded. Please check your environment variables."
+            )
             return
 
         # Start health check loop
         asyncio.create_task(self._health_check_loop())
 
-        logger.info(f"🎉 Universal AI Manager initialized with {len(self.providers)} providers.")
+        logger.info(
+            f"🎉 Universal AI Manager initialized with {len(self.providers)} providers."
+        )
 
     async def _health_check_loop(self, interval: int = 300):
         """Periodically check the health of all providers."""
@@ -531,7 +573,9 @@ class UniversalAIManager:
         try:
             # Use a simple, non-intrusive prompt for health check
             response = await self._make_request(
-                provider_id, messages=[{"role": "user", "content": "Health check"}], max_tokens=10
+                provider_id,
+                messages=[{"role": "user", "content": "Health check"}],
+                max_tokens=10,
             )
             if response["success"]:
                 config.status = ProviderStatus.ACTIVE
@@ -611,7 +655,11 @@ class UniversalAIManager:
                 # Find provider_id by name or alias
                 found_pid = None
                 for pid, config in self.providers.items():
-                    if pid == pref_api or config.name.lower() == pref_api.lower() or config.model.lower() == pref_api.lower():
+                    if (
+                        pid == pref_api
+                        or config.name.lower() == pref_api.lower()
+                        or config.model.lower() == pref_api.lower()
+                    ):
                         found_pid = pid
                         break
                 if found_pid and found_pid in self.active_providers:
@@ -623,7 +671,9 @@ class UniversalAIManager:
             candidate_providers = [p for p in candidate_providers if p in allowed_apis]
         if task_type:
             candidate_providers = [
-                p for p in candidate_providers if task_type in self.providers[p].model_capabilities
+                p
+                for p in candidate_providers
+                if task_type in self.providers[p].model_capabilities
             ]
 
         # Apply strategy to the remaining candidates
@@ -645,7 +695,9 @@ class UniversalAIManager:
 
         if not final_providers_to_try:
             self.global_stats["failed_requests"] += 1
-            logger.error("❌ ALL AI PROVIDERS FAILED! No providers available after filtering.")
+            logger.error(
+                "❌ ALL AI PROVIDERS FAILED! No providers available after filtering."
+            )
             return {
                 "success": False,
                 "error": "All AI providers failed or no suitable providers found",
@@ -657,7 +709,7 @@ class UniversalAIManager:
 
         # Try providers with fallback
         for attempt, provider_id in enumerate(final_providers_to_try):
-            if attempt >= max_attempts: # Respect max_attempts
+            if attempt >= max_attempts:  # Respect max_attempts
                 break
             config = self.providers[provider_id]
             logger.info(
@@ -673,11 +725,13 @@ class UniversalAIManager:
                     config.status = ProviderStatus.ACTIVE
 
                     # Update average response time (exponential moving average for smoother updates)
-                    alpha = 0.1 # Smoothing factor
+                    alpha = 0.1  # Smoothing factor
                     if config.avg_response_time == 0:
                         config.avg_response_time = result["response_time"]
                     else:
-                        config.avg_response_time = (alpha * result["response_time"]) + ((1 - alpha) * config.avg_response_time)
+                        config.avg_response_time = (alpha * result["response_time"]) + (
+                            (1 - alpha) * config.avg_response_time
+                        )
 
                     # Update global stats
                     self.global_stats["successful_requests"] += 1
@@ -771,7 +825,7 @@ class UniversalAIManager:
             "average_response_time": 0,
             "total_response_time": 0,
             "last_reset": datetime.now(),
-            "uptime": self.global_stats["uptime"], # Keep original uptime
+            "uptime": self.global_stats["uptime"],  # Keep original uptime
         }
         for provider in self.providers.values():
             provider.success_count = 0
@@ -915,14 +969,18 @@ class UniversalAIManager:
         url = f"{config.base_url}/models/{config.model}:generateContent?key={config.api_key}"
 
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, json=payload, timeout=config.timeout) as resp:
+            async with session.post(
+                url, headers=headers, json=payload, timeout=config.timeout
+            ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     return {
                         "success": True,
                         "content": data["candidates"][0]["content"]["parts"][0]["text"],
                         "provider": config.name,
-                        "tokens_used": data.get("usageMetadata", {}).get("totalTokenCount", 0),
+                        "tokens_used": data.get("usageMetadata", {}).get(
+                            "totalTokenCount", 0
+                        ),
                     }
                 else:
                     error_text = await resp.text()
@@ -953,7 +1011,9 @@ class UniversalAIManager:
             if i == len(messages) - 1:
                 prompt = msg["content"]
             else:
-                chat_history.append({"role": msg["role"].upper(), "message": msg["content"]})
+                chat_history.append(
+                    {"role": msg["role"].upper(), "message": msg["content"]}
+                )
 
         payload = {
             "model": config.model,
@@ -965,7 +1025,10 @@ class UniversalAIManager:
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                f"{config.base_url}/chat", headers=headers, json=payload, timeout=config.timeout
+                f"{config.base_url}/chat",
+                headers=headers,
+                json=payload,
+                timeout=config.timeout,
             ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
@@ -973,7 +1036,9 @@ class UniversalAIManager:
                         "success": True,
                         "content": data["text"],
                         "provider": config.name,
-                        "tokens_used": data.get("meta", {}).get("tokens", {}).get("output_tokens", 0),
+                        "tokens_used": data.get("meta", {})
+                        .get("tokens", {})
+                        .get("output_tokens", 0),
                     }
                 else:
                     error_text = await resp.text()
@@ -1014,7 +1079,10 @@ class UniversalAIManager:
 
         async with aiohttp.ClientSession() as session:
             async with session.post(
-                f"{config.base_url}/messages", headers=headers, json=payload, timeout=config.timeout
+                f"{config.base_url}/messages",
+                headers=headers,
+                json=payload,
+                timeout=config.timeout,
             ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
@@ -1069,7 +1137,9 @@ class UniversalAIManager:
         }
 
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, json=payload, timeout=config.timeout) as resp:
+            async with session.post(
+                url, headers=headers, json=payload, timeout=config.timeout
+            ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     return {
@@ -1101,7 +1171,9 @@ class UniversalAIManager:
         # This is a simplified example. A full implementation would require
         # google-cloud-aiplatform library and authentication.
         # For now, we will raise a NotImplementedError.
-        raise NotImplementedError("Google Cloud Vertex AI handler is not fully implemented yet.")
+        raise NotImplementedError(
+            "Google Cloud Vertex AI handler is not fully implemented yet."
+        )
 
     async def _handle_huggingface(
         self, config: ProviderConfig, messages: List[Dict[str, str]], **kwargs
@@ -1115,7 +1187,9 @@ class UniversalAIManager:
         # HuggingFace Inference API often expects a simple string input or specific chat formats
         # This example assumes a simple text generation task.
         # For chat models, you might need to format messages into a single prompt string.
-        formatted_prompt = "\n".join([f'{msg["role"]}: {msg["content"]}' for msg in messages])
+        formatted_prompt = "\n".join(
+            [f'{msg["role"]}: {msg["content"]}' for msg in messages]
+        )
 
         payload = {
             "inputs": formatted_prompt,
@@ -1128,7 +1202,9 @@ class UniversalAIManager:
         url = f"{config.base_url}/{config.model}"
 
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, headers=headers, json=payload, timeout=config.timeout) as resp:
+            async with session.post(
+                url, headers=headers, json=payload, timeout=config.timeout
+            ) as resp:
                 if resp.status == 200:
                     data = await resp.json()
                     # The response format can vary greatly between models on HuggingFace
@@ -1136,7 +1212,7 @@ class UniversalAIManager:
                     generated_text = data[0].get("generated_text", "")
                     # The API might return the original prompt in the response, so we remove it.
                     if generated_text.startswith(formatted_prompt):
-                        generated_text = generated_text[len(formatted_prompt):].strip()
+                        generated_text = generated_text[len(formatted_prompt) :].strip()
 
                     return {
                         "success": True,
@@ -1150,6 +1226,7 @@ class UniversalAIManager:
                         "success": False,
                         "error": f"HTTP {resp.status}: {error_text}",
                     }
+
 
 # --- Singleton instance ---
 
@@ -1179,7 +1256,9 @@ async def main():
 
     print("\n--- Generating a response ---")
     prompt = "Write a short story about a robot who discovers music."
-    response = await ai_manager.generate_response(prompt, system_prompt="You are a creative writer.")
+    response = await ai_manager.generate_response(
+        prompt, system_prompt="You are a creative writer."
+    )
 
     if response["success"]:
         print(f"Provider: {response['provider_name']}")
@@ -1192,6 +1271,6 @@ async def main():
     stats = ai_manager.get_stats()
     print(json.dumps(stats, indent=2))
 
+
 if __name__ == "__main__":
     asyncio.run(main())
-

@@ -1,7 +1,7 @@
-'''
+"""
 Unified Integration Manager for AMAS Intelligence System
 Manages complete service integration, workflow orchestration, and real-time monitoring
-'''
+"""
 
 import asyncio
 import json
@@ -21,7 +21,12 @@ from amas.services.security_service import SecurityService
 from amas.services.service_manager import ServiceManager
 
 # Import the new UnifiedOrchestratorV2
-from .unified_orchestrator_v2 import UnifiedOrchestratorV2, OrchestratorTask, TaskStatus, TaskPriority
+from .unified_orchestrator_v2 import (
+    OrchestratorTask,
+    TaskPriority,
+    TaskStatus,
+    UnifiedOrchestratorV2,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -81,12 +86,12 @@ class WorkflowExecution:
 
 
 class IntegrationManagerV2:
-    '''
+    """
     Unified Integration Manager for AMAS Intelligence System.
 
     Manages complete service integration, workflow orchestration,
     real-time monitoring, and performance optimization.
-    '''
+    """
 
     def __init__(
         self,
@@ -95,7 +100,7 @@ class IntegrationManagerV2:
         database_service: DatabaseService,
         security_service: SecurityService,
     ):
-        '''
+        """
         Initialize the integration manager.
 
         Args:
@@ -103,7 +108,7 @@ class IntegrationManagerV2:
             service_manager: Service manager for various AMAS services.
             database_service: Database service instance.
             security_service: Security service instance.
-        '''
+        """
         self.orchestrator = orchestrator
         self.service_manager = service_manager
         self.database_service = database_service
@@ -154,10 +159,10 @@ class IntegrationManagerV2:
         logger.info("Integration Manager V2 initialized")
 
     async def initialize_integration(self):
-        '''
+        """
         Initialize complete system integration, including service connections,
         workflow engine, monitoring, and performance optimization.
-        '''
+        """
         try:
             logger.info("Initializing complete system integration...")
 
@@ -176,10 +181,10 @@ class IntegrationManagerV2:
             raise
 
     async def _initialize_service_connections(self):
-        '''
+        """
         Initialize all service connections and perform initial health checks.
         This version attempts to use actual service instances.
-        '''
+        """
         logger.info("Initializing service connections...")
 
         # Retrieve actual service instances from the service_manager
@@ -208,7 +213,9 @@ class IntegrationManagerV2:
                         }
                         logger.info(f"Service {service_name} connected successfully.")
                     else:
-                        logger.warning(f"Service {service_name} health check failed: {health.get('message', 'No message')}")
+                        logger.warning(
+                            f"Service {service_name} health check failed: {health.get('message', 'No message')}"
+                        )
                         self.connected_services[service_name] = {
                             "instance": service_instance,
                             "status": IntegrationStatus.ERROR,
@@ -216,7 +223,9 @@ class IntegrationManagerV2:
                             "error": health.get("message", "Health check failed"),
                         }
                 except AttributeError:
-                    logger.warning(f"Service {service_name} does not have a health_check method. Assuming connected.")
+                    logger.warning(
+                        f"Service {service_name} does not have a health_check method. Assuming connected."
+                    )
                     self.connected_services[service_name] = {
                         "instance": service_instance,
                         "status": IntegrationStatus.CONNECTED,
@@ -234,25 +243,29 @@ class IntegrationManagerV2:
                         "error": str(e),
                     }
             else:
-                logger.warning(f"Service {service_name} instance is None. Skipping connection.")
+                logger.warning(
+                    f"Service {service_name} instance is None. Skipping connection."
+                )
 
         logger.info(f"Connected to {len(self.connected_services)} services.")
 
     async def _initialize_workflow_engine(self):
-        '''
+        """
         Initialize the enhanced workflow engine by loading templates.
-        '''
+        """
         logger.info("Initializing enhanced workflow engine...")
         # Workflow templates are now managed by the UnifiedOrchestratorV2
         # We can potentially synchronize them or ensure they are loaded here if needed.
         # For now, assume UnifiedOrchestratorV2 handles its own workflow templates.
-        self.workflow_templates = self.orchestrator.workflows # Reference orchestrator's templates
+        self.workflow_templates = (
+            self.orchestrator.workflows
+        )  # Reference orchestrator's templates
         logger.info("Enhanced workflow engine initialized.")
 
     async def _initialize_monitoring_system(self):
-        '''
+        """
         Initialize real-time monitoring system, including metrics and alert handlers.
-        '''
+        """
         logger.info("Initializing real-time monitoring system...")
         self.alert_handlers = [
             self._handle_performance_alerts,
@@ -263,9 +276,9 @@ class IntegrationManagerV2:
         logger.info("Real-time monitoring system initialized.")
 
     async def _initialize_performance_optimization(self):
-        '''
+        """
         Initialize performance optimization components like connection pools and load balancers.
-        '''
+        """
         logger.info("Initializing performance optimization...")
         self.connection_pools = {
             "database": await self._create_database_pool(),
@@ -308,9 +321,9 @@ class IntegrationManagerV2:
         return {"strategy": "round_robin", "agents": [], "current_index": 0}
 
     async def _start_real_time_monitoring(self):
-        '''
+        """
         Starts background tasks for real-time system, service, and workflow monitoring.
-        '''
+        """
         logger.info("Starting real-time monitoring...")
         self.monitoring_tasks = [
             asyncio.create_task(self._monitor_system_health()),
@@ -323,7 +336,7 @@ class IntegrationManagerV2:
     async def execute_advanced_workflow(
         self, workflow_id: str, parameters: Dict[str, Any], user_id: str = None
     ) -> str:
-        '''
+        """
         Executes an advanced workflow using the UnifiedOrchestratorV2.
 
         Args:
@@ -333,10 +346,12 @@ class IntegrationManagerV2:
 
         Returns:
             The execution ID of the workflow.
-        '''
+        """
         try:
             # Delegate workflow execution to the UnifiedOrchestratorV2
-            execution_id = await self.orchestrator.execute_workflow(workflow_id, parameters)
+            execution_id = await self.orchestrator.execute_workflow(
+                workflow_id, parameters
+            )
 
             # Log audit event if security service is available
             if user_id and self.security_service:
@@ -349,9 +364,13 @@ class IntegrationManagerV2:
                         classification="system",
                     )
                 except Exception as e:
-                    logger.warning(f"Failed to log audit event for workflow {execution_id}: {e}")
+                    logger.warning(
+                        f"Failed to log audit event for workflow {execution_id}: {e}"
+                    )
 
-            logger.info(f"Advanced workflow {workflow_id} execution started: {execution_id}.")
+            logger.info(
+                f"Advanced workflow {workflow_id} execution started: {execution_id}."
+            )
             return execution_id
 
         except Exception as e:
@@ -359,9 +378,9 @@ class IntegrationManagerV2:
             raise
 
     async def _monitor_system_health(self):
-        '''
+        """
         Monitors overall system health by checking connected services.
-        '''
+        """
         while self.monitoring_enabled:
             try:
                 system_healthy = True
@@ -374,7 +393,9 @@ class IntegrationManagerV2:
                         try:
                             start_time = datetime.utcnow()
                             health = await service_info["instance"].health_check()
-                            response_time = (datetime.utcnow() - start_time).total_seconds()
+                            response_time = (
+                                datetime.utcnow() - start_time
+                            ).total_seconds()
 
                             service_info["last_health_check"] = datetime.utcnow()
                             service_info["response_time"] = response_time
@@ -386,20 +407,29 @@ class IntegrationManagerV2:
                                 service_info["status"] = IntegrationStatus.ERROR
                                 service_info["error_count"] += 1
                                 system_healthy = False
-                                logger.warning(f"Health check failed for {service_name}: {health.get('message', 'No message')}")
+                                logger.warning(
+                                    f"Health check failed for {service_name}: {health.get('message', 'No message')}"
+                                )
 
                         except Exception as e:
                             service_info["status"] = IntegrationStatus.ERROR
                             service_info["error_count"] += 1
                             system_healthy = False
-                            logger.warning(f"Health check failed for {service_name}: {e}")
+                            logger.warning(
+                                f"Health check failed for {service_name}: {e}"
+                            )
 
-                self.monitoring_metrics["system_health"] = "healthy" if system_healthy else "unhealthy"
+                self.monitoring_metrics["system_health"] = (
+                    "healthy" if system_healthy else "unhealthy"
+                )
                 self.monitoring_metrics["last_health_check"] = datetime.utcnow()
 
                 # Trigger alerts if system is unhealthy
                 if not system_healthy:
-                    await self._trigger_alert("system_unhealthy", "Overall system health is unhealthy due to service errors.")
+                    await self._trigger_alert(
+                        "system_unhealthy",
+                        "Overall system health is unhealthy due to service errors.",
+                    )
 
                 await asyncio.sleep(30)  # Check every 30 seconds
 
@@ -408,15 +438,17 @@ class IntegrationManagerV2:
                 await asyncio.sleep(60)  # Wait longer after an error
 
     async def _monitor_service_performance(self):
-        '''
+        """
         Monitors the performance of each connected service.
-        '''
+        """
         while self.monitoring_enabled:
             try:
                 for service_name, service_info in self.connected_services.items():
                     if service_info["status"] == IntegrationStatus.CONNECTED:
                         # Calculate error rate
-                        total_requests = service_info["success_count"] + service_info["error_count"]
+                        total_requests = (
+                            service_info["success_count"] + service_info["error_count"]
+                        )
                         error_rate = (
                             service_info["error_count"] / total_requests
                             if total_requests > 0
@@ -431,7 +463,10 @@ class IntegrationManagerV2:
                         }
 
                         # Check against thresholds
-                        if service_info["response_time"] > self.alert_thresholds["response_time"]:
+                        if (
+                            service_info["response_time"]
+                            > self.alert_thresholds["response_time"]
+                        ):
                             await self._trigger_alert(
                                 "performance_degradation",
                                 f"High response time for {service_name}: {service_info['response_time']:.2f}s",
@@ -449,9 +484,9 @@ class IntegrationManagerV2:
                 await asyncio.sleep(120)
 
     async def _monitor_workflow_executions(self):
-        '''
+        """
         Monitors the status of active workflow executions.
-        '''
+        """
         while self.monitoring_enabled:
             try:
                 # This is now handled by UnifiedOrchestratorV2, so we get status from it
@@ -468,16 +503,20 @@ class IntegrationManagerV2:
                 await asyncio.sleep(60)
 
     async def _monitor_security_events(self):
-        '''
+        """
         Monitors for security events from the SecurityService.
-        '''
+        """
         while self.monitoring_enabled:
             try:
                 if self.security_service:
                     # Assuming security_service has a method to get recent events
-                    events = await self.security_service.get_recent_security_events(since=datetime.utcnow() - timedelta(minutes=1))
+                    events = await self.security_service.get_recent_security_events(
+                        since=datetime.utcnow() - timedelta(minutes=1)
+                    )
                     for event in events:
-                        await self._trigger_alert("security_event", f"Security event detected: {event}")
+                        await self._trigger_alert(
+                            "security_event", f"Security event detected: {event}"
+                        )
 
                 await asyncio.sleep(60)  # Check every 60 seconds
 
@@ -486,9 +525,9 @@ class IntegrationManagerV2:
                 await asyncio.sleep(120)
 
     async def _trigger_alert(self, alert_type: str, message: str):
-        '''
+        """
         Triggers an alert and notifies relevant handlers.
-        '''
+        """
         logger.warning(f"ALERT [{alert_type.upper()}]: {message}")
         self.monitoring_metrics["alert_count"] += 1
 
@@ -505,50 +544,53 @@ class IntegrationManagerV2:
                 logger.error(f"Error in alert handler {handler.__name__}: {e}")
 
     async def _handle_performance_alerts(self, alert_data: Dict[str, Any]):
-        '''
+        """
         Handles performance-related alerts (placeholder).
-        '''
+        """
         logger.info(f"Handling performance alert: {alert_data.get('message')}")
         # Example: Scale resources, adjust load balancing
 
     async def _handle_error_alerts(self, alert_data: Dict[str, Any]):
-        '''
+        """
         Handles error-related alerts (placeholder).
-        '''
+        """
         logger.info(f"Handling error alert: {alert_data.get('message')}")
         # Example: Trigger automated rollback, notify on-call engineer
 
     async def _handle_service_alerts(self, alert_data: Dict[str, Any]):
-        '''
+        """
         Handles service-related alerts (placeholder).
-        '''
+        """
         logger.info(f"Handling service alert: {alert_data.get('message')}")
         # Example: Attempt service restart, switch to fallback
 
     async def _handle_security_alerts(self, alert_data: Dict[str, Any]):
-        '''
+        """
         Handles security-related alerts (placeholder).
-        '''
+        """
         logger.info(f"Handling security alert: {alert_data.get('message')}")
         # Example: Isolate affected components, trigger incident response workflow
 
     async def get_integration_status(self) -> Dict[str, Any]:
-        '''
+        """
         Retrieves the current status of the integration manager and connected services.
-        '''
+        """
         return {
             "integration_status": self.integration_status.value,
             "connected_services": {
-                name: info["status"].value for name, info in self.connected_services.items()
+                name: info["status"].value
+                for name, info in self.connected_services.items()
             },
             "monitoring_metrics": self.monitoring_metrics,
             "workflow_metrics": self.workflow_metrics,
         }
 
-    async def get_workflow_execution_status(self, execution_id: str) -> Optional[Dict[str, Any]]:
-        '''
+    async def get_workflow_execution_status(
+        self, execution_id: str
+    ) -> Optional[Dict[str, Any]]:
+        """
         Retrieves the status of a specific workflow execution from the orchestrator.
-        '''
+        """
         task_status = await self.orchestrator.get_task_status(execution_id)
         if task_status:
             return {
@@ -561,9 +603,9 @@ class IntegrationManagerV2:
         return None
 
     async def close(self):
-        '''
+        """
         Gracefully shuts down the integration manager and all background tasks.
-        '''
+        """
         logger.info("Shutting down Integration Manager...")
         self.monitoring_enabled = False
         for task in self.monitoring_tasks:
@@ -574,14 +616,16 @@ class IntegrationManagerV2:
 
 # Example usage (for demonstration and testing)
 async def main():
-    '''
+    """
     Main function to demonstrate IntegrationManagerV2 usage.
-    '''
+    """
     # Setup basic logging
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
 
     # Initialize services (placeholders/mocks for this example)
-    orchestrator = UnifiedOrchestratorV2(None) # Pass a mock agent manager if needed
+    orchestrator = UnifiedOrchestratorV2(None)  # Pass a mock agent manager if needed
     service_manager = ServiceManager()
     database_service = DatabaseService(config={})
     security_service = SecurityService(config={})
@@ -602,9 +646,17 @@ async def main():
         workflow_def = {
             "name": "Simple Greeting Workflow",
             "steps": [
-                {"step_id": "get_name", "agent": "input_agent", "prompt": "What is your name?"},
-                {"step_id": "greet", "agent": "format_agent", "prompt": "Hello, {get_name.result}!"}
-            ]
+                {
+                    "step_id": "get_name",
+                    "agent": "input_agent",
+                    "prompt": "What is your name?",
+                },
+                {
+                    "step_id": "greet",
+                    "agent": "format_agent",
+                    "prompt": "Hello, {get_name.result}!",
+                },
+            ],
         }
         orchestrator.load_workflow("simple_greeting", workflow_def)
 
@@ -615,10 +667,17 @@ async def main():
         print(f"Started workflow via Integration Manager: {workflow_exec_id}")
 
         while True:
-            workflow_status = await integration_manager.get_workflow_execution_status(workflow_exec_id)
+            workflow_status = await integration_manager.get_workflow_execution_status(
+                workflow_exec_id
+            )
             if workflow_status:
-                print(f"Workflow {workflow_exec_id} status: {workflow_status['status']}")
-                if workflow_status["status"] in [WorkflowStatus.COMPLETED.value, WorkflowStatus.FAILED.value]:
+                print(
+                    f"Workflow {workflow_exec_id} status: {workflow_status['status']}"
+                )
+                if workflow_status["status"] in [
+                    WorkflowStatus.COMPLETED.value,
+                    WorkflowStatus.FAILED.value,
+                ]:
                     print(f"Workflow results: {workflow_status.get('results')}")
                     print(f"Workflow error: {workflow_status.get('error')}")
                     break
@@ -633,4 +692,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-

@@ -1,4 +1,3 @@
-
 """
 RAG Agent Implementation
 
@@ -9,6 +8,7 @@ Vector and Knowledge Graph services through the orchestrator.
 """
 
 from __future__ import annotations
+
 import asyncio
 import json
 import logging
@@ -20,8 +20,8 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 from amas.agents.base.intelligence_agent import IntelligenceAgent
 from amas.common.models import OrchestratorTask, TaskPriority, TaskStatus
 from amas.core.message_bus import MessageBus
-from amas.services.vector_service import VectorService
 from amas.services.knowledge_graph_service import KnowledgeGraphService
+from amas.services.vector_service import VectorService
 
 logger = logging.getLogger(__name__)
 
@@ -123,7 +123,7 @@ class RAGAgent(IntelligenceAgent):
         self,
         agent_id: str,
         config: Dict[str, Any],
-        orchestrator: 'UnifiedOrchestratorV2',
+        orchestrator: "UnifiedOrchestratorV2",
         message_bus: MessageBus,
     ):
         """
@@ -138,16 +138,26 @@ class RAGAgent(IntelligenceAgent):
         super().__init__(agent_id, config, orchestrator, message_bus)
 
         self.name = config.get("name", "RAG Agent")
-        self.capabilities = config.get("capabilities", ["information_retrieval", "data_synthesis", "qa"])
+        self.capabilities = config.get(
+            "capabilities", ["information_retrieval", "data_synthesis", "qa"]
+        )
 
         # Services are now accessed via the orchestrator's service manager
-        self.vector_service: Optional[VectorService] = self.orchestrator.get_service_manager().get_vector_service()
-        self.knowledge_graph: Optional[KnowledgeGraphService] = self.orchestrator.get_service_manager().get_knowledge_graph_service()
+        self.vector_service: Optional[VectorService] = (
+            self.orchestrator.get_service_manager().get_vector_service()
+        )
+        self.knowledge_graph: Optional[KnowledgeGraphService] = (
+            self.orchestrator.get_service_manager().get_knowledge_graph_service()
+        )
 
         if not self.vector_service or not self.vector_service.is_initialized:
-            logger.warning(f"RAGAgent {self.agent_id}: VectorService not available or not initialized.")
+            logger.warning(
+                f"RAGAgent {self.agent_id}: VectorService not available or not initialized."
+            )
         if not self.knowledge_graph or not self.knowledge_graph.is_initialized:
-            logger.warning(f"RAGAgent {self.agent_id}: KnowledgeGraphService not available or not initialized.")
+            logger.warning(
+                f"RAGAgent {self.agent_id}: KnowledgeGraphService not available or not initialized."
+            )
 
         # Query strategies
         self.query_strategies = {
@@ -169,7 +179,9 @@ class RAGAgent(IntelligenceAgent):
         self.query_history = []
         self.feedback_history = []
 
-        logger.info(f"RAGAgent {self.agent_id} initialized with capabilities: {self.capabilities}")
+        logger.info(
+            f"RAGAgent {self.agent_id} initialized with capabilities: {self.capabilities}"
+        )
 
     async def execute_task(self, task: OrchestratorTask) -> Dict[str, Any]:
         """
@@ -199,10 +211,14 @@ class RAGAgent(IntelligenceAgent):
         )
 
         try:
-            synthesis_result = await self.intelligent_query(agent_context, information_need)
+            synthesis_result = await self.intelligent_query(
+                agent_context, information_need
+            )
             return {"success": True, "result": synthesis_result.__dict__}
         except Exception as e:
-            logger.error(f"RAGAgent {self.agent_id} failed to execute task {task.id}: {e}")
+            logger.error(
+                f"RAGAgent {self.agent_id} failed to execute task {task.id}: {e}"
+            )
             return {"success": False, "error": str(e)}
 
     async def intelligent_query(
@@ -267,7 +283,9 @@ class RAGAgent(IntelligenceAgent):
         Analyze the information need to understand requirements using LLM.
         """
         if not self.universal_ai_manager:
-            logger.warning("Universal AI Manager not available for query analysis. Returning default.")
+            logger.warning(
+                "Universal AI Manager not available for query analysis. Returning default."
+            )
             return {
                 "entities": [],
                 "concepts": [],
@@ -301,7 +319,10 @@ Provide analysis in JSON format:
 """
 
             result = await self._call_ai_manager(
-                prompt=prompt, max_tokens=300, temperature=0.3, task_type="text_analysis"
+                prompt=prompt,
+                max_tokens=300,
+                temperature=0.3,
+                task_type="text_analysis",
             )
 
             if result["success"]:
@@ -309,7 +330,9 @@ Provide analysis in JSON format:
                     analysis = json.loads(result["content"])
                     return analysis
                 except json.JSONDecodeError:
-                    logger.error(f"Failed to parse AI manager response for query analysis: {result['content']}")
+                    logger.error(
+                        f"Failed to parse AI manager response for query analysis: {result['content']}"
+                    )
                     return {
                         "entities": [],
                         "concepts": [],
@@ -403,12 +426,20 @@ Provide analysis in JSON format:
             results = []
 
             # Execute vector service query
-            if "vector" in queries and self.vector_service and self.vector_service.is_initialized:
+            if (
+                "vector" in queries
+                and self.vector_service
+                and self.vector_service.is_initialized
+            ):
                 vector_results = await self._execute_vector_query(queries["vector"])
                 results.extend(vector_results)
 
             # Execute knowledge graph query
-            if "graph" in queries and self.knowledge_graph and self.knowledge_graph.is_initialized:
+            if (
+                "graph" in queries
+                and self.knowledge_graph
+                and self.knowledge_graph.is_initialized
+            ):
                 graph_results = await self._execute_graph_query(queries["graph"])
                 results.extend(graph_results)
 
@@ -428,7 +459,9 @@ Provide analysis in JSON format:
         Execute query on vector service.
         """
         if not self.vector_service or not self.vector_service.is_initialized:
-            logger.warning("Vector service not available or not initialized. Skipping vector query.")
+            logger.warning(
+                "Vector service not available or not initialized. Skipping vector query."
+            )
             return []
 
         try:
@@ -477,7 +510,9 @@ Provide analysis in JSON format:
         Execute query on knowledge graph service.
         """
         if not self.knowledge_graph or not self.knowledge_graph.is_initialized:
-            logger.warning("Knowledge graph not available or not initialized. Skipping graph query.")
+            logger.warning(
+                "Knowledge graph not available or not initialized. Skipping graph query."
+            )
             return []
 
         try:
@@ -573,10 +608,12 @@ Provide analysis in JSON format:
         return SynthesisResult(
             synthesized_content=content,
             source_attributions=[r.source for r in retrieval_results],
-            confidence_score=sum(r.relevance_score for r in retrieval_results)
-            / len(retrieval_results)
-            if retrieval_results
-            else 0.0,
+            confidence_score=(
+                sum(r.relevance_score for r in retrieval_results)
+                / len(retrieval_results)
+                if retrieval_results
+                else 0.0
+            ),
             reasoning_trace=[],
             metadata={},
         )
@@ -591,7 +628,9 @@ Provide analysis in JSON format:
         Summarize results using Universal AI Manager.
         """
         if not self.universal_ai_manager:
-            logger.warning("Universal AI Manager not available for summarization. Falling back to concatenation.")
+            logger.warning(
+                "Universal AI Manager not available for summarization. Falling back to concatenation."
+            )
             return await self._concatenation_synthesis(
                 retrieval_results, agent_context, query_analysis
             )
@@ -608,7 +647,10 @@ Provide a concise summary.
 """
 
             result = await self._call_ai_manager(
-                prompt=prompt, max_tokens=500, temperature=0.5, task_type="summarization"
+                prompt=prompt,
+                max_tokens=500,
+                temperature=0.5,
+                task_type="summarization",
             )
 
             if result["success"]:
@@ -616,7 +658,9 @@ Provide a concise summary.
                     synthesized_content=result["content"],
                     source_attributions=[r.source for r in retrieval_results],
                     confidence_score=result.get("confidence", 0.8),
-                    reasoning_trace=[{"step": "summarization", "details": "Used LLM to summarize."}],
+                    reasoning_trace=[
+                        {"step": "summarization", "details": "Used LLM to summarize."}
+                    ],
                     metadata={},
                 )
             else:
@@ -641,7 +685,9 @@ Provide a concise summary.
         Fuse information from multiple sources using Universal AI Manager.
         """
         if not self.universal_ai_manager:
-            logger.warning("Universal AI Manager not available for fusion. Falling back to summarization.")
+            logger.warning(
+                "Universal AI Manager not available for fusion. Falling back to summarization."
+            )
             return await self._summarization_synthesis(
                 retrieval_results, agent_context, query_analysis
             )
@@ -668,7 +714,9 @@ Synthesize the information, resolve contradictions, and provide a single, cohere
                     synthesized_content=result["content"],
                     source_attributions=[r.source for r in retrieval_results],
                     confidence_score=result.get("confidence", 0.85),
-                    reasoning_trace=[{"step": "fusion", "details": "Used LLM to fuse information."}],
+                    reasoning_trace=[
+                        {"step": "fusion", "details": "Used LLM to fuse information."}
+                    ],
                     metadata={},
                 )
             else:
@@ -693,7 +741,9 @@ Synthesize the information, resolve contradictions, and provide a single, cohere
         Perform complex reasoning over retrieved information.
         """
         if not self.universal_ai_manager:
-            logger.warning("Universal AI Manager not available for reasoning. Falling back to fusion.")
+            logger.warning(
+                "Universal AI Manager not available for reasoning. Falling back to fusion."
+            )
             return await self._fusion_synthesis(
                 retrieval_results, agent_context, query_analysis
             )
@@ -720,7 +770,15 @@ Provide a detailed, step-by-step reasoning process and a final answer.
                     synthesized_content=result["content"],
                     source_attributions=[r.source for r in retrieval_results],
                     confidence_score=result.get("confidence", 0.9),
-                    reasoning_trace=result.get("reasoning_trace", [{"step": "reasoning", "details": "Used LLM for complex reasoning."}]),
+                    reasoning_trace=result.get(
+                        "reasoning_trace",
+                        [
+                            {
+                                "step": "reasoning",
+                                "details": "Used LLM for complex reasoning.",
+                            }
+                        ],
+                    ),
                     metadata={},
                 )
             else:
@@ -750,7 +808,9 @@ Provide a detailed, step-by-step reasoning process and a final answer.
         """
         Formulate a keyword query.
         """
-        query = " ".join(query_analysis.get("entities", []) + query_analysis.get("concepts", []))
+        query = " ".join(
+            query_analysis.get("entities", []) + query_analysis.get("concepts", [])
+        )
         return {"type": "keyword", "query": query, "limit": 10, "threshold": 0.5}
 
     async def _hybrid_query(
@@ -760,7 +820,9 @@ Provide a detailed, step-by-step reasoning process and a final answer.
         Formulate a hybrid query.
         """
         semantic_query = f"Entities: {query_analysis.get('entities', [])}, Concepts: {query_analysis.get('concepts', [])}"
-        keyword_query = " ".join(query_analysis.get("entities", []) + query_analysis.get("concepts", []))
+        keyword_query = " ".join(
+            query_analysis.get("entities", []) + query_analysis.get("concepts", [])
+        )
         return {
             "type": "hybrid",
             "semantic_query": semantic_query,
@@ -776,7 +838,9 @@ Provide a detailed, step-by-step reasoning process and a final answer.
         Formulate a contextual query using LLM.
         """
         if not self.universal_ai_manager:
-            logger.warning("Universal AI Manager not available for contextual query. Falling back to semantic.")
+            logger.warning(
+                "Universal AI Manager not available for contextual query. Falling back to semantic."
+            )
             return await self._semantic_query(agent_context, query_analysis, source)
 
         try:
@@ -790,11 +854,19 @@ Provide the query string only.
 """
 
             result = await self._call_ai_manager(
-                prompt=prompt, max_tokens=100, temperature=0.2, task_type="query_formulation"
+                prompt=prompt,
+                max_tokens=100,
+                temperature=0.2,
+                task_type="query_formulation",
             )
 
             if result["success"]:
-                return {"type": "semantic", "query": result["content"], "limit": 10, "threshold": 0.75}
+                return {
+                    "type": "semantic",
+                    "query": result["content"],
+                    "limit": 10,
+                    "threshold": 0.75,
+                }
             else:
                 logger.error(f"Contextual query formulation failed: {result['error']}")
                 return await self._semantic_query(agent_context, query_analysis, source)
@@ -850,13 +922,16 @@ Provide suggestions in a structured format.
 """
 
                 result = await self._call_ai_manager(
-                    prompt=prompt, max_tokens=500, temperature=0.6, task_type="adaptation"
+                    prompt=prompt,
+                    max_tokens=500,
+                    temperature=0.6,
+                    task_type="adaptation",
                 )
 
                 if result["success"]:
                     logger.info(f"Adaptation suggestions: {result['content']}")
                     # In a real system, these suggestions would be parsed and applied
-                    self.feedback_history.clear() # Clear feedback after processing
+                    self.feedback_history.clear()  # Clear feedback after processing
 
         except Exception as e:
             logger.error(f"Adaptation from feedback failed: {e}")
@@ -882,7 +957,10 @@ Extract key entities and concepts from the following document:
 Provide output in JSON format: {{"entities": [], "concepts": []}}
 """
                 result = await self._call_ai_manager(
-                    prompt=prompt, max_tokens=200, temperature=0.3, task_type="metadata_extraction"
+                    prompt=prompt,
+                    max_tokens=200,
+                    temperature=0.3,
+                    task_type="metadata_extraction",
                 )
                 if result["success"]:
                     try:
@@ -894,7 +972,9 @@ Provide output in JSON format: {{"entities": [], "concepts": []}}
 
             success = await self.vector_service.add_document(document, metadata)
             if success:
-                logger.info(f"Document added to knowledge base with metadata: {metadata}")
+                logger.info(
+                    f"Document added to knowledge base with metadata: {metadata}"
+                )
             else:
                 logger.error("Failed to add document to knowledge base.")
             return success
@@ -916,7 +996,9 @@ Provide output in JSON format: {{"entities": [], "concepts": []}}
         try:
             query = f"MATCH (e {{name: '{entity}'}})-[r]-(n) RETURN e, r, n"
             if relation:
-                query = f"MATCH (e {{name: '{entity}'}})-[r:{relation}]-(n) RETURN e, r, n"
+                query = (
+                    f"MATCH (e {{name: '{entity}'}})-[r:{relation}]-(n) RETURN e, r, n"
+                )
 
             results = await self.knowledge_graph.execute_query(query)
             return results
@@ -934,8 +1016,16 @@ Provide output in JSON format: {{"entities": [], "concepts": []}}
             "name": self.name,
             "status": self.status,
             "capabilities": self.capabilities,
-            "vector_service_status": "available" if self.vector_service and self.vector_service.is_initialized else "unavailable",
-            "knowledge_graph_status": "available" if self.knowledge_graph and self.knowledge_graph.is_initialized else "unavailable",
+            "vector_service_status": (
+                "available"
+                if self.vector_service and self.vector_service.is_initialized
+                else "unavailable"
+            ),
+            "knowledge_graph_status": (
+                "available"
+                if self.knowledge_graph and self.knowledge_graph.is_initialized
+                else "unavailable"
+            ),
             "query_history_count": len(self.query_history),
             "feedback_history_count": len(self.feedback_history),
         }
@@ -961,10 +1051,18 @@ Provide output in JSON format: {{"entities": [], "concepts": []}}
             service_name = message.get("service_name")
             status = message.get("status")
             if service_name == "vector_service":
-                self.vector_service = self.orchestrator.get_service_manager().get_vector_service() if status == "available" else None
+                self.vector_service = (
+                    self.orchestrator.get_service_manager().get_vector_service()
+                    if status == "available"
+                    else None
+                )
                 logger.info(f"Vector service status updated to: {status}")
             elif service_name == "knowledge_graph_service":
-                self.knowledge_graph = self.orchestrator.get_service_manager().get_knowledge_graph_service() if status == "available" else None
+                self.knowledge_graph = (
+                    self.orchestrator.get_service_manager().get_knowledge_graph_service()
+                    if status == "available"
+                    else None
+                )
                 logger.info(f"Knowledge graph service status updated to: {status}")
 
     async def start(self):
@@ -972,7 +1070,9 @@ Provide output in JSON format: {{"entities": [], "concepts": []}}
         Start the RAG agent and subscribe to relevant topics.
         """
         await super().start()
-        await self.message_bus.subscribe(f"system_messages", self._handle_system_message)
+        await self.message_bus.subscribe(
+            f"system_messages", self._handle_system_message
+        )
         logger.info(f"RAGAgent {self.agent_id} subscribed to system messages.")
 
     async def stop(self):
@@ -980,11 +1080,14 @@ Provide output in JSON format: {{"entities": [], "concepts": []}}
         Stop the RAG agent and unsubscribe from topics.
         """
         await super().stop()
-        await self.message_bus.unsubscribe(f"system_messages", self._handle_system_message)
+        await self.message_bus.unsubscribe(
+            f"system_messages", self._handle_system_message
+        )
         logger.info(f"RAGAgent {self.agent_id} unsubscribed from system messages.")
 
 
 # Example Usage (for testing)
+
 
 async def main():
     # This is a simplified setup for testing purposes.
@@ -1038,7 +1141,7 @@ async def main():
     await service_manager.shutdown_services()
     await orchestrator.shutdown()
 
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     asyncio.run(main())
-

@@ -1,13 +1,13 @@
-
 import asyncio
 import logging
-from typing import Any, Dict, List, Optional, Callable
+from typing import Any, Callable, Dict, List, Optional
 
 from amas.agents.base.intelligence_agent import IntelligenceAgent
-from amas.core.unified_orchestrator_v2 import UnifiedOrchestratorV2, OrchestratorTask
 from amas.core.message_bus import MessageBus
+from amas.core.unified_orchestrator_v2 import OrchestratorTask, UnifiedOrchestratorV2
 
 logger = logging.getLogger(__name__)
+
 
 class ToolAgent(IntelligenceAgent):
     """
@@ -29,7 +29,9 @@ class ToolAgent(IntelligenceAgent):
         self.capabilities = config.get("capabilities", ["tool_execution"])
         self.available_tools: Dict[str, Callable] = {}
         self._load_tools(config.get("tools", []))
-        logger.info(f"ToolAgent {self.agent_id} initialized with tools: {list(self.available_tools.keys())}")
+        logger.info(
+            f"ToolAgent {self.agent_id} initialized with tools: {list(self.available_tools.keys())}"
+        )
 
     def _load_tools(self, tool_configs: List[Dict[str, Any]]):
         """
@@ -42,7 +44,9 @@ class ToolAgent(IntelligenceAgent):
             if tool_name and tool_function_path:
                 # Simulate loading a tool function
                 # In a real scenario, you'd use importlib to load the actual function
-                self.available_tools[tool_name] = self._simulate_tool_function(tool_name, tool_config)
+                self.available_tools[tool_name] = self._simulate_tool_function(
+                    tool_name, tool_config
+                )
                 logger.info(f"Loaded simulated tool: {tool_name}")
             else:
                 logger.warning(f"Invalid tool configuration: {tool_config}")
@@ -51,10 +55,18 @@ class ToolAgent(IntelligenceAgent):
         """
         A placeholder for a tool function. In reality, this would be the actual tool logic.
         """
+
         async def simulated_tool(*args, **kwargs):
-            logger.info(f"Executing simulated tool '{tool_name}' with args: {args}, kwargs: {kwargs}")
-            await asyncio.sleep(1) # Simulate work
-            return {"tool_name": tool_name, "status": "success", "output": f"Executed {tool_name} with {kwargs}"}
+            logger.info(
+                f"Executing simulated tool '{tool_name}' with args: {args}, kwargs: {kwargs}"
+            )
+            await asyncio.sleep(1)  # Simulate work
+            return {
+                "tool_name": tool_name,
+                "status": "success",
+                "output": f"Executed {tool_name} with {kwargs}",
+            }
+
         return simulated_tool
 
     async def execute_task(self, task: OrchestratorTask) -> Dict[str, Any]:
@@ -73,14 +85,21 @@ class ToolAgent(IntelligenceAgent):
             raise ValueError(f"Tool '{tool_name}' not found or not available.")
 
         try:
-            logger.info(f"ToolAgent {self.agent_id} executing tool '{tool_name}' for task {task.id}")
+            logger.info(
+                f"ToolAgent {self.agent_id} executing tool '{tool_name}' for task {task.id}"
+            )
             result = await tool_function(**tool_args)
             return {"success": True, "result": result}
         except Exception as e:
             logger.error(f"Tool '{tool_name}' execution failed for task {task.id}: {e}")
             return {"success": False, "error": str(e)}
 
-    async def add_tool(self, tool_name: str, tool_function: Callable, tool_config: Optional[Dict[str, Any]] = None):
+    async def add_tool(
+        self,
+        tool_name: str,
+        tool_function: Callable,
+        tool_config: Optional[Dict[str, Any]] = None,
+    ):
         """
         Dynamically adds a tool to the agent.
         """
@@ -95,9 +114,11 @@ class ToolAgent(IntelligenceAgent):
         """
         if tool_name in self.available_tools:
             del self.available_tools[tool_name]
-            self.config["tools"] = [t for t in self.config.get("tools", []) if t.get("name") != tool_name]
+            self.config["tools"] = [
+                t for t in self.config.get("tools", []) if t.get("name") != tool_name
+            ]
             logger.info(f"Tool '{tool_name}' removed from ToolAgent {self.agent_id}.")
         else:
-            logger.warning(f"Attempted to remove non-existent tool '{tool_name}' from ToolAgent {self.agent_id}.")
-
-
+            logger.warning(
+                f"Attempted to remove non-existent tool '{tool_name}' from ToolAgent {self.agent_id}."
+            )

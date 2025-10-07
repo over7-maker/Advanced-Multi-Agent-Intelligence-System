@@ -1,9 +1,9 @@
-
 import asyncio
 import logging
 from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
+
 
 class MessageBus:
     """
@@ -45,7 +45,9 @@ class MessageBus:
 
         # Remove from any topic subscriptions
         for topic in list(self._subscribers.keys()):
-            self._subscribers[topic] = [q for q in self._subscribers[topic] if q != self._queues.get(agent_id)]
+            self._subscribers[topic] = [
+                q for q in self._subscribers[topic] if q != self._queues.get(agent_id)
+            ]
             if not self._subscribers[topic]:
                 del self._subscribers[topic]
 
@@ -54,13 +56,15 @@ class MessageBus:
         Subscribes an agent to a specific topic.
         """
         if agent_id not in self._queues:
-            logger.error(f"Agent {agent_id} not registered. Cannot subscribe to topic {topic}.")
+            logger.error(
+                f"Agent {agent_id} not registered. Cannot subscribe to topic {topic}."
+            )
             return
         if topic not in self._subscribers:
             self._subscribers[topic] = []
         if self._queues[agent_id] not in self._subscribers[topic]:
             self._subscribers[topic].append(self._queues[agent_id])
-            logger.info(f"Agent {agent_id} subscribed to topic \'{topic}\'.")
+            logger.info(f"Agent {agent_id} subscribed to topic '{topic}'.")
 
     async def unsubscribe(self, agent_id: str, topic: str):
         """
@@ -72,13 +76,13 @@ class MessageBus:
                 self._subscribers[topic].remove(queue)
                 if not self._subscribers[topic]:
                     del self._subscribers[topic]
-                logger.info(f"Agent {agent_id} unsubscribed from topic \'{topic}\'.")
+                logger.info(f"Agent {agent_id} unsubscribed from topic '{topic}'.")
 
     async def publish(self, topic: str, message: Dict[str, Any]):
         """
         Publishes a message to all subscribers of a topic.
         """
-        logger.debug(f"Publishing message to topic \'{topic}\': {message}")
+        logger.debug(f"Publishing message to topic '{topic}': {message}")
         if topic in self._subscribers:
             for queue in self._subscribers[topic]:
                 await queue.put(message)
@@ -91,7 +95,9 @@ class MessageBus:
         if recipient_id in self._queues:
             await self._queues[recipient_id].put(message)
         else:
-            logger.warning(f"Recipient agent {recipient_id} not found. Message not delivered.")
+            logger.warning(
+                f"Recipient agent {recipient_id} not found. Message not delivered."
+            )
 
     async def _process_agent_queue(self, agent_id: str):
         """
@@ -120,5 +126,3 @@ class MessageBus:
         for agent_id in list(self._queues.keys()):
             await self.unregister_agent(agent_id)
         logger.info("MessageBus closed.")
-
-

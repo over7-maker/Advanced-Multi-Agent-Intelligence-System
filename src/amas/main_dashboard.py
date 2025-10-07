@@ -11,29 +11,27 @@ import logging
 import signal
 import sys
 import threading
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 
+from .agents.code_agent import CodeAgent
+from .agents.data_agent import DataAgent
+from .agents.planning_agent import PlanningAgent
+from .agents.rag_agent import RAGAgent
+from .agents.tool_agent import ToolAgent
+from .api.dashboard_api import create_dashboard_api
 from .core.unified_orchestrator_v2 import UnifiedOrchestratorV2
 from .services.service_manager import ServiceManager
 from .services.universal_ai_manager import get_universal_ai_manager
-from .api.dashboard_api import create_dashboard_api
-from .agents.rag_agent import RAGAgent
-from .agents.tool_agent import ToolAgent
-from .agents.planning_agent import PlanningAgent
-from .agents.code_agent import CodeAgent
-from .agents.data_agent import DataAgent
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.StreamHandler(sys.stdout),
-        logging.FileHandler('amas.log')
-    ]
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[logging.StreamHandler(sys.stdout), logging.FileHandler("amas.log")],
 )
 
 logger = logging.getLogger(__name__)
+
 
 class AMASApplicationWithDashboard:
     """
@@ -53,59 +51,64 @@ class AMASApplicationWithDashboard:
         self.dashboard_api = None
         self.api_thread: Optional[threading.Thread] = None
         self.running = False
-        
+
         logger.info("AMAS Application with Dashboard initialized")
 
     def _get_default_config(self) -> Dict[str, Any]:
         """Get default configuration for the application."""
         return {
-            "orchestrator": {
-                "max_concurrent_tasks": 10,
-                "task_timeout": 300
-            },
+            "orchestrator": {"max_concurrent_tasks": 10, "task_timeout": 300},
             "agents": {
                 "rag_agent": {
                     "name": "RAG Agent Alpha",
                     "capabilities": ["information_retrieval", "data_synthesis", "qa"],
                     "initial_llm_temperature": 0.7,
-                    "initial_llm_max_tokens": 1000
+                    "initial_llm_max_tokens": 1000,
                 },
                 "tool_agent": {
                     "name": "Tool Agent Beta",
                     "capabilities": ["tool_execution"],
                     "tools": [
                         {"name": "web_search", "function_path": "tools.web_search"},
-                        {"name": "file_processor", "function_path": "tools.file_processor"}
-                    ]
+                        {
+                            "name": "file_processor",
+                            "function_path": "tools.file_processor",
+                        },
+                    ],
                 },
                 "planning_agent": {
                     "name": "Planning Agent Gamma",
-                    "capabilities": ["task_planning", "plan_refinement", "resource_allocation"]
+                    "capabilities": [
+                        "task_planning",
+                        "plan_refinement",
+                        "resource_allocation",
+                    ],
                 },
                 "code_agent": {
                     "name": "Code Agent Delta",
-                    "capabilities": ["code_generation", "code_execution", "code_debugging"]
+                    "capabilities": [
+                        "code_generation",
+                        "code_execution",
+                        "code_debugging",
+                    ],
                 },
                 "data_agent": {
                     "name": "Data Agent Epsilon",
-                    "capabilities": ["data_analysis", "data_processing", "data_visualization"]
-                }
+                    "capabilities": [
+                        "data_analysis",
+                        "data_processing",
+                        "data_visualization",
+                    ],
+                },
             },
             "services": {
                 "vector_service": {
                     "enabled": True,
-                    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2"
+                    "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
                 },
-                "knowledge_graph_service": {
-                    "enabled": True,
-                    "graph_type": "networkx"
-                }
+                "knowledge_graph_service": {"enabled": True, "graph_type": "networkx"},
             },
-            "api": {
-                "host": "0.0.0.0",
-                "port": 5000,
-                "debug": False
-            }
+            "api": {"host": "0.0.0.0", "port": 5000, "debug": False},
         }
 
     async def initialize(self):
@@ -127,7 +130,7 @@ class AMASApplicationWithDashboard:
                 universal_ai_manager=universal_ai_manager,
                 vector_service=self.service_manager.get_vector_service(),
                 knowledge_graph=self.service_manager.get_knowledge_graph_service(),
-                security_service=None  # Placeholder for future security service
+                security_service=None,  # Placeholder for future security service
             )
             logger.info("Unified Orchestrator initialized")
 
@@ -136,7 +139,9 @@ class AMASApplicationWithDashboard:
             logger.info("Agents initialized and registered")
 
             # Initialize Dashboard API
-            self.dashboard_api = create_dashboard_api(self.orchestrator, self.service_manager)
+            self.dashboard_api = create_dashboard_api(
+                self.orchestrator, self.service_manager
+            )
             logger.info("Dashboard API initialized")
 
             logger.info("AMAS system initialization completed successfully")
@@ -156,7 +161,7 @@ class AMASApplicationWithDashboard:
                 agent_id="rag_agent_001",
                 config=agent_configs["rag_agent"],
                 orchestrator=self.orchestrator,
-                message_bus=message_bus
+                message_bus=message_bus,
             )
             await self.orchestrator.register_agent(rag_agent)
             logger.info("RAG Agent registered")
@@ -167,7 +172,7 @@ class AMASApplicationWithDashboard:
                 agent_id="tool_agent_001",
                 config=agent_configs["tool_agent"],
                 orchestrator=self.orchestrator,
-                message_bus=message_bus
+                message_bus=message_bus,
             )
             await self.orchestrator.register_agent(tool_agent)
             logger.info("Tool Agent registered")
@@ -178,7 +183,7 @@ class AMASApplicationWithDashboard:
                 agent_id="planning_agent_001",
                 config=agent_configs["planning_agent"],
                 orchestrator=self.orchestrator,
-                message_bus=message_bus
+                message_bus=message_bus,
             )
             await self.orchestrator.register_agent(planning_agent)
             logger.info("Planning Agent registered")
@@ -189,7 +194,7 @@ class AMASApplicationWithDashboard:
                 agent_id="code_agent_001",
                 config=agent_configs["code_agent"],
                 orchestrator=self.orchestrator,
-                message_bus=message_bus
+                message_bus=message_bus,
             )
             await self.orchestrator.register_agent(code_agent)
             logger.info("Code Agent registered")
@@ -200,7 +205,7 @@ class AMASApplicationWithDashboard:
                 agent_id="data_agent_001",
                 config=agent_configs["data_agent"],
                 orchestrator=self.orchestrator,
-                message_bus=message_bus
+                message_bus=message_bus,
             )
             await self.orchestrator.register_agent(data_agent)
             logger.info("Data Agent registered")
@@ -214,22 +219,24 @@ class AMASApplicationWithDashboard:
                 kwargs={
                     "host": api_config.get("host", "0.0.0.0"),
                     "port": api_config.get("port", 5000),
-                    "debug": api_config.get("debug", False)
+                    "debug": api_config.get("debug", False),
                 },
-                daemon=True
+                daemon=True,
             )
             self.api_thread.start()
-            logger.info(f"Dashboard API server started on {api_config.get('host', '0.0.0.0')}:{api_config.get('port', 5000)}")
+            logger.info(
+                f"Dashboard API server started on {api_config.get('host', '0.0.0.0')}:{api_config.get('port', 5000)}"
+            )
 
     async def run(self):
         """Run the AMAS application."""
         try:
             await self.initialize()
             self.running = True
-            
+
             # Start the API server
             self.start_api_server()
-            
+
             logger.info("AMAS system is now running...")
             logger.info("Dashboard available at: http://localhost:5000")
             logger.info("Press Ctrl+C to stop the system")
@@ -277,11 +284,11 @@ class AMASApplicationWithDashboard:
 async def main():
     """Main entry point for the AMAS application with dashboard."""
     app = AMASApplicationWithDashboard()
-    
+
     # Set up signal handlers
     signal.signal(signal.SIGINT, app.signal_handler)
     signal.signal(signal.SIGTERM, app.signal_handler)
-    
+
     try:
         await app.run()
     except Exception as e:
