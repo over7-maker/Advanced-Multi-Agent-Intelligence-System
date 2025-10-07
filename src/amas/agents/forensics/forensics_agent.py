@@ -43,6 +43,7 @@ class ForensicsAgent(IntelligenceAgent):
             security_service=security_service,
         )
 
+
         self.evidence_store = {}
         self.analysis_results = {}
         self._initialized = False
@@ -83,35 +84,24 @@ class ForensicsAgent(IntelligenceAgent):
 
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Execute forensics task"""
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
         try:
-            task_type = task.get("type", "general")
-            task_id = task.get("id", "unknown")
+            logger.info(f"Executing forensics task: {task_description}")
 
-            logger.info(f"Executing forensics task {task_id} of type {task_type}")
+            # Determine task type from description
+            task_type = self._classify_task(task_description)
+            metadata = metadata or {}
 
-            # Mock forensics analysis
-            forensics_result = {
-                "analysis_id": f"forensics_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
-                "description": task.get("description", ""),
-                "status": "completed",
-                "findings": [
-                    "Forensics analysis completed",
-                    "No suspicious activity detected",
-                    "All evidence properly acquired",
-                ],
-                "recommendations": [
-                    "Continue monitoring",
-                    "Update forensics protocols",
-                ],
-                "confidence": 0.9,
-            }
-
-            return {
-                "success": True,
-                "task_type": "forensics_analysis",
-                "result": forensics_result,
-                "timestamp": datetime.utcnow().isoformat(),
-            }
+            if task_type == "file_analysis":
+                return await self._analyze_file(task_description, metadata)
+            elif task_type == "hash_analysis":
+                return await self._analyze_hash(task_description, metadata)
+            elif task_type == "metadata_extraction":
+                return await self._extract_metadata(task_description, metadata)
+            elif task_type == "timeline_analysis":
+                return await self._analyze_timeline(task_description, metadata)
+            else:
+                return await self._perform_general_forensics(task_description, metadata)
 
         except Exception as e:
             logger.error(f"Error executing forensics task: {e}")
@@ -120,7 +110,6 @@ class ForensicsAgent(IntelligenceAgent):
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
-
     async def validate_task(self, task: Dict[str, Any]) -> bool:
         """Validate if this agent can handle the task"""
         forensics_keywords = [
@@ -137,6 +126,7 @@ class ForensicsAgent(IntelligenceAgent):
 
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
         return any(keyword in task_text for keyword in forensics_keywords)
+
 
     async def _acquire_evidence(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Acquire digital evidence"""
@@ -221,6 +211,7 @@ class ForensicsAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
         except Exception as e:
             logger.error(f"Error in file analysis: {e}")
             return {
@@ -228,6 +219,7 @@ class ForensicsAgent(IntelligenceAgent):
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
+
 
     async def _reconstruct_timeline(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Reconstruct timeline of events"""
@@ -263,11 +255,13 @@ class ForensicsAgent(IntelligenceAgent):
 
         except Exception as e:
             logger.error(f"Error in timeline reconstruction: {e}")
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
             return {
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
+
 
     async def _extract_metadata(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Extract metadata from files"""
@@ -316,6 +310,7 @@ class ForensicsAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
         except Exception as e:
             logger.error(f"Error in metadata extraction: {e}")
             return {
@@ -323,6 +318,7 @@ class ForensicsAgent(IntelligenceAgent):
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
+
 
     async def _analyze_malware(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze malware samples"""
@@ -371,11 +367,13 @@ class ForensicsAgent(IntelligenceAgent):
 
         except Exception as e:
             logger.error(f"Error in malware analysis: {e}")
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
             return {
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
+
 
     async def _perform_general_forensics(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Perform general forensics analysis"""
@@ -407,10 +405,13 @@ class ForensicsAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
         except Exception as e:
             logger.error(f"Error in general forensics: {e}")
             return {
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
+
             }
+ origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
