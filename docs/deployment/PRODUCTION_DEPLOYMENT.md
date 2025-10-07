@@ -1,726 +1,766 @@
-# AMAS Production Deployment Guide
+# 🚀 AMAS Production Deployment Guide
 
-## 🚀 Production-Ready Deployment
+## Overview
 
-This guide provides comprehensive instructions for deploying the Advanced Multi-Agent Intelligence System (AMAS) in a production environment with enterprise-grade security.
+This guide provides comprehensive instructions for deploying AMAS in a production environment. It covers security hardening, performance optimization, high availability setup, and operational best practices.
 
-## 🔒 Security-First Deployment
+## 📋 Table of Contents
 
-### Pre-Deployment Security Checklist
+1. [Pre-Production Checklist](#pre-production-checklist)
+2. [Infrastructure Requirements](#infrastructure-requirements)
+3. [Security Configuration](#security-configuration)
+4. [High Availability Setup](#high-availability-setup)
+5. [Performance Optimization](#performance-optimization)
+6. [Monitoring & Alerting](#monitoring--alerting)
+7. [Backup & Recovery](#backup--recovery)
+8. [Operational Procedures](#operational-procedures)
+9. [Troubleshooting](#troubleshooting)
+10. [Maintenance](#maintenance)
 
-- [ ] **Environment Variables**: All sensitive data in environment variables
-- [ ] **SSL/TLS Certificates**: Valid certificates for HTTPS
-- [ ] **Firewall Configuration**: Restrictive network access rules
-- [ ] **Database Security**: Encrypted connections and secure credentials
-- [ ] **Container Security**: Non-root user, minimal attack surface
-- [ ] **Audit Logging**: Comprehensive logging enabled
-- [ ] **Monitoring**: Security monitoring and alerting configured
-- [ ] **Backup Strategy**: Encrypted backups with retention policy
+---
 
-## 🛠️ Production Setup
+## ✅ Pre-Production Checklist
 
-### 1. Environment Configuration
+### Infrastructure Readiness
+- [ ] **Servers provisioned** with required specifications
+- [ ] **Network configured** with proper segmentation
+- [ ] **Load balancers** configured and tested
+- [ ] **SSL certificates** obtained and installed
+- [ ] **DNS records** configured correctly
+- [ ] **Firewall rules** implemented and tested
+- [ ] **VPN access** configured for management
+- [ ] **Backup systems** configured and tested
 
-Create a production environment file:
+### Security Preparation
+- [ ] **Security audit** completed
+- [ ] **Penetration testing** performed
+- [ ] **Compliance review** passed
+- [ ] **API keys** rotated and secured
+- [ ] **MFA enabled** for all admin accounts
+- [ ] **Access controls** configured
+- [ ] **Audit logging** enabled
+- [ ] **Encryption** configured for data at rest and in transit
 
-```bash
-# Create production environment
-cp .env.example .env.production
+### Application Readiness
+- [ ] **Code review** completed
+- [ ] **Performance testing** passed
+- [ ] **Load testing** completed
+- [ ] **Security scanning** passed
+- [ ] **Dependencies** updated and scanned
+- [ ] **Configuration** reviewed for production
+- [ ] **Database migrations** tested
+- [ ] **Rollback procedures** documented
 
-# Edit with production values
-nano .env.production
+### Operational Readiness
+- [ ] **Monitoring** configured and tested
+- [ ] **Alerting** rules configured
+- [ ] **Runbooks** documented
+- [ ] **Incident response** plan ready
+- [ ] **Team training** completed
+- [ ] **Support rotation** scheduled
+- [ ] **Documentation** up to date
+- [ ] **SLAs** defined and agreed
+
+---
+
+## 🏗️ Infrastructure Requirements
+
+### Minimum Production Requirements
+
+| Component | Specification | Quantity | Notes |
+|-----------|---------------|----------|-------|
+| **API Servers** | 8 vCPU, 32GB RAM, 100GB SSD | 3+ | Behind load balancer |
+| **Worker Nodes** | 16 vCPU, 64GB RAM, 200GB SSD | 5+ | For agent processing |
+| **Database** | 32 vCPU, 128GB RAM, 1TB SSD | 2 (Primary + Replica) | PostgreSQL 14+ |
+| **Cache** | 8 vCPU, 32GB RAM | 3 (Cluster) | Redis 7+ |
+| **Load Balancer** | 4 vCPU, 8GB RAM | 2 (Active/Passive) | Nginx or HAProxy |
+| **Monitoring** | 8 vCPU, 32GB RAM, 500GB SSD | 1 | Prometheus + Grafana |
+
+### Network Architecture
+
+```
+Internet
+    │
+    ├─── CDN (CloudFlare/Akamai)
+    │
+    ├─── WAF (Web Application Firewall)
+    │
+    ├─── Load Balancer (Layer 7)
+    │         │
+    │    ┌────┴────┬────────┬────────┐
+    │    │         │        │        │
+    │   API-1    API-2    API-3   API-N
+    │    │         │        │        │
+    │    └────┬────┴────────┴────────┘
+    │         │
+    ├─── Internal Load Balancer
+    │         │
+    │    ┌────┴────┬────────┬────────┐
+    │    │         │        │        │
+    │  Worker-1 Worker-2 Worker-3 Worker-N
+    │    │         │        │        │
+    │    └────┬────┴────────┴────────┘
+    │         │
+    ├─── Data Layer
+    │    ├─── PostgreSQL (Primary)
+    │    ├─── PostgreSQL (Replica)
+    │    ├─── Redis Cluster
+    │    └─── Object Storage
+    │
+    └─── Management Network
+         ├─── Monitoring Stack
+         ├─── Log Aggregation
+         └─── Backup Systems
 ```
 
-**Production Environment Variables:**
+---
 
-```bash
-# AMAS Configuration
-AMAS_ENVIRONMENT=production
-AMAS_DEBUG=false
+## 🔒 Security Configuration
 
-# Database Configuration
-POSTGRES_HOST=db.amas.local
-POSTGRES_PORT=5432
-POSTGRES_USER=amas_prod
-POSTGRES_PASSWORD=your_secure_database_password_here
-POSTGRES_DB=amas_production
-POSTGRES_SSL_MODE=require
-
-# Redis Configuration
-REDIS_HOST=redis.amas.local
-REDIS_PORT=6379
-REDIS_PASSWORD=your_secure_redis_password_here
-REDIS_SSL=true
-
-# Neo4j Configuration
-NEO4J_URI=bolt://neo4j.amas.local:7687
-NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=your_secure_neo4j_password_here
-NEO4J_DATABASE=neo4j
-
-# Security Configuration
-JWT_SECRET=your_super_secure_jwt_secret_key_64_characters_long
-JWT_ALGORITHM=HS256
-JWT_EXPIRATION=3600
-ENCRYPTION_KEY=your_32_byte_encryption_key_for_data_protection
-AUDIT_ENABLED=true
-MAX_LOGIN_ATTEMPTS=5
-LOCKOUT_DURATION=900
-
-# LLM Configuration
-LLM_PROVIDER=ollama
-LLM_BASE_URL=https://llm.amas.local:11434
-LLM_MODEL=llama2
-LLM_API_KEY=your_llm_api_key_here
-LLM_TIMEOUT=30
-
-# Monitoring Configuration
-PROMETHEUS_URL=https://monitoring.amas.local:9090
-GRAFANA_URL=https://monitoring.amas.local:3001
-METRICS_ENABLED=true
-LOG_LEVEL=INFO
-```
-
-### 2. SSL/TLS Certificate Setup
-
-```bash
-# Generate SSL certificates
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout /etc/ssl/private/amas.key \
-  -out /etc/ssl/certs/amas.crt \
-  -subj "/C=US/ST=State/L=City/O=Organization/CN=amas.local"
-
-# Set proper permissions
-chmod 600 /etc/ssl/private/amas.key
-chmod 644 /etc/ssl/certs/amas.crt
-```
-
-### 3. Docker Security Configuration
-
-Update `docker-compose.prod.yml`:
-
-```yaml
-version: '3.8'
-
-services:
-  amas-api:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-      target: production
-    container_name: amas-api-prod
-    environment:
-      - AMAS_ENVIRONMENT=production
-      - AMAS_DEBUG=false
-    env_file:
-      - .env.production
-    volumes:
-      - ./logs:/app/logs:ro
-      - ./data:/app/data:ro
-      - /etc/ssl/certs:/etc/ssl/certs:ro
-    ports:
-      - "127.0.0.1:8000:8000"
-    networks:
-      - amas-internal
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /tmp
-      - /var/tmp
-    user: "1000:1000"
-    cap_drop:
-      - ALL
-    cap_add:
-      - NET_BIND_SERVICE
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
-
-  nginx:
-    image: nginx:alpine
-    container_name: amas-nginx-prod
-    volumes:
-      - ./docker/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
-      - /etc/ssl/certs:/etc/ssl/certs:ro
-      - /etc/ssl/private:/etc/ssl/private:ro
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - amas-internal
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    read_only: true
-    tmpfs:
-      - /var/cache/nginx
-      - /var/run
-    user: "101:101"
-    cap_drop:
-      - ALL
-    cap_add:
-      - NET_BIND_SERVICE
-      - CHOWN
-      - SETGID
-      - SETUID
-
-networks:
-  amas-internal:
-    driver: bridge
-    internal: true
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
-```
-
-### 4. Production Nginx Configuration
-
-Create `docker/nginx/nginx.prod.conf`:
+### SSL/TLS Configuration
 
 ```nginx
-events {
-    worker_connections 1024;
-}
+# /etc/nginx/conf.d/ssl.conf
+ssl_certificate /etc/ssl/certs/amas.crt;
+ssl_certificate_key /etc/ssl/private/amas.key;
 
-http {
-    include       /etc/nginx/mime.types;
-    default_type  application/octet-stream;
-    
-    # Security headers
-    add_header X-Frame-Options "SAMEORIGIN" always;
-    add_header X-Content-Type-Options "nosniff" always;
-    add_header X-XSS-Protection "1; mode=block" always;
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-    
-    # Hide Nginx version
-    server_tokens off;
-    
-    # Rate limiting
-    limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
-    limit_req_zone $binary_remote_addr zone=web:10m rate=30r/s;
-    
-    # SSL Configuration
-    ssl_protocols TLSv1.2 TLSv1.3;
-    ssl_ciphers ECDHE-RSA-AES256-GCM-SHA512:DHE-RSA-AES256-GCM-SHA512:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES256-GCM-SHA384;
-    ssl_prefer_server_ciphers off;
-    ssl_session_cache shared:SSL:10m;
-    ssl_session_timeout 10m;
-    
-    # Redirect HTTP to HTTPS
-    server {
-        listen 80;
-        server_name amas.local;
-        return 301 https://$server_name$request_uri;
-    }
-    
-    # HTTPS Server
-    server {
-        listen 443 ssl http2;
-        server_name amas.local;
-        
-        ssl_certificate /etc/ssl/certs/amas.crt;
-        ssl_certificate_key /etc/ssl/private/amas.key;
-        
-        # API routes
-        location /api/ {
-            limit_req zone=api burst=20 nodelay;
-            
-            proxy_pass http://amas-api:8000/;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
-            
-            # Security headers
-            proxy_set_header X-Forwarded-Host $host;
-            proxy_set_header X-Forwarded-Port $server_port;
-            
-            # Timeouts
-            proxy_connect_timeout 30s;
-            proxy_send_timeout 30s;
-            proxy_read_timeout 30s;
-        }
-        
-        # Web interface
-        location / {
-            limit_req zone=web burst=50 nodelay;
-            
-            root /usr/share/nginx/html;
-            index index.html;
-            try_files $uri $uri/ /index.html;
-            
-            # Cache static assets
-            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
-                expires 1y;
-                add_header Cache-Control "public, immutable";
-            }
-        }
-        
-        # Health check
-        location /health {
-            access_log off;
-            return 200 "healthy\n";
-            add_header Content-Type text/plain;
-        }
-    }
-}
+# Modern configuration
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
+ssl_prefer_server_ciphers off;
+
+# HSTS
+add_header Strict-Transport-Security "max-age=63072000" always;
+
+# OCSP stapling
+ssl_stapling on;
+ssl_stapling_verify on;
+ssl_trusted_certificate /etc/ssl/certs/chain.pem;
 ```
 
-### 5. Security Hardening Script
-
-Run the security hardening script:
+### Firewall Rules
 
 ```bash
-# Run security hardening
-python scripts/security_hardening.py
+#!/bin/bash
+# Production firewall configuration
 
-# Review security report
-cat security_report.json
+# Reset rules
+iptables -F
+iptables -X
+
+# Default policies
+iptables -P INPUT DROP
+iptables -P FORWARD DROP
+iptables -P OUTPUT ACCEPT
+
+# Loopback
+iptables -A INPUT -i lo -j ACCEPT
+
+# Established connections
+iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# SSH (restricted to management network)
+iptables -A INPUT -p tcp --dport 22 -s 10.0.100.0/24 -j ACCEPT
+
+# HTTP/HTTPS (public)
+iptables -A INPUT -p tcp --dport 80 -j ACCEPT
+iptables -A INPUT -p tcp --dport 443 -j ACCEPT
+
+# API ports (internal only)
+iptables -A INPUT -p tcp --dport 8000 -s 10.0.0.0/16 -j ACCEPT
+
+# Database (internal only)
+iptables -A INPUT -p tcp --dport 5432 -s 10.0.2.0/24 -j ACCEPT
+
+# Redis (internal only)
+iptables -A INPUT -p tcp --dport 6379 -s 10.0.2.0/24 -j ACCEPT
+
+# Monitoring
+iptables -A INPUT -p tcp --dport 9090 -s 10.0.100.0/24 -j ACCEPT
+iptables -A INPUT -p tcp --dport 3000 -s 10.0.100.0/24 -j ACCEPT
+
+# Save rules
+iptables-save > /etc/iptables/rules.v4
 ```
 
-### 6. Production Deployment
-
-```bash
-# Deploy production system
-./scripts/deploy.sh production deploy
-
-# Verify deployment
-curl -k https://localhost/health
-curl -k https://localhost/api/health
-```
-
-## 🔐 Security Configuration
-
-### 1. Firewall Configuration
-
-```bash
-# Configure UFW firewall
-sudo ufw default deny incoming
-sudo ufw default allow outgoing
-
-# Allow SSH
-sudo ufw allow 22/tcp
-
-# Allow HTTPS
-sudo ufw allow 443/tcp
-
-# Allow HTTP (redirect to HTTPS)
-sudo ufw allow 80/tcp
-
-# Enable firewall
-sudo ufw enable
-```
-
-### 2. Database Security
-
-```sql
--- Create production database user
-CREATE USER amas_prod WITH PASSWORD 'secure_password_here';
-
--- Create database
-CREATE DATABASE amas_production OWNER amas_prod;
-
--- Grant permissions
-GRANT ALL PRIVILEGES ON DATABASE amas_production TO amas_prod;
-
--- Enable SSL
-ALTER SYSTEM SET ssl = on;
-ALTER SYSTEM SET ssl_cert_file = '/etc/ssl/certs/amas.crt';
-ALTER SYSTEM SET ssl_key_file = '/etc/ssl/private/amas.key';
-
--- Reload configuration
-SELECT pg_reload_conf();
-```
-
-### 3. Redis Security
-
-```bash
-# Configure Redis with authentication
-echo "requirepass your_secure_redis_password_here" >> /etc/redis/redis.conf
-
-# Disable dangerous commands
-echo "rename-command FLUSHDB \"\"" >> /etc/redis/redis.conf
-echo "rename-command FLUSHALL \"\"" >> /etc/redis/redis.conf
-echo "rename-command DEBUG \"\"" >> /etc/redis/redis.conf
-
-# Restart Redis
-sudo systemctl restart redis
-```
-
-### 4. Monitoring Configuration
-
-Create `docker/prometheus/prometheus.prod.yml`:
+### Secrets Management
 
 ```yaml
+# HashiCorp Vault configuration
+storage "consul" {
+  address = "127.0.0.1:8500"
+  path    = "vault/"
+}
+
+listener "tcp" {
+  address     = "0.0.0.0:8200"
+  tls_cert_file = "/opt/vault/tls/cert.pem"
+  tls_key_file  = "/opt/vault/tls/key.pem"
+}
+
+seal "awskms" {
+  region = "us-east-1"
+  kms_key_id = "alias/vault-unseal"
+}
+
+ui = true
+```
+
+---
+
+## 🔄 High Availability Setup
+
+### Database HA Configuration
+
+```sql
+-- PostgreSQL Primary configuration
+-- postgresql.conf
+listen_addresses = '*'
+max_connections = 500
+shared_buffers = 32GB
+effective_cache_size = 96GB
+work_mem = 128MB
+maintenance_work_mem = 2GB
+
+# Replication
+wal_level = replica
+max_wal_senders = 10
+wal_keep_segments = 64
+hot_standby = on
+
+# Archive
+archive_mode = on
+archive_command = 'rsync -a %p backup@backup-server:/backups/postgres/%f'
+```
+
+```sql
+-- Streaming replication setup
+-- On replica
+pg_basebackup -h primary-server -D /var/lib/postgresql/14/main -U replicator -v -P -W
+
+-- recovery.conf
+standby_mode = 'on'
+primary_conninfo = 'host=primary-server port=5432 user=replicator'
+trigger_file = '/tmp/postgresql.trigger'
+```
+
+### Redis Cluster Configuration
+
+```conf
+# redis.conf for cluster nodes
+port 7000
+cluster-enabled yes
+cluster-config-file nodes.conf
+cluster-node-timeout 5000
+appendonly yes
+maxmemory 16gb
+maxmemory-policy allkeys-lru
+
+# Setup cluster
+redis-cli --cluster create \
+  node1:7000 node2:7000 node3:7000 \
+  node4:7000 node5:7000 node6:7000 \
+  --cluster-replicas 1
+```
+
+### Load Balancer HA
+
+```conf
+# keepalived.conf for VRRP
+vrrp_instance VI_1 {
+    state MASTER
+    interface eth0
+    virtual_router_id 51
+    priority 100
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass SecurePassword123
+    }
+    virtual_ipaddress {
+        192.168.1.100/24
+    }
+}
+```
+
+---
+
+## ⚡ Performance Optimization
+
+### System Tuning
+
+```bash
+# /etc/sysctl.conf
+# Network optimizations
+net.core.somaxconn = 65535
+net.ipv4.tcp_max_syn_backlog = 65535
+net.ipv4.tcp_syncookies = 1
+net.ipv4.tcp_tw_reuse = 1
+net.ipv4.tcp_fin_timeout = 30
+net.ipv4.tcp_keepalive_time = 1200
+
+# Memory optimizations
+vm.swappiness = 10
+vm.dirty_ratio = 15
+vm.dirty_background_ratio = 5
+
+# File system
+fs.file-max = 2097152
+fs.nr_open = 1048576
+```
+
+### Application Optimization
+
+```python
+# gunicorn_config.py
+import multiprocessing
+
+bind = "0.0.0.0:8000"
+workers = multiprocessing.cpu_count() * 2 + 1
+worker_class = "uvicorn.workers.UvicornWorker"
+worker_connections = 1000
+keepalive = 5
+max_requests = 1000
+max_requests_jitter = 50
+timeout = 30
+graceful_timeout = 30
+preload_app = True
+
+# Logging
+accesslog = "-"
+errorlog = "-"
+loglevel = "info"
+```
+
+### Database Optimization
+
+```sql
+-- Performance indexes
+CREATE INDEX CONCURRENTLY idx_tasks_user_status 
+    ON tasks(user_id, status) 
+    WHERE status IN ('pending', 'processing');
+
+CREATE INDEX CONCURRENTLY idx_results_created_at 
+    ON results(created_at DESC) 
+    INCLUDE (task_id, status);
+
+-- Table partitioning
+CREATE TABLE tasks_2025_q1 PARTITION OF tasks
+    FOR VALUES FROM ('2025-01-01') TO ('2025-04-01');
+
+-- Connection pooling with PgBouncer
+[databases]
+amas = host=localhost port=5432 dbname=amas
+
+[pgbouncer]
+pool_mode = transaction
+max_client_conn = 1000
+default_pool_size = 25
+reserve_pool_size = 5
+```
+
+---
+
+## 📊 Monitoring & Alerting
+
+### Prometheus Configuration
+
+```yaml
+# prometheus.yml
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
-
-rule_files:
-  - "rules/*.yml"
+  external_labels:
+    environment: 'production'
+    region: 'us-east-1'
 
 alerting:
   alertmanagers:
     - static_configs:
-        - targets:
-          - alertmanager:9093
+        - targets: ['alertmanager:9093']
+
+rule_files:
+  - 'alerts/*.yml'
 
 scrape_configs:
   - job_name: 'amas-api'
     static_configs:
-      - targets: ['amas-api:8000']
-    metrics_path: '/metrics'
-    scrape_interval: 30s
-    scrape_timeout: 10s
-    scheme: https
-    tls_config:
-      insecure_skip_verify: true
-
+      - targets: ['api1:9090', 'api2:9090', 'api3:9090']
+    
+  - job_name: 'amas-workers'
+    static_configs:
+      - targets: ['worker1:9090', 'worker2:9090', 'worker3:9090']
+    
   - job_name: 'postgres'
     static_configs:
-      - targets: ['postgres:5432']
-    scrape_interval: 30s
-
+      - targets: ['postgres-exporter:9187']
+    
   - job_name: 'redis'
     static_configs:
-      - targets: ['redis:6379']
-    scrape_interval: 30s
+      - targets: ['redis-exporter:9121']
 ```
 
-## 📊 Monitoring & Alerting
+### Alert Rules
 
-### 1. Grafana Dashboard Configuration
+```yaml
+# alerts/amas.yml
+groups:
+  - name: amas_alerts
+    interval: 30s
+    rules:
+      - alert: HighErrorRate
+        expr: rate(amas_api_errors_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second"
+      
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, amas_api_latency_seconds) > 2
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High API response time"
+          description: "95th percentile response time is {{ $value }} seconds"
+      
+      - alert: DatabaseConnectionPoolExhausted
+        expr: amas_db_connections_active / amas_db_connections_max > 0.9
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "{{ $value }}% of connections in use"
+```
 
-Create `docker/grafana/dashboards/amas-production.json`:
+### Grafana Dashboards
 
 ```json
 {
   "dashboard": {
-    "id": null,
     "title": "AMAS Production Dashboard",
-    "tags": ["amas", "production", "monitoring"],
-    "style": "dark",
-    "timezone": "browser",
     "panels": [
       {
-        "id": 1,
-        "title": "System Health",
-        "type": "stat",
-        "targets": [
-          {
-            "expr": "up{job=\"amas-api\"}",
-            "legendFormat": "API Service"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 0,
-          "y": 0
-        }
+        "title": "API Request Rate",
+        "targets": [{
+          "expr": "rate(amas_api_requests_total[5m])"
+        }]
       },
       {
-        "id": 2,
-        "title": "Security Events",
-        "type": "graph",
-        "targets": [
-          {
-            "expr": "rate(amas_security_events_total[5m])",
-            "legendFormat": "Security Events/sec"
-          }
-        ],
-        "gridPos": {
-          "h": 8,
-          "w": 12,
-          "x": 12,
-          "y": 0
-        }
+        "title": "Response Time (p95)",
+        "targets": [{
+          "expr": "histogram_quantile(0.95, amas_api_latency_seconds)"
+        }]
+      },
+      {
+        "title": "Active Tasks",
+        "targets": [{
+          "expr": "amas_tasks_active"
+        }]
+      },
+      {
+        "title": "AI Provider Health",
+        "targets": [{
+          "expr": "amas_ai_provider_health"
+        }]
       }
     ]
   }
 }
 ```
 
-### 2. Alert Rules
+---
 
-Create `docker/prometheus/rules/amas-alerts.yml`:
+## 💾 Backup & Recovery
 
-```yaml
-groups:
-  - name: amas_alerts
-    rules:
-      - alert: AMASApiDown
-        expr: up{job="amas-api"} == 0
-        for: 1m
-        labels:
-          severity: critical
-        annotations:
-          summary: "AMAS API is down"
-          description: "AMAS API service has been down for more than 1 minute."
-
-      - alert: HighErrorRate
-        expr: rate(amas_http_requests_total{status=~"5.."}[5m]) > 0.1
-        for: 2m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High error rate detected"
-          description: "Error rate is above 10% for more than 2 minutes."
-
-      - alert: HighMemoryUsage
-        expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.9
-        for: 5m
-        labels:
-          severity: warning
-        annotations:
-          summary: "High memory usage"
-          description: "Memory usage is above 90% for more than 5 minutes."
-
-      - alert: SecurityViolation
-        expr: increase(amas_security_violations_total[5m]) > 0
-        for: 0m
-        labels:
-          severity: critical
-        annotations:
-          summary: "Security violation detected"
-          description: "Security violation detected in AMAS system."
-```
-
-## 🔄 Backup & Recovery
-
-### 1. Database Backup
+### Backup Strategy
 
 ```bash
 #!/bin/bash
-# Database backup script
+# backup.sh - Production backup script
 
-BACKUP_DIR="/backups/amas"
-DATE=$(date +%Y%m%d_%H%M%S)
-DB_NAME="amas_production"
-
-# Create backup directory
+BACKUP_DIR="/backup/amas/$(date +%Y%m%d)"
 mkdir -p $BACKUP_DIR
 
-# Backup database
-pg_dump -h db.amas.local -U amas_prod -d $DB_NAME | gzip > $BACKUP_DIR/amas_$DATE.sql.gz
+# Database backup
+pg_dump -h localhost -U amas -d amas -F custom -f $BACKUP_DIR/amas_db.dump
 
-# Encrypt backup
-gpg --symmetric --cipher-algo AES256 $BACKUP_DIR/amas_$DATE.sql.gz
+# Redis backup
+redis-cli BGSAVE
+cp /var/lib/redis/dump.rdb $BACKUP_DIR/redis.rdb
 
-# Remove unencrypted backup
-rm $BACKUP_DIR/amas_$DATE.sql.gz
+# Application data
+rsync -av /var/lib/amas/ $BACKUP_DIR/app_data/
 
-# Keep only last 30 days of backups
-find $BACKUP_DIR -name "amas_*.sql.gz.gpg" -mtime +30 -delete
+# Configuration files
+tar -czf $BACKUP_DIR/configs.tar.gz /etc/amas/
+
+# Encrypt backups
+gpg --encrypt --recipient backup@amas.com $BACKUP_DIR/*
+
+# Upload to S3
+aws s3 sync $BACKUP_DIR s3://amas-backups/production/
+
+# Cleanup old backups (keep 30 days)
+find /backup/amas -type d -mtime +30 -exec rm -rf {} \;
 ```
 
-### 2. Configuration Backup
+### Recovery Procedures
 
 ```bash
 #!/bin/bash
-# Configuration backup script
+# restore.sh - Disaster recovery script
 
-BACKUP_DIR="/backups/amas/config"
-DATE=$(date +%Y%m%d_%H%M%S)
+RESTORE_DATE=$1
+BACKUP_DIR="/backup/amas/$RESTORE_DATE"
 
-# Create backup directory
-mkdir -p $BACKUP_DIR
+# Stop services
+systemctl stop amas-api amas-worker
 
-# Backup configuration files
-tar -czf $BACKUP_DIR/amas_config_$DATE.tar.gz \
-  /etc/ssl/certs/amas.crt \
-  /etc/ssl/private/amas.key \
-  /app/.env.production \
-  /app/docker-compose.prod.yml
+# Restore database
+pg_restore -h localhost -U amas -d amas_restore $BACKUP_DIR/amas_db.dump
+psql -c "ALTER DATABASE amas RENAME TO amas_old;"
+psql -c "ALTER DATABASE amas_restore RENAME TO amas;"
 
-# Encrypt backup
-gpg --symmetric --cipher-algo AES256 $BACKUP_DIR/amas_config_$DATE.tar.gz
+# Restore Redis
+systemctl stop redis
+cp $BACKUP_DIR/redis.rdb /var/lib/redis/dump.rdb
+chown redis:redis /var/lib/redis/dump.rdb
+systemctl start redis
 
-# Remove unencrypted backup
-rm $BACKUP_DIR/amas_config_$DATE.tar.gz
+# Restore application data
+rsync -av $BACKUP_DIR/app_data/ /var/lib/amas/
+
+# Start services
+systemctl start amas-api amas-worker
+
+# Verify
+curl http://localhost:8000/health
 ```
 
-## 🚀 Performance Optimization
+---
 
-### 1. Database Optimization
+## 📋 Operational Procedures
 
-```sql
--- Optimize PostgreSQL for production
-ALTER SYSTEM SET shared_buffers = '256MB';
-ALTER SYSTEM SET effective_cache_size = '1GB';
-ALTER SYSTEM SET maintenance_work_mem = '64MB';
-ALTER SYSTEM SET checkpoint_completion_target = 0.9;
-ALTER SYSTEM SET wal_buffers = '16MB';
-ALTER SYSTEM SET default_statistics_target = 100;
-
--- Reload configuration
-SELECT pg_reload_conf();
-```
-
-### 2. Redis Optimization
+### Deployment Process
 
 ```bash
-# Configure Redis for production
-echo "maxmemory 1gb" >> /etc/redis/redis.conf
-echo "maxmemory-policy allkeys-lru" >> /etc/redis/redis.conf
-echo "save 900 1" >> /etc/redis/redis.conf
-echo "save 300 10" >> /etc/redis/redis.conf
-echo "save 60 10000" >> /etc/redis/redis.conf
+#!/bin/bash
+# deploy.sh - Zero-downtime deployment
 
-# Restart Redis
-sudo systemctl restart redis
+VERSION=$1
+HEALTH_CHECK_URL="http://localhost:8000/health"
+
+# Pre-deployment checks
+./run_tests.sh
+./security_scan.sh
+
+# Blue-green deployment
+echo "Deploying version $VERSION"
+
+# Start new version
+docker run -d --name amas-api-$VERSION \
+  -p 8001:8000 \
+  amas/api:$VERSION
+
+# Health check
+for i in {1..30}; do
+  if curl -f $HEALTH_CHECK_URL:8001; then
+    echo "New version healthy"
+    break
+  fi
+  sleep 2
+done
+
+# Switch traffic
+nginx -s reload
+
+# Stop old version
+docker stop amas-api-old
+docker rm amas-api-old
+
+echo "Deployment complete"
 ```
 
-### 3. Application Optimization
+### Scaling Procedures
 
-```python
-# Production settings for AMAS
-PRODUCTION_SETTINGS = {
-    'workers': 4,
-    'worker_class': 'uvicorn.workers.UvicornWorker',
-    'worker_connections': 1000,
-    'max_requests': 1000,
-    'max_requests_jitter': 100,
-    'preload_app': True,
-    'keepalive': 2,
-    'timeout': 30
+```bash
+# Scale up workers
+kubectl scale deployment amas-worker --replicas=10
+
+# Auto-scaling configuration
+kubectl autoscale deployment amas-api \
+  --min=3 \
+  --max=20 \
+  --cpu-percent=70
+```
+
+### Maintenance Mode
+
+```nginx
+# maintenance.conf
+location / {
+    if (-f /var/www/maintenance.flag) {
+        return 503;
+    }
+    proxy_pass http://amas_backend;
+}
+
+error_page 503 @maintenance;
+location @maintenance {
+    root /var/www/maintenance;
+    rewrite ^(.*)$ /index.html break;
 }
 ```
 
-## 📋 Maintenance Procedures
+---
 
-### 1. Regular Security Updates
+## 🔧 Troubleshooting
 
+### Common Issues
+
+#### High Memory Usage
 ```bash
-#!/bin/bash
-# Security update script
+# Check memory usage
+ps aux --sort=-%mem | head -20
 
-# Update system packages
-sudo apt update && sudo apt upgrade -y
+# Check for memory leaks
+valgrind --leak-check=full python -m src.amas.main
 
-# Update Docker images
-docker-compose pull
-docker-compose up -d
-
-# Update Python dependencies
-pip install --upgrade -r requirements.txt
-
-# Restart services
-docker-compose restart
+# Force garbage collection
+echo 3 > /proc/sys/vm/drop_caches
 ```
 
-### 2. Log Rotation
+#### Database Performance
+```sql
+-- Check slow queries
+SELECT query, calls, mean_time, total_time
+FROM pg_stat_statements
+ORDER BY mean_time DESC
+LIMIT 10;
 
+-- Check blocking queries
+SELECT pid, usename, query, state
+FROM pg_stat_activity
+WHERE state != 'idle'
+AND query_start < NOW() - INTERVAL '1 minute';
+
+-- Kill blocking query
+SELECT pg_terminate_backend(pid);
+```
+
+#### API Latency
 ```bash
-# Configure log rotation
-cat > /etc/logrotate.d/amas << EOF
+# Check connection pool
+curl http://localhost:8000/metrics | grep connection
+
+# Check worker queue depth
+redis-cli llen celery
+
+# Profile endpoint
+python -m cProfile -o profile.out src/amas/api/app.py
+```
+
+---
+
+## 🔄 Maintenance
+
+### Regular Maintenance Tasks
+
+#### Daily
+- [ ] Check system alerts
+- [ ] Review error logs
+- [ ] Verify backup completion
+- [ ] Check disk usage
+- [ ] Monitor performance metrics
+
+#### Weekly
+- [ ] Security scan
+- [ ] Database maintenance (VACUUM, ANALYZE)
+- [ ] Review capacity planning
+- [ ] Update documentation
+- [ ] Test recovery procedures
+
+#### Monthly
+- [ ] Security patches
+- [ ] Performance review
+- [ ] Capacity planning
+- [ ] Disaster recovery drill
+- [ ] Team training
+
+### Database Maintenance
+
+```sql
+-- Weekly maintenance
+VACUUM ANALYZE;
+
+-- Monthly maintenance
+REINDEX DATABASE amas;
+
+-- Quarterly maintenance
+CLUSTER tasks USING idx_tasks_created_at;
+```
+
+### Log Rotation
+
+```conf
+# /etc/logrotate.d/amas
 /var/log/amas/*.log {
     daily
     rotate 30
     compress
     delaycompress
-    missingok
     notifempty
-    create 644 amas amas
+    create 0640 amas amas
+    sharedscripts
     postrotate
-        docker-compose restart amas-api
+        systemctl reload amas-api
     endscript
 }
-EOF
 ```
 
-### 3. Health Checks
+---
 
-```bash
-#!/bin/bash
-# Health check script
+## 📊 Performance Benchmarks
 
-# Check API health
-curl -f https://localhost/api/health || exit 1
+### Expected Performance Metrics
 
-# Check database connection
-docker-compose exec postgres pg_isready || exit 1
+| Metric | Target | Acceptable | Critical |
+|--------|--------|------------|----------|
+| **API Response Time (p95)** | < 200ms | < 500ms | > 1s |
+| **Throughput** | > 1000 req/s | > 500 req/s | < 100 req/s |
+| **Error Rate** | < 0.1% | < 1% | > 5% |
+| **Availability** | 99.99% | 99.9% | < 99% |
+| **Task Success Rate** | > 99% | > 95% | < 90% |
+| **AI Provider Success** | > 99.9% | > 99% | < 95% |
 
-# Check Redis connection
-docker-compose exec redis redis-cli ping || exit 1
+---
 
-# Check Neo4j connection
-curl -f http://localhost:7474 || exit 1
+## 🚨 Emergency Procedures
 
-echo "All services healthy"
-```
+### Incident Response
 
-## 🎯 Production Readiness Checklist
+1. **Assess** - Determine severity and impact
+2. **Contain** - Prevent further damage
+3. **Communicate** - Notify stakeholders
+4. **Remediate** - Fix the issue
+5. **Document** - Record actions taken
+6. **Review** - Post-mortem analysis
 
-- [ ] **Environment Variables**: All sensitive data in environment variables
-- [ ] **SSL/TLS**: Valid certificates and HTTPS configuration
-- [ ] **Firewall**: Restrictive network access rules
-- [ ] **Database**: Encrypted connections and secure credentials
-- [ ] **Container Security**: Non-root user, minimal attack surface
-- [ ] **Audit Logging**: Comprehensive logging enabled
-- [ ] **Monitoring**: Security monitoring and alerting configured
-- [ ] **Backup Strategy**: Encrypted backups with retention policy
-- [ ] **Performance**: Optimized for production workload
-- [ ] **Documentation**: Complete operational procedures
-- [ ] **Testing**: Security and performance testing completed
-- [ ] **Compliance**: Security standards and regulations met
+### Emergency Contacts
 
-## 🚨 Incident Response
+- **On-Call Engineer**: +1-xxx-xxx-xxxx
+- **Infrastructure Team**: infra@amas.com
+- **Security Team**: security@amas.com
+- **Management**: escalation@amas.com
 
-### 1. Security Incident Response
+---
 
-```bash
-# Incident response checklist
-1. Identify the incident
-2. Contain the threat
-3. Eradicate the threat
-4. Recover systems
-5. Document lessons learned
-```
+**Remember**: Always test changes in staging before applying to production!
 
-### 2. Emergency Procedures
-
-```bash
-# Emergency shutdown
-docker-compose down
-
-# Emergency restart
-docker-compose up -d
-
-# Emergency backup
-./scripts/backup_emergency.sh
-```
-
-## 📞 Support & Maintenance
-
-### 1. Monitoring Contacts
-
-- **Security Team**: security@amas.local
-- **Operations Team**: ops@amas.local
-- **Development Team**: dev@amas.local
-
-### 2. Maintenance Windows
-
-- **Weekly**: Security updates and patches
-- **Monthly**: Performance optimization and tuning
-- **Quarterly**: Security audit and penetration testing
-
-## 🎉 Production Deployment Complete
-
-The AMAS system is now deployed in a production-ready, enterprise-grade environment with comprehensive security measures, monitoring, and operational procedures.
-
-**Key Features:**
-- ✅ **Zero-Trust Security**: Comprehensive security framework
-- ✅ **High Availability**: Redundant and fault-tolerant design
-- ✅ **Performance Optimized**: Tuned for production workloads
-- ✅ **Fully Monitored**: Real-time monitoring and alerting
-- ✅ **Compliance Ready**: Meets enterprise security standards
-- ✅ **Operationally Ready**: Complete procedures and documentation
-
-The AMAS system is now ready for production use! 🚀
+**Last Updated**: January 2025  
+**Version**: 1.1.0  
+**Approved By**: DevOps Team
