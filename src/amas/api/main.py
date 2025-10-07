@@ -14,7 +14,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
 # Import AMAS system
-from main import AMASIntelligenceSystem
+from ..main import AMASApplication
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -122,7 +122,7 @@ async def startup_event():
         }
 
         # Initialize AMAS system
-        amas_system = AMASIntelligenceSystem(config)
+        amas_system = AMASApplication(config)
         await amas_system.initialize()
 
         logger.info("AMAS Intelligence System initialized successfully")
@@ -199,7 +199,7 @@ async def submit_task(
         amas = await get_amas_system()
 
         # Submit task
-        task_id = await amas.submit_intelligence_task(
+        task_id = await amas.submit_task(
             {
                 "type": task_request.type,
                 "description": task_request.description,
@@ -233,22 +233,12 @@ async def get_task_status(task_id: str, auth: dict = Depends(verify_auth)):
     try:
         amas = await get_amas_system()
 
-        # Get task from database
-        task = await amas.database_service.get_task(task_id)
-        if not task:
-            raise HTTPException(status_code=404, detail="Task not found")
+        # Get task result
+        task_result = await amas.get_task_result(task_id)
+        if "error" in task_result:
+            raise HTTPException(status_code=404, detail=task_result["error"])
 
-        return {
-            "task_id": task_id,
-            "status": task.get("status", "unknown"),
-            "type": task.get("task_type", "unknown"),
-            "description": task.get("description", ""),
-            "created_at": task.get("created_at", ""),
-            "started_at": task.get("started_at", ""),
-            "completed_at": task.get("completed_at", ""),
-            "result": task.get("result", {}),
-            "error": task.get("error", ""),
-        }
+        return task_result
 
     except HTTPException:
         raise
@@ -265,18 +255,19 @@ async def get_agents(auth: dict = Depends(verify_auth)):
         amas = await get_amas_system()
 
         agents = []
-        for agent_id, agent in amas.agents.items():
-            agent_status = await agent.get_status()
-            agents.append(
-                {
-                    "agent_id": agent_id,
-                    "name": agent_status.get("name", ""),
-                    "status": agent_status.get("status", "unknown"),
-                    "capabilities": agent_status.get("capabilities", []),
-                    "last_activity": agent_status.get("last_activity", ""),
-                    "metrics": agent_status.get("metrics", {}),
-                }
-            )
+        if hasattr(amas, 'orchestrator') and amas.orchestrator:
+            for agent_id, agent in amas.orchestrator.agents.items():
+                agent_status = await agent.get_status()
+                agents.append(
+                    {
+                        "agent_id": agent_id,
+                        "name": agent_status.get("name", ""),
+                        "status": agent_status.get("status", "unknown"),
+                        "capabilities": agent_status.get("capabilities", []),
+                        "last_activity": agent_status.get("last_activity", ""),
+                        "metrics": agent_status.get("metrics", {}),
+                    }
+                )
 
         return {"agents": agents}
 
@@ -292,10 +283,13 @@ async def get_agent_status(agent_id: str, auth: dict = Depends(verify_auth)):
     try:
         amas = await get_amas_system()
 
-        if agent_id not in amas.agents:
+        if not hasattr(amas, 'orchestrator') or not amas.orchestrator:
+            raise HTTPException(status_code=503, detail="Orchestrator not available")
+            
+        if agent_id not in amas.orchestrator.agents:
             raise HTTPException(status_code=404, detail="Agent not found")
 
-        agent = amas.agents[agent_id]
+        agent = amas.orchestrator.agents[agent_id]
         status = await agent.get_status()
 
         return status

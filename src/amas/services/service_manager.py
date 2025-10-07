@@ -151,6 +151,10 @@ class ServiceManager:
                 await self.llm_service.close()
                 logger.info("LLM service closed")
 
+            if self.vector_service:
+                await self.vector_service.close()
+                logger.info("Vector service closed")
+
             if self.knowledge_graph_service:
                 await self.knowledge_graph_service.close()
                 logger.info("Knowledge Graph service closed")
@@ -159,6 +163,10 @@ class ServiceManager:
 
         except Exception as e:
             logger.error(f"Error closing services: {e}")
+
+    async def shutdown(self):
+        """Shutdown all services"""
+        await self.close_all_services()
 
     def get_llm_service(self) -> Optional[LLMService]:
         """Get LLM service instance"""
