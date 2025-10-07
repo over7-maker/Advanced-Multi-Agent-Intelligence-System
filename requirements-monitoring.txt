@@ -1,0 +1,8 @@
+# AMAS Performance Monitoring Dependencies
+psutil>=5.9.0
+aioredis>=2.0.0
+matplotlib>=3.6.0
+seaborn>=0.12.0
+aiohttp>=3.8.0
+locust>=2.15.0
+asyncio-mqtt>=0.13.0
