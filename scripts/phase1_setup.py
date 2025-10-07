@@ -62,7 +62,7 @@ async def validate_setup():
         import asyncpg
         conn = await asyncpg.connect(
             host='localhost', port=5432,
-            user='amas', password='amas123', database='amas'
+            user='amas', password=os.getenv('DB_PASSWORD', 'default'), database='amas'
         )
         await conn.fetchval('SELECT 1')
         await conn.close()

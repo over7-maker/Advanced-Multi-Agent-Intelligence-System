@@ -1,4 +1,6 @@
-# AMAS API Documentation
+# AMAS API Documentation - Fully Integrated (October 2025)
+
+> **Integration Status**: ✅ All endpoints verified and operational following PR #162 fixes
 
 The AMAS REST API provides programmatic access to all system functionality through a well-designed, RESTful interface.
 

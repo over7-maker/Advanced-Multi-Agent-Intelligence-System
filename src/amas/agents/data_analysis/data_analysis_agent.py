@@ -7,7 +7,7 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from agents.base.intelligence_agent import AgentStatus, IntelligenceAgent
+from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 
@@ -26,9 +26,8 @@ class DataAnalysisAgent(IntelligenceAgent):
     ):
         capabilities = [
             "statistical_analysis",
-            "predictive_modeling",
-            "correlation_analysis",
             "pattern_recognition",
+            "correlation_analysis",
             "anomaly_detection",
             "data_visualization",
         ]
@@ -43,7 +42,8 @@ class DataAnalysisAgent(IntelligenceAgent):
             security_service=security_service,
         )
 
-        self.analysis_results = {}
+        self.analysis_cache = {}
+        self.model_store = {}
 
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Execute data analysis task"""
@@ -250,8 +250,10 @@ class DataAnalysisAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _perform_anomaly_detection(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Perform anomaly detection"""
+    async def _perform_correlation_analysis(
+        self, task: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Perform correlation analysis"""
         try:
             data = task.get("parameters", {}).get("data", [])
             threshold = task.get("parameters", {}).get("threshold", 0.8)
@@ -281,6 +283,105 @@ class DataAnalysisAgent(IntelligenceAgent):
 
         except Exception as e:
             logger.error(f"Error in anomaly detection: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+    async def _build_predictive_model(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Build predictive model"""
+        try:
+            training_data = task.get("parameters", {}).get("training_data", [])
+            model_type = task.get("parameters", {}).get("model_type", "regression")
+            target_variable = task.get("parameters", {}).get(
+                "target_variable", "target"
+            )
+
+            # Mock predictive model
+            model_results = {
+                "model_id": f"model_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+                "model_type": model_type,
+                "training_data_size": len(training_data),
+                "target_variable": target_variable,
+                "model_performance": {
+                    "accuracy": 0.85,
+                    "precision": 0.82,
+                    "recall": 0.88,
+                    "f1_score": 0.85,
+                    "r_squared": 0.80,
+                },
+                "feature_importance": {
+                    "feature1": 0.4,
+                    "feature2": 0.3,
+                    "feature3": 0.2,
+                    "feature4": 0.1,
+                },
+                "cross_validation": {
+                    "cv_scores": [0.83, 0.85, 0.87, 0.84, 0.86],
+                    "mean_cv_score": 0.85,
+                    "std_cv_score": 0.015,
+                },
+            }
+
+            # Store model
+            self.model_store[model_results["model_id"]] = model_results
+
+            return {
+                "success": True,
+                "task_type": "predictive_modeling",
+                "model_id": model_results["model_id"],
+                "results": model_results,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+        except Exception as e:
+            logger.error(f"Error in predictive modeling: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+    async def _analyze_trends(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze trends in data"""
+        try:
+            time_series_data = task.get("parameters", {}).get("time_series_data", [])
+            trend_period = task.get("parameters", {}).get("trend_period", "30d")
+
+            # Mock trend analysis
+            trend_results = {
+                "data_points": len(time_series_data),
+                "trend_period": trend_period,
+                "overall_trend": {
+                    "direction": "increasing",
+                    "slope": 0.05,
+                    "r_squared": 0.75,
+                    "significance": "significant",
+                },
+                "seasonal_patterns": {
+                    "has_seasonality": True,
+                    "seasonal_period": 7,
+                    "seasonal_strength": 0.6,
+                },
+                "forecast": {
+                    "next_period": 1.05,
+                    "confidence_interval": [0.95, 1.15],
+                    "forecast_horizon": "7d",
+                },
+                "trend_components": {"trend": 0.8, "seasonal": 0.6, "residual": 0.4},
+            }
+
+            return {
+                "success": True,
+                "task_type": "trend_analysis",
+                "data_points": len(time_series_data),
+                "results": trend_results,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+        except Exception as e:
+            logger.error(f"Error in trend analysis: {e}")
             return {
                 "success": False,
                 "error": str(e),

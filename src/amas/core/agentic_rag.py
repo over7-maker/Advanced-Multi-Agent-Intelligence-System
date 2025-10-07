@@ -13,7 +13,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from agents.base.intelligence_agent import IntelligenceAgent
+from amas.agents.base.intelligence_agent import IntelligenceAgent
 
 
 class QueryStrategy(Enum):

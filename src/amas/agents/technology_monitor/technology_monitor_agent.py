@@ -2,12 +2,11 @@
 Technology Monitor Agent Implementation
 """
 
-import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from agents.base.intelligence_agent import AgentStatus, IntelligenceAgent
+from ..base.intelligence_agent import IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +24,10 @@ class TechnologyMonitorAgent(IntelligenceAgent):
         security_service: Any = None,
     ):
         capabilities = [
-            "technology_trends",
-            "academic_papers",
-            "github_monitoring",
-            "tech_news",
+            "technology_tracking",
+            "trend_analysis",
+            "innovation_detection",
+            "research_monitoring",
             "patent_analysis",
             "innovation_tracking",
         ]
@@ -74,7 +73,7 @@ class TechnologyMonitorAgent(IntelligenceAgent):
             elif task_type == "innovation_tracking":
                 return await self._track_innovation(task)
             else:
-                return await self._perform_general_monitoring(task)
+                return await self._perform_general_technology_monitoring(task)
 
         except Exception as e:
             logger.error(f"Error executing technology monitoring task: {e}")
@@ -86,28 +85,42 @@ class TechnologyMonitorAgent(IntelligenceAgent):
 
     async def validate_task(self, task: Dict[str, Any]) -> bool:
         """Validate if this agent can handle the task"""
-        monitoring_keywords = [
+        # monitoring_keywords = [
+        #     "technology",
+        #     "trends",
+        #     "monitoring",
+        #     "academic",
+        #     "github",
+        #     "news",
+        #     "patent",
+        #     "innovation",
+        #     "research",
+        # ]
+
+        technology_keywords = [
             "technology",
+            "monitor",
+            "tracking",
             "trends",
-            "monitoring",
-            "academic",
-            "github",
-            "news",
-            "patent",
             "innovation",
+            "development",
             "research",
+            "patent",
+            "startup",
+            "funding",
         ]
 
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
-        return any(keyword in task_text for keyword in monitoring_keywords)
+        return any(keyword in task_text for keyword in technology_keywords)
 
-    async def _monitor_technology_trends(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Monitor technology trends"""
+    async def _track_technology(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Track technology developments"""
         try:
             technologies = task.get("parameters", {}).get("technologies", [])
             time_range = task.get("parameters", {}).get("time_range", "30d")
 
-            # Mock technology trends monitoring
+            # Mock technology tracking
+            # tracking_results = []
             trends = []
             for tech in technologies:
                 trends.append(
@@ -135,15 +148,15 @@ class TechnologyMonitorAgent(IntelligenceAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in technology trends monitoring: {e}")
+            logger.error(f"Error in technology tracking: {e}")
             return {
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _monitor_academic_papers(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Monitor academic papers"""
+    async def _analyze_trends(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze technology trends"""
         try:
             keywords = task.get("parameters", {}).get("keywords", [])
             sources = task.get("parameters", {}).get(
@@ -176,15 +189,15 @@ class TechnologyMonitorAgent(IntelligenceAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in academic papers monitoring: {e}")
+            logger.error(f"Error in trend analysis: {e}")
             return {
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _monitor_github_repos(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Monitor GitHub repositories"""
+    async def _detect_innovation(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Detect innovation and breakthroughs"""
         try:
             topics = task.get("parameters", {}).get("topics", [])
             languages = task.get("parameters", {}).get("languages", [])
@@ -217,15 +230,15 @@ class TechnologyMonitorAgent(IntelligenceAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in GitHub monitoring: {e}")
+            logger.error(f"Error in innovation detection: {e}")
             return {
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _monitor_tech_news(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Monitor technology news"""
+    async def _monitor_research(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Monitor research developments"""
         try:
             categories = task.get("parameters", {}).get("categories", [])
             sources = task.get("parameters", {}).get("sources", [])
@@ -257,7 +270,7 @@ class TechnologyMonitorAgent(IntelligenceAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in tech news monitoring: {e}")
+            logger.error(f"Error in research monitoring: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -265,7 +278,7 @@ class TechnologyMonitorAgent(IntelligenceAgent):
             }
 
     async def _analyze_patents(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze patents"""
+        """Analyze patent landscape"""
         try:
             technology_areas = task.get("parameters", {}).get("technology_areas", [])
             time_range = task.get("parameters", {}).get("time_range", "1y")
@@ -308,8 +321,8 @@ class TechnologyMonitorAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _track_innovation(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Track innovation trends"""
+    async def _analyze_market(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze market dynamics"""
         try:
             innovation_areas = task.get("parameters", {}).get("innovation_areas", [])
             tracking_depth = task.get("parameters", {}).get(
@@ -347,20 +360,22 @@ class TechnologyMonitorAgent(IntelligenceAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in innovation tracking: {e}")
+            logger.error(f"Error in market analysis: {e}")
             return {
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _perform_general_monitoring(self, task: Dict[str, Any]) -> Dict[str, Any]:
+    async def _perform_general_technology_monitoring(
+        self, task: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Perform general technology monitoring"""
         try:
             description = task.get("description", "")
-            parameters = task.get("parameters", {})
+            # parameters = task.get("parameters", {})
 
-            # Mock general monitoring
+            # Mock general technology monitoring
             monitoring_result = {
                 "monitoring_id": f"monitor_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
                 "description": description,
@@ -385,7 +400,7 @@ class TechnologyMonitorAgent(IntelligenceAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in general monitoring: {e}")
+            logger.error(f"Error in general technology monitoring: {e}")
             return {
                 "success": False,
                 "error": str(e),

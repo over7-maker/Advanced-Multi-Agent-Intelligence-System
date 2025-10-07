@@ -1,0 +1,27 @@
+{
+    "collective_learning": {
+        "enabled": true,
+        "learning_cycle_hours": 1,
+        "knowledge_retention_days": 30,
+        "min_confidence_threshold": 0.7,
+        "adaptation_rate": 0.1
+    },
+    "adaptive_personalities": {
+        "enabled": true,
+        "adaptation_strength": 0.05,
+        "personality_persistence": true,
+        "user_profile_retention_days": 90
+    },
+    "predictive_intelligence": {
+        "enabled": true,
+        "model_retrain_threshold": 50,
+        "prediction_confidence_threshold": 0.6,
+        "resource_prediction_horizon_minutes": 60
+    },
+    "models": {
+        "task_success_model": "GradientBoostingClassifier",
+        "duration_model": "RandomForestRegressor", 
+        "quality_model": "RandomForestRegressor",
+        "resource_model": "LinearRegression"
+    }
+}

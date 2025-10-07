@@ -1,6 +1,4 @@
-"""
-Test suite for AMAS Services
-"""
+"""Test services"""
 
 import asyncio
 from datetime import datetime

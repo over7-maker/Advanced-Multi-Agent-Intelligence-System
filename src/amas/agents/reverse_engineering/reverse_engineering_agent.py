@@ -4,10 +4,12 @@ Reverse Engineering Agent Implementation
 
 import asyncio
 import logging
+import os
+import tempfile
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from agents.base.intelligence_agent import AgentStatus, IntelligenceAgent
+from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +27,8 @@ class ReverseEngineeringAgent(IntelligenceAgent):
         security_service: Any = None,
     ):
         capabilities = [
-            "binary_analysis",
+            "static_analysis",
+            "dynamic_analysis",
             "malware_analysis",
             "code_deobfuscation",
             "protocol_analysis",
@@ -43,8 +46,8 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             security_service=security_service,
         )
 
-        self.sandbox_path = "/app/sandbox"
-        self.analysis_results = {}
+        self.analysis_cache = {}
+        self.threat_database = {}
 
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Execute reverse engineering task"""
@@ -90,11 +93,23 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             "sandbox",
         ]
 
-        task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
-        return any(keyword in task_text for keyword in re_keywords)
+        reverse_engineering_keywords = [
+            "reverse",
+            "engineering",
+            "binary",
+            "analysis",
+            "disassembly",
+            "decompilation",
+            "malware",
+            "firmware",
+            "sandbox",
+        ]
 
-    async def _analyze_binary(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze binary files"""
+        task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
+        return any(keyword in task_text for keyword in reverse_engineering_keywords)
+
+    async def _perform_static_analysis(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Perform static analysis on binary"""
         try:
             binary_path = task.get("parameters", {}).get("binary_path", "")
             analysis_depth = task.get("parameters", {}).get(
@@ -125,7 +140,79 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in binary analysis: {e}")
+            logger.error(f"Error in static analysis: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+    async def _perform_dynamic_analysis(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Perform dynamic analysis on binary"""
+        try:
+            binary_path = task.get("parameters", {}).get("binary_path", "")
+            execution_time = task.get("parameters", {}).get("execution_time", 60)
+
+            # Mock dynamic analysis
+            dynamic_results = {
+                "binary_path": binary_path,
+                "execution_time": execution_time,
+                "api_calls": [
+                    {
+                        "api": "CreateFile",
+                        "count": 5,
+                        "timestamp": "2024-01-01T10:00:00Z",
+                    },
+                    {
+                        "api": "ReadFile",
+                        "count": 10,
+                        "timestamp": "2024-01-01T10:00:01Z",
+                    },
+                    {
+                        "api": "WriteFile",
+                        "count": 3,
+                        "timestamp": "2024-01-01T10:00:02Z",
+                    },
+                ],
+                "network_activity": [
+                    {"protocol": "TCP", "remote_ip": "192.168.1.100", "port": 80},
+                    {"protocol": "UDP", "remote_ip": "8.8.8.8", "port": 53},
+                ],
+                "file_operations": [
+                    {
+                        "operation": "create",
+                        "path": os.path.join(tempfile.gettempdir(), "test.txt"),
+                    },
+                    {"operation": "read", "path": "/etc/passwd"},
+                    {
+                        "operation": "write",
+                        "path": os.path.join(tempfile.gettempdir(), "output.log"),
+                    },
+                ],
+                "registry_operations": [
+                    {"operation": "create", "key": "HKEY_CURRENT_USER\\Software\\Test"},
+                    {"operation": "write", "key": "HKEY_LOCAL_MACHINE\\System\\Test"},
+                ],
+                "process_creation": [
+                    {"process": "notepad.exe", "pid": 1234, "parent_pid": 5678}
+                ],
+                "behavior_indicators": [
+                    "file_creation",
+                    "network_communication",
+                    "process_injection",
+                ],
+            }
+
+            return {
+                "success": True,
+                "task_type": "dynamic_analysis",
+                "binary_path": binary_path,
+                "results": dynamic_results,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+        except Exception as e:
+            logger.error(f"Error in dynamic analysis: {e}")
             return {
                 "success": False,
                 "error": str(e),
@@ -133,7 +220,7 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             }
 
     async def _analyze_malware(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Analyze malware samples"""
+        """Analyze malware sample"""
         try:
             sample_path = task.get("parameters", {}).get("sample_path", "")
             sandbox_mode = task.get("parameters", {}).get("sandbox_mode", True)
@@ -174,8 +261,8 @@ class ReverseEngineeringAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _deobfuscate_code(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Deobfuscate obfuscated code"""
+    async def _analyze_binary(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze binary file"""
         try:
             code = task.get("parameters", {}).get("code", "")
             obfuscation_type = task.get("parameters", {}).get(
@@ -278,7 +365,7 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in firmware analysis: {e}")
+            logger.error(f"Error in binary analysis: {e}")
             return {
                 "success": False,
                 "error": str(e),

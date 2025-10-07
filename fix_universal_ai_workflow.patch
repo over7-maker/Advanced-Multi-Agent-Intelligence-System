@@ -1,0 +1,21 @@
+--- .github/workflows/universal-ai-workflow.yml.old
++++ .github/workflows/universal-ai-workflow.yml
+@@ -120,9 +120,13 @@ jobs:
+                       max_tokens=100
+                   )
+                   
+-                  if result['success']:
++                  if result and result.get('success'):
+                       print(f"✅ {strategy.upper()} - Success with {result['provider_name']}")
+-                      print(f"   Response: {result['content'][:100]}...")
++                      # Only access 'content' if the request was successful
++                      if 'content' in result:
++                          print(f"   Response: {result['content'][:100]}...")
++                      else:
++                          print("   Response: <No content returned>")
+                       print(f"   Time: {result['response_time']:.2f}s")
+                   else:
+-                      print(f"❌ {strategy.upper()} - Failed: {result['error']}")
++                      error_msg = result.get('error', 'Unknown error') if result else 'No result returned'
++                      print(f"❌ {strategy.upper()} - Failed: {error_msg}")
+                   print()

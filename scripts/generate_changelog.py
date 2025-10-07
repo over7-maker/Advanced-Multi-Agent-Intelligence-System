@@ -14,7 +14,17 @@ import requests
 
 
 def main():
-    print("📝 Changelog Generator")
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Generate AI-enhanced changelog")
+    parser.add_argument("--version", help="Release version (e.g., v1.0.0)")
+    parser.add_argument("--type", help="Release type (major, minor, patch, prerelease)")
+    parser.add_argument("--custom", help="Custom changelog content")
+    parser.add_argument("--output", help="Output file path")
+
+    args = parser.parse_args()
+
+    print("🤖 AI-Enhanced Changelog Generator")
     print("=" * 40)
 
     # Get arguments
