@@ -1,0 +1,157 @@
+version: '3.8'
+
+services:
+  amas-dev:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      # Database
+      AMAS_DB_HOST: postgres-dev
+      AMAS_DB_USER: amas
+      AMAS_DB_PASSWORD: amas123
+      AMAS_DB_NAME: amas
+      AMAS_DB_PORT: 5432
+      
+      # Redis
+      AMAS_REDIS_HOST: redis-dev
+      AMAS_REDIS_PORT: 6379
+      AMAS_REDIS_DB: 0
+      
+      # Neo4j
+      AMAS_NEO4J_HOST: neo4j-dev
+      AMAS_NEO4J_PORT: 7687
+      AMAS_NEO4J_USER: neo4j
+      AMAS_NEO4J_PASSWORD: amas123
+      AMAS_NEO4J_DATABASE: neo4j
+      
+      # AI Providers (Minimal Mode - Basic)
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      GLM_API_KEY: ${GLM_API_KEY:-}
+      GROK_API_KEY: ${GROK_API_KEY:-}
+      
+      # Optional AI Providers
+      KIMI_API_KEY: ${KIMI_API_KEY:-}
+      QWEN_API_KEY: ${QWEN_API_KEY:-}
+      GPTOSS_API_KEY: ${GPTOSS_API_KEY:-}
+      
+      # Development settings
+      AMAS_MAX_CONCURRENT_TASKS: 5
+      AMAS_TASK_TIMEOUT: 300
+      LOG_LEVEL: INFO
+      
+    depends_on:
+      - postgres-dev
+      - redis-dev
+      - neo4j-dev
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./scripts:/app/scripts
+    command: >
+      sh -c "
+        echo 'Starting AMAS Development Environment...' &&
+        python scripts/validate_env.py --mode basic --skip-db &&
+        python -m uvicorn src.amas.api.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+    networks:
+      - amas-dev-network
+
+  postgres-dev:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: amas
+      POSTGRES_PASSWORD: amas123
+      POSTGRES_DB: amas
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - amas-dev-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U amas -d amas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-dev:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - amas-dev-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  neo4j-dev:
+    image: neo4j:5-community
+    environment:
+      NEO4J_AUTH: neo4j/amas123
+      NEO4J_dbms_security_procedures_unrestricted: apoc.*
+      NEO4J_dbms_security_procedures_allowlist: apoc.*
+      NEO4J_apoc_export_file_enabled: true
+      NEO4J_apoc_import_file_enabled: true
+      NEO4J_apoc_import_file_use__neo4j__config: true
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_dev_data:/data
+      - neo4j_dev_logs:/logs
+    networks:
+      - amas-dev-network
+    healthcheck:
+      test: ["CMD", "cypher-shell", "-u", "neo4j", "-p", "amas123", "RETURN 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Development tools
+  pgadmin-dev:
+    image: dpage/pgadmin4:latest
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@amas.dev
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "8080:80"
+    depends_on:
+      - postgres-dev
+    networks:
+      - amas-dev-network
+
+  redis-commander-dev:
+    image: rediscommander/redis-commander:latest
+    environment:
+      REDIS_HOSTS: local:redis-dev:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis-dev
+    networks:
+      - amas-dev-network
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+  neo4j_dev_data:
+    driver: local
+  neo4j_dev_logs:
+    driver: local
+
+networks:
+  amas-dev-network:
+    driver: bridge
