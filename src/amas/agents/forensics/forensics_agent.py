@@ -179,24 +179,38 @@ class ForensicsAgent(IntelligenceAgent):
         return None
 
     async def _calculate_hashes(self, file_path: Path) -> Dict[str, str]:
-        """Calculate various hashes for file"""
+        """Calculate various hashes for file
+        
+        Note: MD5 and SHA1 are included for compatibility with existing systems
+        and forensic tools, but SHA256 should be used for security-critical applications.
+        """
         try:
             hashes = {}
             
             # Read file in chunks to handle large files
             with open(file_path, "rb") as f:
+                # Include legacy hashes for forensic compatibility
                 md5_hash = hashlib.md5()
                 sha1_hash = hashlib.sha1()
+                # Primary security hash
                 sha256_hash = hashlib.sha256()
+                # Additional secure hash
+                sha512_hash = hashlib.sha512()
                 
                 while chunk := f.read(8192):
                     md5_hash.update(chunk)
                     sha1_hash.update(chunk)
                     sha256_hash.update(chunk)
+                    sha512_hash.update(chunk)
                 
-                hashes["md5"] = md5_hash.hexdigest()
-                hashes["sha1"] = sha1_hash.hexdigest()
-                hashes["sha256"] = sha256_hash.hexdigest()
+                # Include all hashes for comprehensive analysis
+                hashes["md5"] = md5_hash.hexdigest()  # Legacy compatibility
+                hashes["sha1"] = sha1_hash.hexdigest()  # Legacy compatibility
+                hashes["sha256"] = sha256_hash.hexdigest()  # Primary security hash
+                hashes["sha512"] = sha512_hash.hexdigest()  # Additional security hash
+                
+                # Add security note
+                hashes["_security_note"] = "Use SHA256 or SHA512 for security-critical applications"
             
             return hashes
             

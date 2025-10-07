@@ -348,6 +348,8 @@ class TestForensicsAgentRealImplementation:
             assert "md5" in hashes
             assert "sha1" in hashes
             assert "sha256" in hashes
+            assert "sha512" in hashes
+            assert "_security_note" in hashes
             
             # Check content analysis
             content_analysis = result["content_analysis"]
