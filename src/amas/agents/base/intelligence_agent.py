@@ -1,309 +1,327 @@
-from __future__ import annotations
+"""
+Base Intelligence Agent Class
+
+This module contains the base class for all intelligence agents in the AMAS system.
+It provides common functionality and interfaces that all specialized agents inherit.
+"""
 
 import asyncio
 import logging
-import time
+import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
-from amas.common.models import AgentStatus, OrchestratorTask, TaskPriority, TaskStatus
-from amas.core.message_bus import MessageBus
-from amas.services.universal_ai_manager import (
-    UniversalAIManager,
-    get_universal_ai_manager,
-)
+from ..base.agent_communication import AgentCommunication
 
-logger = logging.getLogger(__name__)
+
+class AgentStatus(Enum):
+    """Agent status enumeration"""
+
+    IDLE = "idle"
+    ACTIVE = "active"
+    BUSY = "busy"
+    ERROR = "error"
+    OFFLINE = "offline"
 
 
 class IntelligenceAgent(ABC):
     """
-    Base class for all intelligent agents in the AMAS system.
+    Base class for all intelligence agents in the AMAS system.
 
-    Defines the common interface and core functionalities for agents,
-    including interaction with the Universal AI Manager, task processing,
-    and state management. Also includes basic learning and adaptation mechanisms.
+    This class provides the foundation for specialized intelligence agents,
+    implementing common functionality and interfaces.
     """
 
     def __init__(
         self,
         agent_id: str,
-        config: Dict[str, Any],
-        orchestrator: Any,
-        message_bus: MessageBus,
+        name: str,
+        capabilities: List[str],
+        llm_service: Any = None,
+        vector_service: Any = None,
+        knowledge_graph: Any = None,
+        security_service: Any = None,
     ):
+        """
+        Initialize the intelligence agent.
+
+        Args:
+            agent_id: Unique identifier for the agent
+            name: Human-readable name for the agent
+            capabilities: List of capabilities this agent provides
+            llm_service: LLM service for AI operations
+            vector_service: Vector service for semantic search
+            knowledge_graph: Knowledge graph service
+            security_service: Security service for access control
+        """
         self.agent_id = agent_id
-        self.config = config
-        self.orchestrator = orchestrator
-        self.message_bus = message_bus
-        self.universal_ai_manager: UniversalAIManager = get_universal_ai_manager()
-        self.status: str = "idle"
-        self.current_task: Optional[OrchestratorTask] = None
-        self.last_active: datetime = datetime.now()
-        self.metrics: Dict[str, Any] = {
+        self.name = name
+        self.capabilities = capabilities
+        self.status = AgentStatus.IDLE
+        self.created_at = datetime.utcnow()
+        self.last_activity = datetime.utcnow()
+
+        # Service dependencies
+        self.llm_service = llm_service
+        self.vector_service = vector_service
+        self.knowledge_graph = knowledge_graph
+        self.security_service = security_service
+
+        # Communication
+        self.communication = AgentCommunication(self.agent_id)
+
+        # Logging
+        self.logger = logging.getLogger(f"amas.intelligence.{self.agent_id}")
+
+        # Task management
+        self.current_task = None
+        self.task_history = []
+
+        # Performance metrics
+        self.metrics = {
             "tasks_completed": 0,
             "tasks_failed": 0,
-            "total_processing_time": 0.0,
-            "ai_requests_made": 0,
-            "tokens_used": 0,
-            "success_rate": 1.0,  # Initial success rate
             "average_response_time": 0.0,
+            "last_activity": self.last_activity,
         }
-        # Adaptation parameters
-        self.llm_temperature: float = config.get("initial_llm_temperature", 0.7)
-        self.llm_max_tokens: int = config.get("initial_llm_max_tokens", 1000)
-
-        logger.info(
-            f'Agent {self.agent_id} initialized with config: {self.config.get("name", "Unnamed Agent")}'
-        )
 
     @abstractmethod
-    async def execute_task(self, task: OrchestratorTask) -> Dict[str, Any]:
+    async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Abstract method to be implemented by concrete agent classes.
-        This method defines the core logic for how an agent processes a task.
+        Execute a task specific to this agent's capabilities.
+
+        Args:
+            task: Task definition with parameters and context
+
+        Returns:
+            Task execution results
         """
         pass
 
-    async def process_task(self, task: OrchestratorTask):
+    @abstractmethod
+    async def validate_task(self, task: Dict[str, Any]) -> bool:
         """
-        Handles the lifecycle of a task for the agent.
-        Updates agent status, calls execute_task, and updates metrics.
-        Sends task updates to the orchestrator via the message bus.
+        Validate if this agent can handle the given task.
+
+        Args:
+            task: Task definition to validate
+
+        Returns:
+            True if agent can handle the task, False otherwise
         """
-        self.status = "processing"
-        self.current_task = task
-        self.last_active = datetime.now()
-        start_time = time.time()
-        task_result = {"success": False, "message": "Task processing failed."}
-        error_message = None
+        pass
+
+    async def start(self) -> bool:
+        """
+        Start the agent and initialize resources.
+
+        Returns:
+            True if agent started successfully, False otherwise
+        """
+        try:
+            self.logger.info(f"Starting agent {self.agent_id}")
+            self.status = AgentStatus.ACTIVE
+            await self._initialize_resources()
+            self.logger.info(f"Agent {self.agent_id} started successfully")
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to start agent {self.agent_id}: {e}")
+            self.status = AgentStatus.ERROR
+            return False
+
+    async def stop(self) -> bool:
+        """
+        Stop the agent and cleanup resources.
+
+        Returns:
+            True if agent stopped successfully, False otherwise
+        """
+        try:
+            self.logger.info(f"Stopping agent {self.agent_id}")
+            await self._cleanup_resources()
+            self.status = AgentStatus.OFFLINE
+            self.logger.info(f"Agent {self.agent_id} stopped successfully")
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to stop agent {self.agent_id}: {e}")
+            return False
+
+    async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Process a task through the agent's workflow.
+
+        Args:
+            task: Task definition to process
+
+        Returns:
+            Task execution results
+        """
+        start_time = datetime.utcnow()
 
         try:
-            logger.info(
-                f"Agent {self.agent_id} starting task {task.id}: {task.description}"
+            # Validate task
+            if not await self.validate_task(task):
+                raise ValueError(f"Agent {self.agent_id} cannot handle task: {task}")
+
+            # Update status
+            self.status = AgentStatus.BUSY
+            self.current_task = task
+
+            # Execute task
+            self.logger.info(
+                f"Processing task {task.get('id', 'unknown')} with agent {self.agent_id}"
             )
-            # Notify orchestrator that task is in progress
-            await self.message_bus.publish(
-                "orchestrator_updates",
+            result = await self.execute_task(task)
+
+            # Update metrics
+            execution_time = (datetime.utcnow() - start_time).total_seconds()
+            self._update_metrics(execution_time, success=True)
+
+            # Update status
+            self.status = AgentStatus.ACTIVE
+            self.current_task = None
+            self.last_activity = datetime.utcnow()
+
+            # Add to task history
+            self.task_history.append(
                 {
-                    "sender_id": self.agent_id,
-                    "type": "task_update",
-                    "task_id": task.id,
-                    "payload": {"status": TaskStatus.IN_PROGRESS.value},
-                },
+                    "task_id": task.get("id"),
+                    "execution_time": execution_time,
+                    "status": "completed",
+                    "timestamp": datetime.utcnow(),
+                }
             )
 
-            task_result = await self.execute_task(task)
-            self.metrics["tasks_completed"] += 1
-            self.status = "idle"
-            logger.info(f"Agent {self.agent_id} completed task {task.id}.")
-            # Notify orchestrator of completion
-            await self.message_bus.publish(
-                "orchestrator_updates",
-                {
-                    "sender_id": self.agent_id,
-                    "type": "task_update",
-                    "task_id": task.id,
-                    "payload": {
-                        "status": TaskStatus.COMPLETED.value,
-                        "result": task_result,
-                    },
-                },
-            )
-            # Provide feedback for learning
-            await self._provide_feedback(task.id, True, task_result)
+            self.logger.info(f"Task {task.get('id', 'unknown')} completed successfully")
+            return result
 
         except Exception as e:
-            logger.error(f"Agent {self.agent_id} failed to process task {task.id}: {e}")
-            self.metrics["tasks_failed"] += 1
-            self.status = "error"
-            error_message = str(e)
-            task_result["message"] = f"Task processing failed: {error_message}"
-            # Notify orchestrator of failure
-            await self.message_bus.publish(
-                "orchestrator_updates",
-                {
-                    "sender_id": self.agent_id,
-                    "type": "task_update",
-                    "task_id": task.id,
-                    "payload": {
-                        "status": TaskStatus.FAILED.value,
-                        "error": error_message,
-                        "result": task_result,
-                    },
-                },
-            )
-            # Provide feedback for learning
-            await self._provide_feedback(task.id, False, {"error": error_message})
+            # Update metrics
+            execution_time = (datetime.utcnow() - start_time).total_seconds()
+            self._update_metrics(execution_time, success=False)
 
-        finally:
-            end_time = time.time()
-            duration = end_time - start_time
-            self.metrics["total_processing_time"] += duration
-            self.metrics["average_response_time"] = (
-                (
-                    self.metrics["average_response_time"]
-                    * (
-                        self.metrics["tasks_completed"]
-                        + self.metrics["tasks_failed"]
-                        - 1
-                    )
-                    + duration
-                )
-                / (self.metrics["tasks_completed"] + self.metrics["tasks_failed"])
-                if (self.metrics["tasks_completed"] + self.metrics["tasks_failed"]) > 0
-                else 0.0
-            )
-            self.metrics["success_rate"] = (
-                self.metrics["tasks_completed"]
-                / (self.metrics["tasks_completed"] + self.metrics["tasks_failed"])
-                if (self.metrics["tasks_completed"] + self.metrics["tasks_failed"]) > 0
-                else 1.0
-            )
+            # Update status
+            self.status = AgentStatus.ERROR
             self.current_task = None
+
+            # Add to task history
+            self.task_history.append(
+                {
+                    "task_id": task.get("id"),
+                    "execution_time": execution_time,
+                    "status": "failed",
+                    "error": str(e),
+                    "timestamp": datetime.utcnow(),
+                }
+            )
+
+            self.logger.error(f"Task {task.get('id', 'unknown')} failed: {e}")
+            raise
 
     async def get_status(self) -> Dict[str, Any]:
         """
-        Returns the current status and metrics of the agent.
+        Get current agent status and metrics.
+
+        Returns:
+            Agent status information
         """
         return {
             "agent_id": self.agent_id,
-            "name": self.config.get("name", "Unnamed Agent"),
-            "status": self.status,
-            "last_active": self.last_active.isoformat(),
-            "current_task": self.current_task.id if self.current_task else None,
+            "name": self.name,
+            "status": self.status.value,
+            "capabilities": self.capabilities,
+            "current_task": self.current_task,
             "metrics": self.metrics,
-            "llm_parameters": {
-                "temperature": self.llm_temperature,
-                "max_tokens": self.llm_max_tokens,
-            },
-            "ai_manager_health": (
-                await self.universal_ai_manager.get_status()
-                if self.universal_ai_manager
-                else "N/A"
-            ),
+            "last_activity": self.last_activity.isoformat(),
+            "created_at": self.created_at.isoformat(),
         }
 
-    async def _call_ai_manager(
-        self, prompt: str, system_prompt: Optional[str] = None, **kwargs
-    ) -> Dict[str, Any]:
+    async def get_capabilities(self) -> List[str]:
         """
-        Helper method to call the Universal AI Manager and update agent metrics.
-        Uses agent's adaptive LLM parameters.
-        """
-        self.metrics["ai_requests_made"] += 1
-        # Override kwargs with adaptive parameters if not explicitly provided
-        kwargs.setdefault("temperature", self.llm_temperature)
-        kwargs.setdefault("max_tokens", self.llm_max_tokens)
+        Get agent capabilities.
 
-        response = await self.universal_ai_manager.generate_response(
-            prompt, system_prompt, **kwargs
-        )
-        if response["success"]:
-            self.metrics["tokens_used"] += response.get("tokens_used", 0)
-        return response
+        Returns:
+            List of agent capabilities
+        """
+        return self.capabilities
 
-    async def update_config(self, new_config: Dict[str, Any]):
+    async def health_check(self) -> Dict[str, Any]:
         """
-        Updates the agent's configuration.
-        """
-        self.config.update(new_config)
-        self.llm_temperature = new_config.get(
-            "initial_llm_temperature", self.llm_temperature
-        )
-        self.llm_max_tokens = new_config.get(
-            "initial_llm_max_tokens", self.llm_max_tokens
-        )
-        logger.info(f"Agent {self.agent_id} configuration updated.")
+        Perform health check on the agent.
 
-    async def start(self):
+        Returns:
+            Health check results
         """
-        Starts the agent, subscribing it to relevant message bus topics.
-        """
-        await self.message_bus.subscribe(
-            f"agent_tasks_{self.agent_id}", self._handle_incoming_message
-        )
-        logger.info(f"Agent {self.agent_id} started and subscribed to its task queue.")
+        try:
+            # Check service dependencies
+            health_status = {
+                "agent_id": self.agent_id,
+                "status": "healthy",
+                "timestamp": datetime.utcnow().isoformat(),
+                "dependencies": {},
+            }
 
-    async def stop(self):
-        """
-        Stops the agent, unsubscribing it from the message bus.
-        """
-        await self.message_bus.unsubscribe(
-            f"agent_tasks_{self.agent_id}", self._handle_incoming_message
-        )
-        logger.info(f"Agent {self.agent_id} stopped and unsubscribed from MessageBus.")
+            # Check LLM service
+            if self.llm_service:
+                try:
+                    await self.llm_service.health_check()
+                    health_status["dependencies"]["llm_service"] = "healthy"
+                except Exception as e:
+                    health_status["dependencies"]["llm_service"] = f"unhealthy: {e}"
+                    health_status["status"] = "degraded"
 
-    async def _handle_incoming_message(self, message: Dict[str, Any]):
-        """
-        Handles messages received directly by this agent.
-        """
-        message_type = message.get("type")
-        payload = message.get("payload")
+            # Check vector service
+            if self.vector_service:
+                try:
+                    await self.vector_service.health_check()
+                    health_status["dependencies"]["vector_service"] = "healthy"
+                except Exception as e:
+                    health_status["dependencies"]["vector_service"] = f"unhealthy: {e}"
+                    health_status["status"] = "degraded"
 
-        if message_type == "assign_task":
-            task = OrchestratorTask(**payload["task_data"])
-            asyncio.create_task(self.process_task(task))
-        elif message_type == "update_config":
-            await self.update_config(payload["new_config"])
+            # Check knowledge graph
+            if self.knowledge_graph:
+                try:
+                    await self.knowledge_graph.health_check()
+                    health_status["dependencies"]["knowledge_graph"] = "healthy"
+                except Exception as e:
+                    health_status["dependencies"]["knowledge_graph"] = f"unhealthy: {e}"
+                    health_status["status"] = "degraded"
+
+            return health_status
+
+        except Exception as e:
+            self.logger.error(f"Health check failed for agent {self.agent_id}: {e}")
+            return {
+                "agent_id": self.agent_id,
+                "status": "unhealthy",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+    async def _initialize_resources(self):
+        """Initialize agent-specific resources."""
+        pass
+
+    async def _cleanup_resources(self):
+        """Cleanup agent-specific resources."""
+        pass
+
+    def _update_metrics(self, execution_time: float, success: bool):
+        """Update agent performance metrics."""
+        if success:
+            self.metrics["tasks_completed"] += 1
         else:
-            logger.warning(
-                f"Agent {self.agent_id} received unhandled message type: {message_type}"
-            )
+            self.metrics["tasks_failed"] += 1
 
-    async def _provide_feedback(
-        self, task_id: str, success: bool, details: Dict[str, Any]
-    ):
-        """
-        Sends feedback about task execution to the orchestrator for learning.
-        """
-        feedback_message = {
-            "sender_id": self.agent_id,
-            "type": "task_feedback",
-            "task_id": task_id,
-            "payload": {
-                "success": success,
-                "details": details,
-                "metrics": self.metrics,
-            },
-        }
-        await self.message_bus.publish("orchestrator_feedback", feedback_message)
-        logger.debug(
-            f"Agent {self.agent_id} sent feedback for task {task_id}: success={success}"
-        )
+        # Update average response time
+        total_tasks = self.metrics["tasks_completed"] + self.metrics["tasks_failed"]
+        if total_tasks > 0:
+            current_avg = self.metrics["average_response_time"]
+            self.metrics["average_response_time"] = (
+                current_avg * (total_tasks - 1) + execution_time
+            ) / total_tasks
 
-    async def adapt_parameters(
-        self, success_rate_threshold: float = 0.8, adjustment_factor: float = 0.1
-    ):
-        """
-        Adapts LLM parameters based on recent performance.
-        This is a simple heuristic; more advanced RL could be integrated here.
-        """
-        if self.metrics["success_rate"] < success_rate_threshold:
-            logger.warning(
-                f'Agent {self.agent_id} success rate ({self.metrics["success_rate"]:.2f}) below threshold. Adapting parameters.'
-            )
-            # If success rate is low, try to make LLM more deterministic (lower temperature)
-            self.llm_temperature = max(0.1, self.llm_temperature - adjustment_factor)
-            # And potentially allow more tokens for more detailed responses
-            self.llm_max_tokens = min(
-                4000, self.llm_max_tokens + 200
-            )  # Cap at 4000 for example
-            logger.info(
-                f"Agent {self.agent_id} adapted: new temperature={self.llm_temperature:.2f}, max_tokens={self.llm_max_tokens}"
-            )
-        elif (
-            self.metrics["success_rate"] > (success_rate_threshold + 0.1)
-            and self.llm_temperature < 1.0
-        ):
-            logger.info(
-                f'Agent {self.agent_id} success rate ({self.metrics["success_rate"]:.2f}) is high. Increasing temperature slightly.'
-            )
-            # If success rate is high, allow LLM to be more creative (higher temperature)
-            self.llm_temperature = min(
-                1.0, self.llm_temperature + adjustment_factor / 2
-            )
-            logger.info(
-                f"Agent {self.agent_id} adapted: new temperature={self.llm_temperature:.2f}"
-            )
+        self.metrics["last_activity"] = self.last_activity

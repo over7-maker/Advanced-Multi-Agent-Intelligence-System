@@ -12,11 +12,8 @@ from typing import Any, Dict, Optional
 
 from .database_service import DatabaseService
 from .knowledge_graph_service import KnowledgeGraphService
+from .llm_service import LLMService
 from .security_service import SecurityService
-from .universal_ai_manager import (  # Import UniversalAIManager
-    UniversalAIManager,
-    get_universal_ai_manager,
-)
 from .vector_service import VectorService
 
 logger = logging.getLogger(__name__)
@@ -40,9 +37,7 @@ class ServiceManager:
         self.config: Dict[str, Any] = (
             config.__dict__ if hasattr(config, "__dict__") else config
         )
-        self.universal_ai_manager: Optional[UniversalAIManager] = (
-            None  # Use UniversalAIManager
-        )
+        self.llm_service: Optional[LLMService] = None
         self.vector_service: Optional[VectorService] = None
         self.knowledge_graph_service: Optional[KnowledgeGraphService] = None
         self.database_service: Optional[DatabaseService] = None
@@ -65,12 +60,45 @@ class ServiceManager:
             logger.info("Initializing all services...")
             self._initialization_errors.clear()
 
-            # Initialize services in order of dependency
-            await self._initialize_universal_ai_manager()
-            await self._initialize_vector_service()
-            await self._initialize_knowledge_graph_service()
-            await self._initialize_database_service()
-            await self._initialize_security_service()
+            # Initialize LLM service
+            self.llm_service = LLMService(
+                {
+                    "llm_service_url": self.config.get(
+                        "llm_service_url", "http://localhost:11434"
+                    )
+                }
+            )
+            await self.llm_service.initialize()
+            logger.info("LLM service initialized")
+
+            # Initialize Vector service
+            self.vector_service = VectorService(
+                {
+                    "vector_service_url": self.config.get(
+                        "vector_service_url", "http://localhost:8001"
+                    ),
+                    "embedding_model": self.config.get(
+                        "embedding_model", "sentence-transformers/all-MiniLM-L6-v2"
+                    ),
+                    "index_path": self.config.get("index_path", "/app/faiss_index"),
+                }
+            )
+            await self.vector_service.initialize()
+            logger.info("Vector service initialized")
+
+            # Initialize Knowledge Graph service
+            self.knowledge_graph_service = KnowledgeGraphService(
+                {
+                    "graph_service_url": self.config.get(
+                        "graph_service_url", "bolt://localhost:7687"
+                    ),
+                    "username": self.config.get("neo4j_username", "neo4j"),
+                    "password": self.config.get("neo4j_password", "amas123"),
+                    "database": self.config.get("neo4j_database", "neo4j"),
+                }
+            )
+            await self.knowledge_graph_service.initialize()
+            logger.info("Knowledge Graph service initialized")
 
             self.services_initialized = True
             logger.info("All services initialized successfully")
@@ -80,34 +108,39 @@ class ServiceManager:
             await self._cleanup_failed_services()
             raise RuntimeError(f"Service initialization failed: {e}") from e
 
-    async def _initialize_universal_ai_manager(self) -> None:
-        """
-        Initialize Universal AI Manager.
-        The UniversalAIManager initializes itself by reading environment variables.
-        """
+    async def _initialize_llm_service(self) -> None:
+        """Initialize LLM service."""
         try:
-            self.universal_ai_manager = get_universal_ai_manager()
-            # No explicit 'initialize' method needed for UniversalAIManager, it initializes on first get
-            logger.info("Universal AI Manager initialized")
+            self.llm_service = LLMService(
+                {
+                    "llm_service_url": self.config.get("llm", {}).get(
+                        "url", "http://localhost:11434"
+                    ),
+                    "deepseek_api_key": self.config.get("deepseek_api_key"),
+                    "glm_api_key": self.config.get("glm_api_key"),
+                    "grok_api_key": self.config.get("grok_api_key"),
+                }
+            )
+            await self.llm_service.initialize()
+            logger.info("LLM service initialized")
         except Exception as e:
-            error_msg = f"Universal AI Manager initialization failed: {e}"
+            error_msg = f"LLM service initialization failed: {e}"
             logger.error(error_msg)
             self._initialization_errors.append(error_msg)
             raise
 
     async def _initialize_vector_service(self) -> None:
-        """
-        Initialize Vector service.
-        """
+        """Initialize Vector service."""
         try:
             self.vector_service = VectorService(
                 {
+                    "vector_service_url": self.config.get(
+                        "vector_service_url", "/app/faiss_index"
+                    ),
                     "embedding_model": self.config.get(
                         "embedding_model", "sentence-transformers/all-MiniLM-L6-v2"
                     ),
-                    "index_path": self.config.get(
-                        "vector_index_path", "/app/faiss_index"
-                    ),
+                    "index_path": self.config.get("index_path", "/app/faiss_index"),
                 }
             )
             await self.vector_service.initialize()
@@ -119,9 +152,7 @@ class ServiceManager:
             raise
 
     async def _initialize_knowledge_graph_service(self) -> None:
-        """
-        Initialize Knowledge Graph service.
-        """
+        """Initialize Knowledge Graph service."""
         try:
             self.knowledge_graph_service = KnowledgeGraphService(
                 {
@@ -142,9 +173,7 @@ class ServiceManager:
             raise
 
     async def _initialize_database_service(self) -> None:
-        """
-        Initialize Database service.
-        """
+        """Initialize Database service."""
         try:
             self.database_service = DatabaseService(self.config)
             await self.database_service.initialize()
@@ -156,9 +185,7 @@ class ServiceManager:
             raise
 
     async def _initialize_security_service(self) -> None:
-        """
-        Initialize Security service.
-        """
+        """Initialize Security service."""
         try:
             self.security_service = SecurityService(self.config)
             await self.security_service.initialize()
@@ -170,11 +197,9 @@ class ServiceManager:
             raise
 
     async def _cleanup_failed_services(self) -> None:
-        """
-        Cleanup services that were partially initialized.
-        """
+        """Cleanup services that were partially initialized."""
         services = [
-            ("universal_ai_manager", self.universal_ai_manager),
+            ("llm_service", self.llm_service),
             ("vector_service", self.vector_service),
             ("knowledge_graph_service", self.knowledge_graph_service),
             ("database_service", self.database_service),
@@ -184,19 +209,13 @@ class ServiceManager:
         for service_name, service in services:
             if service:
                 try:
-                    # UniversalAIManager does not have a close method, it's a singleton
-                    if service_name != "universal_ai_manager" and hasattr(
-                        service, "close"
-                    ):
-                        await service.close()
-                        logger.info(f"Cleaned up {service_name}")
+                    await service.close()
+                    logger.info(f"Cleaned up {service_name}")
                 except Exception as e:
                     logger.error(f"Error cleaning up {service_name}: {e}")
 
     async def health_check_all_services(self) -> Dict[str, Any]:
-        """
-        Check health of all services.
-        """
+        """Check health of all services"""
         try:
             health_status = {
                 "timestamp": datetime.utcnow().isoformat(),
@@ -204,11 +223,11 @@ class ServiceManager:
                 "overall_status": "healthy",
             }
 
-            # Check Universal AI Manager status
-            if self.universal_ai_manager:
-                ai_manager_health = await self.universal_ai_manager.get_status()
-                health_status["services"]["universal_ai_manager"] = ai_manager_health
-                if ai_manager_health.get("status") != "active":
+            # Check LLM service
+            if self.llm_service:
+                llm_health = await self.llm_service.health_check()
+                health_status["services"]["llm"] = llm_health
+                if llm_health.get("status") != "healthy":
                     health_status["overall_status"] = "degraded"
 
             # Check Vector service
@@ -250,17 +269,16 @@ class ServiceManager:
             }
 
     async def get_service_stats(self) -> Dict[str, Any]:
-        """
-        Get statistics from all services.
-        """
+        """Get statistics from all services"""
         try:
             stats = {"timestamp": datetime.utcnow().isoformat(), "services": {}}
 
-            # Get Universal AI Manager stats
-            if self.universal_ai_manager:
-                stats["services"][
-                    "universal_ai_manager"
-                ] = self.universal_ai_manager.get_stats()
+            # Get LLM service stats
+            if self.llm_service:
+                stats["services"]["llm"] = {
+                    "models": self.llm_service.models,
+                    "current_model": self.llm_service.current_model,
+                }
 
             # Get Vector service stats
             if self.vector_service:
@@ -278,54 +296,18 @@ class ServiceManager:
             logger.error(f"Error getting service stats: {e}")
             return {"timestamp": datetime.utcnow().isoformat(), "error": str(e)}
 
-    def get_universal_ai_manager(self) -> Optional[UniversalAIManager]:
-        """
-        Get Universal AI Manager instance.
-        """
-        return self.universal_ai_manager
-
-    def get_vector_service(self) -> Optional[VectorService]:
-        """
-        Get Vector service instance.
-        """
-        return self.vector_service
-
-    def get_knowledge_graph_service(self) -> Optional[KnowledgeGraphService]:
-        """
-        Get Knowledge Graph service instance.
-        """
-        return self.knowledge_graph_service
-
-    def get_database_service(self) -> Optional[DatabaseService]:
-        """
-        Get Database service instance.
-        """
-        return self.database_service
-
-    def get_security_service(self) -> Optional[SecurityService]:
-        """
-        Get Security service instance.
-        """
-        return self.security_service
-
     async def close_all_services(self):
-        """
-        Close all services.
-        """
+        """Close all services"""
         try:
-            # UniversalAIManager does not have a close method
-            # if self.universal_ai_manager:
-            #     await self.universal_ai_manager.close()
-            #     logger.info("Universal AI Manager closed")
+            if self.llm_service:
+                await self.llm_service.close()
+                logger.info("LLM service closed")
 
             if self.vector_service:
                 await self.vector_service.close()
                 logger.info("Vector service closed")
 
-            if (
-                self.knowledge_graph_service
-                and self.knowledge_graph_service.is_initialized
-            ):
+            if self.knowledge_graph_service:
                 await self.knowledge_graph_service.close()
                 logger.info("Knowledge Graph service closed")
 
@@ -337,18 +319,22 @@ class ServiceManager:
                 await self.security_service.close()
                 logger.info("Security service closed")
 
-            if self.vector_service and self.vector_service.is_initialized:
-                await self.vector_service.close()
-                logger.info("Vector service closed")
-
             logger.info("All services closed successfully")
 
         except Exception as e:
             logger.error(f"Error closing services: {e}")
 
+    async def shutdown(self):
+        """Shutdown all services"""
+        await self.close_all_services()
+
     def get_llm_service(self) -> Optional[LLMService]:
         """Get LLM service instance"""
         return self.llm_service
+
+    def get_vector_service(self) -> Optional[VectorService]:
+        """Get Vector service instance"""
+        return self.vector_service
 
     def get_knowledge_graph_service(self) -> Optional[KnowledgeGraphService]:
         """Get Knowledge Graph service instance"""
@@ -363,9 +349,7 @@ class ServiceManager:
         return self.security_service
 
     async def shutdown(self):
-        """
-        Shutdown all services.
-        """
+        """Shutdown all services"""
         try:
             await self.close_all_services()
             logger.info("All services shutdown successfully")

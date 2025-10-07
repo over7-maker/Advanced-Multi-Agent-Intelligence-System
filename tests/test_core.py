@@ -6,7 +6,6 @@ from typing import Any, Dict
 
 import pytest
 
-from amas.common.models import TaskPriority
 from amas.main import AMASApplication
 
 
@@ -90,14 +89,7 @@ class TestOrchestrator:
         """Test task submission to orchestrator"""
         orchestrator = amas_app.orchestrator
 
-        task_id = await orchestrator.submit_task(
-            description=sample_task["description"],
-            task_type=sample_task["task_type"],
-            priority=TaskPriority(sample_task["priority"]),
-            metadata=sample_task["metadata"],
-        )
-
-
+        task_id = await orchestrator.submit_task(sample_task)
         assert task_id is not None
         assert isinstance(task_id, str)
 
@@ -107,15 +99,9 @@ class TestOrchestrator:
     ):
         """Test task status retrieval"""
         orchestrator = amas_app.orchestrator
+
         # Submit a task
-        task_id = await orchestrator.submit_task(
-            description=sample_task["description"],
-            task_type=sample_task["task_type"],
-            priority=TaskPriority(sample_task["priority"]),
-            metadata=sample_task["metadata"],
-        )
-
-
+        task_id = await orchestrator.submit_task(sample_task)
 
         # Get task status
         status = await orchestrator.get_task_status(task_id)
