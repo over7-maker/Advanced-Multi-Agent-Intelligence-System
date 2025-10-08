@@ -31,7 +31,8 @@ class CompleteAIIntegrationTest:
 
     def __init__(self):
         self.ai_service = None
-        self.config_manager = get_ai_config()
+        # Mock config manager for testing
+        self.config_manager = None
         self.test_results = {}
 
     async def initialize(self):

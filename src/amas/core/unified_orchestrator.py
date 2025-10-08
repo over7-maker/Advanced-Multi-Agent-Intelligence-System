@@ -2,14 +2,13 @@
 
 Unified Multi-Agent Orchestrator
 Combines functionality from all orchestrator implementations
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
+
 """
 
 import asyncio
 import json
 import logging
 import os
-
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -513,4 +512,3 @@ def get_orchestrator() -> UnifiedOrchestrator:
     if _orchestrator_instance is None:
         _orchestrator_instance = UnifiedOrchestrator()
     return _orchestrator_instance
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
