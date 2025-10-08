@@ -91,12 +91,6 @@ class MinimalConfig:
         return features
 
 class MinimalConfigManager:
-<<<<<<< HEAD
-    """Manages minimal configuration mode"""
-
-    def __init__(self):
-        self.minimal_configs = {
-            MinimalMode.BASIC: MinimalConfig(
     """Manages minimal configuration with graceful degradation"""
 
     def __init__(self):
@@ -215,7 +209,6 @@ class MinimalConfigManager:
     def validate_config(self) -> Dict[str, Any]:
         """Validate current configuration"""
         config = self.get_config()
->>>>>>> origin/main
 
         validation_result = {
             "valid": True,
@@ -226,7 +219,6 @@ class MinimalConfigManager:
             "errors": [],
         }
 
-<<<<<<< HEAD
         # Check required providers
         for provider in minimal_config.required_providers:
             config = ai_config.get_provider_config(provider)
@@ -261,9 +253,6 @@ class MinimalConfigManager:
                 "Consider adding optional providers for better redundancy"
             )
 
-        # Check if we have at least one provider
-        if not validation_result["available_providers"]:
-=======
         # Check if required providers are available
         required_available = all(
             any(p.name.lower() == req.lower() for p in config.available_providers)
@@ -271,7 +260,6 @@ class MinimalConfigManager:
         )
 
         if not required_available:
->>>>>>> origin/main
             validation_result["valid"] = False
             validation_result["required_providers_met"] = False
             validation_result["errors"].append("Required providers not available")
@@ -282,13 +270,7 @@ class MinimalConfigManager:
                 "Minimal configuration - limited functionality available"
             )
 
-<<<<<<< HEAD
         return validation_result
-
-    def create_minimal_ai_config(self, mode: MinimalMode = MinimalMode.BASIC) -> AIConfigManager:
-        """Create AI configuration with only minimal providers enabled"""
-        minimal_config = self.get_minimal_config(mode)
-        ai_config = AIConfigManager()
 
         # Disable all providers first
         for provider in AIProvider:
@@ -306,38 +288,16 @@ class MinimalConfigManager:
         """Get environment setup guide for minimal mode"""
         minimal_config = self.get_minimal_config(mode)
 
-        guide = f"""
-# AMAS Minimal Configuration Setup Guide - {mode.value.upper()} Mode
-=======
         if len(config.available_providers) < 3:
             validation_result["warnings"].append(
                 "Consider adding more API keys for better reliability"
             )
 
         return validation_result
->>>>>>> origin/main
 
     def get_setup_instructions(self) -> str:
         """Get setup instructions based on current configuration"""
         config = self.get_config()
-
-<<<<<<< HEAD
-### Primary Providers (Required)
-"""
-
-        for provider in minimal_config.required_providers:
-            env_var = f"{provider.value.upper()}_API_KEY"
-            guide += f"export {env_var}=your_api_key_here\n"
-
-        if minimal_config.optional_providers:
-            guide += "\n### Optional Providers (Recommended)\n"
-            for provider in minimal_config.optional_providers:
-                env_var = f"{provider.value.upper()}_API_KEY"
-                guide += f"export {env_var}=your_api_key_here  # Optional\n"
-
-        guide += f"""
-## Quick Start
-=======
         instructions = [
             "=" * 60,
             "🔧 AMAS MINIMAL CONFIGURATION SETUP",
@@ -363,7 +323,6 @@ class MinimalConfigManager:
             "SETUP STEPS:",
             "1. Set environment variables:",
         ]
->>>>>>> origin/main
 
         for provider in config.available_providers:
             instructions.append(
@@ -388,15 +347,6 @@ class MinimalConfigManager:
     def get_feature_status(self) -> Dict[str, Any]:
         """Get status of available features"""
         config = self.get_config()
-
-<<<<<<< HEAD
-Run the validation script to check your setup:
-```bash
-python scripts/validate_env.py --mode {mode.value} --verbose
-```
-"""
-
-        return guide
 
     def get_minimal_docker_compose(self, mode: MinimalMode = MinimalMode.BASIC) -> str:
         """Get minimal docker-compose configuration"""
@@ -443,7 +393,13 @@ services:
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
-=======
+        """
+
+        return compose
+
+    def get_feature_status(self) -> Dict[str, Any]:
+        """Get status of available features"""
+        config = self.get_config()
         return {
             "configuration_level": config.config_level.value,
             "features": config.features,
@@ -463,7 +419,6 @@ services:
         """Get configuration recommendations"""
         config = self.get_config()
         recommendations = []
->>>>>>> origin/main
 
         if config.config_level == ConfigLevel.MINIMAL:
             recommendations.extend(
@@ -490,44 +445,10 @@ services:
         else:  # FULL
             recommendations.append("Configuration is optimal - all features available")
 
-<<<<<<< HEAD
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-
-  neo4j:
-    image: neo4j:5
-    environment:
-      NEO4J_AUTH: neo4j/amas123
-    ports:
-      - "7474:7474"
-      - "7687:7687"
-    volumes:
-      - neo4j_data:/data
-
-volumes:
-  postgres_data:
-  neo4j_data:
-"""
-=======
         return recommendations
->>>>>>> origin/main
-
-        return compose
 
 # Global configuration manager
 _config_manager: Optional[MinimalConfigManager] = None
-
-<<<<<<< HEAD
-def get_minimal_config_manager() -> MinimalConfigManager:
-    """Get the global minimal configuration manager"""
-    return minimal_config_manager
-
-def validate_environment(mode: MinimalMode = MinimalMode.BASIC) -> Dict[str, Any]:
-    """Quick validation of environment for minimal mode"""
-    return minimal_config_manager.validate_minimal_setup(mode)
-=======
 
 def get_config_manager() -> MinimalConfigManager:
     """Get or create the global configuration manager"""
