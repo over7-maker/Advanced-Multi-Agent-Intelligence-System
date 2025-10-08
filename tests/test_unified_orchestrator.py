@@ -3,20 +3,21 @@ Comprehensive test suite for Unified Intelligence Orchestrator
 """
 
 import asyncio
-import pytest
-import tempfile
 import os
-from unittest.mock import Mock, AsyncMock, patch
+import tempfile
 from datetime import datetime
+from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
+
+from src.amas.config.minimal_config import MinimalMode, get_minimal_config_manager
 from src.amas.core.unified_orchestrator import (
-    UnifiedIntelligenceOrchestrator,
     AgentType,
+    ProviderManager,
     TaskPriority,
     TaskStatus,
-    ProviderManager
+    UnifiedIntelligenceOrchestrator,
 )
-from src.amas.config.minimal_config import MinimalMode, get_minimal_config_manager
 
 class TestUnifiedIntelligenceOrchestrator:
     """Test the unified orchestrator"""

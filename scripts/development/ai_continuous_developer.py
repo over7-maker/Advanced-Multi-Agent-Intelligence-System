@@ -196,9 +196,10 @@ Provide a concise analysis."""
                         f"File: {fa['file']}\nAnalysis: {fa['analysis']}"
                     )
 
+                file_summaries_text = "\n".join(file_summaries)
                 summary_prompt = f"""Create a project-wide quality assessment based on these file analyses:
 
-{'\n'.join(file_summaries)}
+{file_summaries_text}
 
 Provide:
 1. Overall project quality score

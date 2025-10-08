@@ -4,6 +4,7 @@ Generate Release Notes for AMAS Releases
 Enhanced with AI integration for intelligent release note generation
 """
 
+import argparse
 import json
 import os
 import sys

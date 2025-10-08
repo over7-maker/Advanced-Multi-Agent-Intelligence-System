@@ -6,9 +6,9 @@ This file provides the main entry point for the AMAS system with all
 critical improvements from the project audit implemented.
 """
 
-import sys
 import asyncio
 import logging
+import sys
 from pathlib import Path
 
 # Add src directory to Python path
@@ -17,10 +17,10 @@ sys.path.insert(0, str(src_path))
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
+
 
 async def main():
     """Main application entry point with unified orchestrator"""
@@ -48,7 +48,7 @@ async def main():
         task_id = await orchestrator.submit_task(
             agent_type="osint",
             description="Test OSINT analysis of example.com",
-            priority=1
+            priority=1,
         )
         logger.info(f"✅ Test task submitted: {task_id}")
 
@@ -69,6 +69,7 @@ async def main():
             logger.info("🔄 AMAS shutdown complete")
         except:
             pass
+
 
 if __name__ == "__main__":
     asyncio.run(main())

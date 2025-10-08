@@ -370,7 +370,7 @@ class TestReportingAgent:
             },
         }
 
-        result = await reporting_agent.execute_task(task)
+        result = await technology_monitor_agent.execute_task(task)
 
         assert result["success"] is True
         assert result["task_type"] == "executive_summary"
