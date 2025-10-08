@@ -806,7 +806,7 @@ class UnifiedIntelligenceOrchestrator:
         """Assign task to agent and execute"""
         try:
             task = self.tasks[task_id]
-            agent = self.agents[agent_id]
+            # agent = self.agents[agent_id]
 
             task.assigned_agent = agent_id
             task.status = TaskStatus.ASSIGNED

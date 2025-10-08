@@ -6,6 +6,7 @@ Intelligent Fallback System - Comprehensive fallback for all 6 AI providers
 import asyncio
 import logging
 import os
+import time
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional

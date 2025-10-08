@@ -3,7 +3,7 @@ Enhanced Authentication Module for AMAS
 """
 
 import asyncio
-import hashlib
+# import hashlib
 import logging
 import secrets
 from datetime import datetime, timedelta

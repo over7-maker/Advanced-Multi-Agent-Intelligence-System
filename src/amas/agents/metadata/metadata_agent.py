@@ -5,7 +5,7 @@ Metadata Agent Implementation
 # import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 

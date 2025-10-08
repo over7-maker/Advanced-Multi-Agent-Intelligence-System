@@ -6,7 +6,7 @@ Digital Forensics Agent Implementation
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 
@@ -271,7 +271,7 @@ class ForensicsAgent(IntelligenceAgent):
         """Reconstruct timeline of events"""
         try:
             evidence_items = task.get("parameters", {}).get("evidence", [])
-            # time_range = task.get("parameters", {}).get("time_range", {})
+            time_range = task.get("parameters", {}).get("time_range", "24h")
 
             # Mock timeline reconstruction
             timeline_events = []
