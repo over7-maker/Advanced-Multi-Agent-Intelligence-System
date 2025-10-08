@@ -288,7 +288,7 @@ class MinimalConfigManager:
 
     def get_environment_setup_guide(self, mode: ConfigLevel = ConfigLevel.BASIC) -> str:
         """Get environment setup guide for minimal mode"""
-        minimal_config = self.get_minimal_config(mode)
+        # minimal_config = self.get_minimal_config(mode)
         config = self.get_config()
 
         guide = [

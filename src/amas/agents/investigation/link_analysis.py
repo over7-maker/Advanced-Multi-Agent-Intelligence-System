@@ -5,7 +5,7 @@ This module provides link analysis capabilities for the Investigation Agent,
 enabling relationship discovery and network analysis.
 """
 
-import asyncio
+# import asyncio
 import json
 import logging
 from dataclasses import dataclass

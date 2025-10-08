@@ -117,7 +117,7 @@ class TechnologyMonitorAgent(IntelligenceAgent):
         """Track technology developments"""
         try:
             technologies = task.get("parameters", {}).get("technologies", [])
-            time_range = task.get("parameters", {}).get("time_range", "30d")
+            # time_range = task.get("parameters", {}).get("time_range", "30d")
 
             # Mock technology tracking
             # tracking_results = []
@@ -281,7 +281,7 @@ class TechnologyMonitorAgent(IntelligenceAgent):
         """Analyze patent landscape"""
         try:
             technology_areas = task.get("parameters", {}).get("technology_areas", [])
-            time_range = task.get("parameters", {}).get("time_range", "1y")
+            # time_range = task.get("parameters", {}).get("time_range", "1y")
 
             # Mock patent analysis
             patents = []

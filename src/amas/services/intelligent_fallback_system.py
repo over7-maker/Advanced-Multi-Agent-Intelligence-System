@@ -4,15 +4,11 @@ Intelligent Fallback System - Comprehensive fallback for all 6 AI providers
 """
 
 import asyncio
-import json
 import logging
 import os
-import random
-import sys
-import time
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import aiohttp
 
@@ -485,7 +481,7 @@ async def test_intelligent_fallback():
 
     # Show comprehensive stats
     stats = get_fallback_stats()
-    print(f"\n📊 Fallback Statistics:")
+    print("\n📊 Fallback Statistics:")
     print(f"Total Requests: {stats['total_requests']}")
     print(f"Success Rate: {stats['success_rate']}")
     print(f"Average Response Time: {stats['average_response_time']}")
@@ -494,7 +490,7 @@ async def test_intelligent_fallback():
 
     # Show provider health
     health = get_provider_health()
-    print(f"\n🏥 Provider Health:")
+    print("\n🏥 Provider Health:")
     for provider_id, info in health.items():
         print(f"  {info['name']}: {info['status']} ({info['success_rate']})")
 

@@ -3,7 +3,7 @@ Enhanced OSINT Collection Agent
 """
 
 import asyncio
-import json
+# import json
 import logging
 import re
 from datetime import datetime, timedelta
@@ -206,7 +206,7 @@ class OSINTAgent(IntelligenceAgent):
                 "platforms", ["twitter", "reddit"]
             )
             keywords = task.get("parameters", {}).get("keywords", [])
-            time_range = task.get("parameters", {}).get("time_range", "24h")
+            # time_range = task.get("parameters", {}).get("time_range", "24h")
 
             # Mock social media monitoring
             social_data = []
@@ -280,7 +280,7 @@ class OSINTAgent(IntelligenceAgent):
                 "sources", self.data_sources["news"]
             )
             keywords = task.get("parameters", {}).get("keywords", [])
-            time_range = task.get("parameters", {}).get("time_range", "24h")
+            # time_range = task.get("parameters", {}).get("time_range", "24h")
 
             # Mock news aggregation
             news_data = []
@@ -487,7 +487,7 @@ class OSINTAgent(IntelligenceAgent):
         """Perform general OSINT collection"""
         try:
             description = task.get("description", "")
-            parameters = task.get("parameters", {})
+            # parameters = task.get("parameters", {})
 
             # Mock general OSINT
             osint_result = {

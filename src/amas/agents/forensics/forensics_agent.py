@@ -2,7 +2,7 @@
 Digital Forensics Agent Implementation
 """
 
-import asyncio
+# import asyncio
 import logging
 import os
 from datetime import datetime
@@ -271,7 +271,7 @@ class ForensicsAgent(IntelligenceAgent):
         """Reconstruct timeline of events"""
         try:
             evidence_items = task.get("parameters", {}).get("evidence", [])
-            time_range = task.get("parameters", {}).get("time_range", {})
+            # time_range = task.get("parameters", {}).get("time_range", {})
 
             # Mock timeline reconstruction
             timeline_events = []

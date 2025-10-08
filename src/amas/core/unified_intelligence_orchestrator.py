@@ -815,7 +815,7 @@ class UnifiedIntelligenceOrchestrator:
             self.active_tasks[task_id] = task
 
             # Execute task
-            result = await agent.execute_task(task)
+            # result = await agent.execute_task(task)
 
             # Update metrics
             self.metrics["tasks_processed"] += 1

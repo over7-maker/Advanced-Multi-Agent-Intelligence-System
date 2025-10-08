@@ -18,7 +18,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Union
 
 import aioredis
-import redis
+# import redis
 
 logger = logging.getLogger(__name__)
 
@@ -469,7 +469,7 @@ class EnterpriseCommunicationService:
     async def _process_queue(self, queue_name: str):
         """Process messages from a queue"""
         try:
-            queue_config = self.message_queues[queue_name]
+            # queue_config = self.message_queues[queue_name]
 
             while True:
                 try:

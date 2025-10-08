@@ -2,7 +2,7 @@
 N8N Integration Implementation
 """
 
-import asyncio
+# import asyncio
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
