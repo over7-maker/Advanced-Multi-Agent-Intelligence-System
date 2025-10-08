@@ -21,6 +21,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class AIFallbackManager:
     """Intelligent fallback manager for all 6 AI providers"""
 
@@ -283,20 +284,25 @@ class AIFallbackManager:
         self.current_provider_index = 0
         logger.info("Fallback order reset to priority order")
 
+
 # Global fallback manager instance
 fallback_manager = AIFallbackManager()
+
 
 async def generate_ai_response(prompt: str, **kwargs) -> Dict[str, Any]:
     """Generate AI response with intelligent fallback"""
     return await fallback_manager.generate_response(prompt, **kwargs)
 
+
 def get_fallback_stats() -> Dict[str, Any]:
     """Get fallback statistics"""
     return fallback_manager.get_fallback_stats()
 
+
 def reset_fallback_order():
     """Reset fallback order"""
     fallback_manager.reset_fallback_order()
+
 
 # Test function
 async def test_fallback_system():
@@ -324,6 +330,7 @@ async def test_fallback_system():
     print(f"Success Rate: {stats['success_rate']}")
     print(f"Active Providers: {stats['active_providers']}")
     print(f"Provider Names: {', '.join(stats['provider_names'])}")
+
 
 if __name__ == "__main__":
     asyncio.run(test_fallback_system())

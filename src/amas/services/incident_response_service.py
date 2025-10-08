@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+
 class IncidentSeverity(Enum):
     """Incident severity enumeration"""
 
@@ -22,6 +23,7 @@ class IncidentSeverity(Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
 
 class IncidentStatus(Enum):
     """Incident status enumeration"""
@@ -31,6 +33,7 @@ class IncidentStatus(Enum):
     ERADICATED = "eradicated"
     RECOVERED = "recovered"
     CLOSED = "closed"
+
 
 class ResponseAction(Enum):
     """Response action enumeration"""
@@ -43,6 +46,7 @@ class ResponseAction(Enum):
     ESCALATE = "escalate"
     RESTORE = "restore"
     PATCH = "patch"
+
 
 @dataclass
 class SecurityIncident:
@@ -65,6 +69,7 @@ class SecurityIncident:
     closed_at: Optional[datetime] = None
     lessons_learned: List[str] = None
 
+
 @dataclass
 class ResponseProcedure:
     """Response procedure data structure"""
@@ -77,6 +82,7 @@ class ResponseProcedure:
     automated: bool
     escalation_required: bool
     estimated_duration: int  # minutes
+
 
 class IncidentResponseService:
     """

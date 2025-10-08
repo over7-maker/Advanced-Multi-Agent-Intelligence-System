@@ -27,24 +27,29 @@ index = None
 documents = []
 vector_data_path = os.getenv("VECTOR_DATA_PATH", "/data/vectors")
 
+
 class VectorSearchRequest(BaseModel):
     query: str
     top_k: int = 10
     threshold: float = 0.0
+
 
 class VectorSearchResponse(BaseModel):
     results: List[Dict[str, Any]]
     total: int
     query: str
 
+
 class DocumentIndexRequest(BaseModel):
     documents: List[str]
     metadata: Optional[List[Dict[str, Any]]] = None
+
 
 class DocumentIndexResponse(BaseModel):
     indexed_count: int
     total_documents: int
     index_size: int
+
 
 def initialize_vectorizer():
     """Initialize the TF-IDF vectorizer"""
@@ -54,6 +59,7 @@ def initialize_vectorizer():
     )
     logger.info("Vectorizer initialized")
 
+
 def initialize_index():
     """Initialize the FAISS index"""
     global index
@@ -61,6 +67,7 @@ def initialize_index():
     # In production, you might want to use IVF or HNSW
     index = faiss.IndexFlatIP(10000)  # Inner product similarity
     logger.info("FAISS index initialized")
+
 
 def load_existing_data():
     """Load existing vector data if available"""
@@ -98,6 +105,7 @@ def load_existing_data():
     except Exception as e:
         logger.warning(f"Could not load existing data: {e}")
 
+
 def save_data():
     """Save vector data to disk"""
     try:
@@ -123,6 +131,7 @@ def save_data():
     except Exception as e:
         logger.error(f"Could not save data: {e}")
 
+
 @app.on_event("startup")
 async def startup_event():
     """Initialize the vector service on startup"""
@@ -131,6 +140,7 @@ async def startup_event():
     initialize_index()
     load_existing_data()
     logger.info("Vector service started successfully")
+
 
 @app.get("/health")
 async def health_check():
@@ -141,6 +151,7 @@ async def health_check():
         "documents_count": len(documents),
         "index_size": index.ntotal if index else 0,
     }
+
 
 @app.post("/index", response_model=DocumentIndexResponse)
 async def index_documents(request: DocumentIndexRequest):
@@ -177,6 +188,7 @@ async def index_documents(request: DocumentIndexRequest):
         logger.error(f"Error indexing documents: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/search", response_model=VectorSearchResponse)
 async def search_vectors(request: VectorSearchRequest):
     """Search for similar vectors"""
@@ -210,6 +222,7 @@ async def search_vectors(request: VectorSearchRequest):
         logger.error(f"Error searching vectors: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/stats")
 async def get_stats():
     """Get vector service statistics"""
@@ -220,6 +233,7 @@ async def get_stats():
             vectorizer.get_feature_names_out().shape[0] if vectorizer else 0
         ),
     }
+
 
 @app.delete("/clear")
 async def clear_index():
@@ -233,6 +247,7 @@ async def clear_index():
         index.reset()
     save_data()
     return {"message": "Index cleared successfully"}
+
 
 if __name__ == "__main__":
     import uvicorn

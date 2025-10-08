@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
+
 class IntelligentAIRouter:
     def __init__(self):
         # Initialize all 9 API keys
@@ -386,6 +387,7 @@ class IntelligentAIRouter:
 
         return best_model
 
+
 def main():
     """Main execution function"""
     router = IntelligentAIRouter()
@@ -423,6 +425,7 @@ def main():
     print(f"\n🔧 Routing Optimization: {optimization['optimization_complete']}")
 
     print("\n🎉 Intelligent AI Routing System Test Complete!")
+
 
 if __name__ == "__main__":
     main()

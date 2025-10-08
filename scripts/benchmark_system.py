@@ -33,6 +33,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class BenchmarkResult:
     """Result of a single benchmark test"""
@@ -50,6 +51,7 @@ class BenchmarkResult:
         if self.metrics is None:
             self.metrics = {}
 
+
 @dataclass
 class BenchmarkSuite:
     """Collection of benchmark results"""
@@ -63,6 +65,7 @@ class BenchmarkSuite:
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
+
 
 class AMASBenchmarker:
     """Main benchmarking class for AMAS system"""
@@ -294,16 +297,10 @@ class AMASBenchmarker:
         """Benchmark memory usage over time"""
         logger.info(f"Running memory benchmark for {duration_seconds} seconds...")
 
-<<<<<<< HEAD
-        import psutil
-        import os
-
-=======
         import os
 
         import psutil
 
->>>>>>> origin/main
         process = psutil.Process(os.getpid())
         start_time = time.time()
         end_time = start_time + duration_seconds
@@ -315,13 +312,6 @@ class AMASBenchmarker:
             while time.time() < end_time:
                 # Sample memory usage
                 memory_info = process.memory_info()
-<<<<<<< HEAD
-                memory_samples.append({
-                    "timestamp": time.time(),
-                    "rss": memory_info.rss,
-                    "vms": memory_info.vms,
-                })
-=======
                 memory_samples.append(
                     {
                         "timestamp": time.time(),
@@ -329,7 +319,6 @@ class AMASBenchmarker:
                         "vms": memory_info.vms,
                     }
                 )
->>>>>>> origin/main
 
                 # Submit a task
                 try:
@@ -392,13 +381,9 @@ class AMASBenchmarker:
         self, concurrent_tasks: int = 50
     ) -> BenchmarkResult:
         """Benchmark system under concurrent load"""
-<<<<<<< HEAD
-        logger.info(f"Running concurrent load benchmark with {concurrent_tasks} concurrent tasks...")
-=======
         logger.info(
             f"Running concurrent load benchmark with {concurrent_tasks} concurrent tasks..."
         )
->>>>>>> origin/main
 
         start_time = time.time()
 
@@ -421,13 +406,9 @@ class AMASBenchmarker:
 
             duration = time.time() - start_time
             completed_tasks = len(self.orchestrator.completed_tasks)
-<<<<<<< HEAD
-            successful_submissions = sum(1 for tid in task_ids if not isinstance(tid, Exception))
-=======
             successful_submissions = sum(
                 1 for tid in task_ids if not isinstance(tid, Exception)
             )
->>>>>>> origin/main
 
             metrics = {
                 "concurrent_tasks": concurrent_tasks,
@@ -478,13 +459,9 @@ class AMASBenchmarker:
                 logger.info(f"Running {name} benchmark...")
                 result = await benchmark_coro
                 self.results.append(result)
-<<<<<<< HEAD
-                logger.info(f"{name} benchmark completed: {'PASS' if result.success else 'FAIL'}")
-=======
                 logger.info(
                     f"{name} benchmark completed: {'PASS' if result.success else 'FAIL'}"
                 )
->>>>>>> origin/main
 
             # Calculate summary
             end_time = datetime.utcnow()
@@ -551,13 +528,6 @@ class AMASBenchmarker:
         print(f"Successful: {suite.summary['successful_tests']}")
         print(f"Failed: {suite.summary['failed_tests']}")
         print(f"Success Rate: {suite.summary['success_rate']:.1%}")
-<<<<<<< HEAD
-        print(f"Average Test Duration: {suite.summary['average_test_duration']:.2f} seconds")
-
-        print("\n" + "-"*60)
-        print("INDIVIDUAL TEST RESULTS:")
-        print("-"*60)
-=======
         print(
             f"Average Test Duration: {suite.summary['average_test_duration']:.2f} seconds"
         )
@@ -565,7 +535,6 @@ class AMASBenchmarker:
         print("\n" + "-" * 60)
         print("INDIVIDUAL TEST RESULTS:")
         print("-" * 60)
->>>>>>> origin/main
 
         for result in suite.results:
             status = "PASS" if result.success else "FAIL"
@@ -576,13 +545,9 @@ class AMASBenchmarker:
                 for key, value in result.metrics.items():
                     if isinstance(value, (int, float)):
                         print(f"  {key}: {value}")
-<<<<<<< HEAD
-=======
 
         print("=" * 60)
->>>>>>> origin/main
 
-        print("="*60)
 
 async def main():
     """Main benchmark execution"""
@@ -609,13 +574,9 @@ async def main():
         await benchmarker.initialize()
 
         # Run benchmark suite
-<<<<<<< HEAD
-        suite = await benchmarker.run_benchmark_suite(f"AMAS Performance Suite - {mode.value.upper()}")
-=======
         suite = await benchmarker.run_benchmark_suite(
             f"AMAS Performance Suite - {mode.value.upper()}"
         )
->>>>>>> origin/main
 
         # Print results
         benchmarker.print_summary(suite)
@@ -638,6 +599,7 @@ async def main():
     except Exception as e:
         logger.error(f"Benchmark execution failed: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

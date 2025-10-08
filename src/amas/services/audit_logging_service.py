@@ -19,6 +19,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
+
 class AuditEventType(Enum):
     """Audit event type enumeration"""
 
@@ -35,6 +36,7 @@ class AuditEventType(Enum):
     SYSTEM_EVENT = "system_event"
     ERROR_EVENT = "error_event"
 
+
 class AuditLevel(Enum):
     """Audit level enumeration"""
 
@@ -42,6 +44,7 @@ class AuditLevel(Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
+
 
 @dataclass
 class AuditEvent:
@@ -62,6 +65,7 @@ class AuditEvent:
     classification: str
     signature: str
     chain_hash: Optional[str] = None
+
 
 class AuditLoggingService:
     """

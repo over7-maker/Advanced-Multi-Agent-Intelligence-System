@@ -24,6 +24,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class ProviderStatus(Enum):
     """Provider status states"""
 
@@ -33,6 +34,7 @@ class ProviderStatus(Enum):
     UNKNOWN = "unknown"
     RATE_LIMITED = "rate_limited"
     THROTTLED = "throttled"
+
 
 class ProviderType(Enum):
     """Provider API types"""
@@ -45,6 +47,7 @@ class ProviderType(Enum):
     COHERE = "cohere"
     CHUTES = "chutes"
     CODESTRAL = "codestral"
+
 
 @dataclass
 class ProviderConfig:
@@ -94,6 +97,7 @@ class ProviderConfig:
         if total == 0:
             return 0.0
         return (self.success_count / total) * 100
+
 
 class UniversalAIManager:
     """
@@ -865,8 +869,10 @@ class UniversalAIManager:
 
         return "\n".join(lines)
 
+
 # Global instance
 _universal_ai_manager: Optional[UniversalAIManager] = None
+
 
 def get_universal_ai_manager() -> UniversalAIManager:
     """Get or create the global Universal AI Manager instance"""
@@ -874,6 +880,7 @@ def get_universal_ai_manager() -> UniversalAIManager:
     if _universal_ai_manager is None:
         _universal_ai_manager = UniversalAIManager()
     return _universal_ai_manager
+
 
 async def generate_ai_response(
     prompt: str,
@@ -895,6 +902,7 @@ async def generate_ai_response(
     """
     manager = get_universal_ai_manager()
     return await manager.generate(prompt, system_prompt, strategy, **kwargs)
+
 
 # Test function
 async def test_universal_ai_manager():
@@ -969,6 +977,7 @@ async def test_universal_ai_manager():
             f"{status_emoji} {info['name']:25s} | Success Rate: {info['success_rate']:6s} | Avg Time: {info['avg_response_time']:8s} | Status: {info['status']}"
         )
     print()
+
 
 if __name__ == "__main__":
     asyncio.run(test_universal_ai_manager())

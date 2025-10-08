@@ -18,6 +18,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+
 def install_requirements():
     """Install required packages"""
     try:
@@ -67,6 +68,7 @@ def install_requirements():
         logger.error(f"Error installing requirements: {e}")
         sys.exit(1)
 
+
 def create_directories():
     """Create necessary directories"""
     directories = [
@@ -89,6 +91,7 @@ def create_directories():
     for directory in directories:
         Path(directory).mkdir(exist_ok=True)
         logger.info(f"Created directory: {directory}")
+
 
 def setup_environment():
     """Setup environment variables and configuration"""
@@ -113,6 +116,7 @@ def setup_environment():
     except Exception as e:
         logger.error(f"Error setting up environment: {e}")
         raise
+
 
 def check_docker_services():
     """Check if Docker services are running"""
@@ -145,6 +149,7 @@ def check_docker_services():
         logger.error(f"Error checking Docker services: {e}")
         return False
 
+
 def start_docker_services():
     """Start Docker services"""
     try:
@@ -162,6 +167,7 @@ def start_docker_services():
     except Exception as e:
         logger.error(f"Error starting Docker services: {e}")
         return False
+
 
 def create_docker_compose_override():
     """Create docker-compose.override.yml for development"""
@@ -248,6 +254,7 @@ volumes:
 
     logger.info("Created docker-compose.override.yml for development")
 
+
 async def test_system_components():
     """Test system components"""
     try:
@@ -290,6 +297,7 @@ async def test_system_components():
     except Exception as e:
         logger.error(f"System component test failed: {e}")
         return False
+
 
 def create_startup_scripts():
     """Create startup scripts for different environments"""
@@ -374,6 +382,7 @@ echo "Tests completed!"
 
     logger.info("Created startup scripts: start_dev.sh, start_prod.sh, run_tests.sh")
 
+
 def main():
     """Main setup function"""
     logger.info("Setting up AMAS Intelligence System...")
@@ -454,6 +463,7 @@ def main():
 
         traceback.print_exc()
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

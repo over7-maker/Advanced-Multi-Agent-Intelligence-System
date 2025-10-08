@@ -772,7 +772,7 @@ async def test_manager():
     for provider_id, info in health.items():
         status_emoji = "✅" if info["available"] else "❌"
         print(
-            f"{status_emoji} {info["name"]:25s} | Status: {info["status"]:12s} | Success: {info["success_rate"]:6s}"
+            f"{status_emoji} {info['name']:25s} | Status: {info['status']:12s} | Success: {info['success_rate']:6s}"
         )
     print()
 

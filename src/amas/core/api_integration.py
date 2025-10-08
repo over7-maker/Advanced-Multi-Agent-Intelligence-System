@@ -37,6 +37,7 @@ from .enhanced_orchestrator import EnhancedOrchestrator, execute_task, run_inves
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class EnhancedLLMService:
     """Enhanced LLM service with multi-API fallback"""
 
@@ -76,6 +77,7 @@ class EnhancedLLMService:
         except Exception as e:
             logger.error(f"Streaming LLM service failed: {e}")
             yield f"AI Response: {prompt[:100]}... (API unavailable)"
+
 
 class EnhancedAgent(BaseAgent):
     """Enhanced base agent with multi-API fallback"""
@@ -160,6 +162,7 @@ class EnhancedAgent(BaseAgent):
             AgentType.TECHNOLOGY_MONITOR: "analysis_agent",
         }
         return agent_type_map.get(self.agent_type, "general_agent")
+
 
 class EnhancedOSINTAgent(EnhancedAgent):
     """Enhanced OSINT agent with multi-API fallback"""
@@ -265,6 +268,7 @@ class EnhancedOSINTAgent(EnhancedAgent):
         task_description = task.description.lower()
         return any(keyword in task_description for keyword in osint_keywords)
 
+
 class EnhancedInvestigationAgent(EnhancedAgent):
     """Enhanced investigation agent with multi-API fallback"""
 
@@ -366,6 +370,7 @@ class EnhancedInvestigationAgent(EnhancedAgent):
         task_description = task.description.lower()
         return any(keyword in task_description for keyword in investigation_keywords)
 
+
 class EnhancedForensicsAgent(EnhancedAgent):
     """Enhanced forensics agent with multi-API fallback"""
 
@@ -463,6 +468,7 @@ class EnhancedForensicsAgent(EnhancedAgent):
 
         task_description = task.description.lower()
         return any(keyword in task_description for keyword in forensics_keywords)
+
 
 class EnhancedReportingAgent(EnhancedAgent):
     """Enhanced reporting agent with multi-API fallback"""
@@ -571,6 +577,7 @@ class EnhancedReportingAgent(EnhancedAgent):
 
         task_description = task.description.lower()
         return any(keyword in task_description for keyword in reporting_keywords)
+
 
 class EnhancedAgentOrchestrator(AgentOrchestrator):
     """Enhanced orchestrator with multi-API fallback integration"""
@@ -796,6 +803,7 @@ class EnhancedAgentOrchestrator(AgentOrchestrator):
 
         return combined_stats
 
+
 # Global enhanced orchestrator instance
 enhanced_orchestrator = EnhancedAgentOrchestrator(
     {
@@ -806,11 +814,13 @@ enhanced_orchestrator = EnhancedAgentOrchestrator(
     }
 )
 
+
 # Convenience functions
 async def initialize_enhanced_system():
     """Initialize the enhanced AMAS system"""
     await enhanced_orchestrator.register_enhanced_agents()
     logger.info("Enhanced AMAS system initialized with multi-API fallback")
+
 
 async def run_enhanced_investigation(
     topic: str, investigation_type: str = "comprehensive"
@@ -819,6 +829,7 @@ async def run_enhanced_investigation(
     return await enhanced_orchestrator.run_enhanced_investigation(
         topic, investigation_type
     )
+
 
 # Example usage
 async def main():
@@ -854,6 +865,7 @@ async def main():
         import traceback
 
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

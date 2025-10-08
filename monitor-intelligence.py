@@ -10,6 +10,7 @@ sys.path.append("src")
 
 from amas.intelligence.intelligence_manager import intelligence_manager
 
+
 async def monitor_intelligence():
     """Monitor intelligence systems in real-time"""
 
@@ -82,6 +83,7 @@ async def monitor_intelligence():
 
     except KeyboardInterrupt:
         print("\n👋 Intelligence monitoring stopped")
+
 
 if __name__ == "__main__":
     asyncio.run(monitor_intelligence())

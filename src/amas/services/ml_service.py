@@ -19,6 +19,7 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+
 class ModelType(Enum):
     """Model type enumeration"""
 
@@ -31,6 +32,7 @@ class ModelType(Enum):
     RECOMMENDATION = "recommendation"
     TIME_SERIES = "time_series"
 
+
 class ModelStatus(Enum):
     """Model status enumeration"""
 
@@ -39,6 +41,7 @@ class ModelStatus(Enum):
     DEPLOYED = "deployed"
     RETIRED = "retired"
     ERROR = "error"
+
 
 @dataclass
 class ModelMetrics:
@@ -55,6 +58,7 @@ class ModelMetrics:
     r2_score: float
     timestamp: datetime
 
+
 @dataclass
 class TrainingJob:
     """Training job data structure"""
@@ -68,6 +72,7 @@ class TrainingJob:
     completed_at: Optional[datetime]
     metrics: Optional[ModelMetrics]
     error_message: Optional[str]
+
 
 class MLService:
     """

@@ -20,6 +20,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class SimpleWorkflowTest:
     """Simple workflow tester without AI dependencies"""
 
@@ -392,6 +393,7 @@ class SimpleWorkflowTest:
         except Exception as e:
             logger.error(f"Error saving test report: {e}")
 
+
 def main():
     """Main function"""
     import argparse
@@ -491,6 +493,7 @@ def main():
     except Exception as e:
         logger.error(f"Error in main: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

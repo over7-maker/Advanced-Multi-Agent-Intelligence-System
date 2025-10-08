@@ -11,6 +11,7 @@ from datetime import datetime
 
 import requests
 
+
 def main():
     print("🤖 Simple Working Auto-Responder")
     print("=" * 50)
@@ -58,6 +59,7 @@ def main():
 
     print("🎉 Auto-response completed successfully!")
     return True
+
 
 def categorize_issue(content):
     """Categorize issue based on content analysis"""
@@ -124,6 +126,7 @@ def categorize_issue(content):
         return "documentation"
 
     return "general"
+
 
 def generate_response(category, author, issue_number, title):
     """Generate appropriate response based on category"""
@@ -284,6 +287,7 @@ Thanks for contributing to AMAS! 🙏
 ---
 *🤖 Auto-generated response - AMAS AI System*"""
 
+
 def post_comment(token, repo, issue_number, response):
     """Post comment to GitHub issue"""
 
@@ -306,6 +310,7 @@ def post_comment(token, repo, issue_number, response):
     except Exception as e:
         print(f"❌ Error posting comment: {e}")
         return False
+
 
 def add_labels(token, repo, issue_number, category):
     """Add labels to GitHub issue"""
@@ -336,6 +341,7 @@ def add_labels(token, repo, issue_number, category):
     except Exception as e:
         print(f"❌ Error adding labels: {e}")
         return False
+
 
 if __name__ == "__main__":
     main()

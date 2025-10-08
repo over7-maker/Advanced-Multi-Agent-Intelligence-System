@@ -6,6 +6,7 @@ Simple verification script to check for false positives
 import os
 import re
 
+
 def check_file_for_patterns(file_path):
     """Check a file for the reported security patterns"""
     if not os.path.exists(file_path):
@@ -59,6 +60,7 @@ def check_file_for_patterns(file_path):
                     pass
 
     return issues
+
 
 def main():
     """Main verification function"""
@@ -116,6 +118,7 @@ def main():
         print("✅ SUCCESS: All security false positives appear to be fixed!")
     else:
         print("❌ FAILED: Some issues remain")
+
 
 if __name__ == "__main__":
     main()

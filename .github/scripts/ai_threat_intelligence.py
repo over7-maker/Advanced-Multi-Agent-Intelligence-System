@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 import requests
 from openai import OpenAI
 
+
 class AIThreatIntelligence:
     def __init__(self):
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -381,9 +382,11 @@ This report presents comprehensive threat intelligence analysis conducted by mul
 
         return results
 
+
 async def main():
     analyzer = AIThreatIntelligence()
     await analyzer.run()
+
 
 if __name__ == "__main__":
     print("🛡️ AMAS Threat Intelligence Analysis System")

@@ -10,6 +10,7 @@ from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
+
 class AIProvider(Enum):
     """AI Provider enumeration"""
 
@@ -19,6 +20,7 @@ class AIProvider(Enum):
     KIMI = "kimi"
     QWEN = "qwen"
     GPTOSS = "gptoss"
+
 
 @dataclass
 class AIProviderConfig:
@@ -34,6 +36,7 @@ class AIProviderConfig:
     rate_limit: int = 60  # requests per minute
     priority: int = 1  # 1 = highest priority
     enabled: bool = True
+
 
 class AIConfigManager:
     """AI Configuration Manager"""
@@ -240,12 +243,15 @@ class AIConfigManager:
             "health_check_retries": 3,
         }
 
+
 # Global configuration instance
 ai_config = AIConfigManager()
+
 
 def get_ai_config() -> AIConfigManager:
     """Get the global AI configuration instance"""
     return ai_config
+
 
 def reload_ai_config():
     """Reload AI configuration from environment"""

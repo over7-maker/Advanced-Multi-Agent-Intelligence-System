@@ -14,6 +14,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+
 class AlertLevel(Enum):
     """Alert level enumeration"""
 
@@ -22,6 +23,7 @@ class AlertLevel(Enum):
     ERROR = "error"
     CRITICAL = "critical"
 
+
 class MetricType(Enum):
     """Metric type enumeration"""
 
@@ -29,6 +31,7 @@ class MetricType(Enum):
     GAUGE = "gauge"
     HISTOGRAM = "histogram"
     SUMMARY = "summary"
+
 
 @dataclass
 class Alert:
@@ -43,6 +46,7 @@ class Alert:
     resolved: bool = False
     resolved_at: Optional[datetime] = None
 
+
 @dataclass
 class Metric:
     """Metric data structure"""
@@ -52,6 +56,7 @@ class Metric:
     type: MetricType
     labels: Dict[str, str]
     timestamp: datetime
+
 
 class MonitoringService:
     """

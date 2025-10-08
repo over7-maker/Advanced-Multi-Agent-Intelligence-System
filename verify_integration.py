@@ -24,6 +24,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class AMASIntegrationVerifier:
     """Verifies AMAS system integration and functionality"""
 
@@ -405,6 +406,7 @@ class AMASIntegrationVerifier:
         logger.info(f"Results saved to: {filename}")
         return filename
 
+
 async def main():
     """Main function"""
     print("🔍 AMAS Integration Verification Tool")
@@ -444,6 +446,7 @@ async def main():
             sys.exit(0)
         else:
             sys.exit(1)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -18,6 +18,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class EnvironmentSetup:
     """Environment Setup Manager"""
 
@@ -396,6 +397,7 @@ class EnvironmentSetup:
         except Exception as e:
             logger.error(f"Error saving setup report: {e}")
 
+
 def main():
     """Main function"""
     import argparse
@@ -454,6 +456,7 @@ def main():
     except Exception as e:
         logger.error(f"Error in main: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

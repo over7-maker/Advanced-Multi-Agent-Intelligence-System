@@ -19,6 +19,7 @@ from ..agents.unified_ai_router import agent_complete, get_ai_router
 
 logger = logging.getLogger(__name__)
 
+
 class AgentRole(Enum):
     """Standardized agent roles across the system"""
 
@@ -36,6 +37,7 @@ class AgentRole(Enum):
     DATA_ANALYST = "data_analyst"
     TECHNOLOGY_MONITOR = "technology_monitor"
 
+
 @dataclass
 class AgentConfig:
     """Configuration for an agent"""
@@ -47,6 +49,7 @@ class AgentConfig:
     priority_models: List[str] = field(default_factory=list)
     capabilities: List[str] = field(default_factory=list)
     max_concurrent_tasks: int = 3
+
 
 @dataclass
 class OrchestratorTask:
@@ -62,6 +65,7 @@ class OrchestratorTask:
     created_at: datetime = field(default_factory=datetime.now)
     completed_at: Optional[datetime] = None
     error: Optional[str] = None
+
 
 class UnifiedOrchestrator:
     """
@@ -496,8 +500,10 @@ class UnifiedOrchestrator:
 
         return results
 
+
 # Singleton instance
 _orchestrator_instance: Optional[UnifiedOrchestrator] = None
+
 
 def get_orchestrator() -> UnifiedOrchestrator:
     """Get or create the singleton orchestrator instance"""

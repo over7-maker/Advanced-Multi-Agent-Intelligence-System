@@ -13,6 +13,7 @@ from typing import Any, Dict, Optional
 import requests
 from openai import OpenAI
 
+
 class AIIssueResponder:
     def __init__(self):
         self.github_token = os.environ.get("GITHUB_TOKEN")
@@ -395,6 +396,7 @@ A human maintainer will review your issue soon. Thank you for your patience!
 """
             self.post_github_comment(fallback_message)
             self.add_issue_labels(["ai-analyzed", "needs-human-review"])
+
 
 if __name__ == "__main__":
     responder = AIIssueResponder()

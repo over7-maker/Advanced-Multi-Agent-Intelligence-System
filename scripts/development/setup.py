@@ -83,9 +83,7 @@ setup(
         ],
     },
     zip_safe=False,
-        "Programming Language :: Python :: 3.12",
     project_urls={
-        "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Source": "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System",
         "Documentation": "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/docs",
     },

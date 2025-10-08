@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
 
+
 class SecretScanner:
     """Scanner for detecting potential secrets in code"""
 
@@ -155,6 +156,7 @@ class SecretScanner:
 
         return report
 
+
 def main():
     """Main function"""
     scanner = SecretScanner()
@@ -183,6 +185,7 @@ def main():
     else:
         print("✅ Security check passed: No secrets detected!")
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()

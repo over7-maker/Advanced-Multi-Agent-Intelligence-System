@@ -1,5 +1,6 @@
 """Audit module for AMAS"""
 
+
 class AuditLogger:
     """Simple audit logger"""
 

@@ -11,6 +11,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+
 class AISystemTester:
     def __init__(self):
         self.test_results = {
@@ -436,11 +437,13 @@ class AISystemTester:
 
         return summary["failed"] == 0
 
+
 def main():
     """Main test runner"""
     tester = AISystemTester()
     success = tester.run_all_tests()
     return 0 if success else 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

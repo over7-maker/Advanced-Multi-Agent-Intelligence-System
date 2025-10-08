@@ -15,6 +15,7 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+
 def create_virtual_environment():
     """Create virtual environment"""
     try:
@@ -25,6 +26,7 @@ def create_virtual_environment():
     except subprocess.CalledProcessError as e:
         logger.error(f"Error creating virtual environment: {e}")
         return False
+
 
 def install_requirements():
     """Install requirements in virtual environment"""
@@ -78,6 +80,7 @@ def install_requirements():
         logger.error(f"Error installing requirements: {e}")
         return False
 
+
 def create_activation_scripts():
     """Create activation scripts for different platforms"""
 
@@ -121,6 +124,7 @@ echo "  python api/main.py"
     os.chmod("activate_venv.sh", 0o755)
 
     logger.info("Created activation scripts: activate_venv.bat, activate_venv.sh")
+
 
 def create_startup_scripts():
     """Create startup scripts that use virtual environment"""
@@ -180,6 +184,7 @@ echo "Tests completed!"
 
     logger.info("Created startup scripts: start_dev.sh, run_tests.sh")
 
+
 def main():
     """Main setup function"""
     logger.info("Setting up AMAS Intelligence System with Virtual Environment...")
@@ -233,6 +238,7 @@ def main():
 
         traceback.print_exc()
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

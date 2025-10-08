@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 import requests
 from openai import OpenAI
 
+
 class AIAdaptivePromptImprovement:
     def __init__(self):
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -454,9 +455,11 @@ This report presents comprehensive prompt analysis and improvement recommendatio
 
         return results
 
+
 async def main():
     analyzer = AIAdaptivePromptImprovement()
     await analyzer.run()
+
 
 if __name__ == "__main__":
     print("🧠 AMAS Adaptive Prompt Improvement System")

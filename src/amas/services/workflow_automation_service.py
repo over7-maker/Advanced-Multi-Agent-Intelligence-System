@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
+
 class WorkflowStatus(Enum):
     DRAFT = "draft"
     ACTIVE = "active"
@@ -21,6 +22,7 @@ class WorkflowStatus(Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
+
 
 class DecisionType(Enum):
     CONDITIONAL = "conditional"
@@ -30,11 +32,13 @@ class DecisionType(Enum):
     TIMEOUT = "timeout"
     MANUAL = "manual"
 
+
 class AutomationLevel(Enum):
     BASIC = "basic"
     INTERMEDIATE = "intermediate"
     ADVANCED = "advanced"
     INTELLIGENT = "intelligent"
+
 
 @dataclass
 class WorkflowStep:
@@ -49,6 +53,7 @@ class WorkflowStep:
     max_retries: int = 3
     dependencies: List[str] = None
 
+
 @dataclass
 class WorkflowExecution:
     execution_id: str
@@ -60,6 +65,7 @@ class WorkflowExecution:
     results: Dict[str, Any]
     error: Optional[str] = None
 
+
 @dataclass
 class DecisionRule:
     rule_id: str
@@ -69,6 +75,7 @@ class DecisionRule:
     priority: int
     enabled: bool
     created_at: datetime
+
 
 class WorkflowAutomationService:
     """Advanced workflow automation service for Phase 9"""

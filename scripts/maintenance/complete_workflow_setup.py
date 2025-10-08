@@ -26,6 +26,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class CompleteWorkflowSetup:
     """Complete Workflow Setup Manager"""
 
@@ -558,6 +559,7 @@ Generate a complete workflow implementation."""
         if self.ai_service:
             await self.ai_service.shutdown()
 
+
 async def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="Complete Workflow Setup")
@@ -651,6 +653,7 @@ async def main():
 
     finally:
         await setup.shutdown()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

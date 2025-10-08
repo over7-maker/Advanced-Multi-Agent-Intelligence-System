@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from ..base.agent_communication import AgentCommunication
 
+
 class AgentStatus(Enum):
     """Agent status enumeration"""
 
@@ -23,6 +24,7 @@ class AgentStatus(Enum):
     BUSY = "busy"
     ERROR = "error"
     OFFLINE = "offline"
+
 
 class IntelligenceAgent(ABC):
     """

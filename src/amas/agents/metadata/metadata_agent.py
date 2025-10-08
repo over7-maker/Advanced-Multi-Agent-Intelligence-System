@@ -11,6 +11,7 @@ from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 
+
 class MetadataAgent(IntelligenceAgent):
     """Metadata Agent for AMAS Intelligence System"""
 

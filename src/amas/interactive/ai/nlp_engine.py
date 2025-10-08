@@ -40,6 +40,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+
 @dataclass
 class Entity:
     """Named entity data structure"""
@@ -55,6 +56,7 @@ class Entity:
         if self.metadata is None:
             self.metadata = {}
 
+
 @dataclass
 class Intent:
     """Intent data structure"""
@@ -69,6 +71,7 @@ class Intent:
             self.parameters = {}
         if self.metadata is None:
             self.metadata = {}
+
 
 @dataclass
 class CommandAnalysis:
@@ -88,6 +91,7 @@ class CommandAnalysis:
             self.suggestions = []
         if self.metadata is None:
             self.metadata = {}
+
 
 class NLPEngine:
     """Advanced Natural Language Processing Engine"""

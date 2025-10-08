@@ -24,6 +24,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class AICodeAnalyzer:
     """AI-powered code analyzer"""
 
@@ -386,6 +387,7 @@ Provide:
         if self.ai_service:
             await self.ai_service.shutdown()
 
+
 async def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Code Analyzer")
@@ -458,6 +460,7 @@ async def main():
 
     finally:
         await analyzer.shutdown()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

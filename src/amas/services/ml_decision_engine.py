@@ -28,6 +28,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 logger = logging.getLogger(__name__)
 
+
 class TaskType(Enum):
     """Task type enumeration"""
 
@@ -41,6 +42,7 @@ class TaskType(Enum):
     SECURITY_ANALYSIS = "security_analysis"
     COMPLIANCE_AUDIT = "compliance_audit"
     PERFORMANCE_OPTIMIZATION = "performance_optimization"
+
 
 class AgentType(Enum):
     """Agent type enumeration"""
@@ -56,6 +58,7 @@ class AgentType(Enum):
     COMPLIANCE_AGENT = "compliance_agent"
     PERFORMANCE_AGENT = "performance_agent"
 
+
 class DecisionStrategy(Enum):
     """Decision strategy enumeration"""
 
@@ -64,6 +67,7 @@ class DecisionStrategy(Enum):
     HYBRID = "hybrid"
     RANDOM = "random"
     ROUND_ROBIN = "round_robin"
+
 
 @dataclass
 class Task:
@@ -79,6 +83,7 @@ class Task:
     deadline: Optional[datetime] = None
     dependencies: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class Agent:
@@ -96,6 +101,7 @@ class Agent:
     location: str = "default"
     last_activity: datetime = field(default_factory=datetime.utcnow)
 
+
 @dataclass
 class AllocationDecision:
     """Task allocation decision"""
@@ -109,6 +115,7 @@ class AllocationDecision:
     alternative_agents: List[str] = field(default_factory=list)
     risk_factors: List[str] = field(default_factory=list)
 
+
 @dataclass
 class PerformanceMetrics:
     """Performance metrics for ML models"""
@@ -120,6 +127,7 @@ class PerformanceMetrics:
     f1_score: float
     last_updated: datetime
     training_samples: int
+
 
 class MLDecisionEngine:
     """

@@ -12,6 +12,7 @@ from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+
 class AgentCommunication:
     """Handles communication between agents"""
 

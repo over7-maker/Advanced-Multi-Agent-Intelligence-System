@@ -15,6 +15,7 @@ from cryptography.fernet import Fernet
 
 logger = logging.getLogger(__name__)
 
+
 class SecurityService:
     """Security service for AMAS Intelligence System"""
 

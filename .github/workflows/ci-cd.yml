@@ -37,7 +37,7 @@ jobs:
       run: |
         python -m ensurepip --upgrade
         python -m pip install --upgrade pip
-        pip install -e .[ci]
+        pip install -r requirements.txt
     
     - name: 🎨 Code formatting check
       run: |
@@ -115,7 +115,7 @@ jobs:
       run: |
         python -m ensurepip --upgrade
         python -m pip install --upgrade pip
-        pip install -e .[ci]
+        pip install -r requirements.txt
     
     - name: 🏗️ Setup test environment
       run: |
@@ -223,7 +223,7 @@ jobs:
       run: |
 
         python -m ensurepip --upgrade
-        pip install -e .[dev]
+        pip install -r requirements.txt
     
     - name: 🎭 Run E2E tests
       run: |

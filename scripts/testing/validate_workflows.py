@@ -19,6 +19,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class WorkflowValidator:
     """Comprehensive workflow validator"""
 
@@ -303,6 +304,7 @@ class WorkflowValidator:
         except Exception as e:
             logger.error(f"Error saving validation report: {e}")
 
+
 def main():
     """Main function"""
     import argparse
@@ -379,6 +381,7 @@ def main():
     except Exception as e:
         logger.error(f"Error in main: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

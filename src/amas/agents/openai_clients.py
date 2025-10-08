@@ -2,9 +2,11 @@ import os
 
 from openai import OpenAI
 
+
 def get_client(api_key: str) -> OpenAI:
     """Returns an OpenAI client configured for OpenRouter."""
     return OpenAI(base_url="https://openrouter.ai/api/v1", api_key=api_key)
+
 
 def deepseek_chat(prompt: str):
     """Call DeepSeek model."""
@@ -24,6 +26,7 @@ def deepseek_chat(prompt: str):
     )
     return completion.choices[0].message.content
 
+
 def zai_glm_chat(prompt: str):
     """Call Z.AI GLM 4.5 Air model."""
     api_key = os.environ.get("GLM_API_KEY")
@@ -41,6 +44,7 @@ def zai_glm_chat(prompt: str):
         messages=[{"role": "user", "content": prompt}],
     )
     return completion.choices[0].message.content
+
 
 def xai_grok_chat(prompt: str, image_url: str = None):
     """Call xAI Grok 4 Fast model with optional image context."""

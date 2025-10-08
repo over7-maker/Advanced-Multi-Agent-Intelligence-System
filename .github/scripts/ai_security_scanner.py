@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 import requests
 from openai import OpenAI
 
+
 class AISecurityScanner:
     def __init__(self):
         self.github_token = os.environ.get("GITHUB_TOKEN")
@@ -676,6 +677,7 @@ Detected Issues:
                 self.post_pr_comment(report)
         else:
             print("✅ No security issues detected in scanned files.")
+
 
 if __name__ == "__main__":
     scanner = AISecurityScanner()

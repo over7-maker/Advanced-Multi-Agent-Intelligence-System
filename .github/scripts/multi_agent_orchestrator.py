@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
+
 class MultiAgentOrchestrator:
     def __init__(self):
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -347,9 +348,11 @@ This report presents a comprehensive intelligence analysis conducted by multiple
 
         return results
 
+
 async def main():
     orchestrator = MultiAgentOrchestrator()
     await orchestrator.run()
+
 
 if __name__ == "__main__":
     print("🔍 AMAS Multi-Agent Intelligence System")

@@ -61,6 +61,7 @@ from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree
 
+
 class QuantumIntent(Enum):
     """Quantum intent classification"""
 
@@ -73,6 +74,7 @@ class QuantumIntent(Enum):
     QUANTUM_ENTANGLEMENT = "quantum_entanglement"
     CONSCIOUSNESS_EVOLUTION = "consciousness_evolution"
 
+
 class ConsciousnessLevel(Enum):
     """Consciousness level for language understanding"""
 
@@ -82,6 +84,7 @@ class ConsciousnessLevel(Enum):
     SELF_AWARE = 3
     TRANSCENDENT = 4
     QUANTUM_CONSCIOUS = 5
+
 
 @dataclass
 class QuantumEntity:
@@ -98,6 +101,7 @@ class QuantumEntity:
     phase: float
     metadata: Dict[str, Any]
 
+
 @dataclass
 class QuantumIntentResult:
     """Quantum intent classification result"""
@@ -113,6 +117,7 @@ class QuantumIntentResult:
     reasoning: List[str]
     metadata: Dict[str, Any]
 
+
 @dataclass
 class QuantumLanguageAnalysis:
     """Quantum language analysis result"""
@@ -127,6 +132,7 @@ class QuantumLanguageAnalysis:
     transcendent_insights: List[str]
     quantum_signature: str
     metadata: Dict[str, Any]
+
 
 class QuantumNLPEngine:
     """Revolutionary Quantum Natural Language Processing Engine"""
@@ -1000,6 +1006,7 @@ class QuantumNLPEngine:
             metrics_table.add_row(metric.replace("_", " ").title(), str(value))
 
         self.console.print(metrics_table)
+
 
 if __name__ == "__main__":
     # Initialize quantum NLP engine

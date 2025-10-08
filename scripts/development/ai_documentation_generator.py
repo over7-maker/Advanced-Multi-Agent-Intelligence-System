@@ -24,6 +24,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class AIDocumentationGenerator:
     """AI-powered documentation generator"""
 
@@ -384,6 +385,7 @@ Provide:
         if self.ai_service:
             await self.ai_service.shutdown()
 
+
 async def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Documentation Generator")
@@ -459,7 +461,7 @@ async def main():
             print("=" * 50)
 
         logger.info(
-                    f"Generated {len(docs)} documentation files in {elapsed_time:.2f} seconds"
+            f"Generated {len(docs)} documentation files in {elapsed_time:.2f} seconds"
         )
 
     except Exception as e:
@@ -468,6 +470,7 @@ async def main():
 
     finally:
         await generator.shutdown()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

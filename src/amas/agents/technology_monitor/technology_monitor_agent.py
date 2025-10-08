@@ -10,6 +10,7 @@ from ..base.intelligence_agent import IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 
+
 class TechnologyMonitorAgent(IntelligenceAgent):
     """Technology Monitor Agent for AMAS Intelligence System"""
 

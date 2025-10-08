@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
+
 class ConfigLevel(Enum):
     """Configuration levels based on available API keys"""
 
@@ -31,6 +32,7 @@ class ProviderConfig:
     priority: int
     required: bool = False
     fallback_available: bool = True
+
 
 @dataclass
 class MinimalConfig:
@@ -89,6 +91,7 @@ class MinimalConfig:
             "real_time_monitoring": self.config_level == ConfigLevel.FULL,
         }
         return features
+
 
 class MinimalConfigManager:
     """Manages minimal configuration with graceful degradation"""
@@ -277,7 +280,9 @@ class MinimalConfigManager:
             ai_config.disable_provider(provider)
 
         # Enable only available required and optional providers
-        for provider in minimal_config.required_providers + minimal_config.optional_providers:
+        for provider in (
+            minimal_config.required_providers + minimal_config.optional_providers
+        ):
             config = ai_config.get_provider_config(provider)
             if config and config.api_key:
                 ai_config.enable_provider(provider)
@@ -447,8 +452,10 @@ services:
 
         return recommendations
 
+
 # Global configuration manager
 _config_manager: Optional[MinimalConfigManager] = None
+
 
 def get_config_manager() -> MinimalConfigManager:
     """Get or create the global configuration manager"""
@@ -514,4 +521,3 @@ if __name__ == "__main__":
 
     # Show setup instructions
     print("\n" + config_manager.get_setup_instructions())
->>>>>>> origin/main

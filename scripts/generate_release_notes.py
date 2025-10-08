@@ -13,6 +13,7 @@ from typing import Any, Dict, List
 
 import requests
 
+
 def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="Generate AI-enhanced release notes")
@@ -82,6 +83,7 @@ def main():
 
     print(f"✅ Release notes generated: {output_file}")
     return True
+
 
 def generate_release_notes(version: str) -> str:
     """Generate comprehensive release notes"""
@@ -205,6 +207,7 @@ Thanks to all contributors who made this release possible!
 """
 
     return release_notes
+
 
 if __name__ == "__main__":
     try:

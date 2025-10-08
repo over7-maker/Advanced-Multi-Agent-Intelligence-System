@@ -18,6 +18,7 @@ from .ai_api_manager import AIAPIManager, get_ai_response
 from .api_integration import EnhancedAgentOrchestrator, initialize_enhanced_system
 from .enhanced_orchestrator import EnhancedOrchestrator, execute_task, run_investigation
 
+
 class QuickStartIntegration:
     """Quick start integration for AMAS AI API Manager"""
 
@@ -277,6 +278,7 @@ class QuickStartIntegration:
         except Exception as e:
             print(f"   ❌ Failed: {e}")
 
+
 async def main():
     """Main entry point for quick start integration"""
     print("🚀 AMAS AI API Manager - Quick Start Integration")
@@ -344,6 +346,7 @@ async def main():
     else:
         print("\n⚠️  Some tests failed. Please check your configuration.")
         print("   Make sure your API keys are valid and have sufficient quota.")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

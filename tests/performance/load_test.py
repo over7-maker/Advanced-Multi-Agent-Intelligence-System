@@ -2,6 +2,7 @@
 
 from locust import HttpUser, between, task
 
+
 class AMASUser(HttpUser):
     """Simulated AMAS user for load testing"""
 

@@ -7,6 +7,7 @@ import re
 import sys
 from pathlib import Path
 
+
 def check_actual_security_issues():
     """Check for ACTUAL security vulnerabilities only"""
     print("🔍 Checking for real security vulnerabilities...")
@@ -91,6 +92,7 @@ def check_actual_security_issues():
         print("✅ No security vulnerabilities found in source code")
         return True
 
+
 def check_production_configuration():
     """Check production configuration"""
     print("🔍 Checking production configuration...")
@@ -136,6 +138,7 @@ def check_production_configuration():
 
     return all(config_checks)
 
+
 def main():
     """Final security verification"""
     print("🛡️  ULTIMATE SECURITY VERIFICATION")
@@ -173,6 +176,7 @@ def main():
 
         print(f"❌ Issues: {', '.join(issues)}")
         return 1
+
 
 if __name__ == "__main__":
     sys.exit(main())

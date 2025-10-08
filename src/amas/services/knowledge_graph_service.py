@@ -18,6 +18,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+
 class KnowledgeGraphService:
     """Knowledge Graph Service for AMAS Intelligence System"""
 

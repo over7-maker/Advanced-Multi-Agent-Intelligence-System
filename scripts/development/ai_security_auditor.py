@@ -24,6 +24,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class AISecurityAuditor:
     """AI-powered security auditor"""
 
@@ -458,6 +459,7 @@ Provide:
         if self.ai_service:
             await self.ai_service.shutdown()
 
+
 async def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Security Auditor")
@@ -540,6 +542,7 @@ async def main():
 
     finally:
         await auditor.shutdown()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

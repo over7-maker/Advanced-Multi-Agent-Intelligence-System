@@ -22,6 +22,7 @@ import redis
 
 logger = logging.getLogger(__name__)
 
+
 class MessageType(Enum):
     """Message type enumeration"""
 
@@ -33,6 +34,7 @@ class MessageType(Enum):
     BROADCAST = "broadcast"
     PRIORITY_ALERT = "priority_alert"
 
+
 class MessagePriority(Enum):
     """Message priority levels"""
 
@@ -42,6 +44,7 @@ class MessagePriority(Enum):
     CRITICAL = 4
     EMERGENCY = 5
 
+
 class RoutingStrategy(Enum):
     """Message routing strategies"""
 
@@ -50,6 +53,7 @@ class RoutingStrategy(Enum):
     AFFINITY_BASED = "affinity_based"
     GEOGRAPHIC = "geographic"
     CAPABILITY_BASED = "capability_based"
+
 
 @dataclass
 class Message:
@@ -70,6 +74,7 @@ class Message:
     max_retries: int = 3
     compressed: bool = False
 
+
 @dataclass
 class AgentCapability:
     """Agent capability definition"""
@@ -79,6 +84,7 @@ class AgentCapability:
     load_factor: float
     last_heartbeat: datetime
     status: str = "active"
+
 
 @dataclass
 class MessageQueue:
@@ -90,6 +96,7 @@ class MessageQueue:
     ttl: int
     routing_strategy: RoutingStrategy
     consumers: List[str] = field(default_factory=list)
+
 
 class EnterpriseCommunicationService:
     """

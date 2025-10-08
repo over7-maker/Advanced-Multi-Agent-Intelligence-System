@@ -43,6 +43,7 @@ from rich.syntax import Syntax
 from rich.table import Table
 from rich.text import Text
 
+
 class TaskStatus(Enum):
     """Task status enumeration"""
 
@@ -54,6 +55,7 @@ class TaskStatus(Enum):
     CANCELLED = "cancelled"
     PAUSED = "paused"
 
+
 class TaskPriority(Enum):
     """Task priority enumeration"""
 
@@ -61,6 +63,7 @@ class TaskPriority(Enum):
     NORMAL = 2
     HIGH = 3
     CRITICAL = 4
+
 
 @dataclass
 class Task:
@@ -88,6 +91,7 @@ class Task:
             self.results = {}
         if self.metadata is None:
             self.metadata = {}
+
 
 class SimpleAMASInteractiveCLI:
     """Simple Interactive Command Line Interface for AMAS"""
@@ -930,6 +934,7 @@ class SimpleAMASInteractiveCLI:
 
         except Exception as e:
             self.console.print(f"❌ Cleanup failed: {e}", style="red")
+
 
 if __name__ == "__main__":
     try:

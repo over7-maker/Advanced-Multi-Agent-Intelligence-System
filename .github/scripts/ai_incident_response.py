@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 import requests
 from openai import OpenAI
 
+
 class AIIncidentResponse:
     def __init__(self):
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -431,9 +432,11 @@ This report presents comprehensive incident response analysis conducted by multi
 
         return results
 
+
 async def main():
     responder = AIIncidentResponse()
     await responder.run()
+
 
 if __name__ == "__main__":
     print("🚨 AMAS Incident Response System")

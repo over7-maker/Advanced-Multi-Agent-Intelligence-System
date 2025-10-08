@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 import requests
 from openai import OpenAI
 
+
 class AIMasterOrchestrator:
     def __init__(self):
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -478,9 +479,11 @@ This report presents comprehensive master orchestration analysis conducted by mu
 
         return results
 
+
 async def main():
     orchestrator = AIMasterOrchestrator()
     await orchestrator.run()
+
 
 if __name__ == "__main__":
     print("🎯 AMAS Master AI Orchestrator")

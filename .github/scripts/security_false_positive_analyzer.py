@@ -8,6 +8,7 @@ import os
 import re
 from typing import Any, Dict, List, Optional
 
+
 class SecurityFalsePositiveAnalyzer:
     def __init__(self):
         self.pattern_definition_indicators = [
@@ -183,6 +184,7 @@ The security scanner is detecting its own pattern definitions as vulnerabilities
 
         return report
 
+
 def main():
     # Sample security report for testing
     sample_report = """
@@ -215,6 +217,7 @@ def main():
         f.write(report)
 
     print("📋 False positive analysis saved to artifacts/false_positive_analysis.md")
+
 
 if __name__ == "__main__":
     main()

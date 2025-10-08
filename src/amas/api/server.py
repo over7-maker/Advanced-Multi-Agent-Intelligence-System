@@ -37,12 +37,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Pydantic models
 class TaskRequest(BaseModel):
     task_type: str
     target: str
     parameters: Optional[Dict[str, Any]] = {}
     user_id: Optional[str] = "api_user"
+
 
 class TaskResponse(BaseModel):
     task_id: str
@@ -51,6 +53,7 @@ class TaskResponse(BaseModel):
     agents_used: List[str]
     result: Dict[str, Any]
 
+
 class SystemStatus(BaseModel):
     system_status: str
     agents: Dict[str, int]
@@ -58,6 +61,7 @@ class SystemStatus(BaseModel):
     tasks: Dict[str, int]
     intelligence: Dict[str, Any]
     timestamp: str
+
 
 # API Routes
 @app.get("/", response_class=HTMLResponse)
@@ -82,10 +86,12 @@ async def root():
     </html>
     """
 
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+
 
 @app.get("/api/status", response_model=SystemStatus)
 async def get_system_status():
@@ -96,6 +102,7 @@ async def get_system_status():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/agents")
 async def get_agents():
     """Get all available agents and their capabilities"""
@@ -105,6 +112,7 @@ async def get_agents():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/providers")
 async def get_providers():
     """Get AI provider status"""
@@ -113,6 +121,7 @@ async def get_providers():
         return {"providers": status}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.post("/api/tasks", response_model=TaskResponse)
 async def execute_task(task_request: TaskRequest, background_tasks: BackgroundTasks):
@@ -128,6 +137,7 @@ async def execute_task(task_request: TaskRequest, background_tasks: BackgroundTa
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/api/tasks/{task_id}")
 async def get_task_status(task_id: str):
     """Get status of a specific task"""
@@ -138,6 +148,7 @@ async def get_task_status(task_id: str):
         "message": "Task tracking not implemented yet",
     }
 
+
 @app.get("/api/intelligence")
 async def get_intelligence_status():
     """Get intelligence system status"""
@@ -147,6 +158,7 @@ async def get_intelligence_status():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/api/intelligence/learn")
 async def trigger_learning():
     """Trigger collective learning cycle"""
@@ -155,6 +167,7 @@ async def trigger_learning():
         return {"message": "Learning cycle triggered", "status": "success"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # Mount static files for dashboard
 try:
@@ -175,6 +188,7 @@ except:
         </html>
         """
 
+
 # Startup and shutdown events
 @app.on_event("startup")
 async def startup_event():
@@ -186,10 +200,12 @@ async def startup_event():
 
     logging.info("✅ AMAS API Server started successfully")
 
+
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown"""
     logging.info("👋 Shutting down AMAS API Server...")
+
 
 # Run the server
 if __name__ == "__main__":

@@ -26,12 +26,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class ProviderStatus(Enum):
     ACTIVE = "active"
     FAILED = "failed"
     TESTING = "testing"
     UNKNOWN = "unknown"
     RATE_LIMITED = "rate_limited"
+
 
 class UltimateFallbackSystem:
     """Ultimate fallback system for all 9 AI providers"""
@@ -777,25 +779,31 @@ class UltimateFallbackSystem:
             f"Fallback order reset - Mode: {'Random' if self.random_mode else 'Priority'}"
         )
 
+
 # Global fallback system instance
 ultimate_fallback_system = UltimateFallbackSystem()
+
 
 # Convenience functions
 async def generate_ai_response(prompt: str, **kwargs) -> Dict[str, Any]:
     """Generate AI response with intelligent fallback"""
     return await ultimate_fallback_system.generate_response(prompt, **kwargs)
 
+
 def get_fallback_stats() -> Dict[str, Any]:
     """Get fallback statistics"""
     return ultimate_fallback_system.get_fallback_stats()
+
 
 def get_provider_health() -> Dict[str, Any]:
     """Get provider health information"""
     return ultimate_fallback_system.get_provider_health()
 
+
 def reset_fallback_order():
     """Reset fallback order"""
     ultimate_fallback_system.reset_fallback_order()
+
 
 # Test function
 async def test_ultimate_fallback():
@@ -832,6 +840,7 @@ async def test_ultimate_fallback():
     print(f"\n🏥 Provider Health:")
     for provider_id, info in health.items():
         print(f"  {info['name']}: {info['status']} ({info['success_rate']})")
+
 
 if __name__ == "__main__":
     asyncio.run(test_ultimate_fallback())

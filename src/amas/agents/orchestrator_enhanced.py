@@ -24,6 +24,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class AgentType(Enum):
     """Agent types for intelligence operations"""
 
@@ -36,6 +37,7 @@ class AgentType(Enum):
     REPORTING = "reporting"
     TECHNOLOGY_MONITOR = "technology_monitor"
 
+
 class TaskStatus(Enum):
     """Task status enumeration"""
 
@@ -46,6 +48,7 @@ class TaskStatus(Enum):
     CANCELLED = "cancelled"
     PAUSED = "paused"
 
+
 class TaskPriority(Enum):
     """Task priority levels"""
 
@@ -55,6 +58,7 @@ class TaskPriority(Enum):
     CRITICAL = 4
     URGENT = 5
 
+
 class AgentStatus(Enum):
     """Agent status enumeration"""
 
@@ -63,6 +67,7 @@ class AgentStatus(Enum):
     ERROR = "error"
     OFFLINE = "offline"
     MAINTENANCE = "maintenance"
+
 
 @dataclass
 class Task:
@@ -106,6 +111,7 @@ class Task:
             "tags": self.tags,
         }
 
+
 @dataclass
 class Agent:
     """Enhanced Agent data structure"""
@@ -139,6 +145,7 @@ class Agent:
             "error_count": self.error_count,
             "success_count": self.success_count,
         }
+
 
 class BaseAgent(ABC):
     """Enhanced base class for all intelligence agents"""
@@ -202,6 +209,7 @@ class BaseAgent(ABC):
             if (self.success_count + self.error_count) > 0
             else 0.0
         )
+
 
 class EnhancedAgentOrchestrator:
     """Enhanced core orchestrator for multi-agent intelligence operations
@@ -425,6 +433,7 @@ class EnhancedAgentOrchestrator:
                 else 0.0
             ),
         }
+
 
 class EventBus:
     """Enhanced event bus for inter-agent communication"""

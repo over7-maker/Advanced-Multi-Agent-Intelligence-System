@@ -18,6 +18,7 @@ from amas.security.secure_config import SecureConfigManager
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class SecurityHardening:
     """Security hardening for AMAS system"""
 
@@ -430,6 +431,7 @@ class SecurityHardening:
 
         logger.info(f"📄 Security report saved to: {report_path}")
 
+
 def main():
     """Main function"""
     hardening = SecurityHardening()
@@ -441,6 +443,7 @@ def main():
     else:
         logger.error("❌ Security hardening failed. Please fix vulnerabilities.")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

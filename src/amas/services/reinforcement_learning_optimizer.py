@@ -49,7 +49,9 @@ except ImportError:
         def load(self, *args, **kwargs):
             pass
 
+
 logger = logging.getLogger(__name__)
+
 
 class OptimizationGoal(Enum):
     """Optimization goal enumeration"""
@@ -60,6 +62,7 @@ class OptimizationGoal(Enum):
     MAXIMIZE_AVAILABILITY = "maximize_availability"
     MINIMIZE_COST = "minimize_cost"
     BALANCED = "balanced"
+
 
 class ActionType(Enum):
     """Action type enumeration"""
@@ -72,6 +75,7 @@ class ActionType(Enum):
     ADJUST_TIMEOUTS = "adjust_timeouts"
     ENABLE_COMPRESSION = "enable_compression"
     DISABLE_FEATURES = "disable_features"
+
 
 @dataclass
 class SystemState:
@@ -91,6 +95,7 @@ class SystemState:
     availability: float
     cost: float
 
+
 @dataclass
 class OptimizationAction:
     """Optimization action"""
@@ -100,6 +105,7 @@ class OptimizationAction:
     confidence: float
     expected_impact: float
     risk_level: str = "low"
+
 
 @dataclass
 class OptimizationResult:
@@ -111,6 +117,7 @@ class OptimizationResult:
     success: bool
     metrics_improvement: Dict[str, float]
     timestamp: datetime = field(default_factory=datetime.utcnow)
+
 
 class AMASOptimizationEnv:
     """
@@ -321,6 +328,7 @@ class AMASOptimizationEnv:
             "availability": state.availability,
             "cost": state.cost,
         }
+
 
 class ReinforcementLearningOptimizer:
     """

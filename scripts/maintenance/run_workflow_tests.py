@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 # Import the Phase 5 system
 from main_phase5_complete import AMASPhase5System
 
+
 class WorkflowTestRunner:
     """Comprehensive workflow test runner"""
 
@@ -744,6 +745,7 @@ class WorkflowTestRunner:
             }
         )
 
+
 async def main():
     """Main test runner execution"""
     try:
@@ -753,6 +755,7 @@ async def main():
     except Exception as e:
         logger.error(f"Workflow test runner failed: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

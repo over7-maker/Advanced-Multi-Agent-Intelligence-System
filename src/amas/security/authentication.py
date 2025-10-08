@@ -16,6 +16,7 @@ from passlib.hash import bcrypt
 
 logger = logging.getLogger(__name__)
 
+
 class AuthenticationManager:
     """Enhanced authentication manager for AMAS"""
 

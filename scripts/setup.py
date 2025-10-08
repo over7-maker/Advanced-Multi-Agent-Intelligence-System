@@ -15,6 +15,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class AMASSetup:
     """AMAS Intelligence System Setup"""
 
@@ -211,10 +212,12 @@ class AMASSetup:
         for workflow in workflows:
             logger.info(f"Setting up workflow: {workflow}")
 
+
 async def main():
     """Main setup function"""
     setup = AMASSetup()
     await setup.setup_system()
+
 
 if __name__ == "__main__":
     import asyncio

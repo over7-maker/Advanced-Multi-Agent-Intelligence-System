@@ -27,6 +27,7 @@ from amas.core.enhanced_orchestrator import (
     run_investigation,
 )
 
+
 class APIManagerExamples:
     """Comprehensive examples of using the AI API Manager"""
 
@@ -319,6 +320,7 @@ class APIManagerExamples:
         except Exception as e:
             print(f"❌ Health check failed: {e}")
 
+
 async def main():
     """Run all examples"""
     print("🚀 AMAS AI API Manager - Comprehensive Usage Examples")
@@ -352,6 +354,7 @@ async def main():
     print("✅ Streaming response generation")
     print("✅ Advanced investigation workflows")
     print("=" * 80)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

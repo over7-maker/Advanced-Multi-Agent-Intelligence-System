@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 import requests
 from openai import OpenAI
 
+
 class AISecurityResponse:
     def __init__(self):
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -381,6 +382,7 @@ Thank you for the comprehensive security scan report! The AMAS AI Security Scann
 
         return results
 
+
 async def main():
     # Sample security report for testing
     sample_report = """
@@ -401,6 +403,7 @@ async def main():
 
     responder = AISecurityResponse()
     await responder.run(sample_report)
+
 
 if __name__ == "__main__":
     print("🔒 AMAS Security Response System")

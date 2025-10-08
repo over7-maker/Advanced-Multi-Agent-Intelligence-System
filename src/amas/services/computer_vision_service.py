@@ -17,6 +17,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
+
 class VisionTask(Enum):
     """Computer vision task enumeration"""
 
@@ -31,6 +32,7 @@ class VisionTask(Enum):
     OPTICAL_CHARACTER_RECOGNITION = "optical_character_recognition"
     IMAGE_SEGMENTATION = "image_segmentation"
 
+
 class ImageFormat(Enum):
     """Image format enumeration"""
 
@@ -39,6 +41,7 @@ class ImageFormat(Enum):
     BMP = "bmp"
     TIFF = "tiff"
     WEBP = "webp"
+
 
 @dataclass
 class BoundingBox:
@@ -50,6 +53,7 @@ class BoundingBox:
     height: int
     confidence: float
 
+
 @dataclass
 class DetectedObject:
     """Detected object data structure"""
@@ -58,6 +62,7 @@ class DetectedObject:
     confidence: float
     bounding_box: BoundingBox
     attributes: Dict[str, Any]
+
 
 @dataclass
 class ImageAnalysisResult:
@@ -72,6 +77,7 @@ class ImageAnalysisResult:
     processing_time: float
     timestamp: datetime
 
+
 @dataclass
 class Face:
     """Face data structure"""
@@ -81,6 +87,7 @@ class Face:
     landmarks: List[Tuple[int, int]]
     attributes: Dict[str, Any]
     embedding: List[float]
+
 
 class ComputerVisionService:
     """

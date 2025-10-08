@@ -23,6 +23,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 warnings.filterwarnings("ignore")
 import logging
 
+
 @dataclass
 class PredictionResult:
     prediction_type: str
@@ -32,6 +33,7 @@ class PredictionResult:
     recommendations: List[str]
     prediction_timestamp: str
     model_accuracy: float
+
 
 @dataclass
 class TaskOutcomePrediction:
@@ -43,6 +45,7 @@ class TaskOutcomePrediction:
     optimization_suggestions: List[str]
     confidence: float
 
+
 @dataclass
 class SystemResourcePrediction:
     time_horizon_minutes: int
@@ -51,6 +54,7 @@ class SystemResourcePrediction:
     predicted_task_load: int
     bottleneck_predictions: List[str]
     scaling_recommendations: List[str]
+
 
 class PredictiveIntelligenceEngine:
     """Advanced predictive analytics for AMAS system optimization"""
@@ -690,6 +694,7 @@ class PredictiveIntelligenceEngine:
             "last_training": datetime.now().isoformat(),
             "feature_importance": self.feature_importance,
         }
+
 
 # CLI interface for testing
 if __name__ == "__main__":

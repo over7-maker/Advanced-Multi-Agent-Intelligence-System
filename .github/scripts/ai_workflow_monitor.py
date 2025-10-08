@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional
 import requests
 from openai import OpenAI
 
+
 class AIWorkflowMonitor:
     def __init__(self):
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -503,9 +504,11 @@ This report presents comprehensive workflow monitoring analysis conducted by mul
 
         return results
 
+
 async def main():
     monitor = AIWorkflowMonitor()
     await monitor.run()
+
 
 if __name__ == "__main__":
     print("📊 AMAS Workflow Monitor")

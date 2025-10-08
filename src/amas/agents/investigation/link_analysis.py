@@ -13,6 +13,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
+
 class RelationshipType(Enum):
     """Types of relationships between entities"""
 
@@ -23,6 +24,7 @@ class RelationshipType(Enum):
     FINANCIAL = "financial"
     GEOGRAPHIC = "geographic"
     TEMPORAL = "temporal"
+
 
 @dataclass
 class Relationship:
@@ -36,6 +38,7 @@ class Relationship:
     metadata: Dict[str, Any]
     discovered_at: datetime
 
+
 @dataclass
 class NetworkNode:
     """Node in the relationship network"""
@@ -45,6 +48,7 @@ class NetworkNode:
     attributes: Dict[str, Any]
     connections: List[str]
     centrality_score: float
+
 
 class LinkAnalysis:
     """

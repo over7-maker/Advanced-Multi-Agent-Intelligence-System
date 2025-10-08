@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from amas.agents.base.intelligence_agent import IntelligenceAgent
 
+
 class QueryStrategy(Enum):
     """Query strategy types"""
 
@@ -23,6 +24,7 @@ class QueryStrategy(Enum):
     HYBRID = "hybrid"
     CONTEXTUAL = "contextual"
 
+
 class SynthesisMethod(Enum):
     """Information synthesis methods"""
 
@@ -30,6 +32,7 @@ class SynthesisMethod(Enum):
     SUMMARIZATION = "summarization"
     FUSION = "fusion"
     REASONING = "reasoning"
+
 
 @dataclass
 class QueryContext:
@@ -43,6 +46,7 @@ class QueryContext:
     constraints: Dict[str, Any]
     preferences: Dict[str, Any]
 
+
 @dataclass
 class RetrievalResult:
     """Retrieval result from a data source"""
@@ -54,6 +58,7 @@ class RetrievalResult:
     entities: List[str]
     timestamp: datetime
 
+
 @dataclass
 class SynthesisResult:
     """Synthesis result from multiple sources"""
@@ -63,6 +68,7 @@ class SynthesisResult:
     confidence_score: float
     reasoning_trace: List[Dict[str, Any]]
     metadata: Dict[str, Any]
+
 
 class AgenticRAG:
     """

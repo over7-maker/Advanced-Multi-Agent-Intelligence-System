@@ -20,6 +20,7 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+
 @dataclass
 class ContextEntry:
     """Context entry data structure"""
@@ -37,6 +38,7 @@ class ContextEntry:
         if self.metadata is None:
             self.metadata = {}
 
+
 @dataclass
 class UserProfile:
     """User profile data structure"""
@@ -53,6 +55,7 @@ class UserProfile:
     def __post_init__(self):
         if self.metadata is None:
             self.metadata = {}
+
 
 class ContextManager:
     """Advanced Context Management System"""

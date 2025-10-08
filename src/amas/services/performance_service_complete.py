@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
+
 class CacheStrategy(Enum):
     """Cache strategy enumeration"""
 
@@ -24,6 +25,7 @@ class CacheStrategy(Enum):
     WRITE_THROUGH = "write_through"
     WRITE_BACK = "write_back"
 
+
 class LoadBalanceStrategy(Enum):
     """Load balancing strategy enumeration"""
 
@@ -32,6 +34,7 @@ class LoadBalanceStrategy(Enum):
     WEIGHTED_ROUND_ROBIN = "weighted_round_robin"
     LEAST_RESPONSE_TIME = "least_response_time"
     RANDOM = "random"
+
 
 @dataclass
 class CacheEntry:
@@ -45,6 +48,7 @@ class CacheEntry:
     ttl: Optional[float] = None
     size: int = 0
 
+
 @dataclass
 class PerformanceMetrics:
     """Performance metrics data structure"""
@@ -57,6 +61,7 @@ class PerformanceMetrics:
     memory_usage: float
     connection_count: int
     timestamp: datetime
+
 
 class PerformanceService:
     """

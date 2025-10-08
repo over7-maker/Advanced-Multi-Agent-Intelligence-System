@@ -17,6 +17,7 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+
 class AnalyticsType(Enum):
     """Analytics type enumeration"""
 
@@ -29,6 +30,7 @@ class AnalyticsType(Enum):
     PATTERN = "pattern"
     ANOMALY = "anomaly"
 
+
 class IntelligenceLevel(Enum):
     """Intelligence level enumeration"""
 
@@ -36,6 +38,7 @@ class IntelligenceLevel(Enum):
     OPERATIONAL = "operational"
     STRATEGIC = "strategic"
     EXECUTIVE = "executive"
+
 
 @dataclass
 class AnalyticsResult:
@@ -51,6 +54,7 @@ class AnalyticsResult:
     timestamp: datetime
     processing_time: float
 
+
 @dataclass
 class IntelligenceInsight:
     """Intelligence insight data structure"""
@@ -64,6 +68,7 @@ class IntelligenceInsight:
     implications: List[str]
     actionable_items: List[str]
     timestamp: datetime
+
 
 class AIAnalyticsService:
     """

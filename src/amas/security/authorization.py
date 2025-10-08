@@ -1,5 +1,6 @@
 """Authorization module for AMAS"""
 
+
 class AuthorizationManager:
     """Simple authorization manager"""
 

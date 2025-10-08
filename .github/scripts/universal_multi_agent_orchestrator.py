@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.amas.services.universal_ai_manager import get_universal_ai_manager
 
+
 class UniversalMultiAgentOrchestrator:
     """
     Multi-agent orchestrator using Universal AI Manager
@@ -417,6 +418,7 @@ class UniversalMultiAgentOrchestrator:
         print(f"⚡ Average response time: {stats['average_response_time']}")
         print("=" * 80)
 
+
 async def main():
     """Main entry point"""
     import argparse
@@ -435,6 +437,7 @@ async def main():
 
     orchestrator = UniversalMultiAgentOrchestrator()
     await orchestrator.run(topic=args.topic, strategy=args.strategy)
+
 
 if __name__ == "__main__":
     asyncio.run(main())

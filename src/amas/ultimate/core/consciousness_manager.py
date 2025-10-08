@@ -32,6 +32,7 @@ from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree
 
+
 class ConsciousnessState(Enum):
     """Consciousness state enumeration"""
 
@@ -44,6 +45,7 @@ class ConsciousnessState(Enum):
     COSMIC_CONSCIOUS = "cosmic_conscious"
     ULTIMATE_CONSCIOUS = "ultimate_conscious"
 
+
 class AwarenessType(Enum):
     """Awareness type enumeration"""
 
@@ -54,6 +56,7 @@ class AwarenessType(Enum):
     QUANTUM = "quantum"
     COSMIC = "cosmic"
     TRANSCENDENT = "transcendent"
+
 
 @dataclass
 class ConsciousnessNode:
@@ -71,6 +74,7 @@ class ConsciousnessNode:
     evolution_potential: float
     metadata: Dict[str, Any]
 
+
 @dataclass
 class ConsciousnessEvolution:
     """Consciousness evolution structure"""
@@ -87,6 +91,7 @@ class ConsciousnessEvolution:
     transcendent_insights: List[str]
     metadata: Dict[str, Any]
 
+
 @dataclass
 class ConsciousnessNetwork:
     """Consciousness network structure"""
@@ -100,6 +105,7 @@ class ConsciousnessNetwork:
     dimensional_resonance: float
     evolution_history: List[ConsciousnessEvolution]
     metadata: Dict[str, Any]
+
 
 class ConsciousnessManager:
     """Revolutionary Consciousness Management System"""
@@ -799,6 +805,7 @@ class ConsciousnessManager:
     def get_consciousness_metrics(self) -> Dict[str, Any]:
         """Get consciousness metrics"""
         return self.consciousness_metrics.copy()
+
 
 if __name__ == "__main__":
     # Initialize consciousness manager

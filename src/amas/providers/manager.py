@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
+
 @dataclass
 class ProviderConfig:
     name: str
@@ -20,11 +21,13 @@ class ProviderConfig:
     max_retries: int = 3
     timeout: int = 30
 
+
 class ProviderStatus(Enum):
     ENABLED = "enabled"
     DISABLED = "disabled"
     ERROR = "error"
     QUOTA_EXCEEDED = "quota_exceeded"
+
 
 class AIProvider(ABC):
     """Abstract base class for AI providers"""
@@ -60,6 +63,7 @@ class AIProvider(ABC):
             self.status = ProviderStatus.ERROR
         elif "quota" in str(error).lower():
             self.status = ProviderStatus.QUOTA_EXCEEDED
+
 
 class ProviderManager:
     """Centralized provider management with dynamic discovery"""
@@ -239,6 +243,7 @@ class ProviderManager:
 
         return validation_result
 
+
 class MockProvider(AIProvider):
     """Mock provider for testing and development"""
 
@@ -256,16 +261,20 @@ class MockProvider(AIProvider):
             "priority": self.config.priority,
         }
 
+
 # Global provider manager instance
 provider_manager = ProviderManager()
+
 
 def get_provider_manager() -> ProviderManager:
     """Get the global provider manager instance"""
     return provider_manager
 
+
 def validate_environment() -> Dict[str, Any]:
     """Validate the current environment configuration"""
     return provider_manager.validate_environment()
+
 
 # CLI interface for environment validation
 if __name__ == "__main__":
