@@ -5,7 +5,7 @@ Investigation Agent Implementation
 # import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 

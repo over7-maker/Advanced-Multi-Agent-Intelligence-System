@@ -4,18 +4,21 @@ Provides advanced message queuing, routing, and coordination protocols
 """
 
 import asyncio
+
 # import hashlib
 import json
 import logging
 import pickle
 import time
+
 # import uuid
 import zlib
-from collections import defaultdict, deque
+
+# from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import aioredis
 
