@@ -14,8 +14,9 @@ import pytest
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from amas.config.settings import get_settings
-from amas.core.self.orchestrator import IntelligenceOrchestrator
+# Import after path modification
+from amas.config.settings import get_settings  # noqa: E402
+from amas.core.self.orchestrator import IntelligenceOrchestrator  # noqa: E402
 
 
 class TestAMASIntegration:

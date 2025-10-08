@@ -11,12 +11,13 @@ import pytest
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from amas.services.database_service import DatabaseService
-from amas.services.knowledge_graph_service import KnowledgeGraphService
-from amas.services.llm_service import LLMService
-from amas.services.security_service import SecurityService
-from amas.services.service_manager import ServiceManager
-from amas.services.vector_service import VectorService
+# Import after path modification
+from amas.services.database_service import DatabaseService  # noqa: E402
+from amas.services.knowledge_graph_service import KnowledgeGraphService  # noqa: E402
+from amas.services.llm_service import LLMService  # noqa: E402
+from amas.services.security_service import SecurityService  # noqa: E402
+from amas.services.service_manager import ServiceManager  # noqa: E402
+from amas.services.vector_service import VectorService  # noqa: E402
 
 
 class TestServiceManager:
@@ -64,6 +65,7 @@ class TestServiceManager:
 
         assert health_status["overall_status"] == "healthy"
         assert len(health_status["services"]) == 3
+
 
 class TestDatabaseService:
     """Test Database Service"""
@@ -132,6 +134,7 @@ class TestDatabaseService:
         # Mock storage operation
         result = True  # In real test, this would be the actual result
         assert result is True
+
 
 class TestSecurityService:
     """Test Security Service"""
@@ -297,6 +300,7 @@ class TestSecurityService:
         assert "jwt_available" in health
         assert "audit_logging" in health
 
+
 class TestLLMService:
     """Test LLM Service"""
 
@@ -337,6 +341,7 @@ class TestLLMService:
         assert response["success"] is True
         assert "response" in response
         assert "model" in response
+
 
 class TestVectorService:
     """Test Vector Service"""
@@ -416,6 +421,7 @@ class TestVectorService:
         assert search_result["success"] is True
         assert len(search_result["results"]) == 1
         assert search_result["results"][0]["score"] == 0.9
+
 
 class TestKnowledgeGraphService:
     """Test Knowledge Graph Service"""
@@ -513,6 +519,7 @@ class TestKnowledgeGraphService:
         assert result["success"] is True
         assert len(result["paths"]) == 1
         assert result["paths"][0]["length"] == 2
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
