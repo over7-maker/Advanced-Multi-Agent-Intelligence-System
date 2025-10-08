@@ -375,10 +375,6 @@ class MinimalConfigManager:
 
         return "\n".join(instructions)
 
-    def get_feature_status(self) -> Dict[str, Any]:
-        """Get status of available features"""
-        config = self.get_config()
-
     def get_minimal_docker_compose(self, mode: ConfigLevel = ConfigLevel.BASIC) -> str:
         """Get minimal docker-compose configuration"""
         minimal_config = self.get_minimal_config(mode)

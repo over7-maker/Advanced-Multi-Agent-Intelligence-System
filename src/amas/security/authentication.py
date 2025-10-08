@@ -9,7 +9,6 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
-import bcrypt
 import jwt
 from passlib.context import CryptContext
 from passlib.hash import bcrypt

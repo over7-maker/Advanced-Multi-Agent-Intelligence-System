@@ -161,7 +161,6 @@ class OSINTAgent(IntelligenceAgent):
         try:
             import time
 
-            import aiohttp
             from bs4 import BeautifulSoup
 
             # Check rate limits

@@ -403,11 +403,13 @@ class HolographicRenderer:
 
         for field in self.active_fields.values():
             for particle in field.particles:
-                px, py, pz = particle.position
+                pos_x, pos_y, pos_z = particle.position
 
                 # Calculate distance
                 distance = math.sqrt(
-                    (screen_x - px) ** 2 + (screen_y - py) ** 2 + (screen_z - pz) ** 2
+                    (screen_x - pos_x) ** 2
+                    + (screen_y - pos_y) ** 2
+                    + (screen_z - pos_z) ** 2
                 )
 
                 # Calculate field contribution
