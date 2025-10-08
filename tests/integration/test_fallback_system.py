@@ -16,6 +16,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class FallbackSystemTester:
     """Test the intelligent fallback system"""
 
@@ -339,6 +340,7 @@ The intelligent fallback system is ready and operational with:
 """
         return report
 
+
 def main():
     """Main test function"""
     tester = FallbackSystemTester()
@@ -363,6 +365,7 @@ def main():
     print("=" * 60)
 
     return test_results
+
 
 if __name__ == "__main__":
     main()

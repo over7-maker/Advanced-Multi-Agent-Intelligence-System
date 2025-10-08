@@ -36,11 +36,11 @@ class TestUnifiedIntelligenceOrchestrator:
             llm_service=mock_llm_service,
             vector_service=mock_vector_service,
             knowledge_graph=mock_knowledge_graph,
-            security_service=mock_security_service
+            security_service=mock_security_service,
         )
 
         # Mock agent initialization
-        with patch.object(orchestrator, '_initialize_agents') as mock_init_agents:
+        with patch.object(orchestrator, "_initialize_agents") as mock_init_agents:
             mock_init_agents.return_value = None
             await orchestrator.initialize()
 
@@ -58,7 +58,7 @@ class TestUnifiedIntelligenceOrchestrator:
             title="Test Task",
             description="Test description",
             agent_type=AgentType.OSINT,
-            priority=TaskPriority.MEDIUM
+            priority=TaskPriority.MEDIUM,
         )
 
         assert task_id is not None
@@ -68,9 +68,15 @@ class TestUnifiedIntelligenceOrchestrator:
     async def test_task_priority_ordering(self, orchestrator):
         """Test tasks are ordered by priority"""
         # Submit tasks with different priorities
-        await orchestrator.submit_task("Low Task", "Description", AgentType.OSINT, TaskPriority.LOW)
-        await orchestrator.submit_task("High Task", "Description", AgentType.OSINT, TaskPriority.HIGH)
-        await orchestrator.submit_task("Medium Task", "Description", AgentType.OSINT, TaskPriority.MEDIUM)
+        await orchestrator.submit_task(
+            "Low Task", "Description", AgentType.OSINT, TaskPriority.LOW
+        )
+        await orchestrator.submit_task(
+            "High Task", "Description", AgentType.OSINT, TaskPriority.HIGH
+        )
+        await orchestrator.submit_task(
+            "Medium Task", "Description", AgentType.OSINT, TaskPriority.MEDIUM
+        )
 
         # Check ordering
         priorities = [task.priority.value for task in orchestrator.task_queue]
@@ -104,6 +110,7 @@ class TestUnifiedIntelligenceOrchestrator:
         # Check that agents are stopped and queues are cleared
         assert len(orchestrator.task_queue) == 0
         assert len(orchestrator.active_tasks) == 0
+
 
 class TestProviderManager:
     """Test the provider manager"""
@@ -173,6 +180,7 @@ class TestProviderManager:
         assert isinstance(health, dict)
         assert len(health) > 0
 
+
 class TestMinimalConfiguration:
     """Test minimal configuration functionality"""
 
@@ -226,6 +234,7 @@ class TestMinimalConfiguration:
         assert "redis:" in compose
         assert "neo4j:" in compose
 
+
 class TestOSINTAgentRealImplementation:
     """Test OSINT agent with real implementation"""
 
@@ -234,10 +243,7 @@ class TestOSINTAgentRealImplementation:
         """Create OSINT agent for testing"""
         from src.amas.agents.osint.osint_agent import OSINTAgent
 
-        agent = OSINTAgent(
-            agent_id="test_osint_001",
-            name="Test OSINT Agent"
-        )
+        agent = OSINTAgent(agent_id="test_osint_001", name="Test OSINT Agent")
         await agent.start()
         yield agent
         await agent.stop()
@@ -250,8 +256,8 @@ class TestOSINTAgentRealImplementation:
             "parameters": {
                 "urls": ["https://httpbin.org/html"],
                 "keywords": ["test", "example"],
-                "max_pages": 1
-            }
+                "max_pages": 1,
+            },
         }
 
         result = await osint_agent.execute_task(task)
@@ -269,8 +275,8 @@ class TestOSINTAgentRealImplementation:
             "parameters": {
                 "urls": ["https://invalid-url-that-does-not-exist.com"],
                 "keywords": ["test"],
-                "max_pages": 1
-            }
+                "max_pages": 1,
+            },
         }
 
         result = await osint_agent.execute_task(task)
@@ -283,10 +289,7 @@ class TestOSINTAgentRealImplementation:
         """Test news aggregation functionality"""
         task = {
             "type": "news_aggregation",
-            "parameters": {
-                "keywords": ["technology", "security"],
-                "max_articles": 5
-            }
+            "parameters": {"keywords": ["technology", "security"], "max_articles": 5},
         }
 
         result = await osint_agent.execute_task(task)
@@ -295,6 +298,7 @@ class TestOSINTAgentRealImplementation:
         assert result["task_type"] == "news_aggregation"
         assert "articles" in result
         assert "analysis" in result
+
 
 class TestForensicsAgentRealImplementation:
     """Test Forensics agent with real implementation"""
@@ -305,8 +309,7 @@ class TestForensicsAgentRealImplementation:
         from src.amas.agents.forensics.forensics_agent import ForensicsAgent
 
         agent = ForensicsAgent(
-            agent_id="test_forensics_001",
-            name="Test Forensics Agent"
+            agent_id="test_forensics_001", name="Test Forensics Agent"
         )
         await agent.start()
         yield agent
@@ -315,7 +318,7 @@ class TestForensicsAgentRealImplementation:
     async def test_file_analysis_real(self, forensics_agent):
         """Test real file analysis functionality"""
         # Create a temporary file for testing
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.txt') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as f:
             f.write("This is a test file for forensics analysis.\n")
             f.write("It contains some test content.\n")
             f.write("Email: test@example.com\n")
@@ -373,7 +376,7 @@ class TestForensicsAgentRealImplementation:
     async def test_metadata_extraction(self, forensics_agent):
         """Test metadata extraction functionality"""
         # Create a temporary file
-        with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False) as f:
             f.write("Test content")
             temp_file = f.name
 
@@ -407,6 +410,7 @@ class TestForensicsAgentRealImplementation:
         assert "error" in result
         assert "not found" in result["error"].lower()
 
+
 class TestPerformanceAndIntegration:
     """Test performance and integration aspects"""
 
@@ -425,6 +429,7 @@ class TestPerformanceAndIntegration:
         """Test system recovers from errors gracefully"""
         # This would test that the system continues to function after errors
         pass
+
 
 # Performance benchmarks
 class TestBenchmarks:
@@ -447,6 +452,7 @@ class TestBenchmarks:
         """Benchmark concurrent load handling"""
         # This would test system performance under load
         pass
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

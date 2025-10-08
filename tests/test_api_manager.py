@@ -129,10 +129,7 @@ class TestAIAPIManager:
 
             # Check if APIs were configured
             assert len(api_manager.apis) > 0
-            assert (
-                "deepseek" in api_manager.apis
-                or "codestral" in api_manager.apis
-            )
+            assert "deepseek" in api_manager.apis or "codestral" in api_manager.apis
 
     def test_get_available_apis(self, api_manager):
         """Test getting available APIs"""
@@ -219,23 +216,16 @@ class TestEnhancedOrchestrator:
         """Test agent type determination"""
         assert orchestrator._determine_agent_type("osint") == "osint_agent"
         assert orchestrator._determine_agent_type("analysis") == "analysis_agent"
-        assert (
-            orchestrator._determine_agent_type("code_analysis")
-            == "code_agent"
-        )
+        assert orchestrator._determine_agent_type("code_analysis") == "code_agent"
         assert orchestrator._determine_agent_type("unknown") == "general_agent"
 
     def test_get_system_prompt(self, orchestrator):
         """Test system prompt generation"""
-        osint_prompt = orchestrator._get_system_prompt(
-            "osint_agent", "osint"
-        )
+        osint_prompt = orchestrator._get_system_prompt("osint_agent", "osint")
         assert "OSINT" in osint_prompt
         assert "intelligence" in osint_prompt
 
-        analysis_prompt = orchestrator._get_system_prompt(
-            "analysis_agent", "analysis"
-        )
+        analysis_prompt = orchestrator._get_system_prompt("analysis_agent", "analysis")
         assert "analysis" in analysis_prompt
         assert "pattern" in analysis_prompt
 
@@ -371,9 +361,7 @@ class TestPerformance:
                 "api_used": "test_api",
             }
 
-            results = await orchestrator.execute_parallel_tasks(
-                tasks, max_concurrent=3
-            )
+            results = await orchestrator.execute_parallel_tasks(tasks, max_concurrent=3)
 
             assert len(results) == 5
             assert all(result.success for result in results)
@@ -429,6 +417,7 @@ class TestConfiguration:
         assert available[1] == "api3"
         assert available[2] == "api1"
 
+
 # Integration tests
 class TestEndToEnd:
     """End-to-end integration tests"""
@@ -466,6 +455,7 @@ class TestEndToEnd:
             assert result.success is True
             assert result.api_used == "backup_api"
 
+
 # Utility functions for testing
 def create_mock_api_response(
     content: str = "Test response", api_used: str = "test_api"
@@ -478,9 +468,8 @@ def create_mock_api_response(
         "timestamp": datetime.now().isoformat(),
     }
 
-def create_mock_task_result(
-    success: bool = True, error: str = None
-) -> TaskResult:
+
+def create_mock_task_result(success: bool = True, error: str = None) -> TaskResult:
     """Create mock task result for testing"""
     return TaskResult(
         task_id="test_001",
@@ -492,6 +481,7 @@ def create_mock_task_result(
         execution_time=1.0,
         timestamp=datetime.now().isoformat(),
     )
+
 
 # Run tests
 if __name__ == "__main__":

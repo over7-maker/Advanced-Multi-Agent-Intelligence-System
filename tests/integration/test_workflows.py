@@ -27,6 +27,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class WorkflowTester:
     """Test all AI workflows"""
 
@@ -510,6 +511,7 @@ class WorkflowTester:
         if self.ai_service:
             await self.ai_service.shutdown()
 
+
 async def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="Test Workflows")
@@ -621,6 +623,7 @@ async def main():
 
     finally:
         await tester.shutdown()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

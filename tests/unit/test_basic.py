@@ -10,6 +10,7 @@ def test_project_structure():
     assert Path("src/amas").exists()
     assert Path("src/amas/__init__.py").exists()
 
+
 def test_imports():
     """Test that basic imports work"""
     try:
@@ -20,11 +21,13 @@ def test_imports():
         # Skip if not installed
         pytest.skip("AMAS not installed")
 
+
 def test_configuration():
     """Test configuration structure"""
     config_path = Path("src/amas/config")
     assert config_path.exists()
     assert config_path.is_dir()
+
 
 class TestBasicFunctionality:
     """Test basic functionality"""

@@ -36,6 +36,7 @@ def test_api_keys():
     print(f"\n📊 API Key Status: {configured_count}/9 configured")
     return configured_count
 
+
 def test_workflow_files():
     """Test workflow files for 9-API support"""
     print("\n📄 Testing Workflow Files...")
@@ -67,6 +68,7 @@ def test_workflow_files():
     print(f"\n📊 Workflow Status: {updated_count}/{len(workflows)} updated")
     return updated_count
 
+
 def test_ai_scripts():
     """Test AI scripts for 9-API support"""
     print("\n🤖 Testing AI Scripts...")
@@ -97,6 +99,7 @@ def test_ai_scripts():
 
     print(f"\n📊 Script Status: {updated_count}/{len(scripts)} updated")
     return updated_count
+
 
 def test_fallback_priority():
     """Test fallback priority order"""
@@ -136,6 +139,7 @@ def test_fallback_priority():
     except Exception as e:
         print(f"  ❌ Error checking priority: {e}")
         return False
+
 
 def main():
     """Run comprehensive 9-API system test"""
@@ -177,6 +181,7 @@ def main():
     return (
         api_count >= 6 and workflow_count >= 10 and script_count >= 10 and priority_ok
     )
+
 
 if __name__ == "__main__":
     success = main()

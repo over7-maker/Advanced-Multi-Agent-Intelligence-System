@@ -33,6 +33,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 class EnhancedResponderTestSuite:
     """Comprehensive test suite for Enhanced AI Issues Responder v2.0"""
 
@@ -657,6 +658,7 @@ class EnhancedResponderTestSuite:
 
         print("=" * 80)
 
+
 async def main():
     """Main test execution function"""
     test_suite = EnhancedResponderTestSuite()
@@ -684,6 +686,7 @@ async def main():
 
     finally:
         await test_suite.cleanup()
+
 
 if __name__ == "__main__":
     exit_code = asyncio.run(main())

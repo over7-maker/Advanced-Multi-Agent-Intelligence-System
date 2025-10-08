@@ -35,6 +35,7 @@ def test_environment():
 
     return True
 
+
 def test_api_keys():
     """Test API key configuration"""
     print("\n🔑 Testing API Key Configuration...")
@@ -59,6 +60,7 @@ def test_api_keys():
 
     print(f"\n📊 API Keys Status: {available_keys}/6 configured")
     return available_keys > 0
+
 
 def test_workflow_files():
     """Test workflow file existence and structure"""
@@ -91,6 +93,7 @@ def test_workflow_files():
     print(f"\n📊 Workflow Files: {existing_files}/{len(workflow_files)} found")
     return existing_files > 0
 
+
 def test_script_files():
     """Test AI script files"""
     print("\n🐍 Testing AI Script Files...")
@@ -121,6 +124,7 @@ def test_script_files():
 
     print(f"\n📊 AI Scripts: {existing_scripts}/{len(script_files)} found")
     return existing_scripts > 0
+
 
 def test_ai_client_initialization():
     """Test AI client initialization"""
@@ -165,6 +169,7 @@ def test_ai_client_initialization():
     except Exception as e:
         print(f"❌ AI Client Test: Failed - {e}")
         return False
+
 
 def generate_test_report():
     """Generate comprehensive test report"""
@@ -232,6 +237,7 @@ def generate_test_report():
     print("✅ Test report saved to: ai_system_test_report.md")
     return True
 
+
 def main():
     """Main test function"""
     print("🚀 Starting AI System Test...")
@@ -274,6 +280,7 @@ def main():
         print("⚠️ Some tests failed. Please check the issues above.")
 
     return passed == total
+
 
 if __name__ == "__main__":
     success = main()

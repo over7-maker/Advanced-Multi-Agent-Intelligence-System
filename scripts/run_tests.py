@@ -38,6 +38,7 @@ def run_command(cmd: List[str], description: str) -> bool:
         print(f"❌ Error running {description}: {e}")
         return False
 
+
 def run_unit_tests(verbose: bool = False) -> bool:
     """Run unit tests."""
     cmd = ["python", "-m", "pytest", "tests/test_unified_orchestrator.py"]
@@ -45,6 +46,7 @@ def run_unit_tests(verbose: bool = False) -> bool:
         cmd.append("-v")
     cmd.extend(["-m", "unit"])
     return run_command(cmd, "Unit Tests")
+
 
 def run_integration_tests(verbose: bool = False) -> bool:
     """Run integration tests."""
@@ -54,6 +56,7 @@ def run_integration_tests(verbose: bool = False) -> bool:
     cmd.extend(["-m", "integration"])
     return run_command(cmd, "Integration Tests")
 
+
 def run_all_tests(verbose: bool = False) -> bool:
     """Run all tests."""
     cmd = ["python", "-m", "pytest", "tests/"]
@@ -61,18 +64,23 @@ def run_all_tests(verbose: bool = False) -> bool:
         cmd.append("-v")
     return run_command(cmd, "All Tests")
 
+
 def run_tests_with_coverage(verbose: bool = False) -> bool:
     """Run tests with coverage reporting."""
     cmd = [
-        "python", "-m", "pytest", "tests/",
+        "python",
+        "-m",
+        "pytest",
+        "tests/",
         "--cov=src/amas",
         "--cov-report=html",
         "--cov-report=term-missing",
-        "--cov-fail-under=80"
+        "--cov-fail-under=80",
     ]
     if verbose:
         cmd.append("-v")
     return run_command(cmd, "Tests with Coverage")
+
 
 def run_benchmark_tests(verbose: bool = False) -> bool:
     """Run benchmark tests."""
@@ -82,6 +90,7 @@ def run_benchmark_tests(verbose: bool = False) -> bool:
     cmd.extend(["-m", "benchmark"])
     return run_command(cmd, "Benchmark Tests")
 
+
 def run_real_tests(verbose: bool = False) -> bool:
     """Run tests with real external services."""
     cmd = ["python", "-m", "pytest", "tests/"]
@@ -90,12 +99,14 @@ def run_real_tests(verbose: bool = False) -> bool:
     cmd.extend(["-m", "real"])
     return run_command(cmd, "Real Service Tests")
 
+
 def run_specific_test(test_path: str, verbose: bool = False) -> bool:
     """Run a specific test file or test function."""
     cmd = ["python", "-m", "pytest", test_path]
     if verbose:
         cmd.append("-v")
     return run_command(cmd, f"Specific Test: {test_path}")
+
 
 def check_environment() -> bool:
     """Check if the environment is properly set up for testing."""
@@ -109,6 +120,7 @@ def check_environment() -> bool:
     # Check if pytest is installed
     try:
         import pytest
+
         print(f"✅ pytest version: {pytest.__version__}")
     except ImportError:
         print("❌ pytest is not installed")
@@ -129,18 +141,27 @@ def check_environment() -> bool:
     print("✅ Test environment is ready")
     return True
 
+
 def main():
     """Main test runner function."""
     parser = argparse.ArgumentParser(description="AMAS Test Runner")
     parser.add_argument("--unit", action="store_true", help="Run unit tests only")
-    parser.add_argument("--integration", action="store_true", help="Run integration tests only")
+    parser.add_argument(
+        "--integration", action="store_true", help="Run integration tests only"
+    )
     parser.add_argument("--all", action="store_true", help="Run all tests")
-    parser.add_argument("--coverage", action="store_true", help="Run tests with coverage")
+    parser.add_argument(
+        "--coverage", action="store_true", help="Run tests with coverage"
+    )
     parser.add_argument("--benchmark", action="store_true", help="Run benchmark tests")
-    parser.add_argument("--real", action="store_true", help="Run tests with real services")
+    parser.add_argument(
+        "--real", action="store_true", help="Run tests with real services"
+    )
     parser.add_argument("--test", type=str, help="Run specific test file or function")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
-    parser.add_argument("--check-env", action="store_true", help="Check test environment only")
+    parser.add_argument(
+        "--check-env", action="store_true", help="Check test environment only"
+    )
 
     args = parser.parse_args()
 
@@ -177,7 +198,16 @@ def main():
     if args.coverage:
         success &= run_tests_with_coverage(args.verbose)
 
-    if args.all or not any([args.unit, args.integration, args.benchmark, args.real, args.test, args.coverage]):
+    if args.all or not any(
+        [
+            args.unit,
+            args.integration,
+            args.benchmark,
+            args.real,
+            args.test,
+            args.coverage,
+        ]
+    ):
         success &= run_all_tests(args.verbose)
 
     # Print summary
@@ -188,6 +218,7 @@ def main():
     else:
         print("❌ Some tests failed. Please check the output above.")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
