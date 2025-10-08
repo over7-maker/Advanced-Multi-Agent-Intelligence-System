@@ -12,7 +12,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import AMASIntelligenceSystem
 
-
 async def research_pipeline_example():
     """Research pipeline example"""
     print("🔬 AMAS Research Pipeline Example")
@@ -159,7 +158,6 @@ async def research_pipeline_example():
         print("✅ AMAS system shutdown complete")
 
     return True
-
 
 if __name__ == "__main__":
     asyncio.run(research_pipeline_example())

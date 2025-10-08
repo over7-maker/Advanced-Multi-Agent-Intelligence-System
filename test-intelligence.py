@@ -12,7 +12,6 @@ sys.path.insert(0, "src")
 
 from amas.intelligence.intelligence_manager import intelligence_manager
 
-
 async def test_intelligence_systems():
     """Test all intelligence systems"""
 
@@ -71,7 +70,6 @@ async def test_intelligence_systems():
 
     print("\n🎉 All intelligence systems working correctly!")
     print("=" * 50)
-
 
 if __name__ == "__main__":
     asyncio.run(test_intelligence_systems())

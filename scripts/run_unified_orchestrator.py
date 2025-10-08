@@ -25,7 +25,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 async def demonstrate_orchestrator():
     """Demonstrate the unified orchestrator capabilities"""
 
@@ -216,7 +215,6 @@ async def demonstrate_orchestrator():
     print("  3. Implement changes systematically")
     print("  4. Re-run analysis to track progress")
 
-
 async def main():
     """Main entry point"""
     # Load environment variables
@@ -233,7 +231,6 @@ async def main():
         import traceback
 
         traceback.print_exc()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

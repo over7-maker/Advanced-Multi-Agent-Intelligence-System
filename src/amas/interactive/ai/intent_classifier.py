@@ -20,7 +20,6 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-
 @dataclass
 class IntentResult:
     """Intent classification result"""
@@ -31,7 +30,6 @@ class IntentResult:
     reasoning: List[str]
     suggested_agents: List[str]
     metadata: Dict[str, Any]
-
 
 class IntentClassifier:
     """Advanced Intent Classification System"""

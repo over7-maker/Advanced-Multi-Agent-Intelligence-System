@@ -12,7 +12,6 @@ from ..agents.adaptive_personality import PersonalityOrchestrator
 from .collective_learning import CollectiveIntelligenceEngine
 from .predictive_engine import PredictiveIntelligenceEngine
 
-
 class AMASIntelligenceManager:
     """Central manager for all intelligence systems"""
 
@@ -164,7 +163,6 @@ class AMASIntelligenceManager:
             "system_status": "operational",
             "intelligence_level": "advanced",
         }
-
 
 # Global intelligence manager instance
 intelligence_manager = AMASIntelligenceManager()

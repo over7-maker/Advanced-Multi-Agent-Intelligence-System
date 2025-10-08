@@ -15,7 +15,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from amas.intelligence.intelligence_manager import intelligence_manager
 from amas.providers.manager import provider_manager, validate_environment
 
-
 def setup_logging():
     """Setup logging configuration"""
     logging.basicConfig(
@@ -26,7 +25,6 @@ def setup_logging():
             logging.FileHandler("logs/amas.log", mode="a"),
         ],
     )
-
 
 def print_banner():
     """Print AMAS banner"""
@@ -44,7 +42,6 @@ def print_banner():
     ╚══════════════════════════════════════════════════════════════╝
     """
     print(banner)
-
 
 def print_provider_status():
     """Print AI provider status"""
@@ -78,7 +75,6 @@ def print_provider_status():
 
     except Exception as e:
         print(f"❌ Error checking provider status: {e}")
-
 
 async def main():
     """Main AMAS function"""
@@ -139,7 +135,6 @@ async def main():
         logger.error(f"❌ AMAS startup failed: {e}")
         print(f"❌ Error: {e}")
         return 1
-
 
 if __name__ == "__main__":
     # Create logs directory

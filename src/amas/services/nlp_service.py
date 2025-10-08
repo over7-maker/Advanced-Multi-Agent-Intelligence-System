@@ -15,7 +15,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
-
 class NLPTask(Enum):
     """NLP task enumeration"""
 
@@ -30,7 +29,6 @@ class NLPTask(Enum):
     RELATION_EXTRACTION = "relation_extraction"
     INTENT_CLASSIFICATION = "intent_classification"
 
-
 class Language(Enum):
     """Language enumeration"""
 
@@ -44,7 +42,6 @@ class Language(Enum):
     JAPANESE = "ja"
     KOREAN = "ko"
 
-
 @dataclass
 class TextAnalysisResult:
     """Text analysis result data structure"""
@@ -57,7 +54,6 @@ class TextAnalysisResult:
     processing_time: float
     timestamp: datetime
 
-
 @dataclass
 class Entity:
     """Entity data structure"""
@@ -69,7 +65,6 @@ class Entity:
     end_pos: int
     context: str
 
-
 @dataclass
 class SentimentResult:
     """Sentiment analysis result data structure"""
@@ -77,7 +72,6 @@ class SentimentResult:
     sentiment: str  # positive, negative, neutral
     confidence: float
     scores: Dict[str, float]  # detailed scores for each sentiment
-
 
 class NLPService:
     """

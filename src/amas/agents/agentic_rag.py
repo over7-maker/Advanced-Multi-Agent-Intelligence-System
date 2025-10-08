@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-
 class AgenticRAG:
     """Agentic RAG for AMAS Intelligence System"""
 

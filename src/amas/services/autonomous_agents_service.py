@@ -16,7 +16,6 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-
 class AgentType(Enum):
     """Autonomous agent type enumeration"""
 
@@ -29,7 +28,6 @@ class AgentType(Enum):
     LEARNING_AGENT = "learning_agent"
     ADAPTIVE_AGENT = "adaptive_agent"
 
-
 class LearningMode(Enum):
     """Learning mode enumeration"""
 
@@ -38,7 +36,6 @@ class LearningMode(Enum):
     REINFORCEMENT = "reinforcement"
     TRANSFER = "transfer"
     META = "meta"
-
 
 class AgentStatus(Enum):
     """Agent status enumeration"""
@@ -50,7 +47,6 @@ class AgentStatus(Enum):
     ERROR = "error"
     RETIRED = "retired"
 
-
 @dataclass
 class AgentCapability:
     """Agent capability data structure"""
@@ -61,7 +57,6 @@ class AgentCapability:
     proficiency_level: float
     learning_rate: float
     last_updated: datetime
-
 
 @dataclass
 class LearningExperience:
@@ -75,7 +70,6 @@ class LearningExperience:
     performance_score: float
     learning_insights: List[str]
     timestamp: datetime
-
 
 @dataclass
 class AutonomousAgent:
@@ -91,7 +85,6 @@ class AutonomousAgent:
     learning_history: List[LearningExperience]
     created_at: datetime
     last_activity: datetime
-
 
 class AutonomousAgentsService:
     """

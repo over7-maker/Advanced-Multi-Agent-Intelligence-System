@@ -19,7 +19,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
-
 class ThreatLevel(Enum):
     """Threat level enumeration"""
 
@@ -27,7 +26,6 @@ class ThreatLevel(Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
-
 
 class SecurityEventType(Enum):
     """Security event type enumeration"""
@@ -42,7 +40,6 @@ class SecurityEventType(Enum):
     INTRUSION_ATTEMPT = "intrusion_attempt"
     DATA_EXFILTRATION = "data_exfiltration"
     PRIVILEGE_ESCALATION = "privilege_escalation"
-
 
 @dataclass
 class SecurityEvent:
@@ -61,7 +58,6 @@ class SecurityEvent:
     resolved: bool = False
     resolved_at: Optional[datetime] = None
 
-
 @dataclass
 class ThreatIntelligence:
     """Threat intelligence data structure"""
@@ -74,7 +70,6 @@ class ThreatIntelligence:
     mitigation: List[str]
     last_seen: datetime
     confidence: float
-
 
 class SecurityMonitoringService:
     """

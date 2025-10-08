@@ -22,7 +22,6 @@ import psutil
 
 logger = logging.getLogger(__name__)
 
-
 class CacheStrategy(Enum):
     LRU = "lru"
     LFU = "lfu"
@@ -30,7 +29,6 @@ class CacheStrategy(Enum):
     ADAPTIVE = "adaptive"
     WRITE_THROUGH = "write_through"
     WRITE_BACK = "write_back"
-
 
 class LoadBalanceStrategy(Enum):
     ROUND_ROBIN = "round_robin"
@@ -40,13 +38,11 @@ class LoadBalanceStrategy(Enum):
     ADAPTIVE = "adaptive"
     CONSISTENT_HASH = "consistent_hash"
 
-
 class OptimizationLevel(Enum):
     BASIC = "basic"
     INTERMEDIATE = "intermediate"
     ADVANCED = "advanced"
     ENTERPRISE = "enterprise"
-
 
 @dataclass
 class CacheEntry:
@@ -60,7 +56,6 @@ class CacheEntry:
     compressed: bool = False
     priority: int = 1
 
-
 @dataclass
 class PerformanceMetrics:
     service_name: str
@@ -73,7 +68,6 @@ class PerformanceMetrics:
     connection_count: int
     timestamp: datetime
 
-
 @dataclass
 class ResourceUsage:
     cpu_percent: float
@@ -82,7 +76,6 @@ class ResourceUsage:
     network_io: int
     connections: int
     timestamp: datetime
-
 
 class AdvancedOptimizationService:
     """Advanced optimization service for Phase 7"""

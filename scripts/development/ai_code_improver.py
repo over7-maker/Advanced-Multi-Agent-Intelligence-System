@@ -24,7 +24,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class AICodeImprover:
     """AI-powered code improver"""
 
@@ -293,7 +292,6 @@ Provide:
         if self.ai_service:
             await self.ai_service.shutdown()
 
-
 async def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Code Improver")
@@ -382,7 +380,6 @@ async def main():
 
     finally:
         await improver.shutdown()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

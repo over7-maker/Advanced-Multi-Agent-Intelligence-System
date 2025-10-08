@@ -15,7 +15,6 @@ from typing import Any, Dict, List, Optional
 import requests
 from openai import OpenAI
 
-
 class AIAdaptivePromptImprovement:
     def __init__(self):
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -267,7 +266,7 @@ class AIAdaptivePromptImprovement:
         - Consistency across different prompts
         - Best practices implementation
         - Performance optimization suggestions
-        
+
         Prompts to analyze:
         {json.dumps(prompts, indent=2)}
         """
@@ -286,7 +285,7 @@ class AIAdaptivePromptImprovement:
         - Performance optimization techniques
         - Version control recommendations
         - A/B testing suggestions
-        
+
         Analysis Results:
         {prompt_analysis}
         """
@@ -309,7 +308,7 @@ class AIAdaptivePromptImprovement:
         - Performance monitoring and metrics
         - Prompt versioning and rollback strategies
         - Integration with other AI workflows
-        
+
         Optimization Recommendations:
         {optimization_recommendations}
         """
@@ -332,7 +331,7 @@ class AIAdaptivePromptImprovement:
         - Error handling and fallback strategies
         - Testing and validation procedures
         - Documentation and maintenance
-        
+
         Strategic Improvements:
         {strategic_improvements}
         """
@@ -362,8 +361,8 @@ class AIAdaptivePromptImprovement:
 
         report = f"""# 🧠 AMAS Adaptive Prompt Improvement Report
 
-**Generated:** {results['timestamp']}  
-**Agents Used:** {', '.join(results['agents_used'])}  
+**Generated:** {results['timestamp']}
+**Agents Used:** {', '.join(results['agents_used'])}
 **Prompts Analyzed:** {results['prompts_analyzed']}
 
 ---
@@ -455,11 +454,9 @@ This report presents comprehensive prompt analysis and improvement recommendatio
 
         return results
 
-
 async def main():
     analyzer = AIAdaptivePromptImprovement()
     await analyzer.run()
-
 
 if __name__ == "__main__":
     print("🧠 AMAS Adaptive Prompt Improvement System")

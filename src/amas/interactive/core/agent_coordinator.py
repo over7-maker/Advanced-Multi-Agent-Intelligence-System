@@ -23,7 +23,6 @@ from rich.panel import Panel
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-
 class AgentStatus(Enum):
     """Agent status enumeration"""
 
@@ -32,7 +31,6 @@ class AgentStatus(Enum):
     ERROR = "error"
     OFFLINE = "offline"
     MAINTENANCE = "maintenance"
-
 
 class TaskType(Enum):
     """Task type enumeration"""
@@ -47,7 +45,6 @@ class TaskType(Enum):
     TESTING_COORDINATION = "testing_coordination"
     THREAT_ANALYSIS = "threat_analysis"
     INCIDENT_RESPONSE = "incident_response"
-
 
 @dataclass
 class Agent:
@@ -81,7 +78,6 @@ class Agent:
             and len(self.current_tasks) < self.max_concurrent_tasks
         )
 
-
 @dataclass
 class TaskAssignment:
     """Task assignment data structure"""
@@ -93,7 +89,6 @@ class TaskAssignment:
     estimated_duration: float
     dependencies: List[str] = field(default_factory=list)
     metadata: Dict[str, Any] = field(default_factory=dict)
-
 
 class AgentCoordinator:
     """Intelligent Multi-Agent Coordinator"""
@@ -733,7 +728,6 @@ class AgentCoordinator:
         """Get performance metrics"""
         return self.performance_metrics.copy()
 
-
 class LoadBalancer:
     """Intelligent load balancer for agent selection"""
 
@@ -768,7 +762,6 @@ class LoadBalancer:
             return sorted_agents[:2]
         else:
             return sorted_agents[:1]
-
 
 class TaskScheduler:
     """Task scheduler for managing task execution"""

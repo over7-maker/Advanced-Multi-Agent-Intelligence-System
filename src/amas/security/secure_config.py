@@ -13,7 +13,6 @@ from cryptography.fernet import Fernet
 
 logger = logging.getLogger(__name__)
 
-
 class SecureConfigManager:
     """Secure configuration manager for AMAS"""
 

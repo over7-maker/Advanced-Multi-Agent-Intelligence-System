@@ -7,7 +7,6 @@ import os
 import subprocess
 import sys
 
-
 def test_files():
     """Test files that previously had false positives"""
     files_to_test = [
@@ -57,7 +56,6 @@ def test_files():
         print("❌ FAILED: Some false positives still exist")
 
     return total_issues == 0
-
 
 def test_specific_patterns():
     """Test specific patterns that were causing false positives"""
@@ -118,7 +116,6 @@ def test_specific_patterns():
     print(f"Test Results: {passed} passed, {failed} failed")
 
     return failed == 0
-
 
 if __name__ == "__main__":
     print("🔒 Security Fix Verification Tool")

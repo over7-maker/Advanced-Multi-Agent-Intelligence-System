@@ -17,7 +17,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class AMASHealthCheck:
     """AMAS System Health Check"""
 
@@ -226,7 +225,6 @@ class AMASHealthCheck:
             logger.error(f"Health report generation failed: {e}")
             return {"error": str(e)}
 
-
 async def main():
     """Main health check function"""
     health_check = AMASHealthCheck()
@@ -257,7 +255,6 @@ async def main():
         sys.exit(0)
     else:
         sys.exit(1)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

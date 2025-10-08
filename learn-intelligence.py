@@ -15,7 +15,6 @@ from datetime import datetime
 
 from amas.intelligence.intelligence_manager import intelligence_manager
 
-
 async def train_with_sample_data():
     """Train intelligence systems with realistic sample data"""
 
@@ -95,7 +94,6 @@ async def train_with_sample_data():
 
     print("\n✅ Intelligence systems trained successfully!")
     print("=" * 50)
-
 
 if __name__ == "__main__":
     asyncio.run(train_with_sample_data())

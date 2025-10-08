@@ -16,7 +16,6 @@ from .config.settings import AMASConfig, get_settings
 from .core.orchestrator import IntelligenceOrchestrator
 from .services.service_manager import ServiceManager
 
-
 class AMASApplication:
     """
     Main AMAS Application class.
@@ -291,7 +290,6 @@ class AMASApplication:
         finally:
             await self.shutdown()
 
-
 async def main() -> None:
     """
     Main application entry point.
@@ -300,7 +298,6 @@ async def main() -> None:
     """
     app = AMASApplication()
     await app.start()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -22,7 +22,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class ProviderStatus(Enum):
     """Provider status states"""
 
@@ -31,7 +30,6 @@ class ProviderStatus(Enum):
     TESTING = "testing"
     UNKNOWN = "unknown"
     RATE_LIMITED = "rate_limited"
-
 
 class ProviderType(Enum):
     """Provider API types"""
@@ -44,7 +42,6 @@ class ProviderType(Enum):
     COHERE = "cohere"
     CHUTES = "chutes"
     CODESTRAL = "codestral"
-
 
 @dataclass
 class ProviderConfig:
@@ -75,7 +72,6 @@ class ProviderConfig:
         if total == 0:
             return 0.0
         return (self.success_count / total) * 100
-
 
 class StandaloneUniversalAIManager:
     """
@@ -559,7 +555,8 @@ class StandaloneUniversalAIManager:
 
             config = self.providers[provider_id]
             logger.info(
-                f"🤖 Attempting with {config.name} (attempt {attempt + 1}/{max_attempts})"
+                f"🤖 Attempting with {config.name} "
+                f"(attempt {attempt + 1}/{max_attempts})"
             )
 
             try:
@@ -602,7 +599,8 @@ class StandaloneUniversalAIManager:
                         self.global_stats["total_fallbacks"] += 1
 
                     logger.info(
-                        f"✅ Success with {config.name} in {result['response_time']:.2f}s"
+                        f"✅ Success with {config.name} "
+                        f"in {result['response_time']:.2f}s"
                     )
                     return result
 
@@ -613,7 +611,8 @@ class StandaloneUniversalAIManager:
                     config.status = ProviderStatus.FAILED
 
                     logger.warning(
-                        f"❌ {config.name} failed: {result.get('error', 'Unknown error')}"
+                        f"❌ {config.name} failed: "
+                        f"{result.get('error', 'Unknown error')}"
                     )
 
             except Exception as e:
@@ -653,7 +652,7 @@ class StandaloneUniversalAIManager:
             "failed_requests": self.global_stats["failed_requests"],
             "success_rate": f"{success_rate:.1f}%",
             "total_fallbacks": self.global_stats["total_fallbacks"],
-            "average_response_time": f"{self.global_stats['average_response_time']:.2f}s",
+            "average_response_time": f"{self.global_stats["average_response_time"]:.2f}s",
             "providers_usage": self.global_stats["providers_usage"],
             "uptime_seconds": uptime,
         }
@@ -703,10 +702,8 @@ class StandaloneUniversalAIManager:
 
         return "\n".join(lines)
 
-
 # Global instance
 _manager: Optional[StandaloneUniversalAIManager] = None
-
 
 def get_manager() -> StandaloneUniversalAIManager:
     """Get or create the global manager instance"""
@@ -714,7 +711,6 @@ def get_manager() -> StandaloneUniversalAIManager:
     if _manager is None:
         _manager = StandaloneUniversalAIManager()
     return _manager
-
 
 async def generate_ai_response(
     prompt: str,
@@ -725,7 +721,6 @@ async def generate_ai_response(
     """Convenience function to generate AI response"""
     manager = get_manager()
     return await manager.generate(prompt, system_prompt, strategy, **kwargs)
-
 
 # Test function
 async def test_manager():
@@ -777,10 +772,9 @@ async def test_manager():
     for provider_id, info in health.items():
         status_emoji = "✅" if info["available"] else "❌"
         print(
-            f"{status_emoji} {info['name']:25s} | Status: {info['status']:12s} | Success: {info['success_rate']:6s}"
+            f"{status_emoji} {info["name"]:25s} | Status: {info["status"]:12s} | Success: {info["success_rate"]:6s}"
         )
     print()
-
 
 if __name__ == "__main__":
     asyncio.run(test_manager())

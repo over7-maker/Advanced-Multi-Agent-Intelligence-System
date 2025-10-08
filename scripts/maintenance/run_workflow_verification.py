@@ -22,7 +22,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-
 async def run_verification_script(script_name: str) -> bool:
     """Run a verification script"""
     try:
@@ -51,7 +50,6 @@ async def run_verification_script(script_name: str) -> bool:
     except Exception as e:
         logger.error(f"Error running {script_name}: {e}")
         return False
-
 
 async def main():
     """Main verification runner"""
@@ -106,7 +104,6 @@ async def main():
     except Exception as e:
         logger.error(f"Workflow verification runner failed: {e}")
         return 1
-
 
 if __name__ == "__main__":
     exit_code = asyncio.run(main())

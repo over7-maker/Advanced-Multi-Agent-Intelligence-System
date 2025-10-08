@@ -26,13 +26,11 @@ warnings.filterwarnings("ignore")
 
 logger = logging.getLogger(__name__)
 
-
 class AnalyticsType(Enum):
     PREDICTIVE = "predictive"
     DESCRIPTIVE = "descriptive"
     PRESCRIPTIVE = "prescriptive"
     DIAGNOSTIC = "diagnostic"
-
 
 class ModelType(Enum):
     CLASSIFICATION = "classification"
@@ -43,13 +41,11 @@ class ModelType(Enum):
     NLP = "nlp"
     COMPUTER_VISION = "computer_vision"
 
-
 class InsightLevel(Enum):
     BASIC = "basic"
     INTERMEDIATE = "intermediate"
     ADVANCED = "advanced"
     EXPERT = "expert"
-
 
 @dataclass
 class AnalyticsModel:
@@ -66,7 +62,6 @@ class AnalyticsModel:
     status: str
     parameters: Dict[str, Any]
 
-
 @dataclass
 class AnalyticsInsight:
     insight_id: str
@@ -79,7 +74,6 @@ class AnalyticsInsight:
     created_at: datetime
     insight_level: InsightLevel
 
-
 @dataclass
 class PredictionResult:
     prediction_id: str
@@ -89,7 +83,6 @@ class PredictionResult:
     confidence: float
     probability: Optional[float]
     created_at: datetime
-
 
 class AdvancedAnalyticsService:
     """Advanced analytics service for Phase 8"""

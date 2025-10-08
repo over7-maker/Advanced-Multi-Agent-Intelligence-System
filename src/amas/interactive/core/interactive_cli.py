@@ -66,7 +66,6 @@ except ImportError as e:
     print("Please ensure AMAS is properly installed and configured")
     sys.exit(1)
 
-
 class TaskStatus(Enum):
     """Task status enumeration"""
 
@@ -78,7 +77,6 @@ class TaskStatus(Enum):
     CANCELLED = "cancelled"
     PAUSED = "paused"
 
-
 class TaskPriority(Enum):
     """Task priority enumeration"""
 
@@ -86,7 +84,6 @@ class TaskPriority(Enum):
     NORMAL = 2
     HIGH = 3
     CRITICAL = 4
-
 
 @dataclass
 class Task:
@@ -114,7 +111,6 @@ class Task:
             self.results = {}
         if self.metadata is None:
             self.metadata = {}
-
 
 class AMASInteractiveCLI:
     """Next-Generation Interactive Command Line Interface for AMAS"""
@@ -1046,7 +1042,6 @@ AMAS remembers your previous commands and can build upon them:
 
         except Exception as e:
             self.logger.error(f"Cleanup failed: {e}")
-
 
 if __name__ == "__main__":
     try:

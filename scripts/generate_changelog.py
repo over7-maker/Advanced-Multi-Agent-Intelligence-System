@@ -12,7 +12,6 @@ from typing import Any, Dict, List
 
 import requests
 
-
 def main():
     import argparse
 
@@ -46,7 +45,6 @@ def main():
 
     print(f"✅ Changelog generated: {output_file}")
     return True
-
 
 def generate_changelog(
     version: str, release_type: str, custom_changelog: str = ""
@@ -93,7 +91,6 @@ All notable changes to AMAS (Advanced Multi-Agent Intelligence System) will be d
 
     return changelog
 
-
 def generate_major_release_section() -> str:
     """Generate major release section"""
     return """### 🚀 Major Changes
@@ -120,7 +117,6 @@ def generate_major_release_section() -> str:
 - Fixed workflow errors
 
 """
-
 
 def generate_minor_release_section() -> str:
     """Generate minor release section"""
@@ -150,7 +146,6 @@ def generate_minor_release_section() -> str:
 
 """
 
-
 def generate_patch_release_section() -> str:
     """Generate patch release section"""
     return """### 🐛 Bug Fixes
@@ -170,7 +165,6 @@ def generate_patch_release_section() -> str:
 - Improved reliability
 
 """
-
 
 def generate_prerelease_section() -> str:
     """Generate prerelease section"""
@@ -196,7 +190,6 @@ def generate_prerelease_section() -> str:
 - Some workflows may fail
 
 """
-
 
 def generate_standard_sections() -> str:
     """Generate standard changelog sections"""
@@ -241,7 +234,6 @@ def generate_standard_sections() -> str:
 - Better monitoring
 
 """
-
 
 if __name__ == "__main__":
     try:

@@ -25,7 +25,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class AIIntegrationSetup:
     """AI Integration Setup Manager"""
 
@@ -259,19 +258,19 @@ def execute_command(user_input):
     # Secure command execution - validate and sanitize input
     import shlex
     import os
-    
+
     # Validate input to prevent command injection
     if not user_input or not isinstance(user_input, str):
         return "Invalid input"
-    
+
     # Sanitize input - only allow alphanumeric characters and safe paths
     sanitized_input = ''.join(c for c in user_input if c.isalnum() or c in '._-/')
-    
+
     # Use safe command execution without shell=True
     try:
         # Only allow specific safe commands
         if sanitized_input.startswith(('test', 'example', 'demo')):
-            result = subprocess.run(['ls', sanitized_input], 
+            result = subprocess.run(['ls', sanitized_input],
                                   capture_output=True, text=True, timeout=10)
             return result.stdout
         else:
@@ -461,7 +460,6 @@ Code:
         if self.ai_service:
             await self.ai_service.shutdown()
 
-
 async def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Integration Setup")
@@ -519,7 +517,7 @@ async def main():
                 print(f"Successful Providers: {summary.get('successful_providers', 0)}")
                 print(f"Total Capabilities: {summary.get('total_capabilities', 0)}")
                 print(
-                    f"Successful Capabilities: {summary.get('successful_capabilities', 0)}"
+                    f"Successful Capabilities: {summary.get("successful_capabilities", 0)}"
                 )
                 print(f"Overall Health: {summary.get('overall_health', 'unknown')}")
                 print(f"Setup Status: {summary.get('setup_status', 'unknown')}")
@@ -536,7 +534,6 @@ async def main():
 
     finally:
         await setup.shutdown()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

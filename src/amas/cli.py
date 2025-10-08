@@ -21,7 +21,6 @@ from .main import AMASApplication
 
 console = Console()
 
-
 @click.group()
 @click.version_option(version="1.0.0", prog_name="AMAS")
 @click.option(
@@ -37,7 +36,6 @@ def cli(ctx, config, verbose):
 
     if verbose:
         console.print("[blue]AMAS CLI v1.0.0[/blue]")
-
 
 @cli.command()
 @click.option("--host", default="0.0.0.0", help="API host (default: 0.0.0.0)")
@@ -73,7 +71,6 @@ def start(ctx, host, port, workers, reload):
             progress.stop()
             console.print(f"[red]Error starting AMAS: {e}[/red]")
             sys.exit(1)
-
 
 @cli.command()
 @click.argument("task_type")
@@ -131,7 +128,6 @@ def submit_task(ctx, task_type, description, priority, params, wait):
 
     asyncio.run(_submit())
 
-
 @cli.command()
 @click.argument("task_id")
 @click.pass_context
@@ -151,7 +147,6 @@ def get_result(ctx, task_id):
             sys.exit(1)
 
     asyncio.run(_get_result())
-
 
 @cli.command()
 @click.pass_context
@@ -198,7 +193,6 @@ def status(ctx):
 
     asyncio.run(_status())
 
-
 @cli.command()
 @click.pass_context
 def config_show(ctx):
@@ -226,7 +220,6 @@ def config_show(ctx):
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
         sys.exit(1)
-
 
 @cli.command()
 @click.option("--check-deps", is_flag=True, help="Check dependencies")
@@ -279,7 +272,6 @@ def health(ctx, check_deps, check_services, check_all):
 
     asyncio.run(_health())
 
-
 def main():
     """Main CLI entry point"""
     try:
@@ -287,7 +279,6 @@ def main():
     except Exception as e:
         console.print(f"[red]CLI Error: {e}[/red]")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

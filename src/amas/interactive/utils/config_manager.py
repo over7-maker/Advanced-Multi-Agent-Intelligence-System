@@ -22,7 +22,6 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-
 @dataclass
 class UserPreferences:
     """User preferences data structure"""
@@ -44,7 +43,6 @@ class UserPreferences:
         if self.custom_shortcuts is None:
             self.custom_shortcuts = {}
 
-
 @dataclass
 class SystemConfig:
     """System configuration data structure"""
@@ -58,7 +56,6 @@ class SystemConfig:
     backup_enabled: bool = True
     performance_monitoring: bool = True
     security_mode: str = "standard"  # standard, strict, paranoid
-
 
 class ConfigManager:
     """Advanced Configuration Management System"""

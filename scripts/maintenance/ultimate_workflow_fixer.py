@@ -19,7 +19,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class UltimateWorkflowFixer:
     """Ultimate workflow fixer to ensure NO failures or skips"""
 
@@ -223,7 +222,6 @@ class UltimateWorkflowFixer:
         except Exception as e:
             logger.error(f"Error saving ultimate report: {e}")
 
-
 def main():
     """Main function"""
     import argparse
@@ -278,7 +276,6 @@ def main():
     except Exception as e:
         logger.error(f"Error in main: {e}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

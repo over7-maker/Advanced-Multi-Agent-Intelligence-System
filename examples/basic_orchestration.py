@@ -12,7 +12,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import AMASIntelligenceSystem
 
-
 async def basic_orchestration_example():
     """Basic orchestration example"""
     print("🤖 AMAS Basic Orchestration Example")
@@ -106,7 +105,6 @@ async def basic_orchestration_example():
         print("✅ AMAS system shutdown complete")
 
     return True
-
 
 if __name__ == "__main__":
     asyncio.run(basic_orchestration_example())

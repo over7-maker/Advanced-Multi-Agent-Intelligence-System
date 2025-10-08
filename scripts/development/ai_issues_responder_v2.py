@@ -56,7 +56,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class IssueType(Enum):
     BUG = "bug"
     FEATURE_REQUEST = "feature_request"
@@ -69,13 +68,11 @@ class IssueType(Enum):
     INVALID = "invalid"
     SPAM = "spam"
 
-
 class Priority(Enum):
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
-
 
 class Sentiment(Enum):
     POSITIVE = "positive"
@@ -83,7 +80,6 @@ class Sentiment(Enum):
     NEGATIVE = "negative"
     FRUSTRATED = "frustrated"
     URGENT = "urgent"
-
 
 @dataclass
 class IssueAnalysis:
@@ -103,7 +99,6 @@ class IssueAnalysis:
     language: str
     keywords: List[str]
     risk_level: str  # low, medium, high
-
 
 class EnhancedAIIssuesResponder:
     """Enhanced AI-powered GitHub issues responder with advanced features"""
@@ -1104,7 +1099,6 @@ Language: {analysis_data.get('language', 'en')}
         except Exception as e:
             logger.error(f"❌ Shutdown error: {e}")
 
-
 async def main():
     """Enhanced main function with comprehensive argument handling"""
     parser = argparse.ArgumentParser(
@@ -1234,7 +1228,6 @@ Examples:
 
     finally:
         await responder.shutdown()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

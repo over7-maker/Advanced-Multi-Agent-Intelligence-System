@@ -17,7 +17,6 @@ import aiohttp
 
 logger = logging.getLogger(__name__)
 
-
 class AIProvider(Enum):
     """AI Provider enumeration"""
 
@@ -27,7 +26,6 @@ class AIProvider(Enum):
     KIMI = "kimi"
     QWEN = "qwen"
     GPTOSS = "gptoss"
-
 
 @dataclass
 class AIProviderConfig:
@@ -44,7 +42,6 @@ class AIProviderConfig:
     priority: int = 1  # 1 = highest priority
     enabled: bool = True
 
-
 @dataclass
 class AIResponse:
     """Standardized AI response"""
@@ -57,7 +54,6 @@ class AIResponse:
     timestamp: datetime
     success: bool
     error: Optional[str] = None
-
 
 class AIServiceManager:
     """AI Service Manager with intelligent fallback and load balancing"""

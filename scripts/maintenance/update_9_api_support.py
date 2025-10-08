@@ -6,7 +6,6 @@ Update all AI scripts to support 9 APIs with proper fallback
 import os
 import re
 
-
 def update_script_file(file_path):
     """Update a single script file to support 9 APIs"""
     try:
@@ -44,7 +43,6 @@ def update_script_file(file_path):
         print(f"❌ Error updating {file_path}: {e}")
         return False
 
-
 def main():
     """Update all AI scripts"""
     scripts_dir = ".github/scripts"
@@ -71,7 +69,6 @@ def main():
     print(
         "✅ All scripts now support: DeepSeek, Claude, GPT-4, GLM, Grok, Kimi, Qwen, Gemini, GPTOSS"
     )
-
 
 if __name__ == "__main__":
     main()

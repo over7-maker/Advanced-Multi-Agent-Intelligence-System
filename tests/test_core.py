@@ -8,7 +8,6 @@ import pytest
 
 from amas.main import AMASApplication
 
-
 class TestAMASApplication:
     """Test AMAS application initialization and basic functionality"""
 
@@ -78,7 +77,6 @@ class TestAMASApplication:
         assert "active_agents" in status
         assert status["orchestrator_status"] == "active"
 
-
 class TestOrchestrator:
     """Test orchestrator functionality"""
 
@@ -141,7 +139,6 @@ class TestOrchestrator:
         assert status is not None
         assert "agent_id" in status
         assert "status" in status
-
 
 class TestServiceManager:
     """Test service manager functionality"""

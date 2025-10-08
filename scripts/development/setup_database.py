@@ -12,7 +12,6 @@ import asyncpg
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 async def create_database_schemas():
     """Create all necessary database tables and indexes"""
 
@@ -132,7 +131,6 @@ async def create_database_schemas():
     except Exception as e:
         logger.error(f"Database setup failed: {e}")
         raise
-
 
 if __name__ == "__main__":
     asyncio.run(create_database_schemas())

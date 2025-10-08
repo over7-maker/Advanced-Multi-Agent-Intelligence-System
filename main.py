@@ -27,22 +27,22 @@ async def main():
     try:
         # Import the unified orchestrator
         from amas.core.unified_orchestrator import UnifiedIntelligenceOrchestrator
-        
+
         logger.info("🚀 Starting AMAS with Unified Orchestrator")
-        
+
         # Initialize the orchestrator
         orchestrator = UnifiedIntelligenceOrchestrator()
         await orchestrator.initialize()
-        
+
         logger.info("✅ AMAS initialized successfully")
         logger.info("📊 System Status:")
-        
+
         # Get and display system status
         status = await orchestrator.get_system_status()
         logger.info(f"  - Available Agents: {len(status['available_agents'])}")
         logger.info(f"  - Active Tasks: {status['active_tasks']}")
         logger.info(f"  - Provider Health: {status['provider_health']}")
-        
+
         # Example: Submit a test task
         logger.info("🧪 Submitting test task...")
         task_id = await orchestrator.submit_task(
@@ -51,17 +51,17 @@ async def main():
             priority=1
         )
         logger.info(f"✅ Test task submitted: {task_id}")
-        
+
         # Get task result
         result = await orchestrator.get_task_result(task_id)
         logger.info(f"📋 Task result: {result['status']}")
-        
+
         logger.info("🎉 AMAS test completed successfully!")
-        
+
     except Exception as e:
         logger.error(f"❌ Error starting AMAS: {e}")
         sys.exit(1)
-    
+
     finally:
         # Cleanup
         try:

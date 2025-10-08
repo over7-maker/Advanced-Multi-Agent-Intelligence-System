@@ -19,7 +19,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-
 async def test_complete_amas_system():
     """Test the complete AMAS Intelligence System"""
     try:
@@ -276,7 +275,6 @@ async def test_complete_amas_system():
         traceback.print_exc()
         return False
 
-
 async def test_api_endpoints():
     """Test API endpoints if FastAPI is running"""
     try:
@@ -329,7 +327,6 @@ async def test_api_endpoints():
         logger.warning(f"API endpoints test failed: {e}")
         return False
 
-
 async def main():
     """Main test function"""
     logger.info("Starting Complete AMAS Intelligence System Test")
@@ -361,7 +358,6 @@ async def main():
     else:
         logger.error("❌ System test failed. Please check the logs for details.")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

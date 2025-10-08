@@ -14,7 +14,6 @@ from typing import Any, Dict, List, Optional
 import requests
 from openai import OpenAI
 
-
 class AISecurityResponse:
     def __init__(self):
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -202,7 +201,7 @@ class AISecurityResponse:
         - Actual security concerns that need attention
         - Recommendations for addressing real issues
         - Security best practices implementation
-        
+
         Security Report:
         {security_report}
         """
@@ -220,7 +219,7 @@ class AISecurityResponse:
         - Distinguish between detection patterns and real code issues
         - Provide guidance on reducing false positives
         - Suggest improvements to security scanning logic
-        
+
         Security Assessment:
         {security_assessment}
         """
@@ -243,7 +242,7 @@ class AISecurityResponse:
         - Best practices implementation
         - Risk mitigation strategies
         - Security monitoring enhancements
-        
+
         False Positive Analysis:
         {false_positive_analysis}
         """
@@ -273,8 +272,8 @@ class AISecurityResponse:
 
         response = f"""# 🔒 AMAS Security Scanner Response
 
-**Generated:** {results['timestamp']}  
-**Agents Used:** {', '.join(results['agents_used'])}  
+**Generated:** {results['timestamp']}
+**Agents Used:** {', '.join(results['agents_used'])}
 **Response to:** AI Security Scan Report
 
 ---
@@ -382,19 +381,18 @@ Thank you for the comprehensive security scan report! The AMAS AI Security Scann
 
         return results
 
-
 async def main():
     # Sample security report for testing
     sample_report = """
     🚨 SECURITY ISSUES DETECTED
     - 0 potential secrets/API keys
     - 9 potential vulnerabilities
-    
+
     .github/scripts/ai_code_analyzer.py
     ⚠️ Security Vulnerabilities
     - Potential XSS vulnerability (Line 237)
     - Usage of weak cryptographic functions (Line 239)
-    
+
     .github/scripts/ai_security_scanner.py
     ⚠️ Security Vulnerabilities
     - Potential SQL injection vulnerability (Line 167)
@@ -403,7 +401,6 @@ async def main():
 
     responder = AISecurityResponse()
     await responder.run(sample_report)
-
 
 if __name__ == "__main__":
     print("🔒 AMAS Security Response System")

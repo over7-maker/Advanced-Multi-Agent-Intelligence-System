@@ -23,7 +23,6 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-
 @dataclass
 class LogEntry:
     """Log entry data structure"""
@@ -42,7 +41,6 @@ class LogEntry:
     def __post_init__(self):
         if self.metadata is None:
             self.metadata = {}
-
 
 class InteractiveLogger:
     """Advanced Interactive Logging System"""

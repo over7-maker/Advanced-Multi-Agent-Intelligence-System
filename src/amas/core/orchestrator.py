@@ -24,7 +24,6 @@ from ..agents.reverse_engineering.reverse_engineering_agent import (
     ReverseEngineeringAgent,
 )
 
-
 class TaskPriority(Enum):
     """Task priority levels"""
 
@@ -32,7 +31,6 @@ class TaskPriority(Enum):
     MEDIUM = 2
     HIGH = 3
     CRITICAL = 4
-
 
 class TaskStatus(Enum):
     """Task status enumeration"""
@@ -43,7 +41,6 @@ class TaskStatus(Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
-
 
 @dataclass
 class IntelligenceTask:
@@ -67,7 +64,6 @@ class IntelligenceTask:
             self.created_at = datetime.utcnow()
         if self.parameters is None:
             self.parameters = {}
-
 
 class IntelligenceOrchestrator:
     """

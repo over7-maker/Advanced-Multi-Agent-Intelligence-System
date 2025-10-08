@@ -34,7 +34,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class BenchmarkResult:
     """Result of a single benchmark test"""
@@ -51,7 +50,6 @@ class BenchmarkResult:
         if self.metrics is None:
             self.metrics = {}
 
-
 @dataclass
 class BenchmarkSuite:
     """Collection of benchmark results"""
@@ -64,7 +62,6 @@ class BenchmarkSuite:
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
-
 
 class AMASBenchmarker:
     """Main benchmarking class for AMAS system"""
@@ -79,17 +76,17 @@ class AMASBenchmarker:
         """Initialize the orchestrator for benchmarking"""
         try:
             logger.info("Initializing AMAS system for benchmarking...")
-            
+
             # Get minimal configuration
             minimal_manager = get_minimal_config_manager()
             ai_config = minimal_manager.create_minimal_ai_config(self.mode)
-            
+
             # Create orchestrator
             self.orchestrator = UnifiedIntelligenceOrchestrator(ai_config=ai_config)
             await self.orchestrator.initialize()
-            
+
             logger.info("AMAS system initialized successfully")
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize AMAS system: {e}")
             raise
@@ -97,11 +94,11 @@ class AMASBenchmarker:
     async def run_latency_benchmark(self, num_tasks: int = 10) -> BenchmarkResult:
         """Benchmark task processing latency"""
         logger.info(f"Running latency benchmark with {num_tasks} tasks...")
-        
+
         start_time = time.time()
         task_ids = []
         errors = []
-        
+
         try:
             # Submit tasks
             for i in range(num_tasks):
@@ -112,22 +109,22 @@ class AMASBenchmarker:
                     priority=TaskPriority.MEDIUM
                 )
                 task_ids.append(task_id)
-            
+
             # Wait for completion (with timeout)
             timeout = 60  # 1 minute timeout
             end_time = time.time() + timeout
-            
+
             completed_tasks = 0
             while completed_tasks < num_tasks and time.time() < end_time:
                 completed_tasks = len(self.orchestrator.completed_tasks)
                 await asyncio.sleep(0.1)
-            
+
             duration = time.time() - start_time
-            
+
             # Calculate metrics
             avg_latency = duration / num_tasks if num_tasks > 0 else 0
             success_rate = completed_tasks / num_tasks if num_tasks > 0 else 0
-            
+
             metrics = {
                 "total_tasks": num_tasks,
                 "completed_tasks": completed_tasks,
@@ -136,14 +133,14 @@ class AMASBenchmarker:
                 "success_rate": success_rate,
                 "throughput_tasks_per_second": num_tasks / duration if duration > 0 else 0,
             }
-            
+
             return BenchmarkResult(
                 test_name="latency_benchmark",
                 duration=duration,
                 success=success_rate > 0.8,  # 80% success rate threshold
                 metrics=metrics
             )
-            
+
         except Exception as e:
             logger.error(f"Latency benchmark failed: {e}")
             return BenchmarkResult(
@@ -156,12 +153,12 @@ class AMASBenchmarker:
     async def run_throughput_benchmark(self, duration_seconds: int = 30) -> BenchmarkResult:
         """Benchmark system throughput over time"""
         logger.info(f"Running throughput benchmark for {duration_seconds} seconds...")
-        
+
         start_time = time.time()
         end_time = start_time + duration_seconds
         task_count = 0
         errors = []
-        
+
         try:
             # Submit tasks continuously
             while time.time() < end_time:
@@ -175,13 +172,13 @@ class AMASBenchmarker:
                     task_count += 1
                 except Exception as e:
                     errors.append(str(e))
-                
+
                 # Small delay to prevent overwhelming the system
                 await asyncio.sleep(0.01)
-            
+
             actual_duration = time.time() - start_time
             completed_tasks = len(self.orchestrator.completed_tasks)
-            
+
             metrics = {
                 "duration_seconds": actual_duration,
                 "tasks_submitted": task_count,
@@ -190,14 +187,14 @@ class AMASBenchmarker:
                 "completion_rate": completed_tasks / task_count if task_count > 0 else 0,
                 "errors": len(errors),
             }
-            
+
             return BenchmarkResult(
                 test_name="throughput_benchmark",
                 duration=actual_duration,
                 success=len(errors) < task_count * 0.1,  # Less than 10% error rate
                 metrics=metrics
             )
-            
+
         except Exception as e:
             logger.error(f"Throughput benchmark failed: {e}")
             return BenchmarkResult(
@@ -210,20 +207,20 @@ class AMASBenchmarker:
     async def run_failover_benchmark(self) -> BenchmarkResult:
         """Benchmark provider failover performance"""
         logger.info("Running failover benchmark...")
-        
+
         start_time = time.time()
-        
+
         try:
             # Get provider health before test
             initial_health = self.orchestrator.provider_manager.get_provider_health()
-            
+
             # Simulate provider failures by disabling providers
             available_providers = self.orchestrator.provider_manager.get_available_providers()
             if len(available_providers) > 1:
                 # Disable first provider to test failover
                 provider_to_disable = available_providers[0]
                 self.orchestrator.ai_config.disable_provider(provider_to_disable)
-                
+
                 # Submit tasks and measure response
                 task_ids = []
                 for i in range(5):
@@ -234,19 +231,19 @@ class AMASBenchmarker:
                         priority=TaskPriority.HIGH
                     )
                     task_ids.append(task_id)
-                
+
                 # Wait for completion
                 await asyncio.sleep(5)
-                
+
                 # Re-enable provider
                 self.orchestrator.ai_config.enable_provider(provider_to_disable)
-                
+
                 # Get final health
                 final_health = self.orchestrator.provider_manager.get_provider_health()
-                
+
                 duration = time.time() - start_time
                 completed_tasks = len(self.orchestrator.completed_tasks)
-                
+
                 metrics = {
                     "providers_available_before": len(available_providers),
                     "providers_available_after": len(self.orchestrator.provider_manager.get_available_providers()),
@@ -256,7 +253,7 @@ class AMASBenchmarker:
                     "initial_health": initial_health,
                     "final_health": final_health,
                 }
-                
+
                 return BenchmarkResult(
                     test_name="failover_benchmark",
                     duration=duration,
@@ -270,7 +267,7 @@ class AMASBenchmarker:
                     success=False,
                     error="Not enough providers for failover test"
                 )
-                
+
         except Exception as e:
             logger.error(f"Failover benchmark failed: {e}")
             return BenchmarkResult(
@@ -283,17 +280,17 @@ class AMASBenchmarker:
     async def run_memory_benchmark(self, duration_seconds: int = 60) -> BenchmarkResult:
         """Benchmark memory usage over time"""
         logger.info(f"Running memory benchmark for {duration_seconds} seconds...")
-        
+
         import psutil
         import os
-        
+
         process = psutil.Process(os.getpid())
         start_time = time.time()
         end_time = start_time + duration_seconds
-        
+
         memory_samples = []
         task_count = 0
-        
+
         try:
             while time.time() < end_time:
                 # Sample memory usage
@@ -303,7 +300,7 @@ class AMASBenchmarker:
                     "rss": memory_info.rss,
                     "vms": memory_info.vms,
                 })
-                
+
                 # Submit a task
                 try:
                     task_id = await self.orchestrator.submit_task(
@@ -315,15 +312,15 @@ class AMASBenchmarker:
                     task_count += 1
                 except Exception as e:
                     logger.warning(f"Failed to submit task: {e}")
-                
+
                 await asyncio.sleep(1)  # Sample every second
-            
+
             duration = time.time() - start_time
-            
+
             # Calculate memory metrics
             rss_values = [sample["rss"] for sample in memory_samples]
             vms_values = [sample["vms"] for sample in memory_samples]
-            
+
             metrics = {
                 "duration_seconds": duration,
                 "samples_taken": len(memory_samples),
@@ -342,14 +339,14 @@ class AMASBenchmarker:
                 },
                 "memory_growth": rss_values[-1] - rss_values[0] if len(rss_values) > 1 else 0,
             }
-            
+
             return BenchmarkResult(
                 test_name="memory_benchmark",
                 duration=duration,
                 success=True,  # Memory benchmark always succeeds
                 metrics=metrics
             )
-            
+
         except Exception as e:
             logger.error(f"Memory benchmark failed: {e}")
             return BenchmarkResult(
@@ -362,9 +359,9 @@ class AMASBenchmarker:
     async def run_concurrent_load_benchmark(self, concurrent_tasks: int = 50) -> BenchmarkResult:
         """Benchmark system under concurrent load"""
         logger.info(f"Running concurrent load benchmark with {concurrent_tasks} concurrent tasks...")
-        
+
         start_time = time.time()
-        
+
         try:
             # Create concurrent tasks
             async def submit_single_task(task_id: int):
@@ -374,18 +371,18 @@ class AMASBenchmarker:
                     agent_type=AgentType.OSINT,
                     priority=TaskPriority.MEDIUM
                 )
-            
+
             # Submit all tasks concurrently
             task_futures = [submit_single_task(i) for i in range(concurrent_tasks)]
             task_ids = await asyncio.gather(*task_futures, return_exceptions=True)
-            
+
             # Wait for completion
             await asyncio.sleep(10)  # Wait 10 seconds for completion
-            
+
             duration = time.time() - start_time
             completed_tasks = len(self.orchestrator.completed_tasks)
             successful_submissions = sum(1 for tid in task_ids if not isinstance(tid, Exception))
-            
+
             metrics = {
                 "concurrent_tasks": concurrent_tasks,
                 "successful_submissions": successful_submissions,
@@ -394,14 +391,14 @@ class AMASBenchmarker:
                 "completion_rate": completed_tasks / concurrent_tasks,
                 "throughput_tasks_per_second": concurrent_tasks / duration,
             }
-            
+
             return BenchmarkResult(
                 test_name="concurrent_load_benchmark",
                 duration=duration,
                 success=successful_submissions > concurrent_tasks * 0.8,  # 80% success rate
                 metrics=metrics
             )
-            
+
         except Exception as e:
             logger.error(f"Concurrent load benchmark failed: {e}")
             return BenchmarkResult(
@@ -414,10 +411,10 @@ class AMASBenchmarker:
     async def run_benchmark_suite(self, suite_name: str = "AMAS Performance Suite") -> BenchmarkSuite:
         """Run complete benchmark suite"""
         logger.info(f"Starting benchmark suite: {suite_name}")
-        
+
         self.start_time = datetime.utcnow()
         self.results = []
-        
+
         try:
             # Run all benchmarks
             benchmarks = [
@@ -427,20 +424,20 @@ class AMASBenchmarker:
                 ("Memory", self.run_memory_benchmark(60)),
                 ("Concurrent Load", self.run_concurrent_load_benchmark(25)),
             ]
-            
+
             for name, benchmark_coro in benchmarks:
                 logger.info(f"Running {name} benchmark...")
                 result = await benchmark_coro
                 self.results.append(result)
                 logger.info(f"{name} benchmark completed: {'PASS' if result.success else 'FAIL'}")
-            
+
             # Calculate summary
             end_time = datetime.utcnow()
             total_duration = (end_time - self.start_time).total_seconds()
-            
+
             successful_tests = sum(1 for r in self.results if r.success)
             total_tests = len(self.results)
-            
+
             summary = {
                 "total_tests": total_tests,
                 "successful_tests": successful_tests,
@@ -449,7 +446,7 @@ class AMASBenchmarker:
                 "total_duration": total_duration,
                 "average_test_duration": sum(r.duration for r in self.results) / total_tests if total_tests > 0 else 0,
             }
-            
+
             return BenchmarkSuite(
                 suite_name=suite_name,
                 start_time=self.start_time.isoformat(),
@@ -458,7 +455,7 @@ class AMASBenchmarker:
                 results=self.results,
                 summary=summary
             )
-            
+
         except Exception as e:
             logger.error(f"Benchmark suite failed: {e}")
             raise
@@ -471,13 +468,13 @@ class AMASBenchmarker:
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = f"benchmark_results_{timestamp}.json"
-        
+
         filepath = Path("logs") / filename
         filepath.parent.mkdir(exist_ok=True)
-        
+
         with open(filepath, "w") as f:
             json.dump(suite.to_dict(), f, indent=2)
-        
+
         logger.info(f"Benchmark results saved to {filepath}")
         return filepath
 
@@ -494,11 +491,11 @@ class AMASBenchmarker:
         print(f"Failed: {suite.summary['failed_tests']}")
         print(f"Success Rate: {suite.summary['success_rate']:.1%}")
         print(f"Average Test Duration: {suite.summary['average_test_duration']:.2f} seconds")
-        
+
         print("\n" + "-"*60)
         print("INDIVIDUAL TEST RESULTS:")
         print("-"*60)
-        
+
         for result in suite.results:
             status = "PASS" if result.success else "FAIL"
             print(f"{result.test_name:25} | {status:4} | {result.duration:6.2f}s")
@@ -508,9 +505,8 @@ class AMASBenchmarker:
                 for key, value in result.metrics.items():
                     if isinstance(value, (int, float)):
                         print(f"  {key}: {value}")
-        
-        print("="*60)
 
+        print("="*60)
 
 async def main():
     """Main benchmark execution"""
@@ -519,28 +515,28 @@ async def main():
                        help="Minimal configuration mode")
     parser.add_argument("--output", help="Output file for results")
     parser.add_argument("--verbose", action="store_true", help="Enable verbose logging")
-    
+
     args = parser.parse_args()
-    
+
     if args.verbose:
         logging.getLogger().setLevel(logging.DEBUG)
-    
+
     mode = MinimalMode(args.mode)
-    
+
     try:
         # Initialize benchmarker
         benchmarker = AMASBenchmarker(mode=mode)
         await benchmarker.initialize()
-        
+
         # Run benchmark suite
         suite = await benchmarker.run_benchmark_suite(f"AMAS Performance Suite - {mode.value.upper()}")
-        
+
         # Print results
         benchmarker.print_summary(suite)
-        
+
         # Save results
         output_file = benchmarker.save_results(suite, args.output)
-        
+
         # Exit with appropriate code
         if suite.summary["success_rate"] >= 0.8:
             print(f"\n✅ Benchmark suite PASSED (Success rate: {suite.summary['success_rate']:.1%})")
@@ -548,11 +544,10 @@ async def main():
         else:
             print(f"\n❌ Benchmark suite FAILED (Success rate: {suite.summary['success_rate']:.1%})")
             sys.exit(1)
-            
+
     except Exception as e:
         logger.error(f"Benchmark execution failed: {e}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

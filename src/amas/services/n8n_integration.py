@@ -14,7 +14,6 @@ from typing import Any, Dict, List, Optional, Union
 
 import requests
 
-
 class N8NIntegration:
     """
     n8n workflow integration service.

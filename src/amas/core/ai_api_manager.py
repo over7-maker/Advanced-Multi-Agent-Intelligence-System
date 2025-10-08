@@ -43,7 +43,6 @@ from tenacity import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 class APIType(Enum):
     """API provider types"""
 
@@ -53,7 +52,6 @@ class APIType(Enum):
     CHUTES = "chutes"
     GEMINI = "gemini"
     NVIDIA = "nvidia"
-
 
 @dataclass
 class APIHealth:
@@ -69,7 +67,6 @@ class APIHealth:
     error_rate: float = 0.0
     quota_remaining: Optional[int] = None
     rate_limit_until: Optional[datetime] = None
-
 
 @dataclass
 class APIConfig:
@@ -88,7 +85,6 @@ class APIConfig:
     capabilities: List[str] = field(default_factory=list)
     cost_per_token: float = 0.0
     rate_limit_per_minute: int = 60
-
 
 class AIAPIManager:
     """Comprehensive AI API Manager with intelligent fallback"""
@@ -810,10 +806,8 @@ class AIAPIManager:
                 self.health_status[api_name] = APIHealth()
             logger.info("Reset health status for all APIs")
 
-
 # Global instance for easy access
 ai_api_manager = AIAPIManager()
-
 
 async def get_ai_response(
     prompt: str, system_prompt: str = None, task_type: str = None, **kwargs
@@ -834,7 +828,6 @@ async def get_ai_response(
         return await ai_api_manager.generate_response(
             prompt=prompt, system_prompt=system_prompt, task_type=task_type, **kwargs
         )
-
 
 # Example usage and testing
 async def main():
@@ -872,7 +865,6 @@ async def main():
         import traceback
 
         traceback.print_exc()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

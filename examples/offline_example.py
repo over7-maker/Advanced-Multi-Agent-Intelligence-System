@@ -25,7 +25,6 @@ logger = logging.getLogger(__name__)
 from offline_agent import OfflineInvestigationAgent, OfflineOSINTAgent, OfflineSystem
 from offline_config import OfflineConfig
 
-
 class OfflineAMASExample:
     """Complete offline AMAS system demonstration"""
 
@@ -314,7 +313,6 @@ class OfflineAMASExample:
             logger.error(f"Error in offline demonstration: {e}")
             return False
 
-
 async def main():
     """Main function"""
     try:
@@ -331,7 +329,6 @@ async def main():
     except Exception as e:
         logger.error(f"Application error: {e}")
         return 1
-
 
 if __name__ == "__main__":
     exit_code = asyncio.run(main())

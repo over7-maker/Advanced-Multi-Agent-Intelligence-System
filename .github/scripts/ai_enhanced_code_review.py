@@ -44,7 +44,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class EnhancedCodeReviewer:
     """Enhanced code reviewer with AI-powered analysis"""
 
@@ -227,7 +226,6 @@ This enhanced code review was performed using the Ultimate AI Fallback System wi
 
         return report
 
-
 def main():
     """Main function"""
     try:
@@ -254,7 +252,6 @@ Please check the workflow logs for more details.
             f.write(error_report)
 
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

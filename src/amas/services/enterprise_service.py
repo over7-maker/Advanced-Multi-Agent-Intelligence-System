@@ -16,13 +16,11 @@ from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
-
 class TenantStatus(Enum):
     ACTIVE = "active"
     SUSPENDED = "suspended"
     PENDING = "pending"
     TERMINATED = "terminated"
-
 
 class ComplianceStandard(Enum):
     SOX = "sox"
@@ -32,13 +30,11 @@ class ComplianceStandard(Enum):
     ISO27001 = "iso27001"
     NIST = "nist"
 
-
 class SecurityLevel(Enum):
     BASIC = "basic"
     STANDARD = "standard"
     ENHANCED = "enhanced"
     ENTERPRISE = "enterprise"
-
 
 @dataclass
 class Tenant:
@@ -55,7 +51,6 @@ class Tenant:
     admin_users: List[str]
     settings: Dict[str, Any]
 
-
 @dataclass
 class ComplianceReport:
     report_id: str
@@ -68,7 +63,6 @@ class ComplianceReport:
     generated_at: datetime
     valid_until: datetime
 
-
 @dataclass
 class SecurityAudit:
     audit_id: str
@@ -79,7 +73,6 @@ class SecurityAudit:
     risk_score: float
     created_at: datetime
     completed_at: Optional[datetime]
-
 
 class EnterpriseService:
     """Enterprise service for Phase 10"""

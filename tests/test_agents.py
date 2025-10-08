@@ -16,7 +16,6 @@ from agents.reporting.reporting_agent import ReportingAgent
 from agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
 from agents.technology_monitor.technology_monitor_agent import TechnologyMonitorAgent
 
-
 class TestOSINTAgent:
     """Test OSINT agent functionality"""
 
@@ -156,7 +155,6 @@ class TestOSINTAgent:
         assert "entities_processed" in result
         assert "resolved_entities" in result
 
-
     @pytest.mark.asyncio
     async def test_evidence_acquisition(self, forensics_agent):
         """Test evidence acquisition task"""
@@ -250,7 +248,6 @@ class TestOSINTAgent:
         assert "anomalies_found" in result
         assert "anomalies" in result
 
-
 class TestReportingAgent:
     """Test Reporting Agent"""
 
@@ -283,7 +280,6 @@ class TestReportingAgent:
         assert result["success"] == True
         assert "report_id" in result
 
-
 class TestMetadataAgent:
     """Test Metadata agent functionality"""
 
@@ -313,7 +309,6 @@ class TestMetadataAgent:
         result = await metadata_agent.execute_task(task)
         assert result["success"] == True
         assert "metadata_results" in result
-
 
 class TestReportingAgent:
     """Test Reporting agent functionality"""
@@ -382,7 +377,6 @@ class TestReportingAgent:
         assert "summary" in result
         assert "audience" in result["summary"]
 
-
 class TestAgentIntegration:
     """Test agent integration"""
 
@@ -433,7 +427,6 @@ class TestAgentIntegration:
 
         finally:
             await agent.stop()
-
 
 if __name__ == "__main__":
     pytest.main([__file__])

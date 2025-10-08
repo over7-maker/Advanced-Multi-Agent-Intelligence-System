@@ -8,7 +8,6 @@ import os
 import re
 from typing import Any, Dict, List, Optional
 
-
 class SecurityFalsePositiveAnalyzer:
     def __init__(self):
         self.pattern_definition_indicators = [
@@ -184,19 +183,18 @@ The security scanner is detecting its own pattern definitions as vulnerabilities
 
         return report
 
-
 def main():
     # Sample security report for testing
     sample_report = """
     🚨 SECURITY ISSUES DETECTED
     - 0 potential secrets/API keys
     - 9 potential vulnerabilities
-    
+
     .github/scripts/ai_code_analyzer.py
     ⚠️ Security Vulnerabilities
     - Potential XSS vulnerability (Line 237)
     - Usage of weak cryptographic functions (Line 239)
-    
+
     .github/scripts/ai_security_scanner.py
     ⚠️ Security Vulnerabilities
     - Potential SQL injection vulnerability (Line 192)
@@ -217,7 +215,6 @@ def main():
         f.write(report)
 
     print("📋 False positive analysis saved to artifacts/false_positive_analysis.md")
-
 
 if __name__ == "__main__":
     main()

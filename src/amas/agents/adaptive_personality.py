@@ -17,7 +17,6 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-
 @dataclass
 class PersonalityTrait:
     name: str
@@ -25,7 +24,6 @@ class PersonalityTrait:
     default_value: float
     adaptation_rate: float  # How quickly this trait adapts
     context_modifiers: Dict[str, float]  # Task-specific modifiers
-
 
 @dataclass
 class UserInteractionPattern:
@@ -36,7 +34,6 @@ class UserInteractionPattern:
     context: Dict[str, Any]
     timestamp: str
 
-
 @dataclass
 class AdaptationRule:
     rule_id: str
@@ -45,7 +42,6 @@ class AdaptationRule:
     confidence: float
     success_rate: float
     usage_count: int
-
 
 class AdaptiveAgentPersonality:
     """Adaptive personality system for individual agents"""
@@ -557,7 +553,6 @@ class AdaptiveAgentPersonality:
             ),
         }
 
-
 class PersonalityOrchestrator:
     """Orchestrator for managing multiple agent personalities"""
 
@@ -635,7 +630,6 @@ class PersonalityOrchestrator:
             "agent_details": agent_summaries,
             "adaptation_active": True,
         }
-
 
 # CLI interface for testing
 if __name__ == "__main__":

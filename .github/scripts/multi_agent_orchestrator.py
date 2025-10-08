@@ -11,7 +11,6 @@ from typing import Any, Dict, List, Optional
 
 from openai import OpenAI
 
-
 class MultiAgentOrchestrator:
     def __init__(self):
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -222,7 +221,7 @@ class MultiAgentOrchestrator:
         - Vulnerabilities being exploited
         - Potential future targets
         - Risk assessment for different sectors
-        
+
         Intelligence Data:
         {osint_result}
         """
@@ -242,7 +241,7 @@ class MultiAgentOrchestrator:
         - Priority actions for security teams
         - Risk mitigation strategies
         - Monitoring and detection improvements
-        
+
         Analysis Data:
         {analysis_result}
         """
@@ -268,7 +267,7 @@ class MultiAgentOrchestrator:
 
         report = f"""# 🤖 AMAS Multi-Agent Intelligence Report
 
-**Generated:** {results['timestamp']}  
+**Generated:** {results['timestamp']}
 **Agents Used:** {', '.join(results['agents_used'])}
 
 ---
@@ -348,11 +347,9 @@ This report presents a comprehensive intelligence analysis conducted by multiple
 
         return results
 
-
 async def main():
     orchestrator = MultiAgentOrchestrator()
     await orchestrator.run()
-
 
 if __name__ == "__main__":
     print("🔍 AMAS Multi-Agent Intelligence System")

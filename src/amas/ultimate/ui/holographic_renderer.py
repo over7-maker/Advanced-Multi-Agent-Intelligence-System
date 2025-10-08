@@ -55,7 +55,6 @@ from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree
 
-
 class HolographicMode(Enum):
     """Holographic rendering modes"""
 
@@ -66,7 +65,6 @@ class HolographicMode(Enum):
     DIMENSIONAL_GRID = "dimensional_grid"
     AGENT_COORDINATION = "agent_coordination"
 
-
 class ParticleType(Enum):
     """Particle types for holographic rendering"""
 
@@ -76,7 +74,6 @@ class ParticleType(Enum):
     TEMPORAL_MARKER = "temporal"
     DIMENSIONAL_ANCHOR = "dimensional"
     AGENT_ENTITY = "agent"
-
 
 @dataclass
 class HolographicParticle:
@@ -94,7 +91,6 @@ class HolographicParticle:
     connections: List[str]
     metadata: Dict[str, Any]
 
-
 @dataclass
 class HolographicField:
     """Holographic field structure"""
@@ -107,7 +103,6 @@ class HolographicField:
     field_radius: float
     animation_speed: float
     color_gradient: List[Tuple[float, float, float, float]]
-
 
 class HolographicRenderer:
     """Revolutionary Holographic Rendering System"""
@@ -613,7 +608,6 @@ class HolographicRenderer:
 
         self.active_fields[field_id] = custom_field
         self.console.print(f"🌌 Custom field '{field_id}' added", style="green")
-
 
 if __name__ == "__main__":
     # Initialize holographic renderer

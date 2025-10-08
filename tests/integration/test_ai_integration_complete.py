@@ -25,7 +25,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class CompleteAIIntegrationTest:
     """Complete AI Integration Test Suite"""
 
@@ -657,7 +656,6 @@ Code:
         if self.ai_service:
             await self.ai_service.shutdown()
 
-
 async def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="Complete AI Integration Test")
@@ -791,7 +789,6 @@ async def main():
 
     finally:
         await test_suite.shutdown()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

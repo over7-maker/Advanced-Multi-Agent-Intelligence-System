@@ -14,7 +14,6 @@ from typing import Any, Dict, List, Optional
 import requests
 from openai import OpenAI
 
-
 class AIIncidentResponse:
     def __init__(self):
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -246,7 +245,7 @@ class AIIncidentResponse:
         - Immediate threat indicators
         - Preliminary containment recommendations
         - Evidence collection priorities
-        
+
         Incident Details:
         Title: {self.issue_title}
         Description: {self.issue_body}
@@ -268,7 +267,7 @@ class AIIncidentResponse:
         - Attack timeline reconstruction
         - Threat actor motivations and objectives
         - Counter-intelligence recommendations
-        
+
         Incident Assessment:
         {incident_assessment}
         """
@@ -290,7 +289,7 @@ class AIIncidentResponse:
         - Recovery and restoration procedures
         - Lessons learned and improvement recommendations
         - Resource allocation and team coordination
-        
+
         Threat Analysis:
         {threat_analysis}
         """
@@ -312,7 +311,7 @@ class AIIncidentResponse:
         - System hardening recommendations
         - Monitoring and detection enhancements
         - Technical implementation steps
-        
+
         Response Strategy:
         {response_strategy}
         """
@@ -342,8 +341,8 @@ class AIIncidentResponse:
 
         report = f"""# 🚨 AMAS Incident Response Report
 
-**Generated:** {results['timestamp']}  
-**Agents Used:** {', '.join(results['agents_used'])}  
+**Generated:** {results['timestamp']}
+**Agents Used:** {', '.join(results['agents_used'])}
 **Severity:** {severity_emoji.get(results['severity'], '⚪')} {results['severity']}
 
 ---
@@ -432,11 +431,9 @@ This report presents comprehensive incident response analysis conducted by multi
 
         return results
 
-
 async def main():
     responder = AIIncidentResponse()
     await responder.run()
-
 
 if __name__ == "__main__":
     print("🚨 AMAS Incident Response System")

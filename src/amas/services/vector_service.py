@@ -23,7 +23,6 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
 class VectorService:
     """Vector Service for AMAS Intelligence System"""
 

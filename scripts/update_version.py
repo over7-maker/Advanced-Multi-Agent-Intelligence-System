@@ -12,7 +12,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-
 class AIVersionManager:
     """AI-enhanced version management system"""
 
@@ -162,7 +161,6 @@ docker pull amas/amas:{version}
 
         return version_info
 
-
 def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI-enhanced version management")
@@ -309,7 +307,6 @@ def main():
     except Exception as e:
         print(f"❌ Error: {e}")
         return False
-
 
 if __name__ == "__main__":
     success = main()

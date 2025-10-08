@@ -17,7 +17,6 @@ from typing import Any, Callable, Dict, List, Optional
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 class AgentType(Enum):
     """Agent types for intelligence operations"""
 
@@ -30,7 +29,6 @@ class AgentType(Enum):
     REPORTING = "reporting"
     TECHNOLOGY_MONITOR = "technology_monitor"
 
-
 class TaskStatus(Enum):
     """Task status enumeration"""
 
@@ -40,7 +38,6 @@ class TaskStatus(Enum):
     FAILED = "failed"
     CANCELLED = "cancelled"
 
-
 class TaskPriority(Enum):
     """Task priority levels"""
 
@@ -48,7 +45,6 @@ class TaskPriority(Enum):
     MEDIUM = 2
     HIGH = 3
     CRITICAL = 4
-
 
 @dataclass
 class Task:
@@ -66,7 +62,6 @@ class Task:
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
 
-
 @dataclass
 class Agent:
     """Agent data structure"""
@@ -79,7 +74,6 @@ class Agent:
     current_task: Optional[str] = None
     created_at: datetime = field(default_factory=datetime.now)
     metadata: Dict[str, Any] = field(default_factory=dict)
-
 
 class BaseAgent(ABC):
     """Base class for all intelligence agents"""
@@ -106,7 +100,6 @@ class BaseAgent(ABC):
         """Update agent status"""
         self.status = status
         logger.info(f"Agent {self.name} status updated to {status}")
-
 
 class AgentOrchestrator:
     """Core orchestrator for multi-agent intelligence operations"""
@@ -375,7 +368,6 @@ class AgentOrchestrator:
                 tasks.append(await self.get_task_status(task.id))
         return tasks
 
-
 class EventBus:
     """Event bus for inter-agent communication"""
 
@@ -399,7 +391,6 @@ class EventBus:
         self.subscribers[event_type].append(handler)
         logger.info(f"Subscribed to event {event_type}")
 
-
 class LLMService:
     """LLM service for AI operations"""
 
@@ -412,7 +403,6 @@ class LLMService:
         # For now, return a placeholder
         return f"LLM Response to: {prompt[:100]}..."
 
-
 class VectorService:
     """Vector service for semantic search"""
 
@@ -423,7 +413,6 @@ class VectorService:
         """Search for similar vectors"""
         # This would integrate with FAISS or other vector services
         return []
-
 
 class KnowledgeGraph:
     """Knowledge graph service"""

@@ -11,7 +11,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-
 def run_command(command, description):
     """Run a command and handle errors"""
     print(f"🔄 {description}...")
@@ -26,7 +25,6 @@ def run_command(command, description):
         print(f"Error output: {e.stderr}")
         return False
 
-
 def check_python_version():
     """Check if Python version is compatible"""
     if sys.version_info < (3, 9):
@@ -34,7 +32,6 @@ def check_python_version():
         return False
     print(f"✅ Python {sys.version.split()[0]} detected")
     return True
-
 
 def create_directories():
     """Create necessary directories"""
@@ -64,13 +61,11 @@ def create_directories():
         Path(directory).mkdir(parents=True, exist_ok=True)
         print(f"📁 Created directory: {directory}")
 
-
 def install_dependencies():
     """Install Python dependencies"""
     return run_command(
         "pip install -r requirements.txt", "Installing Python dependencies"
     )
-
 
 def setup_environment():
     """Setup environment configuration"""
@@ -83,7 +78,6 @@ def setup_environment():
         print("⚠️  Please edit .env and add your API keys")
     else:
         print("📝 .env file already exists")
-
 
 def setup_web_dashboard():
     """Setup React dashboard"""
@@ -136,16 +130,13 @@ def setup_web_dashboard():
         package_json.write_text(package_content)
         print("📝 Created package.json for React dashboard")
 
-
 def run_security_scan():
     """Run security scan"""
     return run_command("python scripts/security-scan.sh", "Running security scan")
 
-
 def validate_environment():
     """Validate environment setup"""
     return run_command("python scripts/validate_env.py", "Validating environment")
-
 
 def main():
     """Main setup function"""
@@ -190,7 +181,6 @@ def main():
     print("3. Start AMAS: python -m amas")
     print("4. Open dashboard: cd web && npm install && npm start")
     print("\n🚀 Your AMAS system is ready!")
-
 
 if __name__ == "__main__":
     main()

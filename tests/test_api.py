@@ -8,7 +8,6 @@ from typing import Any, Dict
 import httpx
 import pytest
 
-
 class TestAPIEndpoints:
     """Test FastAPI endpoints"""
 

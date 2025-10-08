@@ -21,7 +21,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class APIConfigValidator:
     """Validates and tests API configurations for all AI providers"""
 
@@ -321,7 +320,6 @@ class APIConfigValidator:
 
         print("\n" + "=" * 60)
 
-
 def main():
     """Main entry point"""
     validator = APIConfigValidator()
@@ -357,7 +355,6 @@ def main():
         sys.exit(2)  # Limited keys
     else:
         sys.exit(0)  # Good configuration
-
 
 if __name__ == "__main__":
     main()

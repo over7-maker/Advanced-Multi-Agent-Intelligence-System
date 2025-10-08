@@ -11,7 +11,6 @@ from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 
-
 class InvestigationAgent(IntelligenceAgent):
     """Investigation Agent for AMAS Intelligence System"""
 

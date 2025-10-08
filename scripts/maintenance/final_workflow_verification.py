@@ -10,7 +10,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-
 def main():
     """Final comprehensive workflow verification"""
     print("🎉 AMAS Intelligence System - Final Workflow Verification")
@@ -200,7 +199,6 @@ def main():
     print(f"\n📄 Final report saved: logs/final_workflow_verification_report.json")
 
     return 0 if success_rate == 100.0 else 1
-
 
 if __name__ == "__main__":
     exit_code = main()

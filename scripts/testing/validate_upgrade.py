@@ -10,7 +10,6 @@ import os
 import sys
 from pathlib import Path
 
-
 def check_file_syntax(file_path):
     """Check if a Python file has valid syntax"""
     try:
@@ -23,7 +22,6 @@ def check_file_syntax(file_path):
         return False, f"Syntax error: {e}"
     except Exception as e:
         return False, f"Error reading file: {e}"
-
 
 def check_yaml_structure(file_path):
     """Basic YAML structure validation"""
@@ -42,7 +40,6 @@ def check_yaml_structure(file_path):
         return True, "YAML structure valid"
     except Exception as e:
         return False, f"Error reading YAML file: {e}"
-
 
 def validate_upgrade():
     """Validate the complete upgrade"""
@@ -193,7 +190,6 @@ def validate_upgrade():
     else:
         print("⚠️ VALIDATION FAILED: Please address the issues above before deployment.")
         return 1
-
 
 if __name__ == "__main__":
     exit_code = validate_upgrade()

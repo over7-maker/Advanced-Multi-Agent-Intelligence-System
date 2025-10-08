@@ -16,7 +16,6 @@ from typing import Any, Dict, List, Optional
 import aioredis
 import psutil
 
-
 @dataclass
 class SystemMetrics:
     timestamp: str
@@ -30,14 +29,12 @@ class SystemMetrics:
     error_count: int
     throughput_per_second: float
 
-
 @dataclass
 class AlertThreshold:
     metric_name: str
     warning_threshold: float
     critical_threshold: float
     duration_minutes: int
-
 
 class AMASPerformanceMonitor:
     def __init__(self, redis_url: str = "redis://localhost:6379"):
@@ -471,7 +468,6 @@ System Status:
         ]
 
         return agents
-
 
 # CLI for testing the monitoring system
 if __name__ == "__main__":

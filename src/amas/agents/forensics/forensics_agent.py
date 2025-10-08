@@ -11,7 +11,6 @@ from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 
-
 class ForensicsAgent(IntelligenceAgent):
     """Digital Forensics Agent for AMAS Intelligence System"""
 
@@ -42,7 +41,6 @@ class ForensicsAgent(IntelligenceAgent):
             knowledge_graph=knowledge_graph,
             security_service=security_service,
         )
-
 
         self.evidence_store = {}
         self.analysis_results = {}
@@ -125,7 +123,6 @@ class ForensicsAgent(IntelligenceAgent):
 
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
         return any(keyword in task_text for keyword in forensics_keywords)
-
 
     async def _acquire_evidence(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Acquire digital evidence"""
@@ -218,7 +215,6 @@ class ForensicsAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-
     async def _reconstruct_timeline(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Reconstruct timeline of events"""
         try:
@@ -258,7 +254,6 @@ class ForensicsAgent(IntelligenceAgent):
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
-
 
     async def _extract_metadata(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Extract metadata from files"""
@@ -315,7 +310,6 @@ class ForensicsAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-
     async def _analyze_malware(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze malware samples"""
         try:
@@ -368,7 +362,6 @@ class ForensicsAgent(IntelligenceAgent):
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
-
 
     async def _perform_general_forensics(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Perform general forensics analysis"""

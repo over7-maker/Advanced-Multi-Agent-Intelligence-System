@@ -17,7 +17,6 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-
 class DatabaseService:
     """Database service for AMAS"""
 

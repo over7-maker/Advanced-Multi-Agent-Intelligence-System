@@ -8,7 +8,6 @@ import re
 import sys
 from pathlib import Path
 
-
 def check_dangerous_code_execution():
     """Check for dangerous code execution functions"""
     print("🔍 Checking for dangerous code execution...")
@@ -78,7 +77,6 @@ def check_dangerous_code_execution():
         print("✅ No dangerous code execution found")
         return True
 
-
 def check_weak_cryptography():
     """Check for weak cryptographic algorithms"""
     print("🔍 Checking for weak cryptography...")
@@ -116,7 +114,6 @@ def check_weak_cryptography():
     else:
         print("✅ Strong cryptography enforced")
         return True
-
 
 def check_secrets_management():
     """Check secrets management"""
@@ -172,7 +169,6 @@ def check_secrets_management():
         print("✅ No secrets management issues found")
         return True
 
-
 def check_production_config():
     """Check production configuration"""
     print("🔍 Checking production configuration...")
@@ -216,7 +212,6 @@ def check_production_config():
         print("  ❌ Security modules missing")
 
     return checks_passed == total_checks
-
 
 def main():
     """Main production readiness verification"""
@@ -265,7 +260,6 @@ def main():
         print(f"❌ Failed checks: {', '.join(failed_checks)}")
         print("🚫 Address issues before production deployment")
         return 1
-
 
 if __name__ == "__main__":
     sys.exit(main())

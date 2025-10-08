@@ -16,7 +16,6 @@ import aiohttp
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
 @dataclass
 class LoadTestResult:
     test_name: str
@@ -29,7 +28,6 @@ class LoadTestResult:
     p95_response_time: float
     requests_per_second: float
     error_rate: float
-
 
 class AMASLoadTester:
     def __init__(self, base_url: str = "http://localhost:8000"):
@@ -426,7 +424,6 @@ class AMASLoadTester:
         self.visualize_results()
 
         print("\n✅ Load testing complete!")
-
 
 # CLI interface
 if __name__ == "__main__":

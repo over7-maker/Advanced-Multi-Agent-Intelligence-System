@@ -13,7 +13,6 @@ from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 
-
 class ReverseEngineeringAgent(IntelligenceAgent):
     """Reverse Engineering Agent for AMAS Intelligence System"""
 

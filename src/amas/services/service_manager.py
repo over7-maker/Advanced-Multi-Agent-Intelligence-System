@@ -18,7 +18,6 @@ from .vector_service import VectorService
 
 logger = logging.getLogger(__name__)
 
-
 class ServiceManager:
     """
     Central service manager for AMAS Intelligence System.

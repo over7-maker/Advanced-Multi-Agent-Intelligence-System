@@ -23,7 +23,6 @@ from .api_clients import APIClientFactory, get_client
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class TaskResult:
     """Result of a task execution"""
@@ -38,7 +37,6 @@ class TaskResult:
     timestamp: str = ""
     retry_count: int = 0
 
-
 @dataclass
 class AgentCapability:
     """Agent capability definition"""
@@ -49,7 +47,6 @@ class AgentCapability:
     preferred_apis: List[str]
     max_retries: int = 3
     timeout: int = 30
-
 
 class EnhancedOrchestrator:
     """Enhanced orchestrator with multi-API fallback and intelligent task routing"""
@@ -515,10 +512,8 @@ Focus on accuracy, helpfulness, and professional communication.""",
             "timestamp": datetime.now().isoformat(),
         }
 
-
 # Global orchestrator instance
 orchestrator = EnhancedOrchestrator()
-
 
 # Convenience functions
 async def execute_task(
@@ -527,13 +522,11 @@ async def execute_task(
     """Execute a single task using the global orchestrator"""
     return await orchestrator.execute_task(task_id, task_type, prompt, **kwargs)
 
-
 async def run_investigation(
     topic: str, investigation_type: str = "comprehensive"
 ) -> Dict[str, Any]:
     """Run an investigation using the global orchestrator"""
     return await orchestrator.run_investigation_workflow(topic, investigation_type)
-
 
 # Example usage
 async def main():
@@ -583,7 +576,6 @@ async def main():
         import traceback
 
         traceback.print_exc()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

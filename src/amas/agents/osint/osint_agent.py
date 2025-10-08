@@ -16,7 +16,6 @@ from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 
-
 class OSINTAgent(IntelligenceAgent):
     """Enhanced OSINT Collection Agent for AMAS Intelligence System"""
 
@@ -313,9 +312,17 @@ class OSINTAgent(IntelligenceAgent):
                     "positive": positive_count,
                     "negative": negative_count,
                 },
-                "languages": list(set(page["metadata"].get("language", "unknown") for page in scraped_data)),
-                "average_response_time": sum(page["response_time"] for page in scraped_data) / len(scraped_data),
-                "summary": f"Analyzed {len(scraped_data)} pages, found {len(emails)} emails, {len(phones)} phones, {len(urls)} URLs across {len(domains)} domains"
+                "languages": list(
+                    set(
+                        page["metadata"].get("language", "unknown")
+                        for page in scraped_data
+                    )
+                ),
+                "average_response_time": sum(
+                    page["response_time"] for page in scraped_data
+                )
+                / len(scraped_data),
+                "summary": f"Analyzed {len(scraped_data)} pages, found {len(emails)} emails, {len(phones)} phones, {len(urls)} URLs across {len(domains)} domains",
             }
 
             return analysis

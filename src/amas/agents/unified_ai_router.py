@@ -19,7 +19,6 @@ from openai import AsyncOpenAI, OpenAI
 
 logger = logging.getLogger(__name__)
 
-
 class ModelProvider(Enum):
     """Available AI model providers"""
 
@@ -30,7 +29,6 @@ class ModelProvider(Enum):
     GLM_DIRECT = "glm_direct"
     LOCAL_LLAMA = "local_llama"
     LOCAL_CODELLAMA = "local_codellama"
-
 
 @dataclass
 class ModelConfig:
@@ -48,7 +46,6 @@ class ModelConfig:
     supports_streaming: bool = True
     timeout_seconds: int = 30
 
-
 @dataclass
 class ModelUsageStats:
     """Track usage statistics for rate limiting and load balancing"""
@@ -61,7 +58,6 @@ class ModelUsageStats:
     last_failure_time: Optional[datetime] = None
     consecutive_failures: int = 0
     is_available: bool = True
-
 
 class UnifiedAIRouter:
     """
@@ -396,10 +392,8 @@ class UnifiedAIRouter:
 
         return results
 
-
 # Singleton instance
 _router_instance: Optional[UnifiedAIRouter] = None
-
 
 def get_ai_router() -> UnifiedAIRouter:
     """Get or create the singleton AI router instance"""
@@ -407,7 +401,6 @@ def get_ai_router() -> UnifiedAIRouter:
     if _router_instance is None:
         _router_instance = UnifiedAIRouter()
     return _router_instance
-
 
 # Example usage for agents
 async def agent_complete(

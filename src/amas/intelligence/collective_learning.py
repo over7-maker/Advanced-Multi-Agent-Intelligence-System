@@ -20,7 +20,6 @@ from sklearn.cluster import KMeans
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-
 @dataclass
 class TaskPattern:
     task_id: str
@@ -35,7 +34,6 @@ class TaskPattern:
     timestamp: str
     context_hash: str
 
-
 @dataclass
 class AgentInsight:
     agent_id: str
@@ -46,7 +44,6 @@ class AgentInsight:
     success_evidence: List[str]
     discovery_timestamp: str
     validation_count: int
-
 
 @dataclass
 class CollectiveKnowledge:
@@ -59,7 +56,6 @@ class CollectiveKnowledge:
     effectiveness_score: float
     usage_count: int
     last_updated: str
-
 
 class CollectiveIntelligenceEngine:
     """Advanced collective learning system for multi-agent coordination"""
@@ -748,7 +744,6 @@ class CollectiveIntelligenceEngine:
 
         self.logger.info(f"📚 Transferred insight from {from_agent} to {to_agent}")
 
-
 # Utility functions for external use
 class CollectiveIntelligenceManager:
     """High-level manager for collective intelligence operations"""
@@ -797,7 +792,6 @@ class CollectiveIntelligenceManager:
             f"{summary['knowledge_entries']} knowledge entries, "
             f"{summary['high_confidence_insights']} high-confidence insights"
         )
-
 
 # CLI interface for testing
 if __name__ == "__main__":

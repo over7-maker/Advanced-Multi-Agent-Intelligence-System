@@ -19,7 +19,6 @@ from .orchestrator import IntelligenceOrchestrator
 
 logger = logging.getLogger(__name__)
 
-
 class IntegrationStatus(Enum):
     """Integration status enumeration"""
 
@@ -30,7 +29,6 @@ class IntegrationStatus(Enum):
     ERROR = "error"
     MAINTENANCE = "maintenance"
 
-
 class WorkflowStatus(Enum):
     """Workflow status enumeration"""
 
@@ -40,7 +38,6 @@ class WorkflowStatus(Enum):
     COMPLETED = "completed"
     FAILED = "failed"
     CANCELLED = "cancelled"
-
 
 @dataclass
 class IntegrationMetrics:
@@ -55,7 +52,6 @@ class IntegrationMetrics:
     uptime: float
     memory_usage: float
     cpu_usage: float
-
 
 @dataclass
 class WorkflowExecution:
@@ -72,7 +68,6 @@ class WorkflowExecution:
     results: Dict[str, Any]
     errors: List[str]
     metrics: Dict[str, Any]
-
 
 class IntegrationManager:
     """

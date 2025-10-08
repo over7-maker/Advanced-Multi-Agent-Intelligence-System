@@ -66,7 +66,6 @@ try:
 except ImportError:
     NEURAL_AVAILABLE = False
 
-
 class QuantumState(Enum):
     """Quantum state enumeration"""
 
@@ -75,7 +74,6 @@ class QuantumState(Enum):
     COLLAPSED = "collapsed"
     COHERENT = "coherent"
     DECOHERENT = "decoherent"
-
 
 class ConsciousnessLevel(Enum):
     """Consciousness level enumeration"""
@@ -86,7 +84,6 @@ class ConsciousnessLevel(Enum):
     SELF_AWARE = 3
     TRANSCENDENT = 4
     QUANTUM_CONSCIOUS = 5
-
 
 @dataclass
 class QuantumCommand:
@@ -103,7 +100,6 @@ class QuantumCommand:
     dimensional_frequency: float
     metadata: Dict[str, Any]
 
-
 @dataclass
 class NeuralPattern:
     """Neural pattern structure"""
@@ -115,7 +111,6 @@ class NeuralPattern:
     plasticity_factor: float
     consciousness_correlation: float
     quantum_entanglement: bool
-
 
 class QuantumAMASInterface:
     """Revolutionary Quantum-Inspired AMAS Interface"""
@@ -712,7 +707,6 @@ class QuantumAMASInterface:
                 break
             except Exception as e:
                 self.console.print(f"\n❌ Quantum error: {e}", style="red")
-
 
 if __name__ == "__main__":
     # Initialize quantum interface

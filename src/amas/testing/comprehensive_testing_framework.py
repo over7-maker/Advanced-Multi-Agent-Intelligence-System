@@ -30,7 +30,6 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-
 class TestType(Enum):
     """Test type enumeration"""
 
@@ -43,7 +42,6 @@ class TestType(Enum):
     STRESS = "stress"
     END_TO_END = "end_to_end"
 
-
 class TestStatus(Enum):
     """Test status enumeration"""
 
@@ -54,7 +52,6 @@ class TestStatus(Enum):
     RUNNING = "running"
     PENDING = "pending"
 
-
 class TestPriority(Enum):
     """Test priority enumeration"""
 
@@ -62,7 +59,6 @@ class TestPriority(Enum):
     HIGH = "high"
     MEDIUM = "medium"
     LOW = "low"
-
 
 @dataclass
 class TestResult:
@@ -81,7 +77,6 @@ class TestResult:
     memory_usage: float = 0.0
     cpu_usage: float = 0.0
 
-
 @dataclass
 class TestSuite:
     """Test suite configuration"""
@@ -94,7 +89,6 @@ class TestSuite:
     retry_count: int = 0
     parallel: bool = False
     dependencies: List[str] = field(default_factory=list)
-
 
 class ComprehensiveTestingFramework:
     """

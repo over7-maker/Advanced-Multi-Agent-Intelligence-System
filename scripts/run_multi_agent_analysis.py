@@ -32,7 +32,6 @@ except ImportError:
 
 from openai import AsyncOpenAI
 
-
 class MultiAgentOrchestrator:
     """Orchestrates multiple AI agents for project analysis"""
 
@@ -307,7 +306,6 @@ Based on the multi-agent analysis, here are the top priorities:
 
         return report
 
-
 async def main():
     """Main execution function"""
     try:
@@ -354,7 +352,6 @@ async def main():
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         return 1
-
 
 if __name__ == "__main__":
     exit_code = asyncio.run(main())

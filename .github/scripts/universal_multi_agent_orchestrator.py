@@ -17,7 +17,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from src.amas.services.universal_ai_manager import get_universal_ai_manager
 
-
 class UniversalMultiAgentOrchestrator:
     """
     Multi-agent orchestrator using Universal AI Manager
@@ -166,14 +165,14 @@ class UniversalMultiAgentOrchestrator:
         print("\n📍 PHASE 1: OSINT Collection")
         phase1_prompt = f"""
         Conduct comprehensive OSINT (Open Source Intelligence) collection on: {topic}
-        
+
         Focus on:
         1. Recent developments and news
         2. Key players and organizations
         3. Technical details and specifications
         4. Potential risks and concerns
         5. Public sentiment and trends
-        
+
         Provide structured intelligence with sources.
         """
 
@@ -192,14 +191,14 @@ class UniversalMultiAgentOrchestrator:
         print("\n📍 PHASE 2: Threat Analysis")
         phase2_prompt = f"""
         Analyze potential security threats related to: {topic}
-        
+
         Focus on:
         1. Identify threat actors and motivations
         2. Analyze attack vectors and techniques
         3. Assess risk levels and impact
         4. Identify vulnerabilities
         5. Evaluate threat intelligence
-        
+
         Provide detailed threat assessment.
         """
 
@@ -222,14 +221,14 @@ class UniversalMultiAgentOrchestrator:
             print("\n📍 PHASE 3: Code Analysis")
             phase3_prompt = f"""
             Analyze code-related aspects of: {topic}
-            
+
             Focus on:
             1. Code quality and security
             2. Vulnerability patterns
             3. Best practices compliance
             4. Technical debt assessment
             5. Security recommendations
-            
+
             Provide technical code assessment.
             """
 
@@ -248,14 +247,14 @@ class UniversalMultiAgentOrchestrator:
         print("\n📍 PHASE 4: Strategic Recommendations")
         phase4_prompt = f"""
         Provide strategic recommendations based on the analysis of: {topic}
-        
+
         Focus on:
         1. Synthesize all findings
         2. Assess overall risk and impact
         3. Prioritize action items
         4. Recommend mitigation strategies
         5. Define success metrics
-        
+
         Provide executive-level strategic recommendations.
         """
 
@@ -418,7 +417,6 @@ class UniversalMultiAgentOrchestrator:
         print(f"⚡ Average response time: {stats['average_response_time']}")
         print("=" * 80)
 
-
 async def main():
     """Main entry point"""
     import argparse
@@ -437,7 +435,6 @@ async def main():
 
     orchestrator = UniversalMultiAgentOrchestrator()
     await orchestrator.run(topic=args.topic, strategy=args.strategy)
-
 
 if __name__ == "__main__":
     asyncio.run(main())

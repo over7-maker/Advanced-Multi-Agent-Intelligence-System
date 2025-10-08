@@ -12,7 +12,6 @@ from typing import Any, Dict, List, Optional, Union
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings
 
-
 class DatabaseConfig(BaseSettings):
     """Database configuration"""
 
@@ -34,7 +33,6 @@ class DatabaseConfig(BaseSettings):
         if not 1 <= v <= 65535:
             raise ValueError("Port must be between 1 and 65535")
         return v
-
 
 class RedisConfig(BaseSettings):
     """Redis configuration"""
@@ -66,7 +64,6 @@ class RedisConfig(BaseSettings):
             raise ValueError("Redis database must be between 0 and 15")
         return v
 
-
 class Neo4jConfig(BaseSettings):
     """Neo4j configuration"""
 
@@ -80,7 +77,6 @@ class Neo4jConfig(BaseSettings):
     def uri(self) -> str:
         return f"bolt://{self.host}:{self.port}"
 
-
 class LLMConfig(BaseSettings):
     """LLM service configuration"""
 
@@ -92,7 +88,6 @@ class LLMConfig(BaseSettings):
     @property
     def url(self) -> str:
         return f"http://{self.host}:{self.port}"
-
 
 class SecurityConfig(BaseSettings):
     """Security configuration"""
@@ -107,7 +102,6 @@ class SecurityConfig(BaseSettings):
     rate_limit_requests: int = Field(default=1000, env="AMAS_RATE_LIMIT_REQUESTS")
     rate_limit_window: int = Field(default=3600, env="AMAS_RATE_LIMIT_WINDOW")
 
-
 class APIConfig(BaseSettings):
     """API configuration"""
 
@@ -118,7 +112,6 @@ class APIConfig(BaseSettings):
     cors_origins: List[str] = Field(
         default=["http://localhost:3000"], env="AMAS_CORS_ORIGINS"
     )
-
 
 class AMASConfig(BaseSettings):
     """
@@ -280,10 +273,8 @@ class AMASConfig(BaseSettings):
             "gptoss": self.gptoss_api_key,
         }
 
-
 # Global configuration instance
 _config: Optional[AMASConfig] = None
-
 
 def get_settings() -> AMASConfig:
     """Get the global configuration instance"""
@@ -292,7 +283,6 @@ def get_settings() -> AMASConfig:
         _config = AMASConfig()
         _config.create_directories()
     return _config
-
 
 def reload_settings() -> AMASConfig:
     """Reload configuration from environment"""

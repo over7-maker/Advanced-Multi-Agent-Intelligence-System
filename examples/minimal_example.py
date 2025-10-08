@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 # Import AMAS system
 from main import AMASIntelligenceSystem
 
-
 class MinimalAMASExample:
     """Minimal example demonstrating AMAS functionality"""
 
@@ -214,7 +213,6 @@ class MinimalAMASExample:
             if self.amas_system:
                 await self.amas_system.shutdown()
 
-
 async def main():
     """Main function"""
     try:
@@ -233,7 +231,6 @@ async def main():
     except Exception as e:
         logger.error(f"Application error: {e}")
         return 1
-
 
 if __name__ == "__main__":
     exit_code = asyncio.run(main())

@@ -6,7 +6,6 @@ import os
 import httpx
 import pytest
 
-
 @pytest.mark.asyncio
 async def test_health_endpoint():
     """Test the health endpoint"""
@@ -23,7 +22,6 @@ async def test_health_endpoint():
             # Skip if API is not running
             pytest.skip("API not available for e2e testing")
 
-
 @pytest.mark.asyncio
 async def test_api_info():
     """Test the API info endpoint"""
@@ -35,7 +33,6 @@ async def test_api_info():
             assert response.status_code in [200, 404]  # May not have root endpoint
         except httpx.ConnectError:
             pytest.skip("API not available for e2e testing")
-
 
 def test_environment_setup():
     """Test that test environment is properly configured"""

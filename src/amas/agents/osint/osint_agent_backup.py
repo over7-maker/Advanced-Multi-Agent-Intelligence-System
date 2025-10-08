@@ -15,7 +15,6 @@ from agents.base.intelligence_agent import AgentStatus, IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 
-
 class OSINTAgent(IntelligenceAgent):
     """Enhanced OSINT Collection Agent for AMAS Intelligence System"""
 

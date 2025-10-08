@@ -41,7 +41,6 @@ from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree
 
-
 class DisplayMode(Enum):
     """Display mode enumeration"""
 
@@ -49,7 +48,6 @@ class DisplayMode(Enum):
     DETAILED = "detailed"
     MINIMAL = "minimal"
     FULL = "full"
-
 
 @dataclass
 class DisplayConfig:
@@ -63,7 +61,6 @@ class DisplayConfig:
     color_scheme: str = "default"
     refresh_rate: float = 0.1
     max_history: int = 50
-
 
 class VisualInterface:
     """Advanced Visual Interface for AMAS Interactive Mode"""

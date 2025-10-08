@@ -19,7 +19,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-
 async def test_basic_imports():
     """Test basic imports"""
     try:
@@ -62,7 +61,6 @@ async def test_basic_imports():
     except Exception as e:
         logger.error(f"Import test failed: {e}")
         return False
-
 
 async def test_basic_functionality():
     """Test basic functionality"""
@@ -120,7 +118,6 @@ async def test_basic_functionality():
         logger.error(f"Basic functionality test failed: {e}")
         return False
 
-
 async def test_api_structure():
     """Test API structure"""
     try:
@@ -141,7 +138,6 @@ async def test_api_structure():
     except Exception as e:
         logger.error(f"API structure test failed: {e}")
         return False
-
 
 async def test_agent_structure():
     """Test agent structure"""
@@ -211,7 +207,6 @@ async def test_agent_structure():
         logger.error(f"Agent structure test failed: {e}")
         return False
 
-
 async def test_docker_configuration():
     """Test Docker configuration"""
     try:
@@ -240,7 +235,6 @@ async def test_docker_configuration():
     except Exception as e:
         logger.error(f"Docker configuration test failed: {e}")
         return False
-
 
 async def main():
     """Main test function"""
@@ -306,7 +300,6 @@ async def main():
         return False
 
     return True
-
 
 if __name__ == "__main__":
     asyncio.run(main())

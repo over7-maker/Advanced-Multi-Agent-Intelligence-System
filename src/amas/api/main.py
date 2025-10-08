@@ -43,7 +43,6 @@ security = HTTPBearer()
 # Global AMAS instance
 amas_app = None
 
-
 # Pydantic models
 class TaskRequest(BaseModel):
     type: str
@@ -51,12 +50,10 @@ class TaskRequest(BaseModel):
     parameters: Dict[str, Any] = {}
     priority: int = 2
 
-
 class TaskResponse(BaseModel):
     task_id: str
     status: str
     message: str
-
 
 class SystemStatus(BaseModel):
     status: str
@@ -65,12 +62,10 @@ class SystemStatus(BaseModel):
     total_tasks: int
     timestamp: str
 
-
 class HealthCheck(BaseModel):
     status: str
     services: Dict[str, Any]
     timestamp: str
-
 
 # Dependency to get AMAS system
 async def get_amas_system():
@@ -78,7 +73,6 @@ async def get_amas_system():
     if amas_app is None:
         raise HTTPException(status_code=503, detail="AMAS system not initialized")
     return amas_app
-
 
 # Dependency to verify authentication
 async def verify_auth(credentials: HTTPAuthorizationCredentials = Depends(security)):
@@ -88,7 +82,6 @@ async def verify_auth(credentials: HTTPAuthorizationCredentials = Depends(securi
             status_code=401, detail="Invalid authentication credentials"
         )
     return {"user_id": "admin", "role": "admin"}
-
 
 # Startup event
 @app.on_event("startup")
@@ -136,7 +129,6 @@ async def startup_event():
         logger.error(f"Failed to initialize AMAS system: {e}")
         raise
 
-
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -144,7 +136,6 @@ async def shutdown_event():
     if amas_app:
         await amas_app.shutdown()
         logger.info("AMAS Intelligence System shutdown complete")
-
 
 # Health check endpoint
 @app.get("/health", response_model=HealthCheck)
@@ -170,7 +161,6 @@ async def health_check():
             timestamp=datetime.utcnow().isoformat(),
         )
 
-
 # System status endpoint
 @app.get("/status", response_model=SystemStatus)
 async def get_system_status():
@@ -190,7 +180,6 @@ async def get_system_status():
     except Exception as e:
         logger.error(f"Error getting system status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 # Submit task endpoint
 @app.post("/tasks", response_model=TaskResponse)
@@ -241,7 +230,6 @@ async def submit_task(
         logger.error(f"Error submitting task: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # Get task status endpoint
 @app.get("/tasks/{task_id}")
 async def get_task_status(task_id: str, auth: dict = Depends(verify_auth)):
@@ -261,7 +249,6 @@ async def get_task_status(task_id: str, auth: dict = Depends(verify_auth)):
     except Exception as e:
         logger.error(f"Error getting task status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 # Get agents endpoint
 @app.get("/agents")
@@ -291,7 +278,6 @@ async def get_agents(auth: dict = Depends(verify_auth)):
         logger.error(f"Error getting agents: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # Get agent status endpoint
 @app.get("/agents/{agent_id}")
 async def get_agent_status(agent_id: str, auth: dict = Depends(verify_auth)):
@@ -315,7 +301,6 @@ async def get_agent_status(agent_id: str, auth: dict = Depends(verify_auth)):
     except Exception as e:
         logger.error(f"Error getting agent status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 # Execute workflow endpoint
 @app.post("/workflows/{workflow_id}/execute")
@@ -347,7 +332,6 @@ async def execute_workflow(
         logger.error(f"Error executing workflow: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # Get audit log endpoint
 @app.get("/audit")
 async def get_audit_log(
@@ -374,7 +358,6 @@ async def get_audit_log(
         logger.error(f"Error getting audit log: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # Root endpoint
 @app.get("/")
 async def root():
@@ -385,7 +368,6 @@ async def root():
         "status": "operational",
         "timestamp": datetime.utcnow().isoformat(),
     }
-
 
 if __name__ == "__main__":
     uvicorn.run(

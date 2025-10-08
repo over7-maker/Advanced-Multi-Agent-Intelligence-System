@@ -17,7 +17,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 def debug_environment():
     """Debug environment variables and configuration"""
     print("🔍 DEBUGGING AI ISSUE RESPONDER ENVIRONMENT")
@@ -87,7 +86,6 @@ def debug_environment():
     print("\n✅ Debug completed successfully!")
     return True
 
-
 def debug_github_auth():
     """Debug GitHub authentication"""
     print("\n🔐 DEBUGGING GITHUB AUTHENTICATION")
@@ -135,7 +133,6 @@ def debug_github_auth():
         print(f"❌ GitHub API test failed: {e}")
         return False
 
-
 def debug_issue_access():
     """Debug issue access"""
     print("\n📋 DEBUGGING ISSUE ACCESS")
@@ -179,7 +176,6 @@ def debug_issue_access():
     except Exception as e:
         print(f"❌ Issue access test failed: {e}")
         return False
-
 
 def debug_comment_posting():
     """Debug comment posting"""
@@ -242,7 +238,6 @@ This is a test comment from the AMAS Auto-Responder debug system.
         print(f"❌ Comment posting test failed: {e}")
         return False
 
-
 def main():
     """Main debugging function"""
     print("🐛 AMAS AUTO-RESPONDER DEBUG SYSTEM")
@@ -294,7 +289,6 @@ def main():
         print("4. Verify issue is open and accessible")
 
     return passed == total
-
 
 if __name__ == "__main__":
     try:

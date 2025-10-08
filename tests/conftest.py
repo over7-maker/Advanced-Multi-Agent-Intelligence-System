@@ -17,7 +17,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 from amas.config.settings import get_settings
 from amas.main import AMASApplication
 
-
 @pytest.fixture(scope="session")
 def event_loop():
     """Create an instance of the default event loop for the test session."""
@@ -25,9 +24,7 @@ def event_loop():
     yield loop
     loop.close()
 
-
 @pytest.fixture
-
 async def amas_app() -> AsyncGenerator[AMASApplication, None]:
     """Create and initialize AMAS application for testing"""
     app = AMASApplication()
@@ -35,13 +32,11 @@ async def amas_app() -> AsyncGenerator[AMASApplication, None]:
     yield app
     await app.shutdown()
 
-
 @pytest.fixture
 async def test_client() -> AsyncGenerator[httpx.AsyncClient, None]:
     """Create test client for API testing"""
     async with httpx.AsyncClient(base_url="http://localhost:8000") as client:
         yield client
-
 
 @pytest.fixture
 def test_config() -> Dict[str, Any]:
@@ -67,9 +62,7 @@ def test_config() -> Dict[str, Any]:
         },
     }
 
-
 @pytest.fixture
-
 def sample_task() -> Dict[str, Any]:
     """Sample task for testing"""
     return {
@@ -81,7 +74,6 @@ def sample_task() -> Dict[str, Any]:
         },
         "priority": 1,
     }
-
 
 @pytest.fixture
 def sample_workflow() -> Dict[str, Any]:

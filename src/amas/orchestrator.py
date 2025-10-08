@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional
 from .intelligence.intelligence_manager import intelligence_manager
 from .providers.manager import provider_manager
 
-
 class AMASOrchestrator:
     """Main orchestrator for the AMAS system"""
 
@@ -334,15 +333,12 @@ Provide a detailed analysis and recommendations.
 
         return capabilities
 
-
 # Global orchestrator instance
 orchestrator = AMASOrchestrator()
-
 
 async def get_orchestrator() -> AMASOrchestrator:
     """Get the global orchestrator instance"""
     return orchestrator
-
 
 # CLI interface for testing
 if __name__ == "__main__":

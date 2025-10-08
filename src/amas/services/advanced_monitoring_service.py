@@ -25,7 +25,6 @@ from sklearn.preprocessing import StandardScaler
 
 logger = logging.getLogger(__name__)
 
-
 class AlertSeverity(Enum):
     """Alert severity levels"""
 
@@ -33,7 +32,6 @@ class AlertSeverity(Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
-
 
 class AnomalyType(Enum):
     """Types of anomalies detected"""
@@ -43,7 +41,6 @@ class AnomalyType(Enum):
     UNUSUAL_PATTERN = "unusual_pattern"
     SECURITY_THREAT = "security_threat"
     SYSTEM_FAILURE = "system_failure"
-
 
 @dataclass
 class MLModel:
@@ -55,7 +52,6 @@ class MLModel:
     last_trained: datetime
     features: List[str]
     threshold: float = 0.5
-
 
 @dataclass
 class AnomalyDetection:
@@ -70,7 +66,6 @@ class AnomalyDetection:
     features: Dict[str, float]
     recommendations: List[str] = field(default_factory=list)
 
-
 @dataclass
 class PredictiveAlert:
     """Predictive alert data structure"""
@@ -83,7 +78,6 @@ class PredictiveAlert:
     time_horizon: int  # minutes
     timestamp: datetime
     recommendations: List[str] = field(default_factory=list)
-
 
 class AdvancedMonitoringService:
     """

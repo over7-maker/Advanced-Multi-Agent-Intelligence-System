@@ -14,7 +14,6 @@ from typing import Any, Dict, List, Optional
 import requests
 from openai import OpenAI
 
-
 class AIThreatIntelligence:
     def __init__(self):
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -219,7 +218,7 @@ class AIThreatIntelligence:
         - Threat actor relationships and collaborations
         - Evolution of threat actor capabilities
         - Counter-intelligence recommendations
-        
+
         Threat Landscape:
         {threat_landscape}
         """
@@ -241,7 +240,7 @@ class AIThreatIntelligence:
         - Strategic recommendations for defense
         - Threat forecasting and predictions
         - Resource allocation recommendations
-        
+
         Threat Analysis:
         {threat_actors}
         """
@@ -265,7 +264,7 @@ class AIThreatIntelligence:
         - Vulnerability exploitation patterns
         - Network security implications
         - Technical implementation recommendations
-        
+
         Strategic Context:
         {strategic_assessment}
         """
@@ -294,7 +293,7 @@ class AIThreatIntelligence:
 
         report = f"""# 🛡️ AMAS Threat Intelligence Report
 
-**Generated:** {results['timestamp']}  
+**Generated:** {results['timestamp']}
 **Agents Used:** {', '.join(results['agents_used'])}
 
 ---
@@ -382,11 +381,9 @@ This report presents comprehensive threat intelligence analysis conducted by mul
 
         return results
 
-
 async def main():
     analyzer = AIThreatIntelligence()
     await analyzer.run()
-
 
 if __name__ == "__main__":
     print("🛡️ AMAS Threat Intelligence Analysis System")

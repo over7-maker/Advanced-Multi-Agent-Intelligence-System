@@ -12,7 +12,6 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from main import AMASIntelligenceSystem
 
-
 async def code_generation_example():
     """Code generation example"""
     print("💻 AMAS Code Generation Example")
@@ -151,7 +150,6 @@ async def code_generation_example():
         print("✅ AMAS system shutdown complete")
 
     return True
-
 
 if __name__ == "__main__":
     asyncio.run(code_generation_example())

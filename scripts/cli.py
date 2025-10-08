@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 sys.path.append("..")
 from main import AMASIntelligenceSystem
 
-
 class AMASCLI:
     """AMAS Command Line Interface"""
 
@@ -81,13 +80,11 @@ class AMASCLI:
             logger.error(f"Failed to get system status: {e}")
             raise
 
-
 # CLI Commands
 @click.group()
 def cli():
     """AMAS Intelligence System CLI"""
     pass
-
 
 @cli.command()
 @click.option(
@@ -114,7 +111,6 @@ def submit_task(task_type: str, description: str, priority: int):
 
     asyncio.run(_submit_task())
 
-
 @cli.command()
 @click.option("--task-id", required=True, help="Task ID to check")
 def get_result(task_id: str):
@@ -134,7 +130,6 @@ def get_result(task_id: str):
 
     asyncio.run(_get_result())
 
-
 @cli.command()
 def system_status():
     """Get system status"""
@@ -152,7 +147,6 @@ def system_status():
             sys.exit(1)
 
     asyncio.run(_system_status())
-
 
 @cli.command()
 @click.option("--workflow-type", required=True, help="Type of workflow to execute")
@@ -182,7 +176,6 @@ def execute_workflow(workflow_type: str, config: str):
 
     asyncio.run(_execute_workflow())
 
-
 @cli.command()
 def list_agents():
     """List all available agents"""
@@ -202,7 +195,6 @@ def list_agents():
             sys.exit(1)
 
     asyncio.run(_list_agents())
-
 
 @cli.command()
 def list_tasks():
@@ -225,7 +217,6 @@ def list_tasks():
             sys.exit(1)
 
     asyncio.run(_list_tasks())
-
 
 @cli.command()
 def health_check():
@@ -258,7 +249,6 @@ def health_check():
             sys.exit(1)
 
     asyncio.run(_health_check())
-
 
 if __name__ == "__main__":
     cli()

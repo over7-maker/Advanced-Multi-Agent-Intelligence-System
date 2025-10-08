@@ -24,7 +24,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class AIContinuousDeveloper:
     """AI-powered continuous developer"""
 
@@ -473,7 +472,6 @@ Provide:
         if self.ai_service:
             await self.ai_service.shutdown()
 
-
 async def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Continuous Developer")
@@ -517,7 +515,6 @@ async def main():
 
     finally:
         await developer.shutdown()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

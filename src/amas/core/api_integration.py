@@ -37,7 +37,6 @@ from .enhanced_orchestrator import EnhancedOrchestrator, execute_task, run_inves
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 class EnhancedLLMService:
     """Enhanced LLM service with multi-API fallback"""
 
@@ -77,7 +76,6 @@ class EnhancedLLMService:
         except Exception as e:
             logger.error(f"Streaming LLM service failed: {e}")
             yield f"AI Response: {prompt[:100]}... (API unavailable)"
-
 
 class EnhancedAgent(BaseAgent):
     """Enhanced base agent with multi-API fallback"""
@@ -162,7 +160,6 @@ class EnhancedAgent(BaseAgent):
             AgentType.TECHNOLOGY_MONITOR: "analysis_agent",
         }
         return agent_type_map.get(self.agent_type, "general_agent")
-
 
 class EnhancedOSINTAgent(EnhancedAgent):
     """Enhanced OSINT agent with multi-API fallback"""
@@ -268,7 +265,6 @@ class EnhancedOSINTAgent(EnhancedAgent):
         task_description = task.description.lower()
         return any(keyword in task_description for keyword in osint_keywords)
 
-
 class EnhancedInvestigationAgent(EnhancedAgent):
     """Enhanced investigation agent with multi-API fallback"""
 
@@ -370,7 +366,6 @@ class EnhancedInvestigationAgent(EnhancedAgent):
         task_description = task.description.lower()
         return any(keyword in task_description for keyword in investigation_keywords)
 
-
 class EnhancedForensicsAgent(EnhancedAgent):
     """Enhanced forensics agent with multi-API fallback"""
 
@@ -468,7 +463,6 @@ class EnhancedForensicsAgent(EnhancedAgent):
 
         task_description = task.description.lower()
         return any(keyword in task_description for keyword in forensics_keywords)
-
 
 class EnhancedReportingAgent(EnhancedAgent):
     """Enhanced reporting agent with multi-API fallback"""
@@ -578,7 +572,6 @@ class EnhancedReportingAgent(EnhancedAgent):
         task_description = task.description.lower()
         return any(keyword in task_description for keyword in reporting_keywords)
 
-
 class EnhancedAgentOrchestrator(AgentOrchestrator):
     """Enhanced orchestrator with multi-API fallback integration"""
 
@@ -623,19 +616,19 @@ class EnhancedAgentOrchestrator(AgentOrchestrator):
             # Enhanced reasoning phase with fallback
             reasoning_prompt = f"""
             You are an intelligence agent tasked with: {task.description}
-            
+
             Current context:
             - Task type: {task.type}
             - Priority: {task.priority.name}
             - Available data sources: {list(self.config.get('data_sources', []))}
-            
+
             Please reason about the best approach to complete this task.
             Consider:
             1. What information do you need?
             2. What actions should you take?
             3. What are the potential risks or challenges?
             4. How will you validate your results?
-            
+
             Provide a step-by-step plan.
             """
 
@@ -653,15 +646,15 @@ class EnhancedAgentOrchestrator(AgentOrchestrator):
             # Enhanced acting phase
             action_prompt = f"""
             Based on your reasoning, execute the following actions:
-            
+
             {reasoning}
-            
+
             For each action:
             1. Describe what you're doing
             2. Execute the action
             3. Record the results
             4. Assess if more information is needed
-            
+
             Be specific and actionable.
             """
 
@@ -679,15 +672,15 @@ class EnhancedAgentOrchestrator(AgentOrchestrator):
             # Enhanced observing phase
             observation_prompt = f"""
             Review the results of your actions:
-            
+
             {actions}
-            
+
             Analyze:
             1. What did you learn?
             2. Are there any gaps in your understanding?
             3. Do you need to take additional actions?
             4. What conclusions can you draw?
-            
+
             Provide a comprehensive analysis.
             """
 
@@ -803,7 +796,6 @@ class EnhancedAgentOrchestrator(AgentOrchestrator):
 
         return combined_stats
 
-
 # Global enhanced orchestrator instance
 enhanced_orchestrator = EnhancedAgentOrchestrator(
     {
@@ -814,13 +806,11 @@ enhanced_orchestrator = EnhancedAgentOrchestrator(
     }
 )
 
-
 # Convenience functions
 async def initialize_enhanced_system():
     """Initialize the enhanced AMAS system"""
     await enhanced_orchestrator.register_enhanced_agents()
     logger.info("Enhanced AMAS system initialized with multi-API fallback")
-
 
 async def run_enhanced_investigation(
     topic: str, investigation_type: str = "comprehensive"
@@ -829,7 +819,6 @@ async def run_enhanced_investigation(
     return await enhanced_orchestrator.run_enhanced_investigation(
         topic, investigation_type
     )
-
 
 # Example usage
 async def main():
@@ -865,7 +854,6 @@ async def main():
         import traceback
 
         traceback.print_exc()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

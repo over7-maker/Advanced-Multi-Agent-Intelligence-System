@@ -33,7 +33,6 @@ from amas.core.enhanced_orchestrator import (
     TaskResult,
 )
 
-
 class TestAPIConfig:
     """Test API configuration"""
 
@@ -56,7 +55,6 @@ class TestAPIConfig:
         assert config.api_type == APIType.OPENAI_COMPATIBLE
         assert "test" in config.capabilities
         assert config.priority == 1
-
 
 class TestAPIHealth:
     """Test API health tracking"""
@@ -98,7 +96,6 @@ class TestAPIHealth:
 
         assert health.consecutive_failures == 1
         assert health.error_rate == 1.0
-
 
 class TestAIAPIManager:
     """Test AI API Manager"""
@@ -166,7 +163,6 @@ class TestAIAPIManager:
         assert "api1" in available
         assert "api2" not in available
 
-
 class TestAPIClients:
     """Test API clients"""
 
@@ -193,7 +189,6 @@ class TestAPIClients:
 
         assert client is not None
         assert hasattr(client, "generate")
-
 
 class TestEnhancedOrchestrator:
     """Test Enhanced Orchestrator"""
@@ -239,7 +234,6 @@ class TestEnhancedOrchestrator:
         assert "analysis" in analysis_prompt
         assert "pattern" in analysis_prompt
 
-
 class TestEnhancedAgents:
     """Test Enhanced Agents"""
 
@@ -275,7 +269,6 @@ class TestEnhancedAgents:
     #     assert agent.name == "Enhanced Reporting Agent"
     #     assert "report_generation" in agent.capabilities
 
-
 class TestIntegration:
     """Test integration between components"""
 
@@ -306,7 +299,6 @@ class TestIntegration:
         stats = orchestrator.get_performance_stats()
         assert "total_tasks" in stats
         assert "success_rate" in stats
-
 
 class TestErrorHandling:
     """Test error handling and fallback mechanisms"""
@@ -341,7 +333,6 @@ class TestErrorHandling:
 
             assert result.success is False
             assert result.error is not None
-
 
 class TestPerformance:
     """Test performance and optimization"""
@@ -389,7 +380,6 @@ class TestPerformance:
         assert "healthy_apis" in health
         assert "unhealthy_apis" in health
 
-
 class TestConfiguration:
     """Test configuration and setup"""
 
@@ -429,7 +419,6 @@ class TestConfiguration:
         assert available[1] == "api3"
         assert available[2] == "api1"
 
-
 # Integration tests
 class TestEndToEnd:
     """End-to-end integration tests"""
@@ -467,7 +456,6 @@ class TestEndToEnd:
             assert result.success is True
             assert result.api_used == "backup_api"
 
-
 # Utility functions for testing
 def create_mock_api_response(
     content: str = "Test response", api_used: str = "test_api"
@@ -479,7 +467,6 @@ def create_mock_api_response(
         "model": "test-model",
         "timestamp": datetime.now().isoformat(),
     }
-
 
 def create_mock_task_result(
     success: bool = True, error: str = None
@@ -495,7 +482,6 @@ def create_mock_task_result(
         execution_time=1.0,
         timestamp=datetime.now().isoformat(),
     )
-
 
 # Run tests
 if __name__ == "__main__":

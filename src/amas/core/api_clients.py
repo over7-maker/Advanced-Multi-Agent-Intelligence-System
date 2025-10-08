@@ -19,7 +19,6 @@ import httpx
 from openai import AsyncOpenAI
 from tenacity import retry, stop_after_attempt, wait_exponential
 
-
 @dataclass
 class APIResponse:
     """Standardized API response format"""
@@ -30,7 +29,6 @@ class APIResponse:
     metadata: Optional[Dict] = None
     api_name: str = ""
     response_time: float = 0.0
-
 
 class BaseAPIClient:
     """Base class for all API clients"""
@@ -62,7 +60,6 @@ class BaseAPIClient:
     ) -> AsyncGenerator[APIResponse, None]:
         """Generate streaming response - to be implemented by subclasses"""
         raise NotImplementedError
-
 
 class OpenAICompatibleClient(BaseAPIClient):
     """Client for OpenAI-compatible APIs"""
@@ -114,7 +111,6 @@ class OpenAICompatibleClient(BaseAPIClient):
                     api_name=self.__class__.__name__,
                 )
 
-
 class CerebrasClient(BaseAPIClient):
     """Specialized client for Cerebras API"""
 
@@ -158,7 +154,6 @@ class CerebrasClient(BaseAPIClient):
                 response_time=time.time() - start_time,
             )
 
-
 class CohereClient(BaseAPIClient):
     """Specialized client for Cohere API"""
 
@@ -191,7 +186,6 @@ class CohereClient(BaseAPIClient):
             api_name="Cohere",
             response_time=time.time() - start_time,
         )
-
 
 class ChutesClient(BaseAPIClient):
     """Specialized client for Chutes API"""
@@ -259,7 +253,6 @@ class ChutesClient(BaseAPIClient):
                     except json.JSONDecodeError:
                         continue
 
-
 class GeminiClient(BaseAPIClient):
     """Specialized client for Gemini API"""
 
@@ -297,7 +290,6 @@ class GeminiClient(BaseAPIClient):
                 response_time=time.time() - start_time,
             )
 
-
 class NVIDIAClient(BaseAPIClient):
     """Specialized client for NVIDIA API"""
 
@@ -322,7 +314,6 @@ class NVIDIAClient(BaseAPIClient):
             api_name="NVIDIA",
             response_time=time.time() - start_time,
         )
-
 
 class APIClientFactory:
     """Factory for creating appropriate API clients"""
@@ -355,14 +346,12 @@ class APIClientFactory:
         client_class = client_map.get(api_name, OpenAICompatibleClient)
         return client_class(api_key, base_url, model)
 
-
 # Convenience functions for easy usage
 async def get_client(
     api_name: str, api_key: str, base_url: str, model: str
 ) -> BaseAPIClient:
     """Get an API client instance"""
     return APIClientFactory.create_client(api_name, api_key, base_url, model)
-
 
 async def test_api_client(
     api_name: str, api_key: str, base_url: str, model: str
@@ -384,7 +373,6 @@ async def test_api_client(
     except Exception as e:
         print(f"API {api_name} test failed: {e}")
         return False
-
 
 # Example usage
 async def main():
@@ -431,7 +419,6 @@ async def main():
 
         except Exception as e:
             print(f"❌ {config['name']}: Failed - {e}")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

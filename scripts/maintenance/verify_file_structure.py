@@ -11,7 +11,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
 
-
 class FileStructureVerifier:
     """Verify all project files and documentation are in the correct locations"""
 
@@ -377,7 +376,6 @@ class FileStructureVerifier:
 
         return success
 
-
 def main():
     """Main verification function"""
     verifier = FileStructureVerifier()
@@ -389,7 +387,6 @@ def main():
     else:
         print("\n⚠️  File structure verification found issues that need attention.")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

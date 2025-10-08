@@ -13,7 +13,6 @@ from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 
-
 class OfflineSetup:
     """Complete offline setup for AMAS system"""
 
@@ -390,7 +389,6 @@ echo "📊 Health: http://localhost:8000/health"
             logger.error(f"Error in offline setup: {e}")
             return False
 
-
 def main():
     """Main setup function"""
     try:
@@ -407,7 +405,6 @@ def main():
     except Exception as e:
         logger.error(f"Setup error: {e}")
         return 1
-
 
 if __name__ == "__main__":
     exit_code = main()

@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-
 class PromptMaker:
     """Prompt Maker for AMAS Intelligence System"""
 

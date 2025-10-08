@@ -10,12 +10,10 @@ import os
 import sys
 from pathlib import Path
 
-
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from amas.providers.manager import provider_manager, validate_environment
-
 
 def main():
     """Main validation function"""
@@ -110,7 +108,6 @@ def main():
     except Exception as e:
         print(f"❌ Validation failed: {e}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

@@ -15,7 +15,6 @@ from typing import Any, Dict, List, Optional
 import requests
 from openai import OpenAI
 
-
 class AIMasterOrchestrator:
     def __init__(self):
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -272,7 +271,7 @@ class AIMasterOrchestrator:
         - System architecture assessment
         - Integration status and connectivity
         - Performance metrics and trends
-        
+
         System Metrics: {json.dumps(system_metrics, indent=2)}
         Workflow Status: {json.dumps(workflow_status, indent=2)}
         """
@@ -291,7 +290,7 @@ class AIMasterOrchestrator:
         - Performance optimization opportunities
         - Error handling and recovery
         - Monitoring and alerting strategies
-        
+
         System Overview:
         {system_overview}
         """
@@ -314,7 +313,7 @@ class AIMasterOrchestrator:
         - Performance scaling strategies
         - Security and compliance improvements
         - Innovation and research directions
-        
+
         Workflow Coordination:
         {workflow_coordination}
         """
@@ -337,7 +336,7 @@ class AIMasterOrchestrator:
         - Error handling and recovery procedures
         - Testing and validation strategies
         - Documentation and maintenance
-        
+
         Strategic Recommendations:
         {strategic_recommendations}
         """
@@ -368,8 +367,8 @@ class AIMasterOrchestrator:
 
         report = f"""# 🎯 AMAS Master AI Orchestration Report
 
-**Generated:** {results['timestamp']}  
-**Agents Used:** {', '.join(results['agents_used'])}  
+**Generated:** {results['timestamp']}
+**Agents Used:** {', '.join(results['agents_used'])}
 **System Health:** {results['system_metrics']['system_health']}
 
 ---
@@ -479,11 +478,9 @@ This report presents comprehensive master orchestration analysis conducted by mu
 
         return results
 
-
 async def main():
     orchestrator = AIMasterOrchestrator()
     await orchestrator.run()
-
 
 if __name__ == "__main__":
     print("🎯 AMAS Master AI Orchestrator")

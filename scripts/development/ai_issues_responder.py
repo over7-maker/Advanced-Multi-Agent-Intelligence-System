@@ -33,7 +33,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class AIIssuesResponder:
     """AI-powered GitHub issues responder"""
 
@@ -419,7 +418,6 @@ Suggest 1-3 potential assignees with brief reasoning."""
         if self.ai_service:
             await self.ai_service.shutdown()
 
-
 async def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Issues Responder")
@@ -478,7 +476,6 @@ async def main():
 
     finally:
         await responder.shutdown()
-
 
 if __name__ == "__main__":
     asyncio.run(main())

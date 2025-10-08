@@ -22,13 +22,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
 class ProviderStatus(Enum):
     ACTIVE = "active"
     FAILED = "failed"
     TESTING = "testing"
     UNKNOWN = "unknown"
-
 
 class IntelligentFallbackSystem:
     """Intelligent fallback system for all 6 AI providers"""
@@ -437,31 +435,25 @@ class IntelligentFallbackSystem:
 
         return health
 
-
 # Global fallback system instance
 fallback_system = IntelligentFallbackSystem()
-
 
 # Convenience functions
 async def generate_ai_response(prompt: str, **kwargs) -> Dict[str, Any]:
     """Generate AI response with intelligent fallback"""
     return await fallback_system.generate_response(prompt, **kwargs)
 
-
 def get_fallback_stats() -> Dict[str, Any]:
     """Get fallback statistics"""
     return fallback_system.get_fallback_stats()
-
 
 def get_provider_health() -> Dict[str, Any]:
     """Get provider health information"""
     return fallback_system.get_provider_health()
 
-
 def reset_fallback_order():
     """Reset fallback order"""
     fallback_system.reset_fallback_order()
-
 
 # Test function
 async def test_intelligent_fallback():
@@ -497,7 +489,6 @@ async def test_intelligent_fallback():
     print(f"\n🏥 Provider Health:")
     for provider_id, info in health.items():
         print(f"  {info['name']}: {info['status']} ({info['success_rate']})")
-
 
 if __name__ == "__main__":
     asyncio.run(test_intelligent_fallback())

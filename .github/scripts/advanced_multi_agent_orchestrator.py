@@ -16,7 +16,6 @@ from typing import Any, Dict, List, Optional
 import aiohttp
 from openai import OpenAI
 
-
 class AdvancedMultiAgentOrchestrator:
     def __init__(self):
         # Initialize all 9 API keys
@@ -293,18 +292,18 @@ class AdvancedMultiAgentOrchestrator:
         """Create specialized prompt for each agent"""
         base_prompt = f"""
         Task: {task}
-        
+
         Context: {context or 'No additional context provided'}
-        
+
         As {self.agents[agent_name]['name']}, you are specialized in {self.agents[agent_name]['specialization']}.
-        
+
         Please provide:
         1. Detailed analysis and recommendations
         2. Specific actionable steps
         3. Priority level for implementation
         4. Potential risks and mitigation strategies
         5. Success metrics and KPIs
-        
+
         Format your response as a structured analysis with clear sections.
         """
 
@@ -526,7 +525,6 @@ class AdvancedMultiAgentOrchestrator:
 
         self.logger.info(f"📄 Improvement report generated: {filename}")
 
-
 async def main():
     """Main execution function"""
     orchestrator = AdvancedMultiAgentOrchestrator()
@@ -542,7 +540,6 @@ async def main():
     print(f"📊 Agents Used: {len(results['agents_used'])}")
     print(f"🎯 Recommendations: {len(results['recommendations'])}")
     print(f"🚀 Next Actions: {len(results['next_actions'])}")
-
 
 if __name__ == "__main__":
     asyncio.run(main())

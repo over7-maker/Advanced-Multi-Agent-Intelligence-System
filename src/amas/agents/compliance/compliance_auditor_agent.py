@@ -17,7 +17,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 logger = logging.getLogger(__name__)
 
-
 class ComplianceFramework(Enum):
     """Compliance framework enumeration"""
 
@@ -30,7 +29,6 @@ class ComplianceFramework(Enum):
     CCPA = "ccpa"
     FERPA = "ferpa"
 
-
 class ComplianceLevel(Enum):
     """Compliance level enumeration"""
 
@@ -40,7 +38,6 @@ class ComplianceLevel(Enum):
     NOT_APPLICABLE = "not_applicable"
     REQUIRES_REVIEW = "requires_review"
 
-
 class RiskLevel(Enum):
     """Risk level enumeration"""
 
@@ -48,7 +45,6 @@ class RiskLevel(Enum):
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
-
 
 @dataclass
 class ComplianceRule:
@@ -65,7 +61,6 @@ class ComplianceRule:
     automated_check: bool = True
     remediation_steps: List[str] = field(default_factory=list)
 
-
 @dataclass
 class ComplianceCheck:
     """Compliance check result"""
@@ -78,7 +73,6 @@ class ComplianceCheck:
     evidence: List[str] = field(default_factory=list)
     timestamp: datetime = field(default_factory=datetime.utcnow)
     risk_level: RiskLevel = RiskLevel.LOW
-
 
 @dataclass
 class ComplianceReport:
@@ -95,7 +89,6 @@ class ComplianceReport:
     valid_until: datetime = field(
         default_factory=lambda: datetime.utcnow() + timedelta(days=90)
     )
-
 
 class ComplianceAuditorAgent:
     """
@@ -931,19 +924,19 @@ class ComplianceAuditorAgent:
         try:
             text_report = f"""
             COMPLIANCE AUDIT REPORT
-            
+
             Report ID: {report.id}
             Framework: {report.framework.value}
             Generated: {report.generated_at.strftime('%Y-%m-%d %H:%M:%S')}
             Valid Until: {report.valid_until.strftime('%Y-%m-%d %H:%M:%S')}
-            
+
             OVERALL COMPLIANCE
             Score: {report.overall_score:.1f}%
             Level: {report.compliance_level.value.upper()}
-            
+
             SUMMARY
             {report.summary}
-            
+
             RECOMMENDATIONS
             """
 

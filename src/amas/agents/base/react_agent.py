@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from .intelligence_agent import AgentStatus, IntelligenceAgent
 
-
 class ReasoningStep(Enum):
     """Reasoning step types in ReAct framework"""
 
@@ -21,7 +20,6 @@ class ReasoningStep(Enum):
     THINK = "think"
     ACT = "act"
     REFLECT = "reflect"
-
 
 class ReactAgent(IntelligenceAgent):
     """

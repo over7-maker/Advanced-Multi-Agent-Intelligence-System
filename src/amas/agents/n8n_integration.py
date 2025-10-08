@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-
 class N8NIntegration:
     """N8N Integration for AMAS Intelligence System"""
 

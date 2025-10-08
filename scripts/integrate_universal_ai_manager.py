@@ -13,7 +13,6 @@ from typing import List, Tuple
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-
 def find_python_files_using_ai() -> List[Path]:
     """Find all Python files that use AI APIs"""
     ai_files = []
@@ -56,7 +55,6 @@ def find_python_files_using_ai() -> List[Path]:
 
     return ai_files
 
-
 def generate_migration_template() -> str:
     """Generate template code for migrating to Universal AI Manager"""
     return '''
@@ -84,7 +82,7 @@ async def generate_response(prompt: str, system_prompt: str = None):
         max_tokens=4096,
         temperature=0.7
     )
-    
+
     if result['success']:
         return result['content']
     else:
@@ -99,7 +97,6 @@ health = ai_manager.get_provider_health()
 for provider_id, info in health.items():
     print(f"{info['name']}: {info['status']} ({info['success_rate']})")
 '''
-
 
 def create_integration_guide() -> str:
     """Create comprehensive integration guide"""
@@ -367,7 +364,6 @@ This will test all configured providers and show detailed statistics.
 """
     return guide
 
-
 def main():
     """Main integration script"""
     print("=" * 80)
@@ -417,7 +413,6 @@ def main():
     print("  ✅ Performance tracking and monitoring")
     print("  ✅ Circuit breaker and rate limit handling")
     print()
-
 
 if __name__ == "__main__":
     main()

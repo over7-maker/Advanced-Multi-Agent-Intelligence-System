@@ -23,7 +23,6 @@ from rich.panel import Panel
 from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-
 class TaskStatus(Enum):
     """Task status enumeration"""
 
@@ -36,7 +35,6 @@ class TaskStatus(Enum):
     PAUSED = "paused"
     SCHEDULED = "scheduled"
 
-
 class TaskPriority(Enum):
     """Task priority enumeration"""
 
@@ -44,7 +42,6 @@ class TaskPriority(Enum):
     NORMAL = 2
     HIGH = 3
     CRITICAL = 4
-
 
 @dataclass
 class Task:
@@ -110,7 +107,6 @@ class Task:
         """Check if task can be retried"""
         return self.retry_count < self.max_retries and self.status == TaskStatus.FAILED
 
-
 @dataclass
 class TaskFilter:
     """Task filter criteria"""
@@ -123,7 +119,6 @@ class TaskFilter:
     created_before: Optional[datetime] = None
     tags: Optional[List[str]] = None
     agents: Optional[List[str]] = None
-
 
 class TaskManager:
     """Advanced Task Management System"""
@@ -614,7 +609,6 @@ class TaskManager:
         self.console.print(
             f"✅ Exported {len(tasks)} tasks to {file_path}", style="green"
         )
-
 
 class TaskExecutor:
     """Task execution engine"""

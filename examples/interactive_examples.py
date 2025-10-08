@@ -24,7 +24,6 @@ from amas.interactive.core.visual_interface import VisualInterface
 from amas.interactive.utils.config_manager import ConfigManager
 from amas.interactive.utils.logger import InteractiveLogger
 
-
 class AMASInteractiveExamples:
     """Comprehensive examples for AMAS Interactive Mode"""
 
@@ -373,12 +372,10 @@ class AMASInteractiveExamples:
 
             traceback.print_exc()
 
-
 def main():
     """Main function"""
     examples = AMASInteractiveExamples()
     examples.run_all_examples()
-
 
 if __name__ == "__main__":
     main()

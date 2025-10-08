@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional
 import requests
 from openai import OpenAI
 
-
 class AICodeAnalyzer:
     def __init__(self):
         self.github_token = os.environ.get("GITHUB_TOKEN")
@@ -521,7 +520,6 @@ Keep the analysis concise but thorough.
         report.append("- 📚 Update documentation if needed")
 
         return "\n".join(report)
-
 
 if __name__ == "__main__":
     analyzer = AICodeAnalyzer()

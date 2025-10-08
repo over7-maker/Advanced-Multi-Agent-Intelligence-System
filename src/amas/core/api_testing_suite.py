@@ -28,7 +28,6 @@ from .ai_api_manager import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-
 @dataclass
 class TestCase:
     """Test case for API validation"""
@@ -41,7 +40,6 @@ class TestCase:
     expected_response_keywords: List[str] = field(default_factory=list)
     max_response_time: float = 30.0
     min_response_length: int = 10
-
 
 @dataclass
 class TestResult:
@@ -56,7 +54,6 @@ class TestResult:
     response_length: int = 0
     contains_keywords: bool = False
     timestamp: datetime = field(default_factory=datetime.now)
-
 
 class APITestingSuite:
     """Comprehensive API testing and validation suite"""
@@ -742,7 +739,6 @@ Artificial Intelligence has revolutionized many industries, from healthcare to f
 
         return validation_results
 
-
 async def run_comprehensive_validation():
     """Run comprehensive validation of the entire system"""
 
@@ -806,7 +802,6 @@ async def run_comprehensive_validation():
         "fallback_results": fallback_results,
         "report": test_report,
     }
-
 
 if __name__ == "__main__":
     asyncio.run(run_comprehensive_validation())

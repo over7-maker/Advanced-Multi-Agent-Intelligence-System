@@ -16,7 +16,6 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
-
 async def test_amas_system():
     """Test the AMAS Intelligence System"""
     try:
@@ -71,7 +70,6 @@ async def test_amas_system():
     except Exception as e:
         logger.error(f"Test failed: {e}")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     asyncio.run(test_amas_system())

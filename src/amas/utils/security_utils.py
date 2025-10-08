@@ -5,7 +5,6 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List
 
-
 def validate_file_path(file_path: str, allowed_dirs: List[str] = None) -> str:
     """Validate and sanitize file paths to prevent traversal attacks"""
     if not file_path:
@@ -27,7 +26,6 @@ def validate_file_path(file_path: str, allowed_dirs: List[str] = None) -> str:
             raise ValueError(f"Path not in allowed directories: {file_path}")
 
     return safe_path
-
 
 def sanitize_user_input(user_input: str, max_length: int = 1000) -> str:
     """Sanitize user input to prevent injection attacks"""
@@ -53,7 +51,6 @@ def sanitize_user_input(user_input: str, max_length: int = 1000) -> str:
 
     return user_input.strip()
 
-
 def validate_api_key(api_key: str) -> bool:
     """Validate API key format"""
     if not api_key or not isinstance(api_key, str):
@@ -69,7 +66,6 @@ def validate_api_key(api_key: str) -> bool:
 
     return True
 
-
 def secure_random_string(length: int = 32) -> str:
     """Generate a secure random string"""
     import secrets
@@ -77,7 +73,6 @@ def secure_random_string(length: int = 32) -> str:
 
     alphabet = string.ascii_letters + string.digits
     return "".join(secrets.choice(alphabet) for _ in range(length))
-
 
 def hash_sensitive_data(data: str, salt: str = None) -> str:
     """Securely hash sensitive data using SHA-256"""
