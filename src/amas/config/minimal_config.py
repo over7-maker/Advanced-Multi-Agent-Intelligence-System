@@ -218,26 +218,37 @@ class MinimalConfigManager:
             "level": config.config_level.value,
             "providers_available": len(config.available_providers),
             "required_providers_met": True,
+            "available_providers": [],
+            "missing_required": [],
+            "missing_optional": [],
             "warnings": [],
             "errors": [],
         }
 
-        # Check required providers
-        for provider in minimal_config.required_providers:
-            config = ai_config.get_provider_config(provider)
-            if config and config.enabled and config.api_key:
-                validation_result["available_providers"].append(provider.value)
+        # Check required providers (basic validation)
+        required_providers = ["deepseek", "glm"]
+        for provider_name in required_providers:
+            provider_found = any(
+                p.name.lower() == provider_name.lower()
+                for p in config.available_providers
+            )
+            if provider_found:
+                validation_result["available_providers"].append(provider_name)
             else:
-                validation_result["missing_required"].append(provider.value)
+                validation_result["missing_required"].append(provider_name)
                 validation_result["valid"] = False
 
         # Check optional providers
-        for provider in minimal_config.optional_providers:
-            config = ai_config.get_provider_config(provider)
-            if config and config.enabled and config.api_key:
-                validation_result["available_providers"].append(provider.value)
+        optional_providers = ["grok", "kimi", "qwen"]
+        for provider_name in optional_providers:
+            provider_found = any(
+                p.name.lower() == provider_name.lower()
+                for p in config.available_providers
+            )
+            if provider_found:
+                validation_result["available_providers"].append(provider_name)
             else:
-                validation_result["missing_optional"].append(provider.value)
+                validation_result["missing_optional"].append(provider_name)
 
         # Add warnings and recommendations
         if not validation_result["valid"]:
@@ -275,30 +286,45 @@ class MinimalConfigManager:
 
         return validation_result
 
-        # Disable all providers first
-        for provider in AIProvider:
-            ai_config.disable_provider(provider)
-
-        # Enable only available required and optional providers
-        for provider in (
-            minimal_config.required_providers + minimal_config.optional_providers
-        ):
-            config = ai_config.get_provider_config(provider)
-            if config and config.api_key:
-                ai_config.enable_provider(provider)
-
-        return ai_config
-
-    def get_environment_setup_guide(self, mode: MinimalMode = MinimalMode.BASIC) -> str:
+    def get_environment_setup_guide(self, mode: ConfigLevel = ConfigLevel.BASIC) -> str:
         """Get environment setup guide for minimal mode"""
         minimal_config = self.get_minimal_config(mode)
+        config = self.get_config()
+
+        guide = [
+            "=" * 60,
+            "🔧 AMAS ENVIRONMENT SETUP GUIDE",
+            "=" * 60,
+            "",
+            f"Mode: {mode.value.upper()}",
+            f"Available Providers: {len(config.available_providers)}",
+            "",
+        ]
 
         if len(config.available_providers) < 3:
-            validation_result["warnings"].append(
-                "Consider adding more API keys for better reliability"
-            )
+            guide.append("⚠️  Consider adding more API keys for better reliability")
+            guide.append("")
 
-        return validation_result
+        guide.extend(
+            [
+                "Required Environment Variables:",
+                "  DEEPSEEK_API_KEY=your_deepseek_key",
+                "  GLM_API_KEY=your_glm_key (optional)",
+                "",
+                "Optional Environment Variables:",
+                "  GROK_API_KEY=your_grok_key",
+                "  KIMI_API_KEY=your_kimi_key",
+                "  QWEN_API_KEY=your_qwen_key",
+                "",
+                "Setup Instructions:",
+                "1. Copy .env.example to .env",
+                "2. Add your API keys to .env",
+                "3. Run: python -m amas --validate-config",
+                "4. Start the system: python -m amas",
+            ]
+        )
+
+        return "\n".join(guide)
 
     def get_setup_instructions(self) -> str:
         """Get setup instructions based on current configuration"""
@@ -353,7 +379,7 @@ class MinimalConfigManager:
         """Get status of available features"""
         config = self.get_config()
 
-    def get_minimal_docker_compose(self, mode: MinimalMode = MinimalMode.BASIC) -> str:
+    def get_minimal_docker_compose(self, mode: ConfigLevel = ConfigLevel.BASIC) -> str:
         """Get minimal docker-compose configuration"""
         minimal_config = self.get_minimal_config(mode)
 

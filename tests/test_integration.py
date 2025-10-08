@@ -12,7 +12,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 # Add src to path
-sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 from amas.config.settings import get_settings
 from amas.core.self.orchestrator import IntelligenceOrchestrator
@@ -25,17 +25,21 @@ class TestAMASIntegration:
     def setup_method(self):
         """Setup for each test"""
         # Mock environment variables
-        self.env_patcher = patch.dict('os.environ', {
-            'OPENAI_API_KEY': 'test_openai_key',
-            'GEMINIAI_API_KEY': 'test_gemini_key',
-            'GROQAI_API_KEY': 'test_groq_key'
-        })
+        self.env_patcher = patch.dict(
+            "os.environ",
+            {
+                "OPENAI_API_KEY": "test_openai_key",
+                "GEMINIAI_API_KEY": "test_gemini_key",
+                "GROQAI_API_KEY": "test_groq_key",
+            },
+        )
         self.env_patcher.start()
-        
+
         # Initialize test variables
         self.orchestrator = None
         self.provider_manager = None
         self.intelligence_manager = None
+
     def teardown_method(self):
         """Cleanup after each test"""
         self.env_patcher.stop()
@@ -46,14 +50,14 @@ class TestAMASIntegration:
         assert self.orchestrator is not None
         assert len(self.orchestrator.agents) == 7
         assert self.orchestrator.task_queue is not None
-    
+
     @pytest.mark.asyncio
     async def test_provider_manager_initialization(self):
         """Test provider manager initializes correctly"""
         assert self.provider_manager is not None
         assert len(self.provider_manager.providers) > 0
         assert len(self.provider_manager.provider_configs) > 0
-    
+
     @pytest.mark.asyncio
     async def test_intelligence_manager_initialization(self):
         """Test intelligence manager initializes correctly"""
@@ -61,11 +65,14 @@ class TestAMASIntegration:
         assert self.intelligence_manager.collective_intelligence is not None
         assert self.intelligence_manager.personality_orchestrator is not None
         assert self.intelligence_manager.predictive_engine is not None
+
     @pytest.mark.asyncio
     async def test_task_execution_flow(self):
         """Test complete task execution flow"""
         # Mock the provider execution
-        with patch.object(self.provider_manager, 'get_best_provider') as mock_get_provider:
+        with patch.object(
+            self.provider_manager, "get_best_provider"
+        ) as mock_get_provider:
             mock_provider = MagicMock()
             mock_provider.infer.return_value = "Test response from AI"
             mock_get_provider.return_value = mock_provider
@@ -74,7 +81,7 @@ class TestAMASIntegration:
             result = await self.orchestrator.execute_task(
                 task_type="security_scan",
                 target="example.com",
-                parameters={"depth": "standard"}
+                parameters={"depth": "standard"},
             )
 
             # Verify result
@@ -143,11 +150,12 @@ class TestAMASIntegration:
             "task_type": "security_scan",
             "target": "example.com",
             "parameters": {"depth": "standard"},
-            "user_id": "test_user"
+            "user_id": "test_user",
         }
-        
-        optimization = await self.intelligence_manager.optimize_task_before_execution(task_data)
->>>>>>> origin/main
+
+        optimization = await self.intelligence_manager.optimize_task_before_execution(
+            task_data
+        )
         assert optimization is not None
         assert "optimal_agents" in optimization
         assert "task_prediction" in optimization
@@ -167,7 +175,7 @@ class TestAMASIntegration:
             "success_rate": 0.9,
             "solution_quality": 0.85,
             "error_patterns": [],
-            "user_feedback": {"rating": 4, "comments": "Good work"}
+            "user_feedback": {"rating": 4, "comments": "Good work"},
         }
 
         # This should not raise an exception
@@ -181,7 +189,7 @@ class TestAMASIntegration:
             task_type="security_scan",
             target="example.com",
             parameters={"depth": "standard"},
-            agents=["security_expert", "intelligence_gathering"]
+            agents=["security_expert", "intelligence_gathering"],
         )
 
         assert prompt is not None
@@ -195,7 +203,7 @@ class TestAMASIntegration:
         """Test agent performance analysis"""
         analysis = self.orchestrator._analyze_agent_performance(
             agents=["security_expert"],
-            response="This is a test response with analysis and recommendations"
+            response="This is a test response with analysis and recommendations",
         )
 
         assert analysis is not None
@@ -205,17 +213,21 @@ class TestAMASIntegration:
         assert "has_analysis" in analysis
         assert "completeness_score" in analysis
 
+
 class TestAMASEndToEnd:
     """End-to-end tests for AMAS system"""
 
     @pytest.fixture(autouse=True)
     def setup_method(self):
         """Setup for each test"""
-        self.env_patcher = patch.dict('os.environ', {
-            'OPENAI_API_KEY': 'test_openai_key',
-            'GEMINIAI_API_KEY': 'test_gemini_key',
-            'GROQAI_API_KEY': 'test_groq_key'
-        })
+        self.env_patcher = patch.dict(
+            "os.environ",
+            {
+                "OPENAI_API_KEY": "test_openai_key",
+                "GEMINIAI_API_KEY": "test_gemini_key",
+                "GROQAI_API_KEY": "test_groq_key",
+            },
+        )
         self.env_patcher.start()
 
     def teardown_method(self):
@@ -226,16 +238,20 @@ class TestAMASEndToEnd:
     async def test_complete_workflow(self):
         """Test complete AMAS workflow from task creation to completion"""
         # Mock provider execution
-        with patch.object(self.provider_manager, 'get_best_provider') as mock_get_provider:
+        with patch.object(
+            self.provider_manager, "get_best_provider"
+        ) as mock_get_provider:
             mock_provider = MagicMock()
-            mock_provider.infer.return_value = "Comprehensive security analysis completed"
+            mock_provider.infer.return_value = (
+                "Comprehensive security analysis completed"
+            )
             mock_get_provider.return_value = mock_provider
 
             # 1. Execute a task
             result = await self.orchestrator.execute_task(
                 task_type="security_scan",
                 target="example.com",
-                parameters={"depth": "comprehensive"}
+                parameters={"depth": "comprehensive"},
             )
 
             # 2. Verify task execution
@@ -247,8 +263,11 @@ class TestAMASEndToEnd:
             assert status["tasks"]["completed"] > 0
 
             # 4. Verify intelligence learning
-            intelligence_data = await self.intelligence_manager.get_intelligence_dashboard_data()
+            intelligence_data = (
+                await self.intelligence_manager.get_intelligence_dashboard_data()
+            )
             assert intelligence_data is not None
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
