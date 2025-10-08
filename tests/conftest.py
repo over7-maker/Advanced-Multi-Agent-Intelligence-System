@@ -16,7 +16,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from amas.config.settings import get_settings
 from amas.main import AMASApplication
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
 
 
 @pytest.fixture(scope="session")
@@ -28,7 +27,6 @@ def event_loop():
 
 
 @pytest.fixture
-
 async def amas_app() -> AsyncGenerator[AMASApplication, None]:
     """Create and initialize AMAS application for testing"""
     app = AMASApplication()
@@ -66,12 +64,10 @@ def test_config() -> Dict[str, Any]:
             "encryption_key": "test_encryption_key_32_bytes",
             "audit_enabled": True,
         },
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
     }
 
 
 @pytest.fixture
-
 def sample_task() -> Dict[str, Any]:
     """Sample task for testing"""
     return {
@@ -92,4 +88,3 @@ def sample_workflow() -> Dict[str, Any]:
         "workflow_id": "test_workflow",
         "parameters": {"target": "test_target", "depth": 2},
     }
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098

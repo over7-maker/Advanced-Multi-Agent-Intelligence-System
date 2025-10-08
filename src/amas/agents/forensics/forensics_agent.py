@@ -4,6 +4,7 @@ Digital Forensics Agent Implementation
 
 import asyncio
 import logging
+import os
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -42,7 +43,6 @@ class ForensicsAgent(IntelligenceAgent):
             knowledge_graph=knowledge_graph,
             security_service=security_service,
         )
-
 
         self.evidence_store = {}
         self.analysis_results = {}
@@ -84,24 +84,24 @@ class ForensicsAgent(IntelligenceAgent):
 
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Execute forensics task"""
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
         try:
+            task_description = task.get("description", "")
             logger.info(f"Executing forensics task: {task_description}")
 
             # Determine task type from description
             task_type = self._classify_task(task_description)
-            metadata = metadata or {}
+            metadata = task.get("parameters", {})
 
             if task_type == "file_analysis":
-                return await self._analyze_file(task_description, metadata)
+                return await self._analyze_files(task)
             elif task_type == "hash_analysis":
-                return await self._analyze_hash(task_description, metadata)
+                return await self._analyze_hash(task)
             elif task_type == "metadata_extraction":
-                return await self._extract_metadata(task_description, metadata)
+                return await self._extract_metadata(task)
             elif task_type == "timeline_analysis":
-                return await self._analyze_timeline(task_description, metadata)
+                return await self._reconstruct_timeline(task)
             else:
-                return await self._perform_general_forensics(task_description, metadata)
+                return await self._perform_general_forensics(task)
 
         except Exception as e:
             logger.error(f"Error executing forensics task: {e}")
@@ -110,6 +110,7 @@ class ForensicsAgent(IntelligenceAgent):
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
+
     async def validate_task(self, task: Dict[str, Any]) -> bool:
         """Validate if this agent can handle the task"""
         forensics_keywords = [
@@ -127,7 +128,6 @@ class ForensicsAgent(IntelligenceAgent):
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
         return any(keyword in task_text for keyword in forensics_keywords)
 
-
     async def _acquire_evidence(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Acquire digital evidence with real file operations"""
         try:
@@ -138,20 +138,21 @@ class ForensicsAgent(IntelligenceAgent):
 
             # Real evidence acquisition
             evidence_id = f"evid_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
-            
+
             # Calculate real hashes if source is a file
             md5_hash = ""
             sha256_hash = ""
             size_bytes = 0
-            
+
             if source and os.path.exists(source):
                 import hashlib
-                with open(source, 'rb') as f:
+
+                with open(source, "rb") as f:
                     content = f.read()
                     size_bytes = len(content)
                     md5_hash = hashlib.md5(content).hexdigest()
                     sha256_hash = hashlib.sha256(content).hexdigest()
-            
+
             evidence_data = {
                 "evidence_id": evidence_id,
                 "source": source,
@@ -199,51 +200,55 @@ class ForensicsAgent(IntelligenceAgent):
             for file_path in files:
                 try:
                     if not os.path.exists(file_path):
-                        analysis_results.append({
-                            "file_path": file_path,
-                            "error": "File not found",
-                            "status": "failed"
-                        })
+                        analysis_results.append(
+                            {
+                                "file_path": file_path,
+                                "error": "File not found",
+                                "status": "failed",
+                            }
+                        )
                         continue
-                    
+
                     # Get real file statistics
                     stat = os.stat(file_path)
-                    
+
                     # Calculate real hashes
                     import hashlib
+
                     md5_hash = ""
                     sha256_hash = ""
-                    with open(file_path, 'rb') as f:
+                    with open(file_path, "rb") as f:
                         content = f.read()
                         md5_hash = hashlib.md5(content).hexdigest()
                         sha256_hash = hashlib.sha256(content).hexdigest()
-                    
+
                     file_analysis = {
                         "file_path": file_path,
                         "file_name": os.path.basename(file_path),
                         "file_extension": os.path.splitext(file_path)[1],
                         "size_bytes": stat.st_size,
-                        "created_time": datetime.fromtimestamp(stat.st_ctime).isoformat(),
-                        "modified_time": datetime.fromtimestamp(stat.st_mtime).isoformat(),
-                        "accessed_time": datetime.fromtimestamp(stat.st_atime).isoformat(),
+                        "created_time": datetime.fromtimestamp(
+                            stat.st_ctime
+                        ).isoformat(),
+                        "modified_time": datetime.fromtimestamp(
+                            stat.st_mtime
+                        ).isoformat(),
+                        "accessed_time": datetime.fromtimestamp(
+                            stat.st_atime
+                        ).isoformat(),
                         "permissions": oct(stat.st_mode)[-3:],
                         "owner_uid": stat.st_uid,
                         "group_gid": stat.st_gid,
-                        "hashes": {
-                            "md5": md5_hash,
-                            "sha256": sha256_hash
-                        },
+                        "hashes": {"md5": md5_hash, "sha256": sha256_hash},
                         "analysis_time": datetime.utcnow().isoformat(),
-                        "status": "completed"
+                        "status": "completed",
                     }
                     analysis_results.append(file_analysis)
-                    
+
                 except Exception as e:
-                    analysis_results.append({
-                        "file_path": file_path,
-                        "error": str(e),
-                        "status": "failed"
-                    })
+                    analysis_results.append(
+                        {"file_path": file_path, "error": str(e), "status": "failed"}
+                    )
 
             return {
                 "success": True,
@@ -254,7 +259,6 @@ class ForensicsAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
         except Exception as e:
             logger.error(f"Error in file analysis: {e}")
             return {
@@ -262,7 +266,6 @@ class ForensicsAgent(IntelligenceAgent):
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
-
 
     async def _reconstruct_timeline(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Reconstruct timeline of events"""
@@ -298,13 +301,12 @@ class ForensicsAgent(IntelligenceAgent):
 
         except Exception as e:
             logger.error(f"Error in timeline reconstruction: {e}")
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
+
             return {
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
-
 
     async def _extract_metadata(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Extract metadata from files"""
@@ -353,7 +355,6 @@ class ForensicsAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
         except Exception as e:
             logger.error(f"Error in metadata extraction: {e}")
             return {
@@ -361,7 +362,6 @@ class ForensicsAgent(IntelligenceAgent):
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
-
 
     async def _analyze_malware(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze malware samples"""
@@ -410,13 +410,12 @@ class ForensicsAgent(IntelligenceAgent):
 
         except Exception as e:
             logger.error(f"Error in malware analysis: {e}")
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
+
             return {
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
             }
-
 
     async def _perform_general_forensics(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Perform general forensics analysis"""
@@ -448,13 +447,10 @@ class ForensicsAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
         except Exception as e:
             logger.error(f"Error in general forensics: {e}")
             return {
                 "success": False,
                 "error": str(e),
                 "timestamp": datetime.utcnow().isoformat(),
-
             }
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098

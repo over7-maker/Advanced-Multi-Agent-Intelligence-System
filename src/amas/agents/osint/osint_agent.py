@@ -159,9 +159,10 @@ class OSINTAgent(IntelligenceAgent):
     async def _scrape_webpage(self, url: str, keywords: List[str]) -> Dict[str, Any]:
         """Scrape a single webpage with real HTTP request"""
         try:
+            import time
+
             import aiohttp
             from bs4 import BeautifulSoup
-            import time
 
             # Check rate limits
             domain = urlparse(url).netloc
@@ -180,7 +181,7 @@ class OSINTAgent(IntelligenceAgent):
                 timeout=aiohttp.ClientTimeout(total=30),
                 headers={
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-                }
+                },
             ) as session:
                 async with session.get(url) as response:
                     response_time = time.time() - start_time
@@ -226,8 +227,25 @@ class OSINTAgent(IntelligenceAgent):
                     metadata = {
                         "content_type": response.headers.get("content-type", ""),
                         "content_length": len(content),
-                        "keywords_found": [kw for kw in keywords if kw.lower() in text_content.lower()],
-                        "language": "en" if any(word in text_content.lower() for word in ["the", "and", "or", "but", "in", "on", "at"]) else "unknown",
+                        "keywords_found": [
+                            kw for kw in keywords if kw.lower() in text_content.lower()
+                        ],
+                        "language": (
+                            "en"
+                            if any(
+                                word in text_content.lower()
+                                for word in [
+                                    "the",
+                                    "and",
+                                    "or",
+                                    "but",
+                                    "in",
+                                    "on",
+                                    "at",
+                                ]
+                            )
+                            else "unknown"
+                        ),
                         "has_forms": len(soup.find_all("form")) > 0,
                         "has_scripts": len(soup.find_all("script")) > 0,
                     }
@@ -241,13 +259,16 @@ class OSINTAgent(IntelligenceAgent):
                         "metadata": metadata,
                         "scraped_at": datetime.utcnow().isoformat(),
                         "status_code": response.status,
-                        "response_time": response_time
+                        "response_time": response_time,
                     }
 
         except Exception as e:
             logger.error(f"Error scraping webpage {url}: {e}")
             return None
+
     async def _analyze_scraped_data(
+        self, scraped_data: List[Dict], keywords: List[str]
+    ) -> Dict[str, Any]:
         """Analyze scraped data with real analysis"""
         try:
             if not scraped_data:
@@ -261,7 +282,9 @@ class OSINTAgent(IntelligenceAgent):
             emails = list(set(re.findall(email_pattern, all_text)))
 
             # Find phone numbers
-            phone_pattern = r"(\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}"
+            phone_pattern = (
+                r"(\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}"
+            )
             phones = list(set(re.findall(phone_pattern, all_text)))
 
             # Find URLs
@@ -285,11 +308,22 @@ class OSINTAgent(IntelligenceAgent):
                     continue
 
             # Sentiment analysis (basic)
-            positive_words = ["good", "great", "excellent", "positive", "success", "win"]
+            positive_words = [
+                "good",
+                "great",
+                "excellent",
+                "positive",
+                "success",
+                "win",
+            ]
             negative_words = ["bad", "terrible", "negative", "fail", "lose", "problem"]
 
-            positive_count = sum(all_text.lower().count(word) for word in positive_words)
-            negative_count = sum(all_text.lower().count(word) for word in negative_words)
+            positive_count = sum(
+                all_text.lower().count(word) for word in positive_words
+            )
+            negative_count = sum(
+                all_text.lower().count(word) for word in negative_words
+            )
 
             sentiment = "neutral"
             if positive_count > negative_count * 1.5:
@@ -299,7 +333,9 @@ class OSINTAgent(IntelligenceAgent):
 
             analysis = {
                 "total_pages": len(scraped_data),
-                "total_content_length": sum(len(page["content"]) for page in scraped_data),
+                "total_content_length": sum(
+                    len(page["content"]) for page in scraped_data
+                ),
                 "keywords_found": keyword_matches,
                 "entities": {
                     "emails": emails[:10],  # Limit to first 10
@@ -312,9 +348,17 @@ class OSINTAgent(IntelligenceAgent):
                     "positive": positive_count,
                     "negative": negative_count,
                 },
-                "languages": list(set(page["metadata"].get("language", "unknown") for page in scraped_data)),
-                "average_response_time": sum(page["response_time"] for page in scraped_data) / len(scraped_data),
-                "summary": f"Analyzed {len(scraped_data)} pages, found {len(emails)} emails, {len(phones)} phones, {len(urls)} URLs across {len(domains)} domains"
+                "languages": list(
+                    set(
+                        page["metadata"].get("language", "unknown")
+                        for page in scraped_data
+                    )
+                ),
+                "average_response_time": sum(
+                    page["response_time"] for page in scraped_data
+                )
+                / len(scraped_data),
+                "summary": f"Analyzed {len(scraped_data)} pages, found {len(emails)} emails, {len(phones)} phones, {len(urls)} URLs across {len(domains)} domains",
             }
 
             return analysis
@@ -322,6 +366,7 @@ class OSINTAgent(IntelligenceAgent):
         except Exception as e:
             logger.error(f"Error analyzing scraped data: {e}")
             return {"error": str(e)}
+
     async def _monitor_social_media(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Monitor social media platforms"""
         try:
