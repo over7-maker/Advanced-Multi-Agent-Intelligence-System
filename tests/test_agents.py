@@ -16,6 +16,7 @@ from agents.reporting.reporting_agent import ReportingAgent
 from agents.reverse_engineering.reverse_engineering_agent import ReverseEngineeringAgent
 from agents.technology_monitor.technology_monitor_agent import TechnologyMonitorAgent
 
+
 class TestOSINTAgent:
     """Test OSINT agent functionality"""
 

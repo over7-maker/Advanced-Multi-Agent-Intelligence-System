@@ -20,6 +20,7 @@ import sys
 from pathlib import Path
 from typing import List, Optional
 
+
 def run_command(cmd: List[str], description: str) -> bool:
     """Run a command and return success status."""
     print(f"\n🔧 {description}")

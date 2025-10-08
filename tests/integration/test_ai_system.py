@@ -7,6 +7,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def test_environment():
     """Test the environment and dependencies"""
     print("🧪 Testing AI System Environment...")

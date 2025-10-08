@@ -19,6 +19,7 @@ from src.amas.core.unified_orchestrator import (
     UnifiedIntelligenceOrchestrator,
 )
 
+
 class TestUnifiedIntelligenceOrchestrator:
     """Test the unified orchestrator"""
 

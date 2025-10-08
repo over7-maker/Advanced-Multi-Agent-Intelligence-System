@@ -8,6 +8,7 @@ import os
 import sys
 from pathlib import Path
 
+
 def test_api_keys():
     """Test API key configuration"""
     print("🔑 Testing API Key Configuration...")

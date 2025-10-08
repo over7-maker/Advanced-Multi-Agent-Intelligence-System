@@ -33,6 +33,7 @@ from amas.core.enhanced_orchestrator import (
     TaskResult,
 )
 
+
 class TestAPIConfig:
     """Test API configuration"""
 

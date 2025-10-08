@@ -8,6 +8,7 @@ import pytest
 
 from amas.main import AMASApplication
 
+
 class TestAMASApplication:
     """Test AMAS application initialization and basic functionality"""
 

@@ -6,6 +6,7 @@ import os
 import httpx
 import pytest
 
+
 @pytest.mark.asyncio
 async def test_health_endpoint():
     """Test the health endpoint"""

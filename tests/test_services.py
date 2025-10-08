@@ -18,6 +18,7 @@ from amas.services.security_service import SecurityService
 from amas.services.service_manager import ServiceManager
 from amas.services.vector_service import VectorService
 
+
 class TestServiceManager:
     """Test Service Manager"""
 

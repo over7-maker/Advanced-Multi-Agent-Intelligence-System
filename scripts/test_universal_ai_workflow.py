@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path.cwd()))
 
 from standalone_universal_ai_manager import get_manager as get_universal_ai_manager
 
+
 async def main():
     manager = get_universal_ai_manager()
 

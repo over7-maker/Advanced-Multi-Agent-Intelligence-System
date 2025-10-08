@@ -17,6 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 from amas.config.settings import get_settings
 from amas.core.self.orchestrator import IntelligenceOrchestrator
 
+
 class TestAMASIntegration:
     """Integration tests for the complete AMAS system"""
 

@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pytest
 
+
 def test_project_structure():
     """Test that basic project structure exists"""
     assert Path("src/amas").exists()
