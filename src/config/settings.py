@@ -5,11 +5,11 @@ Production-ready configuration with pydantic-settings
 
 import os
 from typing import List, Optional, Union
-from pydantic import BaseSettings, Field, validator
-from pydantic_settings import BaseSettings as PydanticBaseSettings
+from pydantic import BaseModel, Field, validator
+from pydantic_settings import BaseSettings
 
 
-class DatabaseSettings(BaseSettings):
+class DatabaseSettings(BaseModel):
     """Database configuration settings"""
     
     url: str = Field(default="postgresql://postgres:amas_password@localhost:5432/amas", env="DATABASE_URL")
@@ -26,7 +26,7 @@ class DatabaseSettings(BaseSettings):
         env_prefix = "DB_"
 
 
-class RedisSettings(BaseSettings):
+class RedisSettings(BaseModel):
     """Redis configuration settings"""
     
     url: str = Field(default="redis://localhost:6379/0", env="REDIS_URL")
@@ -40,7 +40,7 @@ class RedisSettings(BaseSettings):
         env_prefix = "REDIS_"
 
 
-class Neo4jSettings(BaseSettings):
+class Neo4jSettings(BaseModel):
     """Neo4j configuration settings"""
     
     uri: str = Field(default="bolt://localhost:7687", env="NEO4J_URI")
@@ -52,11 +52,11 @@ class Neo4jSettings(BaseSettings):
         env_prefix = "NEO4J_"
 
 
-class SecuritySettings(BaseSettings):
+class SecuritySettings(BaseModel):
     """Security configuration settings"""
     
-    secret_key: str = Field(..., env="SECRET_KEY")
-    jwt_secret_key: str = Field(..., env="JWT_SECRET_KEY")
+    secret_key: str = Field(default="default_secret_key_change_in_production", env="SECRET_KEY")
+    jwt_secret_key: str = Field(default="default_jwt_secret_key_change_in_production", env="JWT_SECRET_KEY")
     jwt_algorithm: str = Field(default="HS256", env="JWT_ALGORITHM")
     jwt_access_token_expire_minutes: int = Field(default=30, env="JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
     jwt_refresh_token_expire_days: int = Field(default=7, env="JWT_REFRESH_TOKEN_EXPIRE_DAYS")
@@ -78,7 +78,7 @@ class SecuritySettings(BaseSettings):
         env_prefix = "SECURITY_"
 
 
-class AISettings(BaseSettings):
+class AISettings(BaseModel):
     """AI provider configuration settings"""
     
     # OpenAI
@@ -110,7 +110,7 @@ class AISettings(BaseSettings):
         env_prefix = "AI_"
 
 
-class MonitoringSettings(BaseSettings):
+class MonitoringSettings(BaseModel):
     """Monitoring and observability settings"""
     
     prometheus_enabled: bool = Field(default=True, env="PROMETHEUS_ENABLED")
@@ -131,7 +131,7 @@ class MonitoringSettings(BaseSettings):
         env_prefix = "MONITORING_"
 
 
-class PerformanceSettings(BaseSettings):
+class PerformanceSettings(BaseModel):
     """Performance and scaling settings"""
     
     worker_processes: int = Field(default=4, env="WORKER_PROCESSES")
@@ -156,7 +156,7 @@ class PerformanceSettings(BaseSettings):
         env_prefix = "PERFORMANCE_"
 
 
-class FeatureFlags(BaseSettings):
+class FeatureFlags(BaseModel):
     """Feature flags for enabling/disabling functionality"""
     
     enable_voice_commands: bool = Field(default=True, env="ENABLE_VOICE_COMMANDS")
@@ -169,7 +169,7 @@ class FeatureFlags(BaseSettings):
         env_prefix = "FEATURE_"
 
 
-class Settings(PydanticBaseSettings):
+class Settings(BaseSettings):
     """Main application settings"""
     
     # Application
@@ -213,6 +213,7 @@ class Settings(PydanticBaseSettings):
         env_file_encoding = "utf-8"
         case_sensitive = False
         validate_assignment = True
+        extra = "ignore"  # Ignore extra environment variables
 
 
 # Global settings instance
