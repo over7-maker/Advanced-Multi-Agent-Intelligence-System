@@ -11,6 +11,8 @@ import asyncio
 import sys
 from pathlib import Path
 
+from rich.console import Console
+
 # Add src directory to Python path
 sys.path.append(str(Path(__file__).parent.parent / "src"))
 

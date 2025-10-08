@@ -33,35 +33,35 @@ class TestAMASIntegration:
         self.env_patcher.start()
         
         # Initialize test variables
-        self.self.orchestrator = None
-        self.self.provider_manager = None
-        self.self.intelligence_manager = None
+        self.orchestrator = None
+        self.provider_manager = None
+        self.intelligence_manager = None
     
     def teardown_method(self):
         """Cleanup after each test"""
         self.env_patcher.stop()
     
     @pytest.mark.asyncio
-    async def test_self.orchestrator_initialization(self):
-        """Test self.orchestrator initializes correctly"""
-        assert self.self.orchestrator is not None
-        assert len(self.self.orchestrator.agents) == 7
-        assert self.self.orchestrator.task_queue is not None
+    async def test_orchestrator_initialization(self):
+        """Test orchestrator initializes correctly"""
+        assert self.orchestrator is not None
+        assert len(self.orchestrator.agents) == 7
+        assert self.orchestrator.task_queue is not None
     
     @pytest.mark.asyncio
-    async def test_self.provider_manager_initialization(self):
+    async def test_provider_manager_initialization(self):
         """Test provider manager initializes correctly"""
-        assert self.self.provider_manager is not None
-        assert len(self.self.provider_manager.providers) > 0
-        assert len(self.self.provider_manager.provider_configs) > 0
+        assert self.provider_manager is not None
+        assert len(self.provider_manager.providers) > 0
+        assert len(self.provider_manager.provider_configs) > 0
     
     @pytest.mark.asyncio
-    async def test_self.intelligence_manager_initialization(self):
+    async def test_intelligence_manager_initialization(self):
         """Test intelligence manager initializes correctly"""
-        assert self.self.intelligence_manager is not None
-        assert self.self.intelligence_manager.collective_intelligence is not None
-        assert self.self.intelligence_manager.personality_self.orchestrator is not None
-        assert self.self.intelligence_manager.predictive_engine is not None
+        assert self.intelligence_manager is not None
+        assert self.intelligence_manager.collective_intelligence is not None
+        assert self.intelligence_manager.personality_self.orchestrator is not None
+        assert self.intelligence_manager.predictive_engine is not None
     
     @pytest.mark.asyncio
     async def test_task_execution_flow(self):
