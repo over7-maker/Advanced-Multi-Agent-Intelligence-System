@@ -8,7 +8,7 @@ including initialization, health monitoring, and graceful shutdown.
 import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from .database_service import DatabaseService
 from .knowledge_graph_service import KnowledgeGraphService

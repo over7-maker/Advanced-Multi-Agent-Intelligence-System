@@ -74,7 +74,6 @@ class HealthCheck(BaseModel):
 
 # Dependency to get AMAS system
 async def get_amas_system():
-    global amas_app
     if amas_app is None:
         raise HTTPException(status_code=503, detail="AMAS system not initialized")
     return amas_app
@@ -93,7 +92,6 @@ async def verify_auth(credentials: HTTPAuthorizationCredentials = Depends(securi
 # Startup event
 @app.on_event("startup")
 async def startup_event():
-    global amas_app
     try:
         logger.info("Initializing AMAS Intelligence System...")
 
@@ -140,7 +138,6 @@ async def startup_event():
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_event():
-    global amas_app
     if amas_app:
         await amas_app.shutdown()
         logger.info("AMAS Intelligence System shutdown complete")

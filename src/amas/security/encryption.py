@@ -10,7 +10,7 @@ import json
 import logging
 import secrets
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
