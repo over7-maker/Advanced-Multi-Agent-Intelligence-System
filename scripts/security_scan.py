@@ -4,10 +4,10 @@ AMAS Security Scanning Script
 Comprehensive vulnerability scanning for production readiness
 """
 
-import subprocess
-import sys
 import json
 import os
+import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 

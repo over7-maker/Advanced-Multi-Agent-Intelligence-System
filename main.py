@@ -6,20 +6,19 @@ Production-ready FastAPI application
 import logging
 import time
 from contextlib import asynccontextmanager
-from typing import Dict, Any
+from typing import Any, Dict
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
 
+from src.api.routes import agents, health, tasks, users
 from src.config.settings import get_settings, validate_configuration
-from src.api.routes import health, agents, tasks, users
 from src.middleware.logging import LoggingMiddleware
-from src.middleware.security import SecurityMiddleware
 from src.middleware.monitoring import MonitoringMiddleware
-
+from src.middleware.security import SecurityMiddleware
 
 # Configure logging
 logging.basicConfig(
@@ -195,8 +194,8 @@ async def readiness_check():
     """Readiness check endpoint"""
     try:
         # Check if all services are ready
-        from src.database.connection import is_connected as db_connected
         from src.cache.redis import is_connected as redis_connected
+        from src.database.connection import is_connected as db_connected
         from src.graph.neo4j import is_connected as neo4j_connected
 
         db_ready = await db_connected()
