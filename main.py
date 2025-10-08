@@ -23,8 +23,7 @@ from src.middleware.monitoring import MonitoringMiddleware
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -34,61 +33,68 @@ async def lifespan(app: FastAPI):
     """Application lifespan manager"""
     # Startup
     logger.info("Starting AMAS application...")
-    
+
     # Validate configuration
     if not validate_configuration():
         logger.error("Configuration validation failed")
         raise RuntimeError("Invalid configuration")
-    
+
     # Initialize services
     try:
         # Initialize database
         from src.database.connection import init_database
+
         await init_database()
         logger.info("Database initialized")
-        
+
         # Initialize Redis
         from src.cache.redis import init_redis
+
         await init_redis()
         logger.info("Redis initialized")
-        
+
         # Initialize Neo4j
         from src.graph.neo4j import init_neo4j
+
         await init_neo4j()
         logger.info("Neo4j initialized")
-        
+
         # Initialize monitoring
         from src.monitoring.prometheus import init_prometheus
+
         init_prometheus()
         logger.info("Monitoring initialized")
-        
+
         logger.info("AMAS application started successfully")
-        
+
     except Exception as e:
         logger.error(f"Failed to initialize application: {e}")
         raise
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down AMAS application...")
-    
+
     # Cleanup services
     try:
         from src.database.connection import close_database
+
         await close_database()
         logger.info("Database connection closed")
-        
+
         from src.cache.redis import close_redis
+
         await close_redis()
         logger.info("Redis connection closed")
-        
+
         from src.graph.neo4j import close_neo4j
+
         await close_neo4j()
         logger.info("Neo4j connection closed")
-        
+
         logger.info("AMAS application shutdown complete")
-        
+
     except Exception as e:
         logger.error(f"Error during shutdown: {e}")
 
@@ -100,7 +106,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs" if get_settings().features.enable_api_documentation else None,
     redoc_url="/redoc" if get_settings().features.enable_api_documentation else None,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # Add middleware
@@ -131,7 +137,7 @@ async def root():
         "message": "AMAS - Advanced Multi-Agent Intelligence System",
         "version": "1.0.0",
         "status": "running",
-        "docs": "/docs" if get_settings().features.enable_api_documentation else None
+        "docs": "/docs" if get_settings().features.enable_api_documentation else None,
     }
 
 
@@ -141,41 +147,46 @@ async def health_check():
     try:
         # Check database
         from src.database.connection import is_connected as db_connected
+
         db_status = await db_connected()
-        
+
         # Check Redis
         from src.cache.redis import is_connected as redis_connected
+
         redis_status = await redis_connected()
-        
+
         # Check Neo4j
         from src.graph.neo4j import is_connected as neo4j_connected
+
         neo4j_status = await neo4j_connected()
-        
+
         services = {
             "database": "healthy" if db_status else "unhealthy",
             "redis": "healthy" if redis_status else "unhealthy",
-            "neo4j": "healthy" if neo4j_status else "neo4j_status"
+            "neo4j": "healthy" if neo4j_status else "neo4j_status",
         }
-        
-        overall_status = "healthy" if all([db_status, redis_status, neo4j_status]) else "unhealthy"
-        
+
+        overall_status = (
+            "healthy" if all([db_status, redis_status, neo4j_status]) else "unhealthy"
+        )
+
         return {
             "status": overall_status,
             "timestamp": time.time(),
             "version": "1.0.0",
-            "uptime": time.time() - app.state.start_time if hasattr(app.state, 'start_time') else 0,
-            "services": services
+            "uptime": (
+                time.time() - app.state.start_time
+                if hasattr(app.state, "start_time")
+                else 0
+            ),
+            "services": services,
         }
-        
+
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return JSONResponse(
             status_code=503,
-            content={
-                "status": "unhealthy",
-                "timestamp": time.time(),
-                "error": str(e)
-            }
+            content={"status": "unhealthy", "timestamp": time.time(), "error": str(e)},
         )
 
 
@@ -187,34 +198,32 @@ async def readiness_check():
         from src.database.connection import is_connected as db_connected
         from src.cache.redis import is_connected as redis_connected
         from src.graph.neo4j import is_connected as neo4j_connected
-        
+
         db_ready = await db_connected()
         redis_ready = await redis_connected()
         neo4j_ready = await neo4j_connected()
-        
+
         services = {
             "database": "healthy" if db_ready else "unhealthy",
             "redis": "healthy" if redis_ready else "unhealthy",
-            "neo4j": "healthy" if neo4j_ready else "unhealthy"
+            "neo4j": "healthy" if neo4j_ready else "unhealthy",
         }
-        
-        overall_status = "ready" if all([db_ready, redis_ready, neo4j_ready]) else "not_ready"
-        
+
+        overall_status = (
+            "ready" if all([db_ready, redis_ready, neo4j_ready]) else "not_ready"
+        )
+
         return {
             "status": overall_status,
             "timestamp": time.time(),
-            "services": services
+            "services": services,
         }
-        
+
     except Exception as e:
         logger.error(f"Readiness check failed: {e}")
         return JSONResponse(
             status_code=503,
-            content={
-                "status": "not_ready",
-                "timestamp": time.time(),
-                "error": str(e)
-            }
+            content={"status": "not_ready", "timestamp": time.time(), "error": str(e)},
         )
 
 
@@ -226,8 +235,8 @@ async def http_exception_handler(request, exc):
         content={
             "error": exc.detail,
             "status_code": exc.status_code,
-            "timestamp": time.time()
-        }
+            "timestamp": time.time(),
+        },
     )
 
 
@@ -240,20 +249,20 @@ async def general_exception_handler(request, exc):
         content={
             "error": "Internal server error",
             "status_code": 500,
-            "timestamp": time.time()
-        }
+            "timestamp": time.time(),
+        },
     )
 
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     settings = get_settings()
-    
+
     uvicorn.run(
         "main:app",
         host=settings.host,
         port=settings.port,
         reload=settings.debug,
-        log_level=settings.monitoring.log_level.lower()
+        log_level=settings.monitoring.log_level.lower(),
     )
