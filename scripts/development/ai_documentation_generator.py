@@ -459,7 +459,7 @@ async def main():
             print("=" * 50)
 
         logger.info(
-            f"Documentation generation complete. {results['files_documented']} files documented."
+                    f"Generated {len(docs)} documentation files in {elapsed_time:.2f} seconds"
         )
 
     except Exception as e:

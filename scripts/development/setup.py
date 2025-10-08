@@ -83,9 +83,9 @@ setup(
         ],
     },
     zip_safe=False,
-    keywords="ai, multi-agent, intelligence, autonomous, offline, llm, vector-search, knowledge-graph",
+        "Programming Language :: Python :: 3.12",
     project_urls={
-        "Bug Reports": "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues",
+        "Topic :: Scientific/Engineering :: Artificial Intelligence",
         "Source": "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System",
         "Documentation": "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/docs",
     },
