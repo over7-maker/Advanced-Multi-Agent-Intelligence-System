@@ -10,7 +10,6 @@ with AI agents through quantum entanglement principles.
 
 import asyncio
 import queue
-import threading
 import uuid
 from dataclasses import dataclass
 from datetime import datetime

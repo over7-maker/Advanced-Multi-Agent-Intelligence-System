@@ -14,9 +14,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
-
-import numpy as np
+from typing import Any, Dict, List, Tuple
 
 # Rich for enhanced output
 from rich.console import Console

@@ -4,18 +4,15 @@ Ultimate Fallback System - Comprehensive fallback for all 9 AI providers
 """
 
 import asyncio
-import json
 import logging
 import os
 import random
-import sys
 import time
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import aiohttp
-import openai
 from cerebras.cloud.sdk import Cerebras
 from google import genai
 from groq import Groq
@@ -290,7 +287,7 @@ class UltimateFallbackSystem:
             client = Groq(api_key=config["api_key"])
 
             start_time = time.time()
-            response = client.chat.completions.create(
+            client.chat.completions.create(
                 messages=[{"role": "user", "content": "Test"}],
                 model=config["model"],
                 max_tokens=10,
@@ -311,7 +308,7 @@ class UltimateFallbackSystem:
             client = Cerebras(api_key=config["api_key"])
 
             start_time = time.time()
-            response = client.chat.completions.create(
+            client.chat.completions.create(
                 messages=[{"role": "user", "content": "Test"}],
                 model=config["model"],
                 max_tokens=10,
@@ -332,9 +329,7 @@ class UltimateFallbackSystem:
             client = genai.Client(api_key=config["api_key"])
 
             start_time = time.time()
-            response = client.models.generate_content(
-                model=config["model"], contents="Test"
-            )
+            client.models.generate_content(model=config["model"], contents="Test")
             response_time = time.time() - start_time
             config["response_time"] = response_time
             config["status"] = ProviderStatus.ACTIVE
