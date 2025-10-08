@@ -2,8 +2,9 @@
 Agent management API routes
 """
 
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, HTTPException, Depends, Query
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
 from src.config.settings import get_settings
@@ -13,6 +14,7 @@ router = APIRouter()
 
 class AgentCreate(BaseModel):
     """Agent creation model"""
+
     name: str
     type: str
     capabilities: List[str]
@@ -21,6 +23,7 @@ class AgentCreate(BaseModel):
 
 class AgentUpdate(BaseModel):
     """Agent update model"""
+
     name: Optional[str] = None
     status: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
@@ -28,6 +31,7 @@ class AgentUpdate(BaseModel):
 
 class AgentResponse(BaseModel):
     """Agent response model"""
+
     id: str
     name: str
     type: str
@@ -43,7 +47,7 @@ async def list_agents(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     status: Optional[str] = Query(None),
-    agent_type: Optional[str] = Query(None)
+    agent_type: Optional[str] = Query(None),
 ) -> List[AgentResponse]:
     """List all agents with optional filtering"""
     try:
@@ -58,7 +62,7 @@ async def list_agents(
                 "capabilities": ["web_search", "data_analysis"],
                 "config": {"model": "gpt-4", "temperature": 0.7},
                 "created_at": "2024-01-01T00:00:00Z",
-                "updated_at": "2024-01-01T00:00:00Z"
+                "updated_at": "2024-01-01T00:00:00Z",
             },
             {
                 "id": "agent-2",
@@ -68,21 +72,21 @@ async def list_agents(
                 "capabilities": ["data_processing", "visualization"],
                 "config": {"model": "gpt-3.5-turbo", "temperature": 0.5},
                 "created_at": "2024-01-01T00:00:00Z",
-                "updated_at": "2024-01-01T00:00:00Z"
-            }
+                "updated_at": "2024-01-01T00:00:00Z",
+            },
         ]
-        
+
         # Apply filters
         if status:
             agents = [a for a in agents if a["status"] == status]
         if agent_type:
             agents = [a for a in agents if a["type"] == agent_type]
-        
+
         # Apply pagination
-        agents = agents[skip:skip + limit]
-        
+        agents = agents[skip : skip + limit]
+
         return [AgentResponse(**agent) for agent in agents]
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to list agents: {str(e)}")
 
@@ -101,11 +105,11 @@ async def get_agent(agent_id: str) -> AgentResponse:
             "capabilities": ["web_search", "data_analysis"],
             "config": {"model": "gpt-4", "temperature": 0.7},
             "created_at": "2024-01-01T00:00:00Z",
-            "updated_at": "2024-01-01T00:00:00Z"
+            "updated_at": "2024-01-01T00:00:00Z",
         }
-        
+
         return AgentResponse(**agent)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get agent: {str(e)}")
 
@@ -124,11 +128,11 @@ async def create_agent(agent: AgentCreate) -> AgentResponse:
             "capabilities": agent.capabilities,
             "config": agent.config,
             "created_at": "2024-01-01T00:00:00Z",
-            "updated_at": "2024-01-01T00:00:00Z"
+            "updated_at": "2024-01-01T00:00:00Z",
         }
-        
+
         return AgentResponse(**new_agent)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create agent: {str(e)}")
 
@@ -147,11 +151,11 @@ async def update_agent(agent_id: str, agent_update: AgentUpdate) -> AgentRespons
             "capabilities": ["web_search", "data_analysis"],
             "config": agent_update.config or {"model": "gpt-4", "temperature": 0.7},
             "created_at": "2024-01-01T00:00:00Z",
-            "updated_at": "2024-01-01T00:00:00Z"
+            "updated_at": "2024-01-01T00:00:00Z",
         }
-        
+
         return AgentResponse(**updated_agent)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update agent: {str(e)}")
 
@@ -162,7 +166,7 @@ async def delete_agent(agent_id: str) -> Dict[str, str]:
     try:
         # This would delete the agent from the database
         return {"message": f"Agent {agent_id} deleted successfully"}
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete agent: {str(e)}")
 
@@ -173,7 +177,7 @@ async def start_agent(agent_id: str) -> Dict[str, str]:
     try:
         # This would start the agent
         return {"message": f"Agent {agent_id} started successfully"}
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to start agent: {str(e)}")
 
@@ -184,7 +188,7 @@ async def stop_agent(agent_id: str) -> Dict[str, str]:
     try:
         # This would stop the agent
         return {"message": f"Agent {agent_id} stopped successfully"}
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to stop agent: {str(e)}")
 
@@ -203,9 +207,11 @@ async def get_agent_status(agent_id: str) -> Dict[str, Any]:
             "performance_metrics": {
                 "cpu_usage": 15.5,
                 "memory_usage": 256,
-                "response_time": 1.2
-            }
+                "response_time": 1.2,
+            },
         }
-        
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get agent status: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get agent status: {str(e)}"
+        )

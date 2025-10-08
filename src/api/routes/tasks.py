@@ -2,10 +2,11 @@
 Task management API routes
 """
 
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, HTTPException, Depends, Query
-from pydantic import BaseModel
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel
 
 from src.config.settings import get_settings
 
@@ -14,6 +15,7 @@ router = APIRouter()
 
 class TaskCreate(BaseModel):
     """Task creation model"""
+
     agent_id: str
     description: str
     priority: str = "medium"
@@ -22,6 +24,7 @@ class TaskCreate(BaseModel):
 
 class TaskUpdate(BaseModel):
     """Task update model"""
+
     status: Optional[str] = None
     priority: Optional[str] = None
     config: Optional[Dict[str, Any]] = None
@@ -29,6 +32,7 @@ class TaskUpdate(BaseModel):
 
 class TaskResponse(BaseModel):
     """Task response model"""
+
     id: str
     agent_id: str
     description: str
@@ -46,7 +50,7 @@ async def list_tasks(
     limit: int = Query(100, ge=1, le=1000),
     status: Optional[str] = Query(None),
     agent_id: Optional[str] = Query(None),
-    priority: Optional[str] = Query(None)
+    priority: Optional[str] = Query(None),
 ) -> List[TaskResponse]:
     """List all tasks with optional filtering"""
     try:
@@ -62,7 +66,7 @@ async def list_tasks(
                 "config": {"timeout": 300},
                 "created_at": "2024-01-01T00:00:00Z",
                 "updated_at": "2024-01-01T00:00:00Z",
-                "completed_at": None
+                "completed_at": None,
             },
             {
                 "id": "task-2",
@@ -73,10 +77,10 @@ async def list_tasks(
                 "config": {"timeout": 600},
                 "created_at": "2024-01-01T00:00:00Z",
                 "updated_at": "2024-01-01T00:00:00Z",
-                "completed_at": None
-            }
+                "completed_at": None,
+            },
         ]
-        
+
         # Apply filters
         if status:
             tasks = [t for t in tasks if t["status"] == status]
@@ -84,12 +88,12 @@ async def list_tasks(
             tasks = [t for t in tasks if t["agent_id"] == agent_id]
         if priority:
             tasks = [t for t in tasks if t["priority"] == priority]
-        
+
         # Apply pagination
-        tasks = tasks[skip:skip + limit]
-        
+        tasks = tasks[skip : skip + limit]
+
         return [TaskResponse(**task) for task in tasks]
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to list tasks: {str(e)}")
 
@@ -109,11 +113,11 @@ async def get_task(task_id: str) -> TaskResponse:
             "config": {"timeout": 300},
             "created_at": "2024-01-01T00:00:00Z",
             "updated_at": "2024-01-01T00:00:00Z",
-            "completed_at": None
+            "completed_at": None,
         }
-        
+
         return TaskResponse(**task)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get task: {str(e)}")
 
@@ -133,11 +137,11 @@ async def create_task(task: TaskCreate) -> TaskResponse:
             "config": task.config or {},
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat(),
-            "completed_at": None
+            "completed_at": None,
         }
-        
+
         return TaskResponse(**new_task)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create task: {str(e)}")
 
@@ -157,11 +161,11 @@ async def update_task(task_id: str, task_update: TaskUpdate) -> TaskResponse:
             "config": task_update.config or {"timeout": 300},
             "created_at": "2024-01-01T00:00:00Z",
             "updated_at": datetime.now().isoformat(),
-            "completed_at": None
+            "completed_at": None,
         }
-        
+
         return TaskResponse(**updated_task)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update task: {str(e)}")
 
@@ -172,7 +176,7 @@ async def delete_task(task_id: str) -> Dict[str, str]:
     try:
         # This would delete the task from the database
         return {"message": f"Task {task_id} deleted successfully"}
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete task: {str(e)}")
 
@@ -183,7 +187,7 @@ async def start_task(task_id: str) -> Dict[str, str]:
     try:
         # This would start the task
         return {"message": f"Task {task_id} started successfully"}
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to start task: {str(e)}")
 
@@ -194,7 +198,7 @@ async def stop_task(task_id: str) -> Dict[str, str]:
     try:
         # This would stop the task
         return {"message": f"Task {task_id} stopped successfully"}
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to stop task: {str(e)}")
 
@@ -211,15 +215,13 @@ async def get_task_status(task_id: str) -> Dict[str, Any]:
             "started_at": "2024-01-01T00:00:00Z",
             "estimated_completion": "2024-01-01T00:05:00Z",
             "current_step": "Processing data",
-            "logs": [
-                "Task started",
-                "Data loaded",
-                "Processing in progress"
-            ]
+            "logs": ["Task started", "Data loaded", "Processing in progress"],
         }
-        
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get task status: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get task status: {str(e)}"
+        )
 
 
 @router.get("/tasks/{task_id}/result")
@@ -235,11 +237,13 @@ async def get_task_result(task_id: str) -> Dict[str, Any]:
                 "metrics": {
                     "processing_time": 120,
                     "accuracy": 0.95,
-                    "confidence": 0.88
-                }
+                    "confidence": 0.88,
+                },
             },
-            "completed_at": "2024-01-01T00:05:00Z"
+            "completed_at": "2024-01-01T00:05:00Z",
         }
-        
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get task result: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get task result: {str(e)}"
+        )

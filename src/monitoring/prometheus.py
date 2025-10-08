@@ -3,30 +3,37 @@ Prometheus metrics collection
 """
 
 import logging
-from prometheus_client import Counter, Histogram, Gauge, start_http_server
+
+from prometheus_client import Counter, Gauge, Histogram, start_http_server
 
 logger = logging.getLogger(__name__)
 
 # Metrics
-request_count = Counter('amas_requests_total', 'Total requests', ['method', 'endpoint', 'status'])
-request_duration = Histogram('amas_request_duration_seconds', 'Request duration', ['method', 'endpoint'])
-active_connections = Gauge('amas_active_connections', 'Active connections')
-active_agents = Gauge('amas_active_agents', 'Active agents')
-active_tasks = Gauge('amas_active_tasks', 'Active tasks')
+request_count = Counter(
+    "amas_requests_total", "Total requests", ["method", "endpoint", "status"]
+)
+request_duration = Histogram(
+    "amas_request_duration_seconds", "Request duration", ["method", "endpoint"]
+)
+active_connections = Gauge("amas_active_connections", "Active connections")
+active_agents = Gauge("amas_active_agents", "Active agents")
+active_tasks = Gauge("amas_active_tasks", "Active tasks")
 
 
 def init_prometheus():
     """Initialize Prometheus metrics"""
     try:
         from src.config.settings import get_settings
-        
+
         settings = get_settings()
-        
+
         if settings.monitoring.prometheus_enabled:
             # Start Prometheus metrics server
             start_http_server(settings.monitoring.prometheus_port)
-            logger.info(f"Prometheus metrics server started on port {settings.monitoring.prometheus_port}")
-        
+            logger.info(
+                f"Prometheus metrics server started on port {settings.monitoring.prometheus_port}"
+            )
+
     except Exception as e:
         logger.error(f"Failed to initialize Prometheus: {e}")
         raise

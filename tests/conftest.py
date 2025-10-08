@@ -5,10 +5,11 @@ Production-ready test setup with fixtures and mocks
 
 import asyncio
 import os
-import pytest
 import tempfile
 from typing import AsyncGenerator, Generator
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 
 # Set test environment
 os.environ["ENVIRONMENT"] = "testing"
@@ -99,11 +100,7 @@ def sample_agent_data():
         "type": "research",
         "status": "active",
         "capabilities": ["web_search", "data_analysis"],
-        "config": {
-            "model": "gpt-4",
-            "temperature": 0.7,
-            "max_tokens": 2000
-        }
+        "config": {"model": "gpt-4", "temperature": 0.7, "max_tokens": 2000},
     }
 
 
@@ -117,7 +114,7 @@ def sample_task_data():
         "status": "pending",
         "priority": "medium",
         "created_at": "2024-01-01T00:00:00Z",
-        "updated_at": "2024-01-01T00:00:00Z"
+        "updated_at": "2024-01-01T00:00:00Z",
     }
 
 
@@ -130,7 +127,7 @@ def sample_user_data():
         "email": "test@example.com",
         "role": "user",
         "is_active": True,
-        "created_at": "2024-01-01T00:00:00Z"
+        "created_at": "2024-01-01T00:00:00Z",
     }
 
 
@@ -165,14 +162,14 @@ def test_agents():
             "id": "agent-1",
             "name": "Research Agent",
             "type": "research",
-            "status": "active"
+            "status": "active",
         },
         {
-            "id": "agent-2", 
+            "id": "agent-2",
             "name": "Analysis Agent",
             "type": "analysis",
-            "status": "active"
-        }
+            "status": "active",
+        },
     ]
 
 
@@ -184,14 +181,14 @@ def test_tasks():
             "id": "task-1",
             "agent_id": "agent-1",
             "description": "Research task",
-            "status": "pending"
+            "status": "pending",
         },
         {
             "id": "task-2",
-            "agent_id": "agent-2", 
+            "agent_id": "agent-2",
             "description": "Analysis task",
-            "status": "in_progress"
-        }
+            "status": "in_progress",
+        },
     ]
 
 
@@ -200,8 +197,9 @@ def test_tasks():
 async def async_test_client():
     """Async test client for API testing."""
     from fastapi.testclient import TestClient
+
     from main import app
-    
+
     with TestClient(app) as client:
         yield client
 
@@ -231,7 +229,7 @@ def performance_metrics():
         "response_time": 0.0,
         "memory_usage": 0.0,
         "cpu_usage": 0.0,
-        "request_count": 0
+        "request_count": 0,
     }
 
 
@@ -243,13 +241,13 @@ def security_test_cases():
         {
             "name": "SQL Injection",
             "payload": "'; DROP TABLE users; --",
-            "expected_result": "safe"
+            "expected_result": "safe",
         },
         {
             "name": "XSS Attack",
             "payload": "<script>alert('xss')</script>",
-            "expected_result": "safe"
-        }
+            "expected_result": "safe",
+        },
     ]
 
 
@@ -261,5 +259,5 @@ def load_test_config():
         "users": 100,
         "spawn_rate": 10,
         "run_time": "5m",
-        "target_host": "http://localhost:8000"
+        "target_host": "http://localhost:8000",
     }

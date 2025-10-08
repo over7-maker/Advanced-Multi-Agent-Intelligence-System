@@ -2,9 +2,10 @@
 Test API endpoints
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import patch, MagicMock
 
 
 class TestAPIEndpoints:

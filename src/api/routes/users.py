@@ -2,10 +2,11 @@
 User management API routes
 """
 
-from typing import List, Dict, Any, Optional
-from fastapi import APIRouter, HTTPException, Depends, Query
-from pydantic import BaseModel, EmailStr
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from pydantic import BaseModel, EmailStr
 
 from src.config.settings import get_settings
 
@@ -14,6 +15,7 @@ router = APIRouter()
 
 class UserCreate(BaseModel):
     """User creation model"""
+
     username: str
     email: EmailStr
     password: str
@@ -22,6 +24,7 @@ class UserCreate(BaseModel):
 
 class UserUpdate(BaseModel):
     """User update model"""
+
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     role: Optional[str] = None
@@ -30,6 +33,7 @@ class UserUpdate(BaseModel):
 
 class UserResponse(BaseModel):
     """User response model"""
+
     id: str
     username: str
     email: str
@@ -44,7 +48,7 @@ async def list_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     role: Optional[str] = Query(None),
-    is_active: Optional[bool] = Query(None)
+    is_active: Optional[bool] = Query(None),
 ) -> List[UserResponse]:
     """List all users with optional filtering"""
     try:
@@ -58,7 +62,7 @@ async def list_users(
                 "role": "admin",
                 "is_active": True,
                 "created_at": "2024-01-01T00:00:00Z",
-                "updated_at": "2024-01-01T00:00:00Z"
+                "updated_at": "2024-01-01T00:00:00Z",
             },
             {
                 "id": "user-2",
@@ -67,21 +71,21 @@ async def list_users(
                 "role": "user",
                 "is_active": True,
                 "created_at": "2024-01-01T00:00:00Z",
-                "updated_at": "2024-01-01T00:00:00Z"
-            }
+                "updated_at": "2024-01-01T00:00:00Z",
+            },
         ]
-        
+
         # Apply filters
         if role:
             users = [u for u in users if u["role"] == role]
         if is_active is not None:
             users = [u for u in users if u["is_active"] == is_active]
-        
+
         # Apply pagination
-        users = users[skip:skip + limit]
-        
+        users = users[skip : skip + limit]
+
         return [UserResponse(**user) for user in users]
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to list users: {str(e)}")
 
@@ -99,11 +103,11 @@ async def get_user(user_id: str) -> UserResponse:
             "role": "user",
             "is_active": True,
             "created_at": "2024-01-01T00:00:00Z",
-            "updated_at": "2024-01-01T00:00:00Z"
+            "updated_at": "2024-01-01T00:00:00Z",
         }
-        
+
         return UserResponse(**user)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to get user: {str(e)}")
 
@@ -121,11 +125,11 @@ async def create_user(user: UserCreate) -> UserResponse:
             "role": user.role,
             "is_active": True,
             "created_at": datetime.now().isoformat(),
-            "updated_at": datetime.now().isoformat()
+            "updated_at": datetime.now().isoformat(),
         }
-        
+
         return UserResponse(**new_user)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create user: {str(e)}")
 
@@ -141,13 +145,15 @@ async def update_user(user_id: str, user_update: UserUpdate) -> UserResponse:
             "username": user_update.username or "user1",
             "email": user_update.email or "user1@example.com",
             "role": user_update.role or "user",
-            "is_active": user_update.is_active if user_update.is_active is not None else True,
+            "is_active": (
+                user_update.is_active if user_update.is_active is not None else True
+            ),
             "created_at": "2024-01-01T00:00:00Z",
-            "updated_at": datetime.now().isoformat()
+            "updated_at": datetime.now().isoformat(),
         }
-        
+
         return UserResponse(**updated_user)
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to update user: {str(e)}")
 
@@ -158,7 +164,7 @@ async def delete_user(user_id: str) -> Dict[str, str]:
     try:
         # This would delete the user from the database
         return {"message": f"User {user_id} deleted successfully"}
-        
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete user: {str(e)}")
 
@@ -169,9 +175,11 @@ async def activate_user(user_id: str) -> Dict[str, str]:
     try:
         # This would activate the user
         return {"message": f"User {user_id} activated successfully"}
-        
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to activate user: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to activate user: {str(e)}"
+        )
 
 
 @router.post("/users/{user_id}/deactivate")
@@ -180,9 +188,11 @@ async def deactivate_user(user_id: str) -> Dict[str, str]:
     try:
         # This would deactivate the user
         return {"message": f"User {user_id} deactivated successfully"}
-        
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to deactivate user: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to deactivate user: {str(e)}"
+        )
 
 
 @router.get("/users/{user_id}/permissions")
@@ -197,14 +207,16 @@ async def get_user_permissions(user_id: str) -> Dict[str, Any]:
                 "write:agents",
                 "read:tasks",
                 "write:tasks",
-                "read:users"
+                "read:users",
             ],
             "role": "user",
-            "is_admin": False
+            "is_admin": False,
         }
-        
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get user permissions: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get user permissions: {str(e)}"
+        )
 
 
 @router.post("/users/{user_id}/reset-password")
@@ -213,6 +225,8 @@ async def reset_user_password(user_id: str) -> Dict[str, str]:
     try:
         # This would reset the user password
         return {"message": f"Password reset for user {user_id} initiated"}
-        
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to reset password: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to reset password: {str(e)}"
+        )
