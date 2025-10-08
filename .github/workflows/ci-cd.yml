@@ -224,7 +224,6 @@ jobs:
 
         python -m ensurepip --upgrade
         pip install -e .[dev]
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
     
     - name: 🎭 Run E2E tests
       run: |
