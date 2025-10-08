@@ -848,14 +848,14 @@ async def main():
             investigation_type="focused",
         )
 
-        print(f"✅ Investigation completed")
+        print("✅ Investigation completed")
         print(f"📊 Phases: {len(investigation.get('phases', []))}")
         print(
             f"📄 Final report available: {'Yes' if investigation.get('final_report') else 'No'}"
         )
 
         # Get performance stats
-        print(f"\n📈 Performance Statistics:")
+        print("\n📈 Performance Statistics:")
         stats = await enhanced_orchestrator.get_enhanced_performance_stats()
         print(f"  Basic stats: {stats['basic_stats']}")
         print(f"  Enhanced stats: {stats['enhanced_stats']}")
