@@ -82,17 +82,6 @@ class ReverseEngineeringAgent(IntelligenceAgent):
 
     async def validate_task(self, task: Dict[str, Any]) -> bool:
         """Validate if this agent can handle the task"""
-        re_keywords = [
-            "reverse",
-            "engineering",
-            "binary",
-            "malware",
-            "deobfuscation",
-            "protocol",
-            "firmware",
-            "sandbox",
-        ]
-
         reverse_engineering_keywords = [
             "reverse",
             "engineering",
@@ -299,7 +288,7 @@ class ReverseEngineeringAgent(IntelligenceAgent):
     async def _analyze_protocol(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze network protocols"""
         try:
-            protocol_data = task.get("parameters", {}).get("protocol_data", "")
+            # protocol_data = task.get("parameters", {}).get("protocol_data", "")
             protocol_type = task.get("parameters", {}).get("protocol_type", "unknown")
 
             # Mock protocol analysis
@@ -378,7 +367,7 @@ class ReverseEngineeringAgent(IntelligenceAgent):
         """Perform general reverse engineering"""
         try:
             description = task.get("description", "")
-            parameters = task.get("parameters", {})
+            # parameters = task.get("parameters", {})
 
             # Mock general reverse engineering
             re_result = {

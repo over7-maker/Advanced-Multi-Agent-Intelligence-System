@@ -413,7 +413,7 @@ class MetadataAgent(IntelligenceAgent):
         """Perform general metadata analysis"""
         try:
             description = task.get("description", "")
-            parameters = task.get("parameters", {})
+            # parameters = task.get("parameters", {})
 
             # Mock general metadata analysis
             metadata_analysis_result = {

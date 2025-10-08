@@ -90,7 +90,7 @@ class ForensicsAgent(IntelligenceAgent):
 
             # Determine task type from description
             task_type = self._classify_task(task_description)
-            metadata = task.get("parameters", {})
+            # metadata = task.get("parameters", {})
 
             if task_type == "file_analysis":
                 return await self._analyze_files(task)
@@ -419,7 +419,7 @@ class ForensicsAgent(IntelligenceAgent):
         """Perform general forensics analysis"""
         try:
             description = task.get("description", "")
-            parameters = task.get("parameters", {})
+            # parameters = task.get("parameters", {})
 
             # Mock general forensics
             forensics_result = {

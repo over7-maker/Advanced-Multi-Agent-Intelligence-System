@@ -2,12 +2,11 @@
 Data Analysis Agent Implementation
 """
 
-import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
+from ..base.intelligence_agent import IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 
@@ -392,7 +391,7 @@ class DataAnalysisAgent(IntelligenceAgent):
         """Perform general data analysis"""
         try:
             description = task.get("description", "")
-            parameters = task.get("parameters", {})
+            # parameters = task.get("parameters", {})
 
             # Mock general analysis
             analysis_result = {

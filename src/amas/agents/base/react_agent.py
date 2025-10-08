@@ -6,12 +6,11 @@ ReAct combines reasoning traces with task-specific actions for adaptive decision
 """
 
 import asyncio
-import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
-from .intelligence_agent import AgentStatus, IntelligenceAgent
+from .intelligence_agent import IntelligenceAgent
 
 
 class ReasoningStep(Enum):

@@ -266,7 +266,7 @@ class InvestigationAgent(IntelligenceAgent):
         """Perform general investigation"""
         try:
             description = task.get("description", "")
-            parameters = task.get("parameters", {})
+            # parameters = task.get("parameters", {})
 
             # Mock general investigation
             investigation_result = {

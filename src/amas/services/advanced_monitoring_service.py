@@ -4,15 +4,13 @@ Provides predictive analytics, anomaly detection, and intelligent alerting
 """
 
 import asyncio
-import hashlib
-import json
 import logging
 import os
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import joblib
 import numpy as np
