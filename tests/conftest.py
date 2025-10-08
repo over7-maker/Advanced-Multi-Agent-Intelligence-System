@@ -16,10 +16,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from amas.config.settings import get_settings
 from amas.main import AMASApplication
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main
 
 @pytest.fixture(scope="session")
 def event_loop():

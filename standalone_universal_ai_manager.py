@@ -652,7 +652,7 @@ class StandaloneUniversalAIManager:
             "failed_requests": self.global_stats["failed_requests"],
             "success_rate": f"{success_rate:.1f}%",
             "total_fallbacks": self.global_stats["total_fallbacks"],
-            "average_response_time": f"{self.global_stats["average_response_time"]:.2f}s",
+            "average_response_time": f"{self.global_stats['average_response_time']:.2f}s",
             "providers_usage": self.global_stats["providers_usage"],
             "uptime_seconds": uptime,
         }

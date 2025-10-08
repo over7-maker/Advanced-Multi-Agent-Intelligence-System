@@ -30,16 +30,11 @@ class TestAMASIntegration:
             'GROQAI_API_KEY': 'test_groq_key'
         })
         self.env_patcher.start()
-<<<<<<< HEAD
-
-=======
         
         # Initialize test variables
         self.orchestrator = None
         self.provider_manager = None
         self.intelligence_manager = None
-    
->>>>>>> origin/main
     def teardown_method(self):
         """Cleanup after each test"""
         self.env_patcher.stop()
@@ -47,27 +42,6 @@ class TestAMASIntegration:
     @pytest.mark.asyncio
     async def test_orchestrator_initialization(self):
         """Test orchestrator initializes correctly"""
-<<<<<<< HEAD
-        assert orchestrator is not None
-        assert len(orchestrator.agents) == 7
-        assert orchestrator.task_queue is not None
-
-    @pytest.mark.asyncio
-    async def test_provider_manager_initialization(self):
-        """Test provider manager initializes correctly"""
-        assert provider_manager is not None
-        assert len(provider_manager.providers) > 0
-        assert len(provider_manager.provider_configs) > 0
-
-    @pytest.mark.asyncio
-    async def test_intelligence_manager_initialization(self):
-        """Test intelligence manager initializes correctly"""
-        assert intelligence_manager is not None
-        assert intelligence_manager.collective_intelligence is not None
-        assert intelligence_manager.personality_orchestrator is not None
-        assert intelligence_manager.predictive_engine is not None
-
-=======
         assert self.orchestrator is not None
         assert len(self.orchestrator.agents) == 7
         assert self.orchestrator.task_queue is not None
@@ -84,10 +58,8 @@ class TestAMASIntegration:
         """Test intelligence manager initializes correctly"""
         assert self.intelligence_manager is not None
         assert self.intelligence_manager.collective_intelligence is not None
-        assert self.intelligence_manager.personality_self.orchestrator is not None
+        assert self.intelligence_manager.personality_orchestrator is not None
         assert self.intelligence_manager.predictive_engine is not None
-    
->>>>>>> origin/main
     @pytest.mark.asyncio
     async def test_task_execution_flow(self):
         """Test complete task execution flow"""
@@ -113,13 +85,7 @@ class TestAMASIntegration:
     @pytest.mark.asyncio
     async def test_system_status(self):
         """Test system status endpoint"""
-<<<<<<< HEAD
-        status = await orchestrator.get_system_status()
-
-=======
         status = await self.orchestrator.get_system_status()
-        
->>>>>>> origin/main
         assert status is not None
         assert "system_status" in status
         assert "agents" in status
@@ -130,13 +96,7 @@ class TestAMASIntegration:
     @pytest.mark.asyncio
     async def test_agent_capabilities(self):
         """Test agent capabilities retrieval"""
-<<<<<<< HEAD
-        capabilities = await orchestrator.get_agent_capabilities()
-
-=======
         capabilities = await self.orchestrator.get_agent_capabilities()
-        
->>>>>>> origin/main
         assert capabilities is not None
         assert len(capabilities) == 7
 
@@ -155,13 +115,7 @@ class TestAMASIntegration:
     @pytest.mark.asyncio
     async def test_provider_status(self):
         """Test provider status retrieval"""
-<<<<<<< HEAD
-        status = provider_manager.get_provider_status()
-
-=======
         status = self.provider_manager.get_provider_status()
-        
->>>>>>> origin/main
         assert status is not None
         assert len(status) > 0
 
@@ -174,13 +128,7 @@ class TestAMASIntegration:
     @pytest.mark.asyncio
     async def test_intelligence_dashboard_data(self):
         """Test intelligence dashboard data retrieval"""
-<<<<<<< HEAD
-        data = await intelligence_manager.get_intelligence_dashboard_data()
-
-=======
         data = await self.intelligence_manager.get_intelligence_dashboard_data()
-        
->>>>>>> origin/main
         assert data is not None
         assert "collective_intelligence" in data
         assert "adaptive_personalities" in data
@@ -196,14 +144,8 @@ class TestAMASIntegration:
             "parameters": {"depth": "standard"},
             "user_id": "test_user"
         }
-<<<<<<< HEAD
-
-        optimization = await intelligence_manager.optimize_task_before_execution(task_data)
-
-=======
         
         optimization = await self.intelligence_manager.optimize_task_before_execution(task_data)
-        
 >>>>>>> origin/main
         assert optimization is not None
         assert "optimal_agents" in optimization
@@ -228,13 +170,7 @@ class TestAMASIntegration:
         }
 
         # This should not raise an exception
-<<<<<<< HEAD
-        await intelligence_manager.process_task_completion(task_data)
-
-=======
         await self.intelligence_manager.process_task_completion(task_data)
-        
->>>>>>> origin/main
         # Verify the task was processed (simplified check)
         assert True  # If we get here without exception, it worked
 

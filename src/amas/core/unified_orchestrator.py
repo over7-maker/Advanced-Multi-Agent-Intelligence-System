@@ -2,10 +2,6 @@
 
 Unified Multi-Agent Orchestrator
 Combines functionality from all orchestrator implementations
-<<<<<<< HEAD
-=======
-
->>>>>>> origin/main
 """
 
 import asyncio
