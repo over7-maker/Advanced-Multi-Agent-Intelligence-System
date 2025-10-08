@@ -258,6 +258,7 @@ class TestReportingAgent:
         agent = ReportingAgent(
             agent_id="test_reporting_001", name="Test Reporting Agent"
         )
+        return agent
 
     @pytest.mark.asyncio
     async def test_agent_initialization(self, reverse_engineering_agent):

@@ -152,6 +152,8 @@ def test_ai_client_initialization():
                     base_url="https://openrouter.ai/api/v1",
                     api_key=glm_key,
                 )
+                # Verify client is properly configured
+                assert client.api_key == glm_key
                 print("✅ GLM client: Initialized successfully")
             except Exception as e:
                 print(f"❌ GLM client: Failed - {e}")

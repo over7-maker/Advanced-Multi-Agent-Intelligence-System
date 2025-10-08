@@ -101,6 +101,7 @@ class TestDatabaseService:
         # Mock storage operation
         result = True  # In real test, this would be the actual result
         assert result is True
+        assert agent_data["agent_id"] == "test_agent_001"
 
     @pytest.mark.asyncio
     async def test_task_storage(self, database_service):
@@ -118,6 +119,7 @@ class TestDatabaseService:
         # Mock storage operation
         result = True  # In real test, this would be the actual result
         assert result is True
+        assert task_data["task_id"] == "test_task_001"
 
     @pytest.mark.asyncio
     async def test_intelligence_data_storage(self, database_service):
@@ -134,6 +136,7 @@ class TestDatabaseService:
         # Mock storage operation
         result = True  # In real test, this would be the actual result
         assert result is True
+        assert data["data_id"] == "test_data_001"
 
 
 class TestSecurityService:

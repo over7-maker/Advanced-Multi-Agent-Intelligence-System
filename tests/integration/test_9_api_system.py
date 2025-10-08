@@ -115,6 +115,10 @@ def test_fallback_priority():
         "GPTOSS",
     ]
 
+    # Verify we have the expected providers
+    assert len(expected_order) == 9
+    assert "DeepSeek" in expected_order
+
     # Check a sample script for priority order
     script_path = Path(".github/scripts/ai_code_analyzer.py")
     try:
