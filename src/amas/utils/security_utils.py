@@ -3,7 +3,7 @@
 import os
 import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import List
 
 
 def validate_file_path(file_path: str, allowed_dirs: List[str] = None) -> str:

@@ -626,14 +626,14 @@ class EnhancedResponderTestSuite:
         print("🧪 ENHANCED AI ISSUES RESPONDER TEST REPORT")
         print("=" * 80)
 
-        print(f"\n📊 TEST SUMMARY:")
+        print("\n📊 TEST SUMMARY:")
         print(f"  Total Tests: {summary['total_tests']}")
         print(f"  Passed: {summary['passed_tests']} ✅")
         print(f"  Failed: {summary['failed_tests']} ❌")
         print(f"  Success Rate: {summary['success_rate']:.1%}")
         print(f"  Total Duration: {summary['total_duration']:.2f}s")
 
-        print(f"\n📋 DETAILED RESULTS:")
+        print("\n📋 DETAILED RESULTS:")
         for result in self.test_results:
             status = "✅ PASS" if result["success"] else "❌ FAIL"
             duration_str = (
@@ -644,7 +644,7 @@ class EnhancedResponderTestSuite:
                 print(f"    Details: {result['details']}")
 
         if report["recommendations"]:
-            print(f"\n💡 RECOMMENDATIONS:")
+            print("\n💡 RECOMMENDATIONS:")
             for rec in report["recommendations"]:
                 print(f"  • {rec}")
 
@@ -673,7 +673,7 @@ async def main():
         with open("enhanced_responder_test_report.json", "w") as f:
             json.dump(report, f, indent=2, default=str)
 
-        print(f"\n📄 Detailed report saved to: enhanced_responder_test_report.json")
+        print("\n📄 Detailed report saved to: enhanced_responder_test_report.json")
 
         # Return exit code based on success rate
         success_rate = report["test_summary"]["success_rate"]
