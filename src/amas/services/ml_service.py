@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import joblib
 import numpy as np
@@ -576,7 +576,7 @@ class MLService:
             # Load model
             model_path = Path(self.ml_config["model_storage_path"]) / f"{model_id}.pkl"
             with open(model_path, "rb") as f:
-                model = pickle.load(f)
+                pickle.load(f)
 
             # Simulate prediction
             # In real implementation, this would use actual model prediction

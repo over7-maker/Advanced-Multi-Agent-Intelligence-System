@@ -4,14 +4,12 @@ Provides adaptive performance optimization using RL algorithms
 """
 
 import asyncio
-import json
 import logging
 import os
 import pickle
 import queue
 import random
 import threading
-import time
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime

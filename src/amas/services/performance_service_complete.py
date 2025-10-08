@@ -4,14 +4,12 @@ Provides performance optimization, caching, load balancing, and resource managem
 """
 
 import asyncio
-import hashlib
-import json
 import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -715,7 +713,7 @@ class PerformanceService:
         """Collect performance metrics"""
         try:
             # Collect cache metrics
-            cache_hit_rate = self.cache_stats["hits"] / max(
+            self.cache_stats["hits"] / max(
                 self.cache_stats["hits"] + self.cache_stats["misses"], 1
             )
 

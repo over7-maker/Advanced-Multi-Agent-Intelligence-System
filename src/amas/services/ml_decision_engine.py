@@ -4,26 +4,24 @@ Provides intelligent task allocation, resource optimization, and decision making
 """
 
 import asyncio
-import json
 import logging
 import os
 import queue
 import threading
-import time
-from collections import defaultdict, deque
+from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import joblib
 import numpy as np
 import pandas as pd
 import xgboost as xgb
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report, mean_squared_error
+from sklearn.metrics import accuracy_score, mean_squared_error
 from sklearn.model_selection import train_test_split
-from sklearn.neural_network import MLPClassifier, MLPRegressor
+from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 logger = logging.getLogger(__name__)
@@ -558,7 +556,7 @@ class MLDecisionEngine:
                 # Use ML decision but with lower confidence
                 ml_decision.confidence *= 0.8
                 ml_decision.reasoning = (
-                    f"Hybrid: ML decision with reduced confidence due to uncertainty"
+                    "Hybrid: ML decision with reduced confidence due to uncertainty"
                 )
                 return ml_decision
 
@@ -621,8 +619,6 @@ class MLDecisionEngine:
                 return None
 
             # Convert historical data to DataFrame
-            df = pd.DataFrame(self.historical_data)
-
             # Prepare features for each agent
             features_list = []
 
