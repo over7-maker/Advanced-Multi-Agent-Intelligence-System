@@ -6,7 +6,7 @@ Production-ready configuration with pydantic-settings
 import os
 from typing import List, Optional, Union
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -26,8 +26,7 @@ class DatabaseSettings(BaseModel):
     max_overflow: int = Field(default=20, env="DB_MAX_OVERFLOW")
     echo: bool = Field(default=False, env="DB_ECHO")
 
-    class Config:
-        env_prefix = "DB_"
+    model_config = ConfigDict(env_prefix="DB_")
 
 
 class RedisSettings(BaseModel):
@@ -40,8 +39,7 @@ class RedisSettings(BaseModel):
     db: int = Field(default=0, env="REDIS_DB")
     max_connections: int = Field(default=20, env="REDIS_MAX_CONNECTIONS")
 
-    class Config:
-        env_prefix = "REDIS_"
+    model_config = ConfigDict(env_prefix="REDIS_")
 
 
 class Neo4jSettings(BaseModel):
@@ -52,8 +50,7 @@ class Neo4jSettings(BaseModel):
     password: str = Field(default="amas_password", env="NEO4J_PASSWORD")
     max_connections: int = Field(default=50, env="NEO4J_MAX_CONNECTIONS")
 
-    class Config:
-        env_prefix = "NEO4J_"
+    model_config = ConfigDict(env_prefix="NEO4J_")
 
 
 class SecuritySettings(BaseModel):
@@ -84,14 +81,14 @@ class SecuritySettings(BaseModel):
     )
     cors_allow_headers: List[str] = Field(default=["*"], env="CORS_ALLOW_HEADERS")
 
-    @validator("cors_origins", pre=True)
+    @field_validator("cors_origins", mode="before")
+    @classmethod
     def parse_cors_origins(cls, v):
         if isinstance(v, str):
             return [origin.strip() for origin in v.split(",")]
         return v
 
-    class Config:
-        env_prefix = "SECURITY_"
+    model_config = ConfigDict(env_prefix="SECURITY_")
 
 
 class AISettings(BaseModel):
@@ -122,8 +119,7 @@ class AISettings(BaseModel):
     max_tokens: int = Field(default=4000, env="MAX_TOKENS")
     temperature: float = Field(default=0.7, env="TEMPERATURE")
 
-    class Config:
-        env_prefix = "AI_"
+    model_config = ConfigDict(env_prefix="AI_")
 
 
 class MonitoringSettings(BaseModel):
@@ -145,8 +141,7 @@ class MonitoringSettings(BaseModel):
     log_max_size: str = Field(default="100MB", env="LOG_MAX_SIZE")
     log_backup_count: int = Field(default=5, env="LOG_BACKUP_COUNT")
 
-    class Config:
-        env_prefix = "MONITORING_"
+    model_config = ConfigDict(env_prefix="MONITORING_")
 
 
 class PerformanceSettings(BaseModel):
@@ -170,8 +165,7 @@ class PerformanceSettings(BaseModel):
     agent_timeout: int = Field(default=300, env="AGENT_TIMEOUT")
     agent_memory_limit: int = Field(default=1000, env="AGENT_MEMORY_LIMIT")
 
-    class Config:
-        env_prefix = "PERFORMANCE_"
+    model_config = ConfigDict(env_prefix="PERFORMANCE_")
 
 
 class FeatureFlags(BaseModel):
@@ -185,8 +179,7 @@ class FeatureFlags(BaseModel):
     )
     enable_health_checks: bool = Field(default=True, env="ENABLE_HEALTH_CHECKS")
 
-    class Config:
-        env_prefix = "FEATURE_"
+    model_config = ConfigDict(env_prefix="FEATURE_")
 
 
 class Settings(BaseSettings):
@@ -209,7 +202,8 @@ class Settings(BaseSettings):
     performance: PerformanceSettings = PerformanceSettings()
     features: FeatureFlags = FeatureFlags()
 
-    @validator("environment")
+    @field_validator("environment")
+    @classmethod
     def validate_environment(cls, v):
         allowed = ["development", "testing", "staging", "production"]
         if v not in allowed:
@@ -228,12 +222,13 @@ class Settings(BaseSettings):
     def is_testing(self) -> bool:
         return self.environment == "testing"
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
-        validate_assignment = True
-        extra = "ignore"  # Ignore extra environment variables
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        validate_assignment=True,
+        extra="ignore",  # Ignore extra environment variables
+    )
 
 
 # Global settings instance
