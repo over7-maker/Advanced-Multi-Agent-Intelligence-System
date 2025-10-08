@@ -250,10 +250,10 @@ class DataAnalysisAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _perform_correlation_analysis(
+    async def _perform_advanced_correlation_analysis(
         self, task: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Perform correlation analysis"""
+        """Perform advanced correlation analysis"""
         try:
             data = task.get("parameters", {}).get("data", [])
             threshold = task.get("parameters", {}).get("threshold", 0.8)
