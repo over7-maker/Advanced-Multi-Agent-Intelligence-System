@@ -419,6 +419,8 @@ class TestConfiguration:
 
 
 # Integration tests
+
+
 class TestEndToEnd:
     """End-to-end integration tests"""
 
@@ -457,6 +459,8 @@ class TestEndToEnd:
 
 
 # Utility functions for testing
+
+
 def create_mock_api_response(
     content: str = "Test response", api_used: str = "test_api"
 ) -> Dict[str, Any]:
@@ -484,5 +488,7 @@ def create_mock_task_result(success: bool = True, error: str = None) -> TaskResu
 
 
 # Run tests
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
