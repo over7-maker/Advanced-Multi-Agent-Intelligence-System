@@ -66,13 +66,13 @@ jobs:
           pip install -r requirements-dev.txt
       
       - name: Run Black code formatting check
-        run: python -m black --check src/ tests/
+        run: python -m black --check src/ tests/ --exclude=".*\.skip$"
       
       - name: Run isort import sorting check
-        run: python -m isort --check-only src/ tests/
+        run: python -m isort --check-only src/ tests/ --skip-glob="*.skip"
       
       - name: Run Flake8 linting
-        run: python -m flake8 src/ tests/
+        run: python -m flake8 src/ tests/ --exclude="*.skip"
       
       - name: Run MyPy type checking
         run: python -m mypy src/
