@@ -519,7 +519,7 @@ async def main():
                 print(f"Successful Providers: {summary.get('successful_providers', 0)}")
                 print(f"Total Capabilities: {summary.get('total_capabilities', 0)}")
                 print(
-                    f"Successful Capabilities: {summary.get("successful_capabilities", 0)}"
+                    f"Successful Capabilities: {summary.get('successful_capabilities', 0)}"
                 )
                 print(f"Overall Health: {summary.get('overall_health', 'unknown')}")
                 print(f"Setup Status: {summary.get('setup_status', 'unknown')}")
