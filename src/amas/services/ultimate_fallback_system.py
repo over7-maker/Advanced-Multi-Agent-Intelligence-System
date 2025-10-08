@@ -822,7 +822,7 @@ async def test_ultimate_fallback():
 
     # Show comprehensive stats
     stats = get_fallback_stats()
-    print(f"\n📊 Fallback Statistics:")
+    print("\n📊 Fallback Statistics:")
     print(f"Total Requests: {stats['total_requests']}")
     print(f"Success Rate: {stats['success_rate']}")
     print(f"Average Response Time: {stats['average_response_time']}")
@@ -832,7 +832,7 @@ async def test_ultimate_fallback():
 
     # Show provider health
     health = get_provider_health()
-    print(f"\n🏥 Provider Health:")
+    print("\n🏥 Provider Health:")
     for provider_id, info in health.items():
         print(f"  {info['name']}: {info['status']} ({info['success_rate']})")
 

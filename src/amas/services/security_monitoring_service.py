@@ -8,7 +8,6 @@ import hashlib
 import hmac
 import logging
 import secrets
-from collections import deque
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum

@@ -847,14 +847,14 @@ async def main():
         async with ai_api_manager:
             # Test health status
             health = ai_api_manager.get_health_status()
-            print(f"📊 Health Status:")
+            print("📊 Health Status:")
             print(f"  Total APIs: {health['total_apis']}")
             print(f"  Healthy APIs: {health['healthy_apis']}")
             print(f"  Unhealthy APIs: {health['unhealthy_apis']}")
             print(f"  Rate Limited APIs: {health['rate_limited_apis']}")
 
             # Test API call
-            print(f"\n🤖 Testing API Call...")
+            print("\n🤖 Testing API Call...")
             result = await ai_api_manager.generate_response(
                 prompt="Explain artificial intelligence in one sentence.",
                 system_prompt="You are a helpful AI assistant.",

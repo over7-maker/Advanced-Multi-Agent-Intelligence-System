@@ -9,7 +9,7 @@ import logging
 import os
 import random
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -923,7 +923,7 @@ async def test_universal_ai_manager():
     )
 
     if result["success"]:
-        print(f"✅ Success!")
+        print("✅ Success!")
         print(f"   Provider: {result['provider_name']}")
         print(f"   Response: {result['content'][:100]}...")
         print(f"   Time: {result['response_time']:.2f}s")
@@ -938,7 +938,7 @@ async def test_universal_ai_manager():
     )
 
     if result["success"]:
-        print(f"✅ Success!")
+        print("✅ Success!")
         print(f"   Provider: {result['provider_name']}")
         print(f"   Response: {result['content']}")
     print()
@@ -950,7 +950,7 @@ async def test_universal_ai_manager():
     )
 
     if result["success"]:
-        print(f"✅ Success!")
+        print("✅ Success!")
         print(f"   Provider: {result['provider_name']}")
         print(f"   Time: {result['response_time']:.2f}s")
     print()

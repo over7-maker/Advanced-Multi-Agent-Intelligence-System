@@ -51,7 +51,7 @@ class QuickStartIntegration:
                 temperature=0.1,
             )
 
-            print(f"✅ Basic test passed!")
+            print("✅ Basic test passed!")
             print(f"   API used: {response['api_used']}")
             print(f"   Response: {response['content']}")
             return True
