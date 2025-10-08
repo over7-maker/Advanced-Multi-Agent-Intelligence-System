@@ -10,33 +10,26 @@ language understanding.
 """
 
 import asyncio
-import json
-import math
-import queue
 import re
-import threading
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
 # Advanced NLP libraries
 try:
     import spacy
-    from spacy import displacy
 
     SPACY_AVAILABLE = True
 except ImportError:
     SPACY_AVAILABLE = False
 
 try:
-    import transformers
-    from transformers import AutoModel, AutoTokenizer, pipeline
+    from transformers import AutoModel, AutoTokenizer
 
     TRANSFORMERS_AVAILABLE = True
 except ImportError:
@@ -44,22 +37,16 @@ except ImportError:
 
 # Quantum processing
 try:
-    import qiskit
     from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
 
     QUANTUM_AVAILABLE = True
 except ImportError:
     QUANTUM_AVAILABLE = False
 
-from rich import print as rprint
-
 # Rich for enhanced output
 from rich.console import Console
 from rich.panel import Panel
-from rich.syntax import Syntax
 from rich.table import Table
-from rich.text import Text
-from rich.tree import Tree
 
 
 class QuantumIntent(Enum):
