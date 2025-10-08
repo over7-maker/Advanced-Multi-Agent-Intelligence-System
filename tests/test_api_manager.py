@@ -17,18 +17,18 @@ import pytest
 # Add src directory to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from amas.core.ai_api_manager import (
+from amas.core.ai_api_manager import (  # noqa: E402
     AIAPIManager,
     APIConfig,
     APIHealth,
     APIType,
 )
-from amas.core.api_clients import (
+from amas.core.api_clients import (  # noqa: E402
     APIClientFactory,
     OpenAICompatibleClient,
 )
-from amas.core.api_integration import EnhancedOSINTAgent
-from amas.core.enhanced_orchestrator import (
+from amas.core.api_integration import EnhancedOSINTAgent  # noqa: E402
+from amas.core.enhanced_orchestrator import (  # noqa: E402
     EnhancedOrchestrator,
     TaskResult,
 )
@@ -56,6 +56,7 @@ class TestAPIConfig:
         assert config.api_type == APIType.OPENAI_COMPATIBLE
         assert "test" in config.capabilities
         assert config.priority == 1
+
 
 class TestAPIHealth:
     """Test API health tracking"""
@@ -97,6 +98,7 @@ class TestAPIHealth:
 
         assert health.consecutive_failures == 1
         assert health.error_rate == 1.0
+
 
 class TestAIAPIManager:
     """Test AI API Manager"""
@@ -164,6 +166,7 @@ class TestAIAPIManager:
         assert "api1" in available
         assert "api2" not in available
 
+
 class TestAPIClients:
     """Test API clients"""
 
@@ -190,6 +193,7 @@ class TestAPIClients:
 
         assert client is not None
         assert hasattr(client, "generate")
+
 
 class TestEnhancedOrchestrator:
     """Test Enhanced Orchestrator"""
@@ -235,6 +239,7 @@ class TestEnhancedOrchestrator:
         assert "analysis" in analysis_prompt
         assert "pattern" in analysis_prompt
 
+
 class TestEnhancedAgents:
     """Test Enhanced Agents"""
 
@@ -270,6 +275,7 @@ class TestEnhancedAgents:
     #     assert agent.name == "Enhanced Reporting Agent"
     #     assert "report_generation" in agent.capabilities
 
+
 class TestIntegration:
     """Test integration between components"""
 
@@ -300,6 +306,7 @@ class TestIntegration:
         stats = orchestrator.get_performance_stats()
         assert "total_tasks" in stats
         assert "success_rate" in stats
+
 
 class TestErrorHandling:
     """Test error handling and fallback mechanisms"""
@@ -334,6 +341,7 @@ class TestErrorHandling:
 
             assert result.success is False
             assert result.error is not None
+
 
 class TestPerformance:
     """Test performance and optimization"""
@@ -380,6 +388,7 @@ class TestPerformance:
         assert "total_apis" in health
         assert "healthy_apis" in health
         assert "unhealthy_apis" in health
+
 
 class TestConfiguration:
     """Test configuration and setup"""
