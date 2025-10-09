@@ -4,11 +4,8 @@ AI Fallback Manager - Intelligent fallback system for all 6 AI providers
 """
 
 import asyncio
-import json
 import logging
 import os
-import random
-import sys
 from typing import Any, Dict, List, Optional
 
 import aiohttp

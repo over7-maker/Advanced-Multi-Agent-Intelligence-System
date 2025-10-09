@@ -768,7 +768,7 @@ class AdvancedAnalyticsService:
             try:
                 # Mock insight generation
                 mock_data = {"sample_data": "mock"}
-                insights = await self.generate_insights(mock_data)
+                await self.generate_insights(mock_data)
 
                 await asyncio.sleep(
                     self.analytics_config["insight_generation_interval"]

@@ -304,7 +304,7 @@ class OSINTAgent(IntelligenceAgent):
                 try:
                     domain = urlparse(url).netloc
                     domains.add(domain)
-                except:
+                except Exception:
                     continue
 
             # Sentiment analysis (basic)

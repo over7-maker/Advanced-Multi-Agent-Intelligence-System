@@ -305,7 +305,7 @@ class RealOSINTAgent:
             try:
                 domain = urlparse(url).netloc
                 domains.add(domain)
-            except:
+            except Exception:
                 continue
 
         return {
@@ -337,7 +337,7 @@ class RealOSINTAgent:
             try:
                 ip = socket.gethostbyname(domain)
                 ip_addresses.append(ip)
-            except:
+            except Exception:
                 pass
 
             # Real WHOIS lookup (simplified)

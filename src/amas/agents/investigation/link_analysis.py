@@ -316,7 +316,7 @@ Provide analysis in JSON format:
 
                 return relationships
 
-            except:
+            except Exception:
                 return []
 
         except Exception as e:
@@ -714,7 +714,7 @@ Provide insights in JSON format:
             try:
                 insights_data = json.loads(result)
                 return insights_data.get("insights", [])
-            except:
+            except Exception:
                 return ["Network analysis completed", "Relationships discovered"]
 
         except Exception as e:

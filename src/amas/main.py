@@ -9,7 +9,6 @@ import asyncio
 import logging
 import sys
 from contextlib import asynccontextmanager
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 from .config.settings import AMASConfig, get_settings

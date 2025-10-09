@@ -1,8 +1,6 @@
 """Database service for AMAS"""
 
 import logging
-from datetime import datetime
-from typing import Any, List
 
 try:
     import asyncpg

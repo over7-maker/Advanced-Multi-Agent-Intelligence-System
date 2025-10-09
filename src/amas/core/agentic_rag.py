@@ -245,7 +245,7 @@ Provide analysis in JSON format:
             try:
                 analysis = json.loads(result)
                 return analysis
-            except:
+            except Exception:
                 return {
                     "entities": [],
                     "concepts": [],

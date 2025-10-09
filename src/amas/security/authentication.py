@@ -2,7 +2,6 @@
 Enhanced Authentication Module for AMAS
 """
 
-import asyncio
 
 # import hashlib
 import logging
@@ -12,7 +11,6 @@ from typing import Any, Dict, List, Optional
 
 import jwt
 from passlib.context import CryptContext
-from passlib.hash import bcrypt
 
 logger = logging.getLogger(__name__)
 

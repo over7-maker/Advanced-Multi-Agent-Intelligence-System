@@ -406,7 +406,7 @@ Provide your reflection in JSON format:
             import json
 
             return json.loads(result)
-        except:
+        except Exception:
             return {"analysis": result, "actions": [], "next_action": "act"}
 
     def _parse_reflection_result(self, result: str) -> Dict[str, Any]:
@@ -415,7 +415,7 @@ Provide your reflection in JSON format:
             import json
 
             return json.loads(result)
-        except:
+        except Exception:
             return {
                 "evaluation": result,
                 "lessons_learned": "",

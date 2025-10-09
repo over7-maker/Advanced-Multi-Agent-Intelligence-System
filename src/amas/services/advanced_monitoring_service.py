@@ -14,8 +14,6 @@ from typing import Any, Dict, List, Optional
 
 import joblib
 import numpy as np
-import pandas as pd
-from sklearn.cluster import DBSCAN
 from sklearn.ensemble import IsolationForest
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
@@ -526,7 +524,7 @@ class AdvancedMonitoringService:
                 AnomalyType.PERFORMANCE_DEGRADATION: f"Performance degradation detected: response time {response_time:.2f}s (baseline: {self.baselines['response_time']:.2f}s)",
                 AnomalyType.RESOURCE_SPIKE: f"Resource spike detected: CPU {cpu_usage:.1f}%, Memory {memory_usage:.1f}%",
                 AnomalyType.SYSTEM_FAILURE: f"System failure indicators: error rate {error_rate:.3f} (baseline: {self.baselines['error_rate']:.3f})",
-                AnomalyType.UNUSUAL_PATTERN: f"Unusual system pattern detected in metrics",
+                AnomalyType.UNUSUAL_PATTERN: "Unusual system pattern detected in metrics",
             }
 
             return descriptions.get(anomaly_type, "Unknown anomaly detected")

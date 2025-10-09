@@ -4,7 +4,6 @@ Provides image analysis, object detection, and visual intelligence capabilities
 """
 
 import asyncio
-import base64
 import logging
 import uuid
 from dataclasses import dataclass
