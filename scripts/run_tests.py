@@ -26,7 +26,7 @@ def run_command(cmd: List[str], description: str) -> bool:
     print(f"\n🔧 {description}")
     print(f"Running: {' '.join(cmd)}")
     print("-" * 50)
-    
+
     try:
         result = subprocess.run(cmd, check=True, capture_output=False)
         print(f"✅ {description} completed successfully")
@@ -68,11 +68,14 @@ def run_all_tests(verbose: bool = False) -> bool:
 def run_tests_with_coverage(verbose: bool = False) -> bool:
     """Run tests with coverage reporting."""
     cmd = [
-        "python", "-m", "pytest", "tests/",
+        "python",
+        "-m",
+        "pytest",
+        "tests/",
         "--cov=src/amas",
         "--cov-report=html",
         "--cov-report=term-missing",
-        "--cov-fail-under=80"
+        "--cov-fail-under=80",
     ]
     if verbose:
         cmd.append("-v")
@@ -108,32 +111,33 @@ def run_specific_test(test_path: str, verbose: bool = False) -> bool:
 def check_environment() -> bool:
     """Check if the environment is properly set up for testing."""
     print("🔍 Checking test environment...")
-    
+
     # Check Python version
     if sys.version_info < (3, 8):
         print("❌ Python 3.8 or higher is required")
         return False
-    
+
     # Check if pytest is installed
     try:
         import pytest
+
         print(f"✅ pytest version: {pytest.__version__}")
     except ImportError:
         print("❌ pytest is not installed")
         return False
-    
+
     # Check if test files exist
     test_dir = Path("tests")
     if not test_dir.exists():
         print("❌ Tests directory not found")
         return False
-    
+
     # Check if main test file exists
     main_test_file = test_dir / "test_unified_orchestrator.py"
     if not main_test_file.exists():
         print("❌ Main test file not found")
         return False
-    
+
     print("✅ Test environment is ready")
     return True
 
@@ -142,53 +146,70 @@ def main():
     """Main test runner function."""
     parser = argparse.ArgumentParser(description="AMAS Test Runner")
     parser.add_argument("--unit", action="store_true", help="Run unit tests only")
-    parser.add_argument("--integration", action="store_true", help="Run integration tests only")
+    parser.add_argument(
+        "--integration", action="store_true", help="Run integration tests only"
+    )
     parser.add_argument("--all", action="store_true", help="Run all tests")
-    parser.add_argument("--coverage", action="store_true", help="Run tests with coverage")
+    parser.add_argument(
+        "--coverage", action="store_true", help="Run tests with coverage"
+    )
     parser.add_argument("--benchmark", action="store_true", help="Run benchmark tests")
-    parser.add_argument("--real", action="store_true", help="Run tests with real services")
+    parser.add_argument(
+        "--real", action="store_true", help="Run tests with real services"
+    )
     parser.add_argument("--test", type=str, help="Run specific test file or function")
     parser.add_argument("--verbose", "-v", action="store_true", help="Verbose output")
-    parser.add_argument("--check-env", action="store_true", help="Check test environment only")
-    
+    parser.add_argument(
+        "--check-env", action="store_true", help="Check test environment only"
+    )
+
     args = parser.parse_args()
-    
+
     print("🧪 AMAS Test Runner")
     print("=" * 50)
-    
+
     # Check environment first
     if not check_environment():
         print("\n❌ Environment check failed. Please fix the issues above.")
         sys.exit(1)
-    
+
     if args.check_env:
         print("\n✅ Environment check completed successfully")
         return
-    
+
     # Run tests based on arguments
     success = True
-    
+
     if args.unit:
         success &= run_unit_tests(args.verbose)
-    
+
     if args.integration:
         success &= run_integration_tests(args.verbose)
-    
+
     if args.benchmark:
         success &= run_benchmark_tests(args.verbose)
-    
+
     if args.real:
         success &= run_real_tests(args.verbose)
-    
+
     if args.test:
         success &= run_specific_test(args.test, args.verbose)
-    
+
     if args.coverage:
         success &= run_tests_with_coverage(args.verbose)
-    
-    if args.all or not any([args.unit, args.integration, args.benchmark, args.real, args.test, args.coverage]):
+
+    if args.all or not any(
+        [
+            args.unit,
+            args.integration,
+            args.benchmark,
+            args.real,
+            args.test,
+            args.coverage,
+        ]
+    ):
         success &= run_all_tests(args.verbose)
-    
+
     # Print summary
     print("\n" + "=" * 50)
     if success:

@@ -3,7 +3,6 @@ Encryption Module for AMAS
 Provides data encryption, decryption, and key management
 """
 
-import asyncio
 import base64
 import hashlib
 import json
@@ -16,7 +15,6 @@ from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 logger = logging.getLogger(__name__)

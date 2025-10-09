@@ -14,6 +14,7 @@ import requests
 from openai import OpenAI
 
 
+
 class AIIssueResponder:
     def __init__(self):
         self.github_token = os.environ.get("GITHUB_TOKEN")
@@ -185,7 +186,7 @@ class AIIssueResponder:
 
     def create_system_prompt(self, issue_type: str) -> str:
         """Create system prompt based on issue type"""
-        base_prompt = f"""
+        base_prompt = """
 You are an AI assistant for the AMAS (Advanced Multi-Agent Intelligence System) project.
 This is a sophisticated multi-agent AI system for intelligence analysis and automation.
 

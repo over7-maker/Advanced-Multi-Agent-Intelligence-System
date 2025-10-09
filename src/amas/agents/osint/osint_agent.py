@@ -2,12 +2,13 @@
 Enhanced OSINT Collection Agent
 """
 
-import asyncio
-import json
+# import asyncio
+
+# import json
 import logging
 import re
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, List
 from urllib.parse import urljoin, urlparse
 
 import aiohttp
@@ -161,7 +162,6 @@ class OSINTAgent(IntelligenceAgent):
         try:
             import time
 
-            import aiohttp
             from bs4 import BeautifulSoup
 
             # Check rate limits
@@ -304,7 +304,7 @@ class OSINTAgent(IntelligenceAgent):
                 try:
                     domain = urlparse(url).netloc
                     domains.add(domain)
-                except:
+                except Exception:
                     continue
 
             # Sentiment analysis (basic)
@@ -374,7 +374,7 @@ class OSINTAgent(IntelligenceAgent):
                 "platforms", ["twitter", "reddit"]
             )
             keywords = task.get("parameters", {}).get("keywords", [])
-            time_range = task.get("parameters", {}).get("time_range", "24h")
+            # time_range = task.get("parameters", {}).get("time_range", "24h")
 
             # Mock social media monitoring
             social_data = []
@@ -448,7 +448,7 @@ class OSINTAgent(IntelligenceAgent):
                 "sources", self.data_sources["news"]
             )
             keywords = task.get("parameters", {}).get("keywords", [])
-            time_range = task.get("parameters", {}).get("time_range", "24h")
+            # time_range = task.get("parameters", {}).get("time_range", "24h")
 
             # Mock news aggregation
             news_data = []
@@ -655,7 +655,7 @@ class OSINTAgent(IntelligenceAgent):
         """Perform general OSINT collection"""
         try:
             description = task.get("description", "")
-            parameters = task.get("parameters", {})
+            # parameters = task.get("parameters", {})
 
             # Mock general OSINT
             osint_result = {

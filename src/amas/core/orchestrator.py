@@ -11,7 +11,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from ..agents.base.intelligence_agent import AgentStatus, IntelligenceAgent
 from ..agents.data_analysis.data_analysis_agent import DataAnalysisAgent
@@ -601,7 +601,7 @@ class IntelligenceOrchestrator:
         """
         try:
             task = self.tasks[task_id]
-            agent = self.agents[agent_id]
+            # agent = self.agents[agent_id]
 
             # Update task status
             task.assigned_agent = agent_id
@@ -768,7 +768,7 @@ class IntelligenceOrchestrator:
             if workflow_id not in self.workflows:
                 raise ValueError(f"Workflow {workflow_id} not found")
 
-            workflow = self.workflows[workflow_id]
+            # workflow = self.workflows[workflow_id]
             execution_id = str(uuid.uuid4())
 
             # Create workflow instance

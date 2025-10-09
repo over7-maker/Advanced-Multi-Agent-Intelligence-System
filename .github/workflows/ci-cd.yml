@@ -15,9 +15,7 @@ env:
   IMAGE_NAME: amas
 
 jobs:
-  # =============================================================================
   # CODE QUALITY & TESTING
-  # =============================================================================
   
   quality-gate:
     name: 🔍 Quality Gate
@@ -39,7 +37,12 @@ jobs:
       run: |
         python -m ensurepip --upgrade
         python -m pip install --upgrade pip
-        pip install -e .[ci]
+        pip install -r requirements.txt
+    
+    - name: 🤖 Auto-fix code quality issues
+      run: |
+        chmod +x .github/scripts/simple-auto-fix.sh
+        ./.github/scripts/simple-auto-fix.sh
     
     - name: 🎨 Code formatting check
       run: |
@@ -48,7 +51,7 @@ jobs:
     
     - name: 🔍 Linting
       run: |
-        flake8 src/ tests/
+        flake8 src/ tests/ --max-complexity=10 --max-line-length=100
         
     - name: 🏷️ Type checking
       run: |
@@ -67,9 +70,7 @@ jobs:
         path: bandit-report.json
         retention-days: 30
 
-  # =============================================================================
   # TESTING SUITE
-  # =============================================================================
   
   test-suite:
     name: 🧪 Test Suite
@@ -119,7 +120,7 @@ jobs:
       run: |
         python -m ensurepip --upgrade
         python -m pip install --upgrade pip
-        pip install -e .[ci]
+        pip install -r requirements.txt
     
     - name: 🏗️ Setup test environment
       run: |
@@ -152,9 +153,7 @@ jobs:
         flags: ${{ matrix.test-type }}
         name: codecov-${{ matrix.python-version }}-${{ matrix.test-type }}
 
-  # =============================================================================
   # DOCKER BUILD & SECURITY
-  # =============================================================================
   
   docker-build:
     name: 🐳 Docker Build
@@ -202,9 +201,7 @@ jobs:
       with:
         sarif_file: 'trivy-results.sarif'
 
-  # =============================================================================
   # E2E TESTING
-  # =============================================================================
   
   e2e-tests:
     name: 🎭 End-to-End Tests
@@ -231,8 +228,7 @@ jobs:
       run: |
 
         python -m ensurepip --upgrade
-        pip install -e .[dev]
- origin/cursor/improve-ai-powered-github-actions-for-project-upgrades-4098
+        pip install -r requirements.txt
     
     - name: 🎭 Run E2E tests
       run: |

@@ -13,6 +13,7 @@ import requests
 from openai import OpenAI
 
 
+
 class AISecurityScanner:
     def __init__(self):
         self.github_token = os.environ.get("GITHUB_TOKEN")

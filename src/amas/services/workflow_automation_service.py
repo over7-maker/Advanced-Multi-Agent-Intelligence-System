@@ -4,13 +4,12 @@ Phase 9: Advanced workflow orchestration and automated decision making
 """
 
 import asyncio
-import json
 import logging
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -647,7 +646,7 @@ class WorkflowAutomationService:
                 context = {"threat_score": 0.5, "response_time": 2.0, "cpu_usage": 0.6}
 
                 # Make automated decisions
-                decision = await self.make_automated_decision(context)
+                await self.make_automated_decision(context)
 
                 await asyncio.sleep(300)  # Process every 5 minutes
 

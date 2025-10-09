@@ -460,9 +460,13 @@ async def main():
             print(results["summary"]["summary"])
             print("=" * 50)
 
-        logger.info(
-            f"Documentation generation complete. {results['files_documented']} files documented."
-        )
+        # Log completion
+        if "summary" in results:
+            files_generated = results["summary"].get("files_generated", 0)
+            elapsed_time = results["summary"].get("elapsed_time", 0)
+            logger.info(
+                f"Generated {files_generated} documentation files in {elapsed_time:.2f} seconds"
+            )
 
     except Exception as e:
         logger.error(f"Error in main: {e}")

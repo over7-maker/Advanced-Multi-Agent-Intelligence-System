@@ -5,13 +5,13 @@ This module provides link analysis capabilities for the Investigation Agent,
 enabling relationship discovery and network analysis.
 """
 
-import asyncio
+# import asyncio
 import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List
 
 
 class RelationshipType(Enum):
@@ -316,7 +316,7 @@ Provide analysis in JSON format:
 
                 return relationships
 
-            except:
+            except Exception:
                 return []
 
         except Exception as e:
@@ -714,7 +714,7 @@ Provide insights in JSON format:
             try:
                 insights_data = json.loads(result)
                 return insights_data.get("insights", [])
-            except:
+            except Exception:
                 return ["Network analysis completed", "Relationships discovered"]
 
         except Exception as e:

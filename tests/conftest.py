@@ -5,6 +5,7 @@ Pytest configuration and fixtures for the AMAS test suite.
 
 import asyncio
 import os
+import sys
 import pytest
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock
@@ -17,6 +18,17 @@ os.environ["REDIS_URL"] = "redis://localhost:6379/1"
 os.environ["NEO4J_URI"] = "bolt://localhost:7687"
 os.environ["SECRET_KEY"] = "test_secret_key"
 os.environ["JWT_SECRET_KEY"] = "test_jwt_secret_key"
+
+# Add src to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
+
+# Import application modules if available
+try:
+    from amas.config.settings import get_settings  # noqa: E402
+    from amas.main import AMASApplication  # noqa: E402
+except ImportError:
+    # Allow tests to run even if main application is not fully setup
+    pass
 
 
 @pytest.fixture(scope="session")

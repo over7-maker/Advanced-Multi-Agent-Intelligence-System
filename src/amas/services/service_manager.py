@@ -5,7 +5,6 @@ This module provides centralized management of all AMAS services,
 including initialization, health monitoring, and graceful shutdown.
 """
 
-import asyncio
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -323,10 +322,6 @@ class ServiceManager:
 
         except Exception as e:
             logger.error(f"Error closing services: {e}")
-
-    async def shutdown(self):
-        """Shutdown all services"""
-        await self.close_all_services()
 
     def get_llm_service(self) -> Optional[LLMService]:
         """Get LLM service instance"""

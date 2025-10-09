@@ -17,6 +17,7 @@ import aiohttp
 from openai import OpenAI
 
 
+
 class AdvancedMultiAgentOrchestrator:
     def __init__(self):
         # Initialize all 9 API keys
@@ -293,18 +294,18 @@ class AdvancedMultiAgentOrchestrator:
         """Create specialized prompt for each agent"""
         base_prompt = f"""
         Task: {task}
-        
+
         Context: {context or 'No additional context provided'}
-        
+
         As {self.agents[agent_name]['name']}, you are specialized in {self.agents[agent_name]['specialization']}.
-        
+
         Please provide:
         1. Detailed analysis and recommendations
         2. Specific actionable steps
         3. Priority level for implementation
         4. Potential risks and mitigation strategies
         5. Success metrics and KPIs
-        
+
         Format your response as a structured analysis with clear sections.
         """
 

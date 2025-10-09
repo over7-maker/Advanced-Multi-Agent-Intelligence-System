@@ -14,14 +14,14 @@ from standalone_universal_ai_manager import get_manager as get_universal_ai_mana
 
 async def main():
     manager = get_universal_ai_manager()
-    
+
     # Show configuration
     print(manager.get_config_summary())
     print()
-    
+
     # Test generation with all strategies
     strategies = ["priority", "intelligent", "fastest"]
-    
+
     for strategy in strategies:
         print(f"🧪 Testing {strategy} strategy...")
         result = await manager.generate(
@@ -30,7 +30,7 @@ async def main():
             strategy=strategy,
             max_tokens=100,
         )
-        
+
         if result and result.get("success"):
             print(f"✅ {strategy.upper()} - Success with {result['provider_name']}")
             # Only access 'content' if the request was successful
@@ -40,10 +40,12 @@ async def main():
                 print("   Response: <No content returned>")
             print(f"   Time: {result.get('response_time', 0):.2f}s")
         else:
-            error_msg = result.get("error", "Unknown error") if result else "No result returned"
+            error_msg = (
+                result.get("error", "Unknown error") if result else "No result returned"
+            )
             print(f"❌ {strategy.upper()} - Failed: {error_msg}")
         print()
-    
+
     # Show final stats
     print("=" * 80)
     print("📊 FINAL STATISTICS")
@@ -52,7 +54,7 @@ async def main():
     for key, value in stats.items():
         print(f"  {key}: {value}")
     print()
-    
+
     # Show provider health
     print("=" * 80)
     print("🏥 PROVIDER HEALTH")
@@ -63,7 +65,6 @@ async def main():
         print(
             f"{status_emoji} {info['name']:25s} | Success: {info['success_rate']:6s} | Avg Time: {info['avg_response_time']:8s}"
         )
-
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -9,7 +9,7 @@ import pickle
 import warnings
 from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import joblib
 import numpy as np
@@ -21,7 +21,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 warnings.filterwarnings("ignore")
-import logging
+import logging  # noqa: E402
 
 
 @dataclass
@@ -292,7 +292,7 @@ class PredictiveIntelligenceEngine:
                         dt.weekday(),  # Day of week
                     ]
                 )
-            except:
+            except Exception:
                 feature_vector.extend([12, 1])  # Default values
 
             features.append(feature_vector)
@@ -362,7 +362,7 @@ class PredictiveIntelligenceEngine:
                         dt.minute,
                     ]
                 )
-            except:
+            except Exception:
                 feature_vector.extend([12, 1, 0])
 
             features.append(feature_vector)
@@ -578,7 +578,7 @@ class PredictiveIntelligenceEngine:
                     cpu_scaled = self.scalers["cpu_usage"].transform(future_features)
                     cpu_pred = self.models["cpu_usage"].predict(cpu_scaled)
                     predictions["cpu"] = float(np.mean(cpu_pred))
-                except:
+                except Exception:
                     predictions["cpu"] = 45.0  # Default
             else:
                 predictions["cpu"] = 45.0
@@ -590,7 +590,7 @@ class PredictiveIntelligenceEngine:
                     mem_scaled = self.scalers["memory_usage"].transform(future_features)
                     mem_pred = self.models["memory_usage"].predict(mem_scaled)
                     predictions["memory"] = float(np.mean(mem_pred))
-                except:
+                except Exception:
                     predictions["memory"] = 55.0  # Default
             else:
                 predictions["memory"] = 55.0
@@ -602,7 +602,7 @@ class PredictiveIntelligenceEngine:
                     load_scaled = self.scalers["task_load"].transform(future_features)
                     load_pred = self.models["task_load"].predict(load_scaled)
                     predictions["task_load"] = int(np.mean(load_pred))
-                except:
+                except Exception:
                     predictions["task_load"] = 5  # Default
             else:
                 predictions["task_load"] = 5

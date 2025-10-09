@@ -101,6 +101,7 @@ async def test_basic_functionality():
             from services.llm_service import LLMService
 
             llm_service = LLMService(config)
+            assert llm_service is not None
             logger.info("✅ LLM service initialized")
         except Exception as e:
             logger.warning(f"⚠️ LLM service initialization failed: {e}")
@@ -110,6 +111,7 @@ async def test_basic_functionality():
             from core.orchestrator import IntelligenceOrchestrator
 
             orchestrator = IntelligenceOrchestrator()
+            assert orchestrator is not None
             logger.info("✅ Orchestrator initialized")
         except Exception as e:
             logger.warning(f"⚠️ Orchestrator initialization failed: {e}")

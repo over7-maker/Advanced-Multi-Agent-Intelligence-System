@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional
 from openai import OpenAI
 
 
+
 class IntelligentAIRouter:
     def __init__(self):
         # Initialize all 9 API keys
@@ -293,18 +294,18 @@ class IntelligentAIRouter:
         """Create specialized prompt for the task"""
         base_prompt = f"""
         Task: {task_description}
-        
+
         Context: {context or 'No additional context provided'}
-        
+
         Specialization: {specialization}
-        
+
         Please provide:
         1. Detailed analysis and recommendations
         2. Specific actionable steps
         3. Priority level for implementation
         4. Potential risks and mitigation strategies
         5. Success metrics and KPIs
-        
+
         Format your response as a structured analysis with clear sections.
         """
 

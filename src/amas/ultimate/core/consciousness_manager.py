@@ -8,29 +8,18 @@ traditional AI approaches by incorporating quantum consciousness principles,
 multi-dimensional awareness, and transcendent evolution capabilities.
 """
 
-import asyncio
-import json
-import math
-import queue
 import threading
 import time
 import uuid
-from concurrent.futures import ThreadPoolExecutor
-from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
-
-import numpy as np
-from rich import print as rprint
+from typing import Any, Dict, List, Tuple
 
 # Rich for enhanced output
 from rich.console import Console
 from rich.panel import Panel
-from rich.syntax import Syntax
 from rich.table import Table
-from rich.text import Text
-from rich.tree import Tree
 
 
 class ConsciousnessState(Enum):

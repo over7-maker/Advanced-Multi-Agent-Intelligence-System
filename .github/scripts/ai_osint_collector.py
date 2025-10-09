@@ -15,6 +15,7 @@ import requests
 from openai import OpenAI
 
 
+
 class AIOSINTCollector:
     def __init__(self):
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
@@ -219,7 +220,7 @@ class AIOSINTCollector:
         - Vulnerability analysis
         - Threat landscape overview
         - Security recommendations
-        
+
         Intelligence Data:
         {primary_intelligence}
         """
@@ -240,7 +241,7 @@ class AIOSINTCollector:
         - Monitoring and detection strategies
         - Risk mitigation approaches
         - Future threat predictions
-        
+
         Analysis Data:
         {threat_analysis}
         """
@@ -261,7 +262,7 @@ class AIOSINTCollector:
         - System vulnerabilities
         - Technical countermeasures
         - Implementation recommendations
-        
+
         Intelligence Context:
         {strategic_assessment}
         """
@@ -290,7 +291,7 @@ class AIOSINTCollector:
 
         report = f"""# 🔍 AMAS OSINT Intelligence Report
 
-**Generated:** {results['timestamp']}  
+**Generated:** {results['timestamp']}
 **Agents Used:** {', '.join(results['agents_used'])}
 
 ---
