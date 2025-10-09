@@ -326,11 +326,15 @@ class StandaloneUniversalAIManager:
 
                     if response.status == 200:
                         result = await response.json()
-                        content = (
-                            result.get("choices", [{}])[0]
-                            .get("message", {})
-                            .get("content", "")
-                        )
+                        choices = result.get("choices", [])
+                        if choices and len(choices) > 0:
+                            content = (
+                                choices[0]
+                                .get("message", {})
+                                .get("content", "")
+                            )
+                        else:
+                            content = ""
 
                         return {
                             "success": True,
@@ -397,12 +401,16 @@ class StandaloneUniversalAIManager:
 
                     if response.status == 200:
                         result = await response.json()
-                        content = (
-                            result.get("candidates", [{}])[0]
-                            .get("content", {})
-                            .get("parts", [{}])[0]
-                            .get("text", "")
-                        )
+                        candidates = result.get("candidates", [])
+                        if candidates and len(candidates) > 0:
+                            content_obj = candidates[0].get("content", {})
+                            parts = content_obj.get("parts", [])
+                            if parts and len(parts) > 0:
+                                content = parts[0].get("text", "")
+                            else:
+                                content = ""
+                        else:
+                            content = ""
 
                         return {
                             "success": True,
@@ -447,7 +455,7 @@ class StandaloneUniversalAIManager:
                 )
 
             # Ensure we always return a valid dictionary
-            if not result or not isinstance(result, dict):
+            if result is None or not isinstance(result, dict):
                 return {
                     "success": False,
                     "error": "Provider returned invalid response",
@@ -565,7 +573,7 @@ class StandaloneUniversalAIManager:
             try:
                 result = await self._make_request(provider_id, messages, **kwargs)
 
-                if not result or not isinstance(result, dict):
+                if result is None or not isinstance(result, dict):
                     logger.error(f"❌ {config.name} returned invalid result: {result}")
                     config.failure_count += 1
                     config.consecutive_failures += 1
