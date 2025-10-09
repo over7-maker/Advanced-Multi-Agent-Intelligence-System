@@ -124,7 +124,7 @@ class AIReleaseNotesGenerator:
 
             # Categorize based on keywords
             if any(keyword in message for keyword in feature_keywords):
-                categories["features"].append(f"- {message.split('\\n')[0]} ({author})")
+                categories["features"].append(f"- {message.split('\" + "\n" + f"')[0]} ({author})")
             elif any(keyword in message for keyword in fix_keywords):
                 categories["fixes"].append(f"- {message.split('\\n')[0]} ({author})")
             elif any(keyword in message for keyword in improvement_keywords):
