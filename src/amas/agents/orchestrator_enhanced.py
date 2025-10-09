@@ -18,6 +18,9 @@ from typing import Any, Callable, Dict, List, Optional
 
 # Import the new intelligent API management system
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+logger = logging.getLogger(__name__)
+
 try:
     from amas.core.ai_api_manager import (
         generate_ai_response,

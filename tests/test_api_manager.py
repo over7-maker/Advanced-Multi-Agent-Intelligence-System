@@ -21,7 +21,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
 from amas.core.ai_api_manager import AIAPIManager, APIConfig, APIHealth, APIType
 from amas.core.api_clients import APIClientFactory, OpenAICompatibleClient
-from amas.core.api_integration import EnhancedAgentOrchestrator, EnhancedOSINTAgent
+from amas.core.api_integration import (
+    EnhancedAgentOrchestrator,
+    EnhancedOSINTAgent,
+    EnhancedInvestigationAgent,
+    EnhancedForensicsAgent,
+    EnhancedReportingAgent,
+)
 from amas.core.enhanced_orchestrator import EnhancedOrchestrator, TaskResult
 
 

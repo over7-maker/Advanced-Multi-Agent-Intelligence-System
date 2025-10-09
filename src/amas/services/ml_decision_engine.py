@@ -294,6 +294,7 @@ class MLDecisionEngine:
 
                 # Simulate allocation decision using secure random
                 import secrets
+
                 allocation_success = secrets.randbelow(100) > 20  # 80% success rate
 
                 # Performance metrics

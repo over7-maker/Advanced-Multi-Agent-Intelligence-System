@@ -14,7 +14,9 @@ long_description = (this_directory / "README.md").read_text()
 # Read requirements
 requirements = []
 with open("requirements.txt", "r") as f:
-    requirements = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+    requirements = [
+        line.strip() for line in f if line.strip() and not line.startswith("#")
+    ]
 
 setup(
     name="amas",

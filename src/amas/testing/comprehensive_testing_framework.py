@@ -5,7 +5,9 @@ Provides unit, integration, performance, security, and chaos testing
 
 import asyncio
 import logging
+import os
 import pytest
+import secrets
 import unittest
 import time
 import json
@@ -834,6 +836,7 @@ class ComprehensiveTestingFramework:
 
         # Simulate authentication testing using secure random
         import secrets
+
         if secrets.randbelow(100) < 10:  # 10% chance of finding vulnerability
             vulnerabilities.append(
                 {
