@@ -8,6 +8,7 @@ import asyncio
 # import json
 import logging
 import os
+import sys
 
 # import sys
 import traceback
@@ -18,8 +19,6 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
-import sys
-
 # Import the new intelligent API management system
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 
@@ -27,9 +26,9 @@ logger = logging.getLogger(__name__)
 
 try:
     from amas.core.ai_api_manager import (
-        generate_ai_response,
-        TaskType,
         APIProvider,
+        TaskType,
+        generate_ai_response,
         get_api_manager,
     )
 
