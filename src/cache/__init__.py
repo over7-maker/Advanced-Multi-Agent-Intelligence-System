@@ -1,0 +1,3 @@
+"""
+Cache module for AMAS
+"""
