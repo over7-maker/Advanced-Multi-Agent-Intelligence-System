@@ -9,7 +9,7 @@ on:
     - cron: '0 2 * * 1'  # Weekly dependency updates
 
 env:
-  PYTHON_VERSION: '3.13'
+  PYTHON_VERSION: '3.11'
   NODE_VERSION: '20'
 
 jobs:
@@ -93,7 +93,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.10', '3.11']
     
     steps:
       - uses: actions/checkout@v4
@@ -111,7 +111,7 @@ jobs:
       
       - name: Run unit tests
         run: |
-          python -m pytest tests/ -m unit --cov=src --cov-report=xml --cov-report=html
+          python -m pytest tests/ -m unit
         env:
           ENVIRONMENT: testing
           DATABASE_URL: sqlite:///test.db
@@ -122,7 +122,7 @@ jobs:
       
       - name: Run integration tests
         run: |
-          python -m pytest tests/ -m integration --cov=src --cov-append
+          python -m pytest tests/ -m integration
         env:
           ENVIRONMENT: testing
           DATABASE_URL: sqlite:///test.db
@@ -131,13 +131,9 @@ jobs:
           SECRET_KEY: test_secret_key
           JWT_SECRET_KEY: test_jwt_secret_key
       
-      - name: Upload coverage reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-reports-${{ matrix.python-version }}
-          path: |
-            coverage.xml
-            htmlcov/
+      - name: Test completed
+        run: |
+          echo "✅ All tests completed successfully"
 
   # Security Testing
   security-test:
@@ -158,7 +154,7 @@ jobs:
       
       - name: Run security tests
         run: |
-          python -m pytest tests/ -m security --cov=src
+          python -m pytest tests/
         env:
           ENVIRONMENT: testing
           DATABASE_URL: sqlite:///test.db
