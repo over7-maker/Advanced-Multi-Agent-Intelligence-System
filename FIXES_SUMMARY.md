@@ -41,6 +41,16 @@ This document summarizes the fixes applied to resolve the GitHub Actions workflo
 - **Files Deleted**:
   - `pytest.ini`
 
+### 6. ✅ NoneType Error in Universal AI Manager
+- **Problem**: `TypeError: 'NoneType' object is not subscriptable` in `standalone_universal_ai_manager.py`
+- **Solution**: 
+  - Added proper null checks for API response parsing
+  - Fixed OpenAI response parsing to handle empty choices array
+  - Fixed Gemini response parsing to handle empty candidates/parts arrays
+  - Improved error handling in `_make_request` method
+- **Files Modified**:
+  - `standalone_universal_ai_manager.py`
+
 ## Dependencies Added
 - `email-validator` - Required for Pydantic email validation
 
@@ -55,9 +65,10 @@ All fixes have been tested locally and are working correctly:
 - ✅ No pytest-asyncio deprecation warnings
 
 ## Files Changed Summary
-- **Modified**: 2 files
+- **Modified**: 3 files
   - `src/config/settings.py` (Pydantic Field fixes)
   - `pyproject.toml` (pytest-asyncio configuration)
+  - `standalone_universal_ai_manager.py` (NoneType error fixes)
 - **Created**: 2 files
   - `src/cache/__init__.py`
   - `src/cache/redis.py`
