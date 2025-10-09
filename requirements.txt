@@ -32,7 +32,7 @@ aioredis==2.0.1
 neo4j==5.28.0
 
 # Monitoring and Performance
-psutil==6.1.0
+psutil==6.0.0
 matplotlib==3.10.0
 seaborn==0.13.2
 plotly==5.24.1
@@ -42,7 +42,7 @@ bcrypt==4.2.1
 pyjwt==2.10.1
 cryptography==44.0.0
 bandit==1.7.10
-safety==3.2.7
+safety==3.2.6
 
 # HTTP and Networking
 httpx==0.28.1
