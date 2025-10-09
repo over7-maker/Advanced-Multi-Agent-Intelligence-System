@@ -267,7 +267,7 @@ class AIAdaptivePromptImprovement:
         - Consistency across different prompts
         - Best practices implementation
         - Performance optimization suggestions
-        
+
         Prompts to analyze:
         {json.dumps(prompts, indent=2)}
         """
@@ -286,7 +286,7 @@ class AIAdaptivePromptImprovement:
         - Performance optimization techniques
         - Version control recommendations
         - A/B testing suggestions
-        
+
         Analysis Results:
         {prompt_analysis}
         """
@@ -309,7 +309,7 @@ class AIAdaptivePromptImprovement:
         - Performance monitoring and metrics
         - Prompt versioning and rollback strategies
         - Integration with other AI workflows
-        
+
         Optimization Recommendations:
         {optimization_recommendations}
         """
@@ -332,7 +332,7 @@ class AIAdaptivePromptImprovement:
         - Error handling and fallback strategies
         - Testing and validation procedures
         - Documentation and maintenance
-        
+
         Strategic Improvements:
         {strategic_improvements}
         """
@@ -362,8 +362,8 @@ class AIAdaptivePromptImprovement:
 
         report = f"""# 🧠 AMAS Adaptive Prompt Improvement Report
 
-**Generated:** {results['timestamp']}  
-**Agents Used:** {', '.join(results['agents_used'])}  
+**Generated:** {results['timestamp']}
+**Agents Used:** {', '.join(results['agents_used'])}
 **Prompts Analyzed:** {results['prompts_analyzed']}
 
 ---

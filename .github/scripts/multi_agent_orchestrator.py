@@ -222,7 +222,7 @@ class MultiAgentOrchestrator:
         - Vulnerabilities being exploited
         - Potential future targets
         - Risk assessment for different sectors
-        
+
         Intelligence Data:
         {osint_result}
         """
@@ -242,7 +242,7 @@ class MultiAgentOrchestrator:
         - Priority actions for security teams
         - Risk mitigation strategies
         - Monitoring and detection improvements
-        
+
         Analysis Data:
         {analysis_result}
         """
@@ -268,7 +268,7 @@ class MultiAgentOrchestrator:
 
         report = f"""# 🤖 AMAS Multi-Agent Intelligence Report
 
-**Generated:** {results['timestamp']}  
+**Generated:** {results['timestamp']}
 **Agents Used:** {', '.join(results['agents_used'])}
 
 ---

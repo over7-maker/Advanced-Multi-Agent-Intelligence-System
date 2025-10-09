@@ -191,12 +191,12 @@ def main():
     🚨 SECURITY ISSUES DETECTED
     - 0 potential secrets/API keys
     - 9 potential vulnerabilities
-    
+
     .github/scripts/ai_code_analyzer.py
     ⚠️ Security Vulnerabilities
     - Potential XSS vulnerability (Line 237)
     - Usage of weak cryptographic functions (Line 239)
-    
+
     .github/scripts/ai_security_scanner.py
     ⚠️ Security Vulnerabilities
     - Potential SQL injection vulnerability (Line 192)

@@ -42,8 +42,8 @@ class TestOSINTAgent:
         valid_task = {"type": "osint", "description": "Collect intelligence on target"}
         invalid_task = {"type": "forensics", "description": "Analyze disk image"}
 
-        assert await osint_agent.validate_task(valid_task) == True
-        assert await osint_agent.validate_task(invalid_task) == False
+        assert await osint_agent.validate_task(valid_task) is True
+        assert await osint_agent.validate_task(invalid_task) is False
 
     @pytest.mark.asyncio
     async def test_task_execution(self, osint_agent):
@@ -60,7 +60,7 @@ class TestOSINTAgent:
         }
 
         result = await osint_agent.execute_task(task)
-        assert result["success"] == True
+        assert result["success"] is True
         assert "timestamp" in result
 
         assert result["success"] is True
@@ -110,16 +110,16 @@ class TestOSINTAgent:
         assert result["domain"] == "suspicious.example.com"
 
     @pytest.mark.asyncio
-    async def test_agent_initialization(self, investigation_agent):
-        """Test agent initialization"""
+    async def test_investigation_agent_initialization(self, investigation_agent):
+        """Test investigation agent initialization"""
         assert investigation_agent.agent_id == "test_investigation"
         assert investigation_agent.name == "Test Investigation Agent"
         assert "case_management" in investigation_agent.capabilities
         assert "evidence_analysis" in investigation_agent.capabilities
 
     @pytest.mark.asyncio
-    async def test_task_execution(self, investigation_agent):
-        """Test task execution"""
+    async def test_investigation_task_execution(self, investigation_agent):
+        """Test investigation task execution"""
         task = {
             "id": "test_1",
             "type": "link_analysis",
@@ -131,7 +131,7 @@ class TestOSINTAgent:
         }
 
         result = await investigation_agent.execute_task(task)
-        assert result["success"] == True
+        assert result["success"] is True
         assert "timestamp" in result
 
         assert result["success"] is True
@@ -156,7 +156,6 @@ class TestOSINTAgent:
         assert "entities_processed" in result
         assert "resolved_entities" in result
 
-
     @pytest.mark.asyncio
     async def test_evidence_acquisition(self, forensics_agent):
         """Test evidence acquisition task"""
@@ -171,7 +170,7 @@ class TestOSINTAgent:
         }
 
         result = await forensics_agent.execute_task(task)
-        assert result["success"] == True
+        assert result["success"] is True
         assert "evidence_id" in result
         assert "status" in result
 
@@ -201,8 +200,8 @@ class TestOSINTAgent:
         assert "analysis_results" in result
 
     @pytest.mark.asyncio
-    async def test_agent_initialization(self, data_analysis_agent):
-        """Test agent initialization"""
+    async def test_data_analysis_agent_initialization(self, data_analysis_agent):
+        """Test data analysis agent initialization"""
         assert data_analysis_agent.agent_id == "test_data_analysis"
         assert data_analysis_agent.name == "Test Data Analysis Agent"
         assert "statistical_analysis" in data_analysis_agent.capabilities
@@ -222,7 +221,7 @@ class TestOSINTAgent:
         }
 
         result = await data_analysis_agent.execute_task(task)
-        assert result["success"] == True
+        assert result["success"] is True
         assert "statistics" in result
 
         assert result["success"] is True
@@ -251,19 +250,22 @@ class TestOSINTAgent:
         assert "anomalies" in result
 
 
-class TestReportingAgent:
-    """Test Reporting Agent"""
+class TestReverseEngineeringAgent:
+    """Test Reverse Engineering Agent"""
 
     @pytest.fixture
-    async def reporting_agent(self):
-        """Create Reporting agent for testing"""
-        agent = ReportingAgent(
-            agent_id="test_reporting_001", name="Test Reporting Agent"
+    async def reverse_engineering_agent(self):
+        """Create Reverse Engineering agent for testing"""
+        agent = ReverseEngineeringAgent(
+            agent_id="test_reverse_engineering", name="Test Reverse Engineering Agent"
         )
+        return agent
 
     @pytest.mark.asyncio
-    async def test_agent_initialization(self, reverse_engineering_agent):
-        """Test agent initialization"""
+    async def test_reverse_engineering_agent_initialization(
+        self, reverse_engineering_agent
+    ):
+        """Test reverse engineering agent initialization"""
         assert reverse_engineering_agent.agent_id == "test_reverse_engineering"
         assert reverse_engineering_agent.name == "Test Reverse Engineering Agent"
         assert "static_analysis" in reverse_engineering_agent.capabilities
@@ -280,7 +282,7 @@ class TestReportingAgent:
         }
 
         result = await reverse_engineering_agent.execute_task(task)
-        assert result["success"] == True
+        assert result["success"] is True
         assert "report_id" in result
 
 
@@ -293,8 +295,8 @@ class TestMetadataAgent:
         return MetadataAgent(agent_id="test_metadata", name="Test Metadata Agent")
 
     @pytest.mark.asyncio
-    async def test_agent_initialization(self, metadata_agent):
-        """Test agent initialization"""
+    async def test_metadata_agent_initialization(self, metadata_agent):
+        """Test metadata agent initialization"""
         assert metadata_agent.agent_id == "test_metadata"
         assert metadata_agent.name == "Test Metadata Agent"
         assert "metadata_extraction" in metadata_agent.capabilities
@@ -311,7 +313,7 @@ class TestMetadataAgent:
         }
 
         result = await metadata_agent.execute_task(task)
-        assert result["success"] == True
+        assert result["success"] is True
         assert "metadata_results" in result
 
 
@@ -324,8 +326,8 @@ class TestReportingAgent:
         return ReportingAgent(agent_id="test_reporting", name="Test Reporting Agent")
 
     @pytest.mark.asyncio
-    async def test_agent_initialization(self, reporting_agent):
-        """Test agent initialization"""
+    async def test_reporting_agent_initialization(self, reporting_agent):
+        """Test reporting agent initialization"""
         assert reporting_agent.agent_id == "test_reporting"
         assert reporting_agent.name == "Test Reporting Agent"
         assert "report_generation" in reporting_agent.capabilities
@@ -346,17 +348,17 @@ class TestReportingAgent:
         }
 
         result = await reporting_agent.execute_task(task)
-        assert result["success"] == True
-        assert "report_id" in result
-
         assert result["success"] is True
+        assert "report_id" in result
         assert result["task_type"] == "report_generation"
         assert "report_content" in result
         assert "output_format" in result
 
     @pytest.mark.asyncio
-    async def test_agent_initialization(self, technology_monitor_agent):
-        """Test agent initialization"""
+    async def test_technology_monitor_agent_initialization(
+        self, technology_monitor_agent
+    ):
+        """Test technology monitor agent initialization"""
         assert technology_monitor_agent.agent_id == "test_technology_monitor"
         assert technology_monitor_agent.name == "Test Technology Monitor Agent"
         assert "technology_trend_monitoring" in technology_monitor_agent.capabilities

@@ -218,9 +218,54 @@ class MinimalConfigManager:
             "level": config.config_level.value,
             "providers_available": len(config.available_providers),
             "required_providers_met": True,
+            "available_providers": [],
+            "missing_required": [],
+            "missing_optional": [],
             "warnings": [],
             "errors": [],
         }
+
+        # Check required providers (basic validation)
+        required_providers = ["deepseek", "glm"]
+        for provider_name in required_providers:
+            provider_found = any(
+                p.name.lower() == provider_name.lower()
+                for p in config.available_providers
+            )
+            if provider_found:
+                validation_result["available_providers"].append(provider_name)
+            else:
+                validation_result["missing_required"].append(provider_name)
+                validation_result["valid"] = False
+
+        # Check optional providers
+        optional_providers = ["grok", "kimi", "qwen"]
+        for provider_name in optional_providers:
+            provider_found = any(
+                p.name.lower() == provider_name.lower()
+                for p in config.available_providers
+            )
+            if provider_found:
+                validation_result["available_providers"].append(provider_name)
+            else:
+                validation_result["missing_optional"].append(provider_name)
+
+        # Add warnings and recommendations
+        if not validation_result["valid"]:
+            validation_result["warnings"].append(
+                f"Missing required providers: {', '.join(validation_result['missing_required'])}"
+            )
+            validation_result["recommendations"].append(
+                f"Set environment variables for: {', '.join(validation_result['missing_required'])}"
+            )
+
+        if validation_result["missing_optional"]:
+            validation_result["warnings"].append(
+                f"Optional providers not configured: {', '.join(validation_result['missing_optional'])}"
+            )
+            validation_result["recommendations"].append(
+                "Consider adding optional providers for better redundancy"
+            )
 
         # Check if required providers are available
         required_available = all(
@@ -239,17 +284,51 @@ class MinimalConfigManager:
                 "Minimal configuration - limited functionality available"
             )
 
-        if len(config.available_providers) < 3:
-            validation_result["warnings"].append(
-                "Consider adding more API keys for better reliability"
-            )
-
         return validation_result
+
+    def get_environment_setup_guide(self, mode: ConfigLevel = ConfigLevel.BASIC) -> str:
+        """Get environment setup guide for minimal mode"""
+        # minimal_config = self.get_minimal_config(mode)
+        config = self.get_config()
+
+        guide = [
+            "=" * 60,
+            "🔧 AMAS ENVIRONMENT SETUP GUIDE",
+            "=" * 60,
+            "",
+            f"Mode: {mode.value.upper()}",
+            f"Available Providers: {len(config.available_providers)}",
+            "",
+        ]
+
+        if len(config.available_providers) < 3:
+            guide.append("⚠️  Consider adding more API keys for better reliability")
+            guide.append("")
+
+        guide.extend(
+            [
+                "Required Environment Variables:",
+                "  DEEPSEEK_API_KEY=your_deepseek_key",
+                "  GLM_API_KEY=your_glm_key (optional)",
+                "",
+                "Optional Environment Variables:",
+                "  GROK_API_KEY=your_grok_key",
+                "  KIMI_API_KEY=your_kimi_key",
+                "  QWEN_API_KEY=your_qwen_key",
+                "",
+                "Setup Instructions:",
+                "1. Copy .env.example to .env",
+                "2. Add your API keys to .env",
+                "3. Run: python -m amas --validate-config",
+                "4. Start the system: python -m amas",
+            ]
+        )
+
+        return "\n".join(guide)
 
     def get_setup_instructions(self) -> str:
         """Get setup instructions based on current configuration"""
         config = self.get_config()
-
         instructions = [
             "=" * 60,
             "🔧 AMAS MINIMAL CONFIGURATION SETUP",
@@ -296,10 +375,58 @@ class MinimalConfigManager:
 
         return "\n".join(instructions)
 
+    def get_minimal_docker_compose(self, mode: ConfigLevel = ConfigLevel.BASIC) -> str:
+        """Get minimal docker-compose configuration"""
+        minimal_config = self.get_minimal_config(mode)
+
+        compose = """version: '3.8'
+
+services:
+  amas:
+    build: .
+    environment:
+      # Database
+      AMAS_DB_HOST: postgres
+      AMAS_DB_USER: amas
+      AMAS_DB_PASSWORD: amas123
+      AMAS_DB_NAME: amas
+
+      # Redis
+      AMAS_REDIS_HOST: redis
+
+      # Neo4j
+      AMAS_NEO4J_HOST: neo4j
+      AMAS_NEO4J_USER: neo4j
+      AMAS_NEO4J_PASSWORD: amas123
+
+      # AI Providers (Minimal Mode)
+"""
+
+        for provider in minimal_config.required_providers:
+            env_var = f"{provider.value.upper()}_API_KEY"
+            compose += f"      {env_var}: ${{{env_var}}}\n"
+
+        for provider in minimal_config.optional_providers:
+            env_var = f"{provider.value.upper()}_API_KEY"
+            compose += f"      {env_var}: ${{{env_var}}}  # Optional\n"
+
+        compose += """
+    depends_on:
+      - postgres
+      - redis
+      - neo4j
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+        """
+
+        return compose
+
     def get_feature_status(self) -> Dict[str, Any]:
         """Get status of available features"""
         config = self.get_config()
-
         return {
             "configuration_level": config.config_level.value,
             "features": config.features,

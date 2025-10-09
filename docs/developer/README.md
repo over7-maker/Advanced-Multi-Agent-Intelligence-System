@@ -1,3 +1,4 @@
+# 👨‍💻 AMAS Developer Guide - Complete Integration Documentation
 # 👨‍💻 AMAS Developer Guide
 
 > **Last Updated**: January 2025 | **Integration Status**: ✅ Fully Integrated
@@ -179,6 +180,12 @@ make lint
 
 ### 1. Unified Orchestrator
 
+The heart of AMAS that coordinates all agent activities.
+
+```python
+# src/amas/orchestrator/orchestrator.py
+class AgentOrchestrator:
+    """Coordinates multi-agent operations and workflows."""
 The heart of AMAS, implementing the unified orchestrator with provider management.
 
 ```python
@@ -191,6 +198,197 @@ class UnifiedIntelligenceOrchestrator:
     - Task Queue: Priority-based task management
     - Performance Monitoring: Real-time metrics and health tracking
     """
+    
+    def __init__(self, service_manager: ServiceManager):
+        self.service_manager = service_manager
+        self.agents = {}
+        self.task_queue = TaskQueue()
+        self.event_bus = EventBus()
+        
+    async def execute_task(self, task: Task) -> TaskResult:
+        """Execute a task using appropriate agents."""
+        # Task allocation using ML decision engine
+        agents = await self.allocate_agents(task)
+        
+        # Create workflow
+        workflow = self.create_workflow(task, agents)
+        
+        # Execute workflow
+        results = await workflow.execute()
+        
+        return TaskResult(task_id=task.id, results=results)
+```
+
+### 3. Minimal Configuration System (`src/amas/config/minimal_config.py`)
+
+Simplified configuration with minimal API key requirements:
+
+```python
+class MinimalConfigManager:
+    """Minimal configuration manager with mode-based setup"""
+    
+    def __init__(self, mode: MinimalMode):
+        self.mode = mode
+        self.config = self._get_config_for_mode(mode)
+    
+    def validate_environment(self) -> bool:
+        """Validate environment against minimal requirements"""
+        required_keys = self.config.required_providers
+        missing_keys = []
+        
+        for provider in required_keys:
+            if not os.getenv(f"{provider.upper()}_API_KEY"):
+                missing_keys.append(provider)
+        
+        return len(missing_keys) == 0
+    
+    def get_setup_guide(self) -> str:
+        """Generate setup guide for the current mode"""
+        return f"""
+        Minimal Configuration Setup ({self.mode.value}):
+        
+        Required API Keys:
+        {', '.join(self.config.required_providers)}
+        
+        Optional API Keys:
+        {', '.join(self.config.optional_providers)}
+        """
+```
+
+## Agent Development
+
+### Real Agent Implementations
+
+AMAS now includes fully functional agents with real implementations:
+
+#### OSINT Agent (`src/amas/agents/osint/osint_agent.py`)
+```python
+class OSINTAgent(IntelligenceAgent):
+    """Real OSINT agent with web scraping and analysis"""
+    
+    async def _scrape_webpage(self, url: str, keywords: List[str]) -> Dict[str, Any]:
+        """Real web scraping with aiohttp and BeautifulSoup"""
+        async with aiohttp.ClientSession(
+            timeout=aiohttp.ClientTimeout(total=30),
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+        ) as session:
+            async with session.get(url) as response:
+                html = await response.text()
+                soup = BeautifulSoup(html, 'html.parser')
+                
+                # Extract real data
+                title = soup.find('title').text if soup.find('title') else ""
+                text = soup.get_text()
+                links = [link.get('href') for link in soup.find_all('a', href=True)]
+                
+                return {
+                    "title": title,
+                    "text": text,
+                    "links": links,
+                    "status_code": response.status
+                }
+```
+
+#### Forensics Agent (`src/amas/agents/forensics/forensics_agent.py`)
+```python
+class ForensicsAgent(IntelligenceAgent):
+    """Real forensics agent with file analysis and security"""
+    
+    async def _calculate_hashes(self, file_path: Path) -> Dict[str, str]:
+        """Real hash calculation with enhanced security"""
+        hashes = {}
+        
+        with open(file_path, "rb") as f:
+            md5_hash = hashlib.md5()
+            sha1_hash = hashlib.sha1()
+            sha256_hash = hashlib.sha256()
+            sha512_hash = hashlib.sha512()
+            
+            while chunk := f.read(8192):
+                md5_hash.update(chunk)
+                sha1_hash.update(chunk)
+                sha256_hash.update(chunk)
+                sha512_hash.update(chunk)
+            
+            hashes["md5"] = md5_hash.hexdigest()
+            hashes["sha1"] = sha1_hash.hexdigest()
+            hashes["sha256"] = sha256_hash.hexdigest()
+            hashes["sha512"] = sha512_hash.hexdigest()
+            hashes["_security_note"] = "Use SHA256 or SHA512 for security-critical applications"
+        
+        return hashes
+```
+
+### Real Agent Implementations
+
+AMAS now includes fully functional agent implementations:
+
+#### OSINT Agent (`src/amas/agents/osint/osint_agent.py`)
+```python
+class OSINTAgent(IntelligenceAgent):
+    """Real OSINT agent with web scraping and analysis"""
+    
+    async def _scrape_webpage(self, url: str, keywords: List[str]) -> Dict[str, Any]:
+        """Real web scraping with aiohttp and BeautifulSoup"""
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                html = await response.text()
+                soup = BeautifulSoup(html, 'html.parser')
+                
+                return {
+                    "title": soup.title.string if soup.title else "",
+                    "text": soup.get_text(),
+                    "links": [link.get('href') for link in soup.find_all('a')],
+                    "images": [img.get('src') for img in soup.find_all('img')]
+                }
+    
+    async def _analyze_scraped_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Real data analysis with entity extraction"""
+        # Extract emails, phone numbers, URLs, domains
+        # Perform keyword frequency analysis
+        # Basic sentiment analysis
+        return analysis_results
+```
+
+#### Forensics Agent (`src/amas/agents/forensics/forensics_agent.py`)
+```python
+class ForensicsAgent(IntelligenceAgent):
+    """Real forensics agent with file analysis and security"""
+    
+    async def _analyze_file(self, file_path: Path) -> Dict[str, Any]:
+        """Real file analysis with comprehensive security checks"""
+        return {
+            "file_info": await self._get_file_info(file_path),
+            "hashes": await self._calculate_hashes(file_path),
+            "content_analysis": await self._analyze_file_content(file_path),
+            "security_analysis": await self._analyze_file_security(file_path)
+        }
+    
+    async def _calculate_hashes(self, file_path: Path) -> Dict[str, str]:
+        """Calculate MD5, SHA1, SHA256, and SHA512 hashes"""
+        # Real hash calculation with security notes
+        return {
+            "md5": md5_hash.hexdigest(),      # Legacy compatibility
+            "sha1": sha1_hash.hexdigest(),    # Legacy compatibility
+            "sha256": sha256_hash.hexdigest(), # Primary security hash
+            "sha512": sha512_hash.hexdigest(), # Additional security hash
+            "_security_note": "Use SHA256 or SHA512 for security-critical applications"
+        }
+```
+
+### Creating Custom Agents
+
+1. **Inherit from Base Agent**
+
+```python
+from amas.agents.base import IntelligenceAgent
+
+class CustomAgent(IntelligenceAgent):
+    """Custom agent implementation"""
+    
+    def __init__(self, agent_id: str, **kwargs):
+        super().__init__(agent_id, **kwargs)
+        self.capabilities = ["custom_capability"]
     
     def __init__(self, service_manager: ServiceManager):
         self.service_manager = service_manager
@@ -549,6 +747,7 @@ python scripts/run_tests.py --test tests/test_unified_orchestrator.py
 pytest
 
 # Run with coverage
+pytest --cov=src --cov-report=html
 pytest --cov=src/amas --cov-report=html
 
 # Run specific test category
@@ -567,6 +766,14 @@ pytest -v
 # Run specific test
 pytest tests/unit/test_decision_engine.py::test_allocate_agents
 ```
+
+### Test Coverage Goals
+
+- **Unit Tests**: 80%+ coverage
+- **Integration Tests**: Critical paths covered
+- **Performance Tests**: Baseline metrics established
+- **Security Tests**: OWASP Top 10 covered
+- **E2E Tests**: User workflows covered
 
 #### New Test Infrastructure
 ```bash

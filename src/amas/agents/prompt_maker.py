@@ -2,10 +2,11 @@
 Prompt Maker Implementation
 """
 
-import asyncio
+# import asyncio
 import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+
+# from datetime import datetime
+from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
 

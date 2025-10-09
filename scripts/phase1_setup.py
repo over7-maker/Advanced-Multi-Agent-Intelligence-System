@@ -12,6 +12,7 @@ from pathlib import Path
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 async def setup_phase1():
     """Complete Phase 1 setup process"""
 
@@ -19,19 +20,21 @@ async def setup_phase1():
 
     try:
         # 1. Create necessary directories
-        directories = ['logs', 'data', 'config', 'temp']
+        directories = ["logs", "data", "config", "temp"]
         for dir_name in directories:
             Path(dir_name).mkdir(exist_ok=True)
             logger.info(f"Created directory: {dir_name}")
 
         # 2. Install Python dependencies
         logger.info("Installing Python dependencies...")
-        subprocess.run(['pip', 'install', '-r', 'requirements.txt'], check=True)
+        subprocess.run(["pip", "install", "-r", "requirements.txt"], check=True)
         logger.info("Dependencies installed successfully")
 
         # 3. Start Docker services
         logger.info("Starting Docker services...")
-        subprocess.run(['docker-compose', 'up', '-d', 'postgres', 'redis', 'neo4j'], check=True)
+        subprocess.run(
+            ["docker-compose", "up", "-d", "postgres", "redis", "neo4j"], check=True
+        )
         logger.info("Core services started")
 
         # 4. Wait for services to be ready
@@ -41,6 +44,7 @@ async def setup_phase1():
         # 5. Setup database schemas
         logger.info("Setting up database schemas...")
         from setup_database import create_database_schemas
+
         await create_database_schemas()
 
         # 6. Validate setup
@@ -54,17 +58,22 @@ async def setup_phase1():
         logger.error(f"Phase 1 setup failed: {e}")
         raise
 
+
 async def validate_setup():
     """Validate that all Phase 1 components are working"""
 
     # Check database connection
     try:
         import asyncpg
+
         conn = await asyncpg.connect(
-            host='localhost', port=5432,
-            user='amas', password=os.getenv('DB_PASSWORD', 'default'), database='amas'
+            host="localhost",
+            port=5432,
+            user="amas",
+            password=os.getenv("DB_PASSWORD", "default"),
+            database="amas",
         )
-        await conn.fetchval('SELECT 1')
+        await conn.fetchval("SELECT 1")
         await conn.close()
         logger.info("✓ Database connection validated")
     except Exception as e:
@@ -74,7 +83,8 @@ async def validate_setup():
     # Check Redis connection
     try:
         import redis.asyncio as redis
-        r = redis.from_url('redis://localhost:6379')
+
+        r = redis.from_url("redis://localhost:6379")
         await r.ping()
         await r.close()
         logger.info("✓ Redis connection validated")
@@ -83,6 +93,7 @@ async def validate_setup():
         raise
 
     logger.info("All Phase 1 components validated successfully")
+
 
 if __name__ == "__main__":
     asyncio.run(setup_phase1())

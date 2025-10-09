@@ -150,7 +150,7 @@ class FileStructureVerifier:
 
         return results
 
-    def verify_core_structure(self) -> Dict[str, bool]:
+    def verify_core_directory_structure(self) -> Dict[str, bool]:
         """Verify core directory structure"""
         print("\n🔍 Verifying Core Structure...")
 
@@ -353,10 +353,10 @@ class FileStructureVerifier:
         print("=" * 80)
 
         # Run all verification checks
-        self.verify_core_structure()
+        self.verify_core_directory_structure()
         self.verify_services_structure()
         self.verify_agents_structure()
-        self.verify_core_structure()
+        self.verify_core_directory_structure()
         self.verify_api_structure()
         self.verify_test_structure()
         self.verify_verification_scripts()

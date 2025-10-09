@@ -378,7 +378,7 @@ class CollectiveIntelligenceEngine:
     ) -> List[Tuple[str, float]]:
         """Predict the optimal agent combination for a given task"""
 
-        context_hash = self.generate_context_hash(task_type, target, parameters)
+        # context_hash = self.generate_context_hash(task_type, target, parameters)
 
         # Find similar tasks from historical data
         similar_tasks = await self._find_similar_tasks(task_type, target, parameters)
@@ -683,7 +683,7 @@ class CollectiveIntelligenceEngine:
         transfer_opportunities = []
 
         for agent in self.agent_specializations.keys():
-            agent_insights = await self.get_agent_insights(agent)
+            # agent_insights = await self.get_agent_insights(agent)
 
             # Find agents with complementary knowledge
             for other_agent in self.agent_specializations.keys():

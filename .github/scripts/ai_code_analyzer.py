@@ -224,7 +224,7 @@ class AICodeAnalyzer:
         file_extension = os.path.splitext(file_path)[1]
 
         # Create analysis prompt based on file type
-        system_prompt = f"""
+        system_prompt = """
 You are an expert code reviewer for the AMAS (Advanced Multi-Agent Intelligence System) project.
 This is a multi-agent AI system focused on intelligence analysis, OSINT, and cybersecurity.
 

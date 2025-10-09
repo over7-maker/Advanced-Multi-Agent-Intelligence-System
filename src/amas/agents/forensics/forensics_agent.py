@@ -2,11 +2,11 @@
 Digital Forensics Agent Implementation
 """
 
-import asyncio
+# import asyncio
 import logging
 import os
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 
@@ -90,7 +90,7 @@ class ForensicsAgent(IntelligenceAgent):
 
             # Determine task type from description
             task_type = self._classify_task(task_description)
-            metadata = task.get("parameters", {})
+            # metadata = task.get("parameters", {})
 
             if task_type == "file_analysis":
                 return await self._analyze_files(task)
@@ -271,7 +271,7 @@ class ForensicsAgent(IntelligenceAgent):
         """Reconstruct timeline of events"""
         try:
             evidence_items = task.get("parameters", {}).get("evidence", [])
-            time_range = task.get("parameters", {}).get("time_range", {})
+            time_range = task.get("parameters", {}).get("time_range", "24h")
 
             # Mock timeline reconstruction
             timeline_events = []
@@ -301,7 +301,6 @@ class ForensicsAgent(IntelligenceAgent):
 
         except Exception as e:
             logger.error(f"Error in timeline reconstruction: {e}")
-
             return {
                 "success": False,
                 "error": str(e),
@@ -410,7 +409,6 @@ class ForensicsAgent(IntelligenceAgent):
 
         except Exception as e:
             logger.error(f"Error in malware analysis: {e}")
-
             return {
                 "success": False,
                 "error": str(e),
@@ -421,7 +419,7 @@ class ForensicsAgent(IntelligenceAgent):
         """Perform general forensics analysis"""
         try:
             description = task.get("description", "")
-            parameters = task.get("parameters", {})
+            # parameters = task.get("parameters", {})
 
             # Mock general forensics
             forensics_result = {

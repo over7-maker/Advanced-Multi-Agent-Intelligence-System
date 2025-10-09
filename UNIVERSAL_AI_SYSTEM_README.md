@@ -435,9 +435,7 @@ print(manager.get_config_summary())
 
 Output:
 ```
-================================================================================
 🤖 UNIVERSAL AI MANAGER - CONFIGURATION SUMMARY
-================================================================================
 Total Providers: 15
 Active Providers: 12
 

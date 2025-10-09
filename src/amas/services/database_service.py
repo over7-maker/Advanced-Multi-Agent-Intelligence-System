@@ -1,14 +1,10 @@
 """Database service for AMAS"""
 
-import asyncio
-import json
 import logging
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 
 try:
-    import asyncpg
-    import redis.asyncio as redis
+    import asyncpg  # noqa: F401
+    import redis.asyncio as redis  # noqa: F401
 
     DATABASE_AVAILABLE = True
 except ImportError:

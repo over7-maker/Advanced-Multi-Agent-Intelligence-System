@@ -2,10 +2,10 @@
 Reporting Agent Implementation
 """
 
-import asyncio
+# import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 
@@ -146,7 +146,7 @@ class ReportingAgent(IntelligenceAgent):
         """Create data visualization"""
         try:
             data = task.get("parameters", {}).get("data", [])
-            visualization_type = task.get("parameters", {}).get("type", "chart")
+            # visualization_type = task.get("parameters", {}).get("type", "chart")
             chart_type = task.get("parameters", {}).get("chart_type", "bar")
 
             # Mock visualization creation
@@ -178,7 +178,7 @@ class ReportingAgent(IntelligenceAgent):
     async def _create_executive_summary(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Create executive summary"""
         try:
-            data = task.get("parameters", {}).get("data", {})
+            # data = task.get("parameters", {}).get("data", {})
             audience = task.get("parameters", {}).get("audience", "executives")
 
             # Mock executive summary
@@ -341,7 +341,7 @@ class ReportingAgent(IntelligenceAgent):
         """Perform general reporting tasks"""
         try:
             description = task.get("description", "")
-            parameters = task.get("parameters", {})
+            # parameters = task.get("parameters", {})
 
             # Mock general reporting
             report_result = {

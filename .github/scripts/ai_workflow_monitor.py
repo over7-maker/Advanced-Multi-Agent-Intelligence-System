@@ -294,7 +294,7 @@ class AIWorkflowMonitor:
         - Resource utilization analysis
         - System reliability metrics
         - Health recommendations
-        
+
         System Metrics: {json.dumps(system_metrics, indent=2)}
         Workflow Health: {json.dumps(workflow_health, indent=2)}
         """
@@ -313,7 +313,7 @@ class AIWorkflowMonitor:
         - Scalability assessment
         - Performance benchmarking
         - Efficiency improvements
-        
+
         Health Analysis:
         {health_analysis}
         """
@@ -336,7 +336,7 @@ class AIWorkflowMonitor:
         - Predictive analytics
         - Risk assessment and mitigation
         - Innovation opportunities
-        
+
         Performance Analysis:
         {performance_analysis}
         """
@@ -359,7 +359,7 @@ class AIWorkflowMonitor:
         - Error handling and recovery
         - Testing and validation procedures
         - Documentation and maintenance
-        
+
         Strategic Insights:
         {strategic_insights}
         """
@@ -390,8 +390,8 @@ class AIWorkflowMonitor:
 
         report = f"""# 📊 AMAS Workflow Monitoring Dashboard
 
-**Generated:** {results['timestamp']}  
-**Agents Used:** {', '.join(results['agents_used'])}  
+**Generated:** {results['timestamp']}
+**Agents Used:** {', '.join(results['agents_used'])}
 **System Uptime:** {results['system_metrics']['system_uptime']}
 
 ---

@@ -4,11 +4,9 @@ Agent Communication Module
 This module handles inter-agent communication and coordination.
 """
 
-import asyncio
-import json
 import logging
 from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List
 
 logger = logging.getLogger(__name__)
 

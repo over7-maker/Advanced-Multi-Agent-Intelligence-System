@@ -136,7 +136,7 @@ def generate_response(category, author, issue_number, title):
     if category == "bug":
         return f"""## 🐛 Bug Report Acknowledged
 
-Thank you for reporting this issue, @{author}! 
+Thank you for reporting this issue, @{author}!
 
 **Issue Analysis:**
 - **Type**: Bug Report
@@ -158,7 +158,7 @@ We appreciate your patience as we work to resolve this! 🙏
     elif category == "feature":
         return f"""## ✨ Feature Request Received
 
-Great suggestion, @{author}! 
+Great suggestion, @{author}!
 
 **Feature Analysis:**
 - **Type**: Feature Request
@@ -202,7 +202,7 @@ We'll get back to you soon! 🤝
     elif category == "security":
         return f"""## 🔒 Security Issue Reported
 
-Thank you for reporting this security concern, @{author}! 
+Thank you for reporting this security concern, @{author}!
 
 **Security Analysis:**
 - **Type**: Security Issue
@@ -224,7 +224,7 @@ Security is our top priority! 🛡️
     elif category == "performance":
         return f"""## ⚡ Performance Issue Reported
 
-Thanks for reporting this performance issue, @{author}! 
+Thanks for reporting this performance issue, @{author}!
 
 **Performance Analysis:**
 - **Type**: Performance Issue
@@ -246,7 +246,7 @@ We'll optimize this for you! 🚀
     elif category == "documentation":
         return f"""## 📚 Documentation Issue Reported
 
-Thank you for improving our documentation, @{author}! 
+Thank you for improving our documentation, @{author}!
 
 **Documentation Analysis:**
 - **Type**: Documentation Issue

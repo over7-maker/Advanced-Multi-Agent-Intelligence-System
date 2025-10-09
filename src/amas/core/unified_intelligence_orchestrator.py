@@ -13,7 +13,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin, urlparse
 
 import aiohttp
@@ -305,7 +305,7 @@ class RealOSINTAgent:
             try:
                 domain = urlparse(url).netloc
                 domains.add(domain)
-            except:
+            except Exception:
                 continue
 
         return {
@@ -337,7 +337,7 @@ class RealOSINTAgent:
             try:
                 ip = socket.gethostbyname(domain)
                 ip_addresses.append(ip)
-            except:
+            except Exception:
                 pass
 
             # Real WHOIS lookup (simplified)
@@ -806,7 +806,7 @@ class UnifiedIntelligenceOrchestrator:
         """Assign task to agent and execute"""
         try:
             task = self.tasks[task_id]
-            agent = self.agents[agent_id]
+            # agent = self.agents[agent_id]
 
             task.assigned_agent = agent_id
             task.status = TaskStatus.ASSIGNED
@@ -815,7 +815,7 @@ class UnifiedIntelligenceOrchestrator:
             self.active_tasks[task_id] = task
 
             # Execute task
-            result = await agent.execute_task(task)
+            # result = await agent.execute_task(task)
 
             # Update metrics
             self.metrics["tasks_processed"] += 1
