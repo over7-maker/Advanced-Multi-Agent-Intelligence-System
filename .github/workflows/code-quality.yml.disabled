@@ -52,7 +52,11 @@ jobs:
     - name: Run security checks
       run: |
         echo "🔒 Running Bandit security checks..."
-        bandit -r . -f json -o bandit_report.json || true
+        python3 scripts/generate_bandit_report.py
+        # Rename for this workflow
+        if [ -f bandit-report.json ]; then
+          mv bandit-report.json bandit_report.json
+        fi
         
     - name: Comment on PR
       if: failure() && github.event_name == 'pull_request'
