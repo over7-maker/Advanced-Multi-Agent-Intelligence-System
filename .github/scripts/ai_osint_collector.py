@@ -4,14 +4,16 @@ AI OSINT Data Collector Script
 Automated intelligence gathering using multiple AI models
 """
 
-import os
 import asyncio
+import json
+import os
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import requests
 from openai import OpenAI
-from typing import Dict, List, Any, Optional
-import time
-import json
-from datetime import datetime
+
 
 
 class AIOSINTCollector:
@@ -218,7 +220,7 @@ class AIOSINTCollector:
         - Vulnerability analysis
         - Threat landscape overview
         - Security recommendations
-        
+
         Intelligence Data:
         {primary_intelligence}
         """
@@ -239,7 +241,7 @@ class AIOSINTCollector:
         - Monitoring and detection strategies
         - Risk mitigation approaches
         - Future threat predictions
-        
+
         Analysis Data:
         {threat_analysis}
         """
@@ -260,7 +262,7 @@ class AIOSINTCollector:
         - System vulnerabilities
         - Technical countermeasures
         - Implementation recommendations
-        
+
         Intelligence Context:
         {strategic_assessment}
         """
@@ -289,7 +291,7 @@ class AIOSINTCollector:
 
         report = f"""# 🔍 AMAS OSINT Intelligence Report
 
-**Generated:** {results['timestamp']}  
+**Generated:** {results['timestamp']}
 **Agents Used:** {', '.join(results['agents_used'])}
 
 ---

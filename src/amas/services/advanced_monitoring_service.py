@@ -5,22 +5,19 @@ Provides predictive analytics, anomaly detection, and intelligent alerting
 
 import asyncio
 import logging
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple
+import os
+import time
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-import json
-import time
-import hashlib
-from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
+
+import joblib
+import numpy as np
 from sklearn.ensemble import IsolationForest
-from sklearn.preprocessing import StandardScaler
-from sklearn.cluster import DBSCAN
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
-import joblib
-import os
+from sklearn.preprocessing import StandardScaler
 
 logger = logging.getLogger(__name__)
 
@@ -527,7 +524,7 @@ class AdvancedMonitoringService:
                 AnomalyType.PERFORMANCE_DEGRADATION: f"Performance degradation detected: response time {response_time:.2f}s (baseline: {self.baselines['response_time']:.2f}s)",
                 AnomalyType.RESOURCE_SPIKE: f"Resource spike detected: CPU {cpu_usage:.1f}%, Memory {memory_usage:.1f}%",
                 AnomalyType.SYSTEM_FAILURE: f"System failure indicators: error rate {error_rate:.3f} (baseline: {self.baselines['error_rate']:.3f})",
-                AnomalyType.UNUSUAL_PATTERN: f"Unusual system pattern detected in metrics",
+                AnomalyType.UNUSUAL_PATTERN: "Unusual system pattern detected in metrics",
             }
 
             return descriptions.get(anomaly_type, "Unknown anomaly detected")

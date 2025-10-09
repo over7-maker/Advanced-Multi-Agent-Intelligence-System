@@ -7,13 +7,15 @@ providing seamless fallback and enhanced reliability across all AI operations.
 """
 
 import asyncio
-import json
+
+# import json
 import logging
-import os
-import sys
-import time
+
+# import os
+# import sys
+# import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from ..agents.forensics.forensics_agent import ForensicsAgent
 from ..agents.investigation.investigation_agent import InvestigationAgent
@@ -623,19 +625,19 @@ class EnhancedAgentOrchestrator(AgentOrchestrator):
             # Enhanced reasoning phase with fallback
             reasoning_prompt = f"""
             You are an intelligence agent tasked with: {task.description}
-            
+
             Current context:
             - Task type: {task.type}
             - Priority: {task.priority.name}
             - Available data sources: {list(self.config.get('data_sources', []))}
-            
+
             Please reason about the best approach to complete this task.
             Consider:
             1. What information do you need?
             2. What actions should you take?
             3. What are the potential risks or challenges?
             4. How will you validate your results?
-            
+
             Provide a step-by-step plan.
             """
 
@@ -653,15 +655,15 @@ class EnhancedAgentOrchestrator(AgentOrchestrator):
             # Enhanced acting phase
             action_prompt = f"""
             Based on your reasoning, execute the following actions:
-            
+
             {reasoning}
-            
+
             For each action:
             1. Describe what you're doing
             2. Execute the action
             3. Record the results
             4. Assess if more information is needed
-            
+
             Be specific and actionable.
             """
 
@@ -679,15 +681,15 @@ class EnhancedAgentOrchestrator(AgentOrchestrator):
             # Enhanced observing phase
             observation_prompt = f"""
             Review the results of your actions:
-            
+
             {actions}
-            
+
             Analyze:
             1. What did you learn?
             2. Are there any gaps in your understanding?
             3. Do you need to take additional actions?
             4. What conclusions can you draw?
-            
+
             Provide a comprehensive analysis.
             """
 
@@ -848,14 +850,14 @@ async def main():
             investigation_type="focused",
         )
 
-        print(f"✅ Investigation completed")
+        print("✅ Investigation completed")
         print(f"📊 Phases: {len(investigation.get('phases', []))}")
         print(
             f"📄 Final report available: {'Yes' if investigation.get('final_report') else 'No'}"
         )
 
         # Get performance stats
-        print(f"\n📈 Performance Statistics:")
+        print("\n📈 Performance Statistics:")
         stats = await enhanced_orchestrator.get_enhanced_performance_stats()
         print(f"  Basic stats: {stats['basic_stats']}")
         print(f"  Enhanced stats: {stats['enhanced_stats']}")

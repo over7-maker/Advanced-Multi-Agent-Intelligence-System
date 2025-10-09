@@ -4,14 +4,12 @@ Phase 8: Predictive analytics, machine learning models, and AI insights
 """
 
 import asyncio
-import json
 import logging
-import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data
 import warnings
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import joblib
 import numpy as np
@@ -162,7 +160,6 @@ class AdvancedAnalyticsService:
         """Load existing models from storage"""
         try:
             import glob
-            import os
 
             model_files = glob.glob(f"{self.model_storage_path}*.pkl")
 
@@ -770,7 +767,7 @@ class AdvancedAnalyticsService:
             try:
                 # Mock insight generation
                 mock_data = {"sample_data": "mock"}
-                insights = await self.generate_insights(mock_data)
+                await self.generate_insights(mock_data)
 
                 await asyncio.sleep(
                     self.analytics_config["insight_generation_interval"]

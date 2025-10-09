@@ -1,4 +1,5 @@
 """
+
 Test configuration and fixtures for AMAS test suite
 """
 
@@ -13,8 +14,8 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from amas.config.settings import get_settings
-from amas.main import AMASApplication
+from amas.config.settings import get_settings  # noqa: E402
+from amas.main import AMASApplication  # noqa: E402
 
 
 @pytest.fixture(scope="session")

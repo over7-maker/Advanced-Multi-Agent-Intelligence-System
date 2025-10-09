@@ -5,15 +5,10 @@ Provides regulatory compliance monitoring, auditing, and reporting
 
 import asyncio
 import logging
-import json
-import hashlib
-from typing import Dict, Any, List, Optional, Tuple, Union
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from dataclasses import dataclass, field
-import re
-import os
-from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
@@ -931,31 +926,26 @@ class ComplianceAuditorAgent:
         try:
             text_report = f"""
             COMPLIANCE AUDIT REPORT
-            ========================
-            
+
             Report ID: {report.id}
             Framework: {report.framework.value}
             Generated: {report.generated_at.strftime('%Y-%m-%d %H:%M:%S')}
             Valid Until: {report.valid_until.strftime('%Y-%m-%d %H:%M:%S')}
-            
+
             OVERALL COMPLIANCE
-            ==================
             Score: {report.overall_score:.1f}%
             Level: {report.compliance_level.value.upper()}
-            
+
             SUMMARY
-            =======
             {report.summary}
-            
+
             RECOMMENDATIONS
-            ===============
             """
 
             for i, rec in enumerate(report.recommendations, 1):
                 text_report += f"{i}. {rec}\n"
 
             text_report += "\n\nDETAILED FINDINGS\n"
-            text_report += "==================\n"
 
             for check in report.checks:
                 text_report += f"\nRule: {check.rule_id}\n"

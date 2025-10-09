@@ -4,9 +4,10 @@ Creates PostgreSQL schemas and initial data
 """
 
 import asyncio
-import asyncpg
 import logging
 from datetime import datetime
+
+import asyncpg
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

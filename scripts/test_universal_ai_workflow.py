@@ -66,6 +66,5 @@ async def main():
             f"{status_emoji} {info['name']:25s} | Success: {info['success_rate']:6s} | Avg Time: {info['avg_response_time']:8s}"
         )
 
-
 if __name__ == "__main__":
     asyncio.run(main())

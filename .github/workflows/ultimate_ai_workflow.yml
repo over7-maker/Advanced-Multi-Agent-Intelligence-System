@@ -50,12 +50,14 @@ jobs:
         fetch-depth: 0
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
     
     - name: Install Ultimate Dependencies
       run: |
+        python -m ensurepip --upgrade
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install openai aiohttp python-dotenv requests pyyaml
@@ -236,7 +238,7 @@ jobs:
           --output continuous_development_report.md || echo "Continuous development completed with warnings"
         echo "✅ Ultimate AI Continuous Development Complete!"
     
-    - name: Ultimate AI Issues Response
+    - name: Ultimate AI Issues Response v2.0
       if: github.event_name == 'issues' || github.event_name == 'issue_comment'
       env:
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
@@ -253,15 +255,32 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}
+        ISSUE_NUMBER: ${{ github.event.issue.number }}
+        ISSUE_TITLE: ${{ github.event.issue.title }}
+        ISSUE_BODY: ${{ github.event.issue.body }}
+        ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+        ACTION: ${{ github.event.action }}
       run: |
-        echo "💬 Running Ultimate AI Issues Response with 9-Provider Fallback..."
-        python scripts/ai_issues_responder.py \
-          --issue-number ${{ github.event.issue.number }} \
-          --issue-title "${{ github.event.issue.title }}" \
-          --issue-body "${{ github.event.issue.body }}" \
-          --repository ${{ github.repository }} \
-          --action ${{ github.event.action }} || echo "Issues response completed with warnings"
-        echo "✅ Ultimate AI Issues Response Complete!"
+        echo "💬 Running Ultimate AI Issues Response v2.0 with 9-Provider Fallback..."
+        mkdir -p performance_reports
+        python scripts/ai_issues_responder_v2.py \
+          --issue-number "$ISSUE_NUMBER" \
+          --issue-title "$ISSUE_TITLE" \
+          --issue-body "$ISSUE_BODY" \
+          --repository "$GITHUB_REPOSITORY" \
+          --action "$ACTION" \
+          --author "$ISSUE_AUTHOR" \
+          --output "performance_reports/issue_${ISSUE_NUMBER}_response.json" \
+          --verbose || {
+            echo "❌ Enhanced processing failed, attempting fallback..."
+            python scripts/ai_issues_responder.py \
+              --issue-number "$ISSUE_NUMBER" \
+              --issue-title "$ISSUE_TITLE" \
+              --issue-body "$ISSUE_BODY" \
+              --repository "$GITHUB_REPOSITORY" \
+              --action "$ACTION" || echo "Issues response completed with warnings"
+          }
+        echo "✅ Ultimate AI Issues Response v2.0 Complete!"
     
     - name: Run Tests
       if: success() || failure()

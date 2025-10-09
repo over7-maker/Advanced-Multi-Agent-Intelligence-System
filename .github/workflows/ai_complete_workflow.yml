@@ -53,7 +53,8 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install dependencies
-      run: 'python -m pip install --upgrade pip
+  run: \'python -m ensurepip --upgrade
+    python -m pip install --upgrade pip
 
         pip install --upgrade -r requirements.txt
 
@@ -100,7 +101,8 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install dependencies
-      run: 'python -m pip install --upgrade pip
+  run: \'python -m ensurepip --upgrade
+    python -m pip install --upgrade pip
 
         pip install --upgrade -r requirements.txt
 
@@ -165,7 +167,8 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install dependencies
-      run: 'python -m pip install --upgrade pip
+  run: \'python -m ensurepip --upgrade
+    python -m pip install --upgrade pip
 
         pip install --upgrade -r requirements.txt
 
@@ -231,7 +234,8 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install dependencies
-      run: 'python -m pip install --upgrade pip
+  run: \'python -m ensurepip --upgrade
+    python -m pip install --upgrade pip
 
         pip install --upgrade -r requirements.txt
 
@@ -305,7 +309,8 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install dependencies
-      run: 'python -m pip install --upgrade pip
+  run: \'python -m ensurepip --upgrade
+    python -m pip install --upgrade pip
 
         pip install --upgrade -r requirements.txt
 
@@ -378,7 +383,8 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install dependencies
-      run: 'python -m pip install --upgrade pip
+  run: \'python -m ensurepip --upgrade
+    python -m pip install --upgrade pip
 
         pip install --upgrade -r requirements.txt
 
@@ -469,7 +475,8 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install dependencies
-      run: 'python -m pip install --upgrade pip
+  run: \'python -m ensurepip --upgrade
+    python -m pip install --upgrade pip
 
         pip install --upgrade -r requirements.txt
 
@@ -536,7 +543,8 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install dependencies
-      run: 'python -m pip install --upgrade pip
+  run: \'python -m ensurepip --upgrade
+    python -m pip install --upgrade pip
 
         pip install --upgrade -r requirements.txt
 
@@ -610,7 +618,8 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install dependencies
-      run: 'python -m pip install --upgrade pip
+  run: \'python -m ensurepip --upgrade
+    python -m pip install --upgrade pip
 
         pip install --upgrade -r requirements.txt
 

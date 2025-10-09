@@ -6,7 +6,8 @@ Analyzes and explains false positives in security scans
 
 import os
 import re
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
+
 
 
 class SecurityFalsePositiveAnalyzer:
@@ -147,8 +148,7 @@ class SecurityFalsePositiveAnalyzer:
 The security scanner is detecting its own pattern definitions as vulnerabilities. This is a common issue where:
 
 1. **Pattern Definitions**: The scanner contains legitimate security detection patterns like:
-   - `'xss_vulnerabilities': ['innerHTML', 'dangerouslySetInnerHTML', '# SECURITY: eval() removed - use safe evaluation
-            # Original: eval(']`
+   - `'xss_vulnerabilities': ['innerHTML', 'dangerouslySetInnerHTML', 'eval()']`
    - `'weak_crypto': ['md5', 'sha1', 'des']`
    - `'sql_injection': ['execute(', 'query(', 'raw sql']`
 
@@ -187,18 +187,17 @@ The security scanner is detecting its own pattern definitions as vulnerabilities
 
 
 def main():
-    # Safe fallback:
     # Sample security report for testing
     sample_report = """
     🚨 SECURITY ISSUES DETECTED
     - 0 potential secrets/API keys
     - 9 potential vulnerabilities
-    
+
     .github/scripts/ai_code_analyzer.py
     ⚠️ Security Vulnerabilities
     - Potential XSS vulnerability (Line 237)
     - Usage of weak cryptographic functions (Line 239)
-    
+
     .github/scripts/ai_security_scanner.py
     ⚠️ Security Vulnerabilities
     - Potential SQL injection vulnerability (Line 192)

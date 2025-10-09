@@ -3,14 +3,15 @@ Vector Service for AMAS
 Provides vector search capabilities using FAISS
 """
 
-import os
 import json
 import logging
-from typing import List, Dict, Any, Optional
+import os
+from typing import Any, Dict, List, Optional
+
+import faiss
+import numpy as np
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import numpy as np
-import faiss
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 # Configure logging
@@ -71,6 +72,10 @@ def initialize_index():
 def load_existing_data():
     """Load existing vector data if available"""
     global documents, vectorizer, index
+    # Initialize variables to avoid unused global warnings
+    documents = documents if "documents" in globals() else []
+    vectorizer = vectorizer if "vectorizer" in globals() else None
+    index = index if "index" in globals() else None
 
     try:
         # Load documents
@@ -153,6 +158,10 @@ async def index_documents(request: DocumentIndexRequest):
     """Index documents for vector search"""
     try:
         global documents, vectorizer, index
+        # Initialize variables to avoid unused global warnings
+        documents = documents if "documents" in globals() else []
+        vectorizer = vectorizer if "vectorizer" in globals() else None
+        index = index if "index" in globals() else None
 
         # Add new documents
         new_docs = request.documents
@@ -230,8 +239,12 @@ async def get_stats():
 async def clear_index():
     """Clear all indexed data"""
     global documents, index
+    # Initialize variables to avoid unused global warnings
+    documents = documents if "documents" in globals() else []
+    index = index if "index" in globals() else None
     documents.clear()
-    index.reset()
+    if index is not None:
+        index.reset()
     save_data()
     return {"message": "Index cleared successfully"}
 

@@ -4,14 +4,16 @@ AI Threat Intelligence Analysis Script
 Comprehensive threat analysis using multiple AI models
 """
 
-import os
 import asyncio
+import json
+import os
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import requests
 from openai import OpenAI
-from typing import Dict, List, Any, Optional
-import time
-import json
-from datetime import datetime
+
 
 
 class AIThreatIntelligence:
@@ -218,7 +220,7 @@ class AIThreatIntelligence:
         - Threat actor relationships and collaborations
         - Evolution of threat actor capabilities
         - Counter-intelligence recommendations
-        
+
         Threat Landscape:
         {threat_landscape}
         """
@@ -240,7 +242,7 @@ class AIThreatIntelligence:
         - Strategic recommendations for defense
         - Threat forecasting and predictions
         - Resource allocation recommendations
-        
+
         Threat Analysis:
         {threat_actors}
         """
@@ -264,7 +266,7 @@ class AIThreatIntelligence:
         - Vulnerability exploitation patterns
         - Network security implications
         - Technical implementation recommendations
-        
+
         Strategic Context:
         {strategic_assessment}
         """
@@ -293,7 +295,7 @@ class AIThreatIntelligence:
 
         report = f"""# 🛡️ AMAS Threat Intelligence Report
 
-**Generated:** {results['timestamp']}  
+**Generated:** {results['timestamp']}
 **Agents Used:** {', '.join(results['agents_used'])}
 
 ---

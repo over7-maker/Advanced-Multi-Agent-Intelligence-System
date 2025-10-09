@@ -2,14 +2,11 @@
 Test core AMAS functionality
 """
 
-import asyncio
 from typing import Any, Dict
 
 import pytest
 
-from amas.core.orchestrator import IntelligenceOrchestrator
 from amas.main import AMASApplication
-from amas.services.service_manager import ServiceManager
 
 
 class TestAMASApplication:

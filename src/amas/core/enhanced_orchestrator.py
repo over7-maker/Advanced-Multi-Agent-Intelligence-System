@@ -7,14 +7,16 @@ to ensure maximum reliability and performance across all AI operations.
 """
 
 import asyncio
-import json
+
+# import json
 import logging
-import os
-import sys
+
+# import os
+# import sys
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 from .ai_api_manager import AIAPIManager, get_ai_response
 from .api_clients import APIClientFactory, get_client
@@ -558,20 +560,20 @@ async def main():
             print(f"📝 Response preview: {result.result['content'][:200]}...")
 
         # Test investigation workflow
-        print(f"\n🔍 Testing investigation workflow...")
+        print("\n🔍 Testing investigation workflow...")
         investigation = await run_investigation(
             topic="Advanced Persistent Threats targeting software supply chains",
             investigation_type="focused",
         )
 
-        print(f"✅ Investigation completed")
+        print("✅ Investigation completed")
         print(f"📊 Phases executed: {len(investigation['phases'])}")
         print(
             f"📄 Final report available: {'Yes' if investigation['final_report'] else 'No'}"
         )
 
         # Get performance stats
-        print(f"\n📈 Performance Statistics:")
+        print("\n📈 Performance Statistics:")
         stats = orchestrator.get_performance_stats()
         print(f"  Total tasks: {stats['total_tasks']}")
         print(f"  Success rate: {stats['success_rate']:.1f}%")

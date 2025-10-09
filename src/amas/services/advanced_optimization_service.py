@@ -6,17 +6,12 @@ Phase 7: Advanced performance optimization, caching, and resource management
 import asyncio
 import gc
 import gzip
-import hashlib
-import json
 import logging
-import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data
-import threading
-import time
-from collections import OrderedDict
+import pickle
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import psutil
 
@@ -767,10 +762,10 @@ class AdvancedOptimizationService:
             if total_weight == 0:
                 return providers[0]["name"]
 
-            # Use secrets module for cryptographically secure random selection
-            import secrets
+            # Simple weighted selection
+            import random
 
-            rand = secrets.SystemRandom().uniform(0, total_weight)
+            rand = random.uniform(0, total_weight)
             current_weight = 0
 
             for provider in providers:

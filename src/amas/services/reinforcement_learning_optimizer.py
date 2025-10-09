@@ -5,27 +5,23 @@ Provides adaptive performance optimization using RL algorithms
 
 import asyncio
 import logging
-import numpy as np
-import json
-import time
-import random
-from typing import Dict, Any, List, Optional, Tuple, Union
-from datetime import datetime, timedelta
-from enum import Enum
-from dataclasses import dataclass, field
-import threading
-import queue
-from collections import deque
-import pickle
 import os
+import pickle
+import queue
+import random
+import threading
+from collections import deque
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
+
+import numpy as np
 
 # RL Libraries (would be installed in production)
 try:
     import gym
-    from stable_baselines3 import PPO, DQN, A2C
-    from stable_baselines3.common.env_util import make_vec_env
-    from stable_baselines3.common.callbacks import EvalCallback
-    from stable_baselines3.common.monitor import Monitor
+    from stable_baselines3 import A2C, DQN, PPO
 
     RL_AVAILABLE = True
 except ImportError:
@@ -523,7 +519,7 @@ class ReinforcementLearningOptimizer:
             self.optimization_active = True
 
             # Start optimization task
-            optimization_task = asyncio.create_task(self._optimization_loop())
+            asyncio.create_task(self._optimization_loop())
 
             logger.info("Optimization loop started")
 
@@ -957,9 +953,6 @@ class ReinforcementLearningOptimizer:
                 return
 
             logger.info("Starting model training...")
-
-            # Convert training data to format expected by models
-            training_data = list(self.training_data)
 
             # Train PPO model
             if self.ppo_model:

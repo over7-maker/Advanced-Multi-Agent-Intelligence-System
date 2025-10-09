@@ -4,15 +4,16 @@ API Configuration Validator and Setup Assistant
 Helps validate and configure API keys for all AI providers
 """
 
+import json
+import logging
 import os
 import sys
-import json
-from typing import Dict, Optional, Tuple
+from datetime import datetime
 from pathlib import Path
+from typing import Dict, Optional, Tuple
+
 import requests
 from openai import OpenAI
-import logging
-from datetime import datetime
 
 # Configure logging
 logging.basicConfig(

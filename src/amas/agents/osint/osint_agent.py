@@ -2,12 +2,13 @@
 Enhanced OSINT Collection Agent
 """
 
-import asyncio
-import json
+# import asyncio
+
+# import json
 import logging
 import re
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from typing import Any, Dict, List
 from urllib.parse import urljoin, urlparse
 
 import aiohttp
@@ -119,7 +120,7 @@ class OSINTAgent(IntelligenceAgent):
         return any(keyword in task_text for keyword in osint_keywords)
 
     async def _perform_web_scraping(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        """Perform web scraping"""
+        """Perform real web scraping with actual HTTP requests"""
         try:
             urls = task.get("parameters", {}).get("urls", [])
             keywords = task.get("parameters", {}).get("keywords", [])
@@ -128,7 +129,7 @@ class OSINTAgent(IntelligenceAgent):
             scraped_data = []
             for url in urls[:max_pages]:
                 try:
-                    # Mock web scraping - in production, this would use actual scraping
+                    # Real web scraping with actual HTTP requests
                     page_data = await self._scrape_webpage(url, keywords)
                     if page_data:
                         scraped_data.append(page_data)
@@ -136,7 +137,7 @@ class OSINTAgent(IntelligenceAgent):
                     logger.error(f"Error scraping {url}: {e}")
                     continue
 
-            # Analyze scraped data
+            # Analyze scraped data with real analysis
             analysis = await self._analyze_scraped_data(scraped_data, keywords)
 
             return {
@@ -157,41 +158,207 @@ class OSINTAgent(IntelligenceAgent):
             }
 
     async def _scrape_webpage(self, url: str, keywords: List[str]) -> Dict[str, Any]:
-        """Scrape a single webpage"""
+        """Scrape a single webpage with real HTTP request"""
         try:
-            # Mock webpage scraping
-            page_data = {
-                "url": url,
-                "title": f"Mock Title for {url}",
-                "content": f'Mock content for {url} containing keywords: {", ".join(keywords)}',
-                "links": [f"{url}/link1", f"{url}/link2"],
-                "images": [f"{url}/image1.jpg", f"{url}/image2.jpg"],
-                "metadata": {
-                    "scraped_at": datetime.utcnow().isoformat(),
-                    "keywords_found": keywords,
-                    "content_length": len(f"Mock content for {url}"),
-                },
-            }
+            import time
 
-            return page_data
+            from bs4 import BeautifulSoup
+
+            # Check rate limits
+            domain = urlparse(url).netloc
+            if not hasattr(self, "rate_limits"):
+                self.rate_limits = {}
+            if domain in self.rate_limits:
+                last_request = self.rate_limits[domain]
+                if time.time() - last_request < 1.0:  # 1 second between requests
+                    logger.warning(f"Rate limited for domain: {domain}")
+                    return None
+            self.rate_limits[domain] = time.time()
+
+            start_time = time.time()
+
+            async with aiohttp.ClientSession(
+                timeout=aiohttp.ClientTimeout(total=30),
+                headers={
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+                },
+            ) as session:
+                async with session.get(url) as response:
+                    response_time = time.time() - start_time
+
+                    if response.status != 200:
+                        logger.warning(f"HTTP {response.status} for {url}")
+                        return None
+
+                    content = await response.text()
+
+                    # Parse with BeautifulSoup
+                    soup = BeautifulSoup(content, "html.parser")
+
+                    # Extract title
+                    title = soup.title.string if soup.title else "No title"
+
+                    # Extract main content
+                    for script in soup(["script", "style", "nav", "footer", "header"]):
+                        script.decompose()
+
+                    text_content = soup.get_text()
+                    text_content = re.sub(r"\s+", " ", text_content).strip()
+
+                    # Extract links
+                    links = []
+                    for link in soup.find_all("a", href=True):
+                        href = link["href"]
+                        if href.startswith("http"):
+                            links.append(href)
+                        elif href.startswith("/"):
+                            links.append(urljoin(url, href))
+
+                    # Extract images
+                    images = []
+                    for img in soup.find_all("img", src=True):
+                        src = img["src"]
+                        if src.startswith("http"):
+                            images.append(src)
+                        elif src.startswith("/"):
+                            images.append(urljoin(url, src))
+
+                    # Extract metadata
+                    metadata = {
+                        "content_type": response.headers.get("content-type", ""),
+                        "content_length": len(content),
+                        "keywords_found": [
+                            kw for kw in keywords if kw.lower() in text_content.lower()
+                        ],
+                        "language": (
+                            "en"
+                            if any(
+                                word in text_content.lower()
+                                for word in [
+                                    "the",
+                                    "and",
+                                    "or",
+                                    "but",
+                                    "in",
+                                    "on",
+                                    "at",
+                                ]
+                            )
+                            else "unknown"
+                        ),
+                        "has_forms": len(soup.find_all("form")) > 0,
+                        "has_scripts": len(soup.find_all("script")) > 0,
+                    }
+
+                    return {
+                        "url": url,
+                        "title": title,
+                        "content": text_content,
+                        "links": links[:50],  # Limit to first 50 links
+                        "images": images[:20],  # Limit to first 20 images
+                        "metadata": metadata,
+                        "scraped_at": datetime.utcnow().isoformat(),
+                        "status_code": response.status,
+                        "response_time": response_time,
+                    }
 
         except Exception as e:
             logger.error(f"Error scraping webpage {url}: {e}")
             return None
 
     async def _analyze_scraped_data(
-        self, scraped_data: List[Dict[str, Any]], keywords: List[str]
+        self, scraped_data: List[Dict], keywords: List[str]
     ) -> Dict[str, Any]:
-        """Analyze scraped data"""
+        """Analyze scraped data with real analysis"""
         try:
-            # Mock analysis
+            if not scraped_data:
+                return {"error": "No data to analyze"}
+
+            # Extract entities and patterns
+            all_text = " ".join([page["content"] for page in scraped_data])
+
+            # Find email addresses
+            email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
+            emails = list(set(re.findall(email_pattern, all_text)))
+
+            # Find phone numbers
+            phone_pattern = (
+                r"(\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}"
+            )
+            phones = list(set(re.findall(phone_pattern, all_text)))
+
+            # Find URLs
+            url_pattern = r"http[s]?://(?:[a-zA-Z]|[0-9]|[huBHc_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+            urls = list(set(re.findall(url_pattern, all_text)))
+
+            # Keyword analysis
+            keyword_matches = {}
+            for keyword in keywords:
+                count = all_text.lower().count(keyword.lower())
+                if count > 0:
+                    keyword_matches[keyword] = count
+
+            # Domain analysis
+            domains = set()
+            for url in urls:
+                try:
+                    domain = urlparse(url).netloc
+                    domains.add(domain)
+                except Exception:
+                    continue
+
+            # Sentiment analysis (basic)
+            positive_words = [
+                "good",
+                "great",
+                "excellent",
+                "positive",
+                "success",
+                "win",
+            ]
+            negative_words = ["bad", "terrible", "negative", "fail", "lose", "problem"]
+
+            positive_count = sum(
+                all_text.lower().count(word) for word in positive_words
+            )
+            negative_count = sum(
+                all_text.lower().count(word) for word in negative_words
+            )
+
+            sentiment = "neutral"
+            if positive_count > negative_count * 1.5:
+                sentiment = "positive"
+            elif negative_count > positive_count * 1.5:
+                sentiment = "negative"
+
             analysis = {
                 "total_pages": len(scraped_data),
-                "keywords_found": keywords,
-                "entities": ["Entity1", "Entity2", "Entity3"],
-                "sentiment": "neutral",
-                "threat_indicators": [],
-                "summary": f'Analyzed {len(scraped_data)} pages for keywords: {", ".join(keywords)}',
+                "total_content_length": sum(
+                    len(page["content"]) for page in scraped_data
+                ),
+                "keywords_found": keyword_matches,
+                "entities": {
+                    "emails": emails[:10],  # Limit to first 10
+                    "phone_numbers": phones[:10],
+                    "urls": urls[:20],
+                    "domains": list(domains)[:20],
+                },
+                "sentiment": sentiment,
+                "sentiment_scores": {
+                    "positive": positive_count,
+                    "negative": negative_count,
+                },
+                "languages": list(
+                    set(
+                        page["metadata"].get("language", "unknown")
+                        for page in scraped_data
+                    )
+                ),
+                "average_response_time": sum(
+                    page["response_time"] for page in scraped_data
+                )
+                / len(scraped_data),
+                "summary": f"Analyzed {len(scraped_data)} pages, found {len(emails)} emails, {len(phones)} phones, {len(urls)} URLs across {len(domains)} domains",
             }
 
             return analysis
@@ -207,7 +374,7 @@ class OSINTAgent(IntelligenceAgent):
                 "platforms", ["twitter", "reddit"]
             )
             keywords = task.get("parameters", {}).get("keywords", [])
-            time_range = task.get("parameters", {}).get("time_range", "24h")
+            # time_range = task.get("parameters", {}).get("time_range", "24h")
 
             # Mock social media monitoring
             social_data = []
@@ -281,7 +448,7 @@ class OSINTAgent(IntelligenceAgent):
                 "sources", self.data_sources["news"]
             )
             keywords = task.get("parameters", {}).get("keywords", [])
-            time_range = task.get("parameters", {}).get("time_range", "24h")
+            # time_range = task.get("parameters", {}).get("time_range", "24h")
 
             # Mock news aggregation
             news_data = []
@@ -488,7 +655,7 @@ class OSINTAgent(IntelligenceAgent):
         """Perform general OSINT collection"""
         try:
             description = task.get("description", "")
-            parameters = task.get("parameters", {})
+            # parameters = task.get("parameters", {})
 
             # Mock general OSINT
             osint_result = {

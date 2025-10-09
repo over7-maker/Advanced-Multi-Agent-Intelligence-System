@@ -4,14 +4,16 @@ AI Security Scanner Response System
 Automated response to security scan reports
 """
 
-import os
 import asyncio
+import json
+import os
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import requests
 from openai import OpenAI
-from typing import Dict, List, Any, Optional
-import time
-import json
-from datetime import datetime
+
 
 
 class AISecurityResponse:
@@ -201,7 +203,7 @@ class AISecurityResponse:
         - Actual security concerns that need attention
         - Recommendations for addressing real issues
         - Security best practices implementation
-        
+
         Security Report:
         {security_report}
         """
@@ -219,7 +221,7 @@ class AISecurityResponse:
         - Distinguish between detection patterns and real code issues
         - Provide guidance on reducing false positives
         - Suggest improvements to security scanning logic
-        
+
         Security Assessment:
         {security_assessment}
         """
@@ -242,7 +244,7 @@ class AISecurityResponse:
         - Best practices implementation
         - Risk mitigation strategies
         - Security monitoring enhancements
-        
+
         False Positive Analysis:
         {false_positive_analysis}
         """
@@ -272,8 +274,8 @@ class AISecurityResponse:
 
         response = f"""# 🔒 AMAS Security Scanner Response
 
-**Generated:** {results['timestamp']}  
-**Agents Used:** {', '.join(results['agents_used'])}  
+**Generated:** {results['timestamp']}
+**Agents Used:** {', '.join(results['agents_used'])}
 **Response to:** AI Security Scan Report
 
 ---
@@ -388,12 +390,12 @@ async def main():
     🚨 SECURITY ISSUES DETECTED
     - 0 potential secrets/API keys
     - 9 potential vulnerabilities
-    
+
     .github/scripts/ai_code_analyzer.py
     ⚠️ Security Vulnerabilities
     - Potential XSS vulnerability (Line 237)
     - Usage of weak cryptographic functions (Line 239)
-    
+
     .github/scripts/ai_security_scanner.py
     ⚠️ Security Vulnerabilities
     - Potential SQL injection vulnerability (Line 167)

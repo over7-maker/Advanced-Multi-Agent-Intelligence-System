@@ -4,12 +4,14 @@ AI Security Scanner Script
 Performs intelligent security analysis using AI models
 """
 
-import os
 import json
+import os
 import re
+from typing import Any, Dict, List, Optional
+
 import requests
 from openai import OpenAI
-from typing import Dict, List, Any, Optional
+
 
 
 class AISecurityScanner:

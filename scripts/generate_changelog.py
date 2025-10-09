@@ -3,13 +3,14 @@
 Generate Changelog for Releases
 """
 
-import os
-import sys
-import requests
 import json
+import os
 import re
+import sys
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
+import requests
 
 
 def main():
@@ -26,11 +27,11 @@ def main():
     print("🤖 AI-Enhanced Changelog Generator")
     print("=" * 40)
 
-    # Get arguments from command line or environment
-    version = args.version or os.environ.get("VERSION", "v1.0.0")
-    release_type = args.type or os.environ.get("RELEASE_TYPE", "minor")
-    custom_changelog = args.custom or os.environ.get("CUSTOM_CHANGELOG", "")
-    output_file = args.output or os.environ.get("OUTPUT", "CHANGELOG.md")
+    # Get arguments
+    version = os.environ.get("VERSION", "v1.0.0")
+    release_type = os.environ.get("RELEASE_TYPE", "minor")
+    custom_changelog = os.environ.get("CUSTOM_CHANGELOG", "")
+    output_file = os.environ.get("OUTPUT", "CHANGELOG.md")
 
     print(f"📋 Version: {version}")
     print(f"🏷️ Type: {release_type}")

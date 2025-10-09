@@ -4,13 +4,15 @@ AI Code Analyzer Script
 Performs intelligent code analysis using AI models
 """
 
-import os
+import difflib
 import json
+import os
+import subprocess
+from typing import Any, Dict, List, Optional
+
 import requests
 from openai import OpenAI
-from typing import Dict, List, Any, Optional
-import subprocess
-import difflib
+
 
 
 class AICodeAnalyzer:
@@ -223,7 +225,7 @@ class AICodeAnalyzer:
         file_extension = os.path.splitext(file_path)[1]
 
         # Create analysis prompt based on file type
-        system_prompt = f"""
+        system_prompt = """
 You are an expert code reviewer for the AMAS (Advanced Multi-Agent Intelligence System) project.
 This is a multi-agent AI system focused on intelligence analysis, OSINT, and cybersecurity.
 
@@ -393,6 +395,16 @@ Keep the analysis concise but thorough.
                             "'api_key =",
                             '"api_key ="',
                             "'secret =",
+                            '"secret ="',
+                        ]
+                    ):
+                        continue
+
+                    # Skip obvious placeholders
+                    matched_text = match.group(0).lower()
+                    if any(
+                        placeholder in matched_text
+                        for placeholder in [
                             "example",
                             "placeholder",
                             "your_",

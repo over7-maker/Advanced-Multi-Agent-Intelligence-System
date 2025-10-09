@@ -6,14 +6,13 @@ Provides ML model management, training, inference, and advanced analytics
 import asyncio
 import json
 import logging
-import pickle  # SECURITY WARNING: Pickle can execute arbitrary code - only use with trusted data
+import pickle
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
-import joblib
 import numpy as np
 import pandas as pd
 
@@ -513,9 +512,10 @@ class MLService:
         try:
             model_id = f"model_{int(datetime.utcnow().timestamp())}"
 
-            # Save model file using joblib (safer than pickle)
+            # Save model file
             model_path = Path(self.ml_config["model_storage_path"]) / f"{model_id}.pkl"
-            joblib.dump(model, model_path)
+            with open(model_path, "wb") as f:
+                pickle.dump(model, f)
 
             # Save model metadata
             metadata = {
@@ -572,14 +572,10 @@ class MLService:
             if model_id not in self.models:
                 raise ValueError(f"Model {model_id} not found")
 
-            # Load model using joblib (safer than pickle)
+            # Load model
             model_path = Path(self.ml_config["model_storage_path"]) / f"{model_id}.pkl"
-            # Using joblib for safer model loading
-            try:
-                model = joblib.load(model_path)
-            except Exception as e:
-                logger.error(f"Failed to load model {model_id}: {e}")
-                raise ValueError(f"Failed to load model {model_id}: {e}")
+            with open(model_path, "rb") as f:
+                pickle.load(f)
 
             # Simulate prediction
             # In real implementation, this would use actual model prediction

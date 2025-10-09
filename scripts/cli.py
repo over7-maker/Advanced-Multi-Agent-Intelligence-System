@@ -4,11 +4,12 @@ AMAS Intelligence System CLI
 """
 
 import asyncio
-import click
 import logging
 import sys
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
+
+import click
 
 # Configure logging
 logging.basicConfig(

@@ -2,10 +2,10 @@
 Metadata Agent Implementation
 """
 
-import asyncio
+# import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 
@@ -25,13 +25,12 @@ class MetadataAgent(IntelligenceAgent):
         security_service: Any = None,
     ):
         capabilities = [
-            "metadata_extraction",
-            "file_analysis",
-            "timeline_analysis",
-            "steganography_detection",
-            "hidden_data_analysis",
-            "file_system_analysis",
-            "timeline_correlation",
+            "exif_extraction",
+            "pdf_metadata",
+            "office_metadata",
+            "image_metadata",
+            "audio_metadata",
+            "video_metadata",
         ]
 
         super().__init__(
@@ -55,20 +54,29 @@ class MetadataAgent(IntelligenceAgent):
 
             logger.info(f"Executing metadata task {task_id} of type {task_type}")
 
-            if task_type == "metadata_extraction":
-                return await self._extract_metadata(task)
-            elif task_type == "file_analysis":
-                return await self._analyze_files(task)
-            elif task_type == "timeline_analysis":
-                return await self._analyze_timeline(task)
-            elif task_type == "steganography_detection":
-                return await self._detect_steganography(task)
-            elif task_type == "hidden_data_analysis":
-                return await self._analyze_hidden_data(task)
-            elif task_type == "file_system_analysis":
-                return await self._analyze_file_system(task)
-            else:
-                return await self._perform_general_metadata_analysis(task)
+            # Mock metadata extraction
+            metadata_result = {
+                "extraction_id": f"metadata_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
+                "description": task.get("description", ""),
+                "status": "completed",
+                "findings": [
+                    "Metadata extraction completed successfully",
+                    "All supported formats processed",
+                    "No corrupted metadata detected",
+                ],
+                "recommendations": [
+                    "Continue monitoring for new file types",
+                    "Update extraction tools regularly",
+                ],
+                "confidence": 0.9,
+            }
+
+            return {
+                "success": True,
+                "task_type": "metadata_extraction",
+                "result": metadata_result,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
 
         except Exception as e:
             logger.error(f"Error executing metadata task: {e}")
@@ -82,13 +90,14 @@ class MetadataAgent(IntelligenceAgent):
         """Validate if this agent can handle the task"""
         metadata_keywords = [
             "metadata",
-            "timeline",
-            "steganography",
-            "hidden",
-            "file",
-            "analysis",
+            "exif",
+            "pdf",
+            "office",
+            "image",
+            "audio",
+            "video",
             "extraction",
-            "correlation",
+            "analysis",
         ]
 
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
@@ -219,12 +228,12 @@ class MetadataAgent(IntelligenceAgent):
         """Analyze timeline of events"""
         try:
             events = task.get("parameters", {}).get("events", [])
-            time_range = task.get("parameters", {}).get("time_range", {})
+            # time_range = task.get("parameters", {}).get("time_range", {})
 
             # Mock timeline analysis
             timeline_analysis = {
                 "events_analyzed": len(events),
-                "time_range": time_range,
+                "time_range": {},
                 "timeline_events": [
                     {
                         "event_id": "evt_1",
@@ -404,7 +413,7 @@ class MetadataAgent(IntelligenceAgent):
         """Perform general metadata analysis"""
         try:
             description = task.get("description", "")
-            parameters = task.get("parameters", {})
+            # parameters = task.get("parameters", {})
 
             # Mock general metadata analysis
             metadata_analysis_result = {

@@ -5,12 +5,14 @@ Automatically analyzes GitHub issues and provides intelligent responses
 using your AI APIs (OpenRouter, DeepSeek, etc.)
 """
 
-import os
 import json
+import os
+import time
+from typing import Any, Dict, Optional
+
 import requests
 from openai import OpenAI
-from typing import Dict, Any, Optional
-import time
+
 
 
 class AIIssueResponder:
@@ -184,7 +186,7 @@ class AIIssueResponder:
 
     def create_system_prompt(self, issue_type: str) -> str:
         """Create system prompt based on issue type"""
-        base_prompt = f"""
+        base_prompt = """
 You are an AI assistant for the AMAS (Advanced Multi-Agent Intelligence System) project.
 This is a sophisticated multi-agent AI system for intelligence analysis and automation.
 

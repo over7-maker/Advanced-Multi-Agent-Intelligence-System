@@ -4,20 +4,27 @@ Provides advanced message queuing, routing, and coordination protocols
 """
 
 import asyncio
-import logging
+
+# import hashlib
 import json
-import uuid
-import time
-from typing import Dict, Any, List, Optional, Callable, Union
+import logging
+import pickle
+
+# import uuid
+import zlib
+
+# from collections import defaultdict, deque
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from dataclasses import dataclass, field
-import redis
+from typing import Any, Dict, List, Optional
+
 import aioredis
-from collections import defaultdict, deque
-import hashlib
-import zlib
-import pickle
+
+# import time
+
+
+# import redis
 
 logger = logging.getLogger(__name__)
 
@@ -468,7 +475,7 @@ class EnterpriseCommunicationService:
     async def _process_queue(self, queue_name: str):
         """Process messages from a queue"""
         try:
-            queue_config = self.message_queues[queue_name]
+            # queue_config = self.message_queues[queue_name]
 
             while True:
                 try:

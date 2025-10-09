@@ -4,8 +4,9 @@ Verification script to test that security false positives have been fixed
 """
 
 import os
-import sys
 import subprocess
+import sys
+
 
 
 def test_files():
@@ -82,7 +83,7 @@ def test_specific_patterns():
         },
         {
             "name": "Actual hardcoded password",
-            "content": 'password=os.getenv("DB_PASSWORD", "default")',
+            "content": 'password = "secretpassword123"',
             "should_flag": True,
         },
         {

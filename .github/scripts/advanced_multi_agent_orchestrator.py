@@ -4,16 +4,18 @@ Advanced Multi-Agent Orchestrator System
 Coordinates all AI agents to continuously improve the project
 """
 
-import os
-import json
-import time
 import asyncio
-import aiohttp
-from datetime import datetime
-from typing import Dict, List, Any, Optional
-from openai import OpenAI
-import subprocess
+import json
 import logging
+import os
+import subprocess
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import aiohttp
+from openai import OpenAI
+
 
 
 class AdvancedMultiAgentOrchestrator:
@@ -292,18 +294,18 @@ class AdvancedMultiAgentOrchestrator:
         """Create specialized prompt for each agent"""
         base_prompt = f"""
         Task: {task}
-        
+
         Context: {context or 'No additional context provided'}
-        
+
         As {self.agents[agent_name]['name']}, you are specialized in {self.agents[agent_name]['specialization']}.
-        
+
         Please provide:
         1. Detailed analysis and recommendations
         2. Specific actionable steps
         3. Priority level for implementation
         4. Potential risks and mitigation strategies
         5. Success metrics and KPIs
-        
+
         Format your response as a structured analysis with clear sections.
         """
 

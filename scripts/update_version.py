@@ -4,13 +4,13 @@ Update Version Files for AMAS Releases
 AI-enhanced version management with intelligent version bumping
 """
 
-import os
-import sys
-import re
 import argparse
+import os
+import re
+import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Tuple
-from datetime import datetime
 
 
 class AIVersionManager:

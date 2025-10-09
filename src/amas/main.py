@@ -8,11 +8,10 @@ It provides a clean, professional interface for initializing and managing the sy
 import asyncio
 import logging
 import sys
-from pathlib import Path
-from typing import Dict, Any, Optional, Union
 from contextlib import asynccontextmanager
+from typing import Any, Dict, Optional
 
-from .config.settings import get_settings, AMASConfig
+from .config.settings import AMASConfig, get_settings
 from .core.orchestrator import IntelligenceOrchestrator
 from .services.service_manager import ServiceManager
 
@@ -101,11 +100,7 @@ class AMASApplication:
 
             # Initialize orchestrator
             self.orchestrator = IntelligenceOrchestrator(
-                config=self.config.__dict__,
-                llm_service=self.service_manager.get_llm_service(),
-                vector_service=self.service_manager.get_vector_service(),
-                knowledge_graph=self.service_manager.get_knowledge_graph_service(),
-                security_service=self.service_manager.get_security_service(),
+                config=self.config, service_manager=self.service_manager
             )
             await self.orchestrator.initialize()
 
@@ -143,8 +138,14 @@ class AMASApplication:
             self._is_running = True
             self.logger.info("AMAS Intelligence System is ready and operational")
 
-            # Main application loop
-            await self._run_main_loop()
+            # Keep the system running
+            while True:
+                await asyncio.sleep(10)
+                # Perform health checks
+                if self.orchestrator:
+                    status = await self.orchestrator.get_system_status()
+                    if status.get("status") != "operational":
+                        self.logger.warning(f"System status: {status}")
 
         except KeyboardInterrupt:
             self.logger.info("Shutdown signal received")

@@ -5,18 +5,19 @@ Demonstrates the consolidated system in action
 """
 
 import asyncio
-import sys
-import os
 import json
-from pathlib import Path
+import os
+import sys
 from datetime import datetime
+from pathlib import Path
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-# Import after path setup
-from amas.core.unified_orchestrator import get_orchestrator, AgentRole
 import logging
+
+# Import after path setup
+from amas.core.unified_orchestrator import AgentRole, get_orchestrator
 
 # Configure logging
 logging.basicConfig(

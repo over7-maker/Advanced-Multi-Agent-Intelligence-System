@@ -4,14 +4,15 @@ Continuous Improvement System
 Integrates all AI agents to continuously improve the project
 """
 
-import os
-import json
 import asyncio
+import json
+import logging
+import os
+import subprocess
 import time
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Optional
-import logging
-import subprocess
+from typing import Any, Dict, List, Optional
+
 
 
 class ContinuousImprovementSystem:
@@ -393,7 +394,7 @@ async def main():
 
     # Get improvement status
     status = system.get_improvement_status()
-    print(f"\n📊 Improvement Status:")
+    print("\n📊 Improvement Status:")
     print(f"Overall Score: {status['metrics']['overall_score']:.2f}")
     print(f"API Keys: {status['api_keys_configured']}/{status['total_api_keys']}")
 

@@ -20,6 +20,7 @@ jobs:
 
       - name: Upgrade pip, setuptools and wheel
         run: |
+          python -m ensurepip --upgrade
           python -m pip install --upgrade pip setuptools wheel pip-tools
 
       - name: Install dependencies

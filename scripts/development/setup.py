@@ -3,8 +3,9 @@ AMAS - Advanced Multi-Agent Intelligence System
 Setup script for installation and development
 """
 
-from setuptools import setup, find_packages
 from pathlib import Path
+
+from setuptools import find_packages, setup
 
 # Read README for long description
 readme_path = Path(__file__).parent / "README.md"
@@ -82,9 +83,7 @@ setup(
         ],
     },
     zip_safe=False,
-    keywords="ai, multi-agent, intelligence, autonomous, offline, llm, vector-search, knowledge-graph",
     project_urls={
-        "Bug Reports": "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues",
         "Source": "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System",
         "Documentation": "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/docs",
     },

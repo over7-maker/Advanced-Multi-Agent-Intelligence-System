@@ -4,12 +4,12 @@ Comprehensive AI System Test Runner
 Tests all components of the AMAS AI Workflow System
 """
 
-import os
-import sys
-import subprocess
 import json
-from pathlib import Path
+import os
+import subprocess
+import sys
 from datetime import datetime
+from pathlib import Path
 
 
 class AISystemTester:

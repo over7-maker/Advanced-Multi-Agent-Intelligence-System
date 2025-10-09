@@ -8,7 +8,8 @@ import asyncio
 import logging
 import sys
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any, Dict
+
 from cryptography.fernet import Fernet
 
 # Configure logging
@@ -21,7 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Import offline components
-from offline_agent import OfflineSystem, OfflineOSINTAgent, OfflineInvestigationAgent
+from offline_agent import OfflineInvestigationAgent, OfflineOSINTAgent, OfflineSystem
 from offline_config import OfflineConfig
 
 

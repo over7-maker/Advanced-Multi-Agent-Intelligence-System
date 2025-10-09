@@ -3,20 +3,20 @@
 AI Documentation Generator - Uses multiple AI providers to generate comprehensive documentation
 """
 
-import asyncio
 import argparse
+import asyncio
+import json
 import logging
 import os
 import sys
-from pathlib import Path
-from typing import List, Dict, Any
-import json
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
 
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from services.ai_service_manager import AIServiceManager, AIProvider
+from services.ai_service_manager import AIProvider, AIServiceManager
 
 # Configure logging
 logging.basicConfig(
@@ -460,9 +460,13 @@ async def main():
             print(results["summary"]["summary"])
             print("=" * 50)
 
-        logger.info(
-            f"Documentation generation complete. {results['files_documented']} files documented."
-        )
+        # Log completion
+        if "summary" in results:
+            files_generated = results["summary"].get("files_generated", 0)
+            elapsed_time = results["summary"].get("elapsed_time", 0)
+            logger.info(
+                f"Generated {files_generated} documentation files in {elapsed_time:.2f} seconds"
+            )
 
     except Exception as e:
         logger.error(f"Error in main: {e}")

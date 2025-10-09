@@ -4,18 +4,18 @@ Manages complete service integration, workflow orchestration, and real-time moni
 """
 
 import asyncio
-import json
+
+# import json
 import logging
 import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-from amas.services.database_service import DatabaseService
-from amas.services.security_service import SecurityService
-from amas.services.service_manager import ServiceManager
-
+from ..services.database_service import DatabaseService
+from ..services.security_service import SecurityService
+from ..services.service_manager import ServiceManager
 from .orchestrator import IntelligenceOrchestrator
 
 logger = logging.getLogger(__name__)

@@ -7,11 +7,13 @@ with your existing AMAS system for maximum reliability.
 """
 
 import asyncio
-import json
+
+# import json
 import os
-import sys
+
+# import sys
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 # Import the new API manager components
 from .ai_api_manager import AIAPIManager, get_ai_response
@@ -51,7 +53,7 @@ class QuickStartIntegration:
                 temperature=0.1,
             )
 
-            print(f"✅ Basic test passed!")
+            print("✅ Basic test passed!")
             print(f"   API used: {response['api_used']}")
             print(f"   Response: {response['content']}")
             return True
@@ -68,7 +70,7 @@ class QuickStartIntegration:
             # Get health status
             health = self.api_manager.get_health_status()
 
-            print(f"✅ Health monitoring working!")
+            print("✅ Health monitoring working!")
             print(f"   Total APIs: {health['total_apis']}")
             print(f"   Healthy APIs: {health['healthy_apis']}")
             print(f"   Unhealthy APIs: {health['unhealthy_apis']}")
@@ -97,7 +99,7 @@ class QuickStartIntegration:
                 agent_type="analysis_agent",
             )
 
-            print(f"✅ Task execution working!")
+            print("✅ Task execution working!")
             print(f"   Success: {result.success}")
             print(f"   API used: {result.api_used}")
             print(f"   Execution time: {result.execution_time:.2f}s")
@@ -122,7 +124,7 @@ class QuickStartIntegration:
                 investigation_type="focused",
             )
 
-            print(f"✅ Investigation workflow working!")
+            print("✅ Investigation workflow working!")
             print(f"   Phases completed: {len(investigation['phases'])}")
             print(f"   Started: {investigation['started_at']}")
             print(f"   Completed: {investigation['completed_at']}")
@@ -151,10 +153,10 @@ class QuickStartIntegration:
             # Initialize enhanced system
             await initialize_enhanced_system()
 
-            print(f"✅ Enhanced system initialized!")
-            print(f"   Enhanced orchestrator ready")
-            print(f"   Multi-API fallback active")
-            print(f"   Health monitoring active")
+            print("✅ Enhanced system initialized!")
+            print("   Enhanced orchestrator ready")
+            print("   Multi-API fallback active")
+            print("   Health monitoring active")
 
             return True
 
@@ -170,13 +172,13 @@ class QuickStartIntegration:
             # Get performance stats
             stats = self.orchestrator.get_performance_stats()
 
-            print(f"✅ Performance metrics working!")
+            print("✅ Performance metrics working!")
             print(f"   Total tasks: {stats['total_tasks']}")
             print(f"   Success rate: {stats['success_rate']:.1f}%")
             print(f"   Average execution time: {stats['average_execution_time']:.2f}s")
 
             if stats["api_usage"]:
-                print(f"   API usage distribution:")
+                print("   API usage distribution:")
                 for api, count in stats["api_usage"].items():
                     print(f"     - {api}: {count} requests")
 

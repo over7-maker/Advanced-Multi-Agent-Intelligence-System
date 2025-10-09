@@ -3,16 +3,17 @@
 Simple Workflow Test - Test workflows without AI dependencies
 """
 
-import os
-import sys
-from pathlib import Path
-from typing import Dict, Any, List
 import json
-from datetime import datetime
-import yaml
 
 # Configure logging
 import logging
+import os
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
+
+import yaml
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"

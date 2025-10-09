@@ -4,14 +4,16 @@ AI Incident Response Automation Script
 Automated incident triage and response using multiple AI models
 """
 
-import os
 import asyncio
+import json
+import os
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 import requests
 from openai import OpenAI
-from typing import Dict, List, Any, Optional
-import time
-import json
-from datetime import datetime
+
 
 
 class AIIncidentResponse:
@@ -245,7 +247,7 @@ class AIIncidentResponse:
         - Immediate threat indicators
         - Preliminary containment recommendations
         - Evidence collection priorities
-        
+
         Incident Details:
         Title: {self.issue_title}
         Description: {self.issue_body}
@@ -267,7 +269,7 @@ class AIIncidentResponse:
         - Attack timeline reconstruction
         - Threat actor motivations and objectives
         - Counter-intelligence recommendations
-        
+
         Incident Assessment:
         {incident_assessment}
         """
@@ -289,7 +291,7 @@ class AIIncidentResponse:
         - Recovery and restoration procedures
         - Lessons learned and improvement recommendations
         - Resource allocation and team coordination
-        
+
         Threat Analysis:
         {threat_analysis}
         """
@@ -311,7 +313,7 @@ class AIIncidentResponse:
         - System hardening recommendations
         - Monitoring and detection enhancements
         - Technical implementation steps
-        
+
         Response Strategy:
         {response_strategy}
         """
@@ -341,8 +343,8 @@ class AIIncidentResponse:
 
         report = f"""# 🚨 AMAS Incident Response Report
 
-**Generated:** {results['timestamp']}  
-**Agents Used:** {', '.join(results['agents_used'])}  
+**Generated:** {results['timestamp']}
+**Agents Used:** {', '.join(results['agents_used'])}
 **Severity:** {severity_emoji.get(results['severity'], '⚪')} {results['severity']}
 
 ---

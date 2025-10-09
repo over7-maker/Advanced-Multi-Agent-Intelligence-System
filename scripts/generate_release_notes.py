@@ -4,15 +4,15 @@ Generate Release Notes for AMAS Releases
 Enhanced with AI integration for intelligent release note generation
 """
 
-import os
-import sys
-import requests
-import json
 import argparse
+import json
+import os
 import re
+import sys
 from datetime import datetime
-from typing import List, Dict, Any, Optional
-from pathlib import Path
+from typing import Any, Dict, List
+
+import requests
 
 
 class AIReleaseNotesGenerator:
@@ -415,5 +415,9 @@ def main():
 
 
 if __name__ == "__main__":
-    success = main()
-    sys.exit(0 if success else 1)
+    try:
+        success = main()
+        sys.exit(0 if success else 1)
+    except Exception as e:
+        print(f"❌ Error generating release notes: {e}")
+        sys.exit(1)

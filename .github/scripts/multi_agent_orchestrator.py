@@ -4,11 +4,13 @@ Multi-Agent Orchestrator Script
 Coordinates multiple AI agents for comprehensive analysis
 """
 
-import os
 import asyncio
-from openai import OpenAI
-from typing import Dict, List, Any, Optional
+import os
 import time
+from typing import Any, Dict, List, Optional
+
+from openai import OpenAI
+
 
 
 class MultiAgentOrchestrator:
@@ -221,7 +223,7 @@ class MultiAgentOrchestrator:
         - Vulnerabilities being exploited
         - Potential future targets
         - Risk assessment for different sectors
-        
+
         Intelligence Data:
         {osint_result}
         """
@@ -241,7 +243,7 @@ class MultiAgentOrchestrator:
         - Priority actions for security teams
         - Risk mitigation strategies
         - Monitoring and detection improvements
-        
+
         Analysis Data:
         {analysis_result}
         """
@@ -267,7 +269,7 @@ class MultiAgentOrchestrator:
 
         report = f"""# 🤖 AMAS Multi-Agent Intelligence Report
 
-**Generated:** {results['timestamp']}  
+**Generated:** {results['timestamp']}
 **Agents Used:** {', '.join(results['agents_used'])}
 
 ---

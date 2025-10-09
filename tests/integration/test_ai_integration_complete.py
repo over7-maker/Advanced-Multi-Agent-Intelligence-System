@@ -17,8 +17,10 @@ from typing import Any, Dict, List
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from config.ai_config import get_ai_config
-from services.ai_service_manager import AIProvider, AIServiceManager
+from src.amas.services.ai_service_manager import (  # noqa: E402
+    AIProvider,
+    AIServiceManager,
+)
 
 # Configure logging
 logging.basicConfig(
@@ -32,7 +34,8 @@ class CompleteAIIntegrationTest:
 
     def __init__(self):
         self.ai_service = None
-        self.config_manager = get_ai_config()
+        # Mock config manager for testing
+        self.config_manager = None
         self.test_results = {}
 
     async def initialize(self):

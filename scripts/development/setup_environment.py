@@ -3,14 +3,14 @@
 Environment Setup Script - Sets up the complete AMAS development environment
 """
 
-import os
-import sys
-import subprocess
-import logging
-from pathlib import Path
-from typing import Dict, Any, List
 import json
+import logging
+import os
+import subprocess
+import sys
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
 
 # Configure logging
 logging.basicConfig(

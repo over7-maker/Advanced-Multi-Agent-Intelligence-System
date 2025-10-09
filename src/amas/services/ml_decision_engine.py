@@ -5,25 +5,24 @@ Provides intelligent task allocation, resource optimization, and decision making
 
 import asyncio
 import logging
-import numpy as np
-import pandas as pd
-from typing import Dict, Any, List, Optional, Tuple, Union
+import os
+import queue
+import threading
+from collections import deque
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-import json
-import time
+from typing import Any, Dict, List, Optional
+
 import joblib
-import os
-from dataclasses import dataclass, field
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingRegressor
-from sklearn.neural_network import MLPClassifier, MLPRegressor
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, mean_squared_error, classification_report
+import numpy as np
+import pandas as pd
 import xgboost as xgb
-from collections import defaultdict, deque
-import threading
-import queue
+from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
+from sklearn.metrics import accuracy_score, mean_squared_error
+from sklearn.model_selection import train_test_split
+from sklearn.neural_network import MLPClassifier
+from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 logger = logging.getLogger(__name__)
 
@@ -557,7 +556,7 @@ class MLDecisionEngine:
                 # Use ML decision but with lower confidence
                 ml_decision.confidence *= 0.8
                 ml_decision.reasoning = (
-                    f"Hybrid: ML decision with reduced confidence due to uncertainty"
+                    "Hybrid: ML decision with reduced confidence due to uncertainty"
                 )
                 return ml_decision
 
@@ -620,8 +619,6 @@ class MLDecisionEngine:
                 return None
 
             # Convert historical data to DataFrame
-            df = pd.DataFrame(self.historical_data)
-
             # Prepare features for each agent
             features_list = []
 

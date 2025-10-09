@@ -4,16 +4,17 @@ Standalone Universal AI Manager - No dependencies on AMAS package
 Can be used independently in any project
 """
 
-import os
 import asyncio
-import aiohttp
-import time
-import random
 import logging
-from typing import Dict, List, Any, Optional
+import os
+import random
+import time
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+import aiohttp
 
 # Configure logging
 logging.basicConfig(
@@ -435,10 +436,33 @@ class StandaloneUniversalAIManager:
         """Make request to any provider"""
         config = self.providers[provider_id]
 
-        if config.provider_type == ProviderType.GEMINI:
-            return await self._make_gemini_request(provider_id, messages, **kwargs)
-        else:
-            return await self._make_openai_request(provider_id, messages, **kwargs)
+        try:
+            if config.provider_type == ProviderType.GEMINI:
+                result = await self._make_gemini_request(
+                    provider_id, messages, **kwargs
+                )
+            else:
+                result = await self._make_openai_request(
+                    provider_id, messages, **kwargs
+                )
+
+            # Ensure we always return a valid dictionary
+            if not result or not isinstance(result, dict):
+                return {
+                    "success": False,
+                    "error": "Provider returned invalid response",
+                    "provider": provider_id,
+                    "response_time": 0.0,
+                }
+
+            return result
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Request failed: {str(e)}",
+                "provider": provider_id,
+                "response_time": 0.0,
+            }
 
     def _is_provider_available(self, provider_id: str) -> bool:
         """Check if provider is available"""
@@ -529,19 +553,24 @@ class StandaloneUniversalAIManager:
                 logger.warning(f"No available providers (attempt {attempt + 1})")
                 continue
 
+            if provider_id not in self.providers:
+                logger.error(f"Selected invalid provider: {provider_id}")
+                continue
+
             config = self.providers[provider_id]
             logger.info(
-                f"🤖 Attempting with {config.name} (attempt {attempt + 1}/{max_attempts})"
+                f"🤖 Attempting with {config.name} "
+                f"(attempt {attempt + 1}/{max_attempts})"
             )
 
             try:
                 result = await self._make_request(provider_id, messages, **kwargs)
 
-                if not result:
-                    logger.error(f"❌ {config.name} returned None result")
+                if not result or not isinstance(result, dict):
+                    logger.error(f"❌ {config.name} returned invalid result: {result}")
                     config.failure_count += 1
                     config.consecutive_failures += 1
-                    config.last_error = "Provider returned None result"
+                    config.last_error = "Provider returned invalid result"
                     config.status = ProviderStatus.FAILED
                     continue
 
@@ -574,7 +603,8 @@ class StandaloneUniversalAIManager:
                         self.global_stats["total_fallbacks"] += 1
 
                     logger.info(
-                        f"✅ Success with {config.name} in {result['response_time']:.2f}s"
+                        f"✅ Success with {config.name} "
+                        f"in {result['response_time']:.2f}s"
                     )
                     return result
 
@@ -585,7 +615,8 @@ class StandaloneUniversalAIManager:
                     config.status = ProviderStatus.FAILED
 
                     logger.warning(
-                        f"❌ {config.name} failed: {result.get('error', 'Unknown error')}"
+                        f"❌ {config.name} failed: "
+                        f"{result.get('error', 'Unknown error')}"
                     )
 
             except Exception as e:

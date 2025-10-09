@@ -2,10 +2,10 @@
 Investigation Agent Implementation
 """
 
-import asyncio
+# import asyncio
 import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 
@@ -176,7 +176,7 @@ class InvestigationAgent(IntelligenceAgent):
         """Reconstruct timeline of events"""
         try:
             events = task.get("parameters", {}).get("events", [])
-            time_range = task.get("parameters", {}).get("time_range", {})
+            time_range = task.get("parameters", {}).get("time_range", "24h")
 
             # Mock timeline reconstruction
             timeline = []
@@ -266,7 +266,7 @@ class InvestigationAgent(IntelligenceAgent):
         """Perform general investigation"""
         try:
             description = task.get("description", "")
-            parameters = task.get("parameters", {})
+            # parameters = task.get("parameters", {})
 
             # Mock general investigation
             investigation_result = {

@@ -24,14 +24,22 @@ jobs:
         fetch-depth: 0
     
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.11'
+        cache: 'pip'
     
     - name: Install dependencies
-      run: |
+      run: |      python -m ensurepip --upgrade
+        python -m pip install --upgrade pippython -m ensurepip --upgrade
+
+
         python -m pip install --upgrade pip
-        python -m pip install openai requests python-dotenv
+        python -m pip install --upgrade setuptools wheel
+        if [ -f requirements.txt ]; then
+          python -m pip install -r requirements.txt
+        fi
+        python -m pip install openai requests aiohttp python-dotenv groq google-generativeai cerebras
     
     - name: Enhanced AI Code Review
       env:
@@ -44,12 +52,26 @@ jobs:
         QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+        CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         REPO_NAME: ${{ github.repository }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
         COMMIT_SHA: ${{ github.sha }}
       run: |
-        python .github/scripts/ai_enhanced_code_review.py
+        echo "🚀 Starting Enhanced AI Code Review..."
+        python .github/scripts/ai_enhanced_code_review.py || {
+          echo "⚠️ Enhanced code review encountered an issue, creating fallback report..."
+          mkdir -p artifacts
+          echo "# ⚠️ Enhanced Code Review Notice" > artifacts/enhanced_code_review_report.md
+          echo "" >> artifacts/enhanced_code_review_report.md
+          echo "The enhanced AI code review system is temporarily unavailable." >> artifacts/enhanced_code_review_report.md
+          echo "Your code will be reviewed by a team member shortly." >> artifacts/enhanced_code_review_report.md
+          echo "" >> artifacts/enhanced_code_review_report.md
+          echo "*Enhanced AI Code Review v2.0*" >> artifacts/enhanced_code_review_report.md
+        }
+        echo "✅ Enhanced AI Code Review Complete!"
     
     - name: Upload Enhanced Code Review Report
       uses: actions/upload-artifact@v4

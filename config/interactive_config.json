@@ -1,0 +1,52 @@
+{
+  "interactive_mode": {
+    "enabled": true,
+    "max_concurrent_tasks": 5,
+    "default_timeout": 300,
+    "auto_save_results": true,
+    "results_directory": "data/results"
+  },
+  "display": {
+    "mode": "detailed",
+    "use_colors": true,
+    "show_progress": true,
+    "detailed_logging": true,
+    "refresh_rate": 0.1,
+    "max_history": 50
+  },
+  "agents": {
+    "code_analysis": {"enabled": true, "priority": 1, "max_tasks": 4},
+    "security_expert": {"enabled": true, "priority": 1, "max_tasks": 3},
+    "intelligence_gathering": {"enabled": true, "priority": 2, "max_tasks": 5},
+    "performance_monitor": {"enabled": true, "priority": 3, "max_tasks": 3},
+    "documentation_specialist": {"enabled": true, "priority": 3, "max_tasks": 2},
+    "testing_coordinator": {"enabled": true, "priority": 3, "max_tasks": 3},
+    "integration_manager": {"enabled": true, "priority": 2, "max_tasks": 2}
+  },
+  "nlp": {
+    "model": "default",
+    "confidence_threshold": 0.5,
+    "max_entities": 10,
+    "context_window": 5
+  },
+  "intent": {
+    "patterns_enabled": true,
+    "ml_enabled": false,
+    "confidence_threshold": 0.6,
+    "fallback_intent": "general_analysis"
+  },
+  "tasks": {
+    "data_directory": "data/tasks",
+    "auto_cleanup": true,
+    "cleanup_interval_hours": 24,
+    "max_task_history": 1000
+  },
+  "ui": {
+    "theme": "default",
+    "color_scheme": "default",
+    "show_banner": true,
+    "show_metrics": true,
+    "show_agents": true,
+    "show_timeline": true
+  }
+}

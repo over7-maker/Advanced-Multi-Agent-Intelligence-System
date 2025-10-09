@@ -5,11 +5,9 @@ This module provides centralized management of all AMAS services,
 including initialization, health monitoring, and graceful shutdown.
 """
 
-import asyncio
 import logging
-from typing import Dict, Any, Optional, List
 from datetime import datetime
-from contextlib import asynccontextmanager
+from typing import Any, Dict, List, Optional
 
 from .database_service import DatabaseService
 from .knowledge_graph_service import KnowledgeGraphService
@@ -61,12 +59,45 @@ class ServiceManager:
             logger.info("Initializing all services...")
             self._initialization_errors.clear()
 
-            # Initialize services in order of dependency
-            await self._initialize_llm_service()
-            await self._initialize_vector_service()
-            await self._initialize_knowledge_graph_service()
-            await self._initialize_database_service()
-            await self._initialize_security_service()
+            # Initialize LLM service
+            self.llm_service = LLMService(
+                {
+                    "llm_service_url": self.config.get(
+                        "llm_service_url", "http://localhost:11434"
+                    )
+                }
+            )
+            await self.llm_service.initialize()
+            logger.info("LLM service initialized")
+
+            # Initialize Vector service
+            self.vector_service = VectorService(
+                {
+                    "vector_service_url": self.config.get(
+                        "vector_service_url", "http://localhost:8001"
+                    ),
+                    "embedding_model": self.config.get(
+                        "embedding_model", "sentence-transformers/all-MiniLM-L6-v2"
+                    ),
+                    "index_path": self.config.get("index_path", "/app/faiss_index"),
+                }
+            )
+            await self.vector_service.initialize()
+            logger.info("Vector service initialized")
+
+            # Initialize Knowledge Graph service
+            self.knowledge_graph_service = KnowledgeGraphService(
+                {
+                    "graph_service_url": self.config.get(
+                        "graph_service_url", "bolt://localhost:7687"
+                    ),
+                    "username": self.config.get("neo4j_username", "neo4j"),
+                    "password": self.config.get("neo4j_password", "amas123"),
+                    "database": self.config.get("neo4j_database", "neo4j"),
+                }
+            )
+            await self.knowledge_graph_service.initialize()
+            logger.info("Knowledge Graph service initialized")
 
             self.services_initialized = True
             logger.info("All services initialized successfully")
@@ -270,6 +301,10 @@ class ServiceManager:
             if self.llm_service:
                 await self.llm_service.close()
                 logger.info("LLM service closed")
+
+            if self.vector_service:
+                await self.vector_service.close()
+                logger.info("Vector service closed")
 
             if self.knowledge_graph_service:
                 await self.knowledge_graph_service.close()

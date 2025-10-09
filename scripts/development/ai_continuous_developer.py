@@ -3,20 +3,20 @@
 AI Continuous Developer - Uses multiple AI providers for continuous development
 """
 
-import asyncio
 import argparse
+import asyncio
+import json
 import logging
 import os
 import sys
-from pathlib import Path
-from typing import List, Dict, Any
-import json
 from datetime import datetime
+from pathlib import Path
+from typing import Any, Dict, List
 
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from services.ai_service_manager import AIServiceManager, AIProvider
+from services.ai_service_manager import AIProvider, AIServiceManager
 
 # Configure logging
 logging.basicConfig(
@@ -197,9 +197,10 @@ Provide a concise analysis."""
                         f"File: {fa['file']}\nAnalysis: {fa['analysis']}"
                     )
 
+                file_summaries_text = "\n".join(file_summaries)
                 summary_prompt = f"""Create a project-wide quality assessment based on these file analyses:
 
-{'\n'.join(file_summaries)}
+{file_summaries_text}
 
 Provide:
 1. Overall project quality score

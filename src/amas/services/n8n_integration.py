@@ -6,12 +6,11 @@ for advanced intelligence workflow orchestration.
 """
 
 import asyncio
-import json
 import logging
 import os
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import requests
 
@@ -29,7 +28,7 @@ class N8NIntegration:
         n8n_url: str = "http://localhost:5678",
         n8n_api_key: Optional[str] = None,
         username: str = "admin",
-        password: str = os.getenv("N8N_PASSWORD", "admin"),
+        password: str = "admin",
     ):
         """
         Initialize n8n integration.

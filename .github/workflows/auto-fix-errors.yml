@@ -1,0 +1,85 @@
+name: 🤖 Auto-Fix Code Quality Issues
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    types: [ opened, synchronize, reopened ]
+  workflow_dispatch:
+
+jobs:
+  auto-fix:
+    name: 🔧 Auto-Fix Code Quality Issues
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
+
+    - name: 🐍 Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: 📦 Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black isort flake8
+        pip install -r requirements.txt
+
+    - name: 🔧 Run automated fixes
+      run: |
+        chmod +x .github/scripts/auto-fix-errors.sh
+        ./.github/scripts/auto-fix-errors.sh
+
+    - name: 📊 Check for changes
+      id: changes
+      run: |
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "changes=true" >> $GITHUB_OUTPUT
+          echo "📝 Changes detected, will commit and push"
+        else
+          echo "changes=false" >> $GITHUB_OUTPUT
+          echo "✅ No changes needed"
+        fi
+
+    - name: 💾 Commit and push changes
+      if: steps.changes.outputs.changes == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add .
+        git commit -m "🤖 Auto-fix: Resolve code quality issues
+
+        - Fixed Black formatting issues
+        - Fixed import sorting with isort
+        - Removed unused imports
+        - Applied automated code quality improvements
+
+        [skip ci]"
+        
+        # Handle PR branches properly
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          git push origin HEAD:${{ github.head_ref }}
+        else
+          git push
+        fi
+
+    - name: 📋 Summary
+      run: |
+        echo "## 🤖 Auto-Fix Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ steps.changes.outputs.changes }}" == "true" ]; then
+          echo "✅ **Changes Applied**: Code quality issues have been automatically fixed and committed." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔧 Fixes Applied:" >> $GITHUB_STEP_SUMMARY
+          echo "- Black code formatting" >> $GITHUB_STEP_SUMMARY
+          echo "- Import sorting with isort" >> $GITHUB_STEP_SUMMARY
+          echo "- Removed unused imports" >> $GITHUB_STEP_SUMMARY
+          echo "- General code quality improvements" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "✅ **No Changes Needed**: Code is already properly formatted and follows quality standards." >> $GITHUB_STEP_SUMMARY
+        fi

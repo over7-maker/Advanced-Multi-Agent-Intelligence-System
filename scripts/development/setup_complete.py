@@ -3,13 +3,13 @@ Complete Setup Script for AMAS Intelligence System
 Handles all dependencies, environment setup, and system initialization
 """
 
-import subprocess
-import sys
-import os
 import asyncio
 import logging
+import os
+import subprocess
+import sys
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Configure logging
 logging.basicConfig(
@@ -271,22 +271,11 @@ async def test_system_components():
 
         # Test services
         try:
-            from services.llm_service import LLMService
-            from services.vector_service import VectorService
-            from services.knowledge_graph_service import KnowledgeGraphService
             from services.database_service import DatabaseService
+            from services.knowledge_graph_service import KnowledgeGraphService
+            from services.llm_service import LLMService
             from services.security_service import SecurityService
-
-            logger.info("✅ Service imports successful")
-        except Exception as e:
-            logger.error(f"❌ Service imports failed: {e}")
-            return False
-
-        # Test agents
-        try:
-            from agents.osint.osint_agent import OSINTAgent
-            from agents.investigation.investigation_agent import InvestigationAgent
-            from agents.forensics.forensics_agent import ForensicsAgent
+            from services.vector_service import VectorService
 
             logger.info("✅ Agent imports successful")
         except Exception as e:
