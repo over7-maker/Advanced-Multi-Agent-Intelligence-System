@@ -13,7 +13,7 @@ import os
 
 # import sys
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 # Import the new API manager components
 from .ai_api_manager import AIAPIManager, get_ai_response

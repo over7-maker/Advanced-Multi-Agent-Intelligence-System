@@ -5,6 +5,7 @@ Handles 6 different AI providers with intelligent failover
 
 import logging
 import os
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
