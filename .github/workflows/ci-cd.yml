@@ -39,6 +39,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
+        pip install -r requirements-dev.txt
     
     - name: 🤖 Auto-fix code quality issues
       run: |
@@ -122,6 +123,7 @@ jobs:
         python -m ensurepip --upgrade
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install -r requirements-dev.txt
         pip install -r requirements-dev.txt
     
     - name: 🏗️ Setup test environment
@@ -227,6 +229,7 @@ jobs:
 
         python -m ensurepip --upgrade
         pip install -r requirements.txt
+        pip install -r requirements-dev.txt
         pip install -r requirements-dev.txt
     
     - name: 🎭 Run E2E tests
