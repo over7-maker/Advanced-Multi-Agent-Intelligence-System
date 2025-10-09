@@ -11,7 +11,6 @@ from datetime import datetime
 
 import requests
 
-
 def main():
     print("🤖 Simple Working Auto-Responder")
     print("=" * 50)

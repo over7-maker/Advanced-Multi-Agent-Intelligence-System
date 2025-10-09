@@ -3,6 +3,7 @@ Security Service for AMAS Intelligence System
 """
 
 import logging
+import os
 import secrets
 from datetime import datetime, timedelta
 from typing import Any, Dict, List

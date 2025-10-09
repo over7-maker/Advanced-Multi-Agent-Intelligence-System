@@ -14,6 +14,7 @@ import requests
 from openai import OpenAI
 
 
+
 class AICodeAnalyzer:
     def __init__(self):
         self.github_token = os.environ.get("GITHUB_TOKEN")
@@ -316,10 +317,22 @@ Keep the analysis concise but thorough.
 
         security_patterns = {
             "hardcoded_secrets": [
-                (r'password\s*=\s*["\'][^"\']+["\']', "hardcoded password"),
-                (r'api_key\s*=\s*["\'][^"\']+["\']', "hardcoded API key"),
-                (r'secret\s*=\s*["\'][^"\']+["\']', "hardcoded secret"),
-                (r'(?<!github_)token\s*=\s*["\'][^"\']+["\']', "hardcoded token"),
+                (
+                    r'password\s*=\s*["\'][^"\'][email protected]+["\']',
+                    "hardcoded password",
+                ),
+                (
+                    r'api_key\s*=\s*["\'][^"\'][email protected]+["\']',
+                    "hardcoded API key",
+                ),
+                (
+                    r'secret\s*=\s*["\'][^"\'][email protected]+["\']',
+                    "hardcoded secret",
+                ),
+                (
+                    r'(?<!github_)token\s*=\s*["\'][^"\'][email protected]+["\']',
+                    "hardcoded token",
+                ),
             ],
             "sql_injection": [
                 (r"execute\s*\([^)]*\+", "SQL injection via string concatenation"),
@@ -371,18 +384,18 @@ Keep the analysis concise but thorough.
                     if line.strip().startswith("#") or line.strip().startswith("//"):
                         continue
 
-                    # Skip if it's a pattern definition
+                    # Skip if it's a pattern definition or example
                     if any(
                         pat in line
                         for pat in [
                             "'password =",
-                            '"password =',
+                            '"password ="',
                             "'token =",
-                            '"token =',
+                            '"token ="',
                             "'api_key =",
-                            '"api_key =',
+                            '"api_key ="',
                             "'secret =",
-                            '"secret =',
+                            '"secret ="',
                         ]
                     ):
                         continue

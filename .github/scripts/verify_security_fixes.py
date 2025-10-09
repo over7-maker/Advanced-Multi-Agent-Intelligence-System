@@ -8,6 +8,7 @@ import subprocess
 import sys
 
 
+
 def test_files():
     """Test files that previously had false positives"""
     files_to_test = [

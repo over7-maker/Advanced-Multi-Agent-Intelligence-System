@@ -18,6 +18,26 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
+import sys
+
+# Import the new intelligent API management system
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+logger = logging.getLogger(__name__)
+
+try:
+    from amas.core.ai_api_manager import (
+        generate_ai_response,
+        TaskType,
+        APIProvider,
+        get_api_manager,
+    )
+
+    API_MANAGER_AVAILABLE = True
+except ImportError:
+    logger.warning("New API manager not available, using fallback mode")
+    API_MANAGER_AVAILABLE = False
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,

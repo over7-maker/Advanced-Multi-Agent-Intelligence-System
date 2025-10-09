@@ -14,6 +14,7 @@ import requests
 from openai import OpenAI
 
 
+
 class AIIssueResponder:
     def __init__(self):
         self.github_token = os.environ.get("GITHUB_TOKEN")
