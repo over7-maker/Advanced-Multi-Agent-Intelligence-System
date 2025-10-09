@@ -48,8 +48,6 @@ async def init_database():
 
 async def close_database():
     """Close database connection"""
-    global engine
-
     if engine:
         await engine.dispose()
         logger.info("Database connection closed")

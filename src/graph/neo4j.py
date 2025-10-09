@@ -44,8 +44,6 @@ async def init_neo4j():
 
 async def close_neo4j():
     """Close Neo4j connection"""
-    global neo4j_driver
-
     if neo4j_driver:
         await neo4j_driver.close()
         logger.info("Neo4j connection closed")

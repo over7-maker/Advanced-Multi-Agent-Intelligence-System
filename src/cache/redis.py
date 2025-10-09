@@ -53,8 +53,6 @@ async def close_redis() -> None:
 
 async def is_connected() -> bool:
     """Check if Redis is connected"""
-    global _redis_client
-    
     if not _redis_client:
         return False
     
