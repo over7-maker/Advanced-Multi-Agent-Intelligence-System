@@ -7,7 +7,7 @@ import logging
 import os
 import tempfile
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
 

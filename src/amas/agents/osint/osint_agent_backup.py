@@ -8,7 +8,7 @@ Enhanced OSINT Collection Agent
 import logging
 import re
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from urllib.parse import urljoin, urlparse
 
 import aiohttp

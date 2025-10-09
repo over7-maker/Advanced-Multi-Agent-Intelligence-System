@@ -15,7 +15,7 @@ import logging
 # import sys
 # import time
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from ..agents.forensics.forensics_agent import ForensicsAgent
 from ..agents.investigation.investigation_agent import InvestigationAgent

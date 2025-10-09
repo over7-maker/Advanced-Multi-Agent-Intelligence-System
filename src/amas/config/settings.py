@@ -7,7 +7,7 @@ This module provides type-safe configuration with validation and environment var
 
 # import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings

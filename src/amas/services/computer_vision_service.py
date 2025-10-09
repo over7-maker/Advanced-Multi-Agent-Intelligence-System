@@ -5,13 +5,12 @@ Provides image analysis, object detection, and visual intelligence capabilities
 
 import asyncio
 import base64
-import json
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -337,7 +336,7 @@ class ComputerVisionService:
         """Decode base64 image data"""
         try:
             # Decode base64 image data
-            image_bytes = base64.b64decode(image_data)
+            # image_bytes = base64.b64decode(image_data)
 
             # Simulate image decoding
             # In real implementation, this would use actual image decoding libraries

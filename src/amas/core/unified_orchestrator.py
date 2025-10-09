@@ -13,7 +13,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 from ..agents.base.intelligence_agent import IntelligenceAgent
 from ..agents.unified_ai_router import agent_complete, get_ai_router
