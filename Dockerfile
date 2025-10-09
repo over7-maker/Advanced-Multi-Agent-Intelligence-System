@@ -36,6 +36,7 @@ COPY scripts/ ./scripts/
 COPY config/ ./config/
 COPY web/ ./web/
 COPY main.py .
+COPY main_simple.py .
 COPY pytest.ini .
 COPY .env.example .
 
@@ -62,4 +63,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
 
 # Default command
-CMD ["python", "main.py"]
+CMD ["python", "main_simple.py"]

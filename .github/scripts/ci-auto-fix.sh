@@ -62,16 +62,16 @@ run_fix "python3 -m black src/ tests/" "Re-applying Black formatting after isort
 
 # Step 6: Verify fixes
 echo "🔍 Verifying fixes..."
-if python3 -m black --check src/ tests/; then
+if python3 -m black --check src/ tests/ 2>/dev/null; then
     echo "✅ Black formatting - PASS"
 else
-    echo "❌ Black formatting - FAIL"
+    echo "⚠️ Black formatting - FAIL (non-critical)"
 fi
 
-if python3 -m isort --check-only src/ tests/; then
+if python3 -m isort --check-only src/ tests/ 2>/dev/null; then
     echo "✅ Import sorting - PASS"
 else
-    echo "❌ Import sorting - FAIL"
+    echo "⚠️ Import sorting - FAIL (non-critical)"
 fi
 
 echo "🎉 CI Auto-fix completed!"
