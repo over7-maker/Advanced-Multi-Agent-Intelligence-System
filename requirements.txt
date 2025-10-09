@@ -12,10 +12,11 @@ openai==1.58.1
 anthropic==0.40.0
 google-generativeai==0.8.3
 groq==0.13.0
-# cohere==5.5.3  # Temporarily disabled due to dependency conflicts
-# huggingface-hub==0.24.6  # Temporarily disabled due to dependency conflicts
-# transformers==4.45.0  # Temporarily disabled due to dependency conflicts
-# torch==2.5.1  # Temporarily disabled due to dependency conflicts
+cohere==5.5.3
+# Fixed: huggingface-hub version compatible with Python 3.13
+huggingface-hub==0.26.2
+transformers==4.45.0
+# torch==2.5.1  # Temporarily disabled due to size constraints
 scikit-learn==1.6.0
 numpy==2.2.1
 pandas==2.2.3
@@ -28,17 +29,17 @@ aioredis==2.0.1
 neo4j==5.28.0
 
 # Monitoring and Performance (Phase 1 - Core only)
-# psutil==5.9.8  # Temporarily disabled due to dependency conflicts
-# matplotlib==3.10.0  # Temporarily disabled due to dependency conflicts
-# seaborn==0.13.2  # Temporarily disabled due to dependency conflicts
-# plotly==5.24.1  # Temporarily disabled due to dependency conflicts
+psutil==6.1.0
+matplotlib==3.10.0
+seaborn==0.13.2
+plotly==5.24.1
 
-# Security and Authentication (Phase 1 - Core only)
+# Security and Authentication
 bcrypt==4.2.1
 pyjwt==2.10.1
 cryptography==44.0.0
-# bandit==1.7.10  # Temporarily disabled due to dependency conflicts
-# safety==3.2.7  # Temporarily disabled due to dependency conflicts
+bandit==1.7.10
+safety==3.2.7
 
 # HTTP and Networking
 httpx==0.28.1
@@ -71,8 +72,8 @@ beautifulsoup4==4.12.3
 selenium==4.28.0
 
 # Vector Search and Embeddings (Phase 1 - Core only)
-# sentence-transformers==3.3.1  # Temporarily disabled due to dependency conflicts
-# faiss-cpu==1.12.0  # Temporarily disabled due to dependency conflicts
+sentence-transformers==3.3.1
+faiss-cpu==1.12.0
 
 # Additional Dependencies
 pyyaml==6.0.2
