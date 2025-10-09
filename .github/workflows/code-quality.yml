@@ -52,10 +52,10 @@ jobs:
     - name: Run security checks
       run: |
         echo "🔒 Running Bandit security checks..."
-        bandit -r . -f json -o bandit_report.json || true
-        # Ensure the file exists even if bandit fails
-        if [ ! -f bandit_report.json ]; then
-          echo '{"results": [], "errors": []}' > bandit_report.json
+        python3 scripts/generate_bandit_report.py
+        # Rename for this workflow
+        if [ -f bandit-report.json ]; then
+          mv bandit-report.json bandit_report.json
         fi
         
     - name: Comment on PR
