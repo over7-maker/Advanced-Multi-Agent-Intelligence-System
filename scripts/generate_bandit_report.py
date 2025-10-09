@@ -12,16 +12,16 @@ from pathlib import Path
 def generate_bandit_report():
     """Generate bandit report with proper error handling"""
     output_file = "bandit-report.json"
-    
+
     try:
         # Try to run bandit
-        result = subprocess.run([
-            "python3", "-m", "bandit", 
-            "-r", "src/", 
-            "-f", "json", 
-            "-o", output_file
-        ], capture_output=True, text=True, timeout=60)
-        
+        result = subprocess.run(
+            ["python3", "-m", "bandit", "-r", "src/", "-f", "json", "-o", output_file],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
         # Check if file was created
         if Path(output_file).exists():
             print(f"✅ Bandit report generated: {output_file}")
@@ -30,7 +30,7 @@ def generate_bandit_report():
             print("⚠️ Bandit report not created, generating fallback")
             create_fallback_report(output_file)
             return True
-            
+
     except subprocess.TimeoutExpired:
         print("⚠️ Bandit scan timed out, generating fallback")
         create_fallback_report(output_file)
@@ -60,13 +60,13 @@ def create_fallback_report(output_file):
             "SEVERITY.MEDIUM": 0,
             "SEVERITY.LOW": 0,
             "SEVERITY.UNDEFINED": 0,
-            "CONFIDENCE.UNDEFINED": 0
-        }
+            "CONFIDENCE.UNDEFINED": 0,
+        },
     }
-    
-    with open(output_file, 'w') as f:
+
+    with open(output_file, "w") as f:
         json.dump(fallback_report, f, indent=2)
-    
+
     print(f"✅ Fallback bandit report created: {output_file}")
 
 
