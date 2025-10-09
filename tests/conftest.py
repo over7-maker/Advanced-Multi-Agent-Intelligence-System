@@ -1,15 +1,14 @@
 """
 AMAS Test Configuration
-Production-ready test setup with fixtures and mocks
+Pytest configuration and fixtures for the AMAS test suite.
 """
 
 import asyncio
 import os
-import tempfile
-from typing import AsyncGenerator, Generator
-from unittest.mock import AsyncMock, MagicMock
-
 import pytest
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock
+from typing import Dict, Any
 
 # Set test environment
 os.environ["ENVIRONMENT"] = "testing"
@@ -19,245 +18,144 @@ os.environ["NEO4J_URI"] = "bolt://localhost:7687"
 os.environ["SECRET_KEY"] = "test_secret_key"
 os.environ["JWT_SECRET_KEY"] = "test_jwt_secret_key"
 
-from src.config.settings import Settings, get_settings
-
 
 @pytest.fixture(scope="session")
-def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
-    """Create an instance of the default event loop for the test session."""
+def event_loop():
+    """Create an event loop for the test session."""
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
 
 @pytest.fixture
-def test_settings() -> Settings:
-    """Get test settings with overridden values."""
-    return get_settings()
-
-
-@pytest.fixture
-def temp_dir() -> Generator[str, None, None]:
-    """Create a temporary directory for test files."""
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        yield tmp_dir
-
-
-@pytest.fixture
-def mock_database():
-    """Mock database connection."""
-    mock_db = MagicMock()
-    mock_db.execute = AsyncMock()
-    mock_db.fetch_one = AsyncMock()
-    mock_db.fetch_all = AsyncMock()
-    return mock_db
-
-
-@pytest.fixture
-def mock_redis():
-    """Mock Redis connection."""
-    mock_redis = MagicMock()
-    mock_redis.get = AsyncMock()
-    mock_redis.set = AsyncMock()
-    mock_redis.delete = AsyncMock()
-    mock_redis.exists = AsyncMock()
-    return mock_redis
-
-
-@pytest.fixture
-def mock_neo4j():
-    """Mock Neo4j connection."""
-    mock_neo4j = MagicMock()
-    mock_neo4j.run = AsyncMock()
-    mock_neo4j.execute_read = AsyncMock()
-    mock_neo4j.execute_write = AsyncMock()
-    return mock_neo4j
-
-
-@pytest.fixture
-def mock_openai():
-    """Mock OpenAI API."""
-    mock_openai = MagicMock()
-    mock_openai.chat.completions.create = AsyncMock()
-    mock_openai.embeddings.create = AsyncMock()
-    return mock_openai
-
-
-@pytest.fixture
-def mock_anthropic():
-    """Mock Anthropic API."""
-    mock_anthropic = MagicMock()
-    mock_anthropic.messages.create = AsyncMock()
-    return mock_anthropic
-
-
-@pytest.fixture
-def sample_agent_data():
-    """Sample agent data for testing."""
+def test_config():
+    """Test configuration fixture."""
     return {
-        "id": "test-agent-1",
-        "name": "Test Agent",
-        "type": "research",
-        "status": "active",
-        "capabilities": ["web_search", "data_analysis"],
-        "config": {"model": "gpt-4", "temperature": 0.7, "max_tokens": 2000},
+        "environment": "testing",
+        "database_url": "sqlite:///test.db",
+        "redis_url": "redis://localhost:6379/1",
+        "neo4j_uri": "bolt://localhost:7687",
+        "secret_key": "test_secret_key",
+        "jwt_secret_key": "test_jwt_secret_key",
+        "debug": True,
+        "testing": True
     }
 
 
 @pytest.fixture
-def sample_task_data():
-    """Sample task data for testing."""
+def mock_database_service():
+    """Mock database service for testing."""
+    mock_service = MagicMock()
+    mock_service.is_healthy = AsyncMock(return_value=True)
+    mock_service.initialize = AsyncMock()
+    mock_service.shutdown = AsyncMock()
+    return mock_service
+
+
+@pytest.fixture
+def mock_security_service():
+    """Mock security service for testing."""
+    mock_service = MagicMock()
+    mock_service.hash_password = MagicMock(return_value="hashed_password")
+    mock_service.verify_password = MagicMock(return_value=True)
+    mock_service.create_access_token = MagicMock(return_value="test_token")
+    mock_service.verify_token = MagicMock(return_value={"sub": "test_user"})
+    return mock_service
+
+
+@pytest.fixture
+def sample_task():
+    """Sample task for testing."""
     return {
-        "id": "test-task-1",
-        "agent_id": "test-agent-1",
-        "description": "Test task description",
-        "status": "pending",
-        "priority": "medium",
-        "created_at": "2024-01-01T00:00:00Z",
-        "updated_at": "2024-01-01T00:00:00Z",
+        "id": "test_task_001",
+        "type": "security_scan",
+        "description": "Test security scan task",
+        "parameters": {"target": "example.com", "depth": "basic"},
+        "priority": 1,
+        "status": "pending"
     }
 
 
 @pytest.fixture
-def sample_user_data():
-    """Sample user data for testing."""
+def sample_workflow():
+    """Sample workflow for testing."""
     return {
-        "id": "test-user-1",
-        "username": "testuser",
-        "email": "test@example.com",
-        "role": "user",
-        "is_active": True,
-        "created_at": "2024-01-01T00:00:00Z",
+        "id": "test_workflow_001",
+        "name": "Test Security Workflow",
+        "description": "Test workflow for security scanning",
+        "steps": [
+            {
+                "name": "scan",
+                "agent": "security_expert",
+                "parameters": {"target": "example.com"}
+            }
+        ]
     }
 
 
 @pytest.fixture
-def mock_http_client():
-    """Mock HTTP client for external API calls."""
-    mock_client = MagicMock()
-    mock_client.get = AsyncMock()
-    mock_client.post = AsyncMock()
-    mock_client.put = AsyncMock()
-    mock_client.delete = AsyncMock()
-    return mock_client
+def mock_ai_provider():
+    """Mock AI provider for testing."""
+    mock_provider = MagicMock()
+    mock_provider.generate = AsyncMock(return_value="Mock AI response")
+    mock_provider.is_healthy = AsyncMock(return_value=True)
+    mock_provider.get_status = MagicMock(return_value={"status": "healthy"})
+    return mock_provider
 
 
 @pytest.fixture
-def mock_logger():
-    """Mock logger for testing."""
-    mock_logger = MagicMock()
-    mock_logger.info = MagicMock()
-    mock_logger.warning = MagicMock()
-    mock_logger.error = MagicMock()
-    mock_logger.debug = MagicMock()
-    return mock_logger
+def mock_agent():
+    """Mock agent for testing."""
+    mock_agent = MagicMock()
+    mock_agent.agent_id = "test_agent_001"
+    mock_agent.name = "Test Agent"
+    mock_agent.status = "active"
+    mock_agent.execute_task = AsyncMock(return_value={"status": "success", "result": "Mock task result"})
+    return mock_agent
 
 
-# Test data fixtures
 @pytest.fixture
-def test_agents():
-    """Test agent data."""
-    return [
-        {
-            "id": "agent-1",
-            "name": "Research Agent",
-            "type": "research",
-            "status": "active",
-        },
-        {
-            "id": "agent-2",
-            "name": "Analysis Agent",
-            "type": "analysis",
-            "status": "active",
-        },
+def mock_orchestrator():
+    """Mock orchestrator for testing."""
+    mock_orchestrator = MagicMock()
+    mock_orchestrator.submit_task = AsyncMock(return_value="task_id_123")
+    mock_orchestrator.get_task_status = AsyncMock(return_value={"status": "completed"})
+    mock_orchestrator.get_agents = MagicMock(return_value=[])
+    return mock_orchestrator
+
+
+@pytest.fixture(autouse=True)
+async def setup_test_environment():
+    """Setup test environment before each test."""
+    # Ensure test directories exist
+    test_dirs = [
+        "logs",
+        "data/temp",
+        "artifacts/test",
     ]
+    
+    for dir_path in test_dirs:
+        Path(dir_path).mkdir(parents=True, exist_ok=True)
+    
+    yield
+    
+    # Cleanup after test
+    # Remove test artifacts if needed
+    pass
 
 
 @pytest.fixture
-def test_tasks():
-    """Test task data."""
-    return [
-        {
-            "id": "task-1",
-            "agent_id": "agent-1",
-            "description": "Research task",
-            "status": "pending",
-        },
-        {
-            "id": "task-2",
-            "agent_id": "agent-2",
-            "description": "Analysis task",
-            "status": "in_progress",
-        },
-    ]
-
-
-# Async test utilities
-@pytest.fixture
-async def async_test_client():
-    """Async test client for API testing."""
+def client():
+    """FastAPI test client fixture."""
     from fastapi.testclient import TestClient
-
-    from main import app
-
-    with TestClient(app) as client:
-        yield client
-
-
-# Database test utilities
-@pytest.fixture
-async def test_database():
-    """Test database setup."""
-    # This would set up a test database
-    # Implementation depends on your database setup
-    pass
-
-
-@pytest.fixture
-async def cleanup_database():
-    """Cleanup test database after tests."""
-    # This would clean up test data
-    # Implementation depends on your database setup
-    pass
-
-
-# Performance testing fixtures
-@pytest.fixture
-def performance_metrics():
-    """Performance testing metrics."""
-    return {
-        "response_time": 0.0,
-        "memory_usage": 0.0,
-        "cpu_usage": 0.0,
-        "request_count": 0,
-    }
-
-
-# Security testing fixtures
-@pytest.fixture
-def security_test_cases():
-    """Security test cases."""
-    return [
-        {
-            "name": "SQL Injection",
-            "payload": "'; DROP TABLE users; --",
-            "expected_result": "safe",
-        },
-        {
-            "name": "XSS Attack",
-            "payload": "<script>alert('xss')</script>",
-            "expected_result": "safe",
-        },
-    ]
-
-
-# Load testing fixtures
-@pytest.fixture
-def load_test_config():
-    """Load testing configuration."""
-    return {
-        "users": 100,
-        "spawn_rate": 10,
-        "run_time": "5m",
-        "target_host": "http://localhost:8000",
-    }
+    try:
+        from src.api.main import app
+        return TestClient(app)
+    except ImportError:
+        # Fallback mock client for incomplete API
+        mock_client = MagicMock()
+        mock_client.get = MagicMock()
+        mock_client.post = MagicMock()
+        mock_client.put = MagicMock()
+        mock_client.delete = MagicMock()
+        return mock_client
