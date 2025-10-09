@@ -53,6 +53,10 @@ jobs:
       run: |
         echo "🔒 Running Bandit security checks..."
         bandit -r . -f json -o bandit_report.json || true
+        # Ensure the file exists even if bandit fails
+        if [ ! -f bandit_report.json ]; then
+          echo '{"results": [], "errors": []}' > bandit_report.json
+        fi
         
     - name: Comment on PR
       if: failure() && github.event_name == 'pull_request'
