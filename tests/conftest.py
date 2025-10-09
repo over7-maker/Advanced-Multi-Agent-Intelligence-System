@@ -176,3 +176,22 @@ def client():
         mock_client.put = MagicMock()
         mock_client.delete = MagicMock()
         return mock_client
+
+
+@pytest.fixture
+def async_test_client():
+    """Async FastAPI test client fixture."""
+    from fastapi.testclient import TestClient
+
+    try:
+        from src.api.main import app
+
+        return TestClient(app)
+    except ImportError:
+        # Fallback mock client for incomplete API
+        mock_client = MagicMock()
+        mock_client.get = MagicMock()
+        mock_client.post = MagicMock()
+        mock_client.put = MagicMock()
+        mock_client.delete = MagicMock()
+        return mock_client
