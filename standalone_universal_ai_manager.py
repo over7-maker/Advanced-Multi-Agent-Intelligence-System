@@ -559,7 +559,8 @@ class StandaloneUniversalAIManager:
 
             config = self.providers[provider_id]
             logger.info(
-                f"🤖 Attempting with {config.name} (attempt {attempt + 1}/{max_attempts})"
+                f"🤖 Attempting with {config.name} "
+                f"(attempt {attempt + 1}/{max_attempts})"
             )
 
             try:
@@ -602,7 +603,8 @@ class StandaloneUniversalAIManager:
                         self.global_stats["total_fallbacks"] += 1
 
                     logger.info(
-                        f"✅ Success with {config.name} in {result['response_time']:.2f}s"
+                        f"✅ Success with {config.name} "
+                        f"in {result['response_time']:.2f}s"
                     )
                     return result
 
@@ -613,7 +615,8 @@ class StandaloneUniversalAIManager:
                     config.status = ProviderStatus.FAILED
 
                     logger.warning(
-                        f"❌ {config.name} failed: {result.get('error', 'Unknown error')}"
+                        f"❌ {config.name} failed: "
+                        f"{result.get('error', 'Unknown error')}"
                     )
 
             except Exception as e:

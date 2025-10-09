@@ -11,7 +11,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional
 
 from amas.agents.base.intelligence_agent import IntelligenceAgent
 
@@ -245,7 +245,7 @@ Provide analysis in JSON format:
             try:
                 analysis = json.loads(result)
                 return analysis
-            except:
+            except Exception:
                 return {
                     "entities": [],
                     "concepts": [],

@@ -8,7 +8,7 @@ import asyncio
 import logging
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from .intelligence.intelligence_manager import intelligence_manager
 from .providers.manager import provider_manager

@@ -174,7 +174,7 @@ try:
     app.mount(
         "/dashboard", StaticFiles(directory="web/build", html=True), name="dashboard"
     )
-except:
+except Exception:
     # If build directory doesn't exist, create a simple dashboard
     @app.get("/dashboard", response_class=HTMLResponse)
     async def dashboard():

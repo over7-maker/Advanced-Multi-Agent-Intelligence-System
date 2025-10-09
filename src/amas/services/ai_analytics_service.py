@@ -4,16 +4,12 @@ Provides AI-powered analytics, predictive modeling, and advanced intelligence ca
 """
 
 import asyncio
-import json
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
-
-import numpy as np
-import pandas as pd
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -313,13 +309,6 @@ class AIAnalyticsService:
             await asyncio.sleep(0.5)  # Simulate processing time
 
             # Generate mock results
-            predictions = {
-                "threat_probability": 0.75,
-                "attack_timeline": "24-48 hours",
-                "target_likelihood": 0.8,
-                "impact_severity": "high",
-            }
-
             findings = [
                 {
                     "type": "prediction",

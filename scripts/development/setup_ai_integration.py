@@ -259,19 +259,19 @@ def execute_command(user_input):
     # Secure command execution - validate and sanitize input
     import shlex
     import os
-    
+
     # Validate input to prevent command injection
     if not user_input or not isinstance(user_input, str):
         return "Invalid input"
-    
+
     # Sanitize input - only allow alphanumeric characters and safe paths
     sanitized_input = ''.join(c for c in user_input if c.isalnum() or c in '._-/')
-    
+
     # Use safe command execution without shell=True
     try:
         # Only allow specific safe commands
         if sanitized_input.startswith(('test', 'example', 'demo')):
-            result = subprocess.run(['ls', sanitized_input], 
+            result = subprocess.run(['ls', sanitized_input],
                                   capture_output=True, text=True, timeout=10)
             return result.stdout
         else:

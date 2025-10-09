@@ -8,52 +8,19 @@ that creates immersive 3D visualizations of AI agent interactions,
 quantum states, and multi-dimensional data structures.
 """
 
-import asyncio
-import json
 import math
-import queue
 import threading
 import time
-from dataclasses import asdict, dataclass
-from datetime import datetime
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
-# Advanced visualization libraries
-try:
-    import matplotlib.animation as animation
-    import matplotlib.pyplot as plt
-    from mpl_toolkits.mplot3d import Axes3D
-
-    MATPLOTLIB_AVAILABLE = True
-except ImportError:
-    MATPLOTLIB_AVAILABLE = False
-
-try:
-    import plotly.express as px
-    import plotly.graph_objects as go
-    from plotly.subplots import make_subplots
-
-    PLOTLY_AVAILABLE = True
-except ImportError:
-    PLOTLY_AVAILABLE = False
-
-from rich import print as rprint
-from rich.align import Align
-from rich.columns import Columns
-
 # Rich for console rendering
 from rich.console import Console
-from rich.layout import Layout
-from rich.live import Live
 from rich.panel import Panel
-from rich.progress import BarColumn, Progress, SpinnerColumn, TextColumn
-from rich.syntax import Syntax
 from rich.table import Table
-from rich.text import Text
-from rich.tree import Tree
 
 
 class HolographicMode(Enum):
@@ -403,11 +370,13 @@ class HolographicRenderer:
 
         for field in self.active_fields.values():
             for particle in field.particles:
-                px, py, pz = particle.position
+                pos_x, pos_y, pos_z = particle.position
 
                 # Calculate distance
                 distance = math.sqrt(
-                    (screen_x - px) ** 2 + (screen_y - py) ** 2 + (screen_z - pz) ** 2
+                    (screen_x - pos_x) ** 2
+                    + (screen_y - pos_y) ** 2
+                    + (screen_z - pos_z) ** 2
                 )
 
                 # Calculate field contribution

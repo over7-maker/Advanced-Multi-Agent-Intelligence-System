@@ -6,17 +6,10 @@ This module provides a comprehensive visual interface with real-time monitoring,
 progress tracking, and beautiful console output for the AMAS interactive system.
 """
 
-import asyncio
-import json
-import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
-
-from rich import print as rprint
-from rich.align import Align
-from rich.columns import Columns
+from typing import Any, Dict, List, Optional
 
 # Rich for advanced console UI
 from rich.console import Console, Group
@@ -32,13 +25,7 @@ from rich.progress import (
     TextColumn,
     TimeElapsedColumn,
 )
-from rich.prompt import Confirm, IntPrompt, Prompt
-from rich.rule import Rule
-from rich.spinner import Spinner
-from rich.status import Status
-from rich.syntax import Syntax
 from rich.table import Table
-from rich.text import Text
 from rich.tree import Tree
 
 

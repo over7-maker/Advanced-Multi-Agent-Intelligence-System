@@ -20,9 +20,7 @@ class TestAMASApplication:
         assert amas_app.orchestrator is not None
 
     @pytest.mark.asyncio
-    async def test_service_manager_initialization(
-        self, amas_app: AMASApplication
-    ):
+    async def test_service_manager_initialization(self, amas_app: AMASApplication):
         """Test that service manager initializes all services"""
         service_manager = amas_app.service_manager
 
@@ -34,9 +32,7 @@ class TestAMASApplication:
         assert service_manager.security_service is not None
 
     @pytest.mark.asyncio
-    async def test_orchestrator_initialization(
-        self, amas_app: AMASApplication
-    ):
+    async def test_orchestrator_initialization(self, amas_app: AMASApplication):
         """Test that orchestrator initializes with agents"""
         orchestrator = amas_app.orchestrator
 

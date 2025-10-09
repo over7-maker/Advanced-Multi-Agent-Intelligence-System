@@ -8,7 +8,7 @@ import asyncio
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import click
 from rich.console import Console
@@ -107,13 +107,11 @@ def submit_task(ctx, task_type, description, priority, params, wait):
                 task_id = await app.submit_task(task_data)
                 progress.update(submit_task, description=f"Task submitted: {task_id}")
 
-                console.print(f"[green]Task submitted successfully[/green]")
+                console.print("[green]Task submitted successfully[/green]")
                 console.print(f"Task ID: [blue]{task_id}[/blue]")
 
                 if wait:
-                    wait_task = progress.add_task(
-                        "Waiting for completion...", total=None
-                    )
+                    progress.add_task("Waiting for completion...", total=None)
 
                     while True:
                         result = await app.get_task_result(task_id)
@@ -244,7 +242,7 @@ def health(ctx, check_deps, check_services, check_all):
             console.print("[blue]AMAS Health Check[/blue]")
 
             # Basic configuration check
-            config = get_settings()
+            get_settings()
             console.print("[green]✓[/green] Configuration loaded")
 
             if check_deps:

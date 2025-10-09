@@ -17,7 +17,10 @@ from typing import Any, Dict, List
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from src.amas.services.ai_service_manager import AIProvider, AIServiceManager
+from src.amas.services.ai_service_manager import (  # noqa: E402
+    AIProvider,
+    AIServiceManager,
+)
 
 # Configure logging
 logging.basicConfig(

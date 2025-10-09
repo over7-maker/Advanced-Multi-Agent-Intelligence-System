@@ -1,3 +1,4 @@
+# 🔌 AMAS API Documentation - Fully Integrated (January 2025)
 # 🔌 AMAS API Documentation
 
 > **Integration Status**: ✅ All endpoints verified and operational following PR #162 fixes
@@ -12,7 +13,7 @@ The Advanced Multi-Agent Intelligence System (AMAS) provides a comprehensive RES
 
 ### Base URL
 ```
-http://localhost:8000
+http://localhost:8000/api/v1
 ```
 
 **Interactive Documentation:**

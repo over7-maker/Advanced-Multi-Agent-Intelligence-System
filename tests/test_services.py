@@ -11,12 +11,13 @@ import pytest
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from amas.services.database_service import DatabaseService
-from amas.services.knowledge_graph_service import KnowledgeGraphService
-from amas.services.llm_service import LLMService
-from amas.services.security_service import SecurityService
-from amas.services.service_manager import ServiceManager
-from amas.services.vector_service import VectorService
+# Import after path modification
+from amas.services.database_service import DatabaseService  # noqa: E402
+from amas.services.knowledge_graph_service import KnowledgeGraphService  # noqa: E402
+from amas.services.llm_service import LLMService  # noqa: E402
+from amas.services.security_service import SecurityService  # noqa: E402
+from amas.services.service_manager import ServiceManager  # noqa: E402
+from amas.services.vector_service import VectorService  # noqa: E402
 
 
 class TestServiceManager:
@@ -100,6 +101,7 @@ class TestDatabaseService:
         # Mock storage operation
         result = True  # In real test, this would be the actual result
         assert result is True
+        assert agent_data["agent_id"] == "test_agent_001"
 
     @pytest.mark.asyncio
     async def test_task_storage(self, database_service):
@@ -117,6 +119,7 @@ class TestDatabaseService:
         # Mock storage operation
         result = True  # In real test, this would be the actual result
         assert result is True
+        assert task_data["task_id"] == "test_task_001"
 
     @pytest.mark.asyncio
     async def test_intelligence_data_storage(self, database_service):
@@ -133,6 +136,7 @@ class TestDatabaseService:
         # Mock storage operation
         result = True  # In real test, this would be the actual result
         assert result is True
+        assert data["data_id"] == "test_data_001"
 
 
 class TestSecurityService:

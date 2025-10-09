@@ -5,13 +5,11 @@ This module contains the base class for all intelligence agents in the AMAS syst
 It provides common functionality and interfaces that all specialized agents inherit.
 """
 
-import asyncio
 import logging
-import uuid
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List
 
 from ..base.agent_communication import AgentCommunication
 

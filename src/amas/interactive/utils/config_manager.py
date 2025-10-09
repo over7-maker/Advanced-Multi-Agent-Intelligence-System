@@ -9,17 +9,13 @@ dynamic configuration updates.
 
 import json
 import logging
-import os
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
-
-import yaml
+from typing import Any, Dict, List, Optional
 
 # Rich for enhanced output
 from rich.console import Console
-from rich.panel import Panel
 from rich.table import Table
 
 

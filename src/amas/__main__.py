@@ -12,8 +12,8 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from amas.intelligence.intelligence_manager import intelligence_manager
-from amas.providers.manager import provider_manager, validate_environment
+from amas.intelligence.intelligence_manager import intelligence_manager  # noqa: E402
+from amas.providers.manager import provider_manager, validate_environment  # noqa: E402
 
 
 def setup_logging():

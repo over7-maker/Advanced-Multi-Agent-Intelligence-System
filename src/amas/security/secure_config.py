@@ -4,10 +4,9 @@ Handles sensitive configuration data securely
 """
 
 import base64
-import json
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from cryptography.fernet import Fernet
 
