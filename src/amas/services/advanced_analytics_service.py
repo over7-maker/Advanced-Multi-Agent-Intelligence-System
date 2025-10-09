@@ -160,7 +160,6 @@ class AdvancedAnalyticsService:
         """Load existing models from storage"""
         try:
             import glob
-            import os
 
             model_files = glob.glob(f"{self.model_storage_path}*.pkl")
 

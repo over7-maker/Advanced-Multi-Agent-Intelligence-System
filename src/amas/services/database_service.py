@@ -3,8 +3,8 @@
 import logging
 
 try:
-    import asyncpg
-    import redis.asyncio as redis
+    import asyncpg  # noqa: F401
+    import redis.asyncio as redis  # noqa: F401
 
     DATABASE_AVAILABLE = True
 except ImportError:
