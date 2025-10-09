@@ -7,15 +7,18 @@ uvicorn[standard]==0.32.1
 pydantic==2.10.4
 pydantic-settings==2.7.0
 
-# AI and ML Core (Phase 1 - Core only)
+# AI and ML Core - Fixed dependency compatibility
 openai==1.58.1
 anthropic==0.40.0
 google-generativeai==0.8.3
 groq==0.13.0
-cohere==5.5.3
+# Fixed: Updated cohere to compatible version that supports tokenizers 0.20+
+cohere>=5.11.0
 # Fixed: huggingface-hub version compatible with Python 3.13
 huggingface-hub==0.26.2
 transformers==4.45.0
+# Explicit tokenizers pin for compatibility
+tokenizers==0.20.4
 # torch==2.5.1  # Temporarily disabled due to size constraints
 scikit-learn==1.6.0
 numpy==2.2.1
@@ -28,7 +31,7 @@ redis==5.2.0
 aioredis==2.0.1
 neo4j==5.28.0
 
-# Monitoring and Performance (Phase 1 - Core only)
+# Monitoring and Performance
 psutil==6.1.0
 matplotlib==3.10.0
 seaborn==0.13.2
@@ -71,9 +74,12 @@ colorama==0.4.6
 beautifulsoup4==4.12.3
 selenium==4.28.0
 
-# Vector Search and Embeddings (Phase 1 - Core only)
+# Vector Search and Embeddings
 sentence-transformers==3.3.1
 faiss-cpu==1.12.0
 
 # Additional Dependencies
 pyyaml==6.0.2
+
+# Email validation for Pydantic
+email-validator==2.2.0
