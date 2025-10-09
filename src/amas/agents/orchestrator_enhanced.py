@@ -8,6 +8,7 @@ import asyncio
 # import json
 import logging
 import os
+import sys
 
 # import sys
 import traceback
@@ -17,6 +18,24 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
+
+# Import the new intelligent API management system
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
+
+logger = logging.getLogger(__name__)
+
+try:
+    from amas.core.ai_api_manager import (
+        APIProvider,
+        TaskType,
+        generate_ai_response,
+        get_api_manager,
+    )
+
+    API_MANAGER_AVAILABLE = True
+except ImportError:
+    logger.warning("New API manager not available, using fallback mode")
+    API_MANAGER_AVAILABLE = False
 
 # Configure logging
 logging.basicConfig(

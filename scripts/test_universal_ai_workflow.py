@@ -40,7 +40,9 @@ async def main():
                 print("   Response: <No content returned>")
             print(f"   Time: {result.get('response_time', 0):.2f}s")
         else:
-            error_msg = result.get("error", "Unknown error") if result else "No result returned"
+            error_msg = (
+                result.get("error", "Unknown error") if result else "No result returned"
+            )
             print(f"❌ {strategy.upper()} - Failed: {error_msg}")
         print()
 

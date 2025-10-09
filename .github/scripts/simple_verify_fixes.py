@@ -7,6 +7,7 @@ import os
 import re
 
 
+
 def check_file_for_patterns(file_path):
     """Check a file for the reported security patterns"""
     if not os.path.exists(file_path):

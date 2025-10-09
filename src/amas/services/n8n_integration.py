@@ -7,6 +7,8 @@ for advanced intelligence workflow orchestration.
 
 import asyncio
 import logging
+import os
+import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
