@@ -13,18 +13,15 @@ from pydantic_settings import BaseSettings
 class DatabaseSettings(BaseModel):
     """Database configuration settings"""
 
-    url: str = Field(
-        default="postgresql://postgres:amas_password@localhost:5432/amas",
-        env="DATABASE_URL",
-    )
-    host: str = Field(default="localhost", env="POSTGRES_HOST")
-    port: int = Field(default=5432, env="POSTGRES_PORT")
-    name: str = Field(default="amas", env="POSTGRES_DB")
-    user: str = Field(default="postgres", env="POSTGRES_USER")
-    password: str = Field(default="amas_password", env="POSTGRES_PASSWORD")
-    pool_size: int = Field(default=10, env="DB_POOL_SIZE")
-    max_overflow: int = Field(default=20, env="DB_MAX_OVERFLOW")
-    echo: bool = Field(default=False, env="DB_ECHO")
+    url: str = Field(default="postgresql://postgres:amas_password@localhost:5432/amas")
+    host: str = Field(default="localhost")
+    port: int = Field(default=5432)
+    name: str = Field(default="amas")
+    user: str = Field(default="postgres")
+    password: str = Field(default="amas_password")
+    pool_size: int = Field(default=10)
+    max_overflow: int = Field(default=20)
+    echo: bool = Field(default=False)
 
     model_config = ConfigDict(env_prefix="DB_")
 
@@ -32,12 +29,12 @@ class DatabaseSettings(BaseModel):
 class RedisSettings(BaseModel):
     """Redis configuration settings"""
 
-    url: str = Field(default="redis://localhost:6379/0", env="REDIS_URL")
-    host: str = Field(default="localhost", env="REDIS_HOST")
-    port: int = Field(default=6379, env="REDIS_PORT")
-    password: Optional[str] = Field(default=None, env="REDIS_PASSWORD")
-    db: int = Field(default=0, env="REDIS_DB")
-    max_connections: int = Field(default=20, env="REDIS_MAX_CONNECTIONS")
+    url: str = Field(default="redis://localhost:6379/0")
+    host: str = Field(default="localhost")
+    port: int = Field(default=6379)
+    password: Optional[str] = Field(default=None)
+    db: int = Field(default=0)
+    max_connections: int = Field(default=20)
 
     model_config = ConfigDict(env_prefix="REDIS_")
 
@@ -45,10 +42,10 @@ class RedisSettings(BaseModel):
 class Neo4jSettings(BaseModel):
     """Neo4j configuration settings"""
 
-    uri: str = Field(default="bolt://localhost:7687", env="NEO4J_URI")
-    user: str = Field(default="neo4j", env="NEO4J_USER")
-    password: str = Field(default="amas_password", env="NEO4J_PASSWORD")
-    max_connections: int = Field(default=50, env="NEO4J_MAX_CONNECTIONS")
+    uri: str = Field(default="bolt://localhost:7687")
+    user: str = Field(default="neo4j")
+    password: str = Field(default="amas_password")
+    max_connections: int = Field(default=50)
 
     model_config = ConfigDict(env_prefix="NEO4J_")
 
@@ -56,30 +53,20 @@ class Neo4jSettings(BaseModel):
 class SecuritySettings(BaseModel):
     """Security configuration settings"""
 
-    secret_key: str = Field(
-        default="default_secret_key_change_in_production", env="SECRET_KEY"
-    )
-    jwt_secret_key: str = Field(
-        default="default_jwt_secret_key_change_in_production", env="JWT_SECRET_KEY"
-    )
-    jwt_algorithm: str = Field(default="HS256", env="JWT_ALGORITHM")
-    jwt_access_token_expire_minutes: int = Field(
-        default=30, env="JWT_ACCESS_TOKEN_EXPIRE_MINUTES"
-    )
-    jwt_refresh_token_expire_days: int = Field(
-        default=7, env="JWT_REFRESH_TOKEN_EXPIRE_DAYS"
-    )
-    bcrypt_rounds: int = Field(default=12, env="BCRYPT_ROUNDS")
+    secret_key: str = Field(default="default_secret_key_change_in_production")
+    jwt_secret_key: str = Field(default="default_jwt_secret_key_change_in_production")
+    jwt_algorithm: str = Field(default="HS256")
+    jwt_access_token_expire_minutes: int = Field(default=30)
+    jwt_refresh_token_expire_days: int = Field(default=7)
+    bcrypt_rounds: int = Field(default=12)
 
     # CORS settings
-    cors_origins: List[str] = Field(
-        default=["http://localhost:3000"], env="CORS_ORIGINS"
-    )
-    cors_allow_credentials: bool = Field(default=True, env="CORS_ALLOW_CREDENTIALS")
+    cors_origins: List[str] = Field(default=["http://localhost:3000"])
+    cors_allow_credentials: bool = Field(default=True)
     cors_allow_methods: List[str] = Field(
-        default=["GET", "POST", "PUT", "DELETE", "OPTIONS"], env="CORS_ALLOW_METHODS"
+        default=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
     )
-    cors_allow_headers: List[str] = Field(default=["*"], env="CORS_ALLOW_HEADERS")
+    cors_allow_headers: List[str] = Field(default=["*"])
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -95,29 +82,29 @@ class AISettings(BaseModel):
     """AI provider configuration settings"""
 
     # OpenAI
-    openai_api_key: Optional[str] = Field(default=None, env="OPENAI_API_KEY")
-    openai_org_id: Optional[str] = Field(default=None, env="OPENAI_ORG_ID")
+    openai_api_key: Optional[str] = Field(default=None)
+    openai_org_id: Optional[str] = Field(default=None)
 
     # Anthropic
-    anthropic_api_key: Optional[str] = Field(default=None, env="ANTHROPIC_API_KEY")
+    anthropic_api_key: Optional[str] = Field(default=None)
 
     # Google AI
-    google_ai_api_key: Optional[str] = Field(default=None, env="GOOGLE_AI_API_KEY")
+    google_ai_api_key: Optional[str] = Field(default=None)
 
     # Groq
-    groq_api_key: Optional[str] = Field(default=None, env="GROQ_API_KEY")
+    groq_api_key: Optional[str] = Field(default=None)
 
     # Cohere
-    cohere_api_key: Optional[str] = Field(default=None, env="COHERE_API_KEY")
+    cohere_api_key: Optional[str] = Field(default=None)
 
     # Hugging Face
-    huggingface_api_key: Optional[str] = Field(default=None, env="HUGGINGFACE_API_KEY")
+    huggingface_api_key: Optional[str] = Field(default=None)
 
     # Model settings
-    default_model: str = Field(default="gpt-4", env="DEFAULT_MODEL")
-    fallback_model: str = Field(default="gpt-3.5-turbo", env="FALLBACK_MODEL")
-    max_tokens: int = Field(default=4000, env="MAX_TOKENS")
-    temperature: float = Field(default=0.7, env="TEMPERATURE")
+    default_model: str = Field(default="gpt-4")
+    fallback_model: str = Field(default="gpt-3.5-turbo")
+    max_tokens: int = Field(default=4000)
+    temperature: float = Field(default=0.7)
 
     model_config = ConfigDict(env_prefix="AI_")
 
@@ -125,21 +112,19 @@ class AISettings(BaseModel):
 class MonitoringSettings(BaseModel):
     """Monitoring and observability settings"""
 
-    prometheus_enabled: bool = Field(default=True, env="PROMETHEUS_ENABLED")
-    prometheus_port: int = Field(default=9090, env="PROMETHEUS_PORT")
+    prometheus_enabled: bool = Field(default=True)
+    prometheus_port: int = Field(default=9090)
 
-    grafana_enabled: bool = Field(default=True, env="GRAFANA_ENABLED")
-    grafana_port: int = Field(default=3001, env="GRAFANA_PORT")
-    grafana_admin_password: str = Field(
-        default="amas_grafana_password", env="GRAFANA_ADMIN_PASSWORD"
-    )
+    grafana_enabled: bool = Field(default=True)
+    grafana_port: int = Field(default=3001)
+    grafana_admin_password: str = Field(default="amas_grafana_password")
 
     # Logging
-    log_level: str = Field(default="INFO", env="LOG_LEVEL")
-    log_format: str = Field(default="json", env="LOG_FORMAT")
-    log_file_path: str = Field(default="/app/logs/amas.log", env="LOG_FILE_PATH")
-    log_max_size: str = Field(default="100MB", env="LOG_MAX_SIZE")
-    log_backup_count: int = Field(default=5, env="LOG_BACKUP_COUNT")
+    log_level: str = Field(default="INFO")
+    log_format: str = Field(default="json")
+    log_file_path: str = Field(default="/app/logs/amas.log")
+    log_max_size: str = Field(default="100MB")
+    log_backup_count: int = Field(default=5)
 
     model_config = ConfigDict(env_prefix="MONITORING_")
 
@@ -147,23 +132,23 @@ class MonitoringSettings(BaseModel):
 class PerformanceSettings(BaseModel):
     """Performance and scaling settings"""
 
-    worker_processes: int = Field(default=4, env="WORKER_PROCESSES")
-    worker_connections: int = Field(default=1000, env="WORKER_CONNECTIONS")
-    max_requests: int = Field(default=1000, env="MAX_REQUESTS")
-    max_requests_jitter: int = Field(default=100, env="MAX_REQUESTS_JITTER")
+    worker_processes: int = Field(default=4)
+    worker_connections: int = Field(default=1000)
+    max_requests: int = Field(default=1000)
+    max_requests_jitter: int = Field(default=100)
 
     # Cache settings
-    cache_ttl: int = Field(default=3600, env="CACHE_TTL")
-    cache_max_size: int = Field(default=1000, env="CACHE_MAX_SIZE")
+    cache_ttl: int = Field(default=3600)
+    cache_max_size: int = Field(default=1000)
 
     # Rate limiting
-    rate_limit_requests: int = Field(default=100, env="RATE_LIMIT_REQUESTS")
-    rate_limit_window: int = Field(default=60, env="RATE_LIMIT_WINDOW")
+    rate_limit_requests: int = Field(default=100)
+    rate_limit_window: int = Field(default=60)
 
     # Agent settings
-    max_agents: int = Field(default=10, env="MAX_AGENTS")
-    agent_timeout: int = Field(default=300, env="AGENT_TIMEOUT")
-    agent_memory_limit: int = Field(default=1000, env="AGENT_MEMORY_LIMIT")
+    max_agents: int = Field(default=10)
+    agent_timeout: int = Field(default=300)
+    agent_memory_limit: int = Field(default=1000)
 
     model_config = ConfigDict(env_prefix="PERFORMANCE_")
 
@@ -171,13 +156,11 @@ class PerformanceSettings(BaseModel):
 class FeatureFlags(BaseModel):
     """Feature flags for enabling/disabling functionality"""
 
-    enable_voice_commands: bool = Field(default=True, env="ENABLE_VOICE_COMMANDS")
-    enable_web_dashboard: bool = Field(default=True, env="ENABLE_WEB_DASHBOARD")
-    enable_api_documentation: bool = Field(default=True, env="ENABLE_API_DOCUMENTATION")
-    enable_metrics_collection: bool = Field(
-        default=True, env="ENABLE_METRICS_COLLECTION"
-    )
-    enable_health_checks: bool = Field(default=True, env="ENABLE_HEALTH_CHECKS")
+    enable_voice_commands: bool = Field(default=True)
+    enable_web_dashboard: bool = Field(default=True)
+    enable_api_documentation: bool = Field(default=True)
+    enable_metrics_collection: bool = Field(default=True)
+    enable_health_checks: bool = Field(default=True)
 
     model_config = ConfigDict(env_prefix="FEATURE_")
 
@@ -186,11 +169,11 @@ class Settings(BaseSettings):
     """Main application settings"""
 
     # Application
-    app_name: str = Field(default="AMAS", env="APP_NAME")
-    environment: str = Field(default="development", env="ENVIRONMENT")
-    debug: bool = Field(default=False, env="DEBUG")
-    host: str = Field(default="0.0.0.0", env="HOST")
-    port: int = Field(default=8000, env="PORT")
+    app_name: str = Field(default="AMAS")
+    environment: str = Field(default="development")
+    debug: bool = Field(default=False)
+    host: str = Field(default="0.0.0.0")
+    port: int = Field(default=8000)
 
     # Sub-settings
     database: DatabaseSettings = DatabaseSettings()

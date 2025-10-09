@@ -172,3 +172,6 @@ skips = ["B101", "B601"]
 max-line-length = 88
 extend-ignore = ["E203", "W503"]
 exclude = [".git", "__pycache__", "venv", "build", "dist"]
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
