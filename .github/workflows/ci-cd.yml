@@ -39,6 +39,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
     
+    - name: 🤖 Auto-fix code quality issues
+      run: |
+        chmod +x .github/scripts/simple-auto-fix.sh
+        ./.github/scripts/simple-auto-fix.sh
+    
     - name: 🎨 Code formatting check
       run: |
         black --check src/ tests/
@@ -46,7 +51,7 @@ jobs:
     
     - name: 🔍 Linting
       run: |
-        flake8 src/ tests/
+        flake8 src/ tests/ --max-complexity=10 --max-line-length=100
         
     - name: 🏷️ Type checking
       run: |

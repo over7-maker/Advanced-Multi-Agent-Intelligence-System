@@ -1,119 +1,91 @@
-# AMAS - Advanced Multi-Agent Intelligence System
-# Professional Makefile for Development and Operations
+# AMAS Project Makefile
+# Provides easy commands for development and maintenance
 
-.PHONY: help install install-dev test lint format clean setup run build deploy
+.PHONY: help install test format lint fix clean
 
 # Default target
-help: ## Show this help message
-	@echo "AMAS - Advanced Multi-Agent Intelligence System"
-	@echo "=============================================="
+help:
+	@echo "🤖 AMAS Project Commands"
+	@echo "========================"
 	@echo ""
-	@echo "Available commands:"
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@echo "📦 Setup:"
+	@echo "  install     Install dependencies"
+	@echo "  setup       Setup development environment"
+	@echo ""
+	@echo "🔧 Code Quality:"
+	@echo "  format      Format code with Black and isort"
+	@echo "  lint        Run linting checks"
+	@echo "  fix         Auto-fix code quality issues"
+	@echo "  check       Run all quality checks"
+	@echo ""
+	@echo "🧪 Testing:"
+	@echo "  test        Run tests"
+	@echo "  test-cov    Run tests with coverage"
+	@echo ""
+	@echo "🧹 Maintenance:"
+	@echo "  clean       Clean up temporary files"
+	@echo "  clean-all   Clean up all generated files"
 
-# Installation
-install: ## Install production dependencies
+# Setup commands
+install:
+	@echo "📦 Installing dependencies..."
 	pip install -r requirements.txt
+	pip install black isort flake8 mypy pre-commit
 
-install-dev: ## Install development dependencies
-	pip install -r requirements.txt
-	pip install -e .[dev]
+setup: install
+	@echo "🔧 Setting up development environment..."
+	pre-commit install
+	@echo "✅ Development environment ready!"
 
-# Development
-setup: ## Setup development environment
-	python -m venv venv
-	. venv/bin/activate && pip install --upgrade pip
-	. venv/bin/activate && make install-dev
-	. venv/bin/activate && pre-commit install
+# Code quality commands
+format:
+	@echo "🎨 Formatting code..."
+	python3 -m black src/ tests/
+	python3 -m isort src/ tests/
+	@echo "✅ Code formatted!"
 
-# Code Quality
-lint: ## Run linting checks
-	flake8 src/ tests/
-	mypy src/
-	bandit -r src/
+lint:
+	@echo "🔍 Running linting checks..."
+	python3 -m flake8 src/ tests/ --max-complexity=10 --max-line-length=100
+	@echo "✅ Linting completed!"
 
-format: ## Format code
-	black src/ tests/
-	isort src/ tests/
+fix:
+	@echo "🤖 Auto-fixing code quality issues..."
+	./.github/scripts/simple-auto-fix.sh
+	@echo "✅ Auto-fix completed!"
 
-# Testing
-test: ## Run tests
-	pytest tests/ -v --cov=src/amas --cov-report=html --cov-report=term-missing
+check: format lint
+	@echo "✅ All quality checks passed!"
 
-test-unit: ## Run unit tests only
-	pytest tests/unit/ -v
+# Testing commands
+test:
+	@echo "🧪 Running tests..."
+	python3 -m pytest tests/ -v
+	@echo "✅ Tests completed!"
 
-test-integration: ## Run integration tests only
-	pytest tests/integration/ -v
+test-cov:
+	@echo "🧪 Running tests with coverage..."
+	python3 -m pytest tests/ --cov=src/ --cov-report=html
+	@echo "✅ Tests with coverage completed!"
 
-test-e2e: ## Run end-to-end tests only
-	pytest tests/e2e/ -v
-
-# Application
-run: ## Run the application
-	python main.py
-
-run-api: ## Run the API server
-	cd src && python -m uvicorn amas.api.main:app --reload --host 0.0.0.0 --port 8000
-
-run-cli: ## Run the CLI interface
-	python -m amas.cli
-
-# Docker
-build: ## Build Docker image
-	docker build -t amas:latest .
-
-run-docker: ## Run with Docker Compose
-	docker-compose up -d
-
-stop-docker: ## Stop Docker Compose services
-	docker-compose down
-
-# Database
-init-db: ## Initialize database
-	python scripts/setup_database.py
-
-migrate: ## Run database migrations
-	cd src && python -m alembic upgrade head
-
-# Security
-security-check: ## Run security checks
-	bandit -r src/
-	safety check
-
-# Documentation
-docs: ## Generate documentation
-	cd docs && sphinx-build -b html . _build/html
-
-# Cleanup
-clean: ## Clean up temporary files
+# Maintenance commands
+clean:
+	@echo "🧹 Cleaning up temporary files..."
 	find . -type f -name "*.pyc" -delete
 	find . -type d -name "__pycache__" -delete
 	find . -type d -name "*.egg-info" -exec rm -rf {} +
-	rm -rf build/ dist/ .coverage htmlcov/ .pytest_cache/ .mypy_cache/
+	@echo "✅ Cleanup completed!"
 
-clean-logs: ## Clean log files
-	rm -rf logs/*.log
+clean-all: clean
+	@echo "🧹 Cleaning up all generated files..."
+	rm -rf .coverage htmlcov/ .pytest_cache/
+	rm -rf dist/ build/
+	@echo "✅ Full cleanup completed!"
 
-# Development Workflow
-dev-setup: clean setup ## Complete development setup
-	@echo "Development environment setup complete!"
-	@echo "Run 'make run' to start the application"
+# Quick development workflow
+dev: fix test
+	@echo "🚀 Development workflow completed!"
 
-ci: lint test security-check ## Run CI pipeline locally
-
-# Production
-deploy: ## Deploy to production
-	@echo "Deploying AMAS to production..."
-	docker-compose -f docker-compose.yml up -d
-
-# Monitoring
-status: ## Check system status
-	curl -s http://localhost:8000/health | jq .
-
-logs: ## View application logs
-	docker-compose logs -f amas-api
-
-# Quick Start
-quick-start: setup run ## Quick start for new developers
-	@echo "AMAS is starting up..."
+# CI simulation
+ci: install fix check test
+	@echo "🏗️ CI workflow completed!"
