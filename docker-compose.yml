@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -43,7 +41,7 @@ services:
 
   # Neo4j Graph Database
   neo4j:
-    image: neo4j:5-alpine
+    image: neo4j:5
     environment:
       - NEO4J_AUTH=neo4j/amas_password
       - NEO4J_PLUGINS=["apoc", "graph-data-science"]
