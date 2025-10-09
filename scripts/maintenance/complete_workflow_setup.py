@@ -17,8 +17,9 @@ from typing import Any, Dict, List
 # Add project root to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from config.ai_config import get_ai_config
 from services.ai_service_manager import AIProvider, AIServiceManager
+
+from config.ai_config import get_ai_config
 
 # Configure logging
 logging.basicConfig(

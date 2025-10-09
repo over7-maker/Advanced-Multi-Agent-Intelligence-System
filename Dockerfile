@@ -7,6 +7,7 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV AMAS_ENV=production
+ENV PYTHONPATH=/app
 
 # Set work directory
 WORKDIR /app
@@ -34,6 +35,9 @@ COPY src/ ./src/
 COPY scripts/ ./scripts/
 COPY config/ ./config/
 COPY web/ ./web/
+COPY main.py .
+COPY pytest.ini .
+COPY .env.example .
 
 # Create necessary directories
 RUN mkdir -p logs data/collective_knowledge data/personalities data/models
@@ -58,4 +62,4 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
 
 # Default command
-CMD ["python", "-m", "amas"]
+CMD ["python", "main.py"]

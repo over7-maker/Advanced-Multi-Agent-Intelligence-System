@@ -9,7 +9,6 @@ import re
 from typing import Any, Dict, List, Optional
 
 
-
 class SecurityFalsePositiveAnalyzer:
     def __init__(self):
         self.pattern_definition_indicators = [

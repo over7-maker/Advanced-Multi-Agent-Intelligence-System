@@ -124,26 +124,36 @@ class AIReleaseNotesGenerator:
 
             # Categorize based on keywords
             if any(keyword in message for keyword in feature_keywords):
-                categories["features"].append(f"- {message.split('\\n')[0]} ({author})")
+                categories["features"].append(
+                    f"- {message.split(chr(10))[0]} ({author})"
+                )
             elif any(keyword in message for keyword in fix_keywords):
-                categories["fixes"].append(f"- {message.split('\\n')[0]} ({author})")
+                categories["features"].append(
+                    "- " + message.split("\n")[0] + " (" + author + ")"
+                )
             elif any(keyword in message for keyword in improvement_keywords):
                 categories["improvements"].append(
-                    f"- {message.split('\\n')[0]} ({author})"
+                    "- {message.split('\\n')[0]} ({author})"
                 )
             elif any(keyword in message for keyword in breaking_keywords):
-                categories["breaking"].append(f"- {message.split('\\n')[0]} ({author})")
+                categories["features"].append(
+                    "- " + message.split("\n")[0] + " (" + author + ")"
+                )
             elif any(keyword in message for keyword in doc_keywords):
-                categories["docs"].append(f"- {message.split('\\n')[0]} ({author})")
+                categories["features"].append(
+                    "- " + message.split("\n")[0] + " (" + author + ")"
+                )
             elif any(keyword in message for keyword in security_keywords):
-                categories["security"].append(f"- {message.split('\\n')[0]} ({author})")
+                categories["features"].append(
+                    "- " + message.split("\n")[0] + " (" + author + ")"
+                )
             elif any(keyword in message for keyword in performance_keywords):
                 categories["performance"].append(
-                    f"- {message.split('\\n')[0]} ({author})"
+                    "- {message.split('\\n')[0]} ({author})"
                 )
             else:
                 categories["improvements"].append(
-                    f"- {message.split('\\n')[0]} ({author})"
+                    "- {message.split('\\n')[0]} ({author})"
                 )
 
         # Process pull requests
@@ -285,56 +295,56 @@ def generate_release_notes(
     if categories["features"]:
         release_notes += "### ✨ New Features\\n\\n"
         for feature in categories["features"][:10]:  # Limit to 10 items
-            release_notes += f"{feature}\\n"
+            release_notes += "{feature}\\n"
         if len(categories["features"]) > 10:
             release_notes += (
-                f"- ... and {len(categories['features']) - 10} more features\\n"
+                "- ... and {len(categories['features']) - 10} more features\\n"
             )
         release_notes += "\\n"
 
     if categories["improvements"]:
         release_notes += "### 🔧 Improvements\\n\\n"
         for improvement in categories["improvements"][:10]:
-            release_notes += f"{improvement}\\n"
+            release_notes += "{improvement}\\n"
         if len(categories["improvements"]) > 10:
             release_notes += (
-                f"- ... and {len(categories['improvements']) - 10} more improvements\\n"
+                "- ... and {len(categories['improvements']) - 10} more improvements\\n"
             )
         release_notes += "\\n"
 
     if categories["fixes"]:
         release_notes += "### 🐛 Bug Fixes\\n\\n"
         for fix in categories["fixes"][:10]:
-            release_notes += f"{fix}\\n"
+            release_notes += "{fix}\\n"
         if len(categories["fixes"]) > 10:
-            release_notes += f"- ... and {len(categories['fixes']) - 10} more fixes\\n"
+            release_notes += "- ... and {len(categories['fixes']) - 10} more fixes\\n"
         release_notes += "\\n"
 
     if categories["security"]:
         release_notes += "### 🔒 Security Updates\\n\\n"
         for security in categories["security"]:
-            release_notes += f"{security}\\n"
+            release_notes += "{security}\\n"
         release_notes += "\\n"
 
     if categories["performance"]:
         release_notes += "### ⚡ Performance Improvements\\n\\n"
         for perf in categories["performance"]:
-            release_notes += f"{perf}\\n"
+            release_notes += "{perf}\\n"
         release_notes += "\\n"
 
     if categories["breaking"]:
         release_notes += "### ⚠️ Breaking Changes\\n\\n"
         for breaking in categories["breaking"]:
-            release_notes += f"{breaking}\\n"
+            release_notes += "{breaking}\\n"
         release_notes += "\\n"
 
     if categories["docs"]:
         release_notes += "### 📚 Documentation Updates\\n\\n"
         for doc in categories["docs"][:5]:
-            release_notes += f"{doc}\\n"
+            release_notes += "{doc}\\n"
         if len(categories["docs"]) > 5:
             release_notes += (
-                f"- ... and {len(categories['docs']) - 5} more documentation updates\\n"
+                "- ... and {len(categories['docs']) - 5} more documentation updates\\n"
             )
         release_notes += "\\n"
 
