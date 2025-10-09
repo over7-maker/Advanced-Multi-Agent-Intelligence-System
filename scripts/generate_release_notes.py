@@ -124,19 +124,29 @@ class AIReleaseNotesGenerator:
 
             # Categorize based on keywords
             if any(keyword in message for keyword in feature_keywords):
-                categories["features"].append(f"- {message.split(chr(10))[0]} ({author})")
+                categories["features"].append(
+                    f"- {message.split(chr(10))[0]} ({author})"
+                )
             elif any(keyword in message for keyword in fix_keywords):
-                categories["features"].append("- " + message.split("\n")[0] + " (" + author + ")")
+                categories["features"].append(
+                    "- " + message.split("\n")[0] + " (" + author + ")"
+                )
             elif any(keyword in message for keyword in improvement_keywords):
                 categories["improvements"].append(
                     "- {message.split('\\n')[0]} ({author})"
                 )
             elif any(keyword in message for keyword in breaking_keywords):
-                categories["features"].append("- " + message.split("\n")[0] + " (" + author + ")")
+                categories["features"].append(
+                    "- " + message.split("\n")[0] + " (" + author + ")"
+                )
             elif any(keyword in message for keyword in doc_keywords):
-                categories["features"].append("- " + message.split("\n")[0] + " (" + author + ")")
+                categories["features"].append(
+                    "- " + message.split("\n")[0] + " (" + author + ")"
+                )
             elif any(keyword in message for keyword in security_keywords):
-                categories["features"].append("- " + message.split("\n")[0] + " (" + author + ")")
+                categories["features"].append(
+                    "- " + message.split("\n")[0] + " (" + author + ")"
+                )
             elif any(keyword in message for keyword in performance_keywords):
                 categories["performance"].append(
                     "- {message.split('\\n')[0]} ({author})"

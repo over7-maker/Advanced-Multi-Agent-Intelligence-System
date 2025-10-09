@@ -6,10 +6,11 @@ Pytest configuration and fixtures for the AMAS test suite.
 import asyncio
 import os
 import sys
-import pytest
 from pathlib import Path
+from typing import Any, Dict
 from unittest.mock import AsyncMock, MagicMock
-from typing import Dict, Any
+
+import pytest
 
 # Set test environment
 os.environ["ENVIRONMENT"] = "testing"
@@ -50,7 +51,7 @@ def test_config():
         "secret_key": "test_secret_key",
         "jwt_secret_key": "test_jwt_secret_key",
         "debug": True,
-        "testing": True
+        "testing": True,
     }
 
 
@@ -84,7 +85,7 @@ def sample_task():
         "description": "Test security scan task",
         "parameters": {"target": "example.com", "depth": "basic"},
         "priority": 1,
-        "status": "pending"
+        "status": "pending",
     }
 
 
@@ -99,9 +100,9 @@ def sample_workflow():
             {
                 "name": "scan",
                 "agent": "security_expert",
-                "parameters": {"target": "example.com"}
+                "parameters": {"target": "example.com"},
             }
-        ]
+        ],
     }
 
 
@@ -122,7 +123,9 @@ def mock_agent():
     mock_agent.agent_id = "test_agent_001"
     mock_agent.name = "Test Agent"
     mock_agent.status = "active"
-    mock_agent.execute_task = AsyncMock(return_value={"status": "success", "result": "Mock task result"})
+    mock_agent.execute_task = AsyncMock(
+        return_value={"status": "success", "result": "Mock task result"}
+    )
     return mock_agent
 
 
@@ -145,12 +148,12 @@ async def setup_test_environment():
         "data/temp",
         "artifacts/test",
     ]
-    
+
     for dir_path in test_dirs:
         Path(dir_path).mkdir(parents=True, exist_ok=True)
-    
+
     yield
-    
+
     # Cleanup after test
     # Remove test artifacts if needed
     pass
@@ -160,8 +163,10 @@ async def setup_test_environment():
 def client():
     """FastAPI test client fixture."""
     from fastapi.testclient import TestClient
+
     try:
         from src.api.main import app
+
         return TestClient(app)
     except ImportError:
         # Fallback mock client for incomplete API

@@ -34,35 +34,35 @@ def main():
     """Main formatting function"""
     print("🚀 AMAS Code Formatting Tool")
     print("=" * 40)
-    
+
     # Get the repository root
     repo_root = Path.cwd()
     print(f"📂 Working directory: {repo_root}")
-    
+
     # List of commands to run
     commands = [
         (
             "python -m black . --line-length=88 --target-version=py311",
-            "Formatting code with Black"
+            "Formatting code with Black",
         ),
         (
             "python -m isort . --profile=black --line-length=88",
-            "Sorting imports with isort"
+            "Sorting imports with isort",
         ),
         (
             "python -m flake8 . --max-line-length=88 --extend-ignore=E203,W503,E501",
-            "Checking code with flake8"
-        )
+            "Checking code with flake8",
+        ),
     ]
-    
+
     success_count = 0
     for cmd, description in commands:
         if run_command(cmd, description):
             success_count += 1
         print()
-    
+
     print(f"📊 Completed {success_count}/{len(commands)} formatting tasks")
-    
+
     if success_count == len(commands):
         print("🎉 All code formatting completed successfully!")
         return 0

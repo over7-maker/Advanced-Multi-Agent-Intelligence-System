@@ -2,16 +2,17 @@
 Complete AI Integration Test - Tests all AI integrations and workflows
 """
 
+import asyncio
+import json
+import logging
 import os
 import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
+
 import pytest
-import asyncio
-import json
-import logging
 
 # Configure logging
 logging.basicConfig(

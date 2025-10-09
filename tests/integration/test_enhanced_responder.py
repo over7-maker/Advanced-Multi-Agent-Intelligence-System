@@ -13,6 +13,7 @@ import tempfile
 import time
 from pathlib import Path
 from typing import Any, Dict, List
+
 import pytest
 
 # Configure logging
@@ -42,7 +43,7 @@ class TestEnhancedResponder:
                 Priority,
                 Sentiment,
             )
-            
+
             # Create temporary database for testing
             self.temp_db = tempfile.NamedTemporaryFile(suffix=".db", delete=False)
             self.temp_db.close()
