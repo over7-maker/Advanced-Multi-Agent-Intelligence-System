@@ -52,7 +52,6 @@ from rich.text import Text
 sys.path.append(str(Path(__file__).parent.parent.parent.parent))
 
 try:
-    from amas.agents.orchestrator_enhanced import EnhancedOrchestrator
     from amas.core.orchestrator import AMASOrchestrator
     from amas.interactive.ai.intent_classifier import IntentClassifier
     from amas.interactive.ai.nlp_engine import NLPEngine
@@ -62,7 +61,6 @@ try:
     from amas.interactive.utils.config_manager import ConfigManager
     from amas.interactive.utils.logger import InteractiveLogger
     from amas.services.ai_service_manager import AIServiceManager
-    from amas.utils.security_utils import SecurityUtils
 except ImportError as e:
     print(f"⚠️ Import error: {e}")
     print("Please ensure AMAS is properly installed and configured")

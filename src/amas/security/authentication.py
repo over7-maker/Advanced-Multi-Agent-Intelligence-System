@@ -2,7 +2,6 @@
 Enhanced Authentication Module for AMAS
 """
 
-
 # import hashlib
 import logging
 import secrets

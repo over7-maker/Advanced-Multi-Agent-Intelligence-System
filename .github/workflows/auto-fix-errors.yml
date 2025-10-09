@@ -60,7 +60,13 @@ jobs:
         - Applied automated code quality improvements
 
         [skip ci]"
-        git push
+        
+        # Handle PR branches properly
+        if [ "${{ github.event_name }}" == "pull_request" ]; then
+          git push origin HEAD:${{ github.head_ref }}
+        else
+          git push
+        fi
 
     - name: 📋 Summary
       run: |
