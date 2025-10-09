@@ -11,7 +11,6 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-
 # Rich for advanced console UI
 from rich.console import Console, Group
 from rich.layout import Layout

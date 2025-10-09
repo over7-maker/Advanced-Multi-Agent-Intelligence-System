@@ -14,7 +14,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-
 # Rich for enhanced output
 from rich.console import Console
 from rich.table import Table
