@@ -91,7 +91,7 @@ jobs:
     - name: 🧠 Run Layer 1 AI Agent
       id: layer1_agent
       env:
-        # All AI API Keys
+        # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -106,6 +106,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Orchestrator Configuration
         ORCHESTRATOR_MODE: ${{ github.event.inputs.orchestration_mode || 'intelligent' }}
@@ -132,7 +136,7 @@ jobs:
         echo "Target: $TARGET_COMPONENTS | Providers: $AI_PROVIDERS"
         echo ""
         
-        # Run the appropriate Layer 1 agent
+        # Run the appropriate Layer 1 agent with Advanced API Manager
         case $AGENT_TYPE in
           "code_quality")
             python .github/scripts/enhanced_code_quality_inspector.py \
@@ -140,6 +144,7 @@ jobs:
               --priority $PRIORITY_LEVEL \
               --target $TARGET_COMPONENTS \
               --providers $AI_PROVIDERS \
+              --use-advanced-manager \
               --output layer1_code_quality_results.json
             ;;
           "security_scanner")
@@ -148,6 +153,7 @@ jobs:
               --priority $PRIORITY_LEVEL \
               --target $TARGET_COMPONENTS \
               --providers $AI_PROVIDERS \
+              --use-advanced-manager \
               --output layer1_security_results.json
             ;;
           "docker_monitor")
@@ -156,6 +162,7 @@ jobs:
               --priority $PRIORITY_LEVEL \
               --target $TARGET_COMPONENTS \
               --providers $AI_PROVIDERS \
+              --use-advanced-manager \
               --output layer1_docker_results.json
             ;;
           "dependency_auditor")
@@ -164,6 +171,7 @@ jobs:
               --priority $PRIORITY_LEVEL \
               --target $TARGET_COMPONENTS \
               --providers $AI_PROVIDERS \
+              --use-advanced-manager \
               --output layer1_dependency_results.json
             ;;
           "performance_analyzer")
@@ -172,6 +180,7 @@ jobs:
               --priority $PRIORITY_LEVEL \
               --target $TARGET_COMPONENTS \
               --providers $AI_PROVIDERS \
+              --use-advanced-manager \
               --output layer1_performance_results.json
             ;;
         esac
@@ -233,7 +242,7 @@ jobs:
     - name: 🧠 Run Layer 2 AI Intelligence
       id: layer2_intelligence
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -248,6 +257,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Orchestrator Configuration
         ORCHESTRATOR_MODE: ${{ github.event.inputs.orchestration_mode || 'intelligent' }}
@@ -339,7 +352,7 @@ jobs:
     - name: ⚡ Run Layer 3 AI Execution & Fix
       id: layer3_execution
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -354,6 +367,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Orchestrator Configuration
         ORCHESTRATOR_MODE: ${{ github.event.inputs.orchestration_mode || 'intelligent' }}
@@ -445,7 +462,7 @@ jobs:
     - name: 🎯 Run Layer 4 Master Orchestration
       id: layer4_orchestration
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -460,6 +477,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Orchestrator Configuration
         ORCHESTRATOR_MODE: ${{ github.event.inputs.orchestration_mode || 'intelligent' }}
@@ -574,7 +595,7 @@ jobs:
     - name: ✅ Run Final Validation
       id: final_validation
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -589,6 +610,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # GitHub Context
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -604,7 +629,8 @@ jobs:
         # Run final validation
         python .github/scripts/final_validation.py \
           --all-results final_results/ \
-          --output final_validation_results.json
+           --use-advanced-manager \
+              --output final_validation_results.json
         
         echo "✅ Final validation completed successfully"
     

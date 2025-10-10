@@ -111,7 +111,7 @@ jobs:
     - name: 🔍 Run Threat Detection & Analysis
       id: threat_detection
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -126,6 +126,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Security Configuration
         SECURITY_MODE: ${{ github.event.inputs.security_mode || 'comprehensive' }}
@@ -157,7 +161,8 @@ jobs:
           --threat-level $THREAT_LEVEL \
           --areas $TARGET_AREAS \
           --response-action $RESPONSE_ACTION \
-          --output threat_detection_results.json
+           --use-advanced-manager \
+              --output threat_detection_results.json
         
         echo "✅ Threat Detection & Analysis completed successfully"
     
@@ -228,7 +233,7 @@ jobs:
     - name: 🔍 Run Vulnerability Scanning & Assessment
       id: vulnerability_scanning
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -243,6 +248,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Security Configuration
         SECURITY_MODE: ${{ github.event.inputs.security_mode || 'comprehensive' }}
@@ -275,7 +284,8 @@ jobs:
           --areas $TARGET_AREAS \
           --response-action $RESPONSE_ACTION \
           --threat-results threat_results/ \
-          --output vulnerability_scanning_results.json
+           --use-advanced-manager \
+              --output vulnerability_scanning_results.json
         
         echo "✅ Vulnerability Scanning & Assessment completed successfully"
     
@@ -346,7 +356,7 @@ jobs:
     - name: 🧠 Run Intelligence Gathering & Analysis
       id: intelligence_gathering
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -361,6 +371,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Security Configuration
         SECURITY_MODE: ${{ github.event.inputs.security_mode || 'comprehensive' }}
@@ -393,7 +407,8 @@ jobs:
           --areas $TARGET_AREAS \
           --response-action $RESPONSE_ACTION \
           --vulnerability-results vulnerability_results/ \
-          --output intelligence_gathering_results.json
+           --use-advanced-manager \
+              --output intelligence_gathering_results.json
         
         echo "✅ Intelligence Gathering & Analysis completed successfully"
     
@@ -464,7 +479,7 @@ jobs:
     - name: 🚨 Run Incident Response & Mitigation
       id: incident_response
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -479,6 +494,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Security Configuration
         SECURITY_MODE: ${{ github.event.inputs.security_mode || 'comprehensive' }}
@@ -511,7 +530,8 @@ jobs:
           --areas $TARGET_AREAS \
           --response-action $RESPONSE_ACTION \
           --all-results all_results/ \
-          --output incident_response_results.json
+           --use-advanced-manager \
+              --output incident_response_results.json
         
         echo "✅ Incident Response & Mitigation completed successfully"
     
@@ -582,7 +602,7 @@ jobs:
     - name: 📊 Generate Final Summary
       id: final_summary
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -597,6 +617,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Security Configuration
         SECURITY_MODE: ${{ github.event.inputs.security_mode || 'comprehensive' }}
@@ -629,7 +653,8 @@ jobs:
           --areas $TARGET_AREAS \
           --response-action $RESPONSE_ACTION \
           --all-results final_results/ \
-          --output final_summary_results.json
+           --use-advanced-manager \
+              --output final_summary_results.json
         
         echo "✅ Final Summary & Integration completed successfully"
     

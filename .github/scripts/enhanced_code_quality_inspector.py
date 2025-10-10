@@ -1,414 +1,375 @@
 #!/usr/bin/env python3
 """
-Enhanced Code Quality Inspector - Layer 1 Agent
-Advanced code analysis with automated fix suggestions
+Enhanced Code Quality Inspector with Advanced API Manager Integration
+Uses standalone_universal_ai_manager.py for intelligent failover
 """
 
+import argparse
 import asyncio
 import json
+import logging
 import os
 import subprocess
-import time
-from datetime import datetime
+import sys
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-import aiohttp
-from openai import OpenAI
+# Add the project root to the Python path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
+# Import the universal AI workflow integration
+from .github.scripts.universal_ai_workflow_integration import (
+    get_integration, 
+    generate_workflow_ai_response, 
+    save_workflow_results
+)
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO, 
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 class EnhancedCodeQualityInspector:
-    def __init__(self):
-        self.github_token = os.environ.get("GITHUB_TOKEN")
-        self.repo_name = os.environ.get("GITHUB_REPOSITORY", "unknown")
-        self.focus_area = os.environ.get("FOCUS_AREA", "comprehensive")
-        self.urgency_level = os.environ.get("URGENCY_LEVEL", "normal")
-        
-        # Initialize AI clients with enhanced fallback
-        self.ai_clients = self._initialize_ai_clients()
-        
-        # Analysis results
-        self.analysis_results = {
-            "timestamp": datetime.now().isoformat(),
-            "focus_area": self.focus_area,
-            "urgency_level": self.urgency_level,
-            "issues_found": [],
-            "critical_issues": [],
+    """Enhanced Code Quality Inspector with Advanced API Manager"""
+    
+    def __init__(self, use_advanced_manager: bool = True):
+        """Initialize the inspector"""
+        self.use_advanced_manager = use_advanced_manager
+        self.integration = get_integration() if use_advanced_manager else None
+        self.results = {
+            "code_quality_analysis": {},
+            "ai_insights": {},
             "recommendations": [],
-            "fix_suggestions": [],
-            "quality_metrics": {},
-            "agent_performance": {}
+            "statistics": {},
+            "integration_stats": {}
         }
-
-    def _initialize_ai_clients(self) -> List[Dict[str, Any]]:
-        """Initialize AI clients with enhanced configuration"""
-        clients = []
+    
+    async def analyze_code_quality(self, directory: str, extensions: List[str]) -> Dict[str, Any]:
+        """Analyze code quality using flake8 and AI insights"""
+        logger.info(f"🔍 Analyzing code quality in {directory}")
         
-        # Priority order with enhanced configuration
-        providers = [
-            {
-                "name": "DeepSeek",
-                "key": os.environ.get("DEEPSEEK_API_KEY"),
-                "base_url": "https://api.deepseek.com/v1",
-                "model": "deepseek-chat",
-                "priority": 1,
-                "specialization": "code_analysis"
-            },
-            {
-                "name": "Claude",
-                "key": os.environ.get("CLAUDE_API_KEY"),
-                "base_url": "https://api.anthropic.com/v1",
-                "model": "claude-3-5-sonnet-20241022",
-                "priority": 2,
-                "specialization": "code_review"
-            },
-            {
-                "name": "GPT-4",
-                "key": os.environ.get("GPT4_API_KEY"),
-                "base_url": "https://api.openai.com/v1",
-                "model": "gpt-4o",
-                "priority": 3,
-                "specialization": "architecture_analysis"
-            },
-            {
-                "name": "GLM",
-                "key": os.environ.get("GLM_API_KEY"),
-                "base_url": "https://open.bigmodel.cn/api/paas/v4",
-                "model": "glm-4-flash",
-                "priority": 4,
-                "specialization": "performance_analysis"
-            },
-            {
-                "name": "Grok",
-                "key": os.environ.get("GROK_API_KEY"),
-                "base_url": "https://api.openrouter.ai/v1",
-                "model": "x-ai/grok-beta",
-                "priority": 5,
-                "specialization": "security_analysis"
-            }
-        ]
+        # Run flake8 analysis
+        flake8_results = await self._run_flake8_analysis(directory, extensions)
         
-        for provider in providers:
-            if provider["key"]:
+        # Run bandit security analysis
+        bandit_results = await self._run_bandit_analysis(directory, extensions)
+        
+        # Get AI insights
+        ai_insights = await self._get_ai_insights(flake8_results, bandit_results, directory)
+        
+        return {
+            "flake8_results": flake8_results,
+            "bandit_results": bandit_results,
+            "ai_insights": ai_insights,
+            "timestamp": str(asyncio.get_event_loop().time())
+        }
+    
+    async def _run_flake8_analysis(self, directory: str, extensions: List[str]) -> Dict[str, Any]:
+        """Run flake8 code quality analysis"""
+        try:
+            logger.info("🔍 Running flake8 analysis...")
+            
+            # Build flake8 command
+            cmd = ["flake8", directory, "--format=json", "--statistics"]
+            
+            # Add extension filters
+            for ext in extensions:
+                cmd.extend(["--include", f"*{ext}"])
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            
+            if result.returncode == 0:
+                return {
+                    "success": True,
+                    "issues": [],
+                    "statistics": {},
+                    "output": result.stdout
+                }
+            else:
+                # Parse JSON output even if there are issues
                 try:
-                    client = OpenAI(
-                        base_url=provider["base_url"],
-                        api_key=provider["key"]
-                    )
-                    clients.append({
-                        "name": provider["name"],
-                        "client": client,
-                        "model": provider["model"],
-                        "priority": provider["priority"],
-                        "specialization": provider["specialization"],
-                        "success_count": 0,
-                        "failure_count": 0,
-                        "avg_response_time": 0.0
-                    })
-                except Exception as e:
-                    print(f"Failed to initialize {provider['name']}: {e}")
-        
-        return sorted(clients, key=lambda x: x["priority"])
-
-    async def _analyze_with_ai(self, prompt: str, system_prompt: str, client_info: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """Analyze code with specific AI client"""
-        start_time = time.time()
+                    issues = json.loads(result.stdout) if result.stdout else []
+                    return {
+                        "success": True,
+                        "issues": issues,
+                        "statistics": self._parse_flake8_stats(result.stderr),
+                        "output": result.stdout
+                    }
+                except json.JSONDecodeError:
+                    return {
+                        "success": False,
+                        "issues": [],
+                        "statistics": {},
+                        "error": result.stderr,
+                        "output": result.stdout
+                    }
+                    
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "issues": [],
+                "statistics": {},
+                "error": "flake8 analysis timed out"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "issues": [],
+                "statistics": {},
+                "error": str(e)
+            }
+    
+    async def _run_bandit_analysis(self, directory: str, extensions: List[str]) -> Dict[str, Any]:
+        """Run bandit security analysis"""
+        try:
+            logger.info("🔍 Running bandit security analysis...")
+            
+            cmd = ["bandit", "-r", directory, "-f", "json"]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            
+            if result.returncode == 0:
+                return {
+                    "success": True,
+                    "issues": [],
+                    "statistics": {},
+                    "output": result.stdout
+                }
+            else:
+                try:
+                    issues = json.loads(result.stdout) if result.stdout else []
+                    return {
+                        "success": True,
+                        "issues": issues,
+                        "statistics": self._parse_bandit_stats(result.stderr),
+                        "output": result.stdout
+                    }
+                except json.JSONDecodeError:
+                    return {
+                        "success": False,
+                        "issues": [],
+                        "statistics": {},
+                        "error": result.stderr,
+                        "output": result.stdout
+                    }
+                    
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "issues": [],
+                "statistics": {},
+                "error": "bandit analysis timed out"
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "issues": [],
+                "statistics": {},
+                "error": str(e)
+            }
+    
+    def _parse_flake8_stats(self, stderr: str) -> Dict[str, Any]:
+        """Parse flake8 statistics from stderr"""
+        stats = {}
+        for line in stderr.split('\n'):
+            if ':' in line and any(char.isdigit() for char in line):
+                parts = line.split(':')
+                if len(parts) >= 2:
+                    key = parts[0].strip()
+                    value = parts[1].strip()
+                    if value.isdigit():
+                        stats[key] = int(value)
+        return stats
+    
+    def _parse_bandit_stats(self, stderr: str) -> Dict[str, Any]:
+        """Parse bandit statistics from stderr"""
+        stats = {}
+        for line in stderr.split('\n'):
+            if ':' in line and any(char.isdigit() for char in line):
+                parts = line.split(':')
+                if len(parts) >= 2:
+                    key = parts[0].strip()
+                    value = parts[1].strip()
+                    if value.isdigit():
+                        stats[key] = int(value)
+        return stats
+    
+    async def _get_ai_insights(
+        self, 
+        flake8_results: Dict[str, Any], 
+        bandit_results: Dict[str, Any], 
+        directory: str
+    ) -> Dict[str, Any]:
+        """Get AI insights using the advanced API manager"""
+        if not self.use_advanced_manager:
+            return {"error": "Advanced API manager not enabled"}
         
         try:
-            response = client_info["client"].chat.completions.create(
-                model=client_info["model"],
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": prompt}
-                ],
-                max_tokens=4000,
-                temperature=0.3
-            )
+            logger.info("🧠 Getting AI insights with advanced API manager...")
             
-            response_time = time.time() - start_time
-            
-            # Update performance metrics
-            client_info["success_count"] += 1
-            if client_info["avg_response_time"] == 0:
-                client_info["avg_response_time"] = response_time
-            else:
-                client_info["avg_response_time"] = (client_info["avg_response_time"] + response_time) / 2
-            
-            return {
-                "success": True,
-                "content": response.choices[0].message.content,
-                "response_time": response_time,
-                "provider": client_info["name"],
-                "model": client_info["model"]
+            # Prepare analysis data for AI
+            analysis_data = {
+                "directory": directory,
+                "flake8_issues": len(flake8_results.get("issues", [])),
+                "bandit_issues": len(bandit_results.get("issues", [])),
+                "flake8_stats": flake8_results.get("statistics", {}),
+                "bandit_stats": bandit_results.get("statistics", {}),
+                "flake8_success": flake8_results.get("success", False),
+                "bandit_success": bandit_results.get("success", False)
             }
             
-        except Exception as e:
-            response_time = time.time() - start_time
-            client_info["failure_count"] += 1
+            # Create AI prompt
+            prompt = f"""
+            Analyze the following code quality data and provide insights:
             
+            Directory: {analysis_data['directory']}
+            Flake8 Issues: {analysis_data['flake8_issues']}
+            Bandit Security Issues: {analysis_data['bandit_issues']}
+            Flake8 Statistics: {analysis_data['flake8_stats']}
+            Bandit Statistics: {analysis_data['bandit_stats']}
+            Flake8 Success: {analysis_data['flake8_success']}
+            Bandit Success: {analysis_data['bandit_success']}
+            
+            Please provide:
+            1. Overall code quality assessment
+            2. Priority issues to address
+            3. Security concerns
+            4. Improvement recommendations
+            5. Code quality score (0-100)
+            """
+            
+            system_prompt = """You are an expert code quality analyst. Provide detailed, actionable insights about code quality, security, and best practices. Be specific and practical in your recommendations."""
+            
+            # Generate AI response with advanced failover
+            result = await generate_workflow_ai_response(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                strategy="intelligent"
+            )
+            
+            if result.get("success", False):
+                return {
+                    "success": True,
+                    "provider": result.get("provider_name", "Unknown"),
+                    "response_time": result.get("response_time", 0),
+                    "insights": result.get("content", ""),
+                    "tokens_used": result.get("tokens_used", 0)
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.get("error", "Unknown error"),
+                    "provider": result.get("provider_name", "Failed")
+                }
+                
+        except Exception as e:
+            logger.error(f"❌ AI insights generation failed: {e}")
             return {
                 "success": False,
                 "error": str(e),
-                "response_time": response_time,
-                "provider": client_info["name"]
+                "provider": "Exception"
             }
-
-    async def _get_code_files(self) -> List[str]:
-        """Get list of code files to analyze"""
-        try:
-            # Get all Python files
-            result = subprocess.run(
-                ["find", ".", "-name", "*.py", "-type", "f"],
-                capture_output=True,
-                text=True,
-                cwd="/workspace"
-            )
-            
-            files = [f for f in result.stdout.strip().split('\n') if f and not any(
-                skip in f for skip in [
-                    '__pycache__', '.git', '.github', 'venv', 'env',
-                    'node_modules', '.pytest_cache', 'build', 'dist'
-                ]
-            )]
-            
-            # Limit to most important files for analysis
-            priority_files = []
-            for file in files:
-                if any(important in file for important in [
-                    'main.py', 'app.py', 'src/', 'core/', 'api/', 'models/',
-                    'services/', 'utils/', 'handlers/', 'workflows/'
-                ]):
-                    priority_files.append(file)
-            
-            return priority_files[:20]  # Limit to 20 most important files
-            
-        except Exception as e:
-            print(f"Error getting code files: {e}")
-            return []
-
-    async def _analyze_code_quality(self, file_path: str) -> Dict[str, Any]:
-        """Analyze code quality for a specific file"""
-        try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-        except Exception as e:
-            return {"error": f"Could not read file {file_path}: {e}"}
-        
-        system_prompt = f"""You are an expert code quality inspector specializing in {self.focus_area} analysis. 
-        
-        Your role is to:
-        1. Identify code quality issues, bugs, and potential problems
-        2. Suggest specific improvements and fixes
-        3. Assess code maintainability, readability, and performance
-        4. Check for security vulnerabilities and best practices
-        5. Provide actionable recommendations with code examples
-        
-        Focus on: {self.focus_area}
-        Urgency Level: {self.urgency_level}
-        
-        Provide your analysis in JSON format with the following structure:
-        {{
-            "issues": [
-                {{
-                    "type": "bug|performance|security|maintainability|style",
-                    "severity": "critical|high|medium|low",
-                    "line": 123,
-                    "description": "Detailed description",
-                    "suggestion": "Specific fix suggestion",
-                    "code_example": "Fixed code example"
-                }}
-            ],
-            "overall_quality_score": 85,
-            "recommendations": ["List of general recommendations"],
-            "fix_suggestions": ["List of specific fixes"]
-        }}"""
-        
-        prompt = f"""Analyze the following Python code for quality issues, bugs, and improvements:
-
-File: {file_path}
-
-```python
-{content}
-```
-
-Please provide a comprehensive analysis focusing on {self.focus_area} with urgency level {self.urgency_level}."""
-        
-        # Try each AI client until one succeeds
-        for client_info in self.ai_clients:
-            result = await self._analyze_with_ai(prompt, system_prompt, client_info)
-            
-            if result and result.get("success"):
-                try:
-                    # Parse JSON response
-                    analysis = json.loads(result["content"])
-                    analysis["provider"] = result["provider"]
-                    analysis["response_time"] = result["response_time"]
-                    return analysis
-                except json.JSONDecodeError:
-                    # If JSON parsing fails, create a structured response
-                    return {
-                        "provider": result["provider"],
-                        "response_time": result["response_time"],
-                        "raw_analysis": result["content"],
-                        "issues": [],
-                        "overall_quality_score": 0,
-                        "recommendations": [],
-                        "fix_suggestions": []
-                    }
-            else:
-                print(f"Analysis failed with {client_info['name']}: {result.get('error', 'Unknown error') if result else 'No result'}")
-        
-        return {"error": "All AI providers failed"}
-
-    async def _run_static_analysis_tools(self) -> Dict[str, Any]:
-        """Run static analysis tools"""
-        tools_results = {}
+    
+    async def run_analysis(
+        self, 
+        directory: str, 
+        extensions: List[str], 
+        output_file: str
+    ) -> Dict[str, Any]:
+        """Run complete code quality analysis"""
+        logger.info(f"🚀 Starting enhanced code quality analysis...")
+        logger.info(f"   Directory: {directory}")
+        logger.info(f"   Extensions: {extensions}")
+        logger.info(f"   Advanced API Manager: {self.use_advanced_manager}")
         
         try:
-            # Run flake8 for style issues
-            result = subprocess.run(
-                ["python", "-m", "flake8", "--format=json", "."],
-                capture_output=True,
-                text=True,
-                cwd="/workspace"
-            )
+            # Run code quality analysis
+            analysis_results = await self.analyze_code_quality(directory, extensions)
             
-            if result.returncode == 0:
-                tools_results["flake8"] = {"status": "clean", "issues": []}
-            else:
-                try:
-                    flake8_issues = json.loads(result.stdout)
-                    tools_results["flake8"] = {"status": "issues_found", "issues": flake8_issues}
-                except:
-                    tools_results["flake8"] = {"status": "error", "output": result.stdout}
+            # Compile final results
+            self.results.update({
+                "code_quality_analysis": analysis_results,
+                "analysis_metadata": {
+                    "directory": directory,
+                    "extensions": extensions,
+                    "use_advanced_manager": self.use_advanced_manager,
+                    "timestamp": str(asyncio.get_event_loop().time())
+                }
+            })
             
-        except Exception as e:
-            tools_results["flake8"] = {"status": "error", "error": str(e)}
-        
-        try:
-            # Run bandit for security issues
-            result = subprocess.run(
-                ["python", "-m", "bandit", "-r", ".", "-f", "json"],
-                capture_output=True,
-                text=True,
-                cwd="/workspace"
-            )
+            # Add integration stats if using advanced manager
+            if self.use_advanced_manager:
+                self.results["integration_stats"] = self.integration.get_integration_stats()
             
-            if result.returncode == 0:
-                tools_results["bandit"] = {"status": "clean", "issues": []}
-            else:
-                try:
-                    bandit_issues = json.loads(result.stdout)
-                    tools_results["bandit"] = {"status": "issues_found", "issues": bandit_issues}
-                except:
-                    tools_results["bandit"] = {"status": "error", "output": result.stdout}
+            # Save results
+            save_workflow_results(self.results, output_file)
+            
+            logger.info(f"✅ Analysis completed successfully!")
+            logger.info(f"   Results saved to: {output_file}")
+            
+            return self.results
             
         except Exception as e:
-            tools_results["bandit"] = {"status": "error", "error": str(e)}
-        
-        return tools_results
-
-    async def run_analysis(self) -> Dict[str, Any]:
-        """Run comprehensive code quality analysis"""
-        print("🔍 Enhanced Code Quality Inspector Starting...")
-        print(f"Focus Area: {self.focus_area}")
-        print(f"Urgency Level: {self.urgency_level}")
-        print(f"AI Clients Available: {len(self.ai_clients)}")
-        
-        # Get code files to analyze
-        code_files = await self._get_code_files()
-        print(f"Analyzing {len(code_files)} code files...")
-        
-        # Run static analysis tools
-        print("Running static analysis tools...")
-        tools_results = await self._run_static_analysis_tools()
-        self.analysis_results["static_analysis"] = tools_results
-        
-        # Analyze each file
-        file_analyses = []
-        for file_path in code_files:
-            print(f"Analyzing {file_path}...")
-            analysis = await self._analyze_code_quality(file_path)
-            analysis["file_path"] = file_path
-            file_analyses.append(analysis)
-            
-            # Collect issues and recommendations
-            if "issues" in analysis:
-                for issue in analysis["issues"]:
-                    issue["file_path"] = file_path
-                    self.analysis_results["issues_found"].append(issue)
-                    
-                    if issue.get("severity") in ["critical", "high"]:
-                        self.analysis_results["critical_issues"].append(issue)
-            
-            if "recommendations" in analysis:
-                self.analysis_results["recommendations"].extend(analysis["recommendations"])
-            
-            if "fix_suggestions" in analysis:
-                self.analysis_results["fix_suggestions"].extend(analysis["fix_suggestions"])
-        
-        self.analysis_results["file_analyses"] = file_analyses
-        
-        # Calculate quality metrics
-        total_issues = len(self.analysis_results["issues_found"])
-        critical_issues = len(self.analysis_results["critical_issues"])
-        
-        self.analysis_results["quality_metrics"] = {
-            "total_files_analyzed": len(code_files),
-            "total_issues_found": total_issues,
-            "critical_issues": critical_issues,
-            "high_priority_issues": len([i for i in self.analysis_results["issues_found"] if i.get("severity") == "high"]),
-            "medium_priority_issues": len([i for i in self.analysis_results["issues_found"] if i.get("severity") == "medium"]),
-            "low_priority_issues": len([i for i in self.analysis_results["issues_found"] if i.get("severity") == "low"]),
-            "recommendations_count": len(self.analysis_results["recommendations"]),
-            "fix_suggestions_count": len(self.analysis_results["fix_suggestions"])
-        }
-        
-        # Update agent performance
-        for client_info in self.ai_clients:
-            self.analysis_results["agent_performance"][client_info["name"]] = {
-                "success_count": client_info["success_count"],
-                "failure_count": client_info["failure_count"],
-                "avg_response_time": client_info["avg_response_time"],
-                "success_rate": client_info["success_count"] / (client_info["success_count"] + client_info["failure_count"]) * 100 if (client_info["success_count"] + client_info["failure_count"]) > 0 else 0
+            logger.error(f"❌ Analysis failed: {e}")
+            error_results = {
+                "error": str(e),
+                "success": False,
+                "timestamp": str(asyncio.get_event_loop().time())
             }
-        
-        # Save results
-        with open("layer1_analysis_results.json", "w") as f:
-            json.dump(self.analysis_results, f, indent=2)
-        
-        print(f"✅ Analysis Complete!")
-        print(f"   Total Issues Found: {total_issues}")
-        print(f"   Critical Issues: {critical_issues}")
-        print(f"   Files Analyzed: {len(code_files)}")
-        print(f"   Recommendations: {len(self.analysis_results['recommendations'])}")
-        print(f"   Fix Suggestions: {len(self.analysis_results['fix_suggestions'])}")
-        
-        return self.analysis_results
-
+            save_workflow_results(error_results, output_file)
+            return error_results
 
 async def main():
     """Main function"""
-    inspector = EnhancedCodeQualityInspector()
-    results = await inspector.run_analysis()
+    parser = argparse.ArgumentParser(description="Enhanced Code Quality Inspector")
+    parser.add_argument("--directory", default=".", help="Directory to analyze")
+    parser.add_argument("--extensions", nargs="+", default=[".py"], help="File extensions to analyze")
+    parser.add_argument("--output", default="code_quality_results.json", help="Output file")
+    parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced API manager")
+    parser.add_argument("--mode", default="comprehensive", help="Analysis mode")
+    parser.add_argument("--priority", default="normal", help="Priority level")
+    parser.add_argument("--target", default="all", help="Target components")
+    parser.add_argument("--providers", default="all", help="AI providers to use")
+    
+    args = parser.parse_args()
+    
+    # Create inspector
+    inspector = EnhancedCodeQualityInspector(use_advanced_manager=args.use_advanced_manager)
+    
+    # Run analysis
+    results = await inspector.run_analysis(
+        directory=args.directory,
+        extensions=args.extensions,
+        output_file=args.output
+    )
     
     # Print summary
-    print("\n" + "="*80)
-    print("🔍 ENHANCED CODE QUALITY INSPECTOR - SUMMARY")
-    print("="*80)
-    print(f"Focus Area: {results['focus_area']}")
-    print(f"Urgency Level: {results['urgency_level']}")
-    print(f"Files Analyzed: {results['quality_metrics']['total_files_analyzed']}")
-    print(f"Total Issues: {results['quality_metrics']['total_issues_found']}")
-    print(f"Critical Issues: {results['quality_metrics']['critical_issues']}")
-    print(f"Recommendations: {results['quality_metrics']['recommendations_count']}")
-    print(f"Fix Suggestions: {results['quality_metrics']['fix_suggestions_count']}")
-    
-    print("\n🏥 Agent Performance:")
-    for agent, perf in results['agent_performance'].items():
-        print(f"  {agent}: {perf['success_rate']:.1f}% success rate, {perf['avg_response_time']:.2f}s avg")
-    
-    print("\n" + "="*80)
-
+    if results.get("success", True):
+        print("\n" + "=" * 80)
+        print("📊 CODE QUALITY ANALYSIS SUMMARY")
+        print("=" * 80)
+        
+        if "code_quality_analysis" in results:
+            analysis = results["code_quality_analysis"]
+            print(f"Flake8 Issues: {len(analysis.get('flake8_results', {}).get('issues', []))}")
+            print(f"Bandit Issues: {len(analysis.get('bandit_results', {}).get('issues', []))}")
+            
+            if "ai_insights" in analysis and analysis["ai_insights"].get("success"):
+                print(f"AI Provider: {analysis['ai_insights'].get('provider', 'Unknown')}")
+                print(f"Response Time: {analysis['ai_insights'].get('response_time', 0):.2f}s")
+        
+        if "integration_stats" in results:
+            stats = results["integration_stats"]
+            print(f"Total Requests: {stats.get('total_requests', 0)}")
+            print(f"Success Rate: {stats.get('success_rate', '0%')}")
+            print(f"Active Providers: {len(stats.get('active_providers', []))}")
+        
+        print("=" * 80)
+    else:
+        print(f"❌ Analysis failed: {results.get('error', 'Unknown error')}")
 
 if __name__ == "__main__":
     asyncio.run(main())

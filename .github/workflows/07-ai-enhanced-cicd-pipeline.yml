@@ -115,7 +115,7 @@ jobs:
     - name: 🔍 Run Intelligent Pipeline Analysis
       id: pipeline_analysis
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -130,6 +130,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # CI/CD Configuration
         PIPELINE_MODE: ${{ github.event.inputs.pipeline_mode || 'intelligent' }}
@@ -163,7 +167,8 @@ jobs:
           --strategy $DEPLOYMENT_STRATEGY \
           --quality-gates $QUALITY_GATES \
           --performance-monitoring $PERFORMANCE_MONITORING \
-          --output pipeline_analysis_results.json
+           --use-advanced-manager \
+              --output pipeline_analysis_results.json
         
         echo "✅ Intelligent Pipeline Analysis completed successfully"
     
@@ -239,7 +244,7 @@ jobs:
     - name: 🧪 Run AI-Powered Testing & Validation
       id: testing_validation
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -254,6 +259,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # CI/CD Configuration
         PIPELINE_MODE: ${{ github.event.inputs.pipeline_mode || 'intelligent' }}
@@ -288,7 +297,8 @@ jobs:
           --quality-gates $QUALITY_GATES \
           --performance-monitoring $PERFORMANCE_MONITORING \
           --pipeline-results pipeline_results/ \
-          --output testing_validation_results.json
+           --use-advanced-manager \
+              --output testing_validation_results.json
         
         echo "✅ AI-Powered Testing & Validation completed successfully"
     
@@ -364,7 +374,7 @@ jobs:
     - name: 🏗️ Run Intelligent Build & Package
       id: build_package
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -379,6 +389,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # CI/CD Configuration
         PIPELINE_MODE: ${{ github.event.inputs.pipeline_mode || 'intelligent' }}
@@ -413,7 +427,8 @@ jobs:
           --quality-gates $QUALITY_GATES \
           --performance-monitoring $PERFORMANCE_MONITORING \
           --testing-results testing_results/ \
-          --output build_package_results.json
+           --use-advanced-manager \
+              --output build_package_results.json
         
         echo "✅ Intelligent Build & Package completed successfully"
     
@@ -489,7 +504,7 @@ jobs:
     - name: 🚀 Run AI-Enhanced Deployment
       id: deployment
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -504,6 +519,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # CI/CD Configuration
         PIPELINE_MODE: ${{ github.event.inputs.pipeline_mode || 'intelligent' }}
@@ -538,7 +557,8 @@ jobs:
           --quality-gates $QUALITY_GATES \
           --performance-monitoring $PERFORMANCE_MONITORING \
           --all-results all_results/ \
-          --output deployment_results.json
+           --use-advanced-manager \
+              --output deployment_results.json
         
         echo "✅ AI-Enhanced Deployment completed successfully"
     
@@ -614,7 +634,7 @@ jobs:
     - name: 📊 Generate Final Summary
       id: final_summary
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -629,6 +649,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # CI/CD Configuration
         PIPELINE_MODE: ${{ github.event.inputs.pipeline_mode || 'intelligent' }}
@@ -663,7 +687,8 @@ jobs:
           --quality-gates $QUALITY_GATES \
           --performance-monitoring $PERFORMANCE_MONITORING \
           --all-results final_results/ \
-          --output final_summary_results.json
+           --use-advanced-manager \
+              --output final_summary_results.json
         
         echo "✅ Final Summary & Integration completed successfully"
     

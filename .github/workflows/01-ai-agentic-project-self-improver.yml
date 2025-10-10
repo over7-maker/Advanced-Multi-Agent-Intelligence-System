@@ -96,7 +96,7 @@ jobs:
     - name: 🧠 Run AI Project Analysis & Learning
       id: project_analysis
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -111,6 +111,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Self-Improver Configuration
         IMPROVEMENT_MODE: ${{ github.event.inputs.improvement_mode || 'intelligent' }}
@@ -142,7 +146,8 @@ jobs:
           --areas $TARGET_AREAS \
           --depth $LEARNING_DEPTH \
           --auto-apply $AUTO_APPLY \
-          --output project_analysis_results.json
+           --use-advanced-manager \
+              --output project_analysis_results.json
         
         echo "✅ Project Analysis & Learning completed successfully"
     
@@ -206,7 +211,7 @@ jobs:
     - name: 🎯 Run Intelligent Improvement Generation
       id: improvement_generation
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -221,6 +226,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Self-Improver Configuration
         IMPROVEMENT_MODE: ${{ github.event.inputs.improvement_mode || 'intelligent' }}
@@ -253,7 +262,8 @@ jobs:
           --depth $LEARNING_DEPTH \
           --auto-apply $AUTO_APPLY \
           --analysis-results analysis_results/ \
-          --output improvement_generation_results.json
+           --use-advanced-manager \
+              --output improvement_generation_results.json
         
         echo "✅ Intelligent Improvement Generation completed successfully"
     
@@ -317,7 +327,7 @@ jobs:
     - name: ⚡ Run Automated Implementation
       id: automated_implementation
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -332,6 +342,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Self-Improver Configuration
         IMPROVEMENT_MODE: ${{ github.event.inputs.improvement_mode || 'intelligent' }}
@@ -364,7 +378,8 @@ jobs:
           --depth $LEARNING_DEPTH \
           --auto-apply $AUTO_APPLY \
           --improvement-results improvement_results/ \
-          --output implementation_results.json
+           --use-advanced-manager \
+              --output implementation_results.json
         
         echo "✅ Automated Implementation completed successfully"
     
@@ -428,7 +443,7 @@ jobs:
     - name: 🧠 Run Learning & Adaptation
       id: learning_adaptation
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -443,6 +458,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Self-Improver Configuration
         IMPROVEMENT_MODE: ${{ github.event.inputs.improvement_mode || 'intelligent' }}
@@ -475,7 +494,8 @@ jobs:
           --depth $LEARNING_DEPTH \
           --auto-apply $AUTO_APPLY \
           --all-results all_results/ \
-          --output learning_adaptation_results.json
+           --use-advanced-manager \
+              --output learning_adaptation_results.json
         
         echo "✅ Learning & Adaptation completed successfully"
     
@@ -539,7 +559,7 @@ jobs:
     - name: 📊 Generate Final Summary
       id: final_summary
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -554,6 +574,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Self-Improver Configuration
         IMPROVEMENT_MODE: ${{ github.event.inputs.improvement_mode || 'intelligent' }}
@@ -586,7 +610,8 @@ jobs:
           --depth $LEARNING_DEPTH \
           --auto-apply $AUTO_APPLY \
           --all-results final_results/ \
-          --output final_summary_results.json
+           --use-advanced-manager \
+              --output final_summary_results.json
         
         echo "✅ Final Summary & Integration completed successfully"
     

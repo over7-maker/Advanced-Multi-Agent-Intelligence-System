@@ -114,7 +114,7 @@ jobs:
     - name: 🔍 Run Code Quality Analysis
       id: quality_analysis
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -129,6 +129,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Quality Configuration
         QUALITY_MODE: ${{ github.event.inputs.quality_mode || 'comprehensive' }}
@@ -162,7 +166,8 @@ jobs:
           --level $OPTIMIZATION_LEVEL \
           --auto-fix $AUTO_FIX \
           --performance-benchmarking $PERFORMANCE_BENCHMARKING \
-          --output quality_analysis_results.json
+           --use-advanced-manager \
+              --output quality_analysis_results.json
         
         echo "✅ Code Quality Analysis completed successfully"
     
@@ -238,7 +243,7 @@ jobs:
     - name: ⚡ Run Performance Analysis & Optimization
       id: performance_analysis
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -253,6 +258,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Quality Configuration
         QUALITY_MODE: ${{ github.event.inputs.quality_mode || 'comprehensive' }}
@@ -287,7 +296,8 @@ jobs:
           --auto-fix $AUTO_FIX \
           --performance-benchmarking $PERFORMANCE_BENCHMARKING \
           --quality-results quality_results/ \
-          --output performance_analysis_results.json
+           --use-advanced-manager \
+              --output performance_analysis_results.json
         
         echo "✅ Performance Analysis & Optimization completed successfully"
     
@@ -363,7 +373,7 @@ jobs:
     - name: 🔧 Run Automated Code Enhancement
       id: code_enhancement
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -378,6 +388,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Quality Configuration
         QUALITY_MODE: ${{ github.event.inputs.quality_mode || 'comprehensive' }}
@@ -412,7 +426,8 @@ jobs:
           --auto-fix $AUTO_FIX \
           --performance-benchmarking $PERFORMANCE_BENCHMARKING \
           --performance-results performance_results/ \
-          --output code_enhancement_results.json
+           --use-advanced-manager \
+              --output code_enhancement_results.json
         
         echo "✅ Automated Code Enhancement completed successfully"
     
@@ -488,7 +503,7 @@ jobs:
     - name: ✅ Run Quality Validation & Testing
       id: quality_validation
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -503,6 +518,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Quality Configuration
         QUALITY_MODE: ${{ github.event.inputs.quality_mode || 'comprehensive' }}
@@ -537,7 +556,8 @@ jobs:
           --auto-fix $AUTO_FIX \
           --performance-benchmarking $PERFORMANCE_BENCHMARKING \
           --all-results all_results/ \
-          --output quality_validation_results.json
+           --use-advanced-manager \
+              --output quality_validation_results.json
         
         echo "✅ Quality Validation & Testing completed successfully"
     
@@ -613,7 +633,7 @@ jobs:
     - name: 📊 Generate Final Summary
       id: final_summary
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -628,6 +648,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Quality Configuration
         QUALITY_MODE: ${{ github.event.inputs.quality_mode || 'comprehensive' }}
@@ -662,7 +686,8 @@ jobs:
           --auto-fix $AUTO_FIX \
           --performance-benchmarking $PERFORMANCE_BENCHMARKING \
           --all-results final_results/ \
-          --output final_summary_results.json
+           --use-advanced-manager \
+              --output final_summary_results.json
         
         echo "✅ Final Summary & Integration completed successfully"
     

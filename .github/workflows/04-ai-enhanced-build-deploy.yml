@@ -108,7 +108,7 @@ jobs:
     - name: 🔍 Run Intelligent Build Analysis
       id: build_analysis
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -123,6 +123,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Build Configuration
         BUILD_MODE: ${{ github.event.inputs.build_mode || 'intelligent' }}
@@ -156,7 +160,8 @@ jobs:
           --strategy $DEPLOYMENT_STRATEGY \
           --auto-rollback $AUTO_ROLLBACK \
           --performance-monitoring $PERFORMANCE_MONITORING \
-          --output build_analysis_results.json
+           --use-advanced-manager \
+              --output build_analysis_results.json
         
         echo "✅ Intelligent Build Analysis completed successfully"
     
@@ -223,7 +228,7 @@ jobs:
     - name: 🏗️ Run AI Build Generation
       id: build_generation
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -238,6 +243,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Build Configuration
         BUILD_MODE: ${{ github.event.inputs.build_mode || 'intelligent' }}
@@ -272,7 +281,8 @@ jobs:
           --auto-rollback $AUTO_ROLLBACK \
           --performance-monitoring $PERFORMANCE_MONITORING \
           --analysis-results analysis_results/ \
-          --output build_generation_results.json
+           --use-advanced-manager \
+              --output build_generation_results.json
         
         echo "✅ AI-Powered Build Generation completed successfully"
     
@@ -339,7 +349,7 @@ jobs:
     - name: 🚀 Run Automated Deployment
       id: deployment
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -354,6 +364,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Build Configuration
         BUILD_MODE: ${{ github.event.inputs.build_mode || 'intelligent' }}
@@ -388,7 +402,8 @@ jobs:
           --auto-rollback $AUTO_ROLLBACK \
           --performance-monitoring $PERFORMANCE_MONITORING \
           --build-results build_results/ \
-          --output deployment_results.json
+           --use-advanced-manager \
+              --output deployment_results.json
         
         echo "✅ Automated Deployment completed successfully"
     
@@ -455,7 +470,7 @@ jobs:
     - name: 📊 Run Performance Monitoring & Validation
       id: performance_monitoring
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -470,6 +485,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Build Configuration
         BUILD_MODE: ${{ github.event.inputs.build_mode || 'intelligent' }}
@@ -504,7 +523,8 @@ jobs:
           --auto-rollback $AUTO_ROLLBACK \
           --performance-monitoring $PERFORMANCE_MONITORING \
           --all-results all_results/ \
-          --output performance_monitoring_results.json
+           --use-advanced-manager \
+              --output performance_monitoring_results.json
         
         echo "✅ Performance Monitoring & Validation completed successfully"
     
@@ -571,7 +591,7 @@ jobs:
     - name: 📊 Generate Final Summary
       id: final_summary
       env:
-        # All AI API Keys
+                # All 16 AI API Keys for Advanced Failover
         DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
         GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
@@ -586,6 +606,10 @@ jobs:
         GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
         COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
         NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         
         # Build Configuration
         BUILD_MODE: ${{ github.event.inputs.build_mode || 'intelligent' }}
@@ -620,7 +644,8 @@ jobs:
           --auto-rollback $AUTO_ROLLBACK \
           --performance-monitoring $PERFORMANCE_MONITORING \
           --all-results final_results/ \
-          --output final_summary_results.json
+           --use-advanced-manager \
+              --output final_summary_results.json
         
         echo "✅ Final Summary & Integration completed successfully"
     
