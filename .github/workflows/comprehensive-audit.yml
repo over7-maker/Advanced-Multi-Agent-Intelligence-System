@@ -1,0 +1,248 @@
+name: 🔍 Comprehensive Workflow & Code Audit
+
+on:
+  schedule:
+    - cron: '0 2 * * 1'  # Every Monday 2AM UTC
+  workflow_dispatch:
+    inputs:
+      audit_type:
+        description: 'Audit Type'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - comprehensive
+          - triggers-only
+          - api-keys-only
+          - legacy-only
+          - security-only
+      create_issues:
+        description: 'Create Issues for Problems'
+        required: true
+        default: 'true'
+        type: boolean
+      notify_on_failure:
+        description: 'Notify on Critical Failures'
+        required: true
+        default: 'true'
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+  AUDIT_TYPE: ${{ github.event.inputs.audit_type || 'comprehensive' }}
+  CREATE_ISSUES: ${{ github.event.inputs.create_issues || 'true' }}
+  NOTIFY_ON_FAILURE: ${{ github.event.inputs.notify_on_failure || 'true' }}
+
+jobs:
+  comprehensive_audit:
+    name: 🔍 Comprehensive System Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 📦 Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pyyaml requests beautifulsoup4
+        # Install yq for YAML processing
+        sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq
+        sudo chmod +x /usr/bin/yq
+    
+    - name: 🔍 Run Comprehensive Audit
+      id: run_audit
+      env:
+        # All 16 AI API Keys for Advanced Failover
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+        CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+        COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+        NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+      run: |
+        echo "🔍 Starting Comprehensive System Audit"
+        echo "Audit Type: $AUDIT_TYPE"
+        echo "Create Issues: $CREATE_ISSUES"
+        echo "Notify on Failure: $NOTIFY_ON_FAILURE"
+        echo ""
+        
+        # Run comprehensive audit
+        python .github/scripts/comprehensive_audit_engine.py \
+          --audit-type $AUDIT_TYPE \
+          --create-issues $CREATE_ISSUES \
+          --notify-on-failure $NOTIFY_ON_FAILURE \
+          --output comprehensive_audit_results.json
+        
+        echo "✅ Comprehensive audit completed"
+    
+    - name: 📊 Generate Audit Report
+      id: audit_report
+      needs: run_audit
+      run: |
+        echo "📊 Generating Comprehensive Audit Report"
+        echo ""
+        
+        # Create comprehensive audit report
+        cat > comprehensive_audit_report.md << 'EOF'
+        # 🔍 Comprehensive System Audit Report
+        
+        ## 📊 **AUDIT OVERVIEW**
+        - **Audit Type**: $AUDIT_TYPE
+        - **Timestamp**: $(date)
+        - **Repository**: ${{ github.repository }}
+        - **Branch**: ${{ github.ref_name }}
+        - **Commit**: ${{ github.sha }}
+        
+        ## 🔍 **AUDIT FINDINGS**
+        - **Total Workflows**: [See audit results]
+        - **Valid Workflows**: [See audit results]
+        - **Duplicate Triggers**: [See audit results]
+        - **Legacy/Stub Workflows**: [See audit results]
+        - **Direct API Key Usage**: [See audit results]
+        - **API Manager Integration**: [See audit results]
+        - **Security Issues**: [See audit results]
+        
+        ## 📈 **PERFORMANCE METRICS**
+        - **Audit Duration**: ${{ github.run_duration }}
+        - **Success Rate**: [See audit results]
+        - **Issues Found**: [See audit results]
+        - **Critical Issues**: [See audit results]
+        - **Recommendations**: [See audit results]
+        
+        ## 🎯 **NEXT STEPS**
+        1. Review audit findings
+        2. Fix identified issues
+        3. Update workflows as needed
+        4. Schedule next audit cycle
+        
+        ---
+        *Generated by Comprehensive Workflow & Code Audit*
+        EOF
+        
+        echo "✅ Audit report generated"
+    
+    - name: 📤 Upload Audit Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: comprehensive-audit-results
+        path: |
+          comprehensive_audit_results.json
+          comprehensive_audit_report.md
+          audit_*.txt
+          audit_*.log
+        retention-days: 90
+    
+    - name: 📝 Create Audit Summary Comment
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          // Read the audit report
+          const report = fs.readFileSync('comprehensive_audit_report.md', 'utf8');
+          
+          // Create comment
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: report
+          });
+    
+    - name: 🏷️ Add Audit Labels
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          // Add audit labels
+          github.rest.issues.addLabels({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            labels: ['comprehensive-audit', 'system-health-check', 'automated-review']
+          });
+    
+    - name: 🚨 Create Issues for Critical Problems
+      if: env.CREATE_ISSUES == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          try {
+            // Read audit results
+            const auditResults = JSON.parse(fs.readFileSync('comprehensive_audit_results.json', 'utf8'));
+            
+            // Create issues for critical problems
+            if (auditResults.duplicate_triggers && auditResults.duplicate_triggers.length > 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '[AUDIT] Duplicate Workflow Triggers Detected',
+                body: `## 🚨 Critical Issue: Duplicate Workflow Triggers\n\n**Found ${auditResults.duplicate_triggers.length} duplicate triggers:**\n\n${auditResults.duplicate_triggers.map(t => `- ${t}`).join('\n')}\n\n**Impact:** Workflow conflicts and resource waste\n\n**Action Required:** Review and consolidate duplicate triggers\n\n---\n*Generated by Comprehensive Audit System*`,
+                labels: ['audit', 'critical', 'workflow-conflict', 'automated']
+              });
+            }
+            
+            if (auditResults.legacy_workflows && auditResults.legacy_workflows.length > 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '[AUDIT] Legacy/Stub Workflows Detected',
+                body: `## ⚠️ Issue: Legacy/Stub Workflows Found\n\n**Found ${auditResults.legacy_workflows.length} legacy workflows:**\n\n${auditResults.legacy_workflows.map(w => `- ${w}`).join('\n')}\n\n**Impact:** Code bloat and maintenance overhead\n\n**Action Required:** Remove or refactor legacy workflows\n\n---\n*Generated by Comprehensive Audit System*`,
+                labels: ['audit', 'legacy', 'cleanup', 'automated']
+              });
+            }
+            
+            if (auditResults.direct_api_usage && auditResults.direct_api_usage.length > 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '[AUDIT] Direct API Key Usage Bypassing Manager',
+                body: `## 🔒 Security Issue: Direct API Key Usage\n\n**Found ${auditResults.direct_api_usage.length} instances of direct API key usage:**\n\n${auditResults.direct_api_usage.map(u => `- ${u}`).join('\n')}\n\n**Impact:** Bypasses failover system and reduces reliability\n\n**Action Required:** Migrate to centralized API manager\n\n---\n*Generated by Comprehensive Audit System*`,
+                labels: ['audit', 'security', 'api-keys', 'automated']
+              });
+            }
+            
+            console.log('✅ Issues created for critical problems');
+          } catch (error) {
+            console.log('⚠️  No critical issues found or error creating issues:', error.message);
+          }
+    
+    - name: 📧 Send Notification on Critical Failure
+      if: failure() && env.NOTIFY_ON_FAILURE == 'true'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          // Send notification for critical audit failure
+          await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: '[AUDIT] Critical Audit Failure - Immediate Attention Required',
+            body: `## 🚨 Critical Audit Failure\n\n**The comprehensive system audit has failed with critical issues.**\n\n**Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n\n**Please review the audit results immediately.**\n\n---\n*Generated by Comprehensive Audit System*`,
+            labels: ['audit', 'critical', 'failure', 'urgent', 'automated']
+          });
