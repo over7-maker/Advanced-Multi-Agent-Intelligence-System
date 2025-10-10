@@ -14,6 +14,7 @@ import {
   Users
 } from 'lucide-react';
 import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import VoiceCommandInterface from './VoiceCommandInterface';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -71,7 +72,23 @@ interface Task {
   agentsInvolved: string[];
 }
 
-const AMASControlCenter: React.FC = () => {
+interface AMASControlCenterProps {
+  onViewChange?: (view: 'dashboard' | 'agents' | 'tasks' | 'metrics' | 'voice') => void;
+  onAgentSelect?: (agent: any) => void;
+  onTaskSelect?: (task: any) => void;
+  onVoiceCommand?: (command: any) => void;
+  onLogout?: () => void;
+  systemHealth?: any;
+}
+
+const AMASControlCenter: React.FC<AMASControlCenterProps> = ({
+  onViewChange,
+  onAgentSelect,
+  onTaskSelect,
+  onVoiceCommand,
+  onLogout,
+  systemHealth
+}) => {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [activeTasks, setActiveTasks] = useState<Task[]>([]);
@@ -177,6 +194,9 @@ const AMASControlCenter: React.FC = () => {
     };
 
     setActiveTasks(prev => [...prev, newTask]);
+    
+    // Notify parent component
+    onTaskSelect?.(newTask);
 
     // Simulate task progress
     simulateTaskProgress(newTask.id);
@@ -350,6 +370,41 @@ const AMASControlCenter: React.FC = () => {
             </div>
             
             <div className="flex items-center space-x-6">
+              {/* Navigation Buttons */}
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => onViewChange?.('agents')}
+                  className="px-4 py-2 bg-slate-700/50 text-gray-300 rounded-lg hover:bg-slate-600/50 transition-colors"
+                >
+                  Agents
+                </button>
+                <button
+                  onClick={() => onViewChange?.('tasks')}
+                  className="px-4 py-2 bg-slate-700/50 text-gray-300 rounded-lg hover:bg-slate-600/50 transition-colors"
+                >
+                  Tasks
+                </button>
+                <button
+                  onClick={() => onViewChange?.('metrics')}
+                  className="px-4 py-2 bg-slate-700/50 text-gray-300 rounded-lg hover:bg-slate-600/50 transition-colors"
+                >
+                  Metrics
+                </button>
+                <button
+                  onClick={() => onViewChange?.('voice')}
+                  className="px-4 py-2 bg-slate-700/50 text-gray-300 rounded-lg hover:bg-slate-600/50 transition-colors"
+                >
+                  Voice
+                </button>
+              </div>
+
+              {/* Voice Command Interface */}
+              <VoiceCommandInterface 
+                onCommandProcessed={onVoiceCommand}
+                compact={true}
+              />
+
+              {/* System Health */}
               {metrics && (
                 <div className="flex items-center space-x-4">
                   <div className="text-center">
@@ -365,6 +420,16 @@ const AMASControlCenter: React.FC = () => {
                     <div className="text-xs text-gray-400">Tasks/sec</div>
                   </div>
                 </div>
+              )}
+
+              {/* Logout Button */}
+              {onLogout && (
+                <button
+                  onClick={onLogout}
+                  className="px-4 py-2 bg-red-600/20 text-red-400 rounded-lg hover:bg-red-600/30 transition-colors"
+                >
+                  Logout
+                </button>
               )}
             </div>
           </div>
