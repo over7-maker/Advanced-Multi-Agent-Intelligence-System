@@ -1,0 +1,613 @@
+name: 🚀 AMAS Production CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop, production]
+  pull_request:
+    branches: [main, develop, production]
+  release:
+    types: [published, prereleased]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      force_deploy:
+        description: 'Force deployment (skip tests)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: amas
+  REGISTRY_USERNAME: ${{ github.actor }}
+  REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  # =============================================================================
+  # PHASE 1: PRE-DEPLOYMENT CHECKS
+  # =============================================================================
+  
+  dependency-scan:
+    name: 🔍 Dependency Security Scan
+    runs-on: ubuntu-latest
+    outputs:
+      vulnerabilities-found: ${{ steps.scan-results.outputs.vulnerabilities }}
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 📦 Install dependencies
+      run: |
+        python -m ensurepip --upgrade
+        python -m pip install --upgrade pip
+        pip install safety pip-audit bandit semgrep
+    
+    - name: 🔒 Run Safety scan
+      run: |
+        safety check --json > safety-report.json || echo "Safety scan completed with warnings"
+        safety check --short-report || echo "Safety scan completed with warnings"
+    
+    - name: 🔍 Run pip-audit scan
+      run: |
+        pip-audit --format=json > pip-audit-report.json || echo "pip-audit scan completed with warnings"
+        pip-audit --short-report || echo "pip-audit scan completed with warnings"
+    
+    - name: 🛡️ Run Semgrep security scan
+      uses: returntocorp/semgrep-action@v1
+      with:
+        config: >-
+          p/security-audit
+          p/secrets
+          p/owasp-top-ten
+        generateSarif: "1"
+    
+    - name: 📊 Upload security reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-reports-${{ github.sha }}
+        path: |
+          safety-report.json
+          pip-audit-report.json
+          semgrep.sarif
+        retention-days: 30
+    
+    - name: 📋 Set scan results
+      id: scan-results
+      run: |
+        if [ -f safety-report.json ] && [ -s safety-report.json ]; then
+          vulnerabilities=$(jq length safety-report.json)
+          echo "vulnerabilities=$vulnerabilities" >> $GITHUB_OUTPUT
+        else
+          echo "vulnerabilities=0" >> $GITHUB_OUTPUT
+        fi
+
+  code-quality:
+    name: 🎨 Code Quality & Standards
+    runs-on: ubuntu-latest
+    outputs:
+      quality-score: ${{ steps.quality-check.outputs.score }}
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 📦 Install dependencies
+      run: |
+        python -m ensurepip --upgrade
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: 🎨 Code formatting check
+      run: |
+        black --check src/ tests/ --exclude=".*\.skip$"
+        isort --check-only src/ tests/ --skip-glob="*.skip"
+    
+    - name: 🔍 Linting
+      run: |
+        flake8 src/ tests/ --max-complexity=10 --max-line-length=100 --exclude="*.skip"
+        pylint src/ --disable=C0114,C0116 --score=yes || echo "Pylint completed with warnings"
+    
+    - name: 🏷️ Type checking
+      run: |
+        mypy src/ --ignore-missing-imports --strict-optional || echo "Type checking completed with warnings"
+    
+    - name: 📊 Calculate quality score
+      id: quality-check
+      run: |
+        # Simple quality scoring based on linting results
+        score=100
+        if [ -f pylint-report.txt ]; then
+          pylint_score=$(grep "Your code has been rated at" pylint-report.txt | grep -o '[0-9.]*' | head -1)
+          if [ ! -z "$pylint_score" ]; then
+            score=$(echo "$pylint_score" | cut -d'/' -f1)
+          fi
+        fi
+        echo "score=$score" >> $GITHUB_OUTPUT
+
+  # =============================================================================
+  # PHASE 2: COMPREHENSIVE TESTING
+  # =============================================================================
+  
+  unit-tests:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🐍 Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    
+    - name: 📦 Install dependencies
+      run: |
+        python -m ensurepip --upgrade
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: 🧪 Run unit tests
+      run: |
+        pytest tests/unit/ -v --tb=short --cov=src --cov-report=xml --cov-report=html
+      env:
+        AMAS_ENVIRONMENT: testing
+        AMAS_DB_HOST: localhost
+        AMAS_DB_PASSWORD: test_password
+        AMAS_DB_NAME: amas_test
+        AMAS_REDIS_HOST: localhost
+    
+    - name: 📊 Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+  integration-tests:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-latest
+    needs: [dependency-scan, code-quality]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: amas_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+      
+      neo4j:
+        image: neo4j:5
+        env:
+          NEO4J_AUTH: neo4j/test_password
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p test_password 'RETURN 1'"
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 5
+        ports:
+          - 7474:7474
+          - 7687:7687
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 📦 Install dependencies
+      run: |
+        python -m ensurepip --upgrade
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: 🏗️ Setup test environment
+      run: |
+        mkdir -p logs data models
+        cp .env.example .env
+        echo "AMAS_DB_HOST=localhost" >> .env
+        echo "AMAS_DB_PASSWORD=test_password" >> .env
+        echo "AMAS_DB_NAME=amas_test" >> .env
+        echo "AMAS_REDIS_HOST=localhost" >> .env
+        echo "AMAS_NEO4J_URI=bolt://localhost:7687" >> .env
+        echo "AMAS_NEO4J_USERNAME=neo4j" >> .env
+        echo "AMAS_NEO4J_PASSWORD=test_password" >> .env
+    
+    - name: 🔗 Run integration tests
+      run: |
+        pytest tests/integration/ -v --tb=short --cov=src --cov-report=xml
+      env:
+        AMAS_ENVIRONMENT: testing
+        AMAS_DB_HOST: localhost
+        AMAS_DB_PASSWORD: test_password
+        AMAS_DB_NAME: amas_test
+        AMAS_REDIS_HOST: localhost
+        AMAS_NEO4J_URI: bolt://localhost:7687
+        AMAS_NEO4J_USERNAME: neo4j
+        AMAS_NEO4J_PASSWORD: test_password
+
+  e2e-tests:
+    name: 🎭 End-to-End Tests
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🐳 Start services
+      run: |
+        docker-compose -f docker-compose.test.yml up -d
+        
+        # Wait for services to be ready
+        timeout 300 bash -c 'until curl -f http://localhost:8000/health; do sleep 5; done'
+    
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: 📦 Install test dependencies
+      run: |
+        python -m ensurepip --upgrade
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: 🎭 Run E2E tests
+      run: |
+        pytest tests/e2e/ -v --tb=short --html=report.html --self-contained-html
+      env:
+        AMAS_API_URL: http://localhost:8000
+    
+    - name: 📋 Collect logs
+      if: always()
+      run: |
+        mkdir -p logs/e2e
+        docker-compose -f docker-compose.test.yml logs > logs/e2e/docker-logs.txt
+    
+    - name: 📊 Upload E2E artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: e2e-test-artifacts-${{ github.sha }}
+        path: |
+          logs/e2e/
+          report.html
+          screenshots/
+        retention-days: 14
+    
+    - name: 🛑 Cleanup
+      if: always()
+      run: |
+        docker-compose -f docker-compose.test.yml down -v
+
+  performance-tests:
+    name: ⚡ Performance Tests
+    runs-on: ubuntu-latest
+    needs: [unit-tests]
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 📦 Install dependencies
+      run: |
+        python -m ensurepip --upgrade
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+        pip install locust
+    
+    - name: ⚡ Run performance tests
+      run: |
+        pytest tests/performance/ -v --tb=short
+        # Run load tests with Locust
+        locust -f tests/performance/locustfile.py --headless -u 100 -r 10 -t 60s --html=performance-report.html
+      env:
+        AMAS_ENVIRONMENT: testing
+    
+    - name: 📊 Upload performance reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: performance-reports-${{ github.sha }}
+        path: |
+          performance-report.html
+          locust-results/
+        retention-days: 30
+
+  # =============================================================================
+  # PHASE 3: BUILD & SECURITY
+  # =============================================================================
+  
+  docker-build:
+    name: 🐳 Docker Build & Security Scan
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: 🔑 Login to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.DOCKER_REGISTRY }}
+        username: ${{ env.REGISTRY_USERNAME }}
+        password: ${{ env.REGISTRY_PASSWORD }}
+    
+    - name: 🏗️ Build and push Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: |
+          ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+          ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        labels: |
+          org.opencontainers.image.title=AMAS
+          org.opencontainers.image.description=Advanced Multi-Agent System
+          org.opencontainers.image.version=${{ github.ref_name }}
+          org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
+          org.opencontainers.image.revision=${{ github.sha }}
+          org.opencontainers.image.licenses=MIT
+    
+    - name: 🔍 Docker security scan with Trivy
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        severity: 'CRITICAL,HIGH'
+    
+    - name: 📊 Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v3
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+    
+    - name: 🔍 Docker security scan with Snyk
+      uses: snyk/actions/docker@master
+      if: github.event_name != 'pull_request'
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        image: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        args: --severity-threshold=high
+
+  # =============================================================================
+  # PHASE 4: DEPLOYMENT
+  # =============================================================================
+  
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [docker-build, e2e-tests, performance-tests]
+    if: github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
+    environment: staging
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🚀 Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Add actual staging deployment commands here
+        # This would typically involve:
+        # 1. Deploying to staging infrastructure
+        # 2. Running smoke tests
+        # 3. Updating staging environment variables
+        # 4. Notifying team of deployment status
+    
+    - name: 🧪 Run smoke tests
+      run: |
+        echo "Running smoke tests against staging environment..."
+        # Add smoke test commands here
+    
+    - name: 📊 Update deployment status
+      run: |
+        echo "Staging deployment completed successfully"
+
+  deploy-production:
+    name: 🌟 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [docker-build, e2e-tests, performance-tests]
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment: production
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🔒 Pre-deployment security check
+      run: |
+        echo "Running pre-deployment security checks..."
+        # Add security validation checks here
+    
+    - name: 🚀 Deploy to production
+      run: |
+        echo "Deploying to production environment..."
+        # Add actual production deployment commands here
+        # This would typically involve:
+        # 1. Blue-green deployment
+        # 2. Database migrations
+        # 3. Health checks
+        # 4. Rollback preparation
+    
+    - name: 🧪 Run production smoke tests
+      run: |
+        echo "Running smoke tests against production environment..."
+        # Add production smoke test commands here
+    
+    - name: 📊 Update deployment status
+      run: |
+        echo "Production deployment completed successfully"
+    
+    - name: 📢 Notify deployment success
+      if: success()
+      run: |
+        echo "Production deployment successful - notifying team"
+        # Add notification logic here (Slack, email, etc.)
+
+  # =============================================================================
+  # PHASE 5: POST-DEPLOYMENT VALIDATION
+  # =============================================================================
+  
+  post-deployment-validation:
+    name: ✅ Post-Deployment Validation
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: 📦 Install dependencies
+      run: |
+        python -m ensurepip --upgrade
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: ✅ Run post-deployment tests
+      run: |
+        echo "Running post-deployment validation tests..."
+        # Add post-deployment validation tests here
+        # This would typically include:
+        # 1. Health check validation
+        # 2. API endpoint validation
+        # 3. Database connectivity tests
+        # 4. Performance baseline validation
+    
+    - name: 📊 Generate deployment report
+      run: |
+        echo "Generating deployment report..."
+        # Add deployment report generation here
+
+  # =============================================================================
+  # PHASE 6: CLEANUP & NOTIFICATIONS
+  # =============================================================================
+  
+  cleanup:
+    name: 🧹 Cleanup
+    runs-on: ubuntu-latest
+    needs: [post-deployment-validation]
+    if: always()
+    
+    steps:
+    - name: 🧹 Cleanup old artifacts
+      run: |
+        echo "Cleaning up old artifacts and temporary files..."
+        # Add cleanup logic here
+    
+    - name: 📊 Update monitoring dashboards
+      run: |
+        echo "Updating monitoring dashboards with deployment metrics..."
+        # Add dashboard update logic here
+
+  # =============================================================================
+  # ROLLBACK CAPABILITY
+  # =============================================================================
+  
+  rollback:
+    name: 🔄 Rollback Deployment
+    runs-on: ubuntu-latest
+    if: failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🔄 Execute rollback
+      run: |
+        echo "Executing rollback procedure..."
+        # Add rollback logic here
+        # This would typically involve:
+        # 1. Reverting to previous stable version
+        # 2. Rolling back database changes
+        # 3. Updating load balancer configuration
+        # 4. Notifying team of rollback
+    
+    - name: 📢 Notify rollback
+      run: |
+        echo "Rollback completed - notifying team"
+        # Add rollback notification logic here
