@@ -24,32 +24,16 @@ run_fix() {
     fi
 }
 
-# Step 1: Fix CI workflow dependencies
-echo "🔧 Fixing CI workflow dependency issues..."
-
-# Fix ci-cd.yml workflow
-if [ -f ".github/workflows/ci-cd.yml" ]; then
-    echo "📝 Updating ci-cd.yml workflow dependencies..."
-    # Ensure all dependency installation steps include requirements-dev.txt
-    sed -i 's/pip install -r requirements\.txt$/&\n        pip install -r requirements-dev.txt/g' .github/workflows/ci-cd.yml
-    echo "✅ ci-cd.yml updated"
-fi
-
-# Fix ci.yml workflow
-if [ -f ".github/workflows/ci.yml" ]; then
-    echo "📝 Updating ci.yml workflow dependencies..."
-    # Ensure all dependency installation steps include requirements-dev.txt
-    sed -i 's/pip install -r requirements\.txt$/&\n        pip install -r requirements-dev.txt/g' .github/workflows/ci.yml
-    echo "✅ ci.yml updated"
-fi
-
-# Step 2: Fix pytest configuration
+# Step 1: Fix pytest configuration (safe to modify)
 if [ -f "pytest.ini" ]; then
     echo "📝 Fixing pytest configuration..."
     # Ensure pytest.ini has correct section header
     sed -i 's/\[tool:pytest\]/[pytest]/g' pytest.ini
     echo "✅ pytest configuration fixed"
 fi
+
+# Note: Skipping workflow file modifications due to permission restrictions
+echo "⚠️ Skipping workflow file modifications (requires workflows permission)"
 
 # Step 3: Fix code formatting
 run_fix "python3 -m black src/ tests/" "Fixing code formatting with Black"
