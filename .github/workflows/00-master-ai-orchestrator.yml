@@ -58,7 +58,7 @@ env:
 jobs:
   # Layer 1: Detection & Analysis - Multi-Agent Intelligence
   layer1_detection_analysis:
-    name: 🔍 Layer 1: Detection & Analysis
+    name: "🔍 Layer 1: Detection & Analysis"
     runs-on: ubuntu-latest
     timeout-minutes: 30
     
@@ -206,7 +206,7 @@ jobs:
 
   # Layer 2: Intelligence & Decision - Advanced AI Reasoning
   layer2_intelligence_decision:
-    name: 🧠 Layer 2: Intelligence & Decision
+        name: "🧠 Layer 2: Intelligence & Decision"
     runs-on: ubuntu-latest
     needs: layer1_detection_analysis
     timeout-minutes: 45
@@ -426,7 +426,7 @@ jobs:
 
   # Layer 4: Orchestration & Management - Master Control
   layer4_orchestration_management:
-    name: 🎯 Layer 4: Orchestration & Management
+        name: "🎯 Layer 4: Orchestration & Management"
     runs-on: ubuntu-latest
     needs: [layer1_detection_analysis, layer2_intelligence_decision, layer3_execution_fix]
     timeout-minutes: 30

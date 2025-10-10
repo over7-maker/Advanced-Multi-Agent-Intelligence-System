@@ -30,7 +30,8 @@ jobs:
         python-version: '3.11'
     
     - name: Install dependencies
-      run: |      python -m ensurepip --upgrade
+      run: |
+        python -m ensurepip --upgrade
         python -m pip install --upgrade pippython -m ensurepip --upgrade
 
 

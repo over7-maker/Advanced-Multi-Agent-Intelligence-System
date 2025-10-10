@@ -436,7 +436,7 @@ jobs:
     - name: 📥 Download All Results
       uses: actions/download-artifact@v4
       with:
-        pattern: *-results-*
+        pattern: "*-results-*"
         path: all_results/
         merge-multiple: true
     
@@ -552,7 +552,7 @@ jobs:
     - name: 📥 Download All Results
       uses: actions/download-artifact@v4
       with:
-        pattern: *-results-*
+        pattern: "*-results-*"
         path: final_results/
         merge-multiple: true
     
