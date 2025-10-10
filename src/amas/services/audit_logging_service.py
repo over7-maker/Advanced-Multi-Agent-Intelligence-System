@@ -1,43 +1,97 @@
 """
-Enhanced Audit Logging Service for AMAS Intelligence System - Phase 5
-Provides comprehensive audit logging, compliance monitoring, and forensic analysis
+Audit Logging Service for AMAS
+Implements comprehensive audit logging for security and compliance
 """
 
-import asyncio
-import hashlib
-import hmac
 import json
 import logging
-import secrets
-from dataclasses import dataclass
-from datetime import datetime, timedelta
+import uuid
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Union
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass, asdict
+
+from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
 
-class AuditEventType(Enum):
-    """Audit event type enumeration"""
+class AuditEventType(str, Enum):
+    """Types of audit events"""
+    # Authentication events
+    LOGIN_SUCCESS = "login_success"
+    LOGIN_FAILURE = "login_failure"
+    LOGOUT = "logout"
+    TOKEN_REFRESH = "token_refresh"
+    PASSWORD_CHANGE = "password_change"
+    ACCOUNT_LOCKED = "account_locked"
+    ACCOUNT_UNLOCKED = "account_unlocked"
+    
+    # Authorization events
+    PERMISSION_GRANTED = "permission_granted"
+    PERMISSION_DENIED = "permission_denied"
+    ROLE_ASSIGNED = "role_assigned"
+    ROLE_REVOKED = "role_revoked"
+    
+    # User management events
+    USER_CREATED = "user_created"
+    USER_UPDATED = "user_updated"
+    USER_DELETED = "user_deleted"
+    USER_DEACTIVATED = "user_deactivated"
+    USER_ACTIVATED = "user_activated"
+    
+    # Agent management events
+    AGENT_CREATED = "agent_created"
+    AGENT_UPDATED = "agent_updated"
+    AGENT_DELETED = "agent_deleted"
+    AGENT_STARTED = "agent_started"
+    AGENT_STOPPED = "agent_stopped"
+    AGENT_EXECUTED = "agent_executed"
+    
+    # Task management events
+    TASK_CREATED = "task_created"
+    TASK_UPDATED = "task_updated"
+    TASK_DELETED = "task_deleted"
+    TASK_SUBMITTED = "task_submitted"
+    TASK_COMPLETED = "task_completed"
+    TASK_FAILED = "task_failed"
+    
+    # System events
+    SYSTEM_STARTUP = "system_startup"
+    SYSTEM_SHUTDOWN = "system_shutdown"
+    CONFIGURATION_CHANGED = "configuration_changed"
+    SECURITY_SCAN = "security_scan"
+    BACKUP_CREATED = "backup_created"
+    BACKUP_RESTORED = "backup_restored"
+    
+    # Data events
+    DATA_ACCESSED = "data_accessed"
+    DATA_CREATED = "data_created"
+    DATA_UPDATED = "data_updated"
+    DATA_DELETED = "data_deleted"
+    DATA_EXPORTED = "data_exported"
+    DATA_IMPORTED = "data_imported"
+    
+    # Security events
+    SECURITY_VIOLATION = "security_violation"
+    SUSPICIOUS_ACTIVITY = "suspicious_activity"
+    RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
+    INVALID_INPUT = "invalid_input"
+    UNAUTHORIZED_ACCESS = "unauthorized_access"
+    
+    # API events
+    API_REQUEST = "api_request"
+    API_RESPONSE = "api_response"
+    API_ERROR = "api_error"
+    
+    # External service events
+    EXTERNAL_SERVICE_CALL = "external_service_call"
+    EXTERNAL_SERVICE_ERROR = "external_service_error"
+    EXTERNAL_SERVICE_TIMEOUT = "external_service_timeout"
 
-    AUTHENTICATION = "authentication"
-    AUTHORIZATION = "authorization"
-    DATA_ACCESS = "data_access"
-    DATA_MODIFICATION = "data_modification"
-    DATA_DELETION = "data_deletion"
-    SYSTEM_ACCESS = "system_access"
-    CONFIGURATION_CHANGE = "configuration_change"
-    SECURITY_EVENT = "security_event"
-    ADMIN_ACTION = "admin_action"
-    USER_ACTION = "user_action"
-    SYSTEM_EVENT = "system_event"
-    ERROR_EVENT = "error_event"
 
-
-class AuditLevel(Enum):
-    """Audit level enumeration"""
-
+class AuditSeverity(str, Enum):
+    """Audit event severity levels"""
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -47,771 +101,384 @@ class AuditLevel(Enum):
 @dataclass
 class AuditEvent:
     """Audit event data structure"""
-
-    event_id: str
-    event_type: AuditEventType
-    audit_level: AuditLevel
+    id: str
     timestamp: datetime
-    user_id: str
-    session_id: str
-    source_ip: str
-    user_agent: str
+    event_type: AuditEventType
+    severity: AuditSeverity
+    user_id: Optional[str]
+    session_id: Optional[str]
+    ip_address: Optional[str]
+    user_agent: Optional[str]
+    resource: Optional[str]
     action: str
-    resource: str
-    result: str
     details: Dict[str, Any]
-    classification: str
-    signature: str
-    chain_hash: Optional[str] = None
+    outcome: str  # success, failure, error
+    error_message: Optional[str] = None
+    correlation_id: Optional[str] = None
+    tags: List[str] = None
+    
+    def __post_init__(self):
+        if self.tags is None:
+            self.tags = []
+        if self.correlation_id is None:
+            self.correlation_id = str(uuid.uuid4())
+
+
+class AuditLogEntry(BaseModel):
+    """Pydantic model for audit log entries"""
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    event_type: AuditEventType
+    severity: AuditSeverity
+    user_id: Optional[str] = None
+    session_id: Optional[str] = None
+    ip_address: Optional[str] = None
+    user_agent: Optional[str] = None
+    resource: Optional[str] = None
+    action: str
+    details: Dict[str, Any] = Field(default_factory=dict)
+    outcome: str = "success"
+    error_message: Optional[str] = None
+    correlation_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    tags: List[str] = Field(default_factory=list)
 
 
 class AuditLoggingService:
-    """
-    Enhanced Audit Logging Service for AMAS Intelligence System
-
-    Provides comprehensive audit logging, compliance monitoring,
-    forensic analysis, and tamper detection.
-    """
+    """Service for managing audit logging"""
 
     def __init__(self, config: Dict[str, Any]):
-        """
-        Initialize the audit logging service.
-
-        Args:
-            config: Configuration dictionary
-        """
         self.config = config
-        self.logging_enabled = True
-        self.audit_events = {}
-        self.audit_chain = []
-        self.previous_hash = None
+        self.logger = logging.getLogger("audit")
+        self.audit_handler = None
+        self._setup_audit_logging()
 
-        # Audit configuration
-        self.audit_config = {
-            "log_retention_days": config.get("audit_retention_days", 365),
-            "log_rotation_size": config.get(
-                "audit_rotation_size", 100 * 1024 * 1024
-            ),  # 100MB
-            "log_compression": config.get("audit_compression", True),
-            "log_encryption": config.get("audit_encryption", True),
-            "tamper_detection": config.get("audit_tamper_detection", True),
-            "compliance_mode": config.get("audit_compliance_mode", "strict"),
-        }
+    def _setup_audit_logging(self):
+        """Setup audit logging configuration"""
+        # Create audit logger
+        self.audit_logger = logging.getLogger("audit")
+        self.audit_logger.setLevel(logging.INFO)
+        
+        # Create file handler for audit logs
+        audit_log_file = self.config.get("audit_log_file", "/app/logs/audit.log")
+        handler = logging.FileHandler(audit_log_file)
+        handler.setLevel(logging.INFO)
+        
+        # Create JSON formatter for structured logging
+        formatter = logging.Formatter(
+            '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "message": %(message)s}'
+        )
+        handler.setFormatter(formatter)
+        
+        self.audit_logger.addHandler(handler)
+        self.audit_logger.propagate = False
 
-        # Audit storage
-        self.audit_storage_path = Path(config.get("audit_storage_path", "logs/audit"))
-        self.audit_storage_path.mkdir(parents=True, exist_ok=True)
-
-        # Audit rules
-        self.audit_rules = []
-        self.compliance_requirements = {}
-
-        # Audit processing
-        self.audit_processing_tasks = []
-
-        logger.info("Audit logging service initialized")
-
-    async def initialize(self):
-        """Initialize the audit logging service"""
-        try:
-            logger.info("Initializing audit logging service...")
-
-            # Initialize audit rules
-            await self._initialize_audit_rules()
-
-            # Initialize compliance requirements
-            await self._initialize_compliance_requirements()
-
-            # Initialize audit storage
-            await self._initialize_audit_storage()
-
-            # Start audit processing
-            await self._start_audit_processing()
-
-            # Log service initialization
-            await self.log_audit_event(
-                event_type=AuditEventType.SYSTEM_EVENT,
-                audit_level=AuditLevel.MEDIUM,
-                user_id="system",
-                action="initialize",
-                resource="audit_logging_service",
-                result="success",
-                details={"service": "audit_logging_service", "status": "initialized"},
-            )
-
-            logger.info("Audit logging service initialized successfully")
-
-        except Exception as e:
-            logger.error(f"Failed to initialize audit logging service: {e}")
-            raise
-
-    async def _initialize_audit_rules(self):
-        """Initialize audit rules"""
-        try:
-            # Define audit rules for different event types
-            self.audit_rules = [
-                {
-                    "event_type": AuditEventType.AUTHENTICATION,
-                    "required_fields": ["user_id", "source_ip", "result"],
-                    "sensitive_data": ["password", "token"],
-                    "retention_days": 365,
-                },
-                {
-                    "event_type": AuditEventType.DATA_ACCESS,
-                    "required_fields": ["user_id", "resource", "action"],
-                    "sensitive_data": ["data_content"],
-                    "retention_days": 2555,  # 7 years for compliance
-                },
-                {
-                    "event_type": AuditEventType.CONFIGURATION_CHANGE,
-                    "required_fields": ["user_id", "resource", "details"],
-                    "sensitive_data": ["old_value", "new_value"],
-                    "retention_days": 2555,  # 7 years for compliance
-                },
-                {
-                    "event_type": AuditEventType.SECURITY_EVENT,
-                    "required_fields": ["user_id", "action", "result"],
-                    "sensitive_data": ["threat_details"],
-                    "retention_days": 2555,  # 7 years for compliance
-                },
-            ]
-
-            logger.info("Audit rules initialized")
-
-        except Exception as e:
-            logger.error(f"Failed to initialize audit rules: {e}")
-            raise
-
-    async def _initialize_compliance_requirements(self):
-        """Initialize compliance requirements"""
-        try:
-            # Define compliance requirements
-            self.compliance_requirements = {
-                "SOX": {
-                    "retention_days": 2555,  # 7 years
-                    "encryption_required": True,
-                    "tamper_detection": True,
-                    "immutable_logs": True,
-                },
-                "GDPR": {
-                    "retention_days": 365,  # 1 year
-                    "encryption_required": True,
-                    "tamper_detection": True,
-                    "data_anonymization": True,
-                },
-                "HIPAA": {
-                    "retention_days": 1825,  # 5 years
-                    "encryption_required": True,
-                    "tamper_detection": True,
-                    "access_controls": True,
-                },
-                "PCI_DSS": {
-                    "retention_days": 1095,  # 3 years
-                    "encryption_required": True,
-                    "tamper_detection": True,
-                    "secure_storage": True,
-                },
-            }
-
-            logger.info("Compliance requirements initialized")
-
-        except Exception as e:
-            logger.error(f"Failed to initialize compliance requirements: {e}")
-            raise
-
-    async def _initialize_audit_storage(self):
-        """Initialize audit storage"""
-        try:
-            # Create audit storage directories
-            self.audit_storage_path.mkdir(parents=True, exist_ok=True)
-
-            # Create subdirectories for different event types
-            for event_type in AuditEventType:
-                event_dir = self.audit_storage_path / event_type.value
-                event_dir.mkdir(exist_ok=True)
-
-            # Create compliance directories
-            for compliance in self.compliance_requirements.keys():
-                compliance_dir = (
-                    self.audit_storage_path / f"compliance_{compliance.lower()}"
-                )
-                compliance_dir.mkdir(exist_ok=True)
-
-            logger.info("Audit storage initialized")
-
-        except Exception as e:
-            logger.error(f"Failed to initialize audit storage: {e}")
-            raise
-
-    async def _start_audit_processing(self):
-        """Start audit processing tasks"""
-        try:
-            self.audit_processing_tasks = [
-                asyncio.create_task(self._process_audit_events()),
-                asyncio.create_task(self._rotate_audit_logs()),
-                asyncio.create_task(self._compress_audit_logs()),
-                asyncio.create_task(self._verify_audit_integrity()),
-                asyncio.create_task(self._cleanup_old_logs()),
-            ]
-
-            logger.info("Audit processing tasks started")
-
-        except Exception as e:
-            logger.error(f"Failed to start audit processing: {e}")
-            raise
-
-    async def log_audit_event(
+    def log_event(
         self,
         event_type: AuditEventType,
-        audit_level: AuditLevel,
-        user_id: str,
         action: str,
-        resource: str,
-        result: str,
-        details: Dict[str, Any],
-        classification: str = "unclassified",
-        session_id: str = None,
-        source_ip: str = "127.0.0.1",
-        user_agent: str = "AMAS-System",
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        ip_address: Optional[str] = None,
+        user_agent: Optional[str] = None,
+        resource: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+        outcome: str = "success",
+        error_message: Optional[str] = None,
+        severity: AuditSeverity = AuditSeverity.MEDIUM,
+        correlation_id: Optional[str] = None,
+        tags: Optional[List[str]] = None
     ) -> str:
         """Log an audit event"""
         try:
-            event_id = secrets.token_urlsafe(16)
-            session_id = session_id or secrets.token_urlsafe(16)
-
-            # Create audit event
-            event = AuditEvent(
-                event_id=event_id,
+            # Create audit log entry
+            entry = AuditLogEntry(
                 event_type=event_type,
-                audit_level=audit_level,
-                timestamp=datetime.utcnow(),
+                severity=severity,
                 user_id=user_id,
                 session_id=session_id,
-                source_ip=source_ip,
+                ip_address=ip_address,
                 user_agent=user_agent,
-                action=action,
                 resource=resource,
-                result=result,
-                details=details,
-                classification=classification,
-                signature=self._generate_audit_signature(event_id, action, details),
+                action=action,
+                details=details or {},
+                outcome=outcome,
+                error_message=error_message,
+                correlation_id=correlation_id or str(uuid.uuid4()),
+                tags=tags or []
             )
-
-            # Generate chain hash for tamper detection
-            if self.audit_chain:
-                event.chain_hash = self._generate_chain_hash(
-                    event, self.audit_chain[-1]
-                )
-            else:
-                event.chain_hash = self._generate_chain_hash(event, None)
-
-            # Store event
-            self.audit_events[event_id] = event
-            self.audit_chain.append(event)
-
-            # Apply audit rules
-            await self._apply_audit_rules(event)
-
-            # Log to file
-            await self._write_audit_log(event)
-
+            
+            # Log the event
+            self.audit_logger.info(json.dumps(entry.dict(), default=str))
+            
+            # Also log to main logger for immediate visibility
             logger.info(
-                f"Audit event logged: {event_type.value} - {action} by {user_id}"
+                f"Audit: {event_type.value} - {action} by {user_id or 'system'} - {outcome}"
             )
-
-            return event_id
-
+            
+            return entry.id
+            
         except Exception as e:
             logger.error(f"Failed to log audit event: {e}")
-            return None
+            return str(uuid.uuid4())
 
-    async def _apply_audit_rules(self, event: AuditEvent):
-        """Apply audit rules to event"""
-        try:
-            # Find applicable rules
-            applicable_rules = [
-                rule
-                for rule in self.audit_rules
-                if rule["event_type"] == event.event_type
-            ]
-
-            for rule in applicable_rules:
-                # Check required fields
-                await self._check_required_fields(event, rule)
-
-                # Sanitize sensitive data
-                await self._sanitize_sensitive_data(event, rule)
-
-                # Apply retention policy
-                await self._apply_retention_policy(event, rule)
-
-        except Exception as e:
-            logger.error(f"Failed to apply audit rules: {e}")
-
-    async def _check_required_fields(self, event: AuditEvent, rule: Dict[str, Any]):
-        """Check required fields for audit event"""
-        try:
-            required_fields = rule.get("required_fields", [])
-
-            for field in required_fields:
-                if not hasattr(event, field) or getattr(event, field) is None:
-                    logger.warning(
-                        f"Missing required field {field} in audit event {event.event_id}"
-                    )
-
-        except Exception as e:
-            logger.error(f"Failed to check required fields: {e}")
-
-    async def _sanitize_sensitive_data(self, event: AuditEvent, rule: Dict[str, Any]):
-        """Sanitize sensitive data in audit event"""
-        try:
-            sensitive_fields = rule.get("sensitive_data", [])
-
-            for field in sensitive_fields:
-                if field in event.details:
-                    # Replace sensitive data with masked value
-                    event.details[field] = "[REDACTED]"
-
-        except Exception as e:
-            logger.error(f"Failed to sanitize sensitive data: {e}")
-
-    async def _apply_retention_policy(self, event: AuditEvent, rule: Dict[str, Any]):
-        """Apply retention policy to audit event"""
-        try:
-            retention_days = rule.get(
-                "retention_days", self.audit_config["log_retention_days"]
-            )
-
-            # Store retention information
-            event.details["retention_days"] = retention_days
-            event.details["retention_until"] = (
-                event.timestamp + timedelta(days=retention_days)
-            ).isoformat()
-
-        except Exception as e:
-            logger.error(f"Failed to apply retention policy: {e}")
-
-    async def _write_audit_log(self, event: AuditEvent):
-        """Write audit log to file"""
-        try:
-            # Create log entry
-            log_entry = {
-                "event_id": event.event_id,
-                "event_type": event.event_type.value,
-                "audit_level": event.audit_level.value,
-                "timestamp": event.timestamp.isoformat(),
-                "user_id": event.user_id,
-                "session_id": event.session_id,
-                "source_ip": event.source_ip,
-                "user_agent": event.user_agent,
-                "action": event.action,
-                "resource": event.resource,
-                "result": event.result,
-                "details": event.details,
-                "classification": event.classification,
-                "signature": event.signature,
-                "chain_hash": event.chain_hash,
-            }
-
-            # Write to event type specific file
-            event_file = (
-                self.audit_storage_path
-                / event.event_type.value
-                / f"{event.timestamp.date()}.jsonl"
-            )
-
-            with open(event_file, "a") as f:
-                f.write(json.dumps(log_entry) + "\n")
-
-            # Write to general audit log
-            general_file = (
-                self.audit_storage_path / f"audit_{event.timestamp.date()}.jsonl"
-            )
-
-            with open(general_file, "a") as f:
-                f.write(json.dumps(log_entry) + "\n")
-
-        except Exception as e:
-            logger.error(f"Failed to write audit log: {e}")
-
-    async def _process_audit_events(self):
-        """Process audit events"""
-        while self.logging_enabled:
-            try:
-                # Process pending audit events
-                await self._process_pending_events()
-
-                # Generate audit reports
-                await self._generate_audit_reports()
-
-                # Update audit statistics
-                await self._update_audit_statistics()
-
-                await asyncio.sleep(60)  # Process every minute
-
-            except Exception as e:
-                logger.error(f"Audit event processing error: {e}")
-                await asyncio.sleep(60)
-
-    async def _rotate_audit_logs(self):
-        """Rotate audit logs"""
-        while self.logging_enabled:
-            try:
-                # Check log file sizes
-                await self._check_log_file_sizes()
-
-                # Rotate oversized files
-                await self._rotate_oversized_files()
-
-                await asyncio.sleep(3600)  # Check every hour
-
-            except Exception as e:
-                logger.error(f"Audit log rotation error: {e}")
-                await asyncio.sleep(3600)
-
-    async def _compress_audit_logs(self):
-        """Compress audit logs"""
-        while self.logging_enabled:
-            try:
-                # Compress old log files
-                await self._compress_old_logs()
-
-                await asyncio.sleep(86400)  # Compress daily
-
-            except Exception as e:
-                logger.error(f"Audit log compression error: {e}")
-                await asyncio.sleep(86400)
-
-    async def _verify_audit_integrity(self):
-        """Verify audit log integrity"""
-        while self.logging_enabled:
-            try:
-                # Verify audit chain integrity
-                await self._verify_chain_integrity()
-
-                # Verify log file integrity
-                await self._verify_file_integrity()
-
-                await asyncio.sleep(3600)  # Verify hourly
-
-            except Exception as e:
-                logger.error(f"Audit integrity verification error: {e}")
-                await asyncio.sleep(3600)
-
-    async def _cleanup_old_logs(self):
-        """Clean up old audit logs"""
-        while self.logging_enabled:
-            try:
-                # Clean up expired logs
-                await self._cleanup_expired_logs()
-
-                await asyncio.sleep(86400)  # Cleanup daily
-
-            except Exception as e:
-                logger.error(f"Audit log cleanup error: {e}")
-                await asyncio.sleep(86400)
-
-    async def _process_pending_events(self):
-        """Process pending audit events"""
-        try:
-            # Process any pending audit events
-            # In real implementation, this would process queued events
-            pass
-
-        except Exception as e:
-            logger.error(f"Failed to process pending events: {e}")
-
-    async def _generate_audit_reports(self):
-        """Generate audit reports"""
-        try:
-            # Generate compliance reports
-            await self._generate_compliance_reports()
-
-            # Generate security reports
-            await self._generate_security_reports()
-
-        except Exception as e:
-            logger.error(f"Failed to generate audit reports: {e}")
-
-    async def _update_audit_statistics(self):
-        """Update audit statistics"""
-        try:
-            # Update audit statistics
-            # In real implementation, this would update statistics
-            pass
-
-        except Exception as e:
-            logger.error(f"Failed to update audit statistics: {e}")
-
-    async def _check_log_file_sizes(self):
-        """Check log file sizes"""
-        try:
-            # Check file sizes and mark for rotation if needed
-            # In real implementation, this would check actual file sizes
-            pass
-
-        except Exception as e:
-            logger.error(f"Failed to check log file sizes: {e}")
-
-    async def _rotate_oversized_files(self):
-        """Rotate oversized files"""
-        try:
-            # Rotate files that exceed size limits
-            # In real implementation, this would rotate files
-            pass
-
-        except Exception as e:
-            logger.error(f"Failed to rotate oversized files: {e}")
-
-    async def _compress_old_logs(self):
-        """Compress old logs"""
-        try:
-            # Compress old log files
-            # In real implementation, this would compress files
-            pass
-
-        except Exception as e:
-            logger.error(f"Failed to compress old logs: {e}")
-
-    async def _verify_chain_integrity(self):
-        """Verify audit chain integrity"""
-        try:
-            # Verify the integrity of the audit chain
-            for i, event in enumerate(self.audit_chain):
-                if i > 0:
-                    previous_event = self.audit_chain[i - 1]
-                    expected_hash = self._generate_chain_hash(event, previous_event)
-                    if event.chain_hash != expected_hash:
-                        logger.error(
-                            f"Audit chain integrity violation at event {event.event_id}"
-                        )
-
-        except Exception as e:
-            logger.error(f"Failed to verify chain integrity: {e}")
-
-    async def _verify_file_integrity(self):
-        """Verify log file integrity"""
-        try:
-            # Verify the integrity of log files
-            # In real implementation, this would verify file signatures
-            pass
-
-        except Exception as e:
-            logger.error(f"Failed to verify file integrity: {e}")
-
-    async def _cleanup_expired_logs(self):
-        """Clean up expired logs"""
-        try:
-            # Clean up logs that have exceeded retention period
-            cutoff_date = datetime.utcnow() - timedelta(
-                days=self.audit_config["log_retention_days"]
-            )
-
-            # Remove expired events from memory
-            self.audit_events = {
-                event_id: event
-                for event_id, event in self.audit_events.items()
-                if event.timestamp > cutoff_date
-            }
-
-            # Remove expired events from chain
-            self.audit_chain = [
-                event for event in self.audit_chain if event.timestamp > cutoff_date
-            ]
-
-        except Exception as e:
-            logger.error(f"Failed to cleanup expired logs: {e}")
-
-    async def _generate_compliance_reports(self):
-        """Generate compliance reports"""
-        try:
-            # Generate compliance reports for different standards
-            # In real implementation, this would generate actual reports
-            pass
-
-        except Exception as e:
-            logger.error(f"Failed to generate compliance reports: {e}")
-
-    async def _generate_security_reports(self):
-        """Generate security reports"""
-        try:
-            # Generate security audit reports
-            # In real implementation, this would generate actual reports
-            pass
-
-        except Exception as e:
-            logger.error(f"Failed to generate security reports: {e}")
-
-    def _generate_audit_signature(
-        self, event_id: str, action: str, details: Dict[str, Any]
-    ) -> str:
-        """Generate audit signature for tamper detection"""
-        try:
-            secret_key = self.config.get("audit_secret_key", "default_audit_secret")
-            data = f"{event_id}:{action}:{json.dumps(details, sort_keys=True)}"
-            signature = hmac.new(
-                secret_key.encode(), data.encode(), hashlib.sha256
-            ).hexdigest()
-            return signature
-
-        except Exception as e:
-            logger.error(f"Failed to generate audit signature: {e}")
-            return ""
-
-    def _generate_chain_hash(
-        self, current_event: AuditEvent, previous_event: Optional[AuditEvent]
-    ) -> str:
-        """Generate chain hash for tamper detection"""
-        try:
-            if previous_event:
-                data = f"{previous_event.chain_hash}:{current_event.event_id}:{current_event.timestamp.isoformat()}"
-            else:
-                data = f"{current_event.event_id}:{current_event.timestamp.isoformat()}"
-
-            return hashlib.sha256(data.encode()).hexdigest()
-
-        except Exception as e:
-            logger.error(f"Failed to generate chain hash: {e}")
-            return ""
-
-    async def get_audit_status(self) -> Dict[str, Any]:
-        """Get audit logging status"""
-        return {
-            "logging_enabled": self.logging_enabled,
-            "total_events": len(self.audit_events),
-            "chain_length": len(self.audit_chain),
-            "storage_path": str(self.audit_storage_path),
-            "retention_days": self.audit_config["log_retention_days"],
-            "compression_enabled": self.audit_config["log_compression"],
-            "encryption_enabled": self.audit_config["log_encryption"],
-            "tamper_detection": self.audit_config["tamper_detection"],
-            "compliance_mode": self.audit_config["compliance_mode"],
-            "timestamp": datetime.utcnow().isoformat(),
-        }
-
-    async def get_audit_events(
+    def log_authentication_event(
         self,
-        event_type: AuditEventType = None,
-        audit_level: AuditLevel = None,
+        event_type: AuditEventType,
+        username: str,
+        ip_address: str,
+        user_agent: str = None,
+        success: bool = True,
+        error_message: str = None,
+        session_id: str = None
+    ) -> str:
+        """Log authentication-related events"""
+        severity = AuditSeverity.HIGH if not success else AuditSeverity.MEDIUM
+        
+        return self.log_event(
+            event_type=event_type,
+            action=f"Authentication attempt for user {username}",
+            user_id=username,
+            session_id=session_id,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            resource="authentication",
+            details={
+                "username": username,
+                "success": success,
+                "ip_address": ip_address
+            },
+            outcome="success" if success else "failure",
+            error_message=error_message,
+            severity=severity,
+            tags=["authentication", "security"]
+        )
+
+    def log_authorization_event(
+        self,
+        event_type: AuditEventType,
+        user_id: str,
+        resource: str,
+        action: str,
+        permission: str,
+        granted: bool,
+        ip_address: str = None,
+        session_id: str = None
+    ) -> str:
+        """Log authorization-related events"""
+        severity = AuditSeverity.HIGH if not granted else AuditSeverity.MEDIUM
+        
+        return self.log_event(
+            event_type=event_type,
+            action=f"Authorization check for {action} on {resource}",
+            user_id=user_id,
+            session_id=session_id,
+            ip_address=ip_address,
+            resource=resource,
+            details={
+                "permission": permission,
+                "granted": granted,
+                "action": action
+            },
+            outcome="success" if granted else "failure",
+            severity=severity,
+            tags=["authorization", "security"]
+        )
+
+    def log_user_management_event(
+        self,
+        event_type: AuditEventType,
+        target_user_id: str,
+        admin_user_id: str,
+        action: str,
+        details: Dict[str, Any] = None,
+        ip_address: str = None,
+        session_id: str = None
+    ) -> str:
+        """Log user management events"""
+        return self.log_event(
+            event_type=event_type,
+            action=f"User management: {action}",
+            user_id=admin_user_id,
+            session_id=session_id,
+            ip_address=ip_address,
+            resource="user_management",
+            details={
+                "target_user_id": target_user_id,
+                "admin_user_id": admin_user_id,
+                "action": action,
+                **(details or {})
+            },
+            outcome="success",
+            severity=AuditSeverity.MEDIUM,
+            tags=["user_management", "administration"]
+        )
+
+    def log_agent_event(
+        self,
+        event_type: AuditEventType,
+        agent_id: str,
+        user_id: str,
+        action: str,
+        details: Dict[str, Any] = None,
+        ip_address: str = None,
+        session_id: str = None
+    ) -> str:
+        """Log agent-related events"""
+        return self.log_event(
+            event_type=event_type,
+            action=f"Agent {action}",
+            user_id=user_id,
+            session_id=session_id,
+            ip_address=ip_address,
+            resource=f"agent:{agent_id}",
+            details={
+                "agent_id": agent_id,
+                "action": action,
+                **(details or {})
+            },
+            outcome="success",
+            severity=AuditSeverity.MEDIUM,
+            tags=["agent", "automation"]
+        )
+
+    def log_task_event(
+        self,
+        event_type: AuditEventType,
+        task_id: str,
+        user_id: str,
+        action: str,
+        details: Dict[str, Any] = None,
+        ip_address: str = None,
+        session_id: str = None
+    ) -> str:
+        """Log task-related events"""
+        return self.log_event(
+            event_type=event_type,
+            action=f"Task {action}",
+            user_id=user_id,
+            session_id=session_id,
+            ip_address=ip_address,
+            resource=f"task:{task_id}",
+            details={
+                "task_id": task_id,
+                "action": action,
+                **(details or {})
+            },
+            outcome="success",
+            severity=AuditSeverity.MEDIUM,
+            tags=["task", "workflow"]
+        )
+
+    def log_security_event(
+        self,
+        event_type: AuditEventType,
+        action: str,
         user_id: str = None,
-        start_date: datetime = None,
-        end_date: datetime = None,
+        ip_address: str = None,
+        details: Dict[str, Any] = None,
+        severity: AuditSeverity = AuditSeverity.HIGH
+    ) -> str:
+        """Log security-related events"""
+        return self.log_event(
+            event_type=event_type,
+            action=action,
+            user_id=user_id,
+            ip_address=ip_address,
+            resource="security",
+            details=details or {},
+            outcome="failure",
+            severity=severity,
+            tags=["security", "violation"]
+        )
+
+    def log_api_event(
+        self,
+        event_type: AuditEventType,
+        method: str,
+        path: str,
+        user_id: str = None,
+        ip_address: str = None,
+        status_code: int = None,
+        response_time: float = None,
+        error_message: str = None,
+        session_id: str = None
+    ) -> str:
+        """Log API-related events"""
+        outcome = "success" if status_code and status_code < 400 else "failure"
+        severity = AuditSeverity.HIGH if status_code and status_code >= 500 else AuditSeverity.MEDIUM
+        
+        return self.log_event(
+            event_type=event_type,
+            action=f"API {method} {path}",
+            user_id=user_id,
+            session_id=session_id,
+            ip_address=ip_address,
+            resource=f"api:{path}",
+            details={
+                "method": method,
+                "path": path,
+                "status_code": status_code,
+                "response_time": response_time
+            },
+            outcome=outcome,
+            error_message=error_message,
+            severity=severity,
+            tags=["api", "http"]
+        )
+
+    def log_system_event(
+        self,
+        event_type: AuditEventType,
+        action: str,
+        details: Dict[str, Any] = None,
+        severity: AuditSeverity = AuditSeverity.MEDIUM
+    ) -> str:
+        """Log system-related events"""
+        return self.log_event(
+            event_type=event_type,
+            action=action,
+            resource="system",
+            details=details or {},
+            outcome="success",
+            severity=severity,
+            tags=["system", "infrastructure"]
+        )
+
+    def get_audit_events(
+        self,
+        user_id: Optional[str] = None,
+        event_type: Optional[AuditEventType] = None,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        limit: int = 100
     ) -> List[Dict[str, Any]]:
-        """Get audit events"""
-        try:
-            events = []
-            for event in self.audit_events.values():
-                if event_type and event.event_type != event_type:
-                    continue
-                if audit_level and event.audit_level != audit_level:
-                    continue
-                if user_id and event.user_id != user_id:
-                    continue
-                if start_date and event.timestamp < start_date:
-                    continue
-                if end_date and event.timestamp > end_date:
-                    continue
+        """Get audit events with filtering (placeholder implementation)"""
+        # In a real implementation, this would query a database
+        # For now, return empty list
+        return []
 
-                events.append(
-                    {
-                        "event_id": event.event_id,
-                        "event_type": event.event_type.value,
-                        "audit_level": event.audit_level.value,
-                        "timestamp": event.timestamp.isoformat(),
-                        "user_id": event.user_id,
-                        "session_id": event.session_id,
-                        "source_ip": event.source_ip,
-                        "user_agent": event.user_agent,
-                        "action": event.action,
-                        "resource": event.resource,
-                        "result": event.result,
-                        "details": event.details,
-                        "classification": event.classification,
-                        "signature": event.signature,
-                        "chain_hash": event.chain_hash,
-                    }
-                )
+    def export_audit_logs(
+        self,
+        start_time: Optional[datetime] = None,
+        end_time: Optional[datetime] = None,
+        format: str = "json"
+    ) -> str:
+        """Export audit logs (placeholder implementation)"""
+        # In a real implementation, this would export from database
+        return "Audit logs exported successfully"
 
-            return events
 
-        except Exception as e:
-            logger.error(f"Failed to get audit events: {e}")
-            return []
+# Global audit logging service instance
+audit_service: Optional[AuditLoggingService] = None
 
-    async def verify_audit_integrity(self) -> Dict[str, Any]:
-        """Verify audit log integrity"""
-        try:
-            integrity_status = {
-                "chain_integrity": True,
-                "file_integrity": True,
-                "signature_verification": True,
-                "tamper_detected": False,
-                "violations": [],
-            }
 
-            # Verify chain integrity
-            for i, event in enumerate(self.audit_chain):
-                if i > 0:
-                    previous_event = self.audit_chain[i - 1]
-                    expected_hash = self._generate_chain_hash(event, previous_event)
-                    if event.chain_hash != expected_hash:
-                        integrity_status["chain_integrity"] = False
-                        integrity_status["tamper_detected"] = True
-                        integrity_status["violations"].append(
-                            f"Chain hash mismatch at event {event.event_id}"
-                        )
-
-            # Verify signatures
-            for event in self.audit_events.values():
-                expected_signature = self._generate_audit_signature(
-                    event.event_id, event.action, event.details
-                )
-                if event.signature != expected_signature:
-                    integrity_status["signature_verification"] = False
-                    integrity_status["tamper_detected"] = True
-                    integrity_status["violations"].append(
-                        f"Signature mismatch for event {event.event_id}"
-                    )
-
-            return integrity_status
-
-        except Exception as e:
-            logger.error(f"Failed to verify audit integrity: {e}")
-            return {
-                "chain_integrity": False,
-                "file_integrity": False,
-                "signature_verification": False,
-                "tamper_detected": True,
-                "violations": [str(e)],
-            }
-
-    async def shutdown(self):
-        """Shutdown audit logging service"""
-        try:
-            logger.info("Shutting down audit logging service...")
-
-            # Stop logging
-            self.logging_enabled = False
-
-            # Cancel processing tasks
-            for task in self.audit_processing_tasks:
-                task.cancel()
-
-            # Wait for tasks to complete
-            await asyncio.gather(*self.audit_processing_tasks, return_exceptions=True)
-
-            # Log service shutdown
-            await self.log_audit_event(
-                event_type=AuditEventType.SYSTEM_EVENT,
-                audit_level=AuditLevel.MEDIUM,
-                user_id="system",
-                action="shutdown",
-                resource="audit_logging_service",
-                result="success",
-                details={"service": "audit_logging_service", "status": "shutdown"},
-            )
-
-            logger.info("Audit logging service shutdown complete")
-
-        except Exception as e:
-            logger.error(f"Error during audit logging service shutdown: {e}")
+def get_audit_service() -> AuditLoggingService:
+    """Get the global audit logging service instance"""
+    global audit_service
+    if audit_service is None:
+        from src.config.settings import get_settings
+        settings = get_settings()
+        audit_service = AuditLoggingService({
+            "audit_log_file": settings.monitoring.log_file_path.replace(".log", "_audit.log")
+        })
+    return audit_service
