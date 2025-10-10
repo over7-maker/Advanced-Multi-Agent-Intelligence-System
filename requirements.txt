@@ -83,3 +83,27 @@ pyyaml==6.0.2
 
 # Email validation for Pydantic
 email-validator==2.2.0
+
+# Enterprise Authentication & Security Dependencies
+pyotp==2.9.0
+python-ldap==3.4.3
+ldap3==2.9.1
+python3-saml==1.15.0
+authlib==1.3.0
+python-jose[cryptography]==3.3.0
+
+# Security Scanning Tools
+bandit==1.7.10
+safety==3.2.7
+pip-audit==2.6.1
+
+# Data Management Dependencies
+dvc[s3]==3.0.0
+dvc[gdrive]==3.0.0
+dvc[gs]==3.0.0
+dvc[azure]==3.0.0
+dvc[oss]==3.0.0
+
+# Additional Security Dependencies
+cryptography==44.0.0
+pycryptodome==3.21.0
