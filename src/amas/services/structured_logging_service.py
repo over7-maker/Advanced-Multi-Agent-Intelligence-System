@@ -6,22 +6,25 @@ Implements correlation IDs and structured logging for better observability
 import json
 import logging
 import uuid
+from contextvars import ContextVar
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Union
-from contextvars import ContextVar
-from dataclasses import dataclass, asdict
 
 from pydantic import BaseModel, Field
 
 # Context variables for request tracking
-correlation_id_var: ContextVar[Optional[str]] = ContextVar('correlation_id', default=None)
-user_id_var: ContextVar[Optional[str]] = ContextVar('user_id', default=None)
-session_id_var: ContextVar[Optional[str]] = ContextVar('session_id', default=None)
-request_id_var: ContextVar[Optional[str]] = ContextVar('request_id', default=None)
+correlation_id_var: ContextVar[Optional[str]] = ContextVar(
+    "correlation_id", default=None
+)
+user_id_var: ContextVar[Optional[str]] = ContextVar("user_id", default=None)
+session_id_var: ContextVar[Optional[str]] = ContextVar("session_id", default=None)
+request_id_var: ContextVar[Optional[str]] = ContextVar("request_id", default=None)
 
 
 class LogLevel(str):
     """Log levels"""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -31,6 +34,7 @@ class LogLevel(str):
 
 class LogEntry(BaseModel):
     """Structured log entry"""
+
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     level: str
     message: str
@@ -59,12 +63,7 @@ class StructuredLogger:
         self.logger = logging.getLogger(name)
         self.logger.setLevel(logging.DEBUG)
 
-    def _create_log_entry(
-        self,
-        level: str,
-        message: str,
-        **kwargs
-    ) -> LogEntry:
+    def _create_log_entry(self, level: str, message: str, **kwargs) -> LogEntry:
         """Create a structured log entry"""
         return LogEntry(
             level=level,
@@ -74,17 +73,17 @@ class StructuredLogger:
             session_id=session_id_var.get(),
             request_id=request_id_var.get(),
             component=self.component,
-            **kwargs
+            **kwargs,
         )
 
     def _log(self, level: str, message: str, **kwargs):
         """Internal logging method"""
         entry = self._create_log_entry(level, message, **kwargs)
-        
+
         # Convert to JSON for structured logging
         log_data = entry.dict()
         log_json = json.dumps(log_data, default=str)
-        
+
         # Log using appropriate level
         if level == "DEBUG":
             self.logger.debug(log_json)
@@ -124,7 +123,7 @@ class StructuredLogger:
         status_code: int,
         duration_ms: float,
         user_id: str = None,
-        **kwargs
+        **kwargs,
     ):
         """Log HTTP request"""
         self.info(
@@ -137,17 +136,13 @@ class StructuredLogger:
                 "method": method,
                 "path": path,
                 "status_code": status_code,
-                "duration_ms": duration_ms
+                "duration_ms": duration_ms,
             },
-            **kwargs
+            **kwargs,
         )
 
     def log_authentication(
-        self,
-        username: str,
-        success: bool,
-        ip_address: str = None,
-        **kwargs
+        self, username: str, success: bool, ip_address: str = None, **kwargs
     ):
         """Log authentication event"""
         level = "INFO" if success else "WARNING"
@@ -159,19 +154,14 @@ class StructuredLogger:
             metadata={
                 "username": username,
                 "success": success,
-                "ip_address": ip_address
+                "ip_address": ip_address,
             },
             tags=["authentication", "security"],
-            **kwargs
+            **kwargs,
         )
 
     def log_authorization(
-        self,
-        user_id: str,
-        resource: str,
-        action: str,
-        granted: bool,
-        **kwargs
+        self, user_id: str, resource: str, action: str, granted: bool, **kwargs
     ):
         """Log authorization event"""
         level = "INFO" if granted else "WARNING"
@@ -180,94 +170,56 @@ class StructuredLogger:
             f"Authorization {'granted' if granted else 'denied'} for {action} on {resource}",
             action="authorization",
             user_id=user_id,
-            metadata={
-                "resource": resource,
-                "action": action,
-                "granted": granted
-            },
+            metadata={"resource": resource, "action": action, "granted": granted},
             tags=["authorization", "security"],
-            **kwargs
+            **kwargs,
         )
 
-    def log_agent_event(
-        self,
-        agent_id: str,
-        event: str,
-        user_id: str = None,
-        **kwargs
-    ):
+    def log_agent_event(self, agent_id: str, event: str, user_id: str = None, **kwargs):
         """Log agent event"""
         self.info(
             f"Agent {agent_id} {event}",
             action="agent_event",
             user_id=user_id,
-            metadata={
-                "agent_id": agent_id,
-                "event": event
-            },
+            metadata={"agent_id": agent_id, "event": event},
             tags=["agent", "automation"],
-            **kwargs
+            **kwargs,
         )
 
-    def log_task_event(
-        self,
-        task_id: str,
-        event: str,
-        user_id: str = None,
-        **kwargs
-    ):
+    def log_task_event(self, task_id: str, event: str, user_id: str = None, **kwargs):
         """Log task event"""
         self.info(
             f"Task {task_id} {event}",
             action="task_event",
             user_id=user_id,
-            metadata={
-                "task_id": task_id,
-                "event": event
-            },
+            metadata={"task_id": task_id, "event": event},
             tags=["task", "workflow"],
-            **kwargs
+            **kwargs,
         )
 
-    def log_error(
-        self,
-        error: Exception,
-        context: str = None,
-        **kwargs
-    ):
+    def log_error(self, error: Exception, context: str = None, **kwargs):
         """Log error with context"""
         import traceback
-        
+
         self.error(
             f"Error in {context or 'unknown context'}: {str(error)}",
             error_code=type(error).__name__,
             error_message=str(error),
             stack_trace=traceback.format_exc(),
-            metadata={
-                "error_type": type(error).__name__,
-                "context": context
-            },
+            metadata={"error_type": type(error).__name__, "context": context},
             tags=["error", "exception"],
-            **kwargs
+            **kwargs,
         )
 
-    def log_performance(
-        self,
-        operation: str,
-        duration_ms: float,
-        **kwargs
-    ):
+    def log_performance(self, operation: str, duration_ms: float, **kwargs):
         """Log performance metrics"""
         self.info(
             f"Performance: {operation} took {duration_ms:.2f}ms",
             action="performance",
             duration_ms=duration_ms,
-            metadata={
-                "operation": operation,
-                "duration_ms": duration_ms
-            },
+            metadata={"operation": operation, "duration_ms": duration_ms},
             tags=["performance", "metrics"],
-            **kwargs
+            **kwargs,
         )
 
     def log_security_event(
@@ -276,7 +228,7 @@ class StructuredLogger:
         severity: str = "medium",
         user_id: str = None,
         ip_address: str = None,
-        **kwargs
+        **kwargs,
     ):
         """Log security event"""
         level = "CRITICAL" if severity == "critical" else "WARNING"
@@ -285,13 +237,9 @@ class StructuredLogger:
             f"Security event: {event}",
             action="security_event",
             user_id=user_id,
-            metadata={
-                "event": event,
-                "severity": severity,
-                "ip_address": ip_address
-            },
+            metadata={"event": event, "severity": severity, "ip_address": ip_address},
             tags=["security", "event"],
-            **kwargs
+            **kwargs,
         )
 
 
@@ -303,13 +251,13 @@ class LoggingContext:
         correlation_id: str = None,
         user_id: str = None,
         session_id: str = None,
-        request_id: str = None
+        request_id: str = None,
     ):
         self.correlation_id = correlation_id or str(uuid.uuid4())
         self.user_id = user_id
         self.session_id = session_id
         self.request_id = request_id or str(uuid.uuid4())
-        
+
         self._old_correlation_id = None
         self._old_user_id = None
         self._old_session_id = None
@@ -321,7 +269,7 @@ class LoggingContext:
         self._old_user_id = user_id_var.get()
         self._old_session_id = session_id_var.get()
         self._old_request_id = request_id_var.get()
-        
+
         # Set new values
         correlation_id_var.set(self.correlation_id)
         if self.user_id:
@@ -329,7 +277,7 @@ class LoggingContext:
         if self.session_id:
             session_id_var.set(self.session_id)
         request_id_var.set(self.request_id)
-        
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -389,14 +337,17 @@ def log_with_context(
     correlation_id: str = None,
     user_id: str = None,
     session_id: str = None,
-    request_id: str = None
+    request_id: str = None,
 ):
     """Decorator for logging with context"""
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             with LoggingContext(correlation_id, user_id, session_id, request_id):
                 return func(*args, **kwargs)
+
         return wrapper
+
     return decorator
 
 

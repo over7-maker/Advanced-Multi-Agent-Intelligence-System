@@ -6,10 +6,10 @@ Implements comprehensive audit logging for security and compliance
 import json
 import logging
 import uuid
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Union
 from enum import Enum
-from dataclasses import dataclass, asdict
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field
 
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class AuditEventType(str, Enum):
     """Types of audit events"""
+
     # Authentication events
     LOGIN_SUCCESS = "login_success"
     LOGIN_FAILURE = "login_failure"
@@ -26,20 +27,20 @@ class AuditEventType(str, Enum):
     PASSWORD_CHANGE = "password_change"
     ACCOUNT_LOCKED = "account_locked"
     ACCOUNT_UNLOCKED = "account_unlocked"
-    
+
     # Authorization events
     PERMISSION_GRANTED = "permission_granted"
     PERMISSION_DENIED = "permission_denied"
     ROLE_ASSIGNED = "role_assigned"
     ROLE_REVOKED = "role_revoked"
-    
+
     # User management events
     USER_CREATED = "user_created"
     USER_UPDATED = "user_updated"
     USER_DELETED = "user_deleted"
     USER_DEACTIVATED = "user_deactivated"
     USER_ACTIVATED = "user_activated"
-    
+
     # Agent management events
     AGENT_CREATED = "agent_created"
     AGENT_UPDATED = "agent_updated"
@@ -47,7 +48,7 @@ class AuditEventType(str, Enum):
     AGENT_STARTED = "agent_started"
     AGENT_STOPPED = "agent_stopped"
     AGENT_EXECUTED = "agent_executed"
-    
+
     # Task management events
     TASK_CREATED = "task_created"
     TASK_UPDATED = "task_updated"
@@ -55,7 +56,7 @@ class AuditEventType(str, Enum):
     TASK_SUBMITTED = "task_submitted"
     TASK_COMPLETED = "task_completed"
     TASK_FAILED = "task_failed"
-    
+
     # System events
     SYSTEM_STARTUP = "system_startup"
     SYSTEM_SHUTDOWN = "system_shutdown"
@@ -63,7 +64,7 @@ class AuditEventType(str, Enum):
     SECURITY_SCAN = "security_scan"
     BACKUP_CREATED = "backup_created"
     BACKUP_RESTORED = "backup_restored"
-    
+
     # Data events
     DATA_ACCESSED = "data_accessed"
     DATA_CREATED = "data_created"
@@ -71,19 +72,19 @@ class AuditEventType(str, Enum):
     DATA_DELETED = "data_deleted"
     DATA_EXPORTED = "data_exported"
     DATA_IMPORTED = "data_imported"
-    
+
     # Security events
     SECURITY_VIOLATION = "security_violation"
     SUSPICIOUS_ACTIVITY = "suspicious_activity"
     RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
     INVALID_INPUT = "invalid_input"
     UNAUTHORIZED_ACCESS = "unauthorized_access"
-    
+
     # API events
     API_REQUEST = "api_request"
     API_RESPONSE = "api_response"
     API_ERROR = "api_error"
-    
+
     # External service events
     EXTERNAL_SERVICE_CALL = "external_service_call"
     EXTERNAL_SERVICE_ERROR = "external_service_error"
@@ -92,6 +93,7 @@ class AuditEventType(str, Enum):
 
 class AuditSeverity(str, Enum):
     """Audit event severity levels"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -101,6 +103,7 @@ class AuditSeverity(str, Enum):
 @dataclass
 class AuditEvent:
     """Audit event data structure"""
+
     id: str
     timestamp: datetime
     event_type: AuditEventType
@@ -116,7 +119,7 @@ class AuditEvent:
     error_message: Optional[str] = None
     correlation_id: Optional[str] = None
     tags: List[str] = None
-    
+
     def __post_init__(self):
         if self.tags is None:
             self.tags = []
@@ -126,6 +129,7 @@ class AuditEvent:
 
 class AuditLogEntry(BaseModel):
     """Pydantic model for audit log entries"""
+
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     event_type: AuditEventType
@@ -157,18 +161,18 @@ class AuditLoggingService:
         # Create audit logger
         self.audit_logger = logging.getLogger("audit")
         self.audit_logger.setLevel(logging.INFO)
-        
+
         # Create file handler for audit logs
         audit_log_file = self.config.get("audit_log_file", "/app/logs/audit.log")
         handler = logging.FileHandler(audit_log_file)
         handler.setLevel(logging.INFO)
-        
+
         # Create JSON formatter for structured logging
         formatter = logging.Formatter(
             '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "message": %(message)s}'
         )
         handler.setFormatter(formatter)
-        
+
         self.audit_logger.addHandler(handler)
         self.audit_logger.propagate = False
 
@@ -186,7 +190,7 @@ class AuditLoggingService:
         error_message: Optional[str] = None,
         severity: AuditSeverity = AuditSeverity.MEDIUM,
         correlation_id: Optional[str] = None,
-        tags: Optional[List[str]] = None
+        tags: Optional[List[str]] = None,
     ) -> str:
         """Log an audit event"""
         try:
@@ -204,19 +208,19 @@ class AuditLoggingService:
                 outcome=outcome,
                 error_message=error_message,
                 correlation_id=correlation_id or str(uuid.uuid4()),
-                tags=tags or []
+                tags=tags or [],
             )
-            
+
             # Log the event
             self.audit_logger.info(json.dumps(entry.dict(), default=str))
-            
+
             # Also log to main logger for immediate visibility
             logger.info(
                 f"Audit: {event_type.value} - {action} by {user_id or 'system'} - {outcome}"
             )
-            
+
             return entry.id
-            
+
         except Exception as e:
             logger.error(f"Failed to log audit event: {e}")
             return str(uuid.uuid4())
@@ -229,11 +233,11 @@ class AuditLoggingService:
         user_agent: str = None,
         success: bool = True,
         error_message: str = None,
-        session_id: str = None
+        session_id: str = None,
     ) -> str:
         """Log authentication-related events"""
         severity = AuditSeverity.HIGH if not success else AuditSeverity.MEDIUM
-        
+
         return self.log_event(
             event_type=event_type,
             action=f"Authentication attempt for user {username}",
@@ -245,12 +249,12 @@ class AuditLoggingService:
             details={
                 "username": username,
                 "success": success,
-                "ip_address": ip_address
+                "ip_address": ip_address,
             },
             outcome="success" if success else "failure",
             error_message=error_message,
             severity=severity,
-            tags=["authentication", "security"]
+            tags=["authentication", "security"],
         )
 
     def log_authorization_event(
@@ -262,11 +266,11 @@ class AuditLoggingService:
         permission: str,
         granted: bool,
         ip_address: str = None,
-        session_id: str = None
+        session_id: str = None,
     ) -> str:
         """Log authorization-related events"""
         severity = AuditSeverity.HIGH if not granted else AuditSeverity.MEDIUM
-        
+
         return self.log_event(
             event_type=event_type,
             action=f"Authorization check for {action} on {resource}",
@@ -274,14 +278,10 @@ class AuditLoggingService:
             session_id=session_id,
             ip_address=ip_address,
             resource=resource,
-            details={
-                "permission": permission,
-                "granted": granted,
-                "action": action
-            },
+            details={"permission": permission, "granted": granted, "action": action},
             outcome="success" if granted else "failure",
             severity=severity,
-            tags=["authorization", "security"]
+            tags=["authorization", "security"],
         )
 
     def log_user_management_event(
@@ -292,7 +292,7 @@ class AuditLoggingService:
         action: str,
         details: Dict[str, Any] = None,
         ip_address: str = None,
-        session_id: str = None
+        session_id: str = None,
     ) -> str:
         """Log user management events"""
         return self.log_event(
@@ -306,11 +306,11 @@ class AuditLoggingService:
                 "target_user_id": target_user_id,
                 "admin_user_id": admin_user_id,
                 "action": action,
-                **(details or {})
+                **(details or {}),
             },
             outcome="success",
             severity=AuditSeverity.MEDIUM,
-            tags=["user_management", "administration"]
+            tags=["user_management", "administration"],
         )
 
     def log_agent_event(
@@ -321,7 +321,7 @@ class AuditLoggingService:
         action: str,
         details: Dict[str, Any] = None,
         ip_address: str = None,
-        session_id: str = None
+        session_id: str = None,
     ) -> str:
         """Log agent-related events"""
         return self.log_event(
@@ -331,14 +331,10 @@ class AuditLoggingService:
             session_id=session_id,
             ip_address=ip_address,
             resource=f"agent:{agent_id}",
-            details={
-                "agent_id": agent_id,
-                "action": action,
-                **(details or {})
-            },
+            details={"agent_id": agent_id, "action": action, **(details or {})},
             outcome="success",
             severity=AuditSeverity.MEDIUM,
-            tags=["agent", "automation"]
+            tags=["agent", "automation"],
         )
 
     def log_task_event(
@@ -349,7 +345,7 @@ class AuditLoggingService:
         action: str,
         details: Dict[str, Any] = None,
         ip_address: str = None,
-        session_id: str = None
+        session_id: str = None,
     ) -> str:
         """Log task-related events"""
         return self.log_event(
@@ -359,14 +355,10 @@ class AuditLoggingService:
             session_id=session_id,
             ip_address=ip_address,
             resource=f"task:{task_id}",
-            details={
-                "task_id": task_id,
-                "action": action,
-                **(details or {})
-            },
+            details={"task_id": task_id, "action": action, **(details or {})},
             outcome="success",
             severity=AuditSeverity.MEDIUM,
-            tags=["task", "workflow"]
+            tags=["task", "workflow"],
         )
 
     def log_security_event(
@@ -376,7 +368,7 @@ class AuditLoggingService:
         user_id: str = None,
         ip_address: str = None,
         details: Dict[str, Any] = None,
-        severity: AuditSeverity = AuditSeverity.HIGH
+        severity: AuditSeverity = AuditSeverity.HIGH,
     ) -> str:
         """Log security-related events"""
         return self.log_event(
@@ -388,7 +380,7 @@ class AuditLoggingService:
             details=details or {},
             outcome="failure",
             severity=severity,
-            tags=["security", "violation"]
+            tags=["security", "violation"],
         )
 
     def log_api_event(
@@ -401,12 +393,16 @@ class AuditLoggingService:
         status_code: int = None,
         response_time: float = None,
         error_message: str = None,
-        session_id: str = None
+        session_id: str = None,
     ) -> str:
         """Log API-related events"""
         outcome = "success" if status_code and status_code < 400 else "failure"
-        severity = AuditSeverity.HIGH if status_code and status_code >= 500 else AuditSeverity.MEDIUM
-        
+        severity = (
+            AuditSeverity.HIGH
+            if status_code and status_code >= 500
+            else AuditSeverity.MEDIUM
+        )
+
         return self.log_event(
             event_type=event_type,
             action=f"API {method} {path}",
@@ -418,12 +414,12 @@ class AuditLoggingService:
                 "method": method,
                 "path": path,
                 "status_code": status_code,
-                "response_time": response_time
+                "response_time": response_time,
             },
             outcome=outcome,
             error_message=error_message,
             severity=severity,
-            tags=["api", "http"]
+            tags=["api", "http"],
         )
 
     def log_system_event(
@@ -431,7 +427,7 @@ class AuditLoggingService:
         event_type: AuditEventType,
         action: str,
         details: Dict[str, Any] = None,
-        severity: AuditSeverity = AuditSeverity.MEDIUM
+        severity: AuditSeverity = AuditSeverity.MEDIUM,
     ) -> str:
         """Log system-related events"""
         return self.log_event(
@@ -441,7 +437,7 @@ class AuditLoggingService:
             details=details or {},
             outcome="success",
             severity=severity,
-            tags=["system", "infrastructure"]
+            tags=["system", "infrastructure"],
         )
 
     def get_audit_events(
@@ -450,7 +446,7 @@ class AuditLoggingService:
         event_type: Optional[AuditEventType] = None,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[Dict[str, Any]]:
         """Get audit events with filtering (placeholder implementation)"""
         # In a real implementation, this would query a database
@@ -461,7 +457,7 @@ class AuditLoggingService:
         self,
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
-        format: str = "json"
+        format: str = "json",
     ) -> str:
         """Export audit logs (placeholder implementation)"""
         # In a real implementation, this would export from database
@@ -477,8 +473,13 @@ def get_audit_service() -> AuditLoggingService:
     global audit_service
     if audit_service is None:
         from src.config.settings import get_settings
+
         settings = get_settings()
-        audit_service = AuditLoggingService({
-            "audit_log_file": settings.monitoring.log_file_path.replace(".log", "_audit.log")
-        })
+        audit_service = AuditLoggingService(
+            {
+                "audit_log_file": settings.monitoring.log_file_path.replace(
+                    ".log", "_audit.log"
+                )
+            }
+        )
     return audit_service
