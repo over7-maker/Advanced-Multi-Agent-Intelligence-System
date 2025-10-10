@@ -1,0 +1,186 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amas
+  namespace: amas
+  labels:
+    app: amas
+    component: application
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: amas
+  template:
+    metadata:
+      labels:
+        app: amas
+        component: application
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      containers:
+      - name: amas
+        image: amas:latest
+        ports:
+        - containerPort: 8000
+          name: http
+        - containerPort: 3000
+          name: dashboard
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://postgres:$(POSTGRES_PASSWORD)@postgres:5432/amas"
+        - name: REDIS_URL
+          value: "redis://:$(REDIS_PASSWORD)@redis:6379/0"
+        - name: NEO4J_URI
+          value: "bolt://neo4j:7687"
+        - name: NEO4J_USER
+          value: "neo4j"
+        - name: NEO4J_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: amas-secrets
+              key: NEO4J_PASSWORD
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: amas-secrets
+              key: POSTGRES_PASSWORD
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: amas-secrets
+              key: REDIS_PASSWORD
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: amas-secrets
+              key: SECRET_KEY
+        envFrom:
+        - configMapRef:
+            name: amas-config
+        volumeMounts:
+        - name: amas-data
+          mountPath: /app/data
+        - name: amas-logs
+          mountPath: /app/logs
+        - name: amas-config
+          mountPath: /app/config
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 12
+      volumes:
+      - name: amas-data
+        persistentVolumeClaim:
+          claimName: amas-data-pvc
+      - name: amas-logs
+        persistentVolumeClaim:
+          claimName: amas-logs-pvc
+      - name: amas-config
+        configMap:
+          name: amas-config
+      initContainers:
+      - name: wait-for-dependencies
+        image: busybox:1.35
+        command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for PostgreSQL..."
+          until nc -z postgres 5432; do
+            echo "PostgreSQL is unavailable - sleeping"
+            sleep 2
+          done
+          echo "PostgreSQL is up - executing command"
+          
+          echo "Waiting for Redis..."
+          until nc -z redis 6379; do
+            echo "Redis is unavailable - sleeping"
+            sleep 2
+          done
+          echo "Redis is up - executing command"
+          
+          echo "Waiting for Neo4j..."
+          until nc -z neo4j 7687; do
+            echo "Neo4j is unavailable - sleeping"
+            sleep 2
+          done
+          echo "Neo4j is up - executing command"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: amas
+  namespace: amas
+  labels:
+    app: amas
+    component: application
+spec:
+  selector:
+    app: amas
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  - name: dashboard
+    port: 3000
+    targetPort: 3000
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: amas-data-pvc
+  namespace: amas
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: amas-logs-pvc
+  namespace: amas
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: standard
