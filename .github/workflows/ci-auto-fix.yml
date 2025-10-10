@@ -1,16 +1,17 @@
-name: 🤖 Auto-Fix Code Quality Issues
+name: 🤖 Auto-Fix CI Issues
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    types: [ opened, synchronize, reopened ]
+  workflow_run:
+    workflows: ["AMAS CI/CD Pipeline"]
+    types: [completed]
+    branches: [main, develop]
   workflow_dispatch:
 
 jobs:
-  auto-fix:
-    name: 🔧 Auto-Fix Code Quality Issues
+  auto-fix-ci:
+    name: 🔧 Auto-Fix CI Issues
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
     
     steps:
     - name: 📥 Checkout code
@@ -27,15 +28,14 @@ jobs:
     - name: 📦 Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install black isort flake8 mypy bandit safety
+        pip install black isort flake8 mypy bandit safety pytest
         pip install -r requirements.txt
         pip install -r requirements-dev.txt
 
-    - name: 🔧 Run comprehensive auto-fixes
+    - name: 🔧 Run CI auto-fixes
       run: |
         chmod +x .github/scripts/ci-auto-fix.sh
-        chmod +x .github/scripts/simple-auto-fix.sh
-        ./.github/scripts/ci-auto-fix.sh || echo "Auto-fix completed with warnings"
+        ./.github/scripts/ci-auto-fix.sh
 
     - name: 📊 Check for changes
       id: changes
@@ -54,38 +54,31 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
         git add .
-        git commit -m "🤖 Auto-fix: Resolve code quality and CI issues
+        git commit -m "🤖 Auto-fix: Resolve CI pipeline issues
 
-        - Fixed Black formatting issues
-        - Fixed import sorting with isort
-        - Removed unused imports
         - Fixed CI workflow dependency issues
         - Fixed pytest configuration
-        - Applied automated code quality improvements
+        - Fixed code formatting issues
+        - Applied automated CI improvements
 
         [skip ci]"
         
-        # Handle PR branches properly
-        if [ "${{ github.event_name }}" == "pull_request" ]; then
-          git push origin HEAD:${{ github.head_ref }}
-        else
-          git push
-        fi
+        git push
 
     - name: 📋 Summary
       run: |
-        echo "## 🤖 Auto-Fix Summary" >> $GITHUB_STEP_SUMMARY
+        echo "## 🤖 CI Auto-Fix Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         if [ "${{ steps.changes.outputs.changes }}" == "true" ]; then
-          echo "✅ **Changes Applied**: Code quality issues have been automatically fixed and committed." >> $GITHUB_STEP_SUMMARY
+          echo "✅ **CI Issues Fixed**: CI pipeline issues have been automatically fixed and committed." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔧 Fixes Applied:" >> $GITHUB_STEP_SUMMARY
-          echo "- Black code formatting" >> $GITHUB_STEP_SUMMARY
-          echo "- Import sorting with isort" >> $GITHUB_STEP_SUMMARY
-          echo "- Removed unused imports" >> $GITHUB_STEP_SUMMARY
           echo "- Fixed CI workflow dependency issues" >> $GITHUB_STEP_SUMMARY
           echo "- Fixed pytest configuration" >> $GITHUB_STEP_SUMMARY
-          echo "- General code quality improvements" >> $GITHUB_STEP_SUMMARY
+          echo "- Fixed code formatting issues" >> $GITHUB_STEP_SUMMARY
+          echo "- Applied automated CI improvements" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔄 **Next Steps**: The CI pipeline will be re-triggered automatically." >> $GITHUB_STEP_SUMMARY
         else
-          echo "✅ **No Changes Needed**: Code is already properly formatted and follows quality standards." >> $GITHUB_STEP_SUMMARY
+          echo "✅ **No Changes Needed**: CI issues may require manual intervention." >> $GITHUB_STEP_SUMMARY
         fi

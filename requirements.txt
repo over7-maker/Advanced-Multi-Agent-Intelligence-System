@@ -42,7 +42,7 @@ bcrypt==4.2.1
 pyjwt==2.10.1
 cryptography==44.0.0
 bandit==1.7.10
-safety==3.2.6
+safety==3.2.7
 
 # HTTP and Networking
 httpx==0.28.1

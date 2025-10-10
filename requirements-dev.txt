@@ -25,6 +25,9 @@ bandit==1.7.10
 safety==3.2.7
 pip-audit==2.7.0
 
+# Additional CI Dependencies
+pip-tools==7.3.0
+
 # Code Quality
 coverage==7.6.9
 # radon==6.0.1  # Temporarily disabled due to dependency conflicts

@@ -5,7 +5,6 @@ Test Workflow Execution - Test that all workflows can execute without errors
 
 import json
 import logging
-import os
 import subprocess
 import sys
 from datetime import datetime
