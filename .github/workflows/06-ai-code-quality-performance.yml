@@ -239,10 +239,10 @@ jobs:
           --mode $QUALITY_MODE \
           --languages $TARGET_LANGUAGES \
           --level $OPTIMIZATION_LEVEL \
-          --auto-fix $AUTO_FIX \
-          --performance-benchmarking $PERFORMANCE_BENCHMARKING \
-           --use-advanced-manager \
-              --output quality_analysis_results.json
+          $([ "$AUTO_FIX" = "true" ] && echo "--auto-fix" || echo "") \
+          $([ "$PERFORMANCE_BENCHMARKING" = "true" ] && echo "--performance-benchmarking" || echo "") \
+          --use-advanced-manager \
+          --output quality_analysis_results.json
         
         echo "✅ Code Quality Analysis completed successfully"
     
@@ -445,11 +445,11 @@ jobs:
           --mode $QUALITY_MODE \
           --languages $TARGET_LANGUAGES \
           --level $OPTIMIZATION_LEVEL \
-          --auto-fix $AUTO_FIX \
-          --performance-benchmarking $PERFORMANCE_BENCHMARKING \
+          $([ "$AUTO_FIX" = "true" ] && echo "--auto-fix" || echo "") \
+          $([ "$PERFORMANCE_BENCHMARKING" = "true" ] && echo "--performance-benchmarking" || echo "") \
           --quality-results quality_results/ \
-           --use-advanced-manager \
-              --output performance_analysis_results.json
+          --use-advanced-manager \
+          --output performance_analysis_results.json
         
         echo "✅ Performance Analysis & Optimization completed successfully"
     
@@ -652,11 +652,11 @@ jobs:
           --mode $QUALITY_MODE \
           --languages $TARGET_LANGUAGES \
           --level $OPTIMIZATION_LEVEL \
-          --auto-fix $AUTO_FIX \
-          --performance-benchmarking $PERFORMANCE_BENCHMARKING \
+          $([ "$AUTO_FIX" = "true" ] && echo "--auto-fix" || echo "") \
+          $([ "$PERFORMANCE_BENCHMARKING" = "true" ] && echo "--performance-benchmarking" || echo "") \
           --performance-results performance_results/ \
-           --use-advanced-manager \
-              --output code_enhancement_results.json
+          --use-advanced-manager \
+          --output code_enhancement_results.json
         
         echo "✅ Automated Code Enhancement completed successfully"
     
@@ -859,11 +859,11 @@ jobs:
           --mode $QUALITY_MODE \
           --languages $TARGET_LANGUAGES \
           --level $OPTIMIZATION_LEVEL \
-          --auto-fix $AUTO_FIX \
-          --performance-benchmarking $PERFORMANCE_BENCHMARKING \
+          $([ "$AUTO_FIX" = "true" ] && echo "--auto-fix" || echo "") \
+          $([ "$PERFORMANCE_BENCHMARKING" = "true" ] && echo "--performance-benchmarking" || echo "") \
           --all-results all_results/ \
-           --use-advanced-manager \
-              --output quality_validation_results.json
+          --use-advanced-manager \
+          --output quality_validation_results.json
         
         echo "✅ Quality Validation & Testing completed successfully"
     
@@ -1066,11 +1066,11 @@ jobs:
           --mode $QUALITY_MODE \
           --languages $TARGET_LANGUAGES \
           --level $OPTIMIZATION_LEVEL \
-          --auto-fix $AUTO_FIX \
-          --performance-benchmarking $PERFORMANCE_BENCHMARKING \
+          $([ "$AUTO_FIX" = "true" ] && echo "--auto-fix" || echo "") \
+          $([ "$PERFORMANCE_BENCHMARKING" = "true" ] && echo "--performance-benchmarking" || echo "") \
           --all-results final_results/ \
-           --use-advanced-manager \
-              --output final_summary_results.json
+          --use-advanced-manager \
+          --output final_summary_results.json
         
         echo "✅ Final Summary & Integration completed successfully"
     
