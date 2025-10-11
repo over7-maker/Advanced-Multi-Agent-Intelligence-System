@@ -95,14 +95,28 @@ jobs:
         set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
 
+        # Configure pip to prefer binary wheels (avoid Cython compilation)
+
+        pip config set global.prefer-binary true
+
+        pip config set global.only-binary all
+
         # Configure pip to prefer binary wheels
 
         pip config set global.prefer-binary true
 
         pip config set global.only-binary all
-        pip install -r requirements.txt
+        # Install requirements with binary wheel preference
+
+        pip install --prefer-binary -r requirements.txt
+
+        pip install --only-binary=all -r requirements.txt || pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
-        pip install aiohttp requests pyyaml
+        # Install packages with binary wheel preference (avoid Cython compilation)
+
+        pip install --prefer-binary aiohttp requests PyYAML
+
+        pip install --only-binary=all aiohttp requests PyYAML || pip install aiohttp requests PyYAML
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
         # Install numpy with binary wheel preference
@@ -241,14 +255,28 @@ jobs:
         set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
 
+        # Configure pip to prefer binary wheels (avoid Cython compilation)
+
+        pip config set global.prefer-binary true
+
+        pip config set global.only-binary all
+
         # Configure pip to prefer binary wheels
 
         pip config set global.prefer-binary true
 
         pip config set global.only-binary all
-        pip install -r requirements.txt
+        # Install requirements with binary wheel preference
+
+        pip install --prefer-binary -r requirements.txt
+
+        pip install --only-binary=all -r requirements.txt || pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
-        pip install aiohttp requests pyyaml
+        # Install packages with binary wheel preference (avoid Cython compilation)
+
+        pip install --prefer-binary aiohttp requests PyYAML
+
+        pip install --only-binary=all aiohttp requests PyYAML || pip install aiohttp requests PyYAML
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
         # Install numpy with binary wheel preference
@@ -397,14 +425,28 @@ jobs:
         set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
 
+        # Configure pip to prefer binary wheels (avoid Cython compilation)
+
+        pip config set global.prefer-binary true
+
+        pip config set global.only-binary all
+
         # Configure pip to prefer binary wheels
 
         pip config set global.prefer-binary true
 
         pip config set global.only-binary all
-        pip install -r requirements.txt
+        # Install requirements with binary wheel preference
+
+        pip install --prefer-binary -r requirements.txt
+
+        pip install --only-binary=all -r requirements.txt || pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
-        pip install aiohttp requests pyyaml
+        # Install packages with binary wheel preference (avoid Cython compilation)
+
+        pip install --prefer-binary aiohttp requests PyYAML
+
+        pip install --only-binary=all aiohttp requests PyYAML || pip install aiohttp requests PyYAML
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
         # Install numpy with binary wheel preference
@@ -553,14 +595,28 @@ jobs:
         set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
 
+        # Configure pip to prefer binary wheels (avoid Cython compilation)
+
+        pip config set global.prefer-binary true
+
+        pip config set global.only-binary all
+
         # Configure pip to prefer binary wheels
 
         pip config set global.prefer-binary true
 
         pip config set global.only-binary all
-        pip install -r requirements.txt
+        # Install requirements with binary wheel preference
+
+        pip install --prefer-binary -r requirements.txt
+
+        pip install --only-binary=all -r requirements.txt || pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
-        pip install aiohttp requests pyyaml
+        # Install packages with binary wheel preference (avoid Cython compilation)
+
+        pip install --prefer-binary aiohttp requests PyYAML
+
+        pip install --only-binary=all aiohttp requests PyYAML || pip install aiohttp requests PyYAML
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
         # Install numpy with binary wheel preference
@@ -709,14 +765,28 @@ jobs:
         set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
 
+        # Configure pip to prefer binary wheels (avoid Cython compilation)
+
+        pip config set global.prefer-binary true
+
+        pip config set global.only-binary all
+
         # Configure pip to prefer binary wheels
 
         pip config set global.prefer-binary true
 
         pip config set global.only-binary all
-        pip install -r requirements.txt
+        # Install requirements with binary wheel preference
+
+        pip install --prefer-binary -r requirements.txt
+
+        pip install --only-binary=all -r requirements.txt || pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
-        pip install aiohttp requests pyyaml
+        # Install packages with binary wheel preference (avoid Cython compilation)
+
+        pip install --prefer-binary aiohttp requests PyYAML
+
+        pip install --only-binary=all aiohttp requests PyYAML || pip install aiohttp requests PyYAML
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
         # Install numpy with binary wheel preference

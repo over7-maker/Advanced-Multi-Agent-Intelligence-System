@@ -101,7 +101,11 @@ jobs:
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          # Install requirements with binary wheel preference
+
+          pip install --prefer-binary -r requirements.txt
+
+          pip install --only-binary=all -r requirements.txt || pip install -r requirements.txt
       
       - name: Run Layer 1 Analysis
         id: analysis
@@ -146,7 +150,11 @@ jobs:
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          # Install requirements with binary wheel preference
+
+          pip install --prefer-binary -r requirements.txt
+
+          pip install --only-binary=all -r requirements.txt || pip install -r requirements.txt
       
       - name: Download Layer 1 Results
         uses: actions/download-artifact@v4
@@ -197,7 +205,11 @@ jobs:
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          # Install requirements with binary wheel preference
+
+          pip install --prefer-binary -r requirements.txt
+
+          pip install --only-binary=all -r requirements.txt || pip install -r requirements.txt
       
       - name: Download Previous Results
         uses: actions/download-artifact@v4
@@ -247,7 +259,11 @@ jobs:
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          # Install requirements with binary wheel preference
+
+          pip install --prefer-binary -r requirements.txt
+
+          pip install --only-binary=all -r requirements.txt || pip install -r requirements.txt
       
       - name: Download All Results
         uses: actions/download-artifact@v4

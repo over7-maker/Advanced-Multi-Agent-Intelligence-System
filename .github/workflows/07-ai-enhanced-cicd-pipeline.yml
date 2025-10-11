@@ -179,7 +179,7 @@ jobs:
             ],
             "build_environment": {
               "cython_fix": "applied",
-              "pyyaml_fix": "binary_wheels",
+              "PyYAML_fix": "binary_wheels",
               "status": "healthy"
             }
           }' > pipeline_analysis_results.json

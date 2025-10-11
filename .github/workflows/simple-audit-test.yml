@@ -43,7 +43,11 @@ jobs:
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip
-        pip install pyyaml requests beautifulsoup4
+        # Install PyYAML with binary wheel preference
+
+        pip install --prefer-binary PyYAML
+
+        pip install --only-binary=all PyYAML || pip install PyYAML requests beautifulsoup4
     
     - name: 🔍 Run Comprehensive Audit
       id: run_audit
