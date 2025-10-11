@@ -31,7 +31,7 @@ def main():
     args = parser.parse_args()
     
     print(f"🚀 Starting AI Security Final Summary")
-    print(f"Mode: {args.mode} | Languages: {args.languages} | Level: {args.level}")
+    print(f"Mode: {args.mode} | Environments: {args.languages} | Strategy: {args.level}")
     print(f"Auto-fix: {args.auto_fix} | Performance Benchmarking: {args.performance_benchmarking}")
     
     # Create simple results without external API calls
@@ -40,8 +40,8 @@ def main():
         "description": "AI Security Final Summary",
         "functionality": "Generate final security analysis summary",
         "mode": args.mode,
-        "languages": args.languages,
-        "level": args.level,
+        "environments": args.languages,
+        "strategy": args.level,
         "auto_fix": args.auto_fix,
         "performance_benchmarking": args.performance_benchmarking,
         "ai_analysis": "AI Security Final Summary completed successfully. All checks passed.",

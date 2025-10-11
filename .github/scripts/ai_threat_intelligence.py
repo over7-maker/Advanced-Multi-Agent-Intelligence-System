@@ -340,7 +340,7 @@ This report presents comprehensive threat intelligence analysis conducted by mul
 
 ## 📈 Key Threat Intelligence Insights
 
-- **Threat Level:** Assessed by multi-agent analysis
+- **Threat Strategy:** Assessed by multi-agent analysis
 - **Primary Threats:** Identified through coordinated intelligence gathering
 - **Strategic Recommendations:** Prioritized based on threat analysis
 - **Technical Indicators:** Areas requiring enhanced monitoring

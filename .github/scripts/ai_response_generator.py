@@ -229,6 +229,13 @@ async def main():
     parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced API manager")
     parser.add_argument("--output", default="ai_response_results.json", help="Output file")
     
+    # Add common optional arguments
+    parser.add_argument("--quality-results", default="quality_results/", help="Quality results directory")
+    parser.add_argument("--performance-results", default="performance_results/", help="Performance results directory")
+    parser.add_argument("--all-results", default="all_results/", help="All results directory")
+    parser.add_argument("--enhancement-results", default="enhancement_results/", help="Enhancement results directory")
+    parser.add_argument("--validation-results", default="validation_results/", help="Validation results directory")
+    
     args = parser.parse_args()
     
     # Create generator

@@ -13,13 +13,13 @@ from pathlib import Path
 def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Pipeline Analyzer")
-    parser.add_argument("--mode", default="comprehensive", help="Analysis mode")
-    parser.add_argument("--languages", default="all", help="Target languages")
-    parser.add_argument("--level", default="high", help="Optimization level")
-    parser.add_argument("--auto-fix", action="store_true", help="Enable auto-fix")
-    parser.add_argument("--performance-benchmarking", action="store_true", help="Enable performance benchmarking")
+    parser.add_argument("--mode", default="intelligent", help="Analysis mode")
+    parser.add_argument("--environments", default="all", help="Target environments")
+    parser.add_argument("--strategy", default="intelligent", help="Deployment strategy")
+    parser.add_argument("--quality-gates", default="true", help="Enable quality gates")
+    parser.add_argument("--performance-monitoring", default="true", help="Enable performance monitoring")
     parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced API manager")
-    parser.add_argument("--output", default="ai_pipeline_analyzer_results.json", help="Output file")
+    parser.add_argument("--output", default="pipeline_analysis_results.json", help="Output file")
     
     # Add common optional arguments
     parser.add_argument("--quality-results", default="quality_results/", help="Quality results directory")
@@ -31,8 +31,8 @@ def main():
     args = parser.parse_args()
     
     print(f"🚀 Starting AI Pipeline Analyzer")
-    print(f"Mode: {args.mode} | Languages: {args.languages} | Level: {args.level}")
-    print(f"Auto-fix: {args.auto_fix} | Performance Benchmarking: {args.performance_benchmarking}")
+    print(f"Mode: {args.mode} | Environments: {args.environments} | Strategy: {args.strategy}")
+    print(f"Quality Gates: {args.quality_gates} | Performance Monitoring: {args.performance_monitoring}")
     
     # Create simple results without external API calls
     results = {
@@ -40,10 +40,10 @@ def main():
         "description": "AI Pipeline Analyzer",
         "functionality": "Analyze CI/CD pipeline performance",
         "mode": args.mode,
-        "languages": args.languages,
-        "level": args.level,
-        "auto_fix": args.auto_fix,
-        "performance_benchmarking": args.performance_benchmarking,
+        "environments": args.environments,
+        "strategy": args.strategy,
+        "quality_gates": args.quality_gates,
+        "performance_monitoring": args.performance_monitoring,
         "ai_analysis": "AI Pipeline Analyzer completed successfully. All checks passed.",
         "recommendations": [
             "Analysis completed successfully",

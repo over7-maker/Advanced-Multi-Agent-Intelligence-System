@@ -336,7 +336,7 @@ This report presents comprehensive open source intelligence (OSINT) analysis con
 
 ## 📈 Key Intelligence Insights
 
-- **Threat Level:** Assessed by multi-agent analysis
+- **Threat Strategy:** Assessed by multi-agent analysis
 - **Primary Concerns:** Identified through coordinated intelligence gathering
 - **Strategic Recommendations:** Prioritized based on threat analysis
 - **Technical Indicators:** Areas requiring enhanced monitoring

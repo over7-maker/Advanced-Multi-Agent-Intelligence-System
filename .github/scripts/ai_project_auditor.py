@@ -54,7 +54,7 @@ class AIProjectAuditor:
     ) -> Dict[str, Any]:
         """Perform comprehensive project audit"""
         logger.info("🔍 Starting Comprehensive Project Audit")
-        logger.info(f"Mode: {mode} | Components: {components} | Level: {level}")
+        logger.info(f"Mode: {mode} | Components: {components} | Strategy: {level}")
         logger.info(f"Output Formats: {formats}")
         
         try:
@@ -461,6 +461,13 @@ async def main():
     parser.add_argument("--formats", default="json", help="Output formats")
     parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced API manager")
     parser.add_argument("--output", default="project_audit_results.json", help="Output file")
+    
+    # Add common optional arguments
+    parser.add_argument("--quality-results", default="quality_results/", help="Quality results directory")
+    parser.add_argument("--performance-results", default="performance_results/", help="Performance results directory")
+    parser.add_argument("--all-results", default="all_results/", help="All results directory")
+    parser.add_argument("--enhancement-results", default="enhancement_results/", help="Enhancement results directory")
+    parser.add_argument("--validation-results", default="validation_results/", help="Validation results directory")
     
     args = parser.parse_args()
     

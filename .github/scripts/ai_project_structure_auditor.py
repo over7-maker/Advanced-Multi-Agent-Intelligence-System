@@ -124,7 +124,7 @@ class AIProjectStructureAuditor:
             Key Files: {structure_analysis.get('files', [])[:10]}
             
             Audit Mode: {audit_mode}
-            Documentation Level: {documentation_level}
+            Documentation Strategy: {documentation_level}
             
             Please provide:
             1. Structure quality assessment
@@ -241,6 +241,13 @@ async def main():
     parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced API manager")
     parser.add_argument("--output", default="project_structure_audit_results.json", help="Output file")
     
+    # Add common optional arguments
+    parser.add_argument("--quality-results", default="quality_results/", help="Quality results directory")
+    parser.add_argument("--performance-results", default="performance_results/", help="Performance results directory")
+    parser.add_argument("--all-results", default="all_results/", help="All results directory")
+    parser.add_argument("--enhancement-results", default="enhancement_results/", help="Enhancement results directory")
+    parser.add_argument("--validation-results", default="validation_results/", help="Validation results directory")
+    
     args = parser.parse_args()
     
     # Create auditor
@@ -261,7 +268,7 @@ async def main():
         print("🔍 PROJECT STRUCTURE AUDIT SUMMARY")
         print("=" * 80)
         print(f"Audit Mode: {args.audit_mode}")
-        print(f"Documentation Level: {args.documentation_level}")
+        print(f"Documentation Strategy: {args.documentation_level}")
         print(f"Output Format: {args.output_format}")
         print(f"Target Components: {args.target_components}")
         print("=" * 80)

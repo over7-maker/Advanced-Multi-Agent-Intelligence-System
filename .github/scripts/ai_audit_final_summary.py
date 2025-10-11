@@ -54,7 +54,7 @@ class AIAuditFinalSummary:
     ) -> Dict[str, Any]:
         """Generate final summary and integration"""
         logger.info("📊 Generating Final Summary & Integration")
-        logger.info(f"Mode: {mode} | Components: {components} | Level: {level}")
+        logger.info(f"Mode: {mode} | Components: {components} | Strategy: {level}")
         logger.info(f"Output Formats: {formats}")
         
         try:
@@ -147,7 +147,7 @@ Generate a comprehensive final summary and integration report for the AI Project
 ## WORKFLOW CONTEXT:
 - Mode: {mode}
 - Components: {components}
-- Level: {level}
+- Strategy: {level}
 - Formats: {formats}
 
 ## AVAILABLE RESULTS:

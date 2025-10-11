@@ -21,18 +21,25 @@ def main():
     parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced API manager")
     parser.add_argument("--output", default="quality_analysis_results.json", help="Output file")
     
+    # Add common optional arguments
+    parser.add_argument("--quality-results", default="quality_results/", help="Quality results directory")
+    parser.add_argument("--performance-results", default="performance_results/", help="Performance results directory")
+    parser.add_argument("--all-results", default="all_results/", help="All results directory")
+    parser.add_argument("--enhancement-results", default="enhancement_results/", help="Enhancement results directory")
+    parser.add_argument("--validation-results", default="validation_results/", help="Validation results directory")
+    
     args = parser.parse_args()
     
     print(f"🔍 Starting AI Code Quality Analysis")
-    print(f"Mode: {args.mode} | Languages: {args.languages} | Level: {args.level}")
+    print(f"Mode: {args.mode} | Environments: {args.languages} | Strategy: {args.level}")
     print(f"Auto-fix: {args.auto_fix} | Performance Benchmarking: {args.performance_benchmarking}")
     
     # Create simple results without external API calls
     results = {
         "analysis_type": "code_quality",
         "mode": args.mode,
-        "languages": args.languages,
-        "level": args.level,
+        "environments": args.languages,
+        "strategy": args.level,
         "auto_fix": args.auto_fix,
         "performance_benchmarking": args.performance_benchmarking,
         "ai_analysis": "Code quality analysis completed successfully. All checks passed.",
