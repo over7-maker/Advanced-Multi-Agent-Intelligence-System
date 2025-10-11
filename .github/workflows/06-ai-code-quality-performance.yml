@@ -389,6 +389,7 @@ jobs:
         pattern: quality-analysis-results-*
         path: quality_results/
         merge-multiple: true
+      continue-on-error: true
     
     - name: ⚡ Run Performance Analysis & Optimization
       id: performance_analysis
@@ -596,6 +597,7 @@ jobs:
         pattern: performance-analysis-results-*
         path: performance_results/
         merge-multiple: true
+      continue-on-error: true
     
     - name: 🔧 Run Automated Code Enhancement
       id: code_enhancement
@@ -803,6 +805,7 @@ jobs:
         pattern: "*-results-*"
         path: all_results/
         merge-multiple: true
+      continue-on-error: true
     
     - name: ✅ Run Quality Validation & Testing
       id: quality_validation
@@ -1010,6 +1013,7 @@ jobs:
         pattern: "*-results-*"
         path: final_results/
         merge-multiple: true
+      continue-on-error: true
     
     - name: 📊 Generate Final Summary
       id: final_summary
