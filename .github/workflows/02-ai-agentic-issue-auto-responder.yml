@@ -89,6 +89,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -150,6 +152,8 @@ jobs:
         ISSUE_LABELS: ${{ toJson(github.event.issue.labels) }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔍 Starting Issue Analysis & Categorization"
         echo "Mode: $RESPONSE_MODE | Depth: $RESPONSE_DEPTH | Language: $LANGUAGE_PREFERENCE"
         echo "Auto-fix: $AUTO_FIX | Target Issues: $TARGET_ISSUES"
@@ -177,6 +181,8 @@ jobs:
     - name: 📈 Generate Analysis Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🔍 Issue Analysis & Categorization" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.RESPONSE_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -207,6 +213,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -275,6 +283,8 @@ jobs:
         ISSUE_LABELS: ${{ toJson(github.event.issue.labels) }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🧠 Starting Intelligent Response Generation"
         echo "Mode: $RESPONSE_MODE | Depth: $RESPONSE_DEPTH | Language: $LANGUAGE_PREFERENCE"
         echo "Auto-fix: $AUTO_FIX | Target Issues: $TARGET_ISSUES"
@@ -303,6 +313,8 @@ jobs:
     - name: 📈 Generate Response Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🧠 Intelligent Response Generation" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.RESPONSE_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -333,6 +345,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -401,6 +415,8 @@ jobs:
         ISSUE_LABELS: ${{ toJson(github.event.issue.labels) }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "⚡ Starting Automated Response & Fix Implementation"
         echo "Mode: $RESPONSE_MODE | Depth: $RESPONSE_DEPTH | Language: $LANGUAGE_PREFERENCE"
         echo "Auto-fix: $AUTO_FIX | Target Issues: $TARGET_ISSUES"
@@ -429,6 +445,8 @@ jobs:
     - name: 📈 Generate Implementation Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## ⚡ Automated Response & Fix Implementation" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.RESPONSE_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -459,6 +477,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -527,6 +547,8 @@ jobs:
         ISSUE_LABELS: ${{ toJson(github.event.issue.labels) }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🧠 Starting Learning & Adaptation"
         echo "Mode: $RESPONSE_MODE | Depth: $RESPONSE_DEPTH | Language: $LANGUAGE_PREFERENCE"
         echo "Auto-fix: $AUTO_FIX | Target Issues: $TARGET_ISSUES"
@@ -555,6 +577,8 @@ jobs:
     - name: 📈 Generate Learning Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🧠 Learning & Adaptation" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.RESPONSE_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -585,6 +609,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -653,6 +679,8 @@ jobs:
         ISSUE_LABELS: ${{ toJson(github.event.issue.labels) }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📊 Generating Final Summary & Integration"
         echo "Mode: $RESPONSE_MODE | Depth: $RESPONSE_DEPTH | Language: $LANGUAGE_PREFERENCE"
         echo "Auto-fix: $AUTO_FIX | Target Issues: $TARGET_ISSUES"
@@ -681,6 +709,8 @@ jobs:
     - name: 📈 Generate Master Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🤖 AI Agentic Issue Auto-Responder v3.0 Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🏗️ 4-Phase Issue Management System" >> $GITHUB_STEP_SUMMARY

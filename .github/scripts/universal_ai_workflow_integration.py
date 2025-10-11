@@ -159,7 +159,7 @@ async def test_integration():
     print("🧪 TESTING UNIVERSAL AI WORKFLOW INTEGRATION")
     print("=" * 80 + "\n")
     
-    integration = get_integration()
+    integration = UniversalAIWorkflowIntegration()
     
     print("📊 Manager Configuration:")
     print(integration.manager.get_config_summary())
@@ -198,15 +198,8 @@ async def test_integration():
     print()
     
     print("=" * 80)
-    print("🏥 PROVIDER HEALTH")
+    print("✅ UNIVERSAL AI WORKFLOW INTEGRATION TEST COMPLETED")
     print("=" * 80)
-    health = stats["provider_health"]
-    for provider_id, info in health.items():
-        status_emoji = "✅" if info["available"] else "❌"
-        print(
-            f"{status_emoji} {info['name']:25s} | Status: {info['status']:12s} | Success: {info['success_rate']:6s}"
-        )
-    print()
 
 if __name__ == "__main__":
     asyncio.run(test_integration())

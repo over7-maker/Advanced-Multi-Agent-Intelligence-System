@@ -78,6 +78,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -110,6 +112,8 @@ jobs:
         GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
         CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔍 Starting Project Structure Audit"
         echo "Mode: $AUDIT_MODE | Level: $DOCUMENTATION_LEVEL | Format: $OUTPUT_FORMAT"
         echo "Target: $TARGET_COMPONENTS"
@@ -149,6 +153,8 @@ jobs:
         GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
         CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔍 Starting Code Quality Audit"
         echo "Mode: $AUDIT_MODE | Level: $DOCUMENTATION_LEVEL"
         echo ""
@@ -186,6 +192,8 @@ jobs:
         GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
         CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔍 Starting Security Audit"
         echo "Mode: $AUDIT_MODE | Level: $DOCUMENTATION_LEVEL"
         echo ""
@@ -223,6 +231,8 @@ jobs:
         GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
         CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔍 Starting Performance Audit"
         echo "Mode: $AUDIT_MODE | Level: $DOCUMENTATION_LEVEL"
         echo ""
@@ -261,6 +271,8 @@ jobs:
         GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
         CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📚 Generating AI-Powered Documentation"
         echo "Level: $DOCUMENTATION_LEVEL | Format: $OUTPUT_FORMAT"
         echo ""
@@ -279,6 +291,8 @@ jobs:
       id: build_documentation
       needs: generate_documentation
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🏗️ Building Documentation"
         echo "Format: $OUTPUT_FORMAT"
         echo ""
@@ -313,6 +327,8 @@ jobs:
       id: audit_summary
       needs: [structure_audit, code_quality_audit, security_audit, performance_audit, generate_documentation, build_documentation]
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📊 Generating Comprehensive Audit Summary"
         echo ""
         

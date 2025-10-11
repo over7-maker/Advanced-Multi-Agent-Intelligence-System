@@ -68,6 +68,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -104,6 +106,8 @@ jobs:
         AUTO_FIX: ${{ env.AUTO_FIX }}
         LANGUAGE: ${{ env.LANGUAGE }}
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🧠 Starting AI Issue Analysis"
         echo "Issue #$ISSUE_NUMBER | Mode: $RESPONSE_MODE | Auto-Fix: $AUTO_FIX | Language: $LANGUAGE"
         echo ""
@@ -143,6 +147,8 @@ jobs:
         GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
         CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🤖 Generating AI Response"
         echo "Mode: $RESPONSE_MODE | Auto-Fix: $AUTO_FIX | Language: $LANGUAGE"
         echo ""
@@ -183,6 +189,8 @@ jobs:
         GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
         CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔧 Applying Auto-Fixes"
         echo "Mode: $RESPONSE_MODE | Auto-Fix: $AUTO_FIX"
         echo ""
@@ -250,6 +258,8 @@ jobs:
       id: response_summary
       needs: [issue_analyzer, generate_response, apply_fixes]
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📊 Generating Issue Response Summary"
         echo ""
         

@@ -91,6 +91,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -157,6 +159,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔍 Starting Code Quality Analysis"
         echo "Mode: $QUALITY_MODE | Languages: $TARGET_LANGUAGES | Level: $OPTIMIZATION_LEVEL"
         echo "Auto-fix: $AUTO_FIX | Performance Benchmarking: $PERFORMANCE_BENCHMARKING"
@@ -184,6 +188,8 @@ jobs:
     - name: 📈 Generate Quality Analysis Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🔍 Code Quality Analysis" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.QUALITY_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -214,6 +220,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -289,6 +297,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "⚡ Starting Performance Analysis & Optimization"
         echo "Mode: $QUALITY_MODE | Languages: $TARGET_LANGUAGES | Level: $OPTIMIZATION_LEVEL"
         echo "Auto-fix: $AUTO_FIX | Performance Benchmarking: $PERFORMANCE_BENCHMARKING"
@@ -317,6 +327,8 @@ jobs:
     - name: 📈 Generate Performance Analysis Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## ⚡ Performance Analysis & Optimization" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.QUALITY_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -347,6 +359,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -422,6 +436,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔧 Starting Automated Code Enhancement"
         echo "Mode: $QUALITY_MODE | Languages: $TARGET_LANGUAGES | Level: $OPTIMIZATION_LEVEL"
         echo "Auto-fix: $AUTO_FIX | Performance Benchmarking: $PERFORMANCE_BENCHMARKING"
@@ -450,6 +466,8 @@ jobs:
     - name: 📈 Generate Code Enhancement Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🔧 Automated Code Enhancement" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.QUALITY_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -480,6 +498,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -555,6 +575,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "✅ Starting Quality Validation & Testing"
         echo "Mode: $QUALITY_MODE | Languages: $TARGET_LANGUAGES | Level: $OPTIMIZATION_LEVEL"
         echo "Auto-fix: $AUTO_FIX | Performance Benchmarking: $PERFORMANCE_BENCHMARKING"
@@ -583,6 +605,8 @@ jobs:
     - name: 📈 Generate Quality Validation Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## ✅ Quality Validation & Testing" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.QUALITY_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -613,6 +637,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -688,6 +714,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📊 Generating Final Summary & Integration"
         echo "Mode: $QUALITY_MODE | Languages: $TARGET_LANGUAGES | Level: $OPTIMIZATION_LEVEL"
         echo "Auto-fix: $AUTO_FIX | Performance Benchmarking: $PERFORMANCE_BENCHMARKING"
@@ -716,6 +744,8 @@ jobs:
     - name: 📈 Generate Master Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## ⚡ AI Code Quality & Performance v2.0 Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🏗️ 4-Phase Quality & Performance System" >> $GITHUB_STEP_SUMMARY

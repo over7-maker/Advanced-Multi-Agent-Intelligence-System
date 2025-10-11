@@ -91,6 +91,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -153,6 +155,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔍 Starting Threat Detection & Analysis"
         echo "Mode: $SECURITY_MODE | Threat Level: $THREAT_LEVEL | Areas: $TARGET_AREAS"
         echo "Response Action: $RESPONSE_ACTION"
@@ -179,6 +183,8 @@ jobs:
     - name: 📈 Generate Threat Detection Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🔍 Threat Detection & Analysis" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.SECURITY_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -209,6 +215,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -278,6 +286,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔍 Starting Vulnerability Scanning & Assessment"
         echo "Mode: $SECURITY_MODE | Threat Level: $THREAT_LEVEL | Areas: $TARGET_AREAS"
         echo "Response Action: $RESPONSE_ACTION"
@@ -305,6 +315,8 @@ jobs:
     - name: 📈 Generate Vulnerability Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🔍 Vulnerability Scanning & Assessment" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.SECURITY_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -335,6 +347,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -404,6 +418,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🧠 Starting Intelligence Gathering & Analysis"
         echo "Mode: $SECURITY_MODE | Threat Level: $THREAT_LEVEL | Areas: $TARGET_AREAS"
         echo "Response Action: $RESPONSE_ACTION"
@@ -431,6 +447,8 @@ jobs:
     - name: 📈 Generate Intelligence Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🧠 Intelligence Gathering & Analysis" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.SECURITY_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -461,6 +479,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -530,6 +550,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🚨 Starting Incident Response & Mitigation"
         echo "Mode: $SECURITY_MODE | Threat Level: $THREAT_LEVEL | Areas: $TARGET_AREAS"
         echo "Response Action: $RESPONSE_ACTION"
@@ -557,6 +579,8 @@ jobs:
     - name: 📈 Generate Incident Response Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🚨 Incident Response & Mitigation" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.SECURITY_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -587,6 +611,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -656,6 +682,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📊 Generating Final Summary & Integration"
         echo "Mode: $SECURITY_MODE | Threat Level: $THREAT_LEVEL | Areas: $TARGET_AREAS"
         echo "Response Action: $RESPONSE_ACTION"
@@ -683,6 +711,8 @@ jobs:
     - name: 📈 Generate Master Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🛡️ AI Security & Threat Intelligence v2.0 Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🏗️ 4-Phase Security Intelligence System" >> $GITHUB_STEP_SUMMARY

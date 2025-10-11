@@ -83,6 +83,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -138,6 +140,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🧠 Starting AI Project Analysis & Learning"
         echo "Mode: $IMPROVEMENT_MODE | Areas: $TARGET_AREAS | Depth: $LEARNING_DEPTH"
         echo "Auto-apply: $AUTO_APPLY"
@@ -164,6 +168,8 @@ jobs:
     - name: 📈 Generate Analysis Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🔍 Project Analysis & Learning" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.IMPROVEMENT_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -194,6 +200,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -256,6 +264,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🎯 Starting Intelligent Improvement Generation"
         echo "Mode: $IMPROVEMENT_MODE | Areas: $TARGET_AREAS | Depth: $LEARNING_DEPTH"
         echo "Auto-apply: $AUTO_APPLY"
@@ -283,6 +293,8 @@ jobs:
     - name: 📈 Generate Improvement Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🎯 Intelligent Improvement Generation" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.IMPROVEMENT_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -313,6 +325,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -375,6 +389,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "⚡ Starting Automated Implementation"
         echo "Mode: $IMPROVEMENT_MODE | Areas: $TARGET_AREAS | Depth: $LEARNING_DEPTH"
         echo "Auto-apply: $AUTO_APPLY"
@@ -402,6 +418,8 @@ jobs:
     - name: 📈 Generate Implementation Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## ⚡ Automated Implementation" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.IMPROVEMENT_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -432,6 +450,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -494,6 +514,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🧠 Starting Learning & Adaptation"
         echo "Mode: $IMPROVEMENT_MODE | Areas: $TARGET_AREAS | Depth: $LEARNING_DEPTH"
         echo "Auto-apply: $AUTO_APPLY"
@@ -521,6 +543,8 @@ jobs:
     - name: 📈 Generate Learning Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🧠 Learning & Adaptation" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.IMPROVEMENT_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -551,6 +575,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -613,6 +639,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📊 Generating Final Summary & Integration"
         echo "Mode: $IMPROVEMENT_MODE | Areas: $TARGET_AREAS | Depth: $LEARNING_DEPTH"
         echo "Auto-apply: $AUTO_APPLY"
@@ -640,6 +668,8 @@ jobs:
     - name: 📈 Generate Master Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🤖 AI Agentic Project Self-Improver v2.0 Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🏗️ 4-Phase Self-Improvement System" >> $GITHUB_STEP_SUMMARY

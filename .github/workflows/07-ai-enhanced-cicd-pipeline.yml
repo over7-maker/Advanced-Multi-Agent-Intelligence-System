@@ -90,6 +90,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -158,6 +160,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔍 Starting Intelligent Pipeline Analysis"
         echo "Mode: $PIPELINE_MODE | Environments: $TARGET_ENVIRONMENTS | Strategy: $DEPLOYMENT_STRATEGY"
         echo "Quality Gates: $QUALITY_GATES | Performance Monitoring: $PERFORMANCE_MONITORING"
@@ -185,6 +189,8 @@ jobs:
     - name: 📈 Generate Pipeline Analysis Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🔍 Intelligent Pipeline Analysis" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.PIPELINE_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -215,6 +221,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -290,6 +298,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🧪 Starting AI-Powered Testing & Validation"
         echo "Mode: $PIPELINE_MODE | Environments: $TARGET_ENVIRONMENTS | Strategy: $DEPLOYMENT_STRATEGY"
         echo "Quality Gates: $QUALITY_GATES | Performance Monitoring: $PERFORMANCE_MONITORING"
@@ -318,6 +328,8 @@ jobs:
     - name: 📈 Generate Testing Validation Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🧪 AI-Powered Testing & Validation" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.PIPELINE_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -348,6 +360,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -423,6 +437,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🏗️ Starting Intelligent Build & Package"
         echo "Mode: $PIPELINE_MODE | Environments: $TARGET_ENVIRONMENTS | Strategy: $DEPLOYMENT_STRATEGY"
         echo "Quality Gates: $QUALITY_GATES | Performance Monitoring: $PERFORMANCE_MONITORING"
@@ -451,6 +467,8 @@ jobs:
     - name: 📈 Generate Build Package Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🏗️ Intelligent Build & Package" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.PIPELINE_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -481,6 +499,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -556,6 +576,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🚀 Starting AI-Enhanced Deployment"
         echo "Mode: $PIPELINE_MODE | Environments: $TARGET_ENVIRONMENTS | Strategy: $DEPLOYMENT_STRATEGY"
         echo "Quality Gates: $QUALITY_GATES | Performance Monitoring: $PERFORMANCE_MONITORING"
@@ -584,6 +606,8 @@ jobs:
     - name: 📈 Generate Deployment Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🚀 AI-Enhanced Deployment" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.PIPELINE_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -614,6 +638,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -689,6 +715,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📊 Generating Final Summary & Integration"
         echo "Mode: $PIPELINE_MODE | Environments: $TARGET_ENVIRONMENTS | Strategy: $DEPLOYMENT_STRATEGY"
         echo "Quality Gates: $QUALITY_GATES | Performance Monitoring: $PERFORMANCE_MONITORING"
@@ -717,6 +745,8 @@ jobs:
     - name: 📈 Generate Master Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🔄 AI-Enhanced CI/CD Pipeline v2.0 Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🏗️ 4-Phase CI/CD Pipeline System" >> $GITHUB_STEP_SUMMARY

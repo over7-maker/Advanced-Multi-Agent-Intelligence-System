@@ -77,6 +77,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -108,6 +110,8 @@ jobs:
         GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
         CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🧠 Starting AI Build Analysis"
         echo "Mode: $BUILD_MODE | Version: $VERSION_STRATEGY | Format: $PACKAGE_FORMAT"
         echo "Platforms: $TARGET_PLATFORMS"
@@ -148,6 +152,8 @@ jobs:
         GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
         CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🧠 Starting AI Version Management"
         echo "Strategy: $VERSION_STRATEGY | Mode: $BUILD_MODE"
         echo ""
@@ -185,6 +191,8 @@ jobs:
         GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
         CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🚀 Starting AI Package Building"
         echo "Format: $PACKAGE_FORMAT | Platforms: $TARGET_PLATFORMS"
         echo ""
@@ -224,6 +232,8 @@ jobs:
         GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
         CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🐳 Starting AI Docker Building"
         echo "Platforms: $TARGET_PLATFORMS | Mode: $BUILD_MODE"
         echo ""
@@ -261,6 +271,8 @@ jobs:
         GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
         CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📦 Starting AI Package Validation"
         echo "Format: $PACKAGE_FORMAT | Platforms: $TARGET_PLATFORMS"
         echo ""
@@ -278,6 +290,8 @@ jobs:
       id: build_summary
       needs: [build_analyzer, version_manager, package_builder, docker_builder, package_validator]
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📊 Generating Build Summary"
         echo ""
         

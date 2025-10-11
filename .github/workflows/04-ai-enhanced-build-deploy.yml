@@ -92,6 +92,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -151,6 +153,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔍 Starting Intelligent Build Analysis"
         echo "Mode: $BUILD_MODE | Platforms: $TARGET_PLATFORMS | Strategy: $DEPLOYMENT_STRATEGY"
         echo "Auto-rollback: $AUTO_ROLLBACK | Performance Monitoring: $PERFORMANCE_MONITORING"
@@ -178,6 +182,8 @@ jobs:
     - name: 📈 Generate Analysis Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🔍 Intelligent Build Analysis" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.BUILD_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -208,6 +214,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -274,6 +282,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🏗️ Starting AI-Powered Build Generation"
         echo "Mode: $BUILD_MODE | Platforms: $TARGET_PLATFORMS | Strategy: $DEPLOYMENT_STRATEGY"
         echo "Auto-rollback: $AUTO_ROLLBACK | Performance Monitoring: $PERFORMANCE_MONITORING"
@@ -302,6 +312,8 @@ jobs:
     - name: 📈 Generate Build Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🏗️ AI-Powered Build Generation" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.BUILD_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -332,6 +344,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -398,6 +412,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🚀 Starting Automated Deployment"
         echo "Mode: $BUILD_MODE | Platforms: $TARGET_PLATFORMS | Strategy: $DEPLOYMENT_STRATEGY"
         echo "Auto-rollback: $AUTO_ROLLBACK | Performance Monitoring: $PERFORMANCE_MONITORING"
@@ -426,6 +442,8 @@ jobs:
     - name: 📈 Generate Deployment Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🚀 Automated Deployment" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.BUILD_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -456,6 +474,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -522,6 +542,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📊 Starting Performance Monitoring & Validation"
         echo "Mode: $BUILD_MODE | Platforms: $TARGET_PLATFORMS | Strategy: $DEPLOYMENT_STRATEGY"
         echo "Auto-rollback: $AUTO_ROLLBACK | Performance Monitoring: $PERFORMANCE_MONITORING"
@@ -550,6 +572,8 @@ jobs:
     - name: 📈 Generate Performance Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 📊 Performance Monitoring & Validation" >> $GITHUB_STEP_SUMMARY
         echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.BUILD_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -580,6 +604,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
@@ -646,6 +672,8 @@ jobs:
         ISSUE_NUMBER: ${{ github.event.issue.number }}
         
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📊 Generating Final Summary & Integration"
         echo "Mode: $BUILD_MODE | Platforms: $TARGET_PLATFORMS | Strategy: $DEPLOYMENT_STRATEGY"
         echo "Auto-rollback: $AUTO_ROLLBACK | Performance Monitoring: $PERFORMANCE_MONITORING"
@@ -674,6 +702,8 @@ jobs:
     - name: 📈 Generate Master Summary
       if: always()
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "## 🚀 AI Enhanced Build & Deploy v2.0 Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🏗️ 4-Phase Build & Deploy System" >> $GITHUB_STEP_SUMMARY

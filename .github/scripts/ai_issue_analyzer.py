@@ -17,11 +17,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import the universal AI workflow integration
-from .github.scripts.universal_ai_workflow_integration import (
-    get_integration, 
-    generate_workflow_ai_response, 
-    save_workflow_results
-)
+from universal_ai_workflow_integration import UniversalAIWorkflowIntegration
 
 # Configure logging
 logging.basicConfig(
@@ -36,7 +32,7 @@ class AIIssueAnalyzer:
     def __init__(self, use_advanced_manager: bool = True):
         """Initialize the analyzer"""
         self.use_advanced_manager = use_advanced_manager
-        self.integration = get_integration() if use_advanced_manager else None
+        self.integration = UniversalAIWorkflowIntegration() if use_advanced_manager else None
         self.results = {
             "issue_analysis": {},
             "ai_insights": {},
@@ -130,7 +126,7 @@ class AIIssueAnalyzer:
             
             system_prompt = """You are an expert GitHub issue analyst. Provide detailed, actionable insights about issue classification, priority, and response strategies."""
             
-            result = await generate_workflow_ai_response(
+            result = await integration.generate_with_fallback(
                 prompt=prompt,
                 system_prompt=system_prompt,
                 strategy="intelligent"
@@ -233,7 +229,7 @@ class AIIssueAnalyzer:
                 self.results["integration_stats"] = self.integration.get_integration_stats()
             
             # Save results
-            save_workflow_results(self.results, output_file)
+            integration.save_results(self.results, output_file)
             
             logger.info(f"✅ Issue analysis completed successfully!")
             return self.results
@@ -244,7 +240,7 @@ class AIIssueAnalyzer:
                 "error": str(e),
                 "success": False
             }
-            save_workflow_results(error_results, output_file)
+            integration.save_results(error_results, output_file)
             return error_results
 
 async def main():

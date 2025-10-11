@@ -54,6 +54,8 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip
         pip install pyyaml requests beautifulsoup4
         # Install yq for YAML processing
@@ -83,6 +85,8 @@ jobs:
         GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
         CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔍 Starting Comprehensive System Audit"
         echo "Audit Type: $AUDIT_TYPE"
         echo "Create Issues: $CREATE_ISSUES"
@@ -102,6 +106,8 @@ jobs:
       id: audit_report
       needs: run_audit
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📊 Generating Comprehensive Audit Report"
         echo ""
         

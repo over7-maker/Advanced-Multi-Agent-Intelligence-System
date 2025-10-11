@@ -6,6 +6,10 @@ This script formats all Python code using Black and isort
 
 import subprocess
 import sys
+
+# Add the project root to the Python path
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 from pathlib import Path
 
 

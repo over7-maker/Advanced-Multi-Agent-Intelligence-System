@@ -41,12 +41,16 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip
         pip install pyyaml requests
     
     - name: 🔍 Run Comprehensive Workflow Audit
       id: workflow_audit
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔍 Starting Comprehensive Workflow Audit"
         echo "Audit Type: $AUDIT_TYPE"
         echo ""
@@ -62,6 +66,8 @@ jobs:
       id: audit_report
       needs: workflow_audit
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📊 Generating Audit Report"
         echo ""
         

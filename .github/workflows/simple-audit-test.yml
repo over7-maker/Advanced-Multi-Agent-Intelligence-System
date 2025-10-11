@@ -40,12 +40,16 @@ jobs:
     
     - name: 📦 Install Dependencies
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip
         pip install pyyaml requests beautifulsoup4
     
     - name: 🔍 Run Comprehensive Audit
       id: run_audit
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "🔍 Starting Simple Audit Test"
         echo "Audit Type: $AUDIT_TYPE"
         echo ""
@@ -61,6 +65,8 @@ jobs:
     
     - name: 📊 Display Audit Results
       run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         echo "📊 AUDIT RESULTS SUMMARY"
         echo "========================="
         
