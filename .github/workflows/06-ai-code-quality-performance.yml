@@ -96,7 +96,10 @@ jobs:
         pip install openai anthropic google-generativeai groq cohere
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
-        pip install scikit-learn numpy pandas matplotlib
+        # Install build dependencies for Cython packages
+        pip install --upgrade pip setuptools wheel
+        pip install Cython numpy
+        pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
@@ -216,7 +219,10 @@ jobs:
         pip install openai anthropic google-generativeai groq cohere
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
-        pip install scikit-learn numpy pandas matplotlib
+        # Install build dependencies for Cython packages
+        pip install --upgrade pip setuptools wheel
+        pip install Cython numpy
+        pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
@@ -346,7 +352,10 @@ jobs:
         pip install openai anthropic google-generativeai groq cohere
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
-        pip install scikit-learn numpy pandas matplotlib
+        # Install build dependencies for Cython packages
+        pip install --upgrade pip setuptools wheel
+        pip install Cython numpy
+        pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
@@ -476,7 +485,10 @@ jobs:
         pip install openai anthropic google-generativeai groq cohere
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
-        pip install scikit-learn numpy pandas matplotlib
+        # Install build dependencies for Cython packages
+        pip install --upgrade pip setuptools wheel
+        pip install Cython numpy
+        pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
@@ -606,7 +618,10 @@ jobs:
         pip install openai anthropic google-generativeai groq cohere
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
-        pip install scikit-learn numpy pandas matplotlib
+        # Install build dependencies for Cython packages
+        pip install --upgrade pip setuptools wheel
+        pip install Cython numpy
+        pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
