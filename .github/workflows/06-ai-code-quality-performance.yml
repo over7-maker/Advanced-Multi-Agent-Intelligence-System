@@ -103,10 +103,10 @@ jobs:
         export PIP_ONLY_BINARY=all
         
         # Install specific package versions with binary wheels (avoid Cython compilation)
-        pip install --only-binary=all PyYAML==6.0.1 numpy==1.24.3 scikit-learn==1.3.0 pandas==2.0.3 matplotlib==3.7.2
-        pip install --only-binary=all aiohttp==3.8.5 requests==2.31.0
-        pip install --only-binary=all openai==1.3.0 anthropic==0.7.0 google-generativeai==0.3.0 groq==0.4.0 cohere==4.0.0
-        pip install --only-binary=all gitpython==3.1.32 pygit2==1.12.2
+        pip install --only-binary=all PyYAML==6.0.1 numpy==1.26.4 scikit-learn==1.3.2 pandas==2.1.4 matplotlib==3.8.2
+        pip install --only-binary=all aiohttp==3.9.1 requests==2.31.0
+        pip install --only-binary=all openai==1.12.0 anthropic==0.18.0 google-generativeai==0.3.2 groq==0.4.1 cohere==4.37
+        pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
@@ -237,10 +237,10 @@ jobs:
         export PIP_ONLY_BINARY=all
         
         # Install specific package versions with binary wheels (avoid Cython compilation)
-        pip install --only-binary=all PyYAML==6.0.1 numpy==1.24.3 scikit-learn==1.3.0 pandas==2.0.3 matplotlib==3.7.2
-        pip install --only-binary=all aiohttp==3.8.5 requests==2.31.0
-        pip install --only-binary=all openai==1.3.0 anthropic==0.7.0 google-generativeai==0.3.0 groq==0.4.0 cohere==4.0.0
-        pip install --only-binary=all gitpython==3.1.32 pygit2==1.12.2
+        pip install --only-binary=all PyYAML==6.0.1 numpy==1.26.4 scikit-learn==1.3.2 pandas==2.1.4 matplotlib==3.8.2
+        pip install --only-binary=all aiohttp==3.9.1 requests==2.31.0
+        pip install --only-binary=all openai==1.12.0 anthropic==0.18.0 google-generativeai==0.3.2 groq==0.4.1 cohere==4.37
+        pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
@@ -381,10 +381,10 @@ jobs:
         export PIP_ONLY_BINARY=all
         
         # Install specific package versions with binary wheels (avoid Cython compilation)
-        pip install --only-binary=all PyYAML==6.0.1 numpy==1.24.3 scikit-learn==1.3.0 pandas==2.0.3 matplotlib==3.7.2
-        pip install --only-binary=all aiohttp==3.8.5 requests==2.31.0
-        pip install --only-binary=all openai==1.3.0 anthropic==0.7.0 google-generativeai==0.3.0 groq==0.4.0 cohere==4.0.0
-        pip install --only-binary=all gitpython==3.1.32 pygit2==1.12.2
+        pip install --only-binary=all PyYAML==6.0.1 numpy==1.26.4 scikit-learn==1.3.2 pandas==2.1.4 matplotlib==3.8.2
+        pip install --only-binary=all aiohttp==3.9.1 requests==2.31.0
+        pip install --only-binary=all openai==1.12.0 anthropic==0.18.0 google-generativeai==0.3.2 groq==0.4.1 cohere==4.37
+        pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
@@ -525,10 +525,10 @@ jobs:
         export PIP_ONLY_BINARY=all
         
         # Install specific package versions with binary wheels (avoid Cython compilation)
-        pip install --only-binary=all PyYAML==6.0.1 numpy==1.24.3 scikit-learn==1.3.0 pandas==2.0.3 matplotlib==3.7.2
-        pip install --only-binary=all aiohttp==3.8.5 requests==2.31.0
-        pip install --only-binary=all openai==1.3.0 anthropic==0.7.0 google-generativeai==0.3.0 groq==0.4.0 cohere==4.0.0
-        pip install --only-binary=all gitpython==3.1.32 pygit2==1.12.2
+        pip install --only-binary=all PyYAML==6.0.1 numpy==1.26.4 scikit-learn==1.3.2 pandas==2.1.4 matplotlib==3.8.2
+        pip install --only-binary=all aiohttp==3.9.1 requests==2.31.0
+        pip install --only-binary=all openai==1.12.0 anthropic==0.18.0 google-generativeai==0.3.2 groq==0.4.1 cohere==4.37
+        pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
@@ -669,10 +669,10 @@ jobs:
         export PIP_ONLY_BINARY=all
         
         # Install specific package versions with binary wheels (avoid Cython compilation)
-        pip install --only-binary=all PyYAML==6.0.1 numpy==1.24.3 scikit-learn==1.3.0 pandas==2.0.3 matplotlib==3.7.2
-        pip install --only-binary=all aiohttp==3.8.5 requests==2.31.0
-        pip install --only-binary=all openai==1.3.0 anthropic==0.7.0 google-generativeai==0.3.0 groq==0.4.0 cohere==4.0.0
-        pip install --only-binary=all gitpython==3.1.32 pygit2==1.12.2
+        pip install --only-binary=all PyYAML==6.0.1 numpy==1.26.4 scikit-learn==1.3.2 pandas==2.1.4 matplotlib==3.8.2
+        pip install --only-binary=all aiohttp==3.9.1 requests==2.31.0
+        pip install --only-binary=all openai==1.12.0 anthropic==0.18.0 google-generativeai==0.3.2 groq==0.4.1 cohere==4.37
+        pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
