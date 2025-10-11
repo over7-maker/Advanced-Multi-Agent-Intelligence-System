@@ -1,3 +1,4 @@
+from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
 """
 AI OSINT Data Collector Script
@@ -17,15 +18,15 @@ from openai import OpenAI
 
 class AIOSINTCollector:
     def __init__(self):
-        self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
-        self.claude_key = os.environ.get("CLAUDE_API_KEY")
+        self.deepseek_key = get_api_key("DEEPSEEK_API_KEY")
+        self.claude_key = get_api_key("CLAUDE_API_KEY")
         self.gpt4_key = os.environ.get("GPT4_API_KEY")
-        self.glm_key = os.environ.get("GLM_API_KEY")
-        self.grok_key = os.environ.get("GROK_API_KEY")
-        self.kimi_key = os.environ.get("KIMI_API_KEY")
-        self.qwen_key = os.environ.get("QWEN_API_KEY")
-        self.gemini_key = os.environ.get("GEMINI_API_KEY")
-        self.gptoss_key = os.environ.get("GPTOSS_API_KEY")
+        self.glm_key = get_api_key("GLM_API_KEY")
+        self.grok_key = get_api_key("GROK_API_KEY")
+        self.kimi_key = get_api_key("KIMI_API_KEY")
+        self.qwen_key = get_api_key("QWEN_API_KEY")
+        self.gemini_key = get_api_key("GEMINI_API_KEY")
+        self.gptoss_key = get_api_key("GPTOSS_API_KEY")
         self.repo_name = os.environ.get("REPO_NAME")
         self.issue_number = os.environ.get("ISSUE_NUMBER")
 
@@ -390,12 +391,12 @@ if __name__ == "__main__":
 
     # Check API key availability
     print("🔑 API Key Status:")
-    print(f"  DeepSeek: {'✅' if os.getenv('DEEPSEEK_API_KEY') else '❌'}")
-    print(f"  GLM: {'✅' if os.getenv('GLM_API_KEY') else '❌'}")
-    print(f"  Grok: {'✅' if os.getenv('GROK_API_KEY') else '❌'}")
-    print(f"  Kimi: {'✅' if os.getenv('KIMI_API_KEY') else '❌'}")
-    print(f"  Qwen: {'✅' if os.getenv('QWEN_API_KEY') else '❌'}")
-    print(f"  GPTOSS: {'✅' if os.getenv('GPTOSS_API_KEY') else '❌'}")
+    print(f"  DeepSeek: {'✅' if get_api_key("DEEPSEEK_API_KEY") else '❌'}")
+    print(f"  GLM: {'✅' if get_api_key("GLM_API_KEY") else '❌'}")
+    print(f"  Grok: {'✅' if get_api_key("GROK_API_KEY") else '❌'}")
+    print(f"  Kimi: {'✅' if get_api_key("KIMI_API_KEY") else '❌'}")
+    print(f"  Qwen: {'✅' if get_api_key("QWEN_API_KEY") else '❌'}")
+    print(f"  GPTOSS: {'✅' if get_api_key("GPTOSS_API_KEY") else '❌'}")
     print()
 
     asyncio.run(main())

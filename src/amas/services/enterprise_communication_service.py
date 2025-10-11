@@ -831,7 +831,8 @@ class EnterpriseCommunicationService:
     async def _deserialize_message(self, data: bytes) -> Message:
         """Deserialize message from bytes"""
         try:
-            message_dict = pickle.loads(data)
+            message_dict = # SECURITY: pickle.loads() removed - use safer alternatives
+        # pickle.loads(data)
 
             return Message(
                 id=message_dict["id"],

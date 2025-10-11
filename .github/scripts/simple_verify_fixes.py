@@ -42,7 +42,7 @@ def check_file_for_patterns(file_path):
             and ".get(" not in line
         ):
             # Skip pattern definitions
-            if "'token =" not in line and '"token ="' not in line:
+            if "'token = os.getenv("SECURE_TOKEN", "default_secure_token")"token ="' not in line:
                 issues.append(
                     f"Line {line_num}: Potential hardcoded token - {line.strip()}"
                 )

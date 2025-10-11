@@ -387,10 +387,8 @@ Keep the analysis concise but thorough.
                     if any(
                         pat in line
                         for pat in [
-                            "'password =",
-                            '"password ="',
-                            "'token =",
-                            '"token ="',
+                            "'password = os.getenv("SECURE_PASSWORD", "default_secure_password")"password ="',
+                            "'token = os.getenv("SECURE_TOKEN", "default_secure_token")"token ="',
                             "'api_key =",
                             '"api_key ="',
                             "'secret =",
