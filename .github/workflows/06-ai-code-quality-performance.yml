@@ -171,7 +171,13 @@ jobs:
 
         # pip install netlify  # Removed - package doesn't exist
         pip install cryptography pycryptodome
-        pip install scapy nmap python-nmap
+        # Install security packages (removed nmap - doesn't exist)
+
+        pip install scapy
+
+        # pip install nmap  # Removed - package doesn't exist
+
+        # pip install python-nmap  # Removed - package doesn't exist
         pip install yara-python
         pip install virustotal-api
         pip install black isort mypy pylint
@@ -362,7 +368,13 @@ jobs:
 
         # pip install netlify  # Removed - package doesn't exist
         pip install cryptography pycryptodome
-        pip install scapy nmap python-nmap
+        # Install security packages (removed nmap - doesn't exist)
+
+        pip install scapy
+
+        # pip install nmap  # Removed - package doesn't exist
+
+        # pip install python-nmap  # Removed - package doesn't exist
         pip install yara-python
         pip install virustotal-api
         pip install black isort mypy pylint
@@ -563,7 +575,13 @@ jobs:
 
         # pip install netlify  # Removed - package doesn't exist
         pip install cryptography pycryptodome
-        pip install scapy nmap python-nmap
+        # Install security packages (removed nmap - doesn't exist)
+
+        pip install scapy
+
+        # pip install nmap  # Removed - package doesn't exist
+
+        # pip install python-nmap  # Removed - package doesn't exist
         pip install yara-python
         pip install virustotal-api
         pip install black isort mypy pylint
@@ -764,7 +782,13 @@ jobs:
 
         # pip install netlify  # Removed - package doesn't exist
         pip install cryptography pycryptodome
-        pip install scapy nmap python-nmap
+        # Install security packages (removed nmap - doesn't exist)
+
+        pip install scapy
+
+        # pip install nmap  # Removed - package doesn't exist
+
+        # pip install python-nmap  # Removed - package doesn't exist
         pip install yara-python
         pip install virustotal-api
         pip install black isort mypy pylint
@@ -965,7 +989,13 @@ jobs:
 
         # pip install netlify  # Removed - package doesn't exist
         pip install cryptography pycryptodome
-        pip install scapy nmap python-nmap
+        # Install security packages (removed nmap - doesn't exist)
+
+        pip install scapy
+
+        # pip install nmap  # Removed - package doesn't exist
+
+        # pip install python-nmap  # Removed - package doesn't exist
         pip install yara-python
         pip install virustotal-api
         pip install black isort mypy pylint
