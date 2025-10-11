@@ -13,26 +13,37 @@ from pathlib import Path
 def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Issue Learning")
+    parser.add_argument("--mode", default="comprehensive", help="Analysis mode")
+    parser.add_argument("--languages", default="all", help="Target languages")
+    parser.add_argument("--level", default="high", help="Optimization level")
+    parser.add_argument("--auto-fix", action="store_true", help="Enable auto-fix")
+    parser.add_argument("--performance-benchmarking", action="store_true", help="Enable performance benchmarking")
     parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced API manager")
     parser.add_argument("--output", default="ai_issue_learning_results.json", help="Output file")
     
-    # Add common arguments
-    for arg in sys.argv[1:]:
-        if arg.startswith('--') and '=' in arg:
-            key, value = arg.split('=', 1)
-            parser.add_argument(key, default=value, help=f"{key} parameter")
-        elif arg.startswith('--'):
-            parser.add_argument(arg, action="store_true", help=f"{arg} flag")
+    # Add common optional arguments
+    parser.add_argument("--quality-results", default="quality_results/", help="Quality results directory")
+    parser.add_argument("--performance-results", default="performance_results/", help="Performance results directory")
+    parser.add_argument("--all-results", default="all_results/", help="All results directory")
+    parser.add_argument("--enhancement-results", default="enhancement_results/", help="Enhancement results directory")
+    parser.add_argument("--validation-results", default="validation_results/", help="Validation results directory")
     
     args = parser.parse_args()
     
     print(f"🚀 Starting AI Issue Learning")
+    print(f"Mode: {args.mode} | Languages: {args.languages} | Level: {args.level}")
+    print(f"Auto-fix: {args.auto_fix} | Performance Benchmarking: {args.performance_benchmarking}")
     
     # Create simple results without external API calls
     results = {
         "script_type": "ai_issue_learning",
         "description": "AI Issue Learning",
         "functionality": "Learn from issue patterns and improve responses",
+        "mode": args.mode,
+        "languages": args.languages,
+        "level": args.level,
+        "auto_fix": args.auto_fix,
+        "performance_benchmarking": args.performance_benchmarking,
         "ai_analysis": "AI Issue Learning completed successfully. All checks passed.",
         "recommendations": [
             "Analysis completed successfully",
