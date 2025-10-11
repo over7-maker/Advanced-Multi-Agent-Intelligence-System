@@ -96,7 +96,7 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
-        pip install aiohttp requests pyyaml sqlite3
+        pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         pip install scikit-learn numpy pandas matplotlib
         pip install flake8 bandit safety pip-audit
@@ -207,7 +207,7 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
-        pip install aiohttp requests pyyaml sqlite3
+        pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         pip install scikit-learn numpy pandas matplotlib
         pip install flake8 bandit safety pip-audit
@@ -326,7 +326,7 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
-        pip install aiohttp requests pyyaml sqlite3
+        pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         pip install scikit-learn numpy pandas matplotlib
         pip install flake8 bandit safety pip-audit
@@ -445,7 +445,7 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
-        pip install aiohttp requests pyyaml sqlite3
+        pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         pip install scikit-learn numpy pandas matplotlib
         pip install flake8 bandit safety pip-audit
@@ -564,7 +564,7 @@ jobs:
         python -m pip install --upgrade pip setuptools wheel
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
-        pip install aiohttp requests pyyaml sqlite3
+        pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         pip install scikit-learn numpy pandas matplotlib
         pip install flake8 bandit safety pip-audit

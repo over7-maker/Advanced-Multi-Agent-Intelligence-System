@@ -71,7 +71,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
-        pip install aiohttp requests pyyaml sqlite3
+        pip install aiohttp requests pyyaml
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
     
