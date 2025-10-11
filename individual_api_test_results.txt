@@ -1,0 +1,127 @@
+🧪 INDIVIDUAL API TEST RESULTS
+==================================================
+
+Generated: 2025-10-11 03:54:18
+
+📊 SUMMARY:
+==========
+Total APIs Tested: 14
+Working APIs: 6
+Failed APIs: 8
+
+🔍 DETAILED RESULTS:
+==================
+
+DeepSeek V3.1:
+  Status: HTTP_ERROR
+  Error: HTTP 401: {"error":{"message":"User not found.","code":401}}
+  HTTP Code: 401
+
+
+GLM 4.5 Air:
+  Status: HTTP_ERROR
+  Error: HTTP 401: {"error":{"message":"User not found.","code":401}}
+  HTTP Code: 401
+
+
+Grok 4 Fast:
+  Status: HTTP_ERROR
+  Error: HTTP 401: {"error":{"message":"User not found.","code":401}}
+  HTTP Code: 401
+
+
+Kimi K2:
+  Status: HTTP_ERROR
+  Error: HTTP 401: {"error":{"message":"User not found.","code":401}}
+  HTTP Code: 401
+
+
+Qwen3 Coder:
+  Status: HTTP_ERROR
+  Error: HTTP 401: {"error":{"message":"User not found.","code":401}}
+  HTTP Code: 401
+
+
+GPT-OSS 120B:
+  Status: HTTP_ERROR
+  Error: HTTP 401: {"error":{"message":"User not found.","code":401}}
+  HTTP Code: 401
+
+
+NVIDIA:
+  Status: SUCCESS
+  Response: 
+
+Hello from NVIDIA
+  HTTP Code: 200
+
+
+Codestral:
+  Status: SUCCESS
+  Response: Hello from Codestral
+  HTTP Code: 200
+
+
+Cerebras:
+  Status: SUCCESS
+  Response: Hello from Cerebras
+  HTTP Code: 200
+
+
+Chutes:
+  Status: SUCCESS
+  Response: Hello from Chutes
+  HTTP Code: 200
+
+
+Groq2:
+  Status: HTTP_ERROR
+  Error: HTTP 401: {"error":{"message":"Invalid API Key","type":"invalid_request_error","code":"invalid_api_key"}}
+
+  HTTP Code: 401
+
+
+GroqAI:
+  Status: HTTP_ERROR
+  Error: HTTP 401: {"error":{"message":"Invalid API Key","type":"invalid_request_error","code":"invalid_api_key"}}
+
+  HTTP Code: 401
+
+
+Gemini 2.0 Flash:
+  Status: SUCCESS
+  Response: Hello from Gemini
+
+  HTTP Code: 200
+
+
+Cohere:
+  Status: SUCCESS
+  Response: Hello from Cohere
+  HTTP Code: 200
+
+
+✅ WORKING APIs (6):
+==============================
+• NVIDIA: 
+
+Hello from NVIDIA...
+• Codestral: Hello from Codestral...
+• Cerebras: Hello from Cerebras...
+• Chutes: Hello from Chutes...
+• Gemini 2.0 Flash: Hello from Gemini
+...
+• Cohere: Hello from Cohere...
+
+❌ FAILED APIs (8):
+==============================
+• DeepSeek V3.1: HTTP 401: {"error":{"message":"User not found.","code":401}}
+• GLM 4.5 Air: HTTP 401: {"error":{"message":"User not found.","code":401}}
+• Grok 4 Fast: HTTP 401: {"error":{"message":"User not found.","code":401}}
+• Kimi K2: HTTP 401: {"error":{"message":"User not found.","code":401}}
+• Qwen3 Coder: HTTP 401: {"error":{"message":"User not found.","code":401}}
+• GPT-OSS 120B: HTTP 401: {"error":{"message":"User not found.","code":401}}
+• Groq2: HTTP 401: {"error":{"message":"Invalid API Key","type":"invalid_request_error","code":"invalid_api_key"}}
+
+• GroqAI: HTTP 401: {"error":{"message":"Invalid API Key","type":"invalid_request_error","code":"invalid_api_key"}}
+
