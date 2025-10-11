@@ -278,7 +278,11 @@ jobs:
         pip install docker docker-compose
         pip install kubernetes
         pip install boto3 azure-mgmt-resource google-cloud-storage
-        pip install heroku3 vercel netlify
+        # Install deployment packages (removed netlify - doesn't exist)
+
+        pip install heroku3 vercel
+
+        # pip install netlify  # Removed - package doesn't exist
         pip install cryptography pycryptodome
         pip install scapy nmap python-nmap
         pip install yara-python
@@ -573,7 +577,11 @@ jobs:
         pip install docker docker-compose
         pip install kubernetes
         pip install boto3 azure-mgmt-resource google-cloud-storage
-        pip install heroku3 vercel netlify
+        # Install deployment packages (removed netlify - doesn't exist)
+
+        pip install heroku3 vercel
+
+        # pip install netlify  # Removed - package doesn't exist
         pip install cryptography pycryptodome
         pip install scapy nmap python-nmap
         pip install yara-python
@@ -876,7 +884,11 @@ jobs:
         pip install docker docker-compose
         pip install kubernetes
         pip install boto3 azure-mgmt-resource google-cloud-storage
-        pip install heroku3 vercel netlify
+        # Install deployment packages (removed netlify - doesn't exist)
+
+        pip install heroku3 vercel
+
+        # pip install netlify  # Removed - package doesn't exist
         pip install cryptography pycryptodome
         pip install scapy nmap python-nmap
         pip install yara-python
@@ -1179,7 +1191,11 @@ jobs:
         pip install docker docker-compose
         pip install kubernetes
         pip install boto3 azure-mgmt-resource google-cloud-storage
-        pip install heroku3 vercel netlify
+        # Install deployment packages (removed netlify - doesn't exist)
+
+        pip install heroku3 vercel
+
+        # pip install netlify  # Removed - package doesn't exist
         pip install cryptography pycryptodome
         pip install scapy nmap python-nmap
         pip install yara-python
@@ -1482,7 +1498,11 @@ jobs:
         pip install docker docker-compose
         pip install kubernetes
         pip install boto3 azure-mgmt-resource google-cloud-storage
-        pip install heroku3 vercel netlify
+        # Install deployment packages (removed netlify - doesn't exist)
+
+        pip install heroku3 vercel
+
+        # pip install netlify  # Removed - package doesn't exist
         pip install cryptography pycryptodome
         pip install scapy nmap python-nmap
         pip install yara-python
