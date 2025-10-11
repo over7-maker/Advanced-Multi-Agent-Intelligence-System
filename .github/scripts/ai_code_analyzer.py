@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""
+""""
 AI Code Analyzer Script
 Performs intelligent code analysis using AI models
-"""
+""""
 
 import difflib
 import json
@@ -224,7 +224,7 @@ class AICodeAnalyzer:
         file_extension = os.path.splitext(file_path)[1]
 
         # Create analysis prompt based on file type
-        system_prompt = """
+        system_prompt = """"
 You are an expert code reviewer for the AMAS (Advanced Multi-Agent Intelligence System) project.
 This is a multi-agent AI system focused on intelligence analysis, OSINT, and cybersecurity.
 
@@ -237,9 +237,9 @@ Analyze the code for:
 6. Error handling and edge cases
 
 Provide specific, actionable feedback. Focus on critical issues first.
-"""
+""""
 
-        analysis_prompt = f"""
+        analysis_prompt = f""""
 File: {file_path}
 File Type: {file_extension}
 
@@ -255,7 +255,7 @@ Please provide a structured code review with:
 5. **Specific Recommendations** (numbered list of actionable items)
 
 Keep the analysis concise but thorough.
-"""
+""""
 
         # Try each AI client in order of preference
         for client_info in self.ai_clients:
@@ -317,19 +317,19 @@ Keep the analysis concise but thorough.
         security_patterns = {
             "hardcoded_secrets": [
                 (
-                    r'password\s*=\s*["\'][^"\'][email protected]+["\']',
+                    r'password\s*=\s*["\'][^"\'][email protected]+["\']',"
                     "hardcoded password",
                 ),
                 (
-                    r'api_key\s*=\s*["\'][^"\'][email protected]+["\']',
+                    r'api_key\s*=\s*["\'][^"\'][email protected]+["\']',"
                     "hardcoded API key",
                 ),
                 (
-                    r'secret\s*=\s*["\'][^"\'][email protected]+["\']',
+                    r'secret\s*=\s*["\'][^"\'][email protected]+["\']',"
                     "hardcoded secret",
                 ),
                 (
-                    r'(?<!github_)token\s*=\s*["\'][^"\'][email protected]+["\']',
+                    r'(?<!github_)token\s*=\s*["\'][^"\'][email protected]+["\']',"
                     "hardcoded token",
                 ),
             ],
@@ -387,8 +387,8 @@ Keep the analysis concise but thorough.
                     if any(
                         pat in line
                         for pat in [
-                            "'password = os.getenv("SECURE_PASSWORD", "default_secure_password")"password ="',
-                            "'token = os.getenv("SECURE_TOKEN", "default_secure_token")"token ="',
+                            "'password = os.getenv("SECURE_PASSWORD", "default_secure_password")"password ="',"
+                            "'token = os.getenv("SECURE_TOKEN", "default_secure_token")"token ="',"
                             "'api_key =",
                             '"api_key ="',
                             "'secret =",
@@ -438,13 +438,13 @@ Keep the analysis concise but thorough.
         }
 
         # Add AI signature
-        ai_comment = f"""{comment}
+        ai_comment = f"""{comment}"
 
 ---
 🤖 **AMAS AI Code Reviewer**
 🔍 *Powered by your integrated AI models*
 📊 *Automated analysis for better code quality*
-"""
+""""
 
         data = {"body": ai_comment}
 

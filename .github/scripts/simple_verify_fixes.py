@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""
+""""
 Simple verification script to check for false positives
-"""
+""""
 
 import os
 import re
@@ -30,7 +30,7 @@ def check_file_for_patterns(file_path):
 
     # Check for hardcoded tokens (should only match actual hardcoded values)
     # Should NOT match environment variable assignments
-    token_pattern = r'token\s*=\s*["\'][^"\']+["\']'
+    token_pattern = r'token\s*=\s*["\'][^"\']+["\']'"
     matches = re.finditer(token_pattern, content, re.IGNORECASE)
     for match in matches:
         line_num = content[: match.start()].count("\n") + 1
@@ -42,7 +42,7 @@ def check_file_for_patterns(file_path):
             and ".get(" not in line
         ):
             # Skip pattern definitions
-            if "'token = os.getenv("SECURE_TOKEN", "default_secure_token")"token ="' not in line:
+            if "'token = os.getenv("SECURE_TOKEN", "default_secure_token")"token ="' not in line:"
                 issues.append(
                     f"Line {line_num}: Potential hardcoded token - {line.strip()}"
                 )
@@ -55,7 +55,7 @@ def check_file_for_patterns(file_path):
             line_261 = lines[260]  # 0-indexed
             if "SELECT.*\\+.*FROM" in line_261:
                 # This is a pattern definition, should not be flagged
-                if "r\"r'" not in line_261 and not line_261.strip().startswith("#"):
+                if "r\"r'" not in line_261 and not line_261.strip().startswith("#"):"
                     # OK, this is indeed a pattern definition in a list
                     pass
 
@@ -106,7 +106,7 @@ def main():
 
     # Check that environment token doesn't match hardcoded pattern
     test_content = 'self.github_token = os.environ.get("GITHUB_TOKEN")'
-    pattern = r'token\s*=\s*["\'][^"\']+["\']'
+    pattern = r'token\s*=\s*["\'][^"\']+["\']'"
     match = re.search(pattern, test_content, re.IGNORECASE)
     if match and "os.environ.get" not in test_content:
         print("❌ FAIL: Environment token matches hardcoded pattern")

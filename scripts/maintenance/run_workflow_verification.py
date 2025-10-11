@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""
+""""
 AMAS Intelligence System - Workflow Verification Runner
 Simple script to run all workflow verification checks
-"""
+""""
 
 import asyncio
 import logging
