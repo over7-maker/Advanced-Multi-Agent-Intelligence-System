@@ -1,39 +1,22 @@
 #!/usr/bin/env python3
 """
-AI Project Auditor Script
-Comprehensive project audit and analysis with Advanced API Manager Integration
+AI Project Auditor Script - Simplified Version
+Comprehensive project audit and analysis
 """
 
 import argparse
-import asyncio
 import json
-import logging
 import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-# Add the project root to the Python path
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
-
-# Import the universal AI workflow integration
-from universal_ai_workflow_integration import get_integration, generate_workflow_ai_response, save_workflow_results
-
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO, 
-    format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-
 class AIProjectAuditor:
-    """AI Project Auditor with Advanced API Manager"""
+    """AI Project Auditor"""
     
     def __init__(self, use_advanced_manager: bool = True):
         """Initialize the auditor"""
         self.use_advanced_manager = use_advanced_manager
-        self.integration = get_integration() if use_advanced_manager else None
         self.results = {
             "project_audit": {},
             "ai_insights": {},
@@ -45,7 +28,7 @@ class AIProjectAuditor:
             "integration_stats": {}
         }
     
-    async def audit_project(
+    def audit_project(
         self, 
         mode: str, 
         components: str, 
@@ -53,35 +36,35 @@ class AIProjectAuditor:
         formats: str
     ) -> Dict[str, Any]:
         """Perform comprehensive project audit"""
-        logger.info("🔍 Starting Comprehensive Project Audit")
-        logger.info(f"Mode: {mode} | Components: {components} | Strategy: {level}")
-        logger.info(f"Output Formats: {formats}")
+        print("🔍 Starting Comprehensive Project Audit")
+        print(f"Mode: {mode} | Components: {components} | Strategy: {level}")
+        print(f"Output Formats: {formats}")
         
         try:
             # Perform project structure analysis
-            structure_analysis = await self._analyze_project_structure()
+            structure_analysis = self._analyze_project_structure()
             
             # Perform code quality analysis
-            code_quality = await self._analyze_code_quality()
+            code_quality = self._analyze_code_quality()
             
             # Perform security analysis
-            security_analysis = await self._analyze_security()
+            security_analysis = self._analyze_security()
             
             # Perform performance analysis
-            performance_analysis = await self._analyze_performance()
+            performance_analysis = self._analyze_performance()
             
             # Generate AI-powered insights
-            ai_insights = await self._generate_ai_insights(
+            ai_insights = self._generate_ai_insights(
                 structure_analysis, code_quality, security_analysis, performance_analysis
             )
             
             # Generate recommendations
-            recommendations = await self._generate_recommendations(
+            recommendations = self._generate_recommendations(
                 structure_analysis, code_quality, security_analysis, performance_analysis
             )
             
             # Generate documentation status
-            doc_status = await self._analyze_documentation_status()
+            doc_status = self._analyze_documentation_status()
             
             # Compile results
             self.results["project_audit"] = {
@@ -102,20 +85,16 @@ class AIProjectAuditor:
             self.results["security_analysis"] = security_analysis
             self.results["performance_analysis"] = performance_analysis
             
-            # Add integration statistics
-            if self.use_advanced_manager and self.integration:
-                self.results["integration_stats"] = self.integration.get_integration_stats()
-            
-            logger.info("✅ Comprehensive Project Audit completed successfully")
+            print("✅ Comprehensive Project Audit completed successfully")
             return self.results
             
         except Exception as e:
-            logger.error(f"❌ Error during project audit: {e}")
+            print(f"❌ Error during project audit: {e}")
             return self._generate_error_results(str(e))
     
-    async def _analyze_project_structure(self) -> Dict[str, Any]:
+    def _analyze_project_structure(self) -> Dict[str, Any]:
         """Analyze project structure"""
-        logger.info("📁 Analyzing project structure...")
+        print("📁 Analyzing project structure...")
         
         structure = {
             "total_files": 0,
@@ -160,14 +139,14 @@ class AIProjectAuditor:
             ]
             
         except Exception as e:
-            logger.error(f"Error analyzing project structure: {e}")
+            print(f"Error analyzing project structure: {e}")
             structure["error"] = str(e)
         
         return structure
     
-    async def _analyze_code_quality(self) -> Dict[str, Any]:
+    def _analyze_code_quality(self) -> Dict[str, Any]:
         """Analyze code quality"""
-        logger.info("🔍 Analyzing code quality...")
+        print("🔍 Analyzing code quality...")
         
         quality_metrics = {
             "python_files": 0,
@@ -208,14 +187,14 @@ class AIProjectAuditor:
             quality_metrics["test_coverage"] = min(100, (test_files * 5))
             
         except Exception as e:
-            logger.error(f"Error analyzing code quality: {e}")
+            print(f"Error analyzing code quality: {e}")
             quality_metrics["error"] = str(e)
         
         return quality_metrics
     
-    async def _analyze_security(self) -> Dict[str, Any]:
+    def _analyze_security(self) -> Dict[str, Any]:
         """Analyze security aspects"""
-        logger.info("🔒 Analyzing security...")
+        print("🔒 Analyzing security...")
         
         security_analysis = {
             "api_keys_found": 0,
@@ -255,14 +234,14 @@ class AIProjectAuditor:
                 security_analysis["recommendations"].append("Use secure secret management")
             
         except Exception as e:
-            logger.error(f"Error analyzing security: {e}")
+            print(f"Error analyzing security: {e}")
             security_analysis["error"] = str(e)
         
         return security_analysis
     
-    async def _analyze_performance(self) -> Dict[str, Any]:
+    def _analyze_performance(self) -> Dict[str, Any]:
         """Analyze performance aspects"""
-        logger.info("⚡ Analyzing performance...")
+        print("⚡ Analyzing performance...")
         
         performance_analysis = {
             "file_count": 0,
@@ -298,12 +277,12 @@ class AIProjectAuditor:
                 performance_analysis["recommendations"].append("Consider reducing repository size")
             
         except Exception as e:
-            logger.error(f"Error analyzing performance: {e}")
+            print(f"Error analyzing performance: {e}")
             performance_analysis["error"] = str(e)
         
         return performance_analysis
     
-    async def _generate_ai_insights(
+    def _generate_ai_insights(
         self, 
         structure: Dict[str, Any], 
         quality: Dict[str, Any], 
@@ -311,73 +290,20 @@ class AIProjectAuditor:
         performance: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Generate AI-powered insights"""
-        logger.info("🤖 Generating AI insights...")
+        print("🤖 Generating AI insights...")
         
-        if not self.use_advanced_manager or not self.integration:
-            return {"ai_generated": False, "message": "AI integration not available"}
+        # Simple insights without external API calls
+        insights = {
+            "ai_generated": False,
+            "content": "Project audit completed with basic analysis",
+            "provider": "Local Analysis",
+            "response_time": 0,
+            "summary": f"Project has {structure.get('total_files', 0)} files with {quality.get('python_files', 0)} Python files"
+        }
         
-        try:
-            # Create comprehensive prompt for AI analysis
-            prompt = f"""
-            Analyze this project audit data and provide comprehensive insights:
-            
-            PROJECT STRUCTURE:
-            - Total files: {structure.get('total_files', 0)}
-            - File types: {structure.get('file_types', {})}
-            - Main components: {structure.get('main_components', [])}
-            
-            CODE QUALITY:
-            - Python files: {quality.get('python_files', 0)}
-            - Total lines: {quality.get('total_lines', 0)}
-            - Complexity score: {quality.get('complexity_score', 0)}
-            - Documentation coverage: {quality.get('documentation_coverage', 0)}%
-            
-            SECURITY:
-            - API keys found: {security.get('api_keys_found', 0)}
-            - Secrets detected: {security.get('secrets_detected', 0)}
-            - Security issues: {len(security.get('security_issues', []))}
-            
-            PERFORMANCE:
-            - File count: {performance.get('file_count', 0)}
-            - Total size: {performance.get('total_size_mb', 0):.2f} MB
-            
-            Provide:
-            1. Overall project health assessment
-            2. Key strengths and weaknesses
-            3. Priority recommendations
-            4. Risk assessment
-            5. Improvement roadmap
-            """
-            
-            ai_response = await self.integration.generate_with_fallback(
-                prompt=prompt,
-                system_prompt="You are an expert software project auditor. Provide detailed, actionable insights.",
-                strategy="intelligent"
-            )
-            
-            if ai_response.get("success", False):
-                return {
-                    "ai_generated": True,
-                    "content": ai_response.get("content", ""),
-                    "provider": ai_response.get("provider_name", "Unknown"),
-                    "response_time": ai_response.get("response_time", 0)
-                }
-            else:
-                return {
-                    "ai_generated": False,
-                    "error": ai_response.get("error", "Unknown error"),
-                    "fallback_insights": "Project audit completed with basic analysis"
-                }
-                
-        except Exception as e:
-            logger.error(f"Error generating AI insights: {e}")
-            return {
-                "ai_generated": False,
-                "error": str(e),
-                "fallback_insights": "Project audit completed with basic analysis"
-            }
+        return insights
     
-    async def _generate_recommendations(
+    def _generate_recommendations(
         self, 
         structure: Dict[str, Any], 
         quality: Dict[str, Any], 
@@ -409,9 +335,9 @@ class AIProjectAuditor:
         
         return recommendations
     
-    async def _analyze_documentation_status(self) -> Dict[str, Any]:
+    def _analyze_documentation_status(self) -> Dict[str, Any]:
         """Analyze documentation status"""
-        logger.info("📚 Analyzing documentation status...")
+        print("📚 Analyzing documentation status...")
         
         doc_status = {
             "readme_files": 0,
@@ -434,7 +360,7 @@ class AIProjectAuditor:
             doc_status["coverage"] = min(100, (len(doc_files) * 10))
             
         except Exception as e:
-            logger.error(f"Error analyzing documentation: {e}")
+            print(f"Error analyzing documentation: {e}")
             doc_status["error"] = str(e)
         
         return doc_status
@@ -452,7 +378,7 @@ class AIProjectAuditor:
             "integration_stats": {"error": error}
         }
 
-async def main():
+def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Project Auditor")
     parser.add_argument("--mode", default="comprehensive", help="Audit mode")
@@ -475,7 +401,7 @@ async def main():
     auditor = AIProjectAuditor(use_advanced_manager=args.use_advanced_manager)
     
     # Perform audit
-    results = await auditor.audit_project(
+    results = auditor.audit_project(
         mode=args.mode,
         components=args.components,
         level=args.level,
@@ -483,13 +409,10 @@ async def main():
     )
     
     # Save results
-    if args.use_advanced_manager and auditor.integration:
-        auditor.integration.save_results(results, args.output)
-    else:
-        with open(args.output, 'w') as f:
-            json.dump(results, f, indent=2, default=str)
+    with open(args.output, 'w') as f:
+        json.dump(results, f, indent=2, default=str)
     
-    logger.info(f"✅ Project audit results saved to {args.output}")
+    print(f"✅ Project audit results saved to {args.output}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
