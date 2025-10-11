@@ -159,7 +159,7 @@ async def test_integration():
     print("🧪 TESTING UNIVERSAL AI WORKFLOW INTEGRATION")
     print("=" * 80 + "\n")
     
-    integration = UniversalAIWorkflowIntegration()
+    integration = get_integration()
     
     print("📊 Manager Configuration:")
     print(integration.manager.get_config_summary())

@@ -17,7 +17,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 # Import the universal AI workflow integration
-from universal_ai_workflow_integration import UniversalAIWorkflowIntegration
+from universal_ai_workflow_integration import get_integration, generate_workflow_ai_response, save_workflow_results
 
 # Configure logging
 logging.basicConfig(
@@ -32,7 +32,7 @@ class AIProjectStructureAuditor:
     def __init__(self, use_advanced_manager: bool = True):
         """Initialize the auditor"""
         self.use_advanced_manager = use_advanced_manager
-        self.integration = UniversalAIWorkflowIntegration() if use_advanced_manager else None
+        self.integration = get_integration() if use_advanced_manager else None
         self.results = {
             "structure_audit": {},
             "ai_insights": {},
