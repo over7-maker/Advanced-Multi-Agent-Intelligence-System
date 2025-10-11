@@ -1,21 +1,21 @@
-    from standalone_universal_ai_manager import get_api_key
+from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
     """
     AI Incident Response Automation Script
     Automated incident triage and response using multiple AI models
     """
 
-    import json
-    import os
-    import time
-    from datetime import datetime
-    from typing import Any, Dict, List, Optional
+import json
+import os
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-    import requests
-    from openai import OpenAI
+import requests
+from openai import OpenAI
 
 class AIIncidentResponse:
-    def __init__(self):
+def __init__(self):
         self.deepseek_key = get_api_key("DEEPSEEK_API_KEY")
         self.claude_key = get_api_key("CLAUDE_API_KEY")
         self.gpt4_key = os.environ.get("GPT4_API_KEY")
@@ -147,7 +147,7 @@ class AIIncidentResponse:
         for agent in self.agents:
             print(f"  - {agent['name']}: {agent['role']}")
 
-    def call_agent(
+def call_agent(
         self, agent: Dict[str, Any], prompt: str, context: str = ""
     ) -> Optional[str]:
         """Call a specific AI agent with error handling"""
@@ -185,7 +185,7 @@ class AIIncidentResponse:
             print(f"❌ {agent['name']} failed: {e}")
             return None
 
-    def analyze_incident_severity(self, title: str, body: str) -> str:
+def analyze_incident_severity(self, title: str, body: str) -> str:
         """Analyze incident severity based on content"""
         content = f"{title} {body}".lower()
 
@@ -224,7 +224,7 @@ class AIIncidentResponse:
         else:
             return "LOW"
 
-    def process_incident(self) -> Dict[str, Any]:
+def process_incident(self) -> Dict[str, Any]:
         """Process incident using multiple agents"""
         if not self.agents:
             return {"error": "No agents available"}
@@ -332,7 +332,7 @@ class AIIncidentResponse:
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
         }
 
-    def generate_incident_report(self, results: Dict[str, Any]) -> str:
+def generate_incident_report(self, results: Dict[str, Any]) -> str:
         """Generate comprehensive incident response report"""
         if "error" in results:
             return f"# Incident Response Failed\n\nError: {results['error']}"
@@ -408,7 +408,7 @@ class AIIncidentResponse:
     """
         return report
 
-    def run(self):
+def run(self):
         """Main execution function"""
         print("🚀 Starting AMAS Incident Response System...")
 

@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-    """
+"""
     AI Audit Final Summary Script - Simplified Version
 Generates final summary and integration for audit documentation workflow
     """
 
-    import argparse
-    import json
-    import os
-    import sys
-    from pathlib import Path
-    from typing import Any, Dict, List, Optional
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 class AIAuditFinalSummary:
     """AI Audit Final Summary Generator"""
     
-    def __init__(self, use_advanced_manager: bool = True):
+def __init__(self, use_advanced_manager: bool = True):
         """Initialize the summary generator"""
         self.use_advanced_manager = use_advanced_manager
         self.results = {
@@ -25,7 +25,7 @@ class AIAuditFinalSummary:
             "audit_completion": {}
         }
     
-    def generate_final_summary(
+def generate_final_summary(
         self, 
         mode: str, 
         components: str, 
@@ -71,7 +71,7 @@ class AIAuditFinalSummary:
             print(f"❌ Error generating final summary: {e}")
             return self._generate_error_results(str(e))
     
-    def _create_comprehensive_summary(
+def _create_comprehensive_summary(
         self, 
         mode: str, 
         components: str, 
@@ -107,7 +107,7 @@ class AIAuditFinalSummary:
         
         return summary
     
-    def _analyze_integration_status(self) -> Dict[str, Any]:
+def _analyze_integration_status(self) -> Dict[str, Any]:
         """Analyze integration status"""
         print("🔗 Analyzing integration status...")
         
@@ -121,7 +121,7 @@ class AIAuditFinalSummary:
         
         return integration
     
-    def _generate_final_recommendations(self) -> List[str]:
+def _generate_final_recommendations(self) -> List[str]:
         """Generate final recommendations"""
         print("💡 Generating final recommendations...")
         
@@ -135,7 +135,7 @@ class AIAuditFinalSummary:
         
         return recommendations
     
-    def _generate_next_steps(self) -> List[str]:
+def _generate_next_steps(self) -> List[str]:
         """Generate next steps"""
         print("🚀 Generating next steps...")
         
@@ -149,7 +149,7 @@ class AIAuditFinalSummary:
         
         return next_steps
     
-    def _generate_error_results(self, error: str) -> Dict[str, Any]:
+def _generate_error_results(self, error: str) -> Dict[str, Any]:
         """Generate error results"""
         return {
             "final_summary": {"error": error},

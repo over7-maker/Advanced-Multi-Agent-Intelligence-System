@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-    """
+"""
     AI Enhanced Code Review Script - Powered by Ultimate Fallback System
 Provides comprehensive code review and refactoring suggestions for PRs
     """
 
-    import json
-    import os
-    import subprocess
-    import sys
-    from datetime import datetime
-    from typing import Any, Dict, List, Optional
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-    import requests
+import requests
 
 # Add project root to sys.path
     sys.path.insert(
@@ -19,7 +19,7 @@ Provides comprehensive code review and refactoring suggestions for PRs
     )
 
     try:
-    from src.amas.services.ultimate_fallback_system import UltimateFallbackSystem
+from src.amas.services.ultimate_fallback_system import UltimateFallbackSystem
     except ImportError:
     # Fallback import paths
     sys.path.insert(
@@ -45,7 +45,7 @@ Provides comprehensive code review and refactoring suggestions for PRs
 class EnhancedCodeReviewer:
     """Enhanced code reviewer with AI-powered analysis"""
 
-    def __init__(self):
+def __init__(self):
         self.ai_system = UltimateFallbackSystem()
         self.github_token = os.getenv("GITHUB_TOKEN")
         self.repo_name = os.getenv("REPO_NAME")
@@ -56,7 +56,7 @@ class EnhancedCodeReviewer:
         # Create artifacts directory
         os.makedirs(self.artifacts_dir, exist_ok=True)
 
-    def get_pr_diff(self) -> str:
+def get_pr_diff(self) -> str:
         """Get the diff for the pull request"""
         try:
             if self.pr_number:
@@ -72,7 +72,7 @@ class EnhancedCodeReviewer:
             print(f"Error getting diff: {str(e)}")
             return ""
 
-    def get_changed_files(self) -> List[str]:
+def get_changed_files(self) -> List[str]:
         """Get list of changed files"""
         try:
             if self.pr_number:
@@ -86,7 +86,7 @@ class EnhancedCodeReviewer:
             print(f"Error getting changed files: {str(e)}")
             return []
 
-    def analyze_code_quality(
+def analyze_code_quality(
         self, diff: str, changed_files: List[str]
     ) -> Dict[str, Any]:
         """Analyze code quality using AI"""
@@ -132,7 +132,7 @@ Format your response as a structured markdown report suitable for GitHub comment
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    def generate_review_report(
+def generate_review_report(
         self, analysis: Dict[str, Any], diff_stats: Dict[str, int]
     ) -> str:
         """Generate the final review report"""
@@ -177,7 +177,7 @@ Format your response as a structured markdown report suitable for GitHub comment
     """
         return report
 
-    def calculate_diff_stats(self, diff: str) -> Dict[str, int]:
+def calculate_diff_stats(self, diff: str) -> Dict[str, int]:
         """Calculate statistics from the diff"""
         additions = len([line for line in diff.split("\n") if line.startswith("+")])
         deletions = len([line for line in diff.split("\n") if line.startswith("-")])
@@ -189,7 +189,7 @@ Format your response as a structured markdown report suitable for GitHub comment
             "files_changed": files_changed,
         }
 
-    def run(self):
+def run(self):
         """Run the enhanced code review"""
         print("Starting enhanced code review...")
 

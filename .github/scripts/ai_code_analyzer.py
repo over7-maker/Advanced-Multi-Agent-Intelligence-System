@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-    """"
+""""
     AI Code Analyzer Script
     Performs intelligent code analysis using AI models
     """"
 
-    import difflib
-    import json
-    import os
-    import subprocess
-    from typing import Any, Dict, List, Optional
+import difflib
+import json
+import os
+import subprocess
+from typing import Any, Dict, List, Optional
 
-    import requests
-    from openai import OpenAI
+import requests
+from openai import OpenAI
 
 class AICodeAnalyzer:
-    def __init__(self):
+def __init__(self):
         self.github_token = os.environ.get("GITHUB_TOKEN")
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
         self.glm_key = os.environ.get("GLM_API_KEY")
@@ -191,7 +191,7 @@ class AICodeAnalyzer:
                 f"🤖 Initialized {len(self.ai_clients)} AI clients with fallback support"
             )
 
-    def read_file_content(self, file_path: str) -> Optional[str]:
+def read_file_content(self, file_path: str) -> Optional[str]:
         """Read file content safely"""
         try:
             with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
@@ -200,7 +200,7 @@ class AICodeAnalyzer:
             print(f"Error reading {file_path}: {e}")
             return None
 
-    def get_file_diff(self, file_path: str) -> Optional[str]:
+def get_file_diff(self, file_path: str) -> Optional[str]:
         """Get git diff for a specific file"""
         try:
             result = subprocess.run(
@@ -213,7 +213,7 @@ class AICodeAnalyzer:
             print(f"Error getting diff for {file_path}: {e}")
             return None
 
-    def analyze_code_with_ai(
+def analyze_code_with_ai(
         self, file_path: str, content: str, diff: str = None
     ) -> Optional[Dict[str, Any]]:
         """Analyze code using AI models with fallback"""
@@ -293,7 +293,7 @@ You are an expert code reviewer for the AMAS (Advanced Multi-Agent Intelligence 
         print("❌ All AI clients failed")
         return None
 
-    def analyze_security_issues(self, file_path: str, content: str) -> List[str]:
+def analyze_security_issues(self, file_path: str, content: str) -> List[str]:
         """Basic security issue detection with context awareness"""
         security_issues = []
 
@@ -422,7 +422,7 @@ You are an expert code reviewer for the AMAS (Advanced Multi-Agent Intelligence 
 
         return security_issues
 
-    def post_pr_comment(self, comment: str) -> bool:
+def post_pr_comment(self, comment: str) -> bool:
         """Post comment to pull request"""
         if not self.pr_number:
             print("No PR number available, skipping comment")
@@ -456,7 +456,7 @@ You are an expert code reviewer for the AMAS (Advanced Multi-Agent Intelligence 
             print(f"❌ Failed to post PR comment: {e}")
             return False
 
-    def run(self):
+def run(self):
         """Main execution function"""
         if not self.changed_files:
             print("No files to analyze")
@@ -503,7 +503,7 @@ You are an expert code reviewer for the AMAS (Advanced Multi-Agent Intelligence 
         else:
             print("No significant issues found in the analyzed files.")
 
-    def generate_analysis_report(
+def generate_analysis_report(
         self, analyses: List[Dict[str, Any]], security_issues: List[str]
     ) -> str:
         """Generate comprehensive analysis report"""

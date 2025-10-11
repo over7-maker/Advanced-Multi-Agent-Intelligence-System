@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-    """
+"""
     AI Project Auditor Script - Simplified Version
     Comprehensive project audit and analysis
     """
 
-    import argparse
-    import json
-    import os
-    import sys
-    from pathlib import Path
-    from typing import Any, Dict, List, Optional
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 class AIProjectAuditor:
     """AI Project Auditor"""
     
-    def __init__(self, use_advanced_manager: bool = True):
+def __init__(self, use_advanced_manager: bool = True):
         """Initialize the auditor"""
         self.use_advanced_manager = use_advanced_manager
         self.results = {
@@ -28,7 +28,7 @@ class AIProjectAuditor:
             "integration_stats": {}
         }
     
-    def audit_project(
+def audit_project(
         self, 
         mode: str, 
         components: str, 
@@ -92,7 +92,7 @@ class AIProjectAuditor:
             print(f"❌ Error during project audit: {e}")
             return self._generate_error_results(str(e))
     
-    def _analyze_project_structure(self) -> Dict[str, Any]:
+def _analyze_project_structure(self) -> Dict[str, Any]:
         """Analyze project structure"""
         print("📁 Analyzing project structure...")
         
@@ -144,7 +144,7 @@ class AIProjectAuditor:
         
         return structure
     
-    def _analyze_code_quality(self) -> Dict[str, Any]:
+def _analyze_code_quality(self) -> Dict[str, Any]:
         """Analyze code quality"""
         print("🔍 Analyzing code quality...")
         
@@ -192,7 +192,7 @@ class AIProjectAuditor:
         
         return quality_metrics
     
-    def _analyze_security(self) -> Dict[str, Any]:
+def _analyze_security(self) -> Dict[str, Any]:
         """Analyze security aspects"""
         print("🔒 Analyzing security...")
         
@@ -239,7 +239,7 @@ class AIProjectAuditor:
         
         return security_analysis
     
-    def _analyze_performance(self) -> Dict[str, Any]:
+def _analyze_performance(self) -> Dict[str, Any]:
         """Analyze performance aspects"""
         print("⚡ Analyzing performance...")
         
@@ -282,7 +282,7 @@ class AIProjectAuditor:
         
         return performance_analysis
     
-    def _generate_ai_insights(
+def _generate_ai_insights(
         self, 
         structure: Dict[str, Any], 
         quality: Dict[str, Any], 
@@ -303,7 +303,7 @@ class AIProjectAuditor:
         
         return insights
     
-    def _generate_recommendations(
+def _generate_recommendations(
         self, 
         structure: Dict[str, Any], 
         quality: Dict[str, Any], 
@@ -335,7 +335,7 @@ class AIProjectAuditor:
         
         return recommendations
     
-    def _analyze_documentation_status(self) -> Dict[str, Any]:
+def _analyze_documentation_status(self) -> Dict[str, Any]:
         """Analyze documentation status"""
         print("📚 Analyzing documentation status...")
         
@@ -365,7 +365,7 @@ class AIProjectAuditor:
         
         return doc_status
     
-    def _generate_error_results(self, error: str) -> Dict[str, Any]:
+def _generate_error_results(self, error: str) -> Dict[str, Any]:
         """Generate error results"""
         return {
             "project_audit": {"error": error},

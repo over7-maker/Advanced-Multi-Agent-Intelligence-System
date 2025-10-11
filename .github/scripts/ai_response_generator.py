@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-    """
+"""
     AI Response Generator with Advanced API Manager Integration
     """
 
-    import argparse
-    import json
-    import os
-    import sys
-    from pathlib import Path
-    from typing import Any, Dict, List, Optional
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Add the project root to the Python path
     project_root = Path(__file__).parent.parent.parent
@@ -25,7 +25,7 @@
 class AIResponseGenerator:
     """AI Response Generator with Advanced API Manager"""
     
-    def __init__(self, use_advanced_manager: bool = True):
+def __init__(self, use_advanced_manager: bool = True):
         """Initialize the generator"""
         self.use_advanced_manager = use_advanced_manager
         self.integration = None if use_advanced_manager else None
@@ -37,7 +37,7 @@ class AIResponseGenerator:
             "integration_stats": {}
         }
     
-    def generate_response(
+def generate_response(
         self, 
         issue_number: str, 
         response_mode: str, 
@@ -75,7 +75,7 @@ class AIResponseGenerator:
                 "error": str(e)
             }
     
-    def _get_issue_context(self, issue_number: str) -> Dict[str, Any]:
+def _get_issue_context(self, issue_number: str) -> Dict[str, Any]:
         """Get issue context (simplified)"""
         return {
             "number": issue_number,
@@ -85,7 +85,7 @@ class AIResponseGenerator:
             "state": "open"
         }
     
-    def _generate_with_ai(
+def _generate_with_ai(
         self, 
         issue_context: Dict[str, Any], 
         response_mode: str, 
@@ -142,7 +142,7 @@ class AIResponseGenerator:
                 "error": str(e)
             }
     
-    def _format_response(
+def _format_response(
         self, 
         ai_response: Dict[str, Any], 
         response_mode: str, 
@@ -166,7 +166,7 @@ class AIResponseGenerator:
         
         return formatted
     
-    def run_generation(
+def run_generation(
         self, 
         issue_number: str, 
         response_mode: str, 

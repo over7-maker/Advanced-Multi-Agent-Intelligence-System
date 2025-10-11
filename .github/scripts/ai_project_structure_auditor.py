@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-    """
+"""
     AI Project Structure Auditor with Advanced API Manager Integration
     """
 
-    import argparse
-    import json
-    import os
-    import sys
-    from pathlib import Path
-    from typing import Any, Dict, List, Optional
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Add the project root to the Python path
     project_root = Path(__file__).parent.parent.parent
@@ -25,7 +25,7 @@
 class AIProjectStructureAuditor:
     """AI Project Structure Auditor with Advanced API Manager"""
     
-    def __init__(self, use_advanced_manager: bool = True):
+def __init__(self, use_advanced_manager: bool = True):
         """Initialize the auditor"""
         self.use_advanced_manager = use_advanced_manager
         self.integration = None if use_advanced_manager else None
@@ -37,7 +37,7 @@ class AIProjectStructureAuditor:
             "integration_stats": {}
         }
     
-    def audit_project_structure(
+def audit_project_structure(
         self, 
         audit_mode: str, 
         documentation_level: str, 
@@ -75,7 +75,7 @@ class AIProjectStructureAuditor:
                 "error": str(e)
             }
     
-    def _analyze_structure(self, target_components: str) -> Dict[str, Any]:
+def _analyze_structure(self, target_components: str) -> Dict[str, Any]:
         """Analyze project structure"""
         try:
             # Analyze directory structure
@@ -101,7 +101,7 @@ class AIProjectStructureAuditor:
             print(f"❌ Structure analysis failed: {e}")
             return {"error": str(e)}
     
-    def _get_ai_insights(
+def _get_ai_insights(
         self, 
         structure_analysis: Dict[str, Any], 
         audit_mode: str, 
@@ -158,7 +158,7 @@ class AIProjectStructureAuditor:
                 "error": str(e)
             }
     
-    def _generate_recommendations(
+def _generate_recommendations(
         self, 
         structure_analysis: Dict[str, Any], 
         ai_insights: Dict[str, Any]
@@ -178,7 +178,7 @@ class AIProjectStructureAuditor:
         
         return recommendations
     
-    def run_audit(
+def run_audit(
         self, 
         audit_mode: str, 
         documentation_level: str, 

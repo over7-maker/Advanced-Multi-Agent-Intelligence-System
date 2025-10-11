@@ -1,22 +1,22 @@
-    from standalone_universal_ai_manager import get_api_key
+from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
     """
     AI Workflow Monitor Script
     Monitors and reports on the health and performance of all AI workflows
     """
 
-    import json
-    import os
-    import subprocess
-    import time
-    from datetime import datetime
-    from typing import Any, Dict, List, Optional
+import json
+import os
+import subprocess
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-    import requests
-    from openai import OpenAI
+import requests
+from openai import OpenAI
 
 class AIWorkflowMonitor:
-    def __init__(self):
+def __init__(self):
         self.deepseek_key = get_api_key("DEEPSEEK_API_KEY")
         self.claude_key = get_api_key("CLAUDE_API_KEY")
         self.gpt4_key = os.environ.get("GPT4_API_KEY")
@@ -146,7 +146,7 @@ class AIWorkflowMonitor:
         for agent in self.agents:
             print(f"  - {agent['name']}: {agent['role']}")
 
-    def call_agent(
+def call_agent(
         self, agent: Dict[str, Any], prompt: str, context: str = ""
     ) -> Optional[str]:
         """Call a specific AI agent with error handling"""
@@ -184,7 +184,7 @@ class AIWorkflowMonitor:
             print(f"❌ {agent['name']} failed: {e}")
             return None
 
-    def get_workflow_health(self) -> Dict[str, Any]:
+def get_workflow_health(self) -> Dict[str, Any]:
         """Get health status of all workflows"""
         workflows = {
             "ai-code-analysis": {
@@ -254,7 +254,7 @@ class AIWorkflowMonitor:
 
         return workflows
 
-    def get_system_metrics(self) -> Dict[str, Any]:
+def get_system_metrics(self) -> Dict[str, Any]:
         """Get system performance metrics"""
         metrics = {
             "total_workflows": 9,
@@ -272,7 +272,7 @@ class AIWorkflowMonitor:
 
         return metrics
 
-    def perform_workflow_monitoring(self) -> Dict[str, Any]:
+def perform_workflow_monitoring(self) -> Dict[str, Any]:
         """Perform comprehensive workflow monitoring using multiple agents"""
         if not self.agents:
             return {"error": "No agents available"}
@@ -382,7 +382,7 @@ class AIWorkflowMonitor:
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
         }
 
-    def generate_monitoring_report(self, results: Dict[str, Any]) -> str:
+def generate_monitoring_report(self, results: Dict[str, Any]) -> str:
         """Generate comprehensive monitoring report"""
         if "error" in results:
             return f"# Workflow Monitoring Failed\n\nError: {results['error']}"
@@ -480,7 +480,7 @@ class AIWorkflowMonitor:
     """
         return report
 
-    def run(self):
+def run(self):
         """Main execution function"""
         print("🚀 Starting AMAS Workflow Monitor...")
 

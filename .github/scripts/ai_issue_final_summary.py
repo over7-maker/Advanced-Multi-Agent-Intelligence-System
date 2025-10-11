@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-    """
+"""
     AI Issue Final Summary Script
 Generates final summary and integration for issue responder workflow
     """
 
-    import argparse
-    import json
-    import os
-    import sys
-    from pathlib import Path
-    from typing import Any, Dict, List, Optional
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Add the project root to the Python path
     project_root = Path(__file__).parent.parent.parent
@@ -26,7 +26,7 @@ Generates final summary and integration for issue responder workflow
 class AIIssueFinalSummary:
     """AI Issue Final Summary Generator with Advanced API Manager"""
     
-    def __init__(self, use_advanced_manager: bool = True):
+def __init__(self, use_advanced_manager: bool = True):
         """Initialize the summary generator"""
         self.use_advanced_manager = use_advanced_manager
         self.integration = None if use_advanced_manager else None
@@ -39,7 +39,7 @@ class AIIssueFinalSummary:
             "success_metrics": {}
         }
     
-    def generate_final_summary(
+def generate_final_summary(
         self, 
         mode: str, 
         depth: str, 
@@ -103,7 +103,7 @@ class AIIssueFinalSummary:
             print(f"❌ Error generating final summary: {e}")
             return self._generate_error_summary(str(e))
     
-    def _load_all_results(self, results_dir: str) -> Dict[str, Any]:
+def _load_all_results(self, results_dir: str) -> Dict[str, Any]:
         """Load all results from the results directory"""
         all_results = {}
         
@@ -124,7 +124,7 @@ class AIIssueFinalSummary:
         
         return all_results
     
-    def _create_summary_prompt(
+def _create_summary_prompt(
         self, 
         all_results: Dict[str, Any], 
         mode: str, 
@@ -167,7 +167,7 @@ Generate a comprehensive final summary and integration report for the AI Issue A
 Please provide a detailed, professional summary suitable for stakeholders and technical teams.
     """
     
-    def _generate_fallback_summary(self, all_results: Dict[str, Any]) -> Dict[str, Any]:
+def _generate_fallback_summary(self, all_results: Dict[str, Any]) -> Dict[str, Any]:
         """Generate fallback summary when AI is not available"""
         return {
             "ai_generated": False,
@@ -178,7 +178,7 @@ Please provide a detailed, professional summary suitable for stakeholders and te
             "available_results": list(all_results.keys())
         }
     
-    def _generate_integration_stats(self) -> Dict[str, Any]:
+def _generate_integration_stats(self) -> Dict[str, Any]:
         """Generate integration statistics"""
         if self.use_advanced_manager and self.integration:
             return         else:
@@ -187,7 +187,7 @@ Please provide a detailed, professional summary suitable for stakeholders and te
                 "message": "Advanced API manager not available"
             }
     
-    def _generate_performance_metrics(self, all_results: Dict[str, Any]) -> Dict[str, Any]:
+def _generate_performance_metrics(self, all_results: Dict[str, Any]) -> Dict[str, Any]:
         """Generate workflow performance metrics"""
         return {
             "total_results": len(all_results),
@@ -197,7 +197,7 @@ Please provide a detailed, professional summary suitable for stakeholders and te
             "workflow_efficiency": self._calculate_efficiency(all_results)
         }
     
-    def _generate_recommendations(self, all_results: Dict[str, Any]) -> List[str]:
+def _generate_recommendations(self, all_results: Dict[str, Any]) -> List[str]:
         """Generate recommendations based on results"""
         recommendations = []
         
@@ -219,7 +219,7 @@ Please provide a detailed, professional summary suitable for stakeholders and te
         
         return recommendations
     
-    def _generate_next_steps(self, all_results: Dict[str, Any]) -> List[str]:
+def _generate_next_steps(self, all_results: Dict[str, Any]) -> List[str]:
         """Generate next steps based on results"""
         next_steps = []
         
@@ -234,7 +234,7 @@ Please provide a detailed, professional summary suitable for stakeholders and te
         
         return next_steps
     
-    def _generate_success_metrics(self, all_results: Dict[str, Any]) -> Dict[str, Any]:
+def _generate_success_metrics(self, all_results: Dict[str, Any]) -> Dict[str, Any]:
         """Generate success metrics"""
         total = len(all_results)
         successful = len([r for r in all_results.values() if r.get("success", False)])
@@ -246,7 +246,7 @@ Please provide a detailed, professional summary suitable for stakeholders and te
             "workflow_status": "SUCCESS" if successful == total else "PARTIAL" if successful > 0 else "FAILED"
         }
     
-    def _calculate_average_time(self, all_results: Dict[str, Any]) -> float:
+def _calculate_average_time(self, all_results: Dict[str, Any]) -> float:
         """Calculate average processing time"""
         times = []
         for result in all_results.values():
@@ -254,7 +254,7 @@ Please provide a detailed, professional summary suitable for stakeholders and te
                 times.append(result["processing_time"])
         return sum(times) / len(times) if times else 0
     
-    def _calculate_efficiency(self, all_results: Dict[str, Any]) -> str:
+def _calculate_efficiency(self, all_results: Dict[str, Any]) -> str:
         """Calculate workflow efficiency"""
         total = len(all_results)
         successful = len([r for r in all_results.values() if r.get("success", False)])
@@ -270,7 +270,7 @@ Please provide a detailed, professional summary suitable for stakeholders and te
         else:
             return "Poor"
     
-    def _generate_error_summary(self, error: str) -> Dict[str, Any]:
+def _generate_error_summary(self, error: str) -> Dict[str, Any]:
         """Generate error summary"""
         return {
             "final_summary": {

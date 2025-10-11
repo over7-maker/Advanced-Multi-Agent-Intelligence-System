@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
-    """
+"""
     AI Issue Responder Script
     Automatically analyzes GitHub issues and provides intelligent responses
     using your AI APIs (OpenRouter, DeepSeek, etc.)
     """
 
-    import json
-    import os
-    import time
-    from typing import Any, Dict, Optional
+import json
+import os
+import time
+from typing import Any, Dict, Optional
 
-    import requests
-    from openai import OpenAI
+import requests
+from openai import OpenAI
 
 class AIIssueResponder:
-    def __init__(self):
+def __init__(self):
         self.github_token = os.environ.get("GITHUB_TOKEN")
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
         self.glm_key = os.environ.get("GLM_API_KEY")
@@ -143,7 +143,7 @@ class AIIssueResponder:
                 f"🤖 Initialized {len(self.ai_clients)} AI clients for issue response"
             )
 
-    def analyze_issue_type(self, title: str, body: str) -> str:
+def analyze_issue_type(self, title: str, body: str) -> str:
         """Analyze the type of issue based on content"""
         title_lower = title.lower()
         body_lower = body.lower()
@@ -182,7 +182,7 @@ class AIIssueResponder:
         else:
             return "general"
 
-    def create_system_prompt(self, issue_type: str) -> str:
+def create_system_prompt(self, issue_type: str) -> str:
         """Create system prompt based on issue type"""
         base_prompt = """
 You are an AI assistant for the AMAS (Advanced Multi-Agent Intelligence System) project.
@@ -237,7 +237,7 @@ This is a sophisticated multi-agent AI system for intelligence analysis and auto
             issue_type, type_specific_prompts["question"]
         )
 
-    def generate_ai_response(
+def generate_ai_response(
         self, issue_type: str, title: str, body: str
     ) -> Optional[str]:
         """Generate AI response using available APIs with fallback"""
@@ -292,7 +292,7 @@ This is a sophisticated multi-agent AI system for intelligence analysis and auto
         print("❌ All AI clients failed")
         return None
 
-    def post_github_comment(self, comment: str) -> bool:
+def post_github_comment(self, comment: str) -> bool:
         """Post comment to GitHub issue"""
         url = f"https://api.github.com/repos/{self.repo_name}/issues/{self.issue_number}/comments"
 
@@ -322,7 +322,7 @@ This is a sophisticated multi-agent AI system for intelligence analysis and auto
             print(f"❌ Failed to post comment: {e}")
             return False
 
-    def add_issue_labels(self, labels: list) -> bool:
+def add_issue_labels(self, labels: list) -> bool:
         """Add labels to the issue"""
         url = f"https://api.github.com/repos/{self.repo_name}/issues/{self.issue_number}/labels"
 
@@ -343,7 +343,7 @@ This is a sophisticated multi-agent AI system for intelligence analysis and auto
             print(f"❌ Failed to add labels: {e}")
             return False
 
-    def run(self):
+def run(self):
         """Main execution function"""
         print(f"🚀 Processing issue #{self.issue_number}: {self.issue_title}")
 

@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
-    """
+"""
     AI Security Scanner Script
     Performs intelligent security analysis using AI models
     """
 
-    import json
-    import os
-    import re
-    from typing import Any, Dict, List, Optional
+import json
+import os
+import re
+from typing import Any, Dict, List, Optional
 
-    import requests
-    from openai import OpenAI
+import requests
+from openai import OpenAI
 
 class AISecurityScanner:
-    def __init__(self):
+def __init__(self):
         self.github_token = os.environ.get("GITHUB_TOKEN")
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
         self.glm_key = os.environ.get("GLM_API_KEY")
@@ -189,7 +189,7 @@ class AISecurityScanner:
                 f"🤖 Initialized {len(self.ai_clients)} AI clients for security analysis"
             )
 
-    def scan_for_secrets(self, content: str, file_path: str) -> List[Dict[str, str]]:
+def scan_for_secrets(self, content: str, file_path: str) -> List[Dict[str, str]]:
         """Scan for potential secrets and API keys"""
         secrets_found = []
 
@@ -241,7 +241,7 @@ class AISecurityScanner:
 
         return secrets_found
 
-    def _is_pattern_definition_file(self, content: str, file_path: str) -> bool:
+def _is_pattern_definition_file(self, content: str, file_path: str) -> bool:
         """Check if file contains only pattern definitions (not actual vulnerabilities)"""
         # Check if file is a security scanner or pattern definition file
         if any(
@@ -277,7 +277,7 @@ class AISecurityScanner:
 
         return False
 
-    def _is_pattern_definition_line(self, line: str, context_lines: list) -> bool:
+def _is_pattern_definition_line(self, line: str, context_lines: list) -> bool:
         """Check if a specific line is a pattern definition rather than actual vulnerable code"""
         import re
 
@@ -345,7 +345,7 @@ class AISecurityScanner:
 
         return False
 
-    def scan_for_vulnerabilities(
+def scan_for_vulnerabilities(
         self, content: str, file_path: str
     ) -> List[Dict[str, str]]:
         """Scan for common security vulnerabilities with context awareness"""
@@ -428,7 +428,7 @@ class AISecurityScanner:
 
         return vulnerabilities
 
-    def get_code_snippet(self, content: str, line_num: int, context: int = 2) -> str:
+def get_code_snippet(self, content: str, line_num: int, context: int = 2) -> str:
         """Get code snippet around a specific line"""
         lines = content.split("\n")
         start = max(0, line_num - context - 1)
@@ -441,7 +441,7 @@ class AISecurityScanner:
 
         return "\n".join(snippet_lines)
 
-    def analyze_security_with_ai(
+def analyze_security_with_ai(
         self, file_path: str, content: str, secrets: List[Dict], vulns: List[Dict]
     ) -> Optional[str]:
         """Get AI analysis of security issues with fallback"""
@@ -513,7 +513,7 @@ You are a cybersecurity expert analyzing code for the AMAS Intelligence System.
         print("❌ All AI clients failed for security analysis")
         return None
 
-    def post_pr_comment(self, comment: str) -> bool:
+def post_pr_comment(self, comment: str) -> bool:
         """Post security report to pull request"""
         if not self.pr_number or not self.github_token:
             print("No PR number or GitHub token available, skipping comment")
@@ -547,7 +547,7 @@ You are a cybersecurity expert analyzing code for the AMAS Intelligence System.
             print(f"❌ Failed to post PR comment: {e}")
             return False
 
-    def generate_security_report(self, scan_results: List[Dict[str, Any]]) -> str:
+def generate_security_report(self, scan_results: List[Dict[str, Any]]) -> str:
         """Generate comprehensive security report"""
         report = ["# 🔒 AI Security Scan Report\n"]
 
@@ -606,7 +606,7 @@ You are a cybersecurity expert analyzing code for the AMAS Intelligence System.
 
         return "\n".join(report)
 
-    def run(self):
+def run(self):
         """Main execution function"""
         if not self.changed_files:
             print("No files to scan")

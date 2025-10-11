@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-    """
+"""
     AI Auto-Fix Applier with Advanced API Manager Integration
     """
 
-    import argparse
-    import json
-    import os
-    import sys
-    from pathlib import Path
-    from typing import Any, Dict, List, Optional
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Add the project root to the Python path
     project_root = Path(__file__).parent.parent.parent
@@ -25,7 +25,7 @@
 class AIAutoFixApplier:
     """AI Auto-Fix Applier with Advanced API Manager"""
     
-    def __init__(self, use_advanced_manager: bool = True):
+def __init__(self, use_advanced_manager: bool = True):
         """Initialize the applier"""
         self.use_advanced_manager = use_advanced_manager
         self.integration = None if use_advanced_manager else None
@@ -37,7 +37,7 @@ class AIAutoFixApplier:
             "integration_stats": {}
         }
     
-    def apply_auto_fixes(
+def apply_auto_fixes(
         self, 
         issue_number: str, 
         response_mode: str
@@ -79,7 +79,7 @@ class AIAutoFixApplier:
                 "error": str(e)
             }
     
-    def _get_issue_context(self, issue_number: str) -> Dict[str, Any]:
+def _get_issue_context(self, issue_number: str) -> Dict[str, Any]:
         """Get issue context (simplified)"""
         return {
             "number": issue_number,
@@ -89,7 +89,7 @@ class AIAutoFixApplier:
             "state": "open"
         }
     
-    def _generate_fixes_with_ai(
+def _generate_fixes_with_ai(
         self, 
         issue_context: Dict[str, Any], 
         response_mode: str
@@ -145,7 +145,7 @@ class AIAutoFixApplier:
                 "error": str(e)
             }
     
-    def _apply_fixes(
+def _apply_fixes(
         self, 
         ai_fixes: Dict[str, Any], 
         issue_context: Dict[str, Any]
@@ -177,7 +177,7 @@ class AIAutoFixApplier:
                 "error": str(e)
             }
     
-    def _validate_fixes(
+def _validate_fixes(
         self, 
         applied_fixes: Dict[str, Any], 
         issue_context: Dict[str, Any]
@@ -210,7 +210,7 @@ class AIAutoFixApplier:
                 "error": str(e)
             }
     
-    def run_auto_fix_application(
+def run_auto_fix_application(
         self, 
         issue_number: str, 
         response_mode: str, 

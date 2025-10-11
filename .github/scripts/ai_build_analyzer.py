@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-    """
+"""
     AI Build Analyzer with Advanced API Manager Integration
     """
 
-    import argparse
-    import json
-    import os
-    import sys
-    from pathlib import Path
-    from typing import Any, Dict, List, Optional
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 # Add the project root to the Python path
     project_root = Path(__file__).parent.parent.parent
@@ -25,7 +25,7 @@
 class AIBuildAnalyzer:
     """AI Build Analyzer with Advanced API Manager"""
     
-    def __init__(self, use_advanced_manager: bool = True):
+def __init__(self, use_advanced_manager: bool = True):
         """Initialize the analyzer"""
         self.use_advanced_manager = use_advanced_manager
         self.integration = None if use_advanced_manager else None
@@ -37,7 +37,7 @@ class AIBuildAnalyzer:
             "integration_stats": {}
         }
     
-    def analyze_build(
+def analyze_build(
         self, 
         build_mode: str, 
         version_strategy: str, 
@@ -75,7 +75,7 @@ class AIBuildAnalyzer:
                 "error": str(e)
             }
     
-    def _analyze_project_files(self) -> Dict[str, Any]:
+def _analyze_project_files(self) -> Dict[str, Any]:
         """Analyze project files for build requirements"""
         try:
             project_root = Path(".")
@@ -110,7 +110,7 @@ class AIBuildAnalyzer:
             print(f"❌ Project file analysis failed: {e}")
             return {"error": str(e)}
     
-    def _get_ai_insights(
+def _get_ai_insights(
         self, 
         project_analysis: Dict[str, Any], 
         build_mode: str, 
@@ -170,7 +170,7 @@ class AIBuildAnalyzer:
                 "error": str(e)
             }
     
-    def _generate_build_recommendations(
+def _generate_build_recommendations(
         self, 
         project_analysis: Dict[str, Any], 
         ai_insights: Dict[str, Any]
@@ -190,7 +190,7 @@ class AIBuildAnalyzer:
         
         return recommendations
     
-    def run_analysis(
+def run_analysis(
         self, 
         build_mode: str, 
         version_strategy: str, 

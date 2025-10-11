@@ -1,21 +1,21 @@
-    from standalone_universal_ai_manager import get_api_key
+from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
     """
     AI OSINT Data Collector Script
     Automated intelligence gathering using multiple AI models
     """
 
-    import json
-    import os
-    import time
-    from datetime import datetime
-    from typing import Any, Dict, List, Optional
+import json
+import os
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-    import requests
-    from openai import OpenAI
+import requests
+from openai import OpenAI
 
 class AIOSINTCollector:
-    def __init__(self):
+def __init__(self):
         self.deepseek_key = get_api_key("DEEPSEEK_API_KEY")
         self.claude_key = get_api_key("CLAUDE_API_KEY")
         self.gpt4_key = os.environ.get("GPT4_API_KEY")
@@ -145,7 +145,7 @@ class AIOSINTCollector:
         for agent in self.agents:
             print(f"  - {agent['name']}: {agent['role']}")
 
-    def call_agent(
+def call_agent(
         self, agent: Dict[str, Any], prompt: str, context: str = ""
     ) -> Optional[str]:
         """Call a specific AI agent with error handling"""
@@ -183,7 +183,7 @@ class AIOSINTCollector:
             print(f"❌ {agent['name']} failed: {e}")
             return None
 
-    def collect_cybersecurity_intelligence(self) -> Dict[str, Any]:
+def collect_cybersecurity_intelligence(self) -> Dict[str, Any]:
         """Collect cybersecurity intelligence using multiple agents"""
         if not self.agents:
             return {"error": "No agents available"}
@@ -282,7 +282,7 @@ class AIOSINTCollector:
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
         }
 
-    def generate_osint_report(self, results: Dict[str, Any]) -> str:
+def generate_osint_report(self, results: Dict[str, Any]) -> str:
         """Generate comprehensive OSINT intelligence report"""
         if "error" in results:
             return f"# OSINT Collection Failed\n\nError: {results['error']}"
@@ -354,7 +354,7 @@ class AIOSINTCollector:
     """
         return report
 
-    def run(self):
+def run(self):
         """Main execution function"""
         print("🚀 Starting AMAS OSINT Collection System...")
 

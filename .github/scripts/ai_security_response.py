@@ -1,21 +1,21 @@
-    from standalone_universal_ai_manager import get_api_key
+from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
     """
     AI Security Scanner Response System
     Automated response to security scan reports
     """
 
-    import json
-    import os
-    import time
-    from datetime import datetime
-    from typing import Any, Dict, List, Optional
+import json
+import os
+import time
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-    import requests
-    from openai import OpenAI
+import requests
+from openai import OpenAI
 
 class AISecurityResponse:
-    def __init__(self):
+def __init__(self):
         self.deepseek_key = get_api_key("DEEPSEEK_API_KEY")
         self.claude_key = get_api_key("CLAUDE_API_KEY")
         self.gpt4_key = os.environ.get("GPT4_API_KEY")
@@ -146,7 +146,7 @@ class AISecurityResponse:
         for agent in self.agents:
             print(f"  - {agent['name']}: {agent['role']}")
 
-    def call_agent(
+def call_agent(
         self, agent: Dict[str, Any], prompt: str, context: str = ""
     ) -> Optional[str]:
         """Call a specific AI agent with error handling"""
@@ -184,7 +184,7 @@ class AISecurityResponse:
             print(f"❌ {agent['name']} failed: {e}")
             return None
 
-    def analyze_security_findings(self, security_report: str) -> Dict[str, Any]:
+def analyze_security_findings(self, security_report: str) -> Dict[str, Any]:
         """Analyze security findings using multiple agents"""
         if not self.agents:
             return {"error": "No agents available"}
@@ -263,7 +263,7 @@ class AISecurityResponse:
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S UTC", time.gmtime()),
         }
 
-    def generate_security_response(
+def generate_security_response(
         self, results: Dict[str, Any], original_report: str
     ) -> str:
         """Generate comprehensive security response"""
@@ -358,7 +358,7 @@ Thank you for the comprehensive security scan report! The AMAS AI Security Scann
     """
         return response
 
-    def run(self, security_report: str = ""):
+def run(self, security_report: str = ""):
         """Main execution function"""
         print("🚀 Starting AMAS Security Response System...")
 
