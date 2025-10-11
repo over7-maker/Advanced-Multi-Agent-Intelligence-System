@@ -123,8 +123,8 @@ jobs:
  pip install --no-build-isolation --only-binary=all pygit2==1.12.2
  pip install --no-build-isolation --only-binary=all flake8==6.0.0
  pip install --no-build-isolation --only-binary=all bandit==1.7.5
- pip install --no-build-isolation --only-binary=all safety==2.3.5
- pip install --no-build-isolation --only-binary=all pip-audit==2.6.0
+ # pip install --no-build-isolation --only-binary=all safety==2.3.5  # Removed due to dependency conflicts
+ # pip install --no-build-isolation --only-binary=all pip-audit==2.6.0  # Removed due to dependency conflicts
  pip install --no-build-isolation --only-binary=all memory-profiler==0.61.0
  pip install --no-build-isolation --only-binary=all line-profiler==4.1.1
  pip install --no-build-isolation --only-binary=all pytest==7.4.0
@@ -216,8 +216,8 @@ jobs:
  pip install --no-build-isolation --only-binary=all pygit2==1.12.2
  pip install --no-build-isolation --only-binary=all flake8==6.0.0
  pip install --no-build-isolation --only-binary=all bandit==1.7.5
- pip install --no-build-isolation --only-binary=all safety==2.3.5
- pip install --no-build-isolation --only-binary=all pip-audit==2.6.0
+ # pip install --no-build-isolation --only-binary=all safety==2.3.5  # Removed due to dependency conflicts
+ # pip install --no-build-isolation --only-binary=all pip-audit==2.6.0  # Removed due to dependency conflicts
  pip install --no-build-isolation --only-binary=all memory-profiler==0.61.0
  pip install --no-build-isolation --only-binary=all line-profiler==4.1.1
  pip install --no-build-isolation --only-binary=all pytest==7.4.0
@@ -315,8 +315,8 @@ jobs:
  pip install --no-build-isolation --only-binary=all pygit2==1.12.2
  pip install --no-build-isolation --only-binary=all flake8==6.0.0
  pip install --no-build-isolation --only-binary=all bandit==1.7.5
- pip install --no-build-isolation --only-binary=all safety==2.3.5
- pip install --no-build-isolation --only-binary=all pip-audit==2.6.0
+ # pip install --no-build-isolation --only-binary=all safety==2.3.5  # Removed due to dependency conflicts
+ # pip install --no-build-isolation --only-binary=all pip-audit==2.6.0  # Removed due to dependency conflicts
  pip install --no-build-isolation --only-binary=all memory-profiler==0.61.0
  pip install --no-build-isolation --only-binary=all line-profiler==4.1.1
  pip install --no-build-isolation --only-binary=all pytest==7.4.0
@@ -413,8 +413,8 @@ jobs:
  pip install --no-build-isolation --only-binary=all pygit2==1.12.2
  pip install --no-build-isolation --only-binary=all flake8==6.0.0
  pip install --no-build-isolation --only-binary=all bandit==1.7.5
- pip install --no-build-isolation --only-binary=all safety==2.3.5
- pip install --no-build-isolation --only-binary=all pip-audit==2.6.0
+ # pip install --no-build-isolation --only-binary=all safety==2.3.5  # Removed due to dependency conflicts
+ # pip install --no-build-isolation --only-binary=all pip-audit==2.6.0  # Removed due to dependency conflicts
  pip install --no-build-isolation --only-binary=all memory-profiler==0.61.0
  pip install --no-build-isolation --only-binary=all line-profiler==4.1.1
  pip install --no-build-isolation --only-binary=all pytest==7.4.0

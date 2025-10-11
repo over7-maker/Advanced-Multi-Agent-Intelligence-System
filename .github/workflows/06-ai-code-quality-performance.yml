@@ -107,7 +107,7 @@ jobs:
         pip install --only-binary=all aiohttp==3.9.1 requests==2.31.0
         pip install --only-binary=all openai==1.12.0 anthropic==0.18.0 google-generativeai==0.3.2 groq==0.4.1 cohere==4.37
         pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
-        pip install flake8 bandit safety pip-audit
+        pip install flake8 bandit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
         pip install kubernetes
@@ -241,7 +241,7 @@ jobs:
         pip install --only-binary=all aiohttp==3.9.1 requests==2.31.0
         pip install --only-binary=all openai==1.12.0 anthropic==0.18.0 google-generativeai==0.3.2 groq==0.4.1 cohere==4.37
         pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
-        pip install flake8 bandit safety pip-audit
+        pip install flake8 bandit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
         pip install kubernetes
@@ -385,7 +385,7 @@ jobs:
         pip install --only-binary=all aiohttp==3.9.1 requests==2.31.0
         pip install --only-binary=all openai==1.12.0 anthropic==0.18.0 google-generativeai==0.3.2 groq==0.4.1 cohere==4.37
         pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
-        pip install flake8 bandit safety pip-audit
+        pip install flake8 bandit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
         pip install kubernetes
@@ -529,7 +529,7 @@ jobs:
         pip install --only-binary=all aiohttp==3.9.1 requests==2.31.0
         pip install --only-binary=all openai==1.12.0 anthropic==0.18.0 google-generativeai==0.3.2 groq==0.4.1 cohere==4.37
         pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
-        pip install flake8 bandit safety pip-audit
+        pip install flake8 bandit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
         pip install kubernetes
@@ -673,7 +673,7 @@ jobs:
         pip install --only-binary=all aiohttp==3.9.1 requests==2.31.0
         pip install --only-binary=all openai==1.12.0 anthropic==0.18.0 google-generativeai==0.3.2 groq==0.4.1 cohere==4.37
         pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
-        pip install flake8 bandit safety pip-audit
+        pip install flake8 bandit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
         pip install kubernetes

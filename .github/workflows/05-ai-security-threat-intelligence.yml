@@ -127,7 +127,7 @@ jobs:
         pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
 
 
-        pip install --only-binary=all flake8==6.1.0 bandit==1.7.5 safety==2.3.5 pip-audit==2.6.0
+        pip install --only-binary=all flake8==6.1.0 bandit==1.7.5
 
 
         pip install --only-binary=all pytest==7.4.4 docker==7.0.0 kubernetes==28.1.0
@@ -162,7 +162,7 @@ jobs:
         pip install --only-binary=all scikit-learn==1.3.0 pandas==2.0.3 matplotlib==3.7.2
 
         pip install --only-binary=all scikit-learn pandas matplotlib || pip install scikit-learn pandas matplotlib
-        pip install flake8 bandit safety pip-audit
+        pip install flake8 bandit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
         pip install kubernetes
@@ -311,7 +311,7 @@ jobs:
         pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
 
 
-        pip install --only-binary=all flake8==6.1.0 bandit==1.7.5 safety==2.3.5 pip-audit==2.6.0
+        pip install --only-binary=all flake8==6.1.0 bandit==1.7.5
 
 
         pip install --only-binary=all pytest==7.4.4 docker==7.0.0 kubernetes==28.1.0
@@ -346,7 +346,7 @@ jobs:
         pip install --only-binary=all scikit-learn==1.3.0 pandas==2.0.3 matplotlib==3.7.2
 
         pip install --only-binary=all scikit-learn pandas matplotlib || pip install scikit-learn pandas matplotlib
-        pip install flake8 bandit safety pip-audit
+        pip install flake8 bandit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
         pip install kubernetes
@@ -503,7 +503,7 @@ jobs:
         pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
 
 
-        pip install --only-binary=all flake8==6.1.0 bandit==1.7.5 safety==2.3.5 pip-audit==2.6.0
+        pip install --only-binary=all flake8==6.1.0 bandit==1.7.5
 
 
         pip install --only-binary=all pytest==7.4.4 docker==7.0.0 kubernetes==28.1.0
@@ -538,7 +538,7 @@ jobs:
         pip install --only-binary=all scikit-learn==1.3.0 pandas==2.0.3 matplotlib==3.7.2
 
         pip install --only-binary=all scikit-learn pandas matplotlib || pip install scikit-learn pandas matplotlib
-        pip install flake8 bandit safety pip-audit
+        pip install flake8 bandit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
         pip install kubernetes
@@ -695,7 +695,7 @@ jobs:
         pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
 
 
-        pip install --only-binary=all flake8==6.1.0 bandit==1.7.5 safety==2.3.5 pip-audit==2.6.0
+        pip install --only-binary=all flake8==6.1.0 bandit==1.7.5
 
 
         pip install --only-binary=all pytest==7.4.4 docker==7.0.0 kubernetes==28.1.0
@@ -730,7 +730,7 @@ jobs:
         pip install --only-binary=all scikit-learn==1.3.0 pandas==2.0.3 matplotlib==3.7.2
 
         pip install --only-binary=all scikit-learn pandas matplotlib || pip install scikit-learn pandas matplotlib
-        pip install flake8 bandit safety pip-audit
+        pip install flake8 bandit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
         pip install kubernetes
@@ -887,7 +887,7 @@ jobs:
         pip install --only-binary=all gitpython==3.1.40 pygit2==1.14.1
 
 
-        pip install --only-binary=all flake8==6.1.0 bandit==1.7.5 safety==2.3.5 pip-audit==2.6.0
+        pip install --only-binary=all flake8==6.1.0 bandit==1.7.5
 
 
         pip install --only-binary=all pytest==7.4.4 docker==7.0.0 kubernetes==28.1.0
@@ -922,7 +922,7 @@ jobs:
         pip install --only-binary=all scikit-learn==1.3.0 pandas==2.0.3 matplotlib==3.7.2
 
         pip install --only-binary=all scikit-learn pandas matplotlib || pip install scikit-learn pandas matplotlib
-        pip install flake8 bandit safety pip-audit
+        pip install flake8 bandit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
         pip install kubernetes
