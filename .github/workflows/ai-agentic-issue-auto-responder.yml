@@ -76,19 +76,67 @@ jobs:
         pip install --prefer-binary -r requirements.txt
 
         pip install --only-binary=all -r requirements.txt || # Install specific package versions with binary wheels
- pip install --only-binary=all PyYAML==6.0.1 numpy==1.26.4 scikit-learn==1.3.2 pandas==2.1.4 matplotlib==3.8.2
- pip install --only-binary=all aiohttp==3.9.1 requests==2.31.0
- pip install --only-binary=all openai==1.12.0 anthropic==0.18.0 google-generativeai==0.3.2 groq==0.4.1 cohere==4.37
- pip install --only-binary=all flake8==6.1.0 bandit==1.7.5
- pip install --only-binary=all pytest==7.4.4 docker==7.0.0 kubernetes==28.1.0
- pip install --only-binary=all boto3==1.34.0 azure-mgmt-resource==23.0.0 google-cloud-storage==2.10.0
+ # Install minimal packages to avoid Cython compilation
+
+ pip install --no-deps --only-binary=all PyYAML==6.0.1
+
+ pip install --no-deps --only-binary=all numpy==1.26.4
+
+ pip install --no-deps --only-binary=all scikit-learn==1.3.2
+
+ pip install --no-deps --only-binary=all pandas==2.1.4
+
+ pip install --no-deps --only-binary=all matplotlib==3.8.2
+ # Install utility packages with minimal dependencies
+
+ pip install --no-deps --only-binary=all aiohttp==3.9.1
+
+ pip install --no-deps --only-binary=all requests==2.31.0
+ # Install AI packages with minimal dependencies
+
+ pip install --no-deps --only-binary=all openai==1.12.0
+
+ pip install --no-deps --only-binary=all anthropic==0.18.0
+
+ pip install --no-deps --only-binary=all google-generativeai==0.3.2
+
+ pip install --no-deps --only-binary=all groq==0.4.1
+
+ pip install --no-deps --only-binary=all cohere==4.37
+ # Install quality packages with minimal dependencies
+
+ pip install --no-deps --only-binary=all flake8==6.1.0
+
+ pip install --no-deps --only-binary=all bandit==1.7.5
+ # Install test packages with minimal dependencies
+
+ pip install --no-deps --only-binary=all pytest==7.4.4
+
+ pip install --no-deps --only-binary=all docker==7.0.0
+
+ pip install --no-deps --only-binary=all kubernetes==28.1.0
+ # Install cloud packages with minimal dependencies
+
+ pip install --no-deps --only-binary=all boto3==1.34.0
+
+ pip install --no-deps --only-binary=all azure-mgmt-resource==23.0.0
+
+ pip install --no-deps --only-binary=all google-cloud-storage==2.10.0
         pip install openai anthropic google-generativeai groq cohere
         # Install packages with binary wheel preference (avoid Cython compilation)
 
         # Install packages with specific binary wheel versions
 
 
-        pip install --only-binary=all aiohttp==3.9.1 requests==2.31.0 PyYAML==6.0.1
+        # Install utility packages with minimal dependencies
+
+
+
+        pip install --no-deps --only-binary=all aiohttp==3.9.1
+
+
+
+        pip install --no-deps --only-binary=all requests==2.31.0 PyYAML==6.0.1
 
         pip install --only-binary=all aiohttp requests PyYAML || pip install aiohttp requests PyYAML
         pip install flake8 bandit
