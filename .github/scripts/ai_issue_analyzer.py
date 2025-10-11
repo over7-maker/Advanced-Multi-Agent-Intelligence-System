@@ -246,7 +246,7 @@ class AIIssueAnalyzer:
 async def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Issue Analyzer")
-    parser.add_argument("--issue-number", required=True, help="Issue number to analyze")
+    parser.add_argument("--issue-number", default="all", help="Issue number to analyze (default: all)")
     parser.add_argument("--response-mode", default="intelligent", help="Response mode")
     parser.add_argument("--auto-fix", action="store_true", help="Enable auto-fix")
     parser.add_argument("--language", default="auto", help="Response language")

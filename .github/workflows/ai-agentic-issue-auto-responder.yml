@@ -42,7 +42,7 @@ on:
 
 env:
   PYTHON_VERSION: '3.11'
-  ISSUE_NUMBER: ${{ github.event.issue.number || github.event.inputs.issue_number }}
+  ISSUE_NUMBER: ${{ github.event.issue.number || github.event.inputs.issue_number || 'all' }}
   RESPONSE_MODE: ${{ github.event.inputs.response_mode || 'intelligent' }}
   AUTO_FIX: ${{ github.event.inputs.auto_fix || 'true' }}
   LANGUAGE: ${{ github.event.inputs.language || 'auto' }}
