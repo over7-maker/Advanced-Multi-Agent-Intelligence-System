@@ -94,13 +94,31 @@ jobs:
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
+
+        # Configure pip to prefer binary wheels
+
+        pip config set global.prefer-binary true
+
+        pip config set global.only-binary all
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
-        pip install Cython numpy
-        pip install scikit-learn pandas matplotlib
+        # Install numpy with binary wheel preference
+
+        # Install numpy with binary wheel preference
+
+        pip install --prefer-binary numpy
+
+        pip install --only-binary=all numpy || pip install numpy
+        # Install ML packages with binary wheels (avoid Cython compilation)
+
+        # Install ML packages with binary wheels (avoid Cython compilation)
+
+        pip install --prefer-binary scikit-learn pandas matplotlib
+
+        pip install --only-binary=all scikit-learn pandas matplotlib || pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
@@ -217,13 +235,31 @@ jobs:
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
+
+        # Configure pip to prefer binary wheels
+
+        pip config set global.prefer-binary true
+
+        pip config set global.only-binary all
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
-        pip install Cython numpy
-        pip install scikit-learn pandas matplotlib
+        # Install numpy with binary wheel preference
+
+        # Install numpy with binary wheel preference
+
+        pip install --prefer-binary numpy
+
+        pip install --only-binary=all numpy || pip install numpy
+        # Install ML packages with binary wheels (avoid Cython compilation)
+
+        # Install ML packages with binary wheels (avoid Cython compilation)
+
+        pip install --prefer-binary scikit-learn pandas matplotlib
+
+        pip install --only-binary=all scikit-learn pandas matplotlib || pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
@@ -348,13 +384,31 @@ jobs:
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
+
+        # Configure pip to prefer binary wheels
+
+        pip config set global.prefer-binary true
+
+        pip config set global.only-binary all
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
-        pip install Cython numpy
-        pip install scikit-learn pandas matplotlib
+        # Install numpy with binary wheel preference
+
+        # Install numpy with binary wheel preference
+
+        pip install --prefer-binary numpy
+
+        pip install --only-binary=all numpy || pip install numpy
+        # Install ML packages with binary wheels (avoid Cython compilation)
+
+        # Install ML packages with binary wheels (avoid Cython compilation)
+
+        pip install --prefer-binary scikit-learn pandas matplotlib
+
+        pip install --only-binary=all scikit-learn pandas matplotlib || pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
@@ -479,13 +533,31 @@ jobs:
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
+
+        # Configure pip to prefer binary wheels
+
+        pip config set global.prefer-binary true
+
+        pip config set global.only-binary all
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
-        pip install Cython numpy
-        pip install scikit-learn pandas matplotlib
+        # Install numpy with binary wheel preference
+
+        # Install numpy with binary wheel preference
+
+        pip install --prefer-binary numpy
+
+        pip install --only-binary=all numpy || pip install numpy
+        # Install ML packages with binary wheels (avoid Cython compilation)
+
+        # Install ML packages with binary wheels (avoid Cython compilation)
+
+        pip install --prefer-binary scikit-learn pandas matplotlib
+
+        pip install --only-binary=all scikit-learn pandas matplotlib || pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
@@ -610,13 +682,31 @@ jobs:
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
         python -m pip install --upgrade pip setuptools wheel
+
+        # Configure pip to prefer binary wheels
+
+        pip config set global.prefer-binary true
+
+        pip config set global.only-binary all
         pip install -r requirements.txt
         pip install openai anthropic google-generativeai groq cohere
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
-        pip install Cython numpy
-        pip install scikit-learn pandas matplotlib
+        # Install numpy with binary wheel preference
+
+        # Install numpy with binary wheel preference
+
+        pip install --prefer-binary numpy
+
+        pip install --only-binary=all numpy || pip install numpy
+        # Install ML packages with binary wheels (avoid Cython compilation)
+
+        # Install ML packages with binary wheels (avoid Cython compilation)
+
+        pip install --prefer-binary scikit-learn pandas matplotlib
+
+        pip install --only-binary=all scikit-learn pandas matplotlib || pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
         pip install docker docker-compose
