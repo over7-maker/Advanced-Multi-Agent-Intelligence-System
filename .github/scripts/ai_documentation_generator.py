@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""
-AI Documentation Generator
-Generate comprehensive documentation
-"""
+    """
+    AI Documentation Generator
+    Generate comprehensive documentation
+    """
 
-import os
-import sys
-import json
-import argparse
-from pathlib import Path
+    import os
+    import sys
+    import json
+    import argparse
+    from pathlib import Path
 
 def main():
     """Main function"""

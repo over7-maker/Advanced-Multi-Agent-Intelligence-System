@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""
-AI Project Auditor Script - Simplified Version
-Comprehensive project audit and analysis
-"""
+    """
+    AI Project Auditor Script - Simplified Version
+    Comprehensive project audit and analysis
+    """
 
-import argparse
-import json
-import os
-import sys
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+    import argparse
+    import json
+    import os
+    import sys
+    from pathlib import Path
+    from typing import Any, Dict, List, Optional
 
 class AIProjectAuditor:
     """AI Project Auditor"""

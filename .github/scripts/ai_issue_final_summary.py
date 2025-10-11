@@ -1,31 +1,27 @@
 #!/usr/bin/env python3
-"""
-AI Issue Final Summary Script
+    """
+    AI Issue Final Summary Script
 Generates final summary and integration for issue responder workflow
-"""
+    """
 
-import argparse
-import asyncio
-import json
-import logging
-import os
-import sys
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+    import argparse
+    import json
+    import os
+    import sys
+    from pathlib import Path
+    from typing import Any, Dict, List, Optional
 
 # Add the project root to the Python path
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
+    project_root = Path(__file__).parent.parent.parent
+    sys.path.insert(0, str(project_root))
 
 # Import the universal AI workflow integration
-from universal_ai_workflow_integration import get_integration, generate_workflow_ai_response, save_workflow_results
 
 # Configure logging
-logging.basicConfig(
+    logging.basicConfig(
     level=logging.INFO, 
     format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+    )
 
 class AIIssueFinalSummary:
     """AI Issue Final Summary Generator with Advanced API Manager"""
@@ -33,7 +29,7 @@ class AIIssueFinalSummary:
     def __init__(self, use_advanced_manager: bool = True):
         """Initialize the summary generator"""
         self.use_advanced_manager = use_advanced_manager
-        self.integration = get_integration() if use_advanced_manager else None
+        self.integration = None if use_advanced_manager else None
         self.results = {
             "final_summary": {},
             "integration_stats": {},
@@ -43,7 +39,7 @@ class AIIssueFinalSummary:
             "success_metrics": {}
         }
     
-    async def generate_final_summary(
+    def generate_final_summary(
         self, 
         mode: str, 
         depth: str, 
@@ -53,21 +49,20 @@ class AIIssueFinalSummary:
         all_results_dir: str
     ) -> Dict[str, Any]:
         """Generate final summary and integration"""
-        logger.info("📊 Generating Final Summary & Integration")
-        logger.info(f"Mode: {mode} | Depth: {depth} | Language: {language}")
-        logger.info(f"Auto-fix: {auto_fix} | Target Issues: {target_issues}")
+        print("📊 Generating Final Summary & Integration")
+        print(f"Mode: {mode} | Depth: {depth} | Language: {language}")
+        print(f"Auto-fix: {auto_fix} | Target Issues: {target_issues}")
         
         try:
             # Load all results from the results directory
-            all_results = await self._load_all_results(all_results_dir)
+            all_results = self._load_all_results(all_results_dir)
             
             # Generate AI-powered final summary
             summary_prompt = self._create_summary_prompt(all_results, mode, depth, language, auto_fix, target_issues)
             
             if self.use_advanced_manager and self.integration:
                 # Use advanced API manager
-                ai_response = await self.integration.generate_with_fallback(
-                    prompt=summary_prompt,
+                ai_response =                     prompt=summary_prompt,
                     system_prompt="You are an expert AI workflow analyst. Generate comprehensive final summaries and integration reports.",
                     strategy="intelligent"
                 )
@@ -80,14 +75,14 @@ class AIIssueFinalSummary:
                         "response_time": ai_response.get("response_time", 0)
                     }
                 else:
-                    logger.error(f"AI generation failed: {ai_response.get('error', 'Unknown error')}")
+                    print(f"AI generation failed: {ai_response.get('error', 'Unknown error')}")
                     self.results["final_summary"] = self._generate_fallback_summary(all_results)
             else:
                 # Fallback summary
                 self.results["final_summary"] = self._generate_fallback_summary(all_results)
             
             # Generate integration statistics
-            self.results["integration_stats"] = await self._generate_integration_stats()
+            self.results["integration_stats"] = self._generate_integration_stats()
             
             # Generate workflow performance metrics
             self.results["workflow_performance"] = self._generate_performance_metrics(all_results)
@@ -101,14 +96,14 @@ class AIIssueFinalSummary:
             # Generate success metrics
             self.results["success_metrics"] = self._generate_success_metrics(all_results)
             
-            logger.info("✅ Final Summary & Integration completed successfully")
+            print("✅ Final Summary & Integration completed successfully")
             return self.results
             
         except Exception as e:
-            logger.error(f"❌ Error generating final summary: {e}")
+            print(f"❌ Error generating final summary: {e}")
             return self._generate_error_summary(str(e))
     
-    async def _load_all_results(self, results_dir: str) -> Dict[str, Any]:
+    def _load_all_results(self, results_dir: str) -> Dict[str, Any]:
         """Load all results from the results directory"""
         all_results = {}
         
@@ -121,11 +116,11 @@ class AIIssueFinalSummary:
                             data = json.load(f)
                             all_results[result_file.stem] = data
                     except Exception as e:
-                        logger.warning(f"Could not load {result_file}: {e}")
+                        print(f"Could not load {result_file}: {e}")
             else:
-                logger.warning(f"Results directory {results_dir} does not exist")
+                print(f"Results directory {results_dir} does not exist")
         except Exception as e:
-            logger.error(f"Error loading results: {e}")
+            print(f"Error loading results: {e}")
         
         return all_results
     
@@ -143,34 +138,34 @@ class AIIssueFinalSummary:
 Generate a comprehensive final summary and integration report for the AI Issue Auto-Responder workflow.
 
 ## WORKFLOW CONTEXT:
-- Mode: {mode}
-- Depth: {depth}
-- Language: {language}
-- Auto-fix: {auto_fix}
-- Target Issues: {target_issues}
+    - Mode: {mode}
+    - Depth: {depth}
+    - Language: {language}
+    - Auto-fix: {auto_fix}
+    - Target Issues: {target_issues}
 
 ## AVAILABLE RESULTS:
-{json.dumps(all_results, indent=2, default=str)}
+    {json.dumps(all_results, indent=2, default=str)}
 
 ## REQUIREMENTS:
-1. Provide a comprehensive overview of all workflow activities
-2. Analyze the effectiveness of each phase
-3. Identify key insights and patterns
-4. Generate actionable recommendations
+    1. Provide a comprehensive overview of all workflow activities
+    2. Analyze the effectiveness of each phase
+    3. Identify key insights and patterns
+    4. Generate actionable recommendations
 5. Suggest next steps for improvement
-6. Calculate success metrics and performance indicators
+    6. Calculate success metrics and performance indicators
 
 ## OUTPUT FORMAT:
-- Executive Summary
-- Detailed Analysis
-- Key Findings
-- Recommendations
-- Next Steps
-- Performance Metrics
-- Integration Status
+    - Executive Summary
+    - Detailed Analysis
+    - Key Findings
+    - Recommendations
+    - Next Steps
+    - Performance Metrics
+    - Integration Status
 
 Please provide a detailed, professional summary suitable for stakeholders and technical teams.
-"""
+    """
     
     def _generate_fallback_summary(self, all_results: Dict[str, Any]) -> Dict[str, Any]:
         """Generate fallback summary when AI is not available"""
@@ -183,11 +178,10 @@ Please provide a detailed, professional summary suitable for stakeholders and te
             "available_results": list(all_results.keys())
         }
     
-    async def _generate_integration_stats(self) -> Dict[str, Any]:
+    def _generate_integration_stats(self) -> Dict[str, Any]:
         """Generate integration statistics"""
         if self.use_advanced_manager and self.integration:
-            return self.integration.get_integration_stats()
-        else:
+            return         else:
             return {
                 "integration_available": False,
                 "message": "Advanced API manager not available"
@@ -292,7 +286,7 @@ Please provide a detailed, professional summary suitable for stakeholders and te
             "success_metrics": {"workflow_status": "ERROR"}
         }
 
-async def main():
+def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Issue Final Summary Generator")
     parser.add_argument("--mode", default="intelligent", help="Response mode")
@@ -310,7 +304,7 @@ async def main():
     summary_generator = AIIssueFinalSummary(use_advanced_manager=args.use_advanced_manager)
     
     # Generate final summary
-    results = await summary_generator.generate_final_summary(
+    results = summary_generator.generate_final_summary(
         mode=args.mode,
         depth=args.depth,
         language=args.language,
@@ -321,12 +315,13 @@ async def main():
     
     # Save results
     if args.use_advanced_manager and summary_generator.integration:
-        summary_generator.integration.save_results(results, args.output)
+        summary_generator.with open(output_file, 'w') as f:
+    json.dump(self.results, f, indent=2, default=str)
     else:
         with open(args.output, 'w') as f:
             json.dump(results, f, indent=2, default=str)
     
-    logger.info(f"✅ Final summary saved to {args.output}")
+    print(f"✅ Final summary saved to {args.output}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

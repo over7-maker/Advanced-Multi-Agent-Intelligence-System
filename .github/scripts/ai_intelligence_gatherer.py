@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""
-AI Intelligence Gatherer
-Gather security intelligence and threat data
-"""
+    """
+    AI Intelligence Gatherer
+    Gather security intelligence and threat data
+    """
 
-import os
-import sys
-import json
-import argparse
-from pathlib import Path
+    import os
+    import sys
+    import json
+    import argparse
+    from pathlib import Path
 
 def main():
     """Main function"""

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""
-AI Performance Monitor
-Monitor and analyze system performance
-"""
+    """
+    AI Performance Monitor
+    Monitor and analyze system performance
+    """
 
-import os
-import sys
-import json
-import argparse
-from pathlib import Path
+    import os
+    import sys
+    import json
+    import argparse
+    from pathlib import Path
 
 def main():
     """Main function"""

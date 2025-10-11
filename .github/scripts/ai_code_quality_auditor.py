@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""
-AI Code Quality Auditor
-Audit code quality and standards
-"""
+    """
+    AI Code Quality Auditor
+    Audit code quality and standards
+    """
 
-import os
-import sys
-import json
-import argparse
-from pathlib import Path
+    import os
+    import sys
+    import json
+    import argparse
+    from pathlib import Path
 
 def main():
     """Main function"""

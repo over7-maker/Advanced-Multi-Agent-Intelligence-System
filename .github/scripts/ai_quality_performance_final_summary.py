@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""
-AI Quality Performance Final Summary
-Generate final summary and integration report
-"""
+    """
+    AI Quality Performance Final Summary
+    Generate final summary and integration report
+    """
 
-import os
-import sys
-import json
-import argparse
-from pathlib import Path
+    import os
+    import sys
+    import json
+    import argparse
+    from pathlib import Path
 
 def main():
     """Main function"""

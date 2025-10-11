@@ -1,21 +1,19 @@
-from standalone_universal_ai_manager import get_api_key
+    from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
-"""
-AI Workflow Monitor Script
-Monitors and reports on the health and performance of all AI workflows
-"""
+    """
+    AI Workflow Monitor Script
+    Monitors and reports on the health and performance of all AI workflows
+    """
 
-import asyncio
-import json
-import os
-import subprocess
-import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+    import json
+    import os
+    import subprocess
+    import time
+    from datetime import datetime
+    from typing import Any, Dict, List, Optional
 
-import requests
-from openai import OpenAI
-
+    import requests
+    from openai import OpenAI
 
 class AIWorkflowMonitor:
     def __init__(self):
@@ -148,7 +146,7 @@ class AIWorkflowMonitor:
         for agent in self.agents:
             print(f"  - {agent['name']}: {agent['role']}")
 
-    async def call_agent(
+    def call_agent(
         self, agent: Dict[str, Any], prompt: str, context: str = ""
     ) -> Optional[str]:
         """Call a specific AI agent with error handling"""
@@ -274,7 +272,7 @@ class AIWorkflowMonitor:
 
         return metrics
 
-    async def perform_workflow_monitoring(self) -> Dict[str, Any]:
+    def perform_workflow_monitoring(self) -> Dict[str, Any]:
         """Perform comprehensive workflow monitoring using multiple agents"""
         if not self.agents:
             return {"error": "No agents available"}
@@ -300,7 +298,7 @@ class AIWorkflowMonitor:
         Workflow Health: {json.dumps(workflow_health, indent=2)}
         """
 
-        health_analysis = await self.call_agent(primary_agent, health_prompt)
+        health_analysis = self.call_agent(primary_agent, health_prompt)
         if not health_analysis:
             return {"error": "Health analysis failed"}
 
@@ -319,7 +317,7 @@ class AIWorkflowMonitor:
         {health_analysis}
         """
 
-        performance_analysis = await self.call_agent(
+        performance_analysis = self.call_agent(
             performance_agent, performance_prompt, health_analysis
         )
         if not performance_analysis:
@@ -342,7 +340,7 @@ class AIWorkflowMonitor:
         {performance_analysis}
         """
 
-        strategic_insights = await self.call_agent(
+        strategic_insights = self.call_agent(
             strategy_agent, strategy_prompt, performance_analysis
         )
         if not strategic_insights:
@@ -365,7 +363,7 @@ class AIWorkflowMonitor:
         {strategic_insights}
         """
 
-        technical_recommendations = await self.call_agent(
+        technical_recommendations = self.call_agent(
             technical_agent, technical_prompt, strategic_insights
         )
         if not technical_recommendations:
@@ -391,98 +389,98 @@ class AIWorkflowMonitor:
 
         report = f"""# 📊 AMAS Workflow Monitoring Dashboard
 
-**Generated:** {results['timestamp']}
-**Agents Used:** {', '.join(results['agents_used'])}
-**System Uptime:** {results['system_metrics']['system_uptime']}
+    **Generated:** {results['timestamp']}
+    **Agents Used:** {', '.join(results['agents_used'])}
+    **System Uptime:** {results['system_metrics']['system_uptime']}
 
----
+    ---
 
 ## 📊 Executive Summary
 
-This report presents comprehensive workflow monitoring analysis conducted by multiple AI agents working in coordination to assess system health, performance, and optimization opportunities.
+    This report presents comprehensive workflow monitoring analysis conducted by multiple AI agents working in coordination to assess system health, performance, and optimization opportunities.
 
----
+    ---
 
 ## 🏥 Step 1: Health Analysis
 
 **Agent:** {results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['health_analysis']}
+    {results['health_analysis']}
 
----
+    ---
 
 ## ⚡ Step 2: Performance Analysis
 
 **Agent:** {results['agents_used'][1] if len(results['agents_used']) > 1 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['performance_analysis']}
+    {results['performance_analysis']}
 
----
+    ---
 
 ## 🎯 Step 3: Strategic Insights
 
 **Agent:** {results['agents_used'][2] if len(results['agents_used']) > 2 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['strategic_insights']}
+    {results['strategic_insights']}
 
----
+    ---
 
 ## ⚙️ Step 4: Technical Recommendations
 
 **Agent:** {results['agents_used'][3] if len(results['agents_used']) > 3 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['technical_recommendations']}
+    {results['technical_recommendations']}
 
----
+    ---
 
 ## 📈 System Metrics
 
-- **Total Workflows:** {results['system_metrics']['total_workflows']}
-- **Healthy Workflows:** {results['system_metrics']['healthy_workflows']}
-- **Failed Workflows:** {results['system_metrics']['failed_workflows']}
-- **Average Success Rate:** {results['system_metrics']['avg_success_rate']}%
-- **Total API Calls:** {results['system_metrics']['total_api_calls']}
-- **Successful API Calls:** {results['system_metrics']['successful_api_calls']}
-- **Failed API Calls:** {results['system_metrics']['failed_api_calls']}
-- **Average Response Time:** {results['system_metrics']['avg_response_time']}
-- **AI Models Active:** {results['system_metrics']['ai_models_active']}
+    - **Total Workflows:** {results['system_metrics']['total_workflows']}
+    - **Healthy Workflows:** {results['system_metrics']['healthy_workflows']}
+    - **Failed Workflows:** {results['system_metrics']['failed_workflows']}
+    - **Average Success Rate:** {results['system_metrics']['avg_success_rate']}%
+    - **Total API Calls:** {results['system_metrics']['total_api_calls']}
+    - **Successful API Calls:** {results['system_metrics']['successful_api_calls']}
+    - **Failed API Calls:** {results['system_metrics']['failed_api_calls']}
+    - **Average Response Time:** {results['system_metrics']['avg_response_time']}
+    - **AI Models Active:** {results['system_metrics']['ai_models_active']}
 
----
+    ---
 
 ## 🔄 Workflow Health Status
 
-"""
+    """
 
         for workflow, health in results["workflow_health"].items():
             status_emoji = "✅" if health["status"] == "healthy" else "❌"
             report += f"- **{workflow}**: {status_emoji} {health['status']} - {health['success_rate']}% success rate\n"
 
         report += f"""
----
+    ---
 
 ## 📈 Key Monitoring Insights
 
-- **System Performance:** Assessed by multi-agent analysis
-- **Workflow Health:** Identified through coordinated monitoring
-- **Performance Opportunities:** Prioritized based on impact analysis
-- **Technical Improvements:** Areas requiring immediate attention
+    - **System Performance:** Assessed by multi-agent analysis
+    - **Workflow Health:** Identified through coordinated monitoring
+    - **Performance Opportunities:** Prioritized based on impact analysis
+    - **Technical Improvements:** Areas requiring immediate attention
 
----
+    ---
 
 ## 🔄 Recommended Actions
 
-1. **Immediate Actions:** Address any critical issues identified
-2. **Short-term:** Implement performance optimizations
-3. **Long-term:** Enhance monitoring and alerting systems
+    1. **Immediate Actions:** Address any critical issues identified
+    2. **Short-term:** Implement performance optimizations
+    3. **Long-term:** Enhance monitoring and alerting systems
 
----
+    ---
 
-*Report generated by AMAS Multi-Agent Workflow Monitor*
+    *Report generated by AMAS Multi-Agent Workflow Monitor*
 *Powered by: {', '.join(results['agents_used']) if results['agents_used'] else 'AI Agents'}*
-"""
+    """
         return report
 
-    async def run(self):
+    def run(self):
         """Main execution function"""
         print("🚀 Starting AMAS Workflow Monitor...")
 
@@ -490,7 +488,7 @@ This report presents comprehensive workflow monitoring analysis conducted by mul
         os.makedirs("artifacts", exist_ok=True)
 
         # Perform workflow monitoring
-        results = await self.perform_workflow_monitoring()
+        results = self.perform_workflow_monitoring()
 
         # Generate report
         report = self.generate_monitoring_report(results)
@@ -505,11 +503,9 @@ This report presents comprehensive workflow monitoring analysis conducted by mul
 
         return results
 
-
-async def main():
+def main():
     monitor = AIWorkflowMonitor()
-    await monitor.run()
-
+    monitor.run()
 
 if __name__ == "__main__":
     print("📊 AMAS Workflow Monitor")
@@ -525,4 +521,4 @@ if __name__ == "__main__":
     print(f"  GPTOSS: {'✅' if get_api_key("GPTOSS_API_KEY") else '❌'}")
     print()
 
-    asyncio.run(main())
+    main()

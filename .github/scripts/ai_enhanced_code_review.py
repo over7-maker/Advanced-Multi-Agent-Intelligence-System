@@ -1,27 +1,26 @@
 #!/usr/bin/env python3
-"""
-AI Enhanced Code Review Script - Powered by Ultimate Fallback System
+    """
+    AI Enhanced Code Review Script - Powered by Ultimate Fallback System
 Provides comprehensive code review and refactoring suggestions for PRs
-"""
+    """
 
-import json
-import logging
-import os
-import subprocess
-import sys
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+    import json
+    import os
+    import subprocess
+    import sys
+    from datetime import datetime
+    from typing import Any, Dict, List, Optional
 
-import requests
+    import requests
 
 # Add project root to sys.path
-sys.path.insert(
+    sys.path.insert(
     0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-)
+    )
 
-try:
+    try:
     from src.amas.services.ultimate_fallback_system import UltimateFallbackSystem
-except ImportError:
+    except ImportError:
     # Fallback import paths
     sys.path.insert(
         0,
@@ -39,11 +38,9 @@ except ImportError:
         sys.exit(1)
 
 # Configure logging
-logging.basicConfig(
+    logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
-
+    )
 
 class EnhancedCodeReviewer:
     """Enhanced code reviewer with AI-powered analysis"""
@@ -72,7 +69,7 @@ class EnhancedCodeReviewer:
             result = subprocess.run(cmd, capture_output=True, text=True)
             return result.stdout
         except Exception as e:
-            logger.error(f"Error getting diff: {str(e)}")
+            print(f"Error getting diff: {str(e)}")
             return ""
 
     def get_changed_files(self) -> List[str]:
@@ -86,7 +83,7 @@ class EnhancedCodeReviewer:
             result = subprocess.run(cmd, capture_output=True, text=True)
             return [f.strip() for f in result.stdout.split("\n") if f.strip()]
         except Exception as e:
-            logger.error(f"Error getting changed files: {str(e)}")
+            print(f"Error getting changed files: {str(e)}")
             return []
 
     def analyze_code_quality(
@@ -95,30 +92,30 @@ class EnhancedCodeReviewer:
         """Analyze code quality using AI"""
         prompt = f"""## Enhanced Code Review Request
 
-Please perform a comprehensive code review of the following changes:
+    Please perform a comprehensive code review of the following changes:
 
-**Changed Files:**
-{', '.join(changed_files)}
+    **Changed Files:**
+    {', '.join(changed_files)}
 
-**Code Diff:**
-```diff
+    **Code Diff:**
+    ```diff
 {diff[:3000]}  # Truncated for API limits
-```
+    ```
 
-Please provide:
-1. **Code Quality Assessment** (1-10 score with explanation)
-2. **Security Analysis** (identify any security concerns)
-3. **Performance Review** (identify performance issues or improvements)
-4. **Best Practices Check** (adherence to coding standards)
-5. **Refactoring Suggestions** (specific improvements)
-6. **Testing Recommendations** (what tests should be added)
-7. **Documentation Review** (are changes properly documented)
-8. **Architecture Impact** (does this affect system architecture)
+    Please provide:
+    1. **Code Quality Assessment** (1-10 score with explanation)
+    2. **Security Analysis** (identify any security concerns)
+    3. **Performance Review** (identify performance issues or improvements)
+    4. **Best Practices Check** (adherence to coding standards)
+    5. **Refactoring Suggestions** (specific improvements)
+    6. **Testing Recommendations** (what tests should be added)
+    7. **Documentation Review** (are changes properly documented)
+    8. **Architecture Impact** (does this affect system architecture)
 
 Format your response as a structured markdown report suitable for GitHub comments.
-Include specific line numbers and code snippets where applicable.
-Be constructive and provide actionable feedback.
-"""
+    Include specific line numbers and code snippets where applicable.
+    Be constructive and provide actionable feedback.
+    """
 
         try:
             response = self.ai_system.query_with_fallback(prompt)
@@ -128,7 +125,7 @@ Be constructive and provide actionable feedback.
                 "timestamp": datetime.utcnow().isoformat(),
             }
         except Exception as e:
-            logger.error(f"Error in code analysis: {str(e)}")
+            print(f"Error in code analysis: {str(e)}")
             return {
                 "success": False,
                 "error": str(e),
@@ -142,42 +139,42 @@ Be constructive and provide actionable feedback.
         if not analysis["success"]:
             return f"""# ❌ Enhanced Code Review Failed
 
-Error: {analysis.get('error', 'Unknown error occurred')}"""
+    Error: {analysis.get('error', 'Unknown error occurred')}"""
 
         report = f"""# 🤖 AI Enhanced Code Review Report
 
-**Repository:** {self.repo_name}
-**PR Number:** {self.pr_number or 'N/A'}
-**Commit:** {self.commit_sha[:7]}
-**Timestamp:** {analysis['timestamp']}
+    **Repository:** {self.repo_name}
+    **PR Number:** {self.pr_number or 'N/A'}
+    **Commit:** {self.commit_sha[:7]}
+    **Timestamp:** {analysis['timestamp']}
 
 ## 📊 Change Summary
-- **Files Changed:** {diff_stats['files_changed']}
-- **Lines Added:** +{diff_stats['additions']}
-- **Lines Removed:** -{diff_stats['deletions']}
+    - **Files Changed:** {diff_stats['files_changed']}
+    - **Lines Added:** +{diff_stats['additions']}
+    - **Lines Removed:** -{diff_stats['deletions']}
 
----
+    ---
 
-{analysis['analysis']}
+    {analysis['analysis']}
 
----
+    ---
 
 ## 🎯 Review Summary
 
-This enhanced code review was performed using the Ultimate AI Fallback System with 9 AI providers ensuring 100% reliability.
+    This enhanced code review was performed using the Ultimate AI Fallback System with 9 AI providers ensuring 100% reliability.
 
 ### Review Features:
-- ✅ Comprehensive code quality analysis
-- ✅ Security vulnerability detection
-- ✅ Performance optimization suggestions
-- ✅ Best practices compliance check
-- ✅ Automated refactoring recommendations
-- ✅ Test coverage analysis
-- ✅ Documentation completeness review
-- ✅ Architecture impact assessment
+    - ✅ Comprehensive code quality analysis
+    - ✅ Security vulnerability detection
+    - ✅ Performance optimization suggestions
+    - ✅ Best practices compliance check
+    - ✅ Automated refactoring recommendations
+    - ✅ Test coverage analysis
+    - ✅ Documentation completeness review
+    - ✅ Architecture impact assessment
 
-*Generated by AI Enhanced Code Review v2.0*
-"""
+    *Generated by AI Enhanced Code Review v2.0*
+    """
         return report
 
     def calculate_diff_stats(self, diff: str) -> Dict[str, int]:
@@ -194,14 +191,14 @@ This enhanced code review was performed using the Ultimate AI Fallback System wi
 
     def run(self):
         """Run the enhanced code review"""
-        logger.info("Starting enhanced code review...")
+        print("Starting enhanced code review...")
 
         # Get diff and changed files
         diff = self.get_pr_diff()
         changed_files = self.get_changed_files()
 
         if not diff and not changed_files:
-            logger.warning("No changes detected")
+            print("No changes detected")
             report = "# ℹ️ No Changes Detected\n\nNo code changes were found to review."
         else:
             # Calculate diff statistics
@@ -218,7 +215,7 @@ This enhanced code review was performed using the Ultimate AI Fallback System wi
         with open(report_path, "w") as f:
             f.write(report)
 
-        logger.info(f"Enhanced code review report saved to {report_path}")
+        print(f"Enhanced code review report saved to {report_path}")
 
         # Also print to console for debugging
         print("\n" + "=" * 80)
@@ -227,26 +224,25 @@ This enhanced code review was performed using the Ultimate AI Fallback System wi
 
         return report
 
-
 def main():
     """Main function"""
     try:
         reviewer = EnhancedCodeReviewer()
         reviewer.run()
     except Exception as e:
-        logger.error(f"Enhanced code review failed: {str(e)}")
+        print(f"Enhanced code review failed: {str(e)}")
 
         # Create error report
         error_report = f"""# ❌ Enhanced Code Review Error
 
-An error occurred during the enhanced code review process:
+    An error occurred during the enhanced code review process:
 
-```
-{str(e)}
-```
+    ```
+    {str(e)}
+    ```
 
 Please check the workflow logs for more details.
-"""
+    """
 
         # Save error report
         os.makedirs("artifacts", exist_ok=True)
@@ -254,7 +250,6 @@ Please check the workflow logs for more details.
             f.write(error_report)
 
         sys.exit(1)
-
 
 if __name__ == "__main__":
     main()

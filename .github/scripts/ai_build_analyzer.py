@@ -1,30 +1,26 @@
 #!/usr/bin/env python3
-"""
-AI Build Analyzer with Advanced API Manager Integration
-"""
+    """
+    AI Build Analyzer with Advanced API Manager Integration
+    """
 
-import argparse
-import asyncio
-import json
-import logging
-import os
-import sys
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+    import argparse
+    import json
+    import os
+    import sys
+    from pathlib import Path
+    from typing import Any, Dict, List, Optional
 
 # Add the project root to the Python path
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
+    project_root = Path(__file__).parent.parent.parent
+    sys.path.insert(0, str(project_root))
 
 # Import the universal AI workflow integration
-from universal_ai_workflow_integration import get_integration, generate_workflow_ai_response, save_workflow_results
 
 # Configure logging
-logging.basicConfig(
+    logging.basicConfig(
     level=logging.INFO, 
     format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+    )
 
 class AIBuildAnalyzer:
     """AI Build Analyzer with Advanced API Manager"""
@@ -32,7 +28,7 @@ class AIBuildAnalyzer:
     def __init__(self, use_advanced_manager: bool = True):
         """Initialize the analyzer"""
         self.use_advanced_manager = use_advanced_manager
-        self.integration = get_integration() if use_advanced_manager else None
+        self.integration = None if use_advanced_manager else None
         self.results = {
             "build_analysis": {},
             "ai_insights": {},
@@ -41,7 +37,7 @@ class AIBuildAnalyzer:
             "integration_stats": {}
         }
     
-    async def analyze_build(
+    def analyze_build(
         self, 
         build_mode: str, 
         version_strategy: str, 
@@ -49,19 +45,19 @@ class AIBuildAnalyzer:
         target_platforms: str
     ) -> Dict[str, Any]:
         """Analyze build requirements using AI"""
-        logger.info(f"🔍 Analyzing build requirements")
+        print(f"🔍 Analyzing build requirements")
         
         try:
             # Analyze project files
-            project_analysis = await self._analyze_project_files()
+            project_analysis = self._analyze_project_files()
             
             # Get AI insights
-            ai_insights = await self._get_ai_insights(
+            ai_insights = self._get_ai_insights(
                 project_analysis, build_mode, version_strategy, package_format
             )
             
             # Generate build recommendations
-            recommendations = await self._generate_build_recommendations(
+            recommendations = self._generate_build_recommendations(
                 project_analysis, ai_insights
             )
             
@@ -73,13 +69,13 @@ class AIBuildAnalyzer:
             }
             
         except Exception as e:
-            logger.error(f"❌ Build analysis failed: {e}")
+            print(f"❌ Build analysis failed: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
     
-    async def _analyze_project_files(self) -> Dict[str, Any]:
+    def _analyze_project_files(self) -> Dict[str, Any]:
         """Analyze project files for build requirements"""
         try:
             project_root = Path(".")
@@ -111,10 +107,10 @@ class AIBuildAnalyzer:
             return analysis
             
         except Exception as e:
-            logger.error(f"❌ Project file analysis failed: {e}")
+            print(f"❌ Project file analysis failed: {e}")
             return {"error": str(e)}
     
-    async def _get_ai_insights(
+    def _get_ai_insights(
         self, 
         project_analysis: Dict[str, Any], 
         build_mode: str, 
@@ -148,8 +144,7 @@ class AIBuildAnalyzer:
             
             system_prompt = """You are an expert build system analyst. Provide detailed insights about build requirements, dependencies, and optimization strategies."""
             
-            result = await integration.generate_with_fallback(
-                prompt=prompt,
+            result =                 prompt=prompt,
                 system_prompt=system_prompt,
                 strategy="intelligent"
             )
@@ -169,13 +164,13 @@ class AIBuildAnalyzer:
                 }
                 
         except Exception as e:
-            logger.error(f"❌ AI insights generation failed: {e}")
+            print(f"❌ AI insights generation failed: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
     
-    async def _generate_build_recommendations(
+    def _generate_build_recommendations(
         self, 
         project_analysis: Dict[str, Any], 
         ai_insights: Dict[str, Any]
@@ -195,7 +190,7 @@ class AIBuildAnalyzer:
         
         return recommendations
     
-    async def run_analysis(
+    def run_analysis(
         self, 
         build_mode: str, 
         version_strategy: str, 
@@ -204,11 +199,11 @@ class AIBuildAnalyzer:
         output_file: str
     ) -> Dict[str, Any]:
         """Run complete build analysis"""
-        logger.info(f"🚀 Starting AI build analysis...")
+        print(f"🚀 Starting AI build analysis...")
         
         try:
             # Run analysis
-            analysis_results = await self.analyze_build(
+            analysis_results = self.analyze_build(
                 build_mode, version_strategy, package_format, target_platforms
             )
             
@@ -226,24 +221,25 @@ class AIBuildAnalyzer:
             
             # Add integration stats if using advanced manager
             if self.use_advanced_manager:
-                self.results["integration_stats"] = self.integration.get_integration_stats()
-            
+                self.results["integration_stats"] = {"status": "simplified"}
             # Save results
-            integration.save_results(self.results, output_file)
+            with open(output_file, 'w') as f:
+    json.dump(self.results, f, indent=2, default=str)
             
-            logger.info(f"✅ Build analysis completed successfully!")
+            print(f"✅ Build analysis completed successfully!")
             return self.results
             
         except Exception as e:
-            logger.error(f"❌ Analysis failed: {e}")
+            print(f"❌ Analysis failed: {e}")
             error_results = {
                 "error": str(e),
                 "success": False
             }
-            integration.save_results(error_results, output_file)
+            with open(output_file, 'w') as f:
+    json.dump(self.results, f, indent=2, default=str)
             return error_results
 
-async def main():
+def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Build Analyzer")
     parser.add_argument("--build-mode", default="intelligent", help="Build mode")
@@ -266,7 +262,7 @@ async def main():
     analyzer = AIBuildAnalyzer(use_advanced_manager=args.use_advanced_manager)
     
     # Run analysis
-    results = await analyzer.run_analysis(
+    results = analyzer.run_analysis(
         build_mode=args.build_mode,
         version_strategy=args.version_strategy,
         package_format=args.package_format,
@@ -288,4 +284,4 @@ async def main():
         print(f"❌ Analysis failed: {results.get('error', 'Unknown error')}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

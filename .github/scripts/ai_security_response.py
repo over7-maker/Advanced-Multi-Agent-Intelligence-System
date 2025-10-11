@@ -1,20 +1,18 @@
-from standalone_universal_ai_manager import get_api_key
+    from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
-"""
-AI Security Scanner Response System
-Automated response to security scan reports
-"""
+    """
+    AI Security Scanner Response System
+    Automated response to security scan reports
+    """
 
-import asyncio
-import json
-import os
-import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+    import json
+    import os
+    import time
+    from datetime import datetime
+    from typing import Any, Dict, List, Optional
 
-import requests
-from openai import OpenAI
-
+    import requests
+    from openai import OpenAI
 
 class AISecurityResponse:
     def __init__(self):
@@ -148,7 +146,7 @@ class AISecurityResponse:
         for agent in self.agents:
             print(f"  - {agent['name']}: {agent['role']}")
 
-    async def call_agent(
+    def call_agent(
         self, agent: Dict[str, Any], prompt: str, context: str = ""
     ) -> Optional[str]:
         """Call a specific AI agent with error handling"""
@@ -186,7 +184,7 @@ class AISecurityResponse:
             print(f"❌ {agent['name']} failed: {e}")
             return None
 
-    async def analyze_security_findings(self, security_report: str) -> Dict[str, Any]:
+    def analyze_security_findings(self, security_report: str) -> Dict[str, Any]:
         """Analyze security findings using multiple agents"""
         if not self.agents:
             return {"error": "No agents available"}
@@ -208,7 +206,7 @@ class AISecurityResponse:
         {security_report}
         """
 
-        security_assessment = await self.call_agent(primary_agent, assessment_prompt)
+        security_assessment = self.call_agent(primary_agent, assessment_prompt)
         if not security_assessment:
             return {"error": "Security assessment failed"}
 
@@ -226,7 +224,7 @@ class AISecurityResponse:
         {security_assessment}
         """
 
-        false_positive_analysis = await self.call_agent(
+        false_positive_analysis = self.call_agent(
             analysis_agent, false_positive_prompt, security_assessment
         )
         if not false_positive_analysis:
@@ -249,7 +247,7 @@ class AISecurityResponse:
         {false_positive_analysis}
         """
 
-        security_recommendations = await self.call_agent(
+        security_recommendations = self.call_agent(
             strategy_agent, strategy_prompt, false_positive_analysis
         )
         if not security_recommendations:
@@ -274,93 +272,93 @@ class AISecurityResponse:
 
         response = f"""# 🔒 AMAS Security Scanner Response
 
-**Generated:** {results['timestamp']}
-**Agents Used:** {', '.join(results['agents_used'])}
-**Response to:** AI Security Scan Report
+    **Generated:** {results['timestamp']}
+    **Agents Used:** {', '.join(results['agents_used'])}
+    **Response to:** AI Security Scan Report
 
----
+    ---
 
 ## 📊 Security Analysis Summary
 
 Thank you for the comprehensive security scan report! The AMAS AI Security Scanner is working correctly and has identified important security patterns.
 
 ### ✅ **Positive Findings:**
-- **0 potential secrets/API keys detected** - API keys are properly secured in GitHub Secrets
-- **Security scanner is functioning correctly** - Successfully detecting security patterns
-- **Multi-agent security analysis is operational**
+    - **0 potential secrets/API keys detected** - API keys are properly secured in GitHub Secrets
+    - **Security scanner is functioning correctly** - Successfully detecting security patterns
+    - **Multi-agent security analysis is operational**
 
----
+    ---
 
 ## 🔍 Step 1: Security Assessment
 
 **Agent:** {results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['security_assessment']}
+    {results['security_assessment']}
 
----
+    ---
 
 ## 🎯 Step 2: False Positive Analysis
 
 **Agent:** {results['agents_used'][1] if len(results['agents_used']) > 1 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['false_positive_analysis']}
+    {results['false_positive_analysis']}
 
----
+    ---
 
 ## 🏛️ Step 3: Security Recommendations
 
 **Agent:** {results['agents_used'][2] if len(results['agents_used']) > 2 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['security_recommendations']}
+    {results['security_recommendations']}
 
----
+    ---
 
 ## 📈 Key Security Insights
 
-- **False Positives Identified:** Pattern definitions being flagged as vulnerabilities
-- **Real Security Status:** No actual vulnerabilities detected
-- **Scanner Performance:** Working as intended with comprehensive pattern detection
-- **Recommendations:** Focus on real security improvements rather than pattern definitions
+    - **False Positives Identified:** Pattern definitions being flagged as vulnerabilities
+    - **Real Security Status:** No actual vulnerabilities detected
+    - **Scanner Performance:** Working as intended with comprehensive pattern detection
+    - **Recommendations:** Focus on real security improvements rather than pattern definitions
 
----
+    ---
 
 ## 🔄 Actions Taken
 
-1. **✅ Security Analysis Complete** - Multi-agent assessment conducted
-2. **✅ False Positive Identification** - Pattern definitions distinguished from real vulnerabilities
-3. **✅ Security Recommendations** - Best practices and improvements identified
+    1. **✅ Security Analysis Complete** - Multi-agent assessment conducted
+    2. **✅ False Positive Identification** - Pattern definitions distinguished from real vulnerabilities
+    3. **✅ Security Recommendations** - Best practices and improvements identified
 4. **✅ Scanner Optimization** - Suggestions for reducing false positives
 
----
+    ---
 
 ## 🛡️ Security Status: SECURE
 
-- **API Keys:** Properly secured in GitHub Secrets
-- **Code Security:** No actual vulnerabilities detected
-- **Scanner Performance:** Operating correctly with comprehensive detection
-- **False Positives:** Identified and explained
+    - **API Keys:** Properly secured in GitHub Secrets
+    - **Code Security:** No actual vulnerabilities detected
+    - **Scanner Performance:** Operating correctly with comprehensive detection
+    - **False Positives:** Identified and explained
 
----
+    ---
 
-*Response generated by AMAS Multi-Agent Security Response System*
+    *Response generated by AMAS Multi-Agent Security Response System*
 *Powered by: {', '.join(results['agents_used']) if results['agents_used'] else 'AI Agents'}*
 
----
+    ---
 
 ## 📋 Original Security Report Reference
 
-<details>
-<summary>Click to view original security report</summary>
+    <details>
+    <summary>Click to view original security report</summary>
 
-```
-{original_report}
-```
+    ```
+    {original_report}
+    ```
 
-</details>
-"""
+    </details>
+    """
         return response
 
-    async def run(self, security_report: str = ""):
+    def run(self, security_report: str = ""):
         """Main execution function"""
         print("🚀 Starting AMAS Security Response System...")
 
@@ -368,7 +366,7 @@ Thank you for the comprehensive security scan report! The AMAS AI Security Scann
         os.makedirs("artifacts", exist_ok=True)
 
         # Analyze security findings
-        results = await self.analyze_security_findings(security_report)
+        results = self.analyze_security_findings(security_report)
 
         # Generate response
         response = self.generate_security_response(results, security_report)
@@ -383,8 +381,7 @@ Thank you for the comprehensive security scan report! The AMAS AI Security Scann
 
         return results
 
-
-async def main():
+def main():
     # Sample security report for testing
     sample_report = """
     🚨 SECURITY ISSUES DETECTED
@@ -403,8 +400,7 @@ async def main():
     """
 
     responder = AISecurityResponse()
-    await responder.run(sample_report)
-
+    responder.run(sample_report)
 
 if __name__ == "__main__":
     print("🔒 AMAS Security Response System")
@@ -420,4 +416,4 @@ if __name__ == "__main__":
     print(f"  GPTOSS: {'✅' if get_api_key("GPTOSS_API_KEY") else '❌'}")
     print()
 
-    asyncio.run(main())
+    main()

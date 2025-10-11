@@ -1,30 +1,26 @@
 #!/usr/bin/env python3
-"""
-AI Project Structure Auditor with Advanced API Manager Integration
-"""
+    """
+    AI Project Structure Auditor with Advanced API Manager Integration
+    """
 
-import argparse
-import asyncio
-import json
-import logging
-import os
-import sys
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+    import argparse
+    import json
+    import os
+    import sys
+    from pathlib import Path
+    from typing import Any, Dict, List, Optional
 
 # Add the project root to the Python path
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
+    project_root = Path(__file__).parent.parent.parent
+    sys.path.insert(0, str(project_root))
 
 # Import the universal AI workflow integration
-from universal_ai_workflow_integration import get_integration, generate_workflow_ai_response, save_workflow_results
 
 # Configure logging
-logging.basicConfig(
+    logging.basicConfig(
     level=logging.INFO, 
     format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+    )
 
 class AIProjectStructureAuditor:
     """AI Project Structure Auditor with Advanced API Manager"""
@@ -32,7 +28,7 @@ class AIProjectStructureAuditor:
     def __init__(self, use_advanced_manager: bool = True):
         """Initialize the auditor"""
         self.use_advanced_manager = use_advanced_manager
-        self.integration = get_integration() if use_advanced_manager else None
+        self.integration = None if use_advanced_manager else None
         self.results = {
             "structure_audit": {},
             "ai_insights": {},
@@ -41,7 +37,7 @@ class AIProjectStructureAuditor:
             "integration_stats": {}
         }
     
-    async def audit_project_structure(
+    def audit_project_structure(
         self, 
         audit_mode: str, 
         documentation_level: str, 
@@ -49,19 +45,19 @@ class AIProjectStructureAuditor:
         target_components: str
     ) -> Dict[str, Any]:
         """Audit project structure using AI"""
-        logger.info(f"🔍 Auditing project structure")
+        print(f"🔍 Auditing project structure")
         
         try:
             # Analyze project structure
-            structure_analysis = await self._analyze_structure(target_components)
+            structure_analysis = self._analyze_structure(target_components)
             
             # Get AI insights
-            ai_insights = await self._get_ai_insights(
+            ai_insights = self._get_ai_insights(
                 structure_analysis, audit_mode, documentation_level
             )
             
             # Generate recommendations
-            recommendations = await self._generate_recommendations(
+            recommendations = self._generate_recommendations(
                 structure_analysis, ai_insights
             )
             
@@ -73,13 +69,13 @@ class AIProjectStructureAuditor:
             }
             
         except Exception as e:
-            logger.error(f"❌ Structure audit failed: {e}")
+            print(f"❌ Structure audit failed: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
     
-    async def _analyze_structure(self, target_components: str) -> Dict[str, Any]:
+    def _analyze_structure(self, target_components: str) -> Dict[str, Any]:
         """Analyze project structure"""
         try:
             # Analyze directory structure
@@ -102,10 +98,10 @@ class AIProjectStructureAuditor:
             return structure
             
         except Exception as e:
-            logger.error(f"❌ Structure analysis failed: {e}")
+            print(f"❌ Structure analysis failed: {e}")
             return {"error": str(e)}
     
-    async def _get_ai_insights(
+    def _get_ai_insights(
         self, 
         structure_analysis: Dict[str, Any], 
         audit_mode: str, 
@@ -136,8 +132,7 @@ class AIProjectStructureAuditor:
             
             system_prompt = """You are an expert project structure analyst. Provide detailed insights about project organization, best practices, and improvement recommendations."""
             
-            result = await integration.generate_with_fallback(
-                prompt=prompt,
+            result =                 prompt=prompt,
                 system_prompt=system_prompt,
                 strategy="intelligent"
             )
@@ -157,13 +152,13 @@ class AIProjectStructureAuditor:
                 }
                 
         except Exception as e:
-            logger.error(f"❌ AI insights generation failed: {e}")
+            print(f"❌ AI insights generation failed: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
     
-    async def _generate_recommendations(
+    def _generate_recommendations(
         self, 
         structure_analysis: Dict[str, Any], 
         ai_insights: Dict[str, Any]
@@ -183,7 +178,7 @@ class AIProjectStructureAuditor:
         
         return recommendations
     
-    async def run_audit(
+    def run_audit(
         self, 
         audit_mode: str, 
         documentation_level: str, 
@@ -192,11 +187,11 @@ class AIProjectStructureAuditor:
         output_file: str
     ) -> Dict[str, Any]:
         """Run complete structure audit"""
-        logger.info(f"🚀 Starting AI project structure audit...")
+        print(f"🚀 Starting AI project structure audit...")
         
         try:
             # Run audit
-            audit_results = await self.audit_project_structure(
+            audit_results = self.audit_project_structure(
                 audit_mode, documentation_level, output_format, target_components
             )
             
@@ -214,24 +209,25 @@ class AIProjectStructureAuditor:
             
             # Add integration stats if using advanced manager
             if self.use_advanced_manager:
-                self.results["integration_stats"] = self.integration.get_integration_stats()
-            
+                self.results["integration_stats"] = {"status": "simplified"}
             # Save results
-            integration.save_results(self.results, output_file)
+            with open(output_file, 'w') as f:
+    json.dump(self.results, f, indent=2, default=str)
             
-            logger.info(f"✅ Structure audit completed successfully!")
+            print(f"✅ Structure audit completed successfully!")
             return self.results
             
         except Exception as e:
-            logger.error(f"❌ Audit failed: {e}")
+            print(f"❌ Audit failed: {e}")
             error_results = {
                 "error": str(e),
                 "success": False
             }
-            integration.save_results(error_results, output_file)
+            with open(output_file, 'w') as f:
+    json.dump(self.results, f, indent=2, default=str)
             return error_results
 
-async def main():
+def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Project Structure Auditor")
     parser.add_argument("--audit-mode", default="comprehensive", help="Audit mode")
@@ -254,7 +250,7 @@ async def main():
     auditor = AIProjectStructureAuditor(use_advanced_manager=args.use_advanced_manager)
     
     # Run audit
-    results = await auditor.run_audit(
+    results = auditor.run_audit(
         audit_mode=args.audit_mode,
         documentation_level=args.documentation_level,
         output_format=args.output_format,
@@ -276,4 +272,4 @@ async def main():
         print(f"❌ Audit failed: {results.get('error', 'Unknown error')}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

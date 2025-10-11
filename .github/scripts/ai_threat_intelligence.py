@@ -1,20 +1,18 @@
-from standalone_universal_ai_manager import get_api_key
+    from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
-"""
-AI Threat Intelligence Analysis Script
-Comprehensive threat analysis using multiple AI models
-"""
+    """
+    AI Threat Intelligence Analysis Script
+    Comprehensive threat analysis using multiple AI models
+    """
 
-import asyncio
-import json
-import os
-import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+    import json
+    import os
+    import time
+    from datetime import datetime
+    from typing import Any, Dict, List, Optional
 
-import requests
-from openai import OpenAI
-
+    import requests
+    from openai import OpenAI
 
 class AIThreatIntelligence:
     def __init__(self):
@@ -147,7 +145,7 @@ class AIThreatIntelligence:
         for agent in self.agents:
             print(f"  - {agent['name']}: {agent['role']}")
 
-    async def call_agent(
+    def call_agent(
         self, agent: Dict[str, Any], prompt: str, context: str = ""
     ) -> Optional[str]:
         """Call a specific AI agent with error handling"""
@@ -185,7 +183,7 @@ class AIThreatIntelligence:
             print(f"❌ {agent['name']} failed: {e}")
             return None
 
-    async def analyze_threat_landscape(self) -> Dict[str, Any]:
+    def analyze_threat_landscape(self) -> Dict[str, Any]:
         """Analyze threat landscape using multiple agents"""
         if not self.agents:
             return {"error": "No agents available"}
@@ -205,7 +203,7 @@ class AIThreatIntelligence:
         - Critical infrastructure targeting trends
         """
 
-        threat_landscape = await self.call_agent(primary_agent, threat_prompt)
+        threat_landscape = self.call_agent(primary_agent, threat_prompt)
         if not threat_landscape:
             return {"error": "Threat landscape analysis failed"}
 
@@ -225,7 +223,7 @@ class AIThreatIntelligence:
         {threat_landscape}
         """
 
-        threat_actors = await self.call_agent(
+        threat_actors = self.call_agent(
             analysis_agent, actor_prompt, threat_landscape
         )
         if not threat_actors:
@@ -247,7 +245,7 @@ class AIThreatIntelligence:
         {threat_actors}
         """
 
-        strategic_assessment = await self.call_agent(
+        strategic_assessment = self.call_agent(
             strategy_agent, strategy_prompt, threat_actors
         )
         if not strategic_assessment:
@@ -271,7 +269,7 @@ class AIThreatIntelligence:
         {strategic_assessment}
         """
 
-        technical_analysis = await self.call_agent(
+        technical_analysis = self.call_agent(
             technical_agent, technical_prompt, strategic_assessment
         )
         if not technical_analysis:
@@ -295,72 +293,72 @@ class AIThreatIntelligence:
 
         report = f"""# 🛡️ AMAS Threat Intelligence Report
 
-**Generated:** {results['timestamp']}
-**Agents Used:** {', '.join(results['agents_used'])}
+    **Generated:** {results['timestamp']}
+    **Agents Used:** {', '.join(results['agents_used'])}
 
----
+    ---
 
 ## 📊 Executive Summary
 
-This report presents comprehensive threat intelligence analysis conducted by multiple AI agents working in coordination to assess current cybersecurity threats and provide actionable intelligence.
+    This report presents comprehensive threat intelligence analysis conducted by multiple AI agents working in coordination to assess current cybersecurity threats and provide actionable intelligence.
 
----
+    ---
 
 ## 🌍 Step 1: Threat Landscape Assessment
 
 **Agent:** {results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['threat_landscape']}
+    {results['threat_landscape']}
 
----
+    ---
 
 ## 👥 Step 2: Threat Actor Analysis
 
 **Agent:** {results['agents_used'][1] if len(results['agents_used']) > 1 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['threat_actors']}
+    {results['threat_actors']}
 
----
+    ---
 
 ## 🏛️ Step 3: Strategic Threat Assessment
 
 **Agent:** {results['agents_used'][2] if len(results['agents_used']) > 2 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['strategic_assessment']}
+    {results['strategic_assessment']}
 
----
+    ---
 
 ## 🔧 Step 4: Technical Threat Analysis
 
 **Agent:** {results['agents_used'][3] if len(results['agents_used']) > 3 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['technical_analysis']}
+    {results['technical_analysis']}
 
----
+    ---
 
 ## 📈 Key Threat Intelligence Insights
 
-- **Threat Strategy:** Assessed by multi-agent analysis
-- **Primary Threats:** Identified through coordinated intelligence gathering
-- **Strategic Recommendations:** Prioritized based on threat analysis
-- **Technical Indicators:** Areas requiring enhanced monitoring
+    - **Threat Strategy:** Assessed by multi-agent analysis
+    - **Primary Threats:** Identified through coordinated intelligence gathering
+    - **Strategic Recommendations:** Prioritized based on threat analysis
+    - **Technical Indicators:** Areas requiring enhanced monitoring
 
----
+    ---
 
 ## 🔄 Recommended Actions
 
-1. **Immediate Actions:** Implement high-priority defensive measures
-2. **Short-term:** Enhance monitoring and detection capabilities
-3. **Long-term:** Develop strategic countermeasures and resilience
+    1. **Immediate Actions:** Implement high-priority defensive measures
+    2. **Short-term:** Enhance monitoring and detection capabilities
+    3. **Long-term:** Develop strategic countermeasures and resilience
 
----
+    ---
 
-*Report generated by AMAS Multi-Agent Threat Intelligence System*
+    *Report generated by AMAS Multi-Agent Threat Intelligence System*
 *Powered by: {', '.join(results['agents_used']) if results['agents_used'] else 'AI Agents'}*
-"""
+    """
         return report
 
-    async def run(self):
+    def run(self):
         """Main execution function"""
         print("🚀 Starting AMAS Threat Intelligence System...")
 
@@ -368,7 +366,7 @@ This report presents comprehensive threat intelligence analysis conducted by mul
         os.makedirs("artifacts", exist_ok=True)
 
         # Analyze threats
-        results = await self.analyze_threat_landscape()
+        results = self.analyze_threat_landscape()
 
         # Generate report
         report = self.generate_threat_report(results)
@@ -383,11 +381,9 @@ This report presents comprehensive threat intelligence analysis conducted by mul
 
         return results
 
-
-async def main():
+def main():
     analyzer = AIThreatIntelligence()
-    await analyzer.run()
-
+    analyzer.run()
 
 if __name__ == "__main__":
     print("🛡️ AMAS Threat Intelligence Analysis System")
@@ -403,4 +399,4 @@ if __name__ == "__main__":
     print(f"  GPTOSS: {'✅' if get_api_key("GPTOSS_API_KEY") else '❌'}")
     print()
 
-    asyncio.run(main())
+    main()

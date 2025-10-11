@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
-""""
-AI Code Analyzer Script
-Performs intelligent code analysis using AI models
-""""
+    """"
+    AI Code Analyzer Script
+    Performs intelligent code analysis using AI models
+    """"
 
-import difflib
-import json
-import os
-import subprocess
-from typing import Any, Dict, List, Optional
+    import difflib
+    import json
+    import os
+    import subprocess
+    from typing import Any, Dict, List, Optional
 
-import requests
-from openai import OpenAI
-
+    import requests
+    from openai import OpenAI
 
 class AICodeAnalyzer:
     def __init__(self):
@@ -226,36 +225,36 @@ class AICodeAnalyzer:
         # Create analysis prompt based on file type
         system_prompt = """"
 You are an expert code reviewer for the AMAS (Advanced Multi-Agent Intelligence System) project.
-This is a multi-agent AI system focused on intelligence analysis, OSINT, and cybersecurity.
+    This is a multi-agent AI system focused on intelligence analysis, OSINT, and cybersecurity.
 
-Analyze the code for:
-1. Code quality and best practices
-2. Security vulnerabilities
-3. Performance optimization opportunities
-4. Integration with AMAS architecture
-5. Documentation and maintainability
-6. Error handling and edge cases
+    Analyze the code for:
+    1. Code quality and best practices
+    2. Security vulnerabilities
+    3. Performance optimization opportunities
+    4. Integration with AMAS architecture
+    5. Documentation and maintainability
+    6. Error handling and edge cases
 
-Provide specific, actionable feedback. Focus on critical issues first.
-""""
+    Provide specific, actionable feedback. Focus on critical issues first.
+    """"
 
         analysis_prompt = f""""
-File: {file_path}
-File Type: {file_extension}
+    File: {file_path}
+    File Type: {file_extension}
 
 {'=== RECENT CHANGES ===' if diff else '=== FULL FILE ==='}
 {diff if diff else content[:3000]}  # Limit content to avoid token limits
 {'...[truncated]' if len(content) > 3000 else ''}
 
-Please provide a structured code review with:
-1. **Overall Assessment** (Good/Needs Improvement/Critical Issues)
-2. **Security Analysis** (any vulnerabilities or concerns)
-3. **Code Quality** (readability, maintainability, best practices)
-4. **AMAS Integration** (how well it fits the project architecture)
-5. **Specific Recommendations** (numbered list of actionable items)
+    Please provide a structured code review with:
+    1. **Overall Assessment** (Good/Needs Improvement/Critical Issues)
+    2. **Security Analysis** (any vulnerabilities or concerns)
+    3. **Code Quality** (readability, maintainability, best practices)
+    4. **AMAS Integration** (how well it fits the project architecture)
+    5. **Specific Recommendations** (numbered list of actionable items)
 
-Keep the analysis concise but thorough.
-""""
+    Keep the analysis concise but thorough.
+    """"
 
         # Try each AI client in order of preference
         for client_info in self.ai_clients:
@@ -440,11 +439,11 @@ Keep the analysis concise but thorough.
         # Add AI signature
         ai_comment = f"""{comment}"
 
----
-🤖 **AMAS AI Code Reviewer**
-🔍 *Powered by your integrated AI models*
+    ---
+    🤖 **AMAS AI Code Reviewer**
+    🔍 *Powered by your integrated AI models*
 📊 *Automated analysis for better code quality*
-""""
+    """"
 
         data = {"body": ai_comment}
 
@@ -531,7 +530,6 @@ Keep the analysis concise but thorough.
         report.append("- 📚 Update documentation if needed")
 
         return "\n".join(report)
-
 
 if __name__ == "__main__":
     analyzer = AICodeAnalyzer()

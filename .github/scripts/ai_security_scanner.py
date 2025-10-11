@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-"""
-AI Security Scanner Script
-Performs intelligent security analysis using AI models
-"""
+    """
+    AI Security Scanner Script
+    Performs intelligent security analysis using AI models
+    """
 
-import json
-import os
-import re
-from typing import Any, Dict, List, Optional
+    import json
+    import os
+    import re
+    from typing import Any, Dict, List, Optional
 
-import requests
-from openai import OpenAI
-
+    import requests
+    from openai import OpenAI
 
 class AISecurityScanner:
     def __init__(self):
@@ -451,22 +450,22 @@ class AISecurityScanner:
 
         system_prompt = """
 You are a cybersecurity expert analyzing code for the AMAS Intelligence System.
-Focus on critical security vulnerabilities that could compromise the system.
+    Focus on critical security vulnerabilities that could compromise the system.
 
-Provide:
-1. Risk assessment (Critical/High/Medium/Low)
-2. Exploitation scenarios
-3. Specific remediation steps
+    Provide:
+    1. Risk assessment (Critical/High/Medium/Low)
+    2. Exploitation scenarios
+    3. Specific remediation steps
 4. Best practices for secure coding
 
-Be concise but thorough.
-"""
+    Be concise but thorough.
+    """
 
         security_prompt = f"""
-File: {file_path}
+    File: {file_path}
 
-Detected Issues:
-"""
+    Detected Issues:
+    """
 
         if secrets:
             security_prompt += "\n**Potential Secrets:**\n"
@@ -531,11 +530,11 @@ Detected Issues:
         # Add AI signature
         ai_comment = f"""{comment}
 
----
-🔒 **AMAS AI Security Scanner**
-🛡️ *Powered by your integrated AI models*
-⚠️ *Please review and address security findings*
-"""
+    ---
+    🔒 **AMAS AI Security Scanner**
+    🛡️ *Powered by your integrated AI models*
+    ⚠️ *Please review and address security findings*
+    """
 
         data = {"body": ai_comment}
 
@@ -677,7 +676,6 @@ Detected Issues:
                 self.post_pr_comment(report)
         else:
             print("✅ No security issues detected in scanned files.")
-
 
 if __name__ == "__main__":
     scanner = AISecurityScanner()

@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""
-AI Deployment Manager
-Manage and orchestrate deployments
-"""
+    """
+    AI Deployment Manager
+    Manage and orchestrate deployments
+    """
 
-import os
-import sys
-import json
-import argparse
-from pathlib import Path
+    import os
+    import sys
+    import json
+    import argparse
+    from pathlib import Path
 
 def main():
     """Main function"""

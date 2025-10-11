@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""
-AI Adaptive Prompt Improvement
-Improve prompts adaptively using AI
-"""
+    """
+    AI Adaptive Prompt Improvement
+    Improve prompts adaptively using AI
+    """
 
-import os
-import sys
-import json
-import argparse
-from pathlib import Path
+    import os
+    import sys
+    import json
+    import argparse
+    from pathlib import Path
 
 def main():
     """Main function"""

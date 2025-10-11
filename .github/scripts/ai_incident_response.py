@@ -1,20 +1,18 @@
-from standalone_universal_ai_manager import get_api_key
+    from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
-"""
-AI Incident Response Automation Script
-Automated incident triage and response using multiple AI models
-"""
+    """
+    AI Incident Response Automation Script
+    Automated incident triage and response using multiple AI models
+    """
 
-import asyncio
-import json
-import os
-import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+    import json
+    import os
+    import time
+    from datetime import datetime
+    from typing import Any, Dict, List, Optional
 
-import requests
-from openai import OpenAI
-
+    import requests
+    from openai import OpenAI
 
 class AIIncidentResponse:
     def __init__(self):
@@ -149,7 +147,7 @@ class AIIncidentResponse:
         for agent in self.agents:
             print(f"  - {agent['name']}: {agent['role']}")
 
-    async def call_agent(
+    def call_agent(
         self, agent: Dict[str, Any], prompt: str, context: str = ""
     ) -> Optional[str]:
         """Call a specific AI agent with error handling"""
@@ -226,7 +224,7 @@ class AIIncidentResponse:
         else:
             return "LOW"
 
-    async def process_incident(self) -> Dict[str, Any]:
+    def process_incident(self) -> Dict[str, Any]:
         """Process incident using multiple agents"""
         if not self.agents:
             return {"error": "No agents available"}
@@ -254,7 +252,7 @@ class AIIncidentResponse:
         Severity: {severity}
         """
 
-        incident_assessment = await self.call_agent(primary_agent, assessment_prompt)
+        incident_assessment = self.call_agent(primary_agent, assessment_prompt)
         if not incident_assessment:
             return {"error": "Incident assessment failed"}
 
@@ -274,7 +272,7 @@ class AIIncidentResponse:
         {incident_assessment}
         """
 
-        threat_analysis = await self.call_agent(
+        threat_analysis = self.call_agent(
             analysis_agent, threat_prompt, incident_assessment
         )
         if not threat_analysis:
@@ -296,7 +294,7 @@ class AIIncidentResponse:
         {threat_analysis}
         """
 
-        response_strategy = await self.call_agent(
+        response_strategy = self.call_agent(
             strategy_agent, strategy_prompt, threat_analysis
         )
         if not response_strategy:
@@ -318,7 +316,7 @@ class AIIncidentResponse:
         {response_strategy}
         """
 
-        technical_response = await self.call_agent(
+        technical_response = self.call_agent(
             technical_agent, technical_prompt, response_strategy
         )
         if not technical_response:
@@ -343,74 +341,74 @@ class AIIncidentResponse:
 
         report = f"""# 🚨 AMAS Incident Response Report
 
-**Generated:** {results['timestamp']}
-**Agents Used:** {', '.join(results['agents_used'])}
-**Severity:** {severity_emoji.get(results['severity'], '⚪')} {results['severity']}
+    **Generated:** {results['timestamp']}
+    **Agents Used:** {', '.join(results['agents_used'])}
+    **Severity:** {severity_emoji.get(results['severity'], '⚪')} {results['severity']}
 
----
+    ---
 
 ## 📊 Executive Summary
 
-This report presents comprehensive incident response analysis conducted by multiple AI agents working in coordination to assess and respond to the security incident.
+    This report presents comprehensive incident response analysis conducted by multiple AI agents working in coordination to assess and respond to the security incident.
 
----
+    ---
 
 ## 🔍 Step 1: Incident Assessment
 
 **Agent:** {results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['incident_assessment']}
+    {results['incident_assessment']}
 
----
+    ---
 
 ## 🎯 Step 2: Threat Analysis
 
 **Agent:** {results['agents_used'][1] if len(results['agents_used']) > 1 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['threat_analysis']}
+    {results['threat_analysis']}
 
----
+    ---
 
 ## 🏛️ Step 3: Response Strategy
 
 **Agent:** {results['agents_used'][2] if len(results['agents_used']) > 2 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['response_strategy']}
+    {results['response_strategy']}
 
----
+    ---
 
 ## 🔧 Step 4: Technical Response
 
 **Agent:** {results['agents_used'][3] if len(results['agents_used']) > 3 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['technical_response']}
+    {results['technical_response']}
 
----
+    ---
 
 ## 📈 Key Response Insights
 
-- **Incident Severity:** {results['severity']} - Assessed by multi-agent analysis
-- **Primary Threats:** Identified through coordinated intelligence gathering
-- **Response Priorities:** Prioritized based on threat analysis
-- **Technical Actions:** Areas requiring immediate attention
+    - **Incident Severity:** {results['severity']} - Assessed by multi-agent analysis
+    - **Primary Threats:** Identified through coordinated intelligence gathering
+    - **Response Priorities:** Prioritized based on threat analysis
+    - **Technical Actions:** Areas requiring immediate attention
 
----
+    ---
 
 ## 🔄 Immediate Actions Required
 
-1. **Critical Actions:** Implement high-priority response measures
-2. **Containment:** Isolate affected systems and networks
-3. **Investigation:** Conduct thorough forensic analysis
-4. **Recovery:** Restore systems with enhanced security
+    1. **Critical Actions:** Implement high-priority response measures
+    2. **Containment:** Isolate affected systems and networks
+    3. **Investigation:** Conduct thorough forensic analysis
+    4. **Recovery:** Restore systems with enhanced security
 
----
+    ---
 
-*Report generated by AMAS Multi-Agent Incident Response System*
+    *Report generated by AMAS Multi-Agent Incident Response System*
 *Powered by: {', '.join(results['agents_used']) if results['agents_used'] else 'AI Agents'}*
-"""
+    """
         return report
 
-    async def run(self):
+    def run(self):
         """Main execution function"""
         print("🚀 Starting AMAS Incident Response System...")
 
@@ -418,7 +416,7 @@ This report presents comprehensive incident response analysis conducted by multi
         os.makedirs("artifacts", exist_ok=True)
 
         # Process incident
-        results = await self.process_incident()
+        results = self.process_incident()
 
         # Generate report
         report = self.generate_incident_report(results)
@@ -433,11 +431,9 @@ This report presents comprehensive incident response analysis conducted by multi
 
         return results
 
-
-async def main():
+def main():
     responder = AIIncidentResponse()
-    await responder.run()
-
+    responder.run()
 
 if __name__ == "__main__":
     print("🚨 AMAS Incident Response System")
@@ -453,4 +449,4 @@ if __name__ == "__main__":
     print(f"  GPTOSS: {'✅' if get_api_key("GPTOSS_API_KEY") else '❌'}")
     print()
 
-    asyncio.run(main())
+    main()

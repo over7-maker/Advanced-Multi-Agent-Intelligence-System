@@ -1,30 +1,26 @@
 #!/usr/bin/env python3
-"""
-AI Auto-Fix Applier with Advanced API Manager Integration
-"""
+    """
+    AI Auto-Fix Applier with Advanced API Manager Integration
+    """
 
-import argparse
-import asyncio
-import json
-import logging
-import os
-import sys
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+    import argparse
+    import json
+    import os
+    import sys
+    from pathlib import Path
+    from typing import Any, Dict, List, Optional
 
 # Add the project root to the Python path
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
+    project_root = Path(__file__).parent.parent.parent
+    sys.path.insert(0, str(project_root))
 
 # Import the universal AI workflow integration
-from universal_ai_workflow_integration import get_integration, generate_workflow_ai_response, save_workflow_results
 
 # Configure logging
-logging.basicConfig(
+    logging.basicConfig(
     level=logging.INFO, 
     format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+    )
 
 class AIAutoFixApplier:
     """AI Auto-Fix Applier with Advanced API Manager"""
@@ -32,7 +28,7 @@ class AIAutoFixApplier:
     def __init__(self, use_advanced_manager: bool = True):
         """Initialize the applier"""
         self.use_advanced_manager = use_advanced_manager
-        self.integration = get_integration() if use_advanced_manager else None
+        self.integration = None if use_advanced_manager else None
         self.results = {
             "auto_fix_application": {},
             "ai_insights": {},
@@ -41,30 +37,30 @@ class AIAutoFixApplier:
             "integration_stats": {}
         }
     
-    async def apply_auto_fixes(
+    def apply_auto_fixes(
         self, 
         issue_number: str, 
         response_mode: str
     ) -> Dict[str, Any]:
         """Apply auto-fixes for issue"""
-        logger.info(f"🔧 Applying auto-fixes for issue #{issue_number}")
+        print(f"🔧 Applying auto-fixes for issue #{issue_number}")
         
         try:
             # Get issue context
-            issue_context = await self._get_issue_context(issue_number)
+            issue_context = self._get_issue_context(issue_number)
             
             # Generate fixes with AI
-            ai_fixes = await self._generate_fixes_with_ai(
+            ai_fixes = self._generate_fixes_with_ai(
                 issue_context, response_mode
             )
             
             # Apply fixes
-            applied_fixes = await self._apply_fixes(
+            applied_fixes = self._apply_fixes(
                 ai_fixes, issue_context
             )
             
             # Validate fixes
-            validation_results = await self._validate_fixes(
+            validation_results = self._validate_fixes(
                 applied_fixes, issue_context
             )
             
@@ -77,13 +73,13 @@ class AIAutoFixApplier:
             }
             
         except Exception as e:
-            logger.error(f"❌ Auto-fix application failed: {e}")
+            print(f"❌ Auto-fix application failed: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
     
-    async def _get_issue_context(self, issue_number: str) -> Dict[str, Any]:
+    def _get_issue_context(self, issue_number: str) -> Dict[str, Any]:
         """Get issue context (simplified)"""
         return {
             "number": issue_number,
@@ -93,7 +89,7 @@ class AIAutoFixApplier:
             "state": "open"
         }
     
-    async def _generate_fixes_with_ai(
+    def _generate_fixes_with_ai(
         self, 
         issue_context: Dict[str, Any], 
         response_mode: str
@@ -123,8 +119,7 @@ class AIAutoFixApplier:
             
             system_prompt = """You are an expert code fixer. Generate specific, actionable fixes that can be automatically applied to resolve the issue."""
             
-            result = await integration.generate_with_fallback(
-                prompt=prompt,
+            result =                 prompt=prompt,
                 system_prompt=system_prompt,
                 strategy="intelligent"
             )
@@ -144,13 +139,13 @@ class AIAutoFixApplier:
                 }
                 
         except Exception as e:
-            logger.error(f"❌ AI fix generation failed: {e}")
+            print(f"❌ AI fix generation failed: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
     
-    async def _apply_fixes(
+    def _apply_fixes(
         self, 
         ai_fixes: Dict[str, Any], 
         issue_context: Dict[str, Any]
@@ -171,18 +166,18 @@ class AIAutoFixApplier:
                 "success": True
             }
             
-            logger.info(f"✅ Applied {fixes_applied['fixes_count']} fixes to {len(fixes_applied['files_modified'])} files")
+            print(f"✅ Applied {fixes_applied['fixes_count']} fixes to {len(fixes_applied['files_modified'])} files")
             
             return fixes_applied
             
         except Exception as e:
-            logger.error(f"❌ Fix application failed: {e}")
+            print(f"❌ Fix application failed: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
     
-    async def _validate_fixes(
+    def _validate_fixes(
         self, 
         applied_fixes: Dict[str, Any], 
         issue_context: Dict[str, Any]
@@ -204,29 +199,29 @@ class AIAutoFixApplier:
                 "success": True
             }
             
-            logger.info("✅ All validation checks passed")
+            print("✅ All validation checks passed")
             
             return validation_results
             
         except Exception as e:
-            logger.error(f"❌ Validation failed: {e}")
+            print(f"❌ Validation failed: {e}")
             return {
                 "success": False,
                 "error": str(e)
             }
     
-    async def run_auto_fix_application(
+    def run_auto_fix_application(
         self, 
         issue_number: str, 
         response_mode: str, 
         output_file: str
     ) -> Dict[str, Any]:
         """Run complete auto-fix application"""
-        logger.info(f"🚀 Starting AI auto-fix application...")
+        print(f"🚀 Starting AI auto-fix application...")
         
         try:
             # Run application
-            application_results = await self.apply_auto_fixes(
+            application_results = self.apply_auto_fixes(
                 issue_number, response_mode
             )
             
@@ -242,24 +237,25 @@ class AIAutoFixApplier:
             
             # Add integration stats if using advanced manager
             if self.use_advanced_manager:
-                self.results["integration_stats"] = self.integration.get_integration_stats()
-            
+                self.results["integration_stats"] = {"status": "simplified"}
             # Save results
-            integration.save_results(self.results, output_file)
+            with open(output_file, 'w') as f:
+    json.dump(self.results, f, indent=2, default=str)
             
-            logger.info(f"✅ Auto-fix application completed successfully!")
+            print(f"✅ Auto-fix application completed successfully!")
             return self.results
             
         except Exception as e:
-            logger.error(f"❌ Application failed: {e}")
+            print(f"❌ Application failed: {e}")
             error_results = {
                 "error": str(e),
                 "success": False
             }
-            integration.save_results(error_results, output_file)
+            with open(output_file, 'w') as f:
+    json.dump(self.results, f, indent=2, default=str)
             return error_results
 
-async def main():
+def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Auto-Fix Applier")
     parser.add_argument("--issue-number", required=True, help="Issue number")
@@ -280,7 +276,7 @@ async def main():
     applier = AIAutoFixApplier(use_advanced_manager=args.use_advanced_manager)
     
     # Run application
-    results = await applier.run_auto_fix_application(
+    results = applier.run_auto_fix_application(
         issue_number=args.issue_number,
         response_mode=args.response_mode,
         output_file=args.output
@@ -298,4 +294,4 @@ async def main():
         print(f"❌ Application failed: {results.get('error', 'Unknown error')}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()

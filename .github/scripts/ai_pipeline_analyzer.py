@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""
-AI Pipeline Analyzer
-Analyze CI/CD pipeline performance
-"""
+    """
+    AI Pipeline Analyzer
+    Analyze CI/CD pipeline performance
+    """
 
-import os
-import sys
-import json
-import argparse
-from pathlib import Path
+    import os
+    import sys
+    import json
+    import argparse
+    from pathlib import Path
 
 def main():
     """Main function"""

@@ -1,20 +1,18 @@
-from standalone_universal_ai_manager import get_api_key
+    from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
-"""
-AI OSINT Data Collector Script
-Automated intelligence gathering using multiple AI models
-"""
+    """
+    AI OSINT Data Collector Script
+    Automated intelligence gathering using multiple AI models
+    """
 
-import asyncio
-import json
-import os
-import time
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+    import json
+    import os
+    import time
+    from datetime import datetime
+    from typing import Any, Dict, List, Optional
 
-import requests
-from openai import OpenAI
-
+    import requests
+    from openai import OpenAI
 
 class AIOSINTCollector:
     def __init__(self):
@@ -147,7 +145,7 @@ class AIOSINTCollector:
         for agent in self.agents:
             print(f"  - {agent['name']}: {agent['role']}")
 
-    async def call_agent(
+    def call_agent(
         self, agent: Dict[str, Any], prompt: str, context: str = ""
     ) -> Optional[str]:
         """Call a specific AI agent with error handling"""
@@ -185,7 +183,7 @@ class AIOSINTCollector:
             print(f"❌ {agent['name']} failed: {e}")
             return None
 
-    async def collect_cybersecurity_intelligence(self) -> Dict[str, Any]:
+    def collect_cybersecurity_intelligence(self) -> Dict[str, Any]:
         """Collect cybersecurity intelligence using multiple agents"""
         if not self.agents:
             return {"error": "No agents available"}
@@ -206,7 +204,7 @@ class AIOSINTCollector:
         - Security research findings
         """
 
-        primary_intelligence = await self.call_agent(primary_agent, intelligence_prompt)
+        primary_intelligence = self.call_agent(primary_agent, intelligence_prompt)
         if not primary_intelligence:
             return {"error": "Primary intelligence collection failed"}
 
@@ -225,7 +223,7 @@ class AIOSINTCollector:
         {primary_intelligence}
         """
 
-        threat_analysis = await self.call_agent(
+        threat_analysis = self.call_agent(
             analysis_agent, analysis_prompt, primary_intelligence
         )
         if not threat_analysis:
@@ -246,7 +244,7 @@ class AIOSINTCollector:
         {threat_analysis}
         """
 
-        strategic_assessment = await self.call_agent(
+        strategic_assessment = self.call_agent(
             strategy_agent, strategy_prompt, threat_analysis
         )
         if not strategic_assessment:
@@ -267,7 +265,7 @@ class AIOSINTCollector:
         {strategic_assessment}
         """
 
-        technical_analysis = await self.call_agent(
+        technical_analysis = self.call_agent(
             technical_agent, technical_prompt, strategic_assessment
         )
         if not technical_analysis:
@@ -291,72 +289,72 @@ class AIOSINTCollector:
 
         report = f"""# 🔍 AMAS OSINT Intelligence Report
 
-**Generated:** {results['timestamp']}
-**Agents Used:** {', '.join(results['agents_used'])}
+    **Generated:** {results['timestamp']}
+    **Agents Used:** {', '.join(results['agents_used'])}
 
----
+    ---
 
 ## 📊 Executive Summary
 
-This report presents comprehensive open source intelligence (OSINT) analysis conducted by multiple AI agents working in coordination to assess current cybersecurity threats and trends.
+    This report presents comprehensive open source intelligence (OSINT) analysis conducted by multiple AI agents working in coordination to assess current cybersecurity threats and trends.
 
----
+    ---
 
 ## 🕵️ Step 1: Primary Intelligence Gathering
 
 **Agent:** {results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['primary_intelligence']}
+    {results['primary_intelligence']}
 
----
+    ---
 
 ## 🎯 Step 2: Threat Analysis
 
 **Agent:** {results['agents_used'][1] if len(results['agents_used']) > 1 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['threat_analysis']}
+    {results['threat_analysis']}
 
----
+    ---
 
 ## 🏛️ Step 3: Strategic Assessment
 
 **Agent:** {results['agents_used'][2] if len(results['agents_used']) > 2 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['strategic_assessment']}
+    {results['strategic_assessment']}
 
----
+    ---
 
 ## 🔧 Step 4: Technical Analysis
 
 **Agent:** {results['agents_used'][3] if len(results['agents_used']) > 3 else results['agents_used'][0] if results['agents_used'] else 'Unknown'}
 
-{results['technical_analysis']}
+    {results['technical_analysis']}
 
----
+    ---
 
 ## 📈 Key Intelligence Insights
 
-- **Threat Strategy:** Assessed by multi-agent analysis
-- **Primary Concerns:** Identified through coordinated intelligence gathering
-- **Strategic Recommendations:** Prioritized based on threat analysis
-- **Technical Indicators:** Areas requiring enhanced monitoring
+    - **Threat Strategy:** Assessed by multi-agent analysis
+    - **Primary Concerns:** Identified through coordinated intelligence gathering
+    - **Strategic Recommendations:** Prioritized based on threat analysis
+    - **Technical Indicators:** Areas requiring enhanced monitoring
 
----
+    ---
 
 ## 🔄 Recommended Actions
 
-1. **Immediate Actions:** Implement high-priority defensive measures
-2. **Short-term:** Enhance monitoring and detection capabilities
-3. **Long-term:** Develop strategic countermeasures and resilience
+    1. **Immediate Actions:** Implement high-priority defensive measures
+    2. **Short-term:** Enhance monitoring and detection capabilities
+    3. **Long-term:** Develop strategic countermeasures and resilience
 
----
+    ---
 
-*Report generated by AMAS Multi-Agent OSINT Collection System*
+    *Report generated by AMAS Multi-Agent OSINT Collection System*
 *Powered by: {', '.join(results['agents_used']) if results['agents_used'] else 'AI Agents'}*
-"""
+    """
         return report
 
-    async def run(self):
+    def run(self):
         """Main execution function"""
         print("🚀 Starting AMAS OSINT Collection System...")
 
@@ -364,7 +362,7 @@ This report presents comprehensive open source intelligence (OSINT) analysis con
         os.makedirs("artifacts", exist_ok=True)
 
         # Collect intelligence
-        results = await self.collect_cybersecurity_intelligence()
+        results = self.collect_cybersecurity_intelligence()
 
         # Generate report
         report = self.generate_osint_report(results)
@@ -379,11 +377,9 @@ This report presents comprehensive open source intelligence (OSINT) analysis con
 
         return results
 
-
-async def main():
+def main():
     collector = AIOSINTCollector()
-    await collector.run()
-
+    collector.run()
 
 if __name__ == "__main__":
     print("🔍 AMAS OSINT Intelligence Collection System")
@@ -399,4 +395,4 @@ if __name__ == "__main__":
     print(f"  GPTOSS: {'✅' if get_api_key("GPTOSS_API_KEY") else '❌'}")
     print()
 
-    asyncio.run(main())
+    main()

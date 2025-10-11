@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""
-AI Code Quality Analyzer
-Advanced AI-powered code quality analysis with intelligent recommendations
-"""
+    """
+    AI Code Quality Analyzer
+    Advanced AI-powered code quality analysis with intelligent recommendations
+    """
 
-import os
-import sys
-import json
-import argparse
-from pathlib import Path
+    import os
+    import sys
+    import json
+    import argparse
+    from pathlib import Path
 
 def main():
     """Main function"""
