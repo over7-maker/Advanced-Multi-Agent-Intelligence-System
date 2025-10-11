@@ -1,5 +1,5 @@
 # AMAS - Advanced Multi-Agent Intelligence System
-# Production-ready requirements with exact versions - Cython build compatible
+# Production-ready requirements with exact versions - PyYAML build fix
 
 # Core Web Framework
 fastapi==0.115.6
@@ -83,8 +83,9 @@ selenium==4.28.0
 sentence-transformers>=2.2.0,<3.4.0
 faiss-cpu>=1.7.0,<1.13.0
 
-# Additional Dependencies
-pyyaml==6.0.2
+# FIXED: PyYAML with pre-built wheels (avoids Cython build issues)
+# Use pre-built binary wheel instead of compiling from source
+PyYAML>=6.0,<7.0
 
 # Email validation for Pydantic
 email-validator==2.2.0
