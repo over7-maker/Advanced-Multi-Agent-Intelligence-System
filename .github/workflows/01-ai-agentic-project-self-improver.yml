@@ -91,11 +91,24 @@ jobs:
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
-        pip install --upgrade pip setuptools wheel
+        pip install Cython numpy
+
+        # Install build dependencies first
+
+
+
+
         pip install Cython numpy
 
 
+        # Install build dependencies first
 
+
+
+
+
+
+        pip install Cython numpy
         pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
@@ -211,11 +224,24 @@ jobs:
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
-        pip install --upgrade pip setuptools wheel
+        pip install Cython numpy
+
+        # Install build dependencies first
+
+
+
+
         pip install Cython numpy
 
 
+        # Install build dependencies first
 
+
+
+
+
+
+        pip install Cython numpy
         pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
@@ -339,11 +365,24 @@ jobs:
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
-        pip install --upgrade pip setuptools wheel
+        pip install Cython numpy
+
+        # Install build dependencies first
+
+
+
+
         pip install Cython numpy
 
 
+        # Install build dependencies first
 
+
+
+
+
+
+        pip install Cython numpy
         pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
@@ -467,11 +506,24 @@ jobs:
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
-        pip install --upgrade pip setuptools wheel
+        pip install Cython numpy
+
+        # Install build dependencies first
+
+
+
+
         pip install Cython numpy
 
 
+        # Install build dependencies first
 
+
+
+
+
+
+        pip install Cython numpy
         pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
@@ -595,11 +647,24 @@ jobs:
         pip install aiohttp requests pyyaml
         pip install gitpython pygit2
         # Install build dependencies for Cython packages
-        pip install --upgrade pip setuptools wheel
+        pip install Cython numpy
+
+        # Install build dependencies first
+
+
+
+
         pip install Cython numpy
 
 
+        # Install build dependencies first
 
+
+
+
+
+
+        pip install Cython numpy
         pip install scikit-learn pandas matplotlib
         pip install flake8 bandit safety pip-audit
         pip install memory-profiler line-profiler pytest
