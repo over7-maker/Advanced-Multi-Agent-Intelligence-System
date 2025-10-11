@@ -182,7 +182,7 @@ jobs:
         pip install virustotal-api
         pip install black isort mypy pylint
         pip install sonarqube-api
-        pip install codeclimate-api
+        # pip install codeclimate-api  # Removed - package doesn't exist
     
     - name: 🔍 Run Code Quality Analysis
       id: quality_analysis
@@ -379,7 +379,7 @@ jobs:
         pip install virustotal-api
         pip install black isort mypy pylint
         pip install sonarqube-api
-        pip install codeclimate-api
+        # pip install codeclimate-api  # Removed - package doesn't exist
         pip install py-spy pyflame
         pip install psutil
     
@@ -586,7 +586,7 @@ jobs:
         pip install virustotal-api
         pip install black isort mypy pylint
         pip install sonarqube-api
-        pip install codeclimate-api
+        # pip install codeclimate-api  # Removed - package doesn't exist
         pip install py-spy pyflame
         pip install psutil
     
@@ -793,7 +793,7 @@ jobs:
         pip install virustotal-api
         pip install black isort mypy pylint
         pip install sonarqube-api
-        pip install codeclimate-api
+        # pip install codeclimate-api  # Removed - package doesn't exist
         pip install py-spy pyflame
         pip install psutil
     
@@ -1000,7 +1000,7 @@ jobs:
         pip install virustotal-api
         pip install black isort mypy pylint
         pip install sonarqube-api
-        pip install codeclimate-api
+        # pip install codeclimate-api  # Removed - package doesn't exist
         pip install py-spy pyflame
         pip install psutil
     
