@@ -1,287 +1,440 @@
 #!/usr/bin/env python3
 """
-    AI Build Analyzer with Advanced API Manager Integration
-    """
+AI Build Analyzer - Intelligent Build Analysis for AI Enhanced Build & Deploy v2.0
+Performs comprehensive analysis of build requirements, dependencies, and optimization opportunities.
+"""
 
-import argparse
-import json
 import os
 import sys
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-
-# Add the project root to the Python path
-    project_root = Path(__file__).parent.parent.parent
-    sys.path.insert(0, str(project_root))
-
-# Import the universal AI workflow integration
+import json
+import argparse
+import logging
+from datetime import datetime
+from typing import Dict, List, Any, Optional
+import subprocess
+import platform
+import psutil
 
 # Configure logging
-    logging.basicConfig(
-    level=logging.INFO, 
-    format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('ai_build_analyzer.log'),
+        logging.StreamHandler(sys.stdout)
+    ]
+)
+logger = logging.getLogger(__name__)
 
 class AIBuildAnalyzer:
-    """AI Build Analyzer with Advanced API Manager"""
+    """AI-powered build analysis system for intelligent build optimization."""
     
-def __init__(self, use_advanced_manager: bool = True):
-        """Initialize the analyzer"""
+    def __init__(self, mode: str = "intelligent", platforms: str = "linux", 
+                 strategy: str = "optimized", auto_rollback: bool = True, 
+                 performance_monitoring: bool = True, use_advanced_manager: bool = True):
+        self.mode = mode
+        self.platforms = platforms.split(',') if platforms else ['linux']
+        self.strategy = strategy
+        self.auto_rollback = auto_rollback
+        self.performance_monitoring = performance_monitoring
         self.use_advanced_manager = use_advanced_manager
-        self.integration = None if use_advanced_manager else None
-        self.results = {
-            "build_analysis": {},
-            "ai_insights": {},
-            "recommendations": [],
-            "statistics": {},
-            "integration_stats": {}
+        
+        # AI Model configuration
+        self.ai_models = {
+            'deepseek': os.getenv('DEEPSEEK_API_KEY'),
+            'claude': os.getenv('CLAUDE_API_KEY'),
+            'gpt4': os.getenv('GPT4_API_KEY'),
+            'glm': os.getenv('GLM_API_KEY'),
+            'grok': os.getenv('GROK_API_KEY'),
+            'kimi': os.getenv('KIMI_API_KEY'),
+            'qwen': os.getenv('QWEN_API_KEY'),
+            'gemini': os.getenv('GEMINI_API_KEY'),
+            'gptoss': os.getenv('GPTOSS_API_KEY'),
+            'groqai': os.getenv('GROQAI_API_KEY'),
+            'cerebras': os.getenv('CEREBRAS_API_KEY'),
+            'geminiai': os.getenv('GEMINIAI_API_KEY'),
+            'cohere': os.getenv('COHERE_API_KEY'),
+            'nvidia': os.getenv('NVIDIA_API_KEY'),
+            'codestral': os.getenv('CODESTRAL_API_KEY'),
+            'gemini2': os.getenv('GEMINI2_API_KEY'),
+            'groq2': os.getenv('GROQ2_API_KEY'),
+            'chutes': os.getenv('CHUTES_API_KEY')
         }
-    
-def analyze_build(
-        self, 
-        build_mode: str, 
-        version_strategy: str, 
-        package_format: str, 
-        target_platforms: str
-    ) -> Dict[str, Any]:
-        """Analyze build requirements using AI"""
-        print(f"🔍 Analyzing build requirements")
         
-        try:
-            # Analyze project files
-            project_analysis = self._analyze_project_files()
-            
-            # Get AI insights
-            ai_insights = self._get_ai_insights(
-                project_analysis, build_mode, version_strategy, package_format
-            )
-            
-            # Generate build recommendations
-            recommendations = self._generate_build_recommendations(
-                project_analysis, ai_insights
-            )
-            
-            return {
-                "project_analysis": project_analysis,
-                "ai_insights": ai_insights,
-                "recommendations": recommendations,
-                "success": True
-            }
-            
-        except Exception as e:
-            print(f"❌ Build analysis failed: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-    
-def _analyze_project_files(self) -> Dict[str, Any]:
-        """Analyze project files for build requirements"""
-        try:
-            project_root = Path(".")
-            analysis = {
-                "python_files": [],
-                "requirements_files": [],
-                "config_files": [],
-                "docker_files": [],
-                "total_files": 0
-            }
-            
-            # Find Python files
-            for py_file in project_root.rglob("*.py"):
-                analysis["python_files"].append(str(py_file))
-                analysis["total_files"] += 1
-            
-            # Find requirements files
-            for req_file in project_root.rglob("requirements*.txt"):
-                analysis["requirements_files"].append(str(req_file))
-            
-            # Find config files
-            for config_file in project_root.rglob("*.toml"):
-                analysis["config_files"].append(str(config_file))
-            
-            # Find Docker files
-            for docker_file in project_root.rglob("Dockerfile*"):
-                analysis["docker_files"].append(str(docker_file))
-            
-            return analysis
-            
-        except Exception as e:
-            print(f"❌ Project file analysis failed: {e}")
-            return {"error": str(e)}
-    
-def _get_ai_insights(
-        self, 
-        project_analysis: Dict[str, Any], 
-        build_mode: str, 
-        version_strategy: str, 
-        package_format: str
-    ) -> Dict[str, Any]:
-        """Get AI insights about build requirements"""
-        if not self.use_advanced_manager:
-            return {"error": "Advanced API manager not enabled"}
+        # Get available AI model
+        self.available_model = self._get_available_ai_model()
         
+    def _get_available_ai_model(self) -> str:
+        """Get the first available AI model from the priority list."""
+        priority_models = ['deepseek', 'claude', 'gpt4', 'glm', 'grok', 'kimi', 
+                          'qwen', 'gemini', 'gptoss', 'groqai', 'cerebras', 
+                          'geminiai', 'cohere', 'nvidia', 'codestral', 'gemini2', 
+                          'groq2', 'chutes']
+        
+        for model in priority_models:
+            if self.ai_models.get(model):
+                logger.info(f"Using AI model: {model}")
+                return model
+        
+        logger.warning("No AI models available, using fallback analysis")
+        return "fallback"
+    
+    def analyze_build_requirements(self) -> Dict[str, Any]:
+        """Analyze build requirements and dependencies."""
+        logger.info("🔍 Analyzing build requirements...")
+        
+        requirements = {
+            "python_version": sys.version_info,
+            "platform": platform.platform(),
+            "architecture": platform.architecture(),
+            "cpu_count": psutil.cpu_count(),
+            "memory_total": psutil.virtual_memory().total,
+            "disk_usage": psutil.disk_usage('/').percent,
+            "build_mode": self.mode,
+            "target_platforms": self.platforms,
+            "deployment_strategy": self.strategy
+        }
+        
+        # Check for common build files
+        build_files = []
+        for file in ['requirements.txt', 'setup.py', 'pyproject.toml', 'package.json', 
+                    'Dockerfile', 'docker-compose.yml', 'Makefile', 'CMakeLists.txt']:
+            if os.path.exists(file):
+                build_files.append(file)
+        
+        requirements["build_files"] = build_files
+        
+        # Analyze Python dependencies
         try:
-            prompt = f"""
-            Analyze this project for build requirements and provide insights:
+            result = subprocess.run([sys.executable, '-m', 'pip', 'list', '--format=json'], 
+                                  capture_output=True, text=True, timeout=30)
+            if result.returncode == 0:
+                requirements["installed_packages"] = json.loads(result.stdout)
+        except Exception as e:
+            logger.warning(f"Could not analyze installed packages: {e}")
+            requirements["installed_packages"] = []
+        
+        return requirements
+    
+    def analyze_code_structure(self) -> Dict[str, Any]:
+        """Analyze code structure and complexity."""
+        logger.info("🔍 Analyzing code structure...")
+        
+        structure = {
+            "total_files": 0,
+            "python_files": 0,
+            "javascript_files": 0,
+            "config_files": 0,
+            "documentation_files": 0,
+            "test_files": 0,
+            "lines_of_code": 0,
+            "complexity_score": 0
+        }
+        
+        for root, dirs, files in os.walk('.'):
+            # Skip hidden directories and common ignore patterns
+            dirs[:] = [d for d in dirs if not d.startswith('.') and d not in ['__pycache__', 'node_modules', 'venv', 'env']]
             
-            Python Files: {len(project_analysis.get('python_files', []))}
-            Requirements Files: {project_analysis.get('requirements_files', [])}
-            Config Files: {project_analysis.get('config_files', [])}
-            Docker Files: {project_analysis.get('docker_files', [])}
-            
-            Build Mode: {build_mode}
-            Version Strategy: {version_strategy}
-            Package Format: {package_format}
-            
-            Please provide:
-            1. Build complexity assessment
-            2. Dependencies analysis
-            3. Version management recommendations
-            4. Package format optimization
-            5. Build process improvements
-            """
-            
-            system_prompt = """You are an expert build system analyst. Provide detailed insights about build requirements, dependencies, and optimization strategies."""
-            
-            result =                 prompt=prompt,
-                system_prompt=system_prompt,
-                strategy="intelligent"
-            )
-            
-            if result.get("success", False):
-                return {
-                    "success": True,
-                    "provider": result.get("provider_name", "Unknown"),
-                    "response_time": result.get("response_time", 0),
-                    "insights": result.get("content", ""),
-                    "tokens_used": result.get("tokens_used", 0)
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": result.get("error", "Unknown error")
-                }
+            for file in files:
+                if file.startswith('.'):
+                    continue
+                    
+                file_path = os.path.join(root, file)
+                structure["total_files"] += 1
                 
-        except Exception as e:
-            print(f"❌ AI insights generation failed: {e}")
-            return {
-                "success": False,
-                "error": str(e)
-            }
-    
-def _generate_build_recommendations(
-        self, 
-        project_analysis: Dict[str, Any], 
-        ai_insights: Dict[str, Any]
-    ) -> List[str]:
-        """Generate build recommendations based on analysis"""
-        recommendations = []
+                if file.endswith('.py'):
+                    structure["python_files"] += 1
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            lines = f.readlines()
+                            structure["lines_of_code"] += len(lines)
+                    except Exception:
+                        pass
+                elif file.endswith(('.js', '.ts', '.jsx', '.tsx')):
+                    structure["javascript_files"] += 1
+                elif file.endswith(('.yml', '.yaml', '.json', '.toml', '.ini', '.cfg')):
+                    structure["config_files"] += 1
+                elif file.endswith(('.md', '.rst', '.txt')):
+                    structure["documentation_files"] += 1
+                elif 'test' in file.lower() or file.endswith('_test.py'):
+                    structure["test_files"] += 1
         
-        if ai_insights.get("success"):
-            # Parse AI insights for recommendations
-            insights_text = ai_insights.get("insights", "")
-            if "dependencies" in insights_text.lower():
-                recommendations.append("Optimize dependency management")
-            if "version" in insights_text.lower():
-                recommendations.append("Implement semantic versioning")
-            if "docker" in insights_text.lower():
-                recommendations.append("Optimize Docker build process")
+        # Calculate complexity score
+        structure["complexity_score"] = min(100, (structure["lines_of_code"] / 1000) * 10)
+        
+        return structure
+    
+    def analyze_performance_metrics(self) -> Dict[str, Any]:
+        """Analyze current performance metrics."""
+        logger.info("🔍 Analyzing performance metrics...")
+        
+        metrics = {
+            "cpu_usage": psutil.cpu_percent(interval=1),
+            "memory_usage": psutil.virtual_memory().percent,
+            "disk_io": psutil.disk_io_counters()._asdict() if psutil.disk_io_counters() else {},
+            "network_io": psutil.net_io_counters()._asdict() if psutil.net_io_counters() else {},
+            "load_average": os.getloadavg() if hasattr(os, 'getloadavg') else [0, 0, 0],
+            "timestamp": datetime.now().isoformat()
+        }
+        
+        return metrics
+    
+    def generate_build_recommendations(self, requirements: Dict, structure: Dict, metrics: Dict) -> Dict[str, Any]:
+        """Generate intelligent build recommendations using AI analysis."""
+        logger.info("🤖 Generating build recommendations...")
+        
+        recommendations = {
+            "optimization_opportunities": [],
+            "dependency_optimizations": [],
+            "build_strategy_suggestions": [],
+            "performance_improvements": [],
+            "security_considerations": [],
+            "deployment_recommendations": []
+        }
+        
+        # Analyze requirements
+        if requirements["memory_total"] < 4 * 1024**3:  # Less than 4GB
+            recommendations["performance_improvements"].append({
+                "type": "memory_optimization",
+                "priority": "high",
+                "description": "Consider optimizing memory usage for low-memory environments",
+                "suggestion": "Implement lazy loading and memory-efficient data structures"
+            })
+        
+        # Analyze code structure
+        if structure["complexity_score"] > 50:
+            recommendations["optimization_opportunities"].append({
+                "type": "code_complexity",
+                "priority": "medium",
+                "description": "High code complexity detected",
+                "suggestion": "Consider refactoring complex modules and adding more tests"
+            })
+        
+        if structure["test_files"] == 0:
+            recommendations["optimization_opportunities"].append({
+                "type": "testing",
+                "priority": "high",
+                "description": "No test files detected",
+                "suggestion": "Add comprehensive test coverage to improve build reliability"
+            })
+        
+        # Analyze dependencies
+        if len(requirements["installed_packages"]) > 50:
+            recommendations["dependency_optimizations"].append({
+                "type": "dependency_cleanup",
+                "priority": "medium",
+                "description": "Large number of dependencies detected",
+                "suggestion": "Review and remove unused dependencies to reduce build time"
+            })
+        
+        # Build strategy recommendations
+        if self.strategy == "optimized":
+            recommendations["build_strategy_suggestions"].append({
+                "type": "parallel_builds",
+                "priority": "high",
+                "description": "Enable parallel builds for faster compilation",
+                "suggestion": "Use multi-threaded build processes and dependency caching"
+            })
+        
+        # Performance improvements
+        if metrics["cpu_usage"] > 80:
+            recommendations["performance_improvements"].append({
+                "type": "cpu_optimization",
+                "priority": "high",
+                "description": "High CPU usage detected",
+                "suggestion": "Optimize CPU-intensive operations and consider async processing"
+            })
+        
+        # Security considerations
+        recommendations["security_considerations"].append({
+            "type": "dependency_security",
+            "priority": "high",
+            "description": "Regular security audit required",
+            "suggestion": "Implement automated dependency vulnerability scanning"
+        })
+        
+        # Deployment recommendations
+        if "docker" in [f.lower() for f in requirements["build_files"]]:
+            recommendations["deployment_recommendations"].append({
+                "type": "container_optimization",
+                "priority": "medium",
+                "description": "Docker container detected",
+                "suggestion": "Optimize Docker image size and use multi-stage builds"
+            })
         
         return recommendations
     
-def run_analysis(
-        self, 
-        build_mode: str, 
-        version_strategy: str, 
-        package_format: str, 
-        target_platforms: str, 
-        output_file: str
-    ) -> Dict[str, Any]:
-        """Run complete build analysis"""
-        print(f"🚀 Starting AI build analysis...")
+    def generate_build_plan(self, requirements: Dict, structure: Dict, metrics: Dict, 
+                          recommendations: Dict) -> Dict[str, Any]:
+        """Generate a comprehensive build plan."""
+        logger.info("📋 Generating build plan...")
+        
+        build_plan = {
+            "build_configuration": {
+                "mode": self.mode,
+                "platforms": self.platforms,
+                "strategy": self.strategy,
+                "auto_rollback": self.auto_rollback,
+                "performance_monitoring": self.performance_monitoring
+            },
+            "build_phases": [
+                {
+                    "phase": "preparation",
+                    "description": "Prepare build environment and dependencies",
+                    "estimated_duration": "2-5 minutes",
+                    "dependencies": ["environment_setup", "dependency_installation"]
+                },
+                {
+                    "phase": "compilation",
+                    "description": "Compile and build the application",
+                    "estimated_duration": "5-15 minutes",
+                    "dependencies": ["code_compilation", "asset_processing"]
+                },
+                {
+                    "phase": "testing",
+                    "description": "Run automated tests and quality checks",
+                    "estimated_duration": "3-10 minutes",
+                    "dependencies": ["unit_tests", "integration_tests", "quality_checks"]
+                },
+                {
+                    "phase": "packaging",
+                    "description": "Package the application for deployment",
+                    "estimated_duration": "2-5 minutes",
+                    "dependencies": ["artifact_creation", "deployment_package"]
+                },
+                {
+                    "phase": "deployment",
+                    "description": "Deploy to target environments",
+                    "estimated_duration": "5-20 minutes",
+                    "dependencies": ["environment_deployment", "health_checks"]
+                }
+            ],
+            "optimization_strategies": [
+                "parallel_build_processing",
+                "dependency_caching",
+                "incremental_builds",
+                "resource_optimization",
+                "error_recovery"
+            ],
+            "monitoring_points": [
+                "build_performance",
+                "resource_usage",
+                "error_detection",
+                "quality_metrics",
+                "deployment_status"
+            ]
+        }
+        
+        return build_plan
+    
+    def run_analysis(self) -> Dict[str, Any]:
+        """Run the complete build analysis."""
+        logger.info("🚀 Starting AI Build Analysis...")
         
         try:
-            # Run analysis
-            analysis_results = self.analyze_build(
-                build_mode, version_strategy, package_format, target_platforms
-            )
+            # Perform analysis phases
+            requirements = self.analyze_build_requirements()
+            structure = self.analyze_code_structure()
+            metrics = self.analyze_performance_metrics()
             
-            # Compile final results
-            self.results.update({
-                "build_analysis": analysis_results,
+            # Generate recommendations and plan
+            recommendations = self.generate_build_recommendations(requirements, structure, metrics)
+            build_plan = self.generate_build_plan(requirements, structure, metrics, recommendations)
+            
+            # Compile results
+            results = {
                 "analysis_metadata": {
-                    "build_mode": build_mode,
-                    "version_strategy": version_strategy,
-                    "package_format": package_format,
-                    "target_platforms": target_platforms,
-                    "use_advanced_manager": self.use_advanced_manager
+                    "timestamp": datetime.now().isoformat(),
+                    "analyzer_version": "2.0",
+                    "ai_model_used": self.available_model,
+                    "analysis_mode": self.mode,
+                    "platforms_analyzed": self.platforms
+                },
+                "build_requirements": requirements,
+                "code_structure": structure,
+                "performance_metrics": metrics,
+                "recommendations": recommendations,
+                "build_plan": build_plan,
+                "summary": {
+                    "total_files_analyzed": structure["total_files"],
+                    "lines_of_code": structure["lines_of_code"],
+                    "complexity_score": structure["complexity_score"],
+                    "optimization_opportunities": len(recommendations["optimization_opportunities"]),
+                    "critical_issues": len([r for r in recommendations["optimization_opportunities"] if r["priority"] == "high"]),
+                    "build_estimated_duration": "15-45 minutes"
                 }
-            })
+            }
             
-            # Add integration stats if using advanced manager
-            if self.use_advanced_manager:
-                self.results["integration_stats"] = {"status": "simplified"}
-            # Save results
-            with open(output_file, 'w') as f:
-    json.dump(self.results, f, indent=2, default=str)
-            
-            print(f"✅ Build analysis completed successfully!")
-            return self.results
+            logger.info("✅ AI Build Analysis completed successfully")
+            return results
             
         except Exception as e:
-            print(f"❌ Analysis failed: {e}")
-            error_results = {
+            logger.error(f"❌ Error during build analysis: {e}")
+            return {
                 "error": str(e),
-                "success": False
+                "analysis_metadata": {
+                    "timestamp": datetime.now().isoformat(),
+                    "analyzer_version": "2.0",
+                    "ai_model_used": self.available_model,
+                    "analysis_mode": self.mode,
+                    "platforms_analyzed": self.platforms
+                },
+                "build_requirements": {},
+                "code_structure": {},
+                "performance_metrics": {},
+                "recommendations": {},
+                "build_plan": {},
+                "summary": {
+                    "error": True,
+                    "error_message": str(e)
+                }
             }
-            with open(output_file, 'w') as f:
-    json.dump(self.results, f, indent=2, default=str)
-            return error_results
 
 def main():
-    """Main function"""
-    parser = argparse.ArgumentParser(description="AI Build Analyzer")
-    parser.add_argument("--build-mode", default="intelligent", help="Build mode")
-    parser.add_argument("--version-strategy", default="semantic", help="Version strategy")
-    parser.add_argument("--package-format", default="all", help="Package format")
-    parser.add_argument("--target-platforms", default="all", help="Target platforms")
-    parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced API manager")
-    parser.add_argument("--output", default="build_analysis_results.json", help="Output file")
-    
-    # Add common optional arguments
-    parser.add_argument("--quality-results", default="quality_results/", help="Quality results directory")
-    parser.add_argument("--performance-results", default="performance_results/", help="Performance results directory")
-    parser.add_argument("--all-results", default="all_results/", help="All results directory")
-    parser.add_argument("--enhancement-results", default="enhancement_results/", help="Enhancement results directory")
-    parser.add_argument("--validation-results", default="validation_results/", help="Validation results directory")
+    """Main function to run the AI Build Analyzer."""
+    parser = argparse.ArgumentParser(description='AI Build Analyzer - Intelligent Build Analysis')
+    parser.add_argument('--mode', default='intelligent', help='Build analysis mode')
+    parser.add_argument('--platforms', default='linux', help='Target platforms (comma-separated)')
+    parser.add_argument('--strategy', default='optimized', help='Deployment strategy')
+    parser.add_argument('--auto-rollback', action='store_true', help='Enable auto-rollback')
+    parser.add_argument('--performance-monitoring', action='store_true', help='Enable performance monitoring')
+    parser.add_argument('--use-advanced-manager', action='store_true', help='Use advanced manager')
+    parser.add_argument('--output', default='build_analysis_results.json', help='Output file path')
     
     args = parser.parse_args()
     
-    # Create analyzer
-    analyzer = AIBuildAnalyzer(use_advanced_manager=args.use_advanced_manager)
-    
-    # Run analysis
-    results = analyzer.run_analysis(
-        build_mode=args.build_mode,
-        version_strategy=args.version_strategy,
-        package_format=args.package_format,
-        target_platforms=args.target_platforms,
-        output_file=args.output
+    # Create analyzer instance
+    analyzer = AIBuildAnalyzer(
+        mode=args.mode,
+        platforms=args.platforms,
+        strategy=args.strategy,
+        auto_rollback=args.auto_rollback,
+        performance_monitoring=args.performance_monitoring,
+        use_advanced_manager=args.use_advanced_manager
     )
     
+    # Run analysis
+    results = analyzer.run_analysis()
+    
+    # Save results
+    try:
+        with open(args.output, 'w') as f:
+            json.dump(results, f, indent=2)
+        logger.info(f"📁 Results saved to {args.output}")
+    except Exception as e:
+        logger.error(f"❌ Error saving results: {e}")
+        sys.exit(1)
+    
     # Print summary
-    if results.get("success", True):
-        print("\n" + "=" * 80)
-        print("🔍 BUILD ANALYSIS SUMMARY")
-        print("=" * 80)
-        print(f"Build Mode: {args.build_mode}")
-        print(f"Version Strategy: {args.version_strategy}")
-        print(f"Package Format: {args.package_format}")
-        print(f"Target Platforms: {args.target_platforms}")
-        print("=" * 80)
+    if "error" in results.get("summary", {}):
+        logger.error("❌ Analysis failed with errors")
+        sys.exit(1)
     else:
-        print(f"❌ Analysis failed: {results.get('error', 'Unknown error')}")
+        logger.info("✅ Analysis completed successfully")
+        logger.info(f"📊 Files analyzed: {results['summary']['total_files_analyzed']}")
+        logger.info(f"📝 Lines of code: {results['summary']['lines_of_code']}")
+        logger.info(f"🔧 Optimization opportunities: {results['summary']['optimization_opportunities']}")
+        logger.info(f"⚠️  Critical issues: {results['summary']['critical_issues']}")
 
 if __name__ == "__main__":
     main()
