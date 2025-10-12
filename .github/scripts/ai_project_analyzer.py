@@ -1,409 +1,725 @@
 #!/usr/bin/env python3
 """
-AI Project Analyzer - Advanced project analysis and learning system
-Version: 2.1 - Optimized for self-improvement workflows
+AI Project Analyzer - Advanced Multi-Agent Project Analysis System
+Part of the AMAS (Advanced Multi-Agent Intelligence System)
 """
 
-import json
 import os
 import sys
+import json
 import argparse
+import logging
+from typing import Dict, List, Any, Optional
 from pathlib import Path
-from datetime import datetime
+import subprocess
 import time
+from datetime import datetime
 
-class AdvancedProjectAnalyzer:
-    def __init__(self, mode="intelligent", areas="all", depth="comprehensive", auto_apply=False):
-        self.mode = mode
-        self.areas = areas
-        self.depth = depth
-        self.auto_apply = auto_apply
-        self.start_time = time.time()
+# Add the current directory to Python path
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+class AIProjectAnalyzer:
+    """Advanced AI-powered project analyzer with multi-agent intelligence"""
+    
+    def __init__(self, config: Dict[str, Any]):
+        self.config = config
+        self.results = {
+            'timestamp': datetime.now().isoformat(),
+            'analysis_type': 'project_analysis',
+            'mode': config.get('mode', 'intelligent'),
+            'areas': config.get('areas', 'all'),
+            'depth': config.get('depth', 'deep'),
+            'auto_apply': config.get('auto_apply', False),
+            'findings': [],
+            'recommendations': [],
+            'metrics': {},
+            'status': 'success'
+        }
         
-    def execute_project_analysis(self):
-        """Execute comprehensive project analysis and learning."""
+    def analyze_project_structure(self) -> Dict[str, Any]:
+        """Analyze project structure and organization"""
+        logger.info("🔍 Analyzing project structure...")
         
-        print(f"🤖 Initializing Advanced Project Analysis System...")
-        print(f"🎯 Mode: {self.mode} | Areas: {self.areas} | Depth: {self.depth}")
-        print(f"🚀 Auto-apply: {self.auto_apply}")
-        
-        analysis_results = {
-            "metadata": {
-                "timestamp": datetime.now().isoformat(),
-                "analyzer_version": "2.1",
-                "analysis_mode": self.mode,
-                "target_areas": self.areas,
-                "learning_depth": self.depth,
-                "auto_apply": self.auto_apply,
-                "execution_status": "in_progress"
-            },
-            "project_health": {
-                "overall_score": 0,
-                "code_quality": {},
-                "architecture_assessment": {},
-                "performance_metrics": {},
-                "security_posture": {}
-            },
-            "learning_insights": {
-                "improvement_opportunities": [],
-                "best_practices_identified": [],
-                "pattern_recognition": [],
-                "optimization_suggestions": []
-            },
-            "analysis_metrics": {
-                "files_analyzed": 0,
-                "components_evaluated": 0,
-                "insights_generated": 0,
-                "confidence_level": 95,
-                "analysis_duration": "0s"
-            }
+        structure_analysis = {
+            'directories': [],
+            'files': [],
+            'languages': {},
+            'frameworks': [],
+            'architecture_patterns': [],
+            'complexity_score': 0
         }
         
         try:
-            # Step 1: Project Structure Analysis
-            self._analyze_project_structure(analysis_results)
+            # Scan project directory
+            project_root = Path('.')
             
-            # Step 2: Code Quality Assessment
-            self._assess_code_quality(analysis_results)
+            for item in project_root.rglob('*'):
+                if item.is_file():
+                    structure_analysis['files'].append({
+                        'path': str(item.relative_to(project_root)),
+                        'size': item.stat().st_size,
+                        'extension': item.suffix,
+                        'modified': item.stat().st_mtime
+                    })
+                    
+                    # Detect language by extension
+                    ext = item.suffix.lower()
+                    if ext in ['.py', '.js', '.ts', '.java', '.cpp', '.c', '.go', '.rs', '.php', '.rb']:
+                        lang = ext[1:]
+                        structure_analysis['languages'][lang] = structure_analysis['languages'].get(lang, 0) + 1
+                        
+                elif item.is_dir() and not any(part.startswith('.') for part in item.parts):
+                    structure_analysis['directories'].append(str(item.relative_to(project_root)))
             
-            # Step 3: Architecture Evaluation
-            self._evaluate_architecture(analysis_results)
-            
-            # Step 4: Performance Analysis
-            self._analyze_performance_patterns(analysis_results)
-            
-            # Step 5: Generate Learning Insights
-            self._generate_learning_insights(analysis_results)
-            
-            # Step 6: Calculate Overall Health Score
-            self._calculate_health_score(analysis_results)
-            
-            # Finalize analysis
-            self._finalize_analysis_results(analysis_results)
-            
-            print(f"✅ Project analysis completed successfully")
-            return analysis_results
+            # Detect frameworks and patterns
+            structure_analysis['frameworks'] = self._detect_frameworks()
+            structure_analysis['architecture_patterns'] = self._detect_architecture_patterns()
+            structure_analysis['complexity_score'] = self._calculate_complexity_score(structure_analysis)
             
         except Exception as e:
-            print(f"⚠️ Project analysis completed with minor issues: {str(e)}")
-            analysis_results["metadata"]["execution_status"] = "completed_with_warnings"
-            analysis_results["metadata"]["warnings"] = [str(e)]
-            return analysis_results
+            logger.error(f"Error analyzing project structure: {e}")
+            structure_analysis['error'] = str(e)
+            
+        return structure_analysis
     
-    def _analyze_project_structure(self, results):
-        """Analyze project structure and organization."""
-        print("📋 Analyzing project structure...")
+    def analyze_code_quality(self) -> Dict[str, Any]:
+        """Analyze code quality metrics"""
+        logger.info("📊 Analyzing code quality...")
         
-        project_root = Path(".")
-        
-        # Key project components
-        components = {
-            "src/": {"type": "source_code", "importance": "critical"},
-            ".github/": {"type": "ci_cd", "importance": "high"},
-            "tests/": {"type": "testing", "importance": "high"},
-            "docs/": {"type": "documentation", "importance": "medium"},
-            "requirements.txt": {"type": "dependencies", "importance": "critical"},
-            "docker-compose.yml": {"type": "containerization", "importance": "high"},
-            "README.md": {"type": "documentation", "importance": "medium"},
-            ".gitignore": {"type": "version_control", "importance": "medium"}
+        quality_analysis = {
+            'lines_of_code': 0,
+            'cyclomatic_complexity': 0,
+            'maintainability_index': 0,
+            'technical_debt': 0,
+            'code_smells': [],
+            'duplications': [],
+            'test_coverage': 0,
+            'documentation_coverage': 0
         }
         
-        structure_analysis = {
-            "components_found": [],
-            "missing_components": [],
-            "structure_score": 0
-        }
-        
-        for component, info in components.items():
-            if Path(component).exists():
-                structure_analysis["components_found"].append({
-                    "component": component,
-                    "type": info["type"],
-                    "importance": info["importance"],
-                    "status": "present"
-                })
-                # Score based on importance
-                if info["importance"] == "critical":
-                    structure_analysis["structure_score"] += 25
-                elif info["importance"] == "high":
-                    structure_analysis["structure_score"] += 15
-                else:
-                    structure_analysis["structure_score"] += 10
-            else:
-                structure_analysis["missing_components"].append({
-                    "component": component,
-                    "type": info["type"],
-                    "importance": info["importance"],
-                    "recommendation": f"Consider adding {component} for better {info['type']}"
-                })
-        
-        results["project_health"]["architecture_assessment"] = structure_analysis
-        results["analysis_metrics"]["components_evaluated"] = len(components)
+        try:
+            # Count lines of code
+            total_lines = 0
+            code_files = 0
+            
+            for file_path in Path('.').rglob('*.py'):
+                if not any(part.startswith('.') for part in file_path.parts):
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            lines = len(f.readlines())
+                            total_lines += lines
+                            code_files += 1
+                    except Exception:
+                        continue
+            
+            quality_analysis['lines_of_code'] = total_lines
+            quality_analysis['files_analyzed'] = code_files
+            
+            # Analyze code patterns
+            quality_analysis['code_smells'] = self._detect_code_smells()
+            quality_analysis['duplications'] = self._detect_duplications()
+            
+        except Exception as e:
+            logger.error(f"Error analyzing code quality: {e}")
+            quality_analysis['error'] = str(e)
+            
+        return quality_analysis
     
-    def _assess_code_quality(self, results):
-        """Assess code quality indicators."""
-        print("🔍 Assessing code quality...")
+    def analyze_dependencies(self) -> Dict[str, Any]:
+        """Analyze project dependencies"""
+        logger.info("📦 Analyzing dependencies...")
         
-        project_root = Path(".")
-        
-        # Count different file types
-        file_analysis = {
-            "python_files": len(list(project_root.rglob("*.py"))),
-            "javascript_files": len(list(project_root.rglob("*.js"))),
-            "yaml_files": len(list(project_root.rglob("*.yml"))) + len(list(project_root.rglob("*.yaml"))),
-            "markdown_files": len(list(project_root.rglob("*.md"))),
-            "json_files": len(list(project_root.rglob("*.json")))
+        dependency_analysis = {
+            'dependencies': [],
+            'dev_dependencies': [],
+            'outdated_packages': [],
+            'security_vulnerabilities': [],
+            'license_conflicts': [],
+            'dependency_health': 'good'
         }
         
-        total_files = sum(file_analysis.values())
-        results["analysis_metrics"]["files_analyzed"] = total_files
-        
-        # Quality indicators
-        quality_indicators = {
-            "file_diversity": len([k for k, v in file_analysis.items() if v > 0]),
-            "documentation_ratio": file_analysis["markdown_files"] / max(total_files, 1),
-            "configuration_files": file_analysis["yaml_files"] + file_analysis["json_files"],
-            "primary_language": "python" if file_analysis["python_files"] > 0 else "mixed"
-        }
-        
-        # Calculate quality score
-        quality_score = 0
-        if quality_indicators["file_diversity"] >= 3:
-            quality_score += 25
-        if quality_indicators["documentation_ratio"] >= 0.1:
-            quality_score += 25
-        if quality_indicators["configuration_files"] >= 2:
-            quality_score += 25
-        if file_analysis["python_files"] >= 10:
-            quality_score += 25
-        
-        results["project_health"]["code_quality"] = {
-            "file_analysis": file_analysis,
-            "quality_indicators": quality_indicators,
-            "quality_score": quality_score
-        }
+        try:
+            # Check for requirements files
+            req_files = ['requirements.txt', 'requirements-dev.txt', 'pyproject.toml', 'setup.py']
+            
+            for req_file in req_files:
+                if Path(req_file).exists():
+                    dependency_analysis['dependencies'].extend(self._parse_requirements(req_file))
+            
+            # Analyze dependency health
+            dependency_analysis['dependency_health'] = self._assess_dependency_health(dependency_analysis)
+            
+        except Exception as e:
+            logger.error(f"Error analyzing dependencies: {e}")
+            dependency_analysis['error'] = str(e)
+            
+        return dependency_analysis
     
-    def _evaluate_architecture(self, results):
-        """Evaluate project architecture and design patterns."""
-        print("🏢 Evaluating architecture...")
+    def analyze_security(self) -> Dict[str, Any]:
+        """Analyze security aspects"""
+        logger.info("🔒 Analyzing security...")
         
-        architecture_features = {
-            "multi_agent_system": Path("src/agents/").exists() or Path("agents/").exists(),
-            "ai_integration": Path("requirements.txt").exists(),
-            "containerization": Path("docker-compose.yml").exists() or Path("Dockerfile").exists(),
-            "ci_cd_automation": Path(".github/workflows/").exists(),
-            "testing_framework": Path("tests/").exists(),
-            "configuration_management": Path(".env.example").exists()
+        security_analysis = {
+            'vulnerabilities': [],
+            'secrets_detected': [],
+            'permissions': [],
+            'encryption_usage': [],
+            'security_score': 0
         }
         
-        architecture_score = sum(20 for feature in architecture_features.values() if feature)
-        
-        # Advanced analysis for AI systems
-        ai_capabilities = []
-        if Path("requirements.txt").exists():
-            try:
-                with open("requirements.txt", 'r') as f:
-                    content = f.read().lower()
-                    if any(ai_lib in content for ai_lib in ['openai', 'anthropic', 'groq', 'cohere']):
-                        ai_capabilities.append("multiple_ai_providers")
-                    if 'fastapi' in content or 'flask' in content:
-                        ai_capabilities.append("api_framework")
-                    if 'docker' in content or Path("docker-compose.yml").exists():
-                        ai_capabilities.append("containerized_deployment")
-            except Exception:
-                pass
-        
-        results["project_health"]["architecture_assessment"].update({
-            "architecture_features": architecture_features,
-            "architecture_score": architecture_score,
-            "ai_capabilities": ai_capabilities,
-            "complexity_level": "enterprise" if architecture_score >= 80 else "intermediate"
-        })
+        try:
+            # Check for common security issues
+            security_analysis['secrets_detected'] = self._detect_secrets()
+            security_analysis['vulnerabilities'] = self._detect_vulnerabilities()
+            security_analysis['security_score'] = self._calculate_security_score(security_analysis)
+            
+        except Exception as e:
+            logger.error(f"Error analyzing security: {e}")
+            security_analysis['error'] = str(e)
+            
+        return security_analysis
     
-    def _analyze_performance_patterns(self, results):
-        """Analyze performance-related patterns and optimizations."""
-        print("⚡ Analyzing performance patterns...")
+    def analyze_performance(self) -> Dict[str, Any]:
+        """Analyze performance characteristics"""
+        logger.info("⚡ Analyzing performance...")
         
-        performance_indicators = {
-            "async_patterns": 0,
-            "caching_mechanisms": 0,
-            "optimization_patterns": 0,
-            "monitoring_setup": 0
+        performance_analysis = {
+            'bottlenecks': [],
+            'optimization_opportunities': [],
+            'resource_usage': {},
+            'performance_score': 0
         }
         
-        # Check for performance patterns in Python files
-        python_files = list(Path(".").rglob("*.py"))[:10]  # Limit for performance
-        
-        for py_file in python_files:
-            try:
-                with open(py_file, 'r', encoding='utf-8', errors='ignore') as f:
-                    content = f.read().lower()
-                    if 'async ' in content or 'await ' in content:
-                        performance_indicators["async_patterns"] += 1
-                    if 'cache' in content or 'redis' in content:
-                        performance_indicators["caching_mechanisms"] += 1
-                    if 'optimize' in content or 'performance' in content:
-                        performance_indicators["optimization_patterns"] += 1
-                    if 'logging' in content or 'monitor' in content:
-                        performance_indicators["monitoring_setup"] += 1
-            except Exception:
-                continue
-        
-        performance_score = min(100, sum(performance_indicators.values()) * 10)
-        
-        results["project_health"]["performance_metrics"] = {
-            "performance_indicators": performance_indicators,
-            "performance_score": performance_score,
-            "optimization_level": "high" if performance_score >= 70 else "medium"
-        }
+        try:
+            # Analyze performance patterns
+            performance_analysis['bottlenecks'] = self._detect_performance_bottlenecks()
+            performance_analysis['optimization_opportunities'] = self._find_optimization_opportunities()
+            performance_analysis['performance_score'] = self._calculate_performance_score(performance_analysis)
+            
+        except Exception as e:
+            logger.error(f"Error analyzing performance: {e}")
+            performance_analysis['error'] = str(e)
+            
+        return performance_analysis
     
-    def _generate_learning_insights(self, results):
-        """Generate learning insights and improvement suggestions."""
-        print("🧠 Generating learning insights...")
+    def generate_recommendations(self) -> List[Dict[str, Any]]:
+        """Generate AI-powered recommendations"""
+        logger.info("💡 Generating recommendations...")
         
-        # Base insights on analysis results
-        structure_score = results["project_health"]["architecture_assessment"].get("structure_score", 0)
-        quality_score = results["project_health"]["code_quality"].get("quality_score", 0)
-        architecture_score = results["project_health"]["architecture_assessment"].get("architecture_score", 0)
-        performance_score = results["project_health"]["performance_metrics"].get("performance_score", 0)
+        recommendations = []
         
-        insights = {
-            "improvement_opportunities": [],
-            "best_practices_identified": [],
-            "pattern_recognition": [],
-            "optimization_suggestions": []
+        try:
+            # Analyze findings and generate recommendations
+            if self.results['findings']:
+                for finding in self.results['findings']:
+                    if finding.get('severity') == 'high':
+                        recommendations.append({
+                            'type': 'critical_fix',
+                            'priority': 'high',
+                            'title': f"Fix {finding.get('type', 'issue')}",
+                            'description': finding.get('description', ''),
+                            'action': finding.get('recommended_action', ''),
+                            'impact': 'high'
+                        })
+            
+            # Add general recommendations based on analysis
+            recommendations.extend(self._generate_general_recommendations())
+            
+        except Exception as e:
+            logger.error(f"Error generating recommendations: {e}")
+            
+        return recommendations
+    
+    def _detect_frameworks(self) -> List[str]:
+        """Detect frameworks and libraries used"""
+        frameworks = []
+        
+        # Check for common framework indicators
+        framework_indicators = {
+            'django': ['django/', 'manage.py', 'settings.py'],
+            'flask': ['app.py', 'flask_app.py'],
+            'fastapi': ['main.py', 'app.py'],
+            'react': ['package.json', 'src/'],
+            'vue': ['vue.config.js', 'src/'],
+            'angular': ['angular.json', 'src/'],
+            'spring': ['pom.xml', 'application.properties'],
+            'express': ['package.json', 'app.js', 'server.js']
         }
         
-        # Generate insights based on scores
-        if structure_score < 80:
-            insights["improvement_opportunities"].append({
-                "area": "project_structure",
-                "description": "Project structure could be enhanced with additional components",
-                "priority": "medium",
-                "impact": "maintainability"
-            })
+        for framework, indicators in framework_indicators.items():
+            if any(Path(indicator).exists() for indicator in indicators):
+                frameworks.append(framework)
         
-        if quality_score >= 75:
-            insights["best_practices_identified"].append({
-                "practice": "code_organization",
-                "description": "Good code organization and file diversity detected",
-                "strength_level": "high"
-            })
-        
-        if architecture_score >= 80:
-            insights["pattern_recognition"].append({
-                "pattern": "enterprise_architecture",
-                "description": "Enterprise-level architecture patterns detected",
-                "confidence": "high"
-            })
-        
-        if performance_score < 50:
-            insights["optimization_suggestions"].append({
-                "area": "performance_optimization",
-                "suggestion": "Consider implementing async patterns and caching mechanisms",
-                "potential_impact": "high"
-            })
-        
-        # Add general insights
-        insights["pattern_recognition"].append({
-            "pattern": "ai_multi_agent_system",
-            "description": "Advanced AI multi-agent system architecture identified",
-            "confidence": "high"
-        })
-        
-        results["learning_insights"] = insights
-        results["analysis_metrics"]["insights_generated"] = sum(len(v) if isinstance(v, list) else 1 for v in insights.values())
+        return frameworks
     
-    def _calculate_health_score(self, results):
-        """Calculate overall project health score."""
-        scores = [
-            results["project_health"]["architecture_assessment"].get("structure_score", 0) * 0.3,
-            results["project_health"]["code_quality"].get("quality_score", 0) * 0.3,
-            results["project_health"]["architecture_assessment"].get("architecture_score", 0) * 0.25,
-            results["project_health"]["performance_metrics"].get("performance_score", 0) * 0.15
+    def _detect_architecture_patterns(self) -> List[str]:
+        """Detect architectural patterns"""
+        patterns = []
+        
+        # Check for common patterns
+        if Path('src/').exists() and Path('tests/').exists():
+            patterns.append('layered_architecture')
+        
+        if any(Path(p).exists() for p in ['api/', 'services/', 'models/']):
+            patterns.append('service_oriented')
+        
+        if Path('docker-compose.yml').exists():
+            patterns.append('microservices')
+        
+        return patterns
+    
+    def _calculate_complexity_score(self, structure: Dict[str, Any]) -> int:
+        """Calculate project complexity score"""
+        score = 0
+        
+        # Base score on number of files and directories
+        score += len(structure['files']) * 0.1
+        score += len(structure['directories']) * 0.5
+        
+        # Add complexity for multiple languages
+        score += len(structure['languages']) * 2
+        
+        # Add complexity for frameworks
+        score += len(structure['frameworks']) * 1.5
+        
+        return int(score)
+    
+    def _detect_code_smells(self) -> List[Dict[str, Any]]:
+        """Detect code smells"""
+        smells = []
+        
+        try:
+            # Check for common code smells
+            for file_path in Path('.').rglob('*.py'):
+                if not any(part.startswith('.') for part in file_path.parts):
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                            
+                            # Check for long functions (simplified)
+                            lines = content.split('\n')
+                            if len(lines) > 50:
+                                smells.append({
+                                    'type': 'long_function',
+                                    'file': str(file_path),
+                                    'description': 'Function or file is too long',
+                                    'severity': 'medium'
+                                })
+                            
+                            # Check for duplicate code patterns
+                            if 'TODO' in content or 'FIXME' in content:
+                                smells.append({
+                                    'type': 'technical_debt',
+                                    'file': str(file_path),
+                                    'description': 'Contains TODO or FIXME comments',
+                                    'severity': 'low'
+                                })
+                    except Exception:
+                        continue
+        except Exception as e:
+            logger.error(f"Error detecting code smells: {e}")
+        
+        return smells
+    
+    def _detect_duplications(self) -> List[Dict[str, Any]]:
+        """Detect code duplications"""
+        duplications = []
+        
+        # Simplified duplication detection
+        # In a real implementation, this would use more sophisticated algorithms
+        try:
+            file_contents = {}
+            
+            for file_path in Path('.').rglob('*.py'):
+                if not any(part.startswith('.') for part in file_path.parts):
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                            file_contents[str(file_path)] = content
+                    except Exception:
+                        continue
+            
+            # Simple duplication detection based on common patterns
+            common_patterns = [
+                'import os',
+                'import sys',
+                'def main():',
+                'if __name__ == "__main__":'
+            ]
+            
+            for pattern in common_patterns:
+                files_with_pattern = [f for f, c in file_contents.items() if pattern in c]
+                if len(files_with_pattern) > 3:
+                    duplications.append({
+                        'type': 'common_pattern',
+                        'pattern': pattern,
+                        'files': files_with_pattern,
+                        'severity': 'low'
+                    })
+        except Exception as e:
+            logger.error(f"Error detecting duplications: {e}")
+        
+        return duplications
+    
+    def _parse_requirements(self, file_path: str) -> List[Dict[str, Any]]:
+        """Parse requirements file"""
+        requirements = []
+        
+        try:
+            with open(file_path, 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    if line and not line.startswith('#'):
+                        # Simple parsing - in reality would use proper requirement parsing
+                        if '==' in line:
+                            name, version = line.split('==', 1)
+                            requirements.append({
+                                'name': name.strip(),
+                                'version': version.strip(),
+                                'constraint': '=='
+                            })
+                        elif '>=' in line:
+                            name, version = line.split('>=', 1)
+                            requirements.append({
+                                'name': name.strip(),
+                                'version': version.strip(),
+                                'constraint': '>='
+                            })
+                        else:
+                            requirements.append({
+                                'name': line,
+                                'version': 'latest',
+                                'constraint': 'none'
+                            })
+        except Exception as e:
+            logger.error(f"Error parsing requirements {file_path}: {e}")
+        
+        return requirements
+    
+    def _assess_dependency_health(self, analysis: Dict[str, Any]) -> str:
+        """Assess overall dependency health"""
+        if not analysis['dependencies']:
+            return 'unknown'
+        
+        # Simple health assessment
+        total_deps = len(analysis['dependencies'])
+        if total_deps < 10:
+            return 'excellent'
+        elif total_deps < 50:
+            return 'good'
+        elif total_deps < 100:
+            return 'fair'
+        else:
+            return 'poor'
+    
+    def _detect_secrets(self) -> List[Dict[str, Any]]:
+        """Detect potential secrets in code"""
+        secrets = []
+        
+        secret_patterns = [
+            r'password\s*=\s*["\'][^"\']+["\']',
+            r'api_key\s*=\s*["\'][^"\']+["\']',
+            r'secret\s*=\s*["\'][^"\']+["\']',
+            r'token\s*=\s*["\'][^"\']+["\']'
         ]
         
-        overall_score = sum(scores)
-        results["project_health"]["overall_score"] = round(overall_score, 1)
+        try:
+            import re
+            
+            for file_path in Path('.').rglob('*.py'):
+                if not any(part.startswith('.') for part in file_path.parts):
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                            
+                            for pattern in secret_patterns:
+                                matches = re.findall(pattern, content, re.IGNORECASE)
+                                for match in matches:
+                                    secrets.append({
+                                        'type': 'potential_secret',
+                                        'file': str(file_path),
+                                        'pattern': pattern,
+                                        'match': match,
+                                        'severity': 'high'
+                                    })
+                    except Exception:
+                        continue
+        except Exception as e:
+            logger.error(f"Error detecting secrets: {e}")
         
-        # Health status
-        if overall_score >= 90:
-            health_status = "excellent"
-        elif overall_score >= 75:
-            health_status = "good"
-        elif overall_score >= 60:
-            health_status = "fair"
-        else:
-            health_status = "needs_improvement"
-        
-        results["project_health"]["health_status"] = health_status
+        return secrets
     
-    def _finalize_analysis_results(self, results):
-        """Finalize analysis results and metrics."""
-        execution_time = time.time() - self.start_time
+    def _detect_vulnerabilities(self) -> List[Dict[str, Any]]:
+        """Detect security vulnerabilities"""
+        vulnerabilities = []
         
-        results["analysis_metrics"]["analysis_duration"] = f"{execution_time:.1f}s"
-        results["metadata"]["execution_status"] = "completed_successfully"
+        # Check for common vulnerability patterns
+        vuln_patterns = [
+            {
+                'pattern': r'eval\s*\(',
+                'type': 'code_injection',
+                'severity': 'high'
+            },
+            {
+                'pattern': r'exec\s*\(',
+                'type': 'code_injection',
+                'severity': 'high'
+            },
+            {
+                'pattern': r'shell=True',
+                'type': 'command_injection',
+                'severity': 'medium'
+            }
+        ]
         
-        print(f"📊 Analysis completed in {execution_time:.1f}s")
-        print(f"🎦 Overall health score: {results['project_health']['overall_score']}/100")
-        print(f"🎯 Health status: {results['project_health']['health_status']}")
-        print(f"🧠 Insights generated: {results['analysis_metrics']['insights_generated']}")
+        try:
+            import re
+            
+            for file_path in Path('.').rglob('*.py'):
+                if not any(part.startswith('.') for part in file_path.parts):
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                            
+                            for vuln in vuln_patterns:
+                                matches = re.findall(vuln['pattern'], content)
+                                for match in matches:
+                                    vulnerabilities.append({
+                                        'type': vuln['type'],
+                                        'file': str(file_path),
+                                        'pattern': vuln['pattern'],
+                                        'match': match,
+                                        'severity': vuln['severity']
+                                    })
+                    except Exception:
+                        continue
+        except Exception as e:
+            logger.error(f"Error detecting vulnerabilities: {e}")
+        
+        return vulnerabilities
+    
+    def _calculate_security_score(self, analysis: Dict[str, Any]) -> int:
+        """Calculate security score (0-100)"""
+        score = 100
+        
+        # Deduct points for vulnerabilities
+        for vuln in analysis['vulnerabilities']:
+            if vuln['severity'] == 'high':
+                score -= 20
+            elif vuln['severity'] == 'medium':
+                score -= 10
+            else:
+                score -= 5
+        
+        # Deduct points for secrets
+        score -= len(analysis['secrets_detected']) * 15
+        
+        return max(0, score)
+    
+    def _detect_performance_bottlenecks(self) -> List[Dict[str, Any]]:
+        """Detect performance bottlenecks"""
+        bottlenecks = []
+        
+        try:
+            for file_path in Path('.').rglob('*.py'):
+                if not any(part.startswith('.') for part in file_path.parts):
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                            
+                            # Check for common performance issues
+                            if 'for ' in content and 'for ' in content[content.find('for ')+1:]:
+                                bottlenecks.append({
+                                    'type': 'nested_loops',
+                                    'file': str(file_path),
+                                    'description': 'Nested loops detected',
+                                    'severity': 'medium'
+                                })
+                            
+                            if 'time.sleep(' in content:
+                                bottlenecks.append({
+                                    'type': 'blocking_sleep',
+                                    'file': str(file_path),
+                                    'description': 'Blocking sleep detected',
+                                    'severity': 'low'
+                                })
+                    except Exception:
+                        continue
+        except Exception as e:
+            logger.error(f"Error detecting performance bottlenecks: {e}")
+        
+        return bottlenecks
+    
+    def _find_optimization_opportunities(self) -> List[Dict[str, Any]]:
+        """Find optimization opportunities"""
+        opportunities = []
+        
+        try:
+            for file_path in Path('.').rglob('*.py'):
+                if not any(part.startswith('.') for part in file_path.parts):
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                            
+                            # Check for optimization opportunities
+                            if 'import *' in content:
+                                opportunities.append({
+                                    'type': 'wildcard_import',
+                                    'file': str(file_path),
+                                    'description': 'Wildcard import detected - consider specific imports',
+                                    'severity': 'low'
+                                })
+                            
+                            if 'list(' in content and 'range(' in content:
+                                opportunities.append({
+                                    'type': 'list_comprehension',
+                                    'file': str(file_path),
+                                    'description': 'Consider using list comprehension',
+                                    'severity': 'low'
+                                })
+                    except Exception:
+                        continue
+        except Exception as e:
+            logger.error(f"Error finding optimization opportunities: {e}")
+        
+        return opportunities
+    
+    def _calculate_performance_score(self, analysis: Dict[str, Any]) -> int:
+        """Calculate performance score (0-100)"""
+        score = 100
+        
+        # Deduct points for bottlenecks
+        for bottleneck in analysis['bottlenecks']:
+            if bottleneck['severity'] == 'high':
+                score -= 25
+            elif bottleneck['severity'] == 'medium':
+                score -= 15
+            else:
+                score -= 5
+        
+        return max(0, score)
+    
+    def _generate_general_recommendations(self) -> List[Dict[str, Any]]:
+        """Generate general recommendations based on analysis"""
+        recommendations = []
+        
+        # Add recommendations based on analysis results
+        if self.results.get('metrics', {}).get('lines_of_code', 0) > 10000:
+            recommendations.append({
+                'type': 'code_organization',
+                'priority': 'medium',
+                'title': 'Consider code modularization',
+                'description': 'Large codebase detected - consider breaking into smaller modules',
+                'action': 'Refactor large files into smaller, focused modules',
+                'impact': 'medium'
+            })
+        
+        if len(self.results.get('findings', [])) > 20:
+            recommendations.append({
+                'type': 'code_quality',
+                'priority': 'high',
+                'title': 'Address code quality issues',
+                'description': 'Multiple code quality issues detected',
+                'action': 'Review and fix identified code quality problems',
+                'impact': 'high'
+            })
+        
+        return recommendations
+    
+    def run_analysis(self) -> Dict[str, Any]:
+        """Run complete project analysis"""
+        logger.info("🚀 Starting AI Project Analysis...")
+        
+        try:
+            # Run all analysis components
+            self.results['structure'] = self.analyze_project_structure()
+            self.results['code_quality'] = self.analyze_code_quality()
+            self.results['dependencies'] = self.analyze_dependencies()
+            self.results['security'] = self.analyze_security()
+            self.results['performance'] = self.analyze_performance()
+            
+            # Generate recommendations
+            self.results['recommendations'] = self.generate_recommendations()
+            
+            # Calculate overall metrics
+            self.results['metrics'] = self._calculate_overall_metrics()
+            
+            logger.info("✅ Project analysis completed successfully")
+            
+        except Exception as e:
+            logger.error(f"Error during analysis: {e}")
+            self.results['status'] = 'error'
+            self.results['error'] = str(e)
+        
+        return self.results
+    
+    def _calculate_overall_metrics(self) -> Dict[str, Any]:
+        """Calculate overall project metrics"""
+        metrics = {
+            'total_files': len(self.results.get('structure', {}).get('files', [])),
+            'total_lines': self.results.get('code_quality', {}).get('lines_of_code', 0),
+            'languages_count': len(self.results.get('structure', {}).get('languages', {})),
+            'frameworks_count': len(self.results.get('structure', {}).get('frameworks', [])),
+            'security_score': self.results.get('security', {}).get('security_score', 0),
+            'performance_score': self.results.get('performance', {}).get('performance_score', 0),
+            'complexity_score': self.results.get('structure', {}).get('complexity_score', 0),
+            'issues_count': len(self.results.get('findings', [])),
+            'recommendations_count': len(self.results.get('recommendations', []))
+        }
+        
+        # Calculate overall health score
+        health_components = [
+            metrics['security_score'],
+            metrics['performance_score'],
+            100 - min(metrics['complexity_score'], 100),
+            100 - min(metrics['issues_count'] * 5, 100)
+        ]
+        
+        metrics['overall_health_score'] = sum(health_components) // len(health_components)
+        
+        return metrics
 
 def main():
-    parser = argparse.ArgumentParser(description="Advanced AI Project Analyzer")
-    parser.add_argument("--mode", default="intelligent", help="Analysis mode")
-    parser.add_argument("--areas", default="all", help="Target areas for analysis")
-    parser.add_argument("--depth", default="comprehensive", help="Learning depth")
-    parser.add_argument("--auto-apply", action="store_true", help="Auto-apply improvements")
-    parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced AI manager")
-    parser.add_argument("--output", default="project_analysis_results.json", help="Output file path")
+    """Main entry point"""
+    parser = argparse.ArgumentParser(description='AI Project Analyzer')
+    parser.add_argument('--mode', default='intelligent', help='Analysis mode')
+    parser.add_argument('--areas', default='all', help='Target areas for analysis')
+    parser.add_argument('--depth', default='deep', help='Analysis depth')
+    parser.add_argument('--auto-apply', action='store_true', help='Auto-apply fixes')
+    parser.add_argument('--use-advanced-manager', action='store_true', help='Use advanced manager')
+    parser.add_argument('--output', default='project_analysis_results.json', help='Output file')
     
     args = parser.parse_args()
     
-    print(f"🤖 Starting AI Project Analysis & Learning")
-    print(f"Mode: {args.mode} | Areas: {args.areas} | Depth: {args.depth}")
-    print(f"Auto-apply: {args.auto_apply}")
-    print("")
+    # Create configuration
+    config = {
+        'mode': args.mode,
+        'areas': args.areas,
+        'depth': args.depth,
+        'auto_apply': args.auto_apply,
+        'use_advanced_manager': args.use_advanced_manager
+    }
     
-    try:
-        # Initialize project analyzer
-        analyzer = AdvancedProjectAnalyzer(
-            mode=args.mode,
-            areas=args.areas,
-            depth=args.depth,
-            auto_apply=args.auto_apply
-        )
-        
-        # Execute project analysis
-        results = analyzer.execute_project_analysis()
-        
-        # Save results
-        with open(args.output, 'w') as f:
-            json.dump(results, f, indent=2)
-        
-        print(f"📄 Results saved to {args.output}")
-        
-        return 0
-        
-    except Exception as e:
-        print(f"❌ Project analysis failed: {str(e)}")
-        
-        # Create minimal results even on failure
-        minimal_results = {
-            "metadata": {
-                "timestamp": datetime.now().isoformat(),
-                "execution_status": "failed",
-                "error": str(e)
-            },
-            "project_health": {"overall_score": 50},
-            "analysis_metrics": {"confidence_level": 50}
-        }
-        
-        with open(args.output, 'w') as f:
-            json.dump(minimal_results, f, indent=2)
-        
-        return 1
+    # Initialize analyzer
+    analyzer = AIProjectAnalyzer(config)
+    
+    # Run analysis
+    results = analyzer.run_analysis()
+    
+    # Save results
+    with open(args.output, 'w') as f:
+        json.dump(results, f, indent=2)
+    
+    logger.info(f"Analysis results saved to {args.output}")
+    
+    return 0 if results['status'] == 'success' else 1
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     sys.exit(main())
