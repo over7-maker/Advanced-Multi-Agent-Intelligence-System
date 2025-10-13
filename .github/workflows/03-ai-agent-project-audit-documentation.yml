@@ -294,7 +294,7 @@ jobs:
         echo ""
         
         # Run AI Documentation Generation with error handling
-        if python .github/scripts/ai_documentation_generator.py \
+        if python .github/scripts/ai_documentation_generator_real.py \
           --mode $AUDIT_MODE \
           --components $TARGET_COMPONENTS \
           --level $DOCUMENTATION_LEVEL \

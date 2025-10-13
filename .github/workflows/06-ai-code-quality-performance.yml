@@ -650,7 +650,7 @@ jobs:
         echo ""
         
         # Run Automated Code Enhancement
-        python .github/scripts/ai_code_enhancer.py \
+        python .github/scripts/ai_code_enhancer_real.py \
           --mode $QUALITY_MODE \
           --languages $TARGET_LANGUAGES \
           --level $OPTIMIZATION_LEVEL \
