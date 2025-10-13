@@ -111,6 +111,11 @@ class RealAICodeEnhancer:
         """Perform real AI analysis using the provider manager"""
         print("🤖 Performing AI analysis...")
         
+        # Debug: Check provider status
+        print(f"🔍 Debug: Available providers: {len(ai_manager.available_providers)}")
+        for name, config in ai_manager.available_providers.items():
+            print(f"  - {name}: {config['model']}")
+        
         # Create analysis prompt
         prompt = f"""
         Perform comprehensive code analysis on the following files:
@@ -131,15 +136,23 @@ class RealAICodeEnhancer:
         Be detailed, actionable, and specific. Include code examples where helpful.
         """
         
-        # Use AI provider manager
-        analysis_result = await ai_manager.analyze_with_fallback(prompt)
-        
-        if analysis_result.get('success'):
-            print(f"✅ AI analysis completed using {analysis_result.get('fallback_used', 'unknown')} provider")
-        else:
-            print(f"❌ AI analysis failed: {analysis_result.get('error', 'Unknown error')}")
-        
-        return analysis_result
+        try:
+            # Use AI provider manager
+            analysis_result = await ai_manager.analyze_with_fallback(prompt)
+            
+            if analysis_result.get('success'):
+                print(f"✅ AI analysis completed using {analysis_result.get('fallback_used', 'unknown')} provider")
+            else:
+                print(f"❌ AI analysis failed: {analysis_result.get('error', 'Unknown error')}")
+            
+            return analysis_result
+        except Exception as e:
+            print(f"❌ Exception during AI analysis: {str(e)}")
+            return {
+                'success': False,
+                'error': f'Exception: {str(e)}',
+                'timestamp': datetime.utcnow().isoformat()
+            }
     
     async def _generate_enhancements(self, files, analysis_results):
         """Generate specific enhancement recommendations"""
@@ -239,6 +252,19 @@ async def main():
     args = parser.parse_args()
     
     try:
+        print("🚀 Starting Real AI Code Enhancer...")
+        print(f"📋 Arguments: mode={args.mode}, languages={args.languages}, level={args.level}")
+        
+        # Debug: Check environment variables
+        print("🔍 Debug: Checking environment variables...")
+        api_keys = ['DEEPSEEK_API_KEY', 'GLM_API_KEY', 'GROK_API_KEY', 'KIMI_API_KEY', 'QWEN_API_KEY']
+        for key in api_keys:
+            value = os.getenv(key)
+            if value:
+                print(f"  ✅ {key}: {'*' * min(len(value), 8)}...")
+            else:
+                print(f"  ❌ {key}: Not set")
+        
         # Initialize enhancer
         enhancer = RealAICodeEnhancer(
             mode=args.mode,
@@ -269,13 +295,16 @@ async def main():
         
     except Exception as e:
         print(f"❌ Real AI Code Enhancement failed: {str(e)}")
+        import traceback
+        print(f"🔍 Full traceback: {traceback.format_exc()}")
         
         # Create minimal results even on failure
         minimal_results = {
             "metadata": {
                 "timestamp": datetime.utcnow().isoformat(),
                 "execution_status": "failed",
-                "error": str(e)
+                "error": str(e),
+                "traceback": traceback.format_exc()
             },
             "enhancements": {"error": str(e)},
             "performance_metrics": {"success_rate": 0.0}
