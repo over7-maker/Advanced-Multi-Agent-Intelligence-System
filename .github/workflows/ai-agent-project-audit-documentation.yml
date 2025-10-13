@@ -104,11 +104,10 @@ jobs:
         pip install --no-deps --only-binary=all anthropic==0.18.0
         pip install --no-deps --only-binary=all google-generativeai==0.3.2
         pip install --no-deps --only-binary=all groq==0.4.1
-
- pip install --no-deps --only-binary=all cohere==4.37
- # Install quality packages with minimal dependencies
-
- pip install --no-deps --only-binary=all flake8==6.1.0
+        pip install --no-deps --only-binary=all cohere==4.37
+        
+        # Install quality packages with minimal dependencies
+        pip install --no-deps --only-binary=all flake8==6.1.0
 
  pip install --no-deps --only-binary=all bandit==1.7.5
  # Install test packages with minimal dependencies
