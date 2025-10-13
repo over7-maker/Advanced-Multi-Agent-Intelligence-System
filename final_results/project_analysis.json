@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "timestamp": "2025-10-12T03:14:40.516836",
+    "timestamp": "2025-10-13T02:02:05.182755",
     "version": "3.0",
     "analysis_mode": "intelligent",
     "target_areas": "all",
@@ -13,10 +13,10 @@
     "code_quality_score": 95,
     "architecture_assessment": {
       "file_distribution": {
-        "python_files": 331,
+        "python_files": 407,
         "yaml_files": 26,
-        "json_files": 49,
-        "markdown_files": 116,
+        "json_files": 52,
+        "markdown_files": 117,
         "docker_files": 9
       },
       "directory_structure": {
@@ -46,7 +46,7 @@
           "subdirs": 4
         }
       },
-      "complexity_score": 53,
+      "complexity_score": 61,
       "organization_quality": "excellent"
     },
     "performance_metrics": {
@@ -129,8 +129,8 @@
     "auto_applicable": []
   },
   "execution_metrics": {
-    "analysis_duration": "0.0s",
-    "files_analyzed": 531,
+    "analysis_duration": "0.1s",
+    "files_analyzed": 611,
     "insights_generated": 8,
     "confidence_score": 98,
     "processing_efficiency": "high"
