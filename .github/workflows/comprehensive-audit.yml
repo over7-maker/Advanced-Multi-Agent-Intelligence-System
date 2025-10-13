@@ -108,7 +108,6 @@ jobs:
     
     - name: 📊 Generate Audit Report
       id: audit_report
-      needs: run_audit
       run: |
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
