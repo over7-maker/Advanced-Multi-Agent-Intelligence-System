@@ -168,7 +168,7 @@ jobs:
         echo ""
         
         # Run Intelligent Build Analysis with error handling
-        if python .github/scripts/ai_build_analyzer.py \
+        if python .github/scripts/ai_build_analyzer_real.py \
           --mode $BUILD_MODE \
           --platforms $TARGET_PLATFORMS \
           --strategy $DEPLOYMENT_STRATEGY \
