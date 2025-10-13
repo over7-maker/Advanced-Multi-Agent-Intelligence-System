@@ -19,6 +19,7 @@ def main():
     parser.add_argument("--auto-fix", action="store_true", help="Enable auto-fix")
     parser.add_argument("--performance-benchmarking", action="store_true", help="Enable performance benchmarking")
     parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced AI manager")
+    parser.add_argument("--performance-results", help="Performance results directory")
     parser.add_argument("--output", default="ai_code_enhancer_simple_results.json", help="Output file")
     
     args = parser.parse_args()
