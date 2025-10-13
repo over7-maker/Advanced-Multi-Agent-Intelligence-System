@@ -13,11 +13,11 @@ from pathlib import Path
 def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Deployment Manager")
-    parser.add_argument("--mode", default="comprehensive", help="Analysis mode")
-    parser.add_argument("--languages", default="all", help="Target languages")
-    parser.add_argument("--level", default="high", help="Optimization level")
-    parser.add_argument("--auto-fix", action="store_true", help="Enable auto-fix")
-    parser.add_argument("--performance-benchmarking", action="store_true", help="Enable performance benchmarking")
+    parser.add_argument("--mode", default="intelligent", help="Deployment mode")
+    parser.add_argument("--platforms", default="linux", help="Target platforms")
+    parser.add_argument("--strategy", default="optimized", help="Deployment strategy")
+    parser.add_argument("--auto-rollback", default="false", help="Enable auto-rollback")
+    parser.add_argument("--performance-monitoring", default="false", help="Enable performance monitoring")
     parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced API manager")
     parser.add_argument("--output", default="ai_deployment_manager_results.json", help="Output file")
     
@@ -31,8 +31,8 @@ def main():
     args = parser.parse_args()
     
     print(f"🚀 Starting AI Deployment Manager")
-    print(f"Mode: {args.mode} | Environments: {args.languages} | Strategy: {args.level}")
-    print(f"Auto-fix: {args.auto_fix} | Performance Benchmarking: {args.performance_benchmarking}")
+    print(f"Mode: {args.mode} | Platforms: {args.platforms} | Strategy: {args.strategy}")
+    print(f"Auto-rollback: {args.auto_rollback} | Performance Monitoring: {args.performance_monitoring}")
     
     # Create simple results without external API calls
     results = {
@@ -40,10 +40,10 @@ def main():
         "description": "AI Deployment Manager",
         "functionality": "Manage and orchestrate deployments",
         "mode": args.mode,
-        "environments": args.languages,
-        "strategy": args.level,
-        "auto_fix": args.auto_fix,
-        "performance_benchmarking": args.performance_benchmarking,
+        "platforms": args.platforms,
+        "strategy": args.strategy,
+        "auto_rollback": str(args.auto_rollback).lower() == 'true',
+        "performance_monitoring": str(args.performance_monitoring).lower() == 'true',
         "ai_analysis": "AI Deployment Manager completed successfully. All checks passed.",
         "recommendations": [
             "Analysis completed successfully",

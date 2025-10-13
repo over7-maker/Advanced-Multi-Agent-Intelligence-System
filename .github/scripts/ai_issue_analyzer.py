@@ -632,7 +632,7 @@ def main():
     parser.add_argument('--mode', default='intelligent', help='Analysis mode')
     parser.add_argument('--depth', default='comprehensive', help='Analysis depth')
     parser.add_argument('--language', default='auto', help='Response language preference')
-    parser.add_argument('--auto-fix', action='store_true', help='Auto-fix issues when possible')
+    parser.add_argument('--auto-fix', default='false', help='Auto-fix issues when possible')
     parser.add_argument('--target-issues', default='all', help='Target issues to analyze')
     parser.add_argument('--use-advanced-manager', action='store_true', help='Use advanced manager')
     parser.add_argument('--output', default='issue_analysis_results.json', help='Output file')
@@ -644,7 +644,7 @@ def main():
         'mode': args.mode,
         'depth': args.depth,
         'language': args.language,
-        'auto_fix': args.auto_fix,
+        'auto_fix': str(args.auto_fix).lower() == 'true',
         'target_issues': args.target_issues,
         'use_advanced_manager': args.use_advanced_manager
     }
