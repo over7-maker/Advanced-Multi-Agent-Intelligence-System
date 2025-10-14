@@ -29,30 +29,7 @@ runs:
           echo "✅ Found AI result file: ${{ inputs.result-file }}"
           
           # Process the AI output using our processor
-          python3 -c "
-import sys
-import os
-import json
-sys.path.append('.github/scripts')
-from ai_output_processor import AIOutputProcessor
-
-# Load the AI result
-with open('${{ inputs.result-file }}', 'r') as f:
-    ai_data = json.load(f)
-
-# Process the output
-processor = AIOutputProcessor()
-processed = processor.process_ai_analysis(ai_data)
-
-# Generate clean PR comment
-comment = processor.generate_clean_pr_comment(processed)
-
-# Save the clean comment
-with open('pr_comment.md', 'w') as f:
-    f.write(comment)
-
-print('✅ AI output processed and cleaned')
-"
+          python3 .github/scripts/process_ai_output.py "${{ inputs.result-file }}"
         else
           echo "⚠️ AI result file not found, generating fallback comment"
           
