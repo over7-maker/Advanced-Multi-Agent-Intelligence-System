@@ -163,6 +163,13 @@ class AIParallelProvider:
             }
         
         # Create consensus prompt
+        # Prepare truncated responses for consensus prompt
+        truncated_responses = [{
+            "provider": r['provider'],
+            "response": r['response'][:1000],  # Truncate for length
+            "response_time": r['response_time']
+        } for r in successful_results]
+        
         consensus_prompt = f"""
 As an expert AI analyst, synthesize these multiple AI responses into a single, comprehensive analysis.
 
@@ -170,11 +177,7 @@ As an expert AI analyst, synthesize these multiple AI responses into a single, c
 {prompt}
 
 ## AI Responses:
-{json.dumps([{
-    "provider": r['provider'],
-    "response": r['response'][:1000],  # Truncate for length
-    "response_time": r['response_time']
-} for r in successful_results], indent=2)}
+{json.dumps(truncated_responses, indent=2)}
 
 ## Task:
 1. **Synthesize** the best insights from all responses
