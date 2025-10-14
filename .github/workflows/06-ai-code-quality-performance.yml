@@ -141,12 +141,12 @@ jobs:
         pip install --no-deps --only-binary=all matplotlib==3.8.2
         # Install utility packages with minimal dependencies
 
-        pip install --only-binary=all aiohttp==3.9.1 multidict yarl
+        pip install aiohttp==3.9.1
 
         pip install --no-deps --only-binary=all requests==2.31.0
         # Install AI packages with minimal dependencies
 
-        pip install --only-binary=all openai==1.12.0
+        pip install openai==1.12.0
 
         pip install --no-deps --only-binary=all anthropic==0.18.0
 
@@ -154,7 +154,7 @@ jobs:
 
         pip install --no-deps --only-binary=all groq==0.4.1
 
-        pip install --only-binary=all cohere==4.37
+        pip install cohere==4.37
         # Install git packages with minimal dependencies
 
         pip install --no-deps --only-binary=all gitpython==3.1.40
@@ -338,12 +338,12 @@ jobs:
         pip install --no-deps --only-binary=all matplotlib==3.8.2
         # Install utility packages with minimal dependencies
 
-        pip install --only-binary=all aiohttp==3.9.1 multidict yarl
+        pip install aiohttp==3.9.1
 
         pip install --no-deps --only-binary=all requests==2.31.0
         # Install AI packages with minimal dependencies
 
-        pip install --only-binary=all openai==1.12.0
+        pip install openai==1.12.0
 
         pip install --no-deps --only-binary=all anthropic==0.18.0
 
@@ -351,7 +351,7 @@ jobs:
 
         pip install --no-deps --only-binary=all groq==0.4.1
 
-        pip install --only-binary=all cohere==4.37
+        pip install cohere==4.37
         # Install git packages with minimal dependencies
 
         pip install --no-deps --only-binary=all gitpython==3.1.40
@@ -546,12 +546,12 @@ jobs:
         pip install --no-deps --only-binary=all matplotlib==3.8.2
         # Install utility packages with minimal dependencies
 
-        pip install --only-binary=all aiohttp==3.9.1 multidict yarl
+        pip install aiohttp==3.9.1
 
         pip install --no-deps --only-binary=all requests==2.31.0
         # Install AI packages with minimal dependencies
 
-        pip install --only-binary=all openai==1.12.0
+        pip install openai==1.12.0
 
         pip install --no-deps --only-binary=all anthropic==0.18.0
 
@@ -559,7 +559,7 @@ jobs:
 
         pip install --no-deps --only-binary=all groq==0.4.1
 
-        pip install --only-binary=all cohere==4.37
+        pip install cohere==4.37
         # Install git packages with minimal dependencies
 
         pip install --no-deps --only-binary=all gitpython==3.1.40
@@ -790,12 +790,12 @@ jobs:
         pip install --no-deps --only-binary=all matplotlib==3.8.2
         # Install utility packages with minimal dependencies
 
-        pip install --only-binary=all aiohttp==3.9.1 multidict yarl
+        pip install aiohttp==3.9.1
 
         pip install --no-deps --only-binary=all requests==2.31.0
         # Install AI packages with minimal dependencies
 
-        pip install --only-binary=all openai==1.12.0
+        pip install openai==1.12.0
 
         pip install --no-deps --only-binary=all anthropic==0.18.0
 
@@ -803,7 +803,7 @@ jobs:
 
         pip install --no-deps --only-binary=all groq==0.4.1
 
-        pip install --only-binary=all cohere==4.37
+        pip install cohere==4.37
         # Install git packages with minimal dependencies
 
         pip install --no-deps --only-binary=all gitpython==3.1.40
@@ -998,12 +998,12 @@ jobs:
         pip install --no-deps --only-binary=all matplotlib==3.8.2
         # Install utility packages with minimal dependencies
 
-        pip install --only-binary=all aiohttp==3.9.1 multidict yarl
+        pip install aiohttp==3.9.1
 
         pip install --no-deps --only-binary=all requests==2.31.0
         # Install AI packages with minimal dependencies
 
-        pip install --only-binary=all openai==1.12.0
+        pip install openai==1.12.0
 
         pip install --no-deps --only-binary=all anthropic==0.18.0
 
@@ -1011,7 +1011,7 @@ jobs:
 
         pip install --no-deps --only-binary=all groq==0.4.1
 
-        pip install --only-binary=all cohere==4.37
+        pip install cohere==4.37
         # Install git packages with minimal dependencies
 
         pip install --no-deps --only-binary=all gitpython==3.1.40
