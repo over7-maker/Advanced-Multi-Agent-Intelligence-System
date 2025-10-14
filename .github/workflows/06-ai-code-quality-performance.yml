@@ -476,7 +476,7 @@ jobs:
 
   # Phase 3: Automated Code Enhancement
   automated_code_enhancement:
-    name: 🔧 Automated Code Enhancement
+    name: 🤖 Real AI Code Analysis
     runs-on: ubuntu-latest
     needs: performance_analysis_optimization
     timeout-minutes: 90
@@ -644,13 +644,13 @@ jobs:
       run: |
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
-        echo "🔧 Starting Automated Code Enhancement"
+        echo "🤖 Starting Real AI Code Analysis"
         echo "Mode: $QUALITY_MODE | Languages: $TARGET_LANGUAGES | Level: $OPTIMIZATION_LEVEL"
         echo "Auto-fix: $AUTO_FIX | Performance Benchmarking: $PERFORMANCE_BENCHMARKING"
         echo ""
         
         # Run Automated Code Enhancement
-        python .github/scripts/ai_code_enhancer_simple.py \
+        python .github/scripts/comprehensive_pr_analyzer.py \
           --mode $QUALITY_MODE \
           --languages $TARGET_LANGUAGES \
           --level $OPTIMIZATION_LEVEL \
@@ -660,7 +660,7 @@ jobs:
           --use-advanced-manager \
           --output code_enhancement_results.json
         
-        echo "✅ Automated Code Enhancement completed successfully"
+        echo "✅ Real AI Code Analysis completed successfully"
     
     - name: 📊 Generate AI Summary
       run: |

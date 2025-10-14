@@ -2,6 +2,7 @@
 """
 Production-ready AI Agent Fallback System for AMAS
 Uses 16 AI providers with intelligent fallback and health monitoring
+Based on expert-level implementation with correct API endpoints
 """
 
 import os
@@ -36,7 +37,7 @@ class AIAgentFallback:
         self.failure_counts = {name: 0 for name in self.providers.keys()}
         
     def _initialize_providers(self) -> Dict[str, Dict[str, Any]]:
-        """Initialize all 16 AI providers with correct configurations"""
+        """Initialize all 16 AI providers with correct configurations matching your API keys"""
         return {
             'deepseek': {
                 'api_key': os.getenv('DEEPSEEK_API_KEY'),
