@@ -1,0 +1,292 @@
+name: 🤖 AMAS AI Agent Comment Listener
+
+on:
+  issue_comment:
+    types: [created, edited]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+env:
+  # 16 AI provider API keys
+  CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+  CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+  DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+  GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+  GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+  GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+  GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+  GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+  KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+  NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+  QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+  GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+  GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+  COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+  CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+  CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+  GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
+
+jobs:
+  ai_agent_responder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: |
+      github.event_name == 'issue_comment' && 
+      github.event.issue.pull_request != null &&
+      contains(github.event.comment.body, '@amas')
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: 📦 Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install aiohttp openai cohere python-dotenv
+          pip install multidict yarl attrs aiosignal frozenlist
+
+      - name: 🔍 Parse AI Agent Command
+        id: parse_command
+        run: |
+          echo "🔍 Parsing AI agent command..."
+          
+          # Extract command from comment
+          COMMENT_BODY="${{ github.event.comment.body }}"
+          echo "Comment: $COMMENT_BODY"
+          
+          # Extract command after @amas
+          COMMAND=$(echo "$COMMENT_BODY" | sed -n 's/.*@amas[[:space:]]*\([^[:space:]]*\).*/\1/p' | tr '[:upper:]' '[:lower:]')
+          echo "command=$COMMAND" >> $GITHUB_OUTPUT
+          
+          # Extract full command text
+          FULL_COMMAND=$(echo "$COMMENT_BODY" | sed -n 's/.*@amas[[:space:]]*\(.*\)/\1/p')
+          echo "full_command=$FULL_COMMAND" >> $GITHUB_OUTPUT
+          
+          # Extract PR number
+          PR_NUMBER="${{ github.event.issue.number }}"
+          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
+          
+          # Extract commenter
+          COMMENTER="${{ github.event.comment.user.login }}"
+          echo "commenter=$COMMENTER" >> $GITHUB_OUTPUT
+          
+          echo "✅ Command parsed: $COMMAND"
+
+      - name: 🤖 Run AI Agent Command Processor
+        id: ai_processor
+        run: |
+          echo "🤖 Running AI agent command processor..."
+          
+          python .github/scripts/ai_agent_command_processor.py \
+            --command "${{ steps.parse_command.outputs.command }}" \
+            --full-command "${{ steps.parse_command.outputs.full_command }}" \
+            --pr-number "${{ steps.parse_command.outputs.pr_number }}" \
+            --commenter "${{ steps.parse_command.outputs.commenter }}" \
+            --output "artifacts/ai_agent_response.json"
+          
+          if [ $? -eq 0 ]; then
+            echo "success=true" >> $GITHUB_OUTPUT
+            echo "✅ AI agent command processed successfully"
+          else
+            echo "success=false" >> $GITHUB_OUTPUT
+            echo "❌ AI agent command processing failed"
+          fi
+
+      - name: 📝 Post AI Agent Response
+        if: steps.ai_processor.outputs.success == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            try {
+              // Read AI agent response
+              const responseData = JSON.parse(fs.readFileSync('artifacts/ai_agent_response.json', 'utf8'));
+              
+              // Generate response comment
+              let comment = `## 🤖 AMAS AI Agent Response
+              
+              **Command:** \`${{ steps.parse_command.outputs.command }}\`
+              **Status:** ${responseData.success ? '✅ Completed' : '❌ Failed'}
+              **Provider:** ${responseData.metadata?.provider_used || 'Unknown'}
+              **Response Time:** ${responseData.metadata?.response_time || 0}s
+              
+              ---
+              
+              ### 🎯 AI Analysis
+              ${responseData.analysis || 'No analysis available'}
+              
+              ---
+              
+              ### 💡 Recommendations
+              ${responseData.recommendations?.map(rec => `- ${rec}`).join('\n') || 'No recommendations available'}
+              
+              ---
+              
+              ### 🚀 Actions Taken
+              ${responseData.actions_taken?.map(action => `- ${action}`).join('\n') || 'No actions taken'}
+              
+              ---
+              
+              *🤖 Generated by AMAS AI Agent at ${new Date().toISOString()}*
+              *Advanced Multi-Agent Intelligence System v3.0*
+              `;
+              
+              // Post response comment
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: comment
+              });
+              
+              console.log('✅ AI agent response posted successfully');
+            } catch (error) {
+              console.error('❌ Failed to post AI agent response:', error);
+              
+              // Post error comment
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 🤖 AMAS AI Agent Error
+                
+                **Command:** \`${{ steps.parse_command.outputs.command }}\`
+                **Status:** ❌ Failed
+                **Error:** ${error.message}
+                
+                ---
+                
+                *Please try again or contact the development team.*
+                `
+              });
+            }
+
+      - name: 📊 Generate Workflow Summary
+        run: |
+          echo "## 🤖 AMAS AI Agent Comment Listener" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Command | ${{ steps.parse_command.outputs.command }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| PR Number | ${{ steps.parse_command.outputs.pr_number }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commenter | ${{ steps.parse_command.outputs.commenter }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Processing | ${{ steps.ai_processor.outputs.success }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**🤖 AMAS AI Agent is ready to help with any task!**" >> $GITHUB_STEP_SUMMARY
+
+  pr_auto_analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 📦 Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install aiohttp openai cohere python-dotenv
+
+      - name: 🤖 Run Automatic PR Analysis
+        run: |
+          echo "🤖 Running automatic PR analysis..."
+          python .github/scripts/comprehensive_pr_analyzer.py \
+            --pr-number "${{ github.event.number }}" \
+            --output "artifacts/auto_pr_analysis.json"
+
+      - name: 📝 Post Welcome Message
+        if: github.event.action == 'opened'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const welcomeComment = `## 🤖 AMAS AI Agent Ready!
+            
+            Hello @${{ github.event.pull_request.user.login }}, I'm your AMAS AI Agent! 🚀
+            
+            I can help you with this pull request in many ways. Just mention me in a comment:
+            
+            ### 🎯 Available Commands:
+            - \`@amas analyze\` - Comprehensive code analysis
+            - \`@amas fix\` - Fix issues automatically
+            - \`@amas security\` - Security audit and fixes
+            - \`@amas build\` - Build optimization
+            - \`@amas docs\` - Generate documentation
+            - \`@amas test\` - Run comprehensive tests
+            - \`@amas deploy\` - Deployment assistance
+            - \`@amas help\` - Show all available commands
+            
+            ### 🚀 AI Capabilities:
+            - **16-Provider Fallback**: Maximum reliability
+            - **Intelligent Analysis**: Advanced pattern recognition
+            - **Automated Fixes**: Self-healing capabilities
+            - **Continuous Learning**: Improves over time
+            
+            ---
+            
+            *🤖 AMAS AI Agent - Advanced Multi-Agent Intelligence System v3.0*
+            `;
+            
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: welcomeComment
+            });
+
+      - name: 📝 Post Auto Analysis
+        if: github.event.action != 'opened'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            try {
+              const analysisData = JSON.parse(fs.readFileSync('artifacts/auto_pr_analysis.json', 'utf8'));
+              
+              const analysisComment = `## 🤖 AMAS AI Agent - Auto Analysis
+              
+              **Status:** ${analysisData.success ? '✅ Completed' : '❌ Failed'}
+              **Provider:** ${analysisData.metadata?.provider_used || 'Unknown'}
+              **Response Time:** ${analysisData.metadata?.response_time || 0}s
+              
+              ---
+              
+              ### 📊 Analysis Summary
+              ${analysisData.analysis || 'No analysis available'}
+              
+              ---
+              
+              ### 💡 Recommendations
+              ${analysisData.recommendations?.map(rec => `- ${rec}`).join('\n') || 'No recommendations available'}
+              
+              ---
+              
+              *🤖 Generated by AMAS AI Agent at ${new Date().toISOString()}*
+              `;
+              
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: analysisComment
+              });
+            } catch (error) {
+              console.log('Auto analysis not available or failed');
+            }

@@ -337,6 +337,8 @@ async def main():
         parser.add_argument("--performance-results", default="performance_results/", help="Performance results directory")
         parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced manager")
         parser.add_argument("--output", default="code_enhancement_results.json", help="Output file")
+        parser.add_argument("--pr-number", help="PR number for analysis")
+        parser.add_argument("--parameters", nargs="*", help="Additional parameters")
         
         args = parser.parse_args()
         
