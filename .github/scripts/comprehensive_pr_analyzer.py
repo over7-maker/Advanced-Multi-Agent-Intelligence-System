@@ -13,6 +13,8 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 # Import our AI agent fallback system
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from ai_agent_fallback import ai_agent
 
 class ComprehensivePRAnalyzer:
@@ -269,17 +271,38 @@ class ComprehensivePRAnalyzer:
 async def main():
     """Main function to run comprehensive PR analysis"""
     try:
+        # Handle command line arguments (for compatibility with workflow)
+        import argparse
+        parser = argparse.ArgumentParser(description="Comprehensive PR Analyzer")
+        parser.add_argument("--mode", default="comprehensive", help="Analysis mode")
+        parser.add_argument("--languages", default="all", help="Target languages")
+        parser.add_argument("--level", default="aggressive", help="Analysis level")
+        parser.add_argument("--auto-fix", action="store_true", help="Enable auto-fix")
+        parser.add_argument("--performance-benchmarking", action="store_true", help="Enable performance benchmarking")
+        parser.add_argument("--performance-results", default="performance_results/", help="Performance results directory")
+        parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced manager")
+        parser.add_argument("--output", default="code_enhancement_results.json", help="Output file")
+        
+        args = parser.parse_args()
+        
+        print(f"🤖 Starting Comprehensive PR Analysis...")
+        print(f"📋 Mode: {args.mode} | Languages: {args.languages} | Level: {args.level}")
+        print(f"🔧 Auto-fix: {args.auto_fix} | Performance Benchmarking: {args.performance_benchmarking}")
+        print("")
+        
         analyzer = ComprehensivePRAnalyzer()
         results = await analyzer.analyze_pr()
         
-        # Save results
-        with open('comprehensive_pr_analysis.json', 'w') as f:
+        # Save results with the expected output filename
+        with open(args.output, 'w') as f:
             json.dump(results, f, indent=2)
         
         # Also save to final_results directory
         os.makedirs("final_results", exist_ok=True)
         with open("final_results/comprehensive_pr_analysis.json", 'w') as f:
             json.dump(results, f, indent=2)
+        
+        print(f"📄 Results saved to {args.output}")
         
         # Create GitHub Actions Summary
         if os.getenv('GITHUB_ACTIONS'):
