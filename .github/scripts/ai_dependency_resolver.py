@@ -17,6 +17,7 @@ from typing import Dict, List, Any, Optional
 # Import our AI agent fallback system
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from ai_agent_fallback import ai_agent
+from ai_output_processor import AIOutputProcessor
 
 class AIDependencyResolver:
     """AI-powered dependency resolver with 16-provider fallback"""
@@ -25,6 +26,7 @@ class AIDependencyResolver:
         self.start_time = datetime.utcnow()
         self.errors = []
         self.fixes_applied = []
+        self.output_processor = AIOutputProcessor()
         
     async def collect_dependency_data(self) -> Dict[str, Any]:
         """Collect comprehensive dependency and error data"""
@@ -166,19 +168,23 @@ Be specific, actionable, and focus on immediate fixes that will resolve the curr
                 
                 # Try to extract JSON from AI response
                 content = result.get('content', '')
+                
+                # Clean the AI response using output processor
+                cleaned_content = self.output_processor.clean_ai_response(content)
+                
                 try:
                     # Look for JSON in the response
-                    json_match = re.search(r'```json\s*(\{.*?\})\s*```', content, re.DOTALL)
+                    json_match = re.search(r'```json\s*(\{.*?\})\s*```', cleaned_content, re.DOTALL)
                     if json_match:
                         ai_analysis = json.loads(json_match.group(1))
                     else:
                         # Fallback: create structured response
                         ai_analysis = {
-                            "analysis": content[:500],
+                            "analysis": cleaned_content[:500],
                             "root_cause": "Dependency installation issues",
-                            "pip_commands": self._extract_pip_commands(content),
-                            "requirements_txt": self._extract_requirements(content),
-                            "workflow_fixes": self._extract_workflow_fixes(content),
+                            "pip_commands": self._extract_pip_commands(cleaned_content),
+                            "requirements_txt": self._extract_requirements(cleaned_content),
+                            "workflow_fixes": self._extract_workflow_fixes(cleaned_content),
                             "code_patches": [],
                             "prevention": ["Regular dependency updates", "Version pinning"],
                             "confidence": 0.8,
@@ -198,11 +204,27 @@ Be specific, actionable, and focus on immediate fixes that will resolve the curr
                         "priority": "high"
                     }
                 
+                # Process the analysis through output processor
+                processed_analysis = self.output_processor.process_ai_analysis({
+                    "success": True,
+                    "metadata": {
+                        "provider_used": result.get('provider_used'),
+                        "response_time": result.get('response_time', 0)
+                    },
+                    "analysis": ai_analysis.get('analysis', ''),
+                    "root_cause": ai_analysis.get('root_cause', ''),
+                    "priority": ai_analysis.get('priority', 'high'),
+                    "confidence": ai_analysis.get('confidence', 0.8),
+                    "recommendations": {
+                        "immediate_actions": ai_analysis.get('pip_commands', [])
+                    }
+                })
+                
                 return {
                     "success": True,
                     "provider_used": result.get('provider_used'),
                     "response_time": result.get('response_time', 0),
-                    "analysis": ai_analysis,
+                    "analysis": processed_analysis,
                     "raw_response": content
                 }
             else:

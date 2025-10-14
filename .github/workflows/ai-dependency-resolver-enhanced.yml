@@ -1,0 +1,102 @@
+name: 🤖 AI Dependency Resolver (Enhanced)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+env:
+  # 16 AI provider API keys
+  CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+  CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+  DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+  GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+  GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+  GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+  GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+  GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+  KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+  NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+  QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+  GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+  GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+  COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+  CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+  CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+  GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
+
+jobs:
+  dependency_analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 📦 Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install aiohttp openai cohere python-dotenv
+
+      - name: 🔍 Run AI Dependency Analysis
+        run: |
+          echo "🔍 Running AI dependency analysis with output processing..."
+          python .github/scripts/ai_dependency_resolver.py
+
+      - name: 💾 Upload Analysis Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-dependency-analysis-${{ github.run_number }}
+          path: artifacts/dependency_resolution.json
+          if-no-files-found: warn
+
+  pr_comment:
+    runs-on: ubuntu-latest
+    needs: [dependency_analysis]
+    if: always() && github.event_name == 'pull_request'
+    timeout-minutes: 5
+    
+    steps:
+      - name: 📥 Download Analysis Results
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-dependency-analysis-${{ github.run_number }}
+          path: artifacts/
+        continue-on-error: true
+
+      - name: 📝 Post Enhanced AI Analysis to PR
+        uses: ./.github/actions/post-ai-comment-enhanced
+        with:
+          workflow-type: 'dependency_analysis'
+          result-file: 'artifacts/dependency_resolution.json'
+          success-message: 'Dependency analysis completed with AI insights'
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: [dependency_analysis, pr_comment]
+    if: always()
+    timeout-minutes: 2
+    
+    steps:
+      - name: 📊 Generate Workflow Summary
+        run: |
+          echo "## 🤖 AI Dependency Resolver (Enhanced)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔍 Dependency Analysis | ${{ needs.dependency_analysis.result }} | ${{ needs.dependency_analysis.result == 'success' && 'Completed' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📝 PR Comment | ${{ needs.pr_comment.result }} | ${{ needs.pr_comment.result == 'success' && 'Posted' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**🎯 Result:** ${{ needs.dependency_analysis.result == 'success' && 'Dependencies analyzed with AI insights' || 'Analysis failed - check logs' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔧 Enhanced Features" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ AI output processing and validation" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Clean, truncated command handling" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Professional PR comment formatting" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ 16-provider AI fallback system" >> $GITHUB_STEP_SUMMARY
