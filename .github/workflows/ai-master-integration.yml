@@ -218,24 +218,28 @@ jobs:
         with:
           name: parallel-ai-analysis-${{ github.run_number }}
           path: artifacts/
+        continue-on-error: true
 
       - name: 📥 Download Intelligence Results
         uses: actions/download-artifact@v4
         with:
           name: dependency-intelligence-${{ github.run_number }}
           path: artifacts/
+        continue-on-error: true
 
       - name: 📥 Download Security Results
         uses: actions/download-artifact@v4
         with:
           name: security-audit-${{ github.run_number }}
           path: artifacts/
+        continue-on-error: true
 
       - name: 📥 Download Auto-Fix Results
         uses: actions/download-artifact@v4
         with:
           name: auto-fix-results-${{ github.run_number }}
           path: artifacts/
+        continue-on-error: true
 
       - name: 📊 Generate Master Summary
         run: |

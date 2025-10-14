@@ -51,7 +51,7 @@ jobs:
 
       - name: 📝 Post AI Dependency Analysis to PR
         if: github.event_name == 'pull_request'
-        uses: ./.github/actions/post-ai-comment
+        uses: ./.github/actions/post-ai-comment-fixed
         with:
           workflow-type: 'dependency_analysis'
           result-file: 'artifacts/dependency_resolution.json'
@@ -77,7 +77,7 @@ jobs:
 
       - name: 📝 Post AI Security Audit to PR
         if: github.event_name == 'pull_request'
-        uses: ./.github/actions/post-ai-comment
+        uses: ./.github/actions/post-ai-comment-fixed
         with:
           workflow-type: 'security_audit'
           result-file: 'artifacts/security_audit_report.json'
@@ -105,7 +105,7 @@ jobs:
 
       - name: 📝 Post AI Code Quality to PR
         if: github.event_name == 'pull_request'
-        uses: ./.github/actions/post-ai-comment
+        uses: ./.github/actions/post-ai-comment-fixed
         with:
           workflow-type: 'code_quality'
           result-file: 'artifacts/code_enhancement_results.json'
@@ -133,7 +133,7 @@ jobs:
 
       - name: 📝 Post AI Build Analysis to PR
         if: github.event_name == 'pull_request'
-        uses: ./.github/actions/post-ai-comment
+        uses: ./.github/actions/post-ai-comment-fixed
         with:
           workflow-type: 'build_analysis'
           result-file: 'artifacts/build_analysis_results.json'
@@ -159,7 +159,7 @@ jobs:
 
       - name: 📝 Post AI Parallel Analysis to PR
         if: github.event_name == 'pull_request'
-        uses: ./.github/actions/post-ai-comment
+        uses: ./.github/actions/post-ai-comment-fixed
         with:
           workflow-type: 'parallel_analysis'
           result-file: 'artifacts/parallel_provider_report.json'
@@ -188,7 +188,7 @@ jobs:
 
       - name: 📝 Post AI Master Summary to PR
         if: github.event_name == 'pull_request'
-        uses: ./.github/actions/post-ai-comment
+        uses: ./.github/actions/post-ai-comment-fixed
         with:
           workflow-type: 'master_integration'
           result-file: 'artifacts/master_ai_summary.json'
