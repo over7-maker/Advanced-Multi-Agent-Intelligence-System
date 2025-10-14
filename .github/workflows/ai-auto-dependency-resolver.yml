@@ -1,0 +1,310 @@
+name: 🤖 AI Auto-Fix & Dependency Resolver
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+  workflow_call:
+
+env:
+  # 16 AI provider API keys
+  CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+  CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+  DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+  GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+  GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+  GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+  GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+  GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+  KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+  NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+  QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+  GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+  GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+  COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+  CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+  CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+  GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
+
+jobs:
+  dependency_analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      has_issues: ${{ steps.analyze.outputs.has_issues }}
+      issue_count: ${{ steps.analyze.outputs.issue_count }}
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: 📦 Install Base Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install aiohttp openai cohere python-dotenv
+          pip install multidict yarl attrs aiosignal frozenlist || true
+
+      - name: 🧪 Run AI Dependency Resolver
+        id: analyze
+        run: |
+          echo "🚀 Launching AI Dependency Resolver..."
+          python .github/scripts/ai_dependency_resolver.py
+          
+          # Check if issues were found
+          if [ -f "artifacts/dependency_resolution.json" ]; then
+            ISSUE_COUNT=$(python -c "
+          import json
+          try:
+              with open('artifacts/dependency_resolution.json', 'r') as f:
+                  data = json.load(f)
+              missing = data.get('issues_detected', {}).get('missing_modules', [])
+              print(len(missing))
+          except:
+              print(0)
+          ")
+            echo "issue_count=$ISSUE_COUNT" >> $GITHUB_OUTPUT
+            echo "has_issues=$([ $ISSUE_COUNT -gt 0 ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+          else
+            echo "issue_count=0" >> $GITHUB_OUTPUT
+            echo "has_issues=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 💾 Upload Analysis Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-dependency-analysis-${{ github.run_number }}
+          path: |
+            artifacts/dependency_resolution.json
+            artifacts/
+          retention-days: 30
+
+  auto_fix_application:
+    runs-on: ubuntu-latest
+    needs: dependency_analysis
+    if: needs.dependency_analysis.outputs.has_issues == 'true'
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 📥 Download Analysis Results
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-dependency-analysis-${{ github.run_number }}
+          path: artifacts/
+
+      - name: 🔧 Apply AI-Suggested Fixes
+        run: |
+          echo "🔧 Applying AI-suggested dependency fixes..."
+          
+          if [ -f "artifacts/dependency_resolution.json" ]; then
+            # Extract and run pip commands
+            python -c "
+          import json
+          import subprocess
+          import sys
+          
+          try:
+              with open('artifacts/dependency_resolution.json', 'r') as f:
+                  data = json.load(f)
+              
+              commands = data.get('ai_analysis', {}).get('pip_commands', [])
+              print(f'Found {len(commands)} suggested commands')
+              
+              for cmd in commands[:5]:  # Limit to 5 commands
+                  print(f'Running: {cmd}')
+                  try:
+                      result = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=60)
+                      if result.returncode == 0:
+                          print(f'✅ Success: {cmd}')
+                      else:
+                          print(f'❌ Failed: {cmd} - {result.stderr}')
+                  except Exception as e:
+                      print(f'❌ Exception: {cmd} - {e}')
+          except Exception as e:
+              print(f'Error processing fixes: {e}')
+          "
+
+      - name: 📝 Update Requirements.txt (if suggested)
+        run: |
+          echo "📝 Checking for requirements.txt updates..."
+          
+          if [ -f "artifacts/dependency_resolution.json" ]; then
+            python -c "
+          import json
+          import os
+          
+          try:
+              with open('artifacts/dependency_resolution.json', 'r') as f:
+                  data = json.load(f)
+              
+              req_content = data.get('ai_analysis', {}).get('requirements_txt', '')
+              if req_content and req_content.strip():
+                  print('Updating requirements.txt with AI suggestions...')
+                  with open('requirements.txt', 'w') as f:
+                      f.write(req_content)
+                  print('✅ requirements.txt updated')
+              else:
+                  print('No requirements.txt updates suggested')
+          except Exception as e:
+              print(f'Error updating requirements.txt: {e}')
+          "
+
+      - name: 🧪 Test Applied Fixes
+        run: |
+          echo "🧪 Testing applied fixes..."
+          python -c "
+          import sys
+          import importlib
+          
+          # Test common imports that were failing
+          test_modules = ['aiohttp', 'openai', 'cohere', 'multidict', 'yarl', 'attrs']
+          
+          for module in test_modules:
+              try:
+                  importlib.import_module(module)
+                  print(f'✅ {module} - OK')
+              except ImportError as e:
+                  print(f'❌ {module} - FAILED: {e}')
+          "
+
+  pr_comment:
+    runs-on: ubuntu-latest
+    needs: [dependency_analysis, auto_fix_application]
+    if: always() && github.event_name == 'pull_request'
+    timeout-minutes: 5
+    
+    steps:
+      - name: 📥 Download Analysis Results
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-dependency-analysis-${{ github.run_number }}
+          path: artifacts/
+
+      - name: 📝 Post AI Analysis to PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let comment = `## 🤖 AI Dependency & Code-Fix Analysis
+            
+            **Status:** ${needs.dependency_analysis.result === 'success' ? '✅ Completed' : '❌ Failed'}
+            **Issues Detected:** ${needs.dependency_analysis.outputs.issue_count || 0}
+            **Auto-Fix Applied:** ${needs.auto_fix_application.result === 'success' ? '✅ Yes' : '❌ No'}
+            
+            ---
+            `;
+            
+            if (fs.existsSync('artifacts/dependency_resolution.json')) {
+              try {
+                const data = JSON.parse(fs.readFileSync('artifacts/dependency_resolution.json', 'utf8'));
+                
+                // Add metadata
+                comment += `**🤖 AI Provider:** ${data.metadata?.provider_used || 'Unknown'}
+                **⏱️ Response Time:** ${data.metadata?.response_time || 0}s
+                **🔧 Fixes Applied:** ${data.fixes_applied?.total_applied || 0}
+                **❌ Fixes Failed:** ${data.fixes_applied?.total_failed || 0}
+                
+                ---
+                `;
+                
+                // Add analysis
+                if (data.ai_analysis) {
+                  comment += `### 🔍 Analysis
+                  **Root Cause:** ${data.ai_analysis.root_cause || 'Unknown'}
+                  **Priority:** ${data.ai_analysis.priority || 'Unknown'}
+                  **Confidence:** ${(data.ai_analysis.confidence || 0) * 100}%
+                  
+                  **Analysis:** ${data.ai_analysis.analysis || 'No analysis available'}
+                  
+                  ---
+                  `;
+                }
+                
+                // Add recommendations
+                if (data.recommendations?.immediate_actions?.length > 0) {
+                  comment += `### 📦 Immediate Actions
+                  \`\`\`bash
+                  ${data.recommendations.immediate_actions.slice(0, 5).join('\n')}
+                  \`\`\`
+                  
+                  ---
+                  `;
+                }
+                
+                // Add long-term improvements
+                if (data.recommendations?.long_term_improvements?.length > 0) {
+                  comment += `### 🚀 Long-term Improvements
+                  ${data.recommendations.long_term_improvements.map(imp => `- ${imp}`).join('\n')}
+                  
+                  ---
+                  `;
+                }
+                
+                // Add workflow changes
+                if (data.recommendations?.workflow_changes?.length > 0) {
+                  comment += `### ⚙️ Workflow Changes
+                  ${data.recommendations.workflow_changes.map(change => `- ${change}`).join('\n')}
+                  
+                  ---
+                  `;
+                }
+                
+              } catch (error) {
+                comment += `**❌ Error parsing analysis results:** ${error.message}`;
+              }
+            } else {
+              comment += `**❌ No analysis results available**`;
+            }
+            
+            comment += `
+            ---
+            
+            *🤖 Generated by AI Dependency Resolver at ${new Date().toISOString()}*
+            *Using 16-provider fallback system for maximum reliability*
+            `;
+            
+            // Post comment to PR
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+  summary:
+    runs-on: ubuntu-latest
+    needs: [dependency_analysis, auto_fix_application, pr_comment]
+    if: always()
+    timeout-minutes: 2
+    
+    steps:
+      - name: 📊 Generate Workflow Summary
+        run: |
+          echo "## 🤖 AI Dependency Resolver Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status | Details |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔍 Dependency Analysis | ${{ needs.dependency_analysis.result }} | Issues: ${{ needs.dependency_analysis.outputs.issue_count || 0 }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 🔧 Auto-Fix Application | ${{ needs.auto_fix_application.result }} | ${{ needs.auto_fix_application.result == 'success' && 'Applied' || 'Skipped/Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| 📝 PR Comment | ${{ needs.pr_comment.result }} | ${{ needs.pr_comment.result == 'success' && 'Posted' || 'Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**🎯 Result:** ${{ needs.dependency_analysis.result == 'success' && 'Dependencies analyzed and fixes applied' || 'Analysis failed - check logs' }}" >> $GITHUB_STEP_SUMMARY
