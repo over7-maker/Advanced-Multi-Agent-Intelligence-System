@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "timestamp": "2025-10-14T18:09:18.376263",
+    "timestamp": "2025-10-14T18:07:18.504369",
     "analyzer_version": "2.0-real-ai",
     "pr_number": 198,
     "pr_title": "Mock PR: AI Code Analysis Test",
@@ -18,10 +18,10 @@
     "success": false,
     "error": "No AI providers available - check API keys",
     "providers_tried": 0,
-    "timestamp": "2025-10-14T18:09:18.376458"
+    "timestamp": "2025-10-14T18:07:18.504589"
   },
   "performance_metrics": {
-    "execution_time_seconds": 0.000228,
+    "execution_time_seconds": 0.000248,
     "ai_providers_available": 0,
     "ai_providers_used": 0,
     "success_rate": 0.0
