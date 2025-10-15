@@ -185,14 +185,14 @@ jobs:
           }' > pipeline_analysis_results.json
         else
           # Run Intelligent Pipeline Analysis
-          python .github/scripts/ai_pipeline_analyzer.py \
-            --mode $PIPELINE_MODE \
-            --environments $TARGET_ENVIRONMENTS \
-            --strategy $DEPLOYMENT_STRATEGY \
-            --quality-gates $QUALITY_GATES \
-            --performance-monitoring $PERFORMANCE_MONITORING \
-            --use-advanced-manager \
-            --output pipeline_analysis_results.json
+          python .github/scripts/unified_ai_manager.py code_quality
+        # CRITICAL: Validate it used REAL AI
+        if grep -q '"real_ai_verified": true' artifacts/real_code_quality_analysis.json; then
+          echo "✅ REAL AI VERIFIED - Provider used actual API"
+        else
+          echo "🚨 FAKE AI DETECTED - Failing workflow"
+          exit 1
+        fi
         fi
         
         echo "✅ Intelligent Pipeline Analysis completed successfully"
