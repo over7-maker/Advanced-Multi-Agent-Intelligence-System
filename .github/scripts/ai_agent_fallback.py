@@ -13,9 +13,45 @@ import time
 from typing import Dict, List, Any, Optional, Callable
 from datetime import datetime
 
-import aiohttp
-from openai import AsyncOpenAI, OpenAIError
-import cohere
+# Import dependencies with fallback handling
+try:
+    import aiohttp
+    from openai import AsyncOpenAI, OpenAIError
+    import cohere
+    DEPENDENCIES_AVAILABLE = True
+except ImportError as e:
+    print(f"⚠️ Some dependencies not available: {e}")
+    print("This is expected in some environments - using fallback mode")
+    DEPENDENCIES_AVAILABLE = False
+    
+    # Create mock classes for fallback
+    class MockAIOHTTP:
+        class ClientSession:
+            async def __aenter__(self):
+                return self
+            async def __aexit__(self, *args):
+                pass
+            async def post(self, *args, **kwargs):
+                raise Exception("aiohttp not available")
+    
+    class MockOpenAI:
+        class AsyncOpenAI:
+            def __init__(self, *args, **kwargs):
+                pass
+            async def chat(self, *args, **kwargs):
+                raise Exception("openai not available")
+    
+    class MockCohere:
+        class AsyncClient:
+            def __init__(self, *args, **kwargs):
+                pass
+            async def chat(self, *args, **kwargs):
+                raise Exception("cohere not available")
+    
+    aiohttp = MockAIOHTTP()
+    from types import SimpleNamespace
+    AsyncOpenAI = MockOpenAI().AsyncOpenAI
+    cohere = MockCohere()
 
 # Configure logging
 logging.basicConfig(

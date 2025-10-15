@@ -13,9 +13,33 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
-# Import our AI agent fallback system
+# Import our AI agent fallback system with error handling
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from ai_agent_fallback import ai_agent
+
+# Try to import AI agent, install dependencies if needed
+try:
+    from ai_agent_fallback import ai_agent
+except ImportError as e:
+    print(f"⚠️ AI agent import failed: {e}")
+    print("Installing required dependencies...")
+    
+    # Install required dependencies
+    import subprocess
+    try:
+        subprocess.run([sys.executable, "-m", "pip", "install", "aiohttp", "openai", "cohere", "python-dotenv"], check=True)
+        from ai_agent_fallback import ai_agent
+        print("✅ Dependencies installed and AI agent loaded")
+    except Exception as install_error:
+        print(f"❌ Failed to install dependencies: {install_error}")
+        # Create a mock AI agent for fallback
+        class MockAIAgent:
+            async def analyze_with_fallback(self, prompt, task_type="analysis"):
+                return {
+                    'success': False,
+                    'error': 'AI agent not available - dependencies not installed',
+                    'content': 'Mock analysis: Please install dependencies manually'
+                }
+        ai_agent = MockAIAgent()
 
 class AIAutoCommitFixer:
     """AI-powered automatic commit and fix application"""

@@ -120,6 +120,14 @@ jobs:
           name: ai-dependency-analysis-${{ github.run_number }}
           path: artifacts/
 
+      - name: 📦 Install Dependencies First
+        run: |
+          echo "📦 Installing required dependencies..."
+          python -m pip install --upgrade pip
+          pip install aiohttp multidict yarl attrs aiosignal frozenlist
+          pip install openai cohere python-dotenv
+          pip install -r requirements.txt || echo "Some requirements failed, continuing..."
+
       - name: 🔧 Apply AI-Suggested Fixes
         run: |
           echo "🔧 Applying AI-suggested dependency fixes..."
