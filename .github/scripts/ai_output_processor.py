@@ -182,11 +182,19 @@ class AIOutputProcessor:
         status = "✅ Completed" if processed_analysis.get('success', True) else "❌ Failed"
         comment_lines.append(f"**Status:** {status}")
         
-        # Provider info
+        # Provider info - only show if it's a real provider
         provider = processed_analysis.get('metadata', {}).get('provider_used', 'Unknown')
         response_time = processed_analysis.get('metadata', {}).get('response_time', 0)
-        comment_lines.append(f"**🤖 AI Provider:** {provider}")
-        comment_lines.append(f"**⏱️ Response Time:** {response_time:.2f}s")
+        
+        # Check if this is a real AI response or mock
+        if provider == 'Unknown' and response_time == 0:
+            comment_lines.append("**⚠️ Warning:** This appears to be a mock response")
+            comment_lines.append("**🤖 AI Provider:** Mock/Fallback (No real AI used)")
+            comment_lines.append("**⏱️ Response Time:** 0.00s (Template response)")
+        else:
+            comment_lines.append(f"**🤖 AI Provider:** {provider}")
+            comment_lines.append(f"**⏱️ Response Time:** {response_time:.2f}s")
+        
         comment_lines.append("")
         
         # Analysis
