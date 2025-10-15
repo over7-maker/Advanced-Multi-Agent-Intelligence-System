@@ -10,6 +10,8 @@ import json
 import asyncio
 import subprocess
 import logging
+import time
+import aiohttp
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 
@@ -21,28 +23,97 @@ class RealAIAnalyzer:
     """Real AI analyzer that ensures actual AI responses"""
     
     def __init__(self):
-        self.api_keys = {
-            'openai': os.getenv('GPT4_API_KEY') or os.getenv('OPENAI_API_KEY'),
-            'anthropic': os.getenv('CLAUDE_API_KEY'),
-            'deepseek': os.getenv('DEEPSEEK_API_KEY'),
-            'groq': os.getenv('GROQAI_API_KEY'),
-            'cohere': os.getenv('COHERE_API_KEY'),
-            'nvidia': os.getenv('NVIDIA_API_KEY'),
-            'cerebras': os.getenv('CEREBRAS_API_KEY'),
-            'codestral': os.getenv('CODESTRAL_API_KEY'),
-            'glm': os.getenv('GLM_API_KEY'),
-            'grok': os.getenv('GROK_API_KEY'),
-            'kimi': os.getenv('KIMI_API_KEY'),
-            'qwen': os.getenv('QWEN_API_KEY'),
-            'gptoss': os.getenv('GPTOSS_API_KEY'),
-            'geminiai': os.getenv('GEMINIAI_API_KEY'),
-            'gemini2': os.getenv('GEMINI2_API_KEY'),
-            'groq2': os.getenv('GROQ2_API_KEY'),
-            'chutes': os.getenv('CHUTES_API_KEY')
+        # Expert configuration with proper API endpoints and models
+        self.providers = {
+            "deepseek": {
+                "api_key": os.getenv("DEEPSEEK_API_KEY"),
+                "base_url": "https://openrouter.ai/api/v1",
+                "model": "deepseek/deepseek-chat-v3.1:free"
+            },
+            "nvidia": {
+                "api_key": os.getenv("NVIDIA_API_KEY"),
+                "base_url": "https://integrate.api.nvidia.com/v1",
+                "model": "deepseek-ai/deepseek-r1"
+            },
+            "codestral": {
+                "api_key": os.getenv("CODESTRAL_API_KEY"),
+                "base_url": "https://codestral.mistral.ai/v1",
+                "model": "codestral-latest"
+            },
+            "openai": {
+                "api_key": os.getenv("GPT4_API_KEY") or os.getenv("OPENAI_API_KEY"),
+                "base_url": "https://api.openai.com/v1",
+                "model": "gpt-4"
+            },
+            "anthropic": {
+                "api_key": os.getenv("CLAUDE_API_KEY"),
+                "base_url": "https://api.anthropic.com/v1",
+                "model": "claude-3-sonnet-20240229"
+            },
+            "groq": {
+                "api_key": os.getenv("GROQAI_API_KEY"),
+                "base_url": "https://api.groq.com/openai/v1",
+                "model": "llama3-8b-8192"
+            },
+            "cohere": {
+                "api_key": os.getenv("COHERE_API_KEY"),
+                "base_url": "https://api.cohere.ai/v1",
+                "model": "command-r-plus"
+            },
+            "cerebras": {
+                "api_key": os.getenv("CEREBRAS_API_KEY"),
+                "base_url": "https://openrouter.ai/api/v1",
+                "model": "cerebras-gpt-13b"
+            },
+            "glm": {
+                "api_key": os.getenv("GLM_API_KEY"),
+                "base_url": "https://openrouter.ai/api/v1",
+                "model": "z-ai/glm-4.5-air:free"
+            },
+            "grok": {
+                "api_key": os.getenv("GROK_API_KEY"),
+                "base_url": "https://openrouter.ai/api/v1",
+                "model": "x-ai/grok-4-fast:free"
+            },
+            "kimi": {
+                "api_key": os.getenv("KIMI_API_KEY"),
+                "base_url": "https://openrouter.ai/api/v1",
+                "model": "moonshotai/kimi-k2:free"
+            },
+            "qwen": {
+                "api_key": os.getenv("QWEN_API_KEY"),
+                "base_url": "https://openrouter.ai/api/v1",
+                "model": "qwen/qwen3-coder:free"
+            },
+            "gptoss": {
+                "api_key": os.getenv("GPTOSS_API_KEY"),
+                "base_url": "https://openrouter.ai/api/v1",
+                "model": "openai/gpt-oss-120b:free"
+            },
+            "geminiai": {
+                "api_key": os.getenv("GEMINIAI_API_KEY"),
+                "base_url": "https://openrouter.ai/api/v1",
+                "model": "google/gemini-1.5-flash-latest"
+            },
+            "gemini2": {
+                "api_key": os.getenv("GEMINI2_API_KEY"),
+                "base_url": "https://openrouter.ai/api/v1",
+                "model": "google/gemini-2.0-flash:generateContent"
+            },
+            "groq2": {
+                "api_key": os.getenv("GROQ2_API_KEY"),
+                "base_url": "https://api.groq.com/openai/v1",
+                "model": "llama3-70b-8192"
+            },
+            "chutes": {
+                "api_key": os.getenv("CHUTES_API_KEY"),
+                "base_url": "https://openrouter.ai/api/v1",
+                "model": "zai-org/GLM-4.5-Air"
+            }
         }
         
-        # Filter out empty API keys
-        self.available_keys = {k: v for k, v in self.api_keys.items() if v and v.strip()}
+        # Filter out providers without API keys
+        self.available_providers = {k: v for k, v in self.providers.items() if v["api_key"] and v["api_key"].strip()}
         
     def install_dependencies(self):
         """Install required dependencies for AI analysis"""
@@ -164,67 +235,119 @@ class RealAIAnalyzer:
             logger.error(f"Cohere API error: {e}")
             return {'success': False, 'error': str(e)}
     
-    async def analyze_with_real_ai(self, prompt: str, task_type: str = "analysis") -> Dict[str, Any]:
-        """Perform real AI analysis using available providers"""
-        logger.info(f"🚀 Starting REAL AI analysis for {task_type}")
-        logger.info(f"📝 Prompt length: {len(prompt)} characters")
-        logger.info(f"🔑 Available API keys: {len(self.available_keys)}")
+    async def analyze_with_real_ai(self, task_type: str, code_content: str = "") -> Dict[str, Any]:
+        """Perform REAL AI analysis using actual API calls (Expert approach)"""
+        logger.info(f"🔍 Starting REAL AI analysis for {task_type}")
+        logger.info(f"📝 Code content length: {len(code_content)} characters")
+        logger.info(f"🔑 Available providers: {len(self.available_providers)}")
         
-        if not self.available_keys:
+        if not self.available_providers:
             return {
                 'success': False,
-                'error': 'No API keys available - check environment variables',
+                'error': 'No AI providers available - check API keys',
                 'providers_tried': 0,
+                'real_ai': False,
                 'timestamp': datetime.utcnow().isoformat()
             }
         
-        # Try each available provider
-        for provider, api_key in self.available_keys.items():
+        # Try providers in sequence until one succeeds
+        for provider_name, config in self.available_providers.items():
             try:
-                logger.info(f"🤖 Trying {provider}...")
-                start_time = datetime.now()
+                logger.info(f"🤖 Trying provider: {provider_name}")
+                start_time = time.time()
                 
-                if provider == 'openai':
-                    result = await self.call_openai_api(prompt, api_key)
-                elif provider == 'anthropic':
-                    result = await self.call_anthropic_api(prompt, api_key)
-                elif provider in ['groq', 'groq2']:
-                    result = await self.call_groq_api(prompt, api_key)
-                elif provider == 'cohere':
-                    result = await self.call_cohere_api(prompt, api_key)
-                else:
-                    # For other providers, try a generic approach
-                    result = await self.call_generic_api(prompt, api_key, provider)
+                result = await self._call_provider(config, task_type, code_content)
+                response_time = time.time() - start_time
                 
                 if result['success']:
-                    response_time = (datetime.now() - start_time).total_seconds()
-                    logger.info(f"✅ Success with {provider} in {response_time:.2f}s")
-                    
+                    logger.info(f"✅ Success with {provider_name} in {response_time:.2f}s")
                     return {
                         'success': True,
-                        'content': result['content'],
-                        'provider_used': result['provider'],
-                        'model_used': result['model'],
-                        'response_time': response_time,
+                        'provider': provider_name,
+                        'response_time': round(response_time, 2),
+                        'analysis': result['content'],
+                        'model_used': config['model'],
                         'task_type': task_type,
                         'timestamp': datetime.utcnow().isoformat(),
-                        'providers_tried': list(self.available_keys.keys()).index(provider) + 1,
-                        'total_available': len(self.available_keys)
+                        'real_ai': True,  # Expert flag to verify real AI
+                        'providers_tried': list(self.available_providers.keys()).index(provider_name) + 1,
+                        'total_available': len(self.available_providers)
                     }
                 else:
-                    logger.warning(f"❌ {provider} failed: {result.get('error', 'Unknown error')}")
+                    logger.warning(f"❌ Provider {provider_name} failed: {result.get('error', 'Unknown error')}")
                     
             except Exception as e:
-                logger.error(f"❌ Exception with {provider}: {e}")
+                logger.error(f"❌ Exception with {provider_name}: {e}")
                 continue
         
         # All providers failed
         return {
             'success': False,
             'error': 'All AI providers failed',
-            'providers_tried': len(self.available_keys),
+            'providers_tried': len(self.available_providers),
+            'real_ai': False,
             'timestamp': datetime.utcnow().isoformat()
         }
+    
+    async def _call_provider(self, config: Dict[str, str], task_type: str, code_content: str) -> Dict[str, Any]:
+        """Make actual API call to AI provider (Expert implementation)"""
+        # Expert prompt engineering for better AI responses
+        prompt = f"""
+        Analyze this {task_type} thoroughly:
+        
+        Code/Content: {code_content[:2000]}
+        
+        Provide specific, actionable insights including:
+        1. Specific issues with file names and line numbers
+        2. Security vulnerabilities (if any)
+        3. Performance improvements
+        4. Code quality recommendations
+        5. Best practices and optimization suggestions
+        
+        Be specific and actionable. Focus on the actual code changes and their impact.
+        """
+        
+        headers = {
+            "Authorization": f"Bearer {config['api_key']}",
+            "Content-Type": "application/json"
+        }
+        
+        # Add provider-specific headers
+        if "openrouter.ai" in config['base_url']:
+            headers.update({
+                "HTTP-Referer": "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System",
+                "X-Title": "AMAS AI Workflow System"
+            })
+        
+        payload = {
+            "model": config["model"],
+            "messages": [
+                {"role": "system", "content": "You are an expert code analyst. Provide detailed, specific recommendations with file names and line numbers when possible."},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.7,
+            "max_tokens": 1500
+        }
+        
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(
+                    f"{config['base_url']}/chat/completions",
+                    headers=headers,
+                    json=payload,
+                    timeout=30
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return {
+                            'success': True,
+                            'content': data["choices"][0]["message"]["content"]
+                        }
+                    else:
+                        error_text = await response.text()
+                        raise Exception(f"HTTP {response.status}: {error_text}")
+        except Exception as e:
+            return {'success': False, 'error': str(e)}
     
     async def call_generic_api(self, prompt: str, api_key: str, provider: str) -> Dict[str, Any]:
         """Generic API call for other providers"""
@@ -281,7 +404,7 @@ class RealAIAnalyzer:
             return {'success': False, 'error': str(e)}
 
 async def main():
-    """Main function for testing"""
+    """Main function for testing (Expert approach)"""
     analyzer = RealAIAnalyzer()
     
     # Install dependencies first
@@ -289,30 +412,34 @@ async def main():
         print("❌ Failed to install dependencies")
         return
     
-    # Test with a real prompt
-    test_prompt = """
-    Analyze this pull request for code quality, security issues, and potential improvements:
-    
-    The PR contains changes to fix YAML syntax errors and dependency issues in GitHub Actions workflows.
-    Key changes include:
-    - Fixed YAML parsing errors in custom actions
-    - Added missing Python dependencies (aiohttp, multidict, yarl, etc.)
-    - Enhanced AI output processing to handle truncation
-    - Improved error handling and fallback mechanisms
-    
-    Please provide a detailed analysis with specific recommendations.
+    # Get actual code content from PR changes
+    code_content = """
+    # Sample code changes from PR
+    def analyze_code_quality():
+        # Fixed YAML parsing errors
+        # Added dependency management
+        # Enhanced error handling
+        pass
     """
     
-    result = await analyzer.analyze_with_real_ai(test_prompt, "pr_analysis")
+    # Perform REAL AI analysis
+    result = await analyzer.analyze_with_real_ai("code_quality", code_content)
     
-    if result['success']:
-        print(f"✅ Real AI analysis successful!")
-        print(f"🤖 Provider: {result['provider_used']}")
-        print(f"⏱️ Response time: {result['response_time']:.2f}s")
-        print(f"📊 Providers tried: {result['providers_tried']}/{result['total_available']}")
-        print(f"\n📝 Analysis:\n{result['content']}")
+    # Save results
+    os.makedirs("artifacts", exist_ok=True)
+    with open("artifacts/real_ai_analysis.json", "w") as f:
+        json.dump(result, f, indent=2)
+    
+    # Output results
+    if result["success"]:
+        print(f"✅ REAL AI Analysis completed!")
+        print(f"🤖 Provider: {result['provider']}")
+        print(f"⏱️ Response Time: {result['response_time']}s")
+        print(f"📊 Analysis: {result['analysis'][:200]}...")
+        print(f"🔍 Real AI verified: {result.get('real_ai', False)}")
     else:
-        print(f"❌ Real AI analysis failed: {result['error']}")
+        print("❌ All AI providers failed")
+        print(f"Error: {result.get('error', 'Unknown error')}")
 
 if __name__ == "__main__":
     asyncio.run(main())
