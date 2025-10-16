@@ -65,6 +65,9 @@ class BulletproofRealAI:
         print(f"🤖 FORCING REAL AI ANALYSIS: {task_type}")
         print(f"🔍 Content length: {len(content)} chars")
         
+        # Track provider failures for better diagnostics
+        provider_failures = []
+        
         # Try each real provider
         for i, provider in enumerate(self.providers, 1):
             try:
@@ -93,14 +96,21 @@ class BulletproofRealAI:
                     }
                 else:
                     print(f"❌ GENERIC/FAKE RESPONSE from {provider['name']}")
+                    provider_failures.append(f"{provider['name']}: Generic/fake response detected")
                     continue
                     
             except Exception as e:
+                error_msg = f"{provider['name']}: {str(e)}"
                 print(f"❌ Provider {provider['name']} error: {str(e)}")
+                provider_failures.append(error_msg)
                 continue
         
         # ALL PROVIDERS FAILED - This is critical
-        raise Exception(f"🚨 ALL {len(self.providers)} REAL AI PROVIDERS FAILED!")
+        print("🚨 ALL PROVIDERS FAILED - DETAILED DIAGNOSTICS:")
+        for failure in provider_failures:
+            print(f"   ❌ {failure}")
+        
+        raise Exception(f"🚨 ALL {len(self.providers)} REAL AI PROVIDERS FAILED!\nProvider failures:\n" + "\n".join(provider_failures))
     
     def _is_real_ai_response(self, response):
         """Validate response is from REAL AI, not template"""
@@ -239,7 +249,7 @@ Provide detailed, specific analysis with exact locations and actionable recommen
             "max_tokens": 2000
         }
         
-        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=45)) as session:
+        async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=60)) as session:
             async with session.post(
                 f"{provider['base_url']}/chat/completions",
                 headers=headers,

@@ -6,6 +6,11 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
 env:
   # 16 AI provider API keys
   CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
@@ -204,6 +209,64 @@ jobs:
           python -m pip install --upgrade pip
           pip install aiohttp openai cohere python-dotenv
 
+      - name: 🔍 Check AI Provider Availability
+        run: |
+          echo "🔍 Checking AI provider availability..."
+          
+          # Count available providers
+          available_providers=0
+          
+          if [ -n "$DEEPSEEK_API_KEY" ] && [ ${#DEEPSEEK_API_KEY} -gt 10 ]; then
+            echo "✅ DEEPSEEK_API_KEY: Available (${#DEEPSEEK_API_KEY} chars)"
+            ((available_providers++))
+          else
+            echo "❌ DEEPSEEK_API_KEY: Missing or invalid"
+          fi
+          
+          if [ -n "$NVIDIA_API_KEY" ] && [ ${#NVIDIA_API_KEY} -gt 10 ]; then
+            echo "✅ NVIDIA_API_KEY: Available (${#NVIDIA_API_KEY} chars)"
+            ((available_providers++))
+          else
+            echo "❌ NVIDIA_API_KEY: Missing or invalid"
+          fi
+          
+          if [ -n "$CEREBRAS_API_KEY" ] && [ ${#CEREBRAS_API_KEY} -gt 10 ]; then
+            echo "✅ CEREBRAS_API_KEY: Available (${#CEREBRAS_API_KEY} chars)"
+            ((available_providers++))
+          else
+            echo "❌ CEREBRAS_API_KEY: Missing or invalid"
+          fi
+          
+          if [ -n "$CODESTRAL_API_KEY" ] && [ ${#CODESTRAL_API_KEY} -gt 10 ]; then
+            echo "✅ CODESTRAL_API_KEY: Available (${#CODESTRAL_API_KEY} chars)"
+            ((available_providers++))
+          else
+            echo "❌ CODESTRAL_API_KEY: Missing or invalid"
+          fi
+          
+          if [ -n "$COHERE_API_KEY" ] && [ ${#COHERE_API_KEY} -gt 10 ]; then
+            echo "✅ COHERE_API_KEY: Available (${#COHERE_API_KEY} chars)"
+            ((available_providers++))
+          else
+            echo "❌ COHERE_API_KEY: Missing or invalid"
+          fi
+          
+          echo "📊 Total available providers: $available_providers/16"
+          
+          if [ $available_providers -eq 0 ]; then
+            echo "🚨 CRITICAL: NO REAL AI PROVIDERS AVAILABLE!"
+            echo "❌ Please add at least one valid API key to repository secrets:"
+            echo "   - DEEPSEEK_API_KEY"
+            echo "   - NVIDIA_API_KEY" 
+            echo "   - CEREBRAS_API_KEY"
+            echo "   - CODESTRAL_API_KEY"
+            echo "   - COHERE_API_KEY"
+            echo "   - Or any other supported provider"
+            exit 1
+          else
+            echo "✅ Real AI providers available - proceeding with analysis"
+          fi
+
       - name: 🤖 Run BULLETPROOF PR Analysis
         run: |
           echo "🚀 Running BULLETPROOF PR analysis..."
@@ -220,8 +283,12 @@ jobs:
           # CRITICAL: Validate bulletproof real AI was used
           if grep -q '"bulletproof_validated": true' artifacts/auto_pr_analysis.json; then
             echo "✅ BULLETPROOF REAL AI VERIFIED!"
+            echo "🤖 Provider used: $(grep -o '"provider": "[^"]*"' artifacts/auto_pr_analysis.json | head -1)"
+            echo "⏱️ Response time: $(grep -o '"response_time": [0-9.]*' artifacts/auto_pr_analysis.json | head -1)"
           else
             echo "🚨 FAKE AI DETECTED - FAILING HARD!"
+            echo "📄 Analysis file contents:"
+            cat artifacts/auto_pr_analysis.json || echo "No analysis file found"
             exit 1
           fi
 

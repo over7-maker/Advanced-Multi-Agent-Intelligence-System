@@ -1,8 +1,29 @@
 #!/usr/bin/env python3
 """
 AI Agent Command Processor - Advanced command interpretation and execution
-Processes @amas commands in PR comments and executes appropriate AI workflows
-Uses BULLETPROOF REAL AI SYSTEM - NO FAKE RESPONSES
+
+BULLETPROOF REAL AI SYSTEM:
+- Processes @amas commands in PR comments and executes appropriate AI workflows
+- Uses ONLY real AI providers (DeepSeek, NVIDIA, Cerebras, Codestral, etc.)
+- Validates all responses for authenticity with bulletproof validation
+- Refuses to generate fake or template responses
+- Fails hard if no real AI providers are available
+
+Capabilities:
+- Command parsing and validation
+- Workflow execution with real AI analysis
+- Response generation with provider verification
+- Error handling and fallback prevention
+
+Limitations:
+- Requires at least one valid API key from supported providers
+- Network timeout of 60 seconds per provider attempt
+- Hard failure on fake AI detection (no graceful fallbacks)
+
+Verification:
+- All responses include 'bulletproof_validated': true
+- Provider names are actual API providers (not "AI System" or "Unknown")
+- Response times are variable and realistic (not identical template times)
 """
 
 import os
@@ -14,7 +35,7 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 
-# Import bulletproof real AI system
+# Import BULLETPROOF REAL AI SYSTEM - NO FAKE RESPONSES ALLOWED
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from bulletproof_real_ai import BulletproofRealAI
 
