@@ -1,0 +1,37 @@
+{
+  "metadata": {
+    "timestamp": "2025-10-14T18:07:18.504369",
+    "analyzer_version": "2.0-real-ai",
+    "pr_number": 198,
+    "pr_title": "Mock PR: AI Code Analysis Test",
+    "execution_status": "completed_successfully"
+  },
+  "pr_analysis": {
+    "title": "Mock PR: AI Code Analysis Test",
+    "body": "This is a test PR for AI code analysis functionality. The system is analyzing code quality, performance, and providing intelligent recommendations.",
+    "diff_size": 349,
+    "files_changed": 1,
+    "lines_added": 6,
+    "lines_removed": 1
+  },
+  "ai_analysis": {
+    "success": false,
+    "error": "No AI providers available - check API keys",
+    "providers_tried": 0,
+    "timestamp": "2025-10-14T18:07:18.504589"
+  },
+  "performance_metrics": {
+    "execution_time_seconds": 0.000248,
+    "ai_providers_available": 0,
+    "ai_providers_used": 0,
+    "success_rate": 0.0
+  },
+  "recommendations": [
+    "Manual review recommended due to AI analysis failure"
+  ],
+  "next_steps": [
+    "Review the analysis failure logs",
+    "Check AI provider configuration",
+    "Consider manual code review"
+  ]
+}

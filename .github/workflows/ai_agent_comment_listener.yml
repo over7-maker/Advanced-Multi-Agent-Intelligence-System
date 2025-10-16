@@ -1,0 +1,163 @@
+name: 🤖 AMAS AI Agent Comment Listener
+
+on:
+  issue_comment:
+    types: [created, edited]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+env:
+  CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+  CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+  DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+  GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+  GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+  GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+  GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+  GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+  KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+  NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+  QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+  GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+  GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+  COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+  CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+  CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+  GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
+
+jobs:
+  pr_auto_analysis:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: 📦 Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install aiohttp openai cohere python-dotenv anthropic google-generativeai groq mistralai
+          pip install multidict yarl attrs aiosignal frozenlist
+
+      - name: 🔍 Check AI Provider Availability
+        shell: bash
+        run: bash .github/scripts/workflow_fix_step.sh
+
+      - name: 🤖 Run BULLETPROOF PR Analysis
+        run: |
+          echo "🚀 Running BULLETPROOF PR analysis..."
+          mkdir -p artifacts
+          python .github/scripts/comprehensive_pr_analyzer_bulletproof.py \
+            --pr-number "${{ github.event.number }}" \
+            --output "artifacts/auto_pr_analysis.json"
+          
+          if [ ! -f "artifacts/auto_pr_analysis.json" ]; then
+            echo "🚨 NO ANALYSIS RESULTS FILE CREATED!"; exit 1
+          fi
+          
+          if grep -q '"bulletproof_validated": true' artifacts/auto_pr_analysis.json; then
+            echo "✅ BULLETPROOF REAL AI VERIFIED!"
+          else
+            echo "🚨 BULLETPROOF VALIDATION FAILED!"; exit 1
+          fi
+
+      - name: 📝 Post Auto Analysis
+        if: github.event.action != 'opened'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            function fence(text = '', lang = '') {
+              const safe = String(text).replace(/```/g, '``\`').replace(/\$\{/g, '\\${');
+              return '```' + lang + '\n' + safe + '\n```';
+            }
+            try {
+              const raw = fs.readFileSync('artifacts/auto_pr_analysis.json', 'utf8');
+              const data = JSON.parse(raw);
+              if (data?.metadata?.bulletproof_validated === true) {
+                const provider = data?.ai_analysis?.provider || 'Unknown';
+                const rt = data?.ai_analysis?.response_time ?? 0;
+                const analysis = data?.ai_analysis?.analysis || '';
+                const recs = Array.isArray(data?.recommendations) ? data.recommendations : [];
+                const comment = [
+                  '## 🤖 BULLETPROOF REAL AI Analysis',
+                  '',
+                  `- Status: ✅ REAL AI Verified`,
+                  `- Provider: ${provider}`,
+                  `- Response Time: ${rt}s`,
+                  `- Validation: Bulletproof validated ✓`,
+                  '',
+                  '### 🔍 Analysis',
+                  fence(analysis, ''),
+                  '',
+                  '### 💡 Recommendations',
+                  (recs.length ? recs.map(r => `- ${r}`).join('\n') : '- None'),
+                  '',
+                  '### 📊 Verification',
+                  `- Real AI Verified: ${String(data?.ai_analysis?.real_ai_verified ?? false)}`,
+                  `- Fake AI Detected: ${String(data?.ai_analysis?.fake_ai_detected ?? false)}`,
+                  `- Bulletproof Validated: ${String(data?.metadata?.bulletproof_validated ?? false)}`,
+                  `- Provider Attempt: ${data?.ai_analysis?.provider_attempt ?? 0}/${data?.ai_analysis?.total_attempts ?? 0}`
+                ].join('\n');
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment
+                });
+              } else {
+                const provider = data?.ai_analysis?.provider || 'Unknown';
+                const rt = data?.ai_analysis?.response_time ?? 0;
+                const comment = [
+                  '## 🚨 BULLETPROOF AI ENFORCEMENT ACTIVE',
+                  '',
+                  '- Status: ❌ FAKE AI GENERATION BLOCKED',
+                  '- Protection: BULLETPROOF validation system',
+                  '',
+                  '### 📊 Detection',
+                  `- Provider: ${provider}`,
+                  `- Response Time: ${rt}s`,
+                  `- Real AI Verified: ${String(data?.ai_analysis?.real_ai_verified ?? false)}`,
+                  `- Bulletproof Validated: ${String(data?.metadata?.bulletproof_validated ?? false)}`,
+                  '',
+                  '### 🔧 Resolution',
+                  '- Ensure at least one valid provider API key',
+                  '- Verify network/quotas',
+                  '- Re-run analysis'
+                ].join('\n');
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment
+                });
+              }
+            } catch (error) {
+              const msg = [
+                '## 🚨 BULLETPROOF AI Analysis Unavailable',
+                '',
+                '- Status: ❌ Analysis Failed',
+                `- Reason: ${error && error.message ? error.message : 'Unknown error'}`,
+                '',
+                'Check logs and confirm API provider configuration.'
+              ].join('\n');
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: msg
+              });
+            }

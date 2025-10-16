@@ -1,3 +1,4 @@
+from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
 """
 AMAS AI API Manager - Comprehensive Multi-API Fallback System
@@ -110,10 +111,10 @@ class AIAPIManager:
         """Setup all available API configurations"""
 
         # Cerebras API
-        if os.getenv("CEREBRAS_API_KEY"):
+        if get_api_key("CEREBRAS_API_KEY"):
             self.apis["cerebras"] = APIConfig(
                 name="Cerebras",
-                api_key=os.getenv("CEREBRAS_API_KEY"),
+                api_key=get_api_key("CEREBRAS_API_KEY"),
                 base_url="https://api.cerebras.ai/v1",
                 model="qwen-3-235b-a22b-instruct-2507",
                 api_type=APIType.CEREBRAS,
@@ -122,10 +123,10 @@ class AIAPIManager:
             )
 
         # Codestral API
-        if os.getenv("CODESTRAL_API_KEY"):
+        if get_api_key("CODESTRAL_API_KEY"):
             self.apis["codestral"] = APIConfig(
                 name="Codestral",
-                api_key=os.getenv("CODESTRAL_API_KEY"),
+                api_key=get_api_key("CODESTRAL_API_KEY"),
                 base_url="https://codestral.mistral.ai/v1",
                 model="codestral-latest",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -138,10 +139,10 @@ class AIAPIManager:
             )
 
         # DeepSeek API
-        if os.getenv("DEEPSEEK_API_KEY"):
+        if get_api_key("DEEPSEEK_API_KEY"):
             self.apis["deepseek"] = APIConfig(
                 name="DeepSeek",
-                api_key=os.getenv("DEEPSEEK_API_KEY"),
+                api_key=get_api_key("DEEPSEEK_API_KEY"),
                 base_url="https://api.deepseek.com/v1",
                 model="deepseek-chat",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -150,10 +151,10 @@ class AIAPIManager:
             )
 
         # Gemini AI API
-        if os.getenv("GEMINIAI_API_KEY"):
+        if get_api_key("GEMINIAI_API_KEY"):
             self.apis["gemini"] = APIConfig(
                 name="Gemini",
-                api_key=os.getenv("GEMINIAI_API_KEY"),
+                api_key=get_api_key("GEMINIAI_API_KEY"),
                 base_url="https://generativelanguage.googleapis.com/v1beta",
                 model="gemini-pro",
                 api_type=APIType.GEMINI,
@@ -162,10 +163,10 @@ class AIAPIManager:
             )
 
         # GLM API (via OpenRouter)
-        if os.getenv("GLM_API_KEY"):
+        if get_api_key("GLM_API_KEY"):
             self.apis["glm"] = APIConfig(
                 name="GLM",
-                api_key=os.getenv("GLM_API_KEY"),
+                api_key=get_api_key("GLM_API_KEY"),
                 base_url="https://openrouter.ai/api/v1",
                 model="deepseek/deepseek-chat",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -174,10 +175,10 @@ class AIAPIManager:
             )
 
         # GPTOSS API
-        if os.getenv("GPTOSS_API_KEY"):
+        if get_api_key("GPTOSS_API_KEY"):
             self.apis["gptoss"] = APIConfig(
                 name="GPTOSS",
-                api_key=os.getenv("GPTOSS_API_KEY"),
+                api_key=get_api_key("GPTOSS_API_KEY"),
                 base_url="https://api.openai.com/v1",
                 model="gpt-4",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -186,10 +187,10 @@ class AIAPIManager:
             )
 
         # Grok API (via OpenRouter)
-        if os.getenv("GROK_API_KEY"):
+        if get_api_key("GROK_API_KEY"):
             self.apis["grok"] = APIConfig(
                 name="Grok",
-                api_key=os.getenv("GROK_API_KEY"),
+                api_key=get_api_key("GROK_API_KEY"),
                 base_url="https://openrouter.ai/api/v1",
                 model="x-ai/grok-beta",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -198,10 +199,10 @@ class AIAPIManager:
             )
 
         # GroqAI API
-        if os.getenv("GROQAI_API_KEY"):
+        if get_api_key("GROQAI_API_KEY"):
             self.apis["groqai"] = APIConfig(
                 name="GroqAI",
-                api_key=os.getenv("GROQAI_API_KEY"),
+                api_key=get_api_key("GROQAI_API_KEY"),
                 base_url="https://api.groq.com/openai/v1",
                 model="llama3-8b-8192",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -210,10 +211,10 @@ class AIAPIManager:
             )
 
         # Kimi API
-        if os.getenv("KIMI_API_KEY"):
+        if get_api_key("KIMI_API_KEY"):
             self.apis["kimi"] = APIConfig(
                 name="Kimi",
-                api_key=os.getenv("KIMI_API_KEY"),
+                api_key=get_api_key("KIMI_API_KEY"),
                 base_url="https://api.moonshot.cn/v1",
                 model="moonshot-v1-8k",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -222,10 +223,10 @@ class AIAPIManager:
             )
 
         # NVIDIA API
-        if os.getenv("NVIDIA_API_KEY"):
+        if get_api_key("NVIDIA_API_KEY"):
             self.apis["nvidia"] = APIConfig(
                 name="NVIDIA",
-                api_key=os.getenv("NVIDIA_API_KEY"),
+                api_key=get_api_key("NVIDIA_API_KEY"),
                 base_url="https://integrate.api.nvidia.com/v1",
                 model="deepseek-ai/deepseek-r1",
                 api_type=APIType.NVIDIA,
@@ -234,10 +235,10 @@ class AIAPIManager:
             )
 
         # Qwen API
-        if os.getenv("QWEN_API_KEY"):
+        if get_api_key("QWEN_API_KEY"):
             self.apis["qwen"] = APIConfig(
                 name="Qwen",
-                api_key=os.getenv("QWEN_API_KEY"),
+                api_key=get_api_key("QWEN_API_KEY"),
                 base_url="https://dashscope.aliyuncs.com/api/v1",
                 model="qwen-turbo",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -246,10 +247,10 @@ class AIAPIManager:
             )
 
         # Gemini2 API
-        if os.getenv("GEMINI2_API_KEY"):
+        if get_api_key("GEMINI2_API_KEY"):
             self.apis["gemini2"] = APIConfig(
                 name="Gemini2",
-                api_key=os.getenv("GEMINI2_API_KEY"),
+                api_key=get_api_key("GEMINI2_API_KEY"),
                 base_url="https://generativelanguage.googleapis.com/v1beta",
                 model="gemini-2.0-flash",
                 api_type=APIType.GEMINI,
@@ -258,10 +259,10 @@ class AIAPIManager:
             )
 
         # NVIDIA2 API
-        if os.getenv("NVIDIA_API_KEY"):
+        if get_api_key("NVIDIA_API_KEY"):
             self.apis["nvidia2"] = APIConfig(
                 name="NVIDIA2",
-                api_key=os.getenv("NVIDIA_API_KEY"),
+                api_key=get_api_key("NVIDIA_API_KEY"),
                 base_url="https://integrate.api.nvidia.com/v1",
                 model="qwen/qwen2.5-coder-32b-instruct",
                 api_type=APIType.NVIDIA,
@@ -270,10 +271,10 @@ class AIAPIManager:
             )
 
         # Groq2 API
-        if os.getenv("GROQ2_API_KEY"):
+        if get_api_key("GROQ2_API_KEY"):
             self.apis["groq2"] = APIConfig(
                 name="Groq2",
-                api_key=os.getenv("GROQ2_API_KEY"),
+                api_key=get_api_key("GROQ2_API_KEY"),
                 base_url="https://api.groq.com/openai/v1",
                 model="llama3-70b-8192",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -282,10 +283,10 @@ class AIAPIManager:
             )
 
         # Cohere API
-        if os.getenv("COHERE_API_KEY"):
+        if get_api_key("COHERE_API_KEY"):
             self.apis["cohere"] = APIConfig(
                 name="Cohere",
-                api_key=os.getenv("COHERE_API_KEY"),
+                api_key=get_api_key("COHERE_API_KEY"),
                 base_url="https://api.cohere.ai/v1",
                 model="command-a-03-2025",
                 api_type=APIType.COHERE,
@@ -294,10 +295,10 @@ class AIAPIManager:
             )
 
         # Chutes API
-        if os.getenv("CHUTES_API_KEY"):
+        if get_api_key("CHUTES_API_KEY"):
             self.apis["chutes"] = APIConfig(
                 name="Chutes",
-                api_key=os.getenv("CHUTES_API_KEY"),
+                api_key=get_api_key("CHUTES_API_KEY"),
                 base_url="https://llm.chutes.ai/v1",
                 model="zai-org/GLM-4.5-Air",
                 api_type=APIType.CHUTES,

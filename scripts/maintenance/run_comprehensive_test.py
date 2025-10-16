@@ -1,3 +1,4 @@
+from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
 """
 Comprehensive AI System Test Runner
@@ -168,12 +169,12 @@ class AISystemTester:
         print("=" * 50)
 
         api_keys = {
-            "DEEPSEEK_API_KEY": os.getenv("DEEPSEEK_API_KEY"),
-            "GLM_API_KEY": os.getenv("GLM_API_KEY"),
-            "GROK_API_KEY": os.getenv("GROK_API_KEY"),
-            "KIMI_API_KEY": os.getenv("KIMI_API_KEY"),
-            "QWEN_API_KEY": os.getenv("QWEN_API_KEY"),
-            "GPTOSS_API_KEY": os.getenv("GPTOSS_API_KEY"),
+            "DEEPSEEK_API_KEY": get_api_key("DEEPSEEK_API_KEY"),
+            "GLM_API_KEY": get_api_key("GLM_API_KEY"),
+            "GROK_API_KEY": get_api_key("GROK_API_KEY"),
+            "KIMI_API_KEY": get_api_key("KIMI_API_KEY"),
+            "QWEN_API_KEY": get_api_key("QWEN_API_KEY"),
+            "GPTOSS_API_KEY": get_api_key("GPTOSS_API_KEY"),
         }
 
         configured_keys = 0

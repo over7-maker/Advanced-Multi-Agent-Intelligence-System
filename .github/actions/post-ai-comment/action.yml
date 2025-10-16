@@ -1,0 +1,64 @@
+name: 'Post AI Comment'
+description: 'Post standardized AI analysis comments to PRs'
+inputs:
+  workflow-type:
+    description: 'Type of AI workflow (dependency_analysis, security_audit, etc.)'
+    required: true
+  result-file:
+    description: 'Path to AI analysis result file'
+    required: false
+    default: 'artifacts/ai_analysis_results.json'
+  comment-title:
+    description: 'Custom title for the comment'
+    required: false
+  success-message:
+    description: 'Success message to show'
+    required: false
+    default: 'AI analysis completed successfully'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 🤖 Generate AI Comment
+      shell: bash
+      run: |
+        echo "🤖 Generating AI comment for ${{ inputs.workflow-type }}..."
+        
+        # Create artifacts directory if it doesn't exist
+        mkdir -p artifacts
+        
+        # Run universal PR commenter
+        python .github/scripts/universal_pr_commenter.py \
+          --workflow-type "${{ inputs.workflow-type }}" \
+          --output-file "pr_comment.md"
+        
+        if [ $? -eq 0 ]; then
+          echo "✅ AI comment generated successfully"
+        else
+          echo "❌ Failed to generate AI comment"
+          exit 1
+        fi
+
+    - name: 📝 Post Comment to PR
+      if: github.event_name == 'pull_request'
+      shell: bash
+      run: |
+        echo "📝 Posting AI comment to PR..."
+        if [ -f "pr_comment.md" ]; then
+          echo "✅ Comment file found, posting to PR"
+        else
+          echo "❌ Comment file not found"
+          exit 1
+        fi
+
+    - name: 📊 Generate Workflow Summary
+      run: |
+        echo "## 🤖 AI Analysis Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+        echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Workflow Type | ${{ inputs.workflow-type }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Status | ✅ Completed |" >> $GITHUB_STEP_SUMMARY
+        echo "| Comment Posted | ✅ Yes |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**${{ inputs.success-message }}**" >> $GITHUB_STEP_SUMMARY

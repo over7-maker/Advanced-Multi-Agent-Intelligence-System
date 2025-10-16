@@ -1,0 +1,55 @@
+🔑 API KEY MIGRATION TEST RESULTS
+==================================================
+
+Direct Usage: 150 instances
+Manager Usage: 31 files
+Migration Rate: -383.9%
+
+FILES WITH DIRECT USAGE:
+------------------------------
+• update_workflows_for_advanced_api_manager.py: 15 instances
+• standalone_universal_ai_manager.py: 26 instances
+• openai_clients.py: 3 instances
+• main.py: 3 instances
+• ai_code_analyzer.py: 8 instances
+• enhanced_dependency_auditor.py: 2 instances
+• enhanced_master_orchestrator.py: 2 instances
+• advanced_multi_agent_orchestrator.py: 8 instances
+• enhanced_conflict_resolver.py: 2 instances
+• intelligent_ai_router.py: 8 instances
+• enhanced_security_scanner.py: 2 instances
+• enhanced_automated_fixer.py: 2 instances
+• ai_security_scanner.py: 8 instances
+• ai_issue_responder.py: 8 instances
+• enhanced_docker_monitor.py: 2 instances
+• continuous_improvement_system.py: 8 instances
+• update_9_api_support.py: 8 instances
+• test_ai_integration_complete.py: 6 instances
+• test_fallback_system.py: 6 instances
+• test_ai_system.py: 8 instances
+• test_workflows.py: 6 instances
+• test_ultimate_fallback_system.py: 9 instances
+
+FILES WITH MANAGER USAGE:
+------------------------------
+• focused_pre_merge_test.py
+• standalone_universal_ai_manager.py
+• run_all_tests_with_txt_output.py
+• integrate_universal_ai_manager.py
+• ai_config.py
+• minimal_config.py
+• unified_ai_router.py
+• ai_fallback_manager.py
+• llm_service.py
+• intelligent_fallback_system.py
+• universal_ai_manager.py
+• ai_service_manager.py
+• ultimate_fallback_system.py
+• api_clients.py
+• ai_api_manager.py
+• ai_incident_response.py
+• ai_security_response.py
+• ai_adaptive_prompt_improvement.py
+• ai_master_orchestrator.py
+• ai_workflow_monitor.py
+... and 11 more files

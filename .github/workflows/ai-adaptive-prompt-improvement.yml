@@ -30,9 +30,12 @@ jobs:
         python-version: '3.11'
     
     - name: Install dependencies
-      run: |      python -m ensurepip --upgrade
+      run: |
+        timeout-minutes: 10
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
+        python -m ensurepip --upgrade
         python -m pip install --upgrade pippython -m ensurepip --upgrade
-
 
         python -m pip install --upgrade pip
         python -m pip install openai requests python-dotenv
@@ -51,6 +54,9 @@ jobs:
         REPO_NAME: ${{ github.repository }}
         ISSUE_NUMBER: ${{ github.event.issue.number }}
       run: |
+        timeout-minutes: 10
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
         python .github/scripts/ai_adaptive_prompt_improvement.py
     
     - name: Upload Prompt Improvement Report
