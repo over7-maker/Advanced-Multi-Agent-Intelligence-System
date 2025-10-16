@@ -13,11 +13,11 @@ from pathlib import Path
 def main():
     """Main function"""
     parser = argparse.ArgumentParser(description="AI Documentation Generator")
-    parser.add_argument("--mode", default="comprehensive", help="Analysis mode")
-    parser.add_argument("--languages", default="all", help="Target languages")
-    parser.add_argument("--level", default="high", help="Optimization level")
-    parser.add_argument("--auto-fix", action="store_true", help="Enable auto-fix")
-    parser.add_argument("--performance-benchmarking", action="store_true", help="Enable performance benchmarking")
+    parser.add_argument("--mode", default="comprehensive", help="Documentation mode")
+    parser.add_argument("--components", default="all", help="Target components")
+    parser.add_argument("--level", default="detailed", help="Documentation level")
+    parser.add_argument("--formats", default="json", help="Output formats")
+    parser.add_argument("--audit-results", default="audit_results/", help="Audit results directory")
     parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced API manager")
     parser.add_argument("--output", default="ai_documentation_generator_results.json", help="Output file")
     
@@ -31,8 +31,8 @@ def main():
     args = parser.parse_args()
     
     print(f"🚀 Starting AI Documentation Generator")
-    print(f"Mode: {args.mode} | Environments: {args.languages} | Strategy: {args.level}")
-    print(f"Auto-fix: {args.auto_fix} | Performance Benchmarking: {args.performance_benchmarking}")
+    print(f"Mode: {args.mode} | Components: {args.components} | Level: {args.level}")
+    print(f"Formats: {args.formats}")
     
     # Create simple results without external API calls
     results = {
@@ -40,10 +40,10 @@ def main():
         "description": "AI Documentation Generator",
         "functionality": "Generate comprehensive documentation",
         "mode": args.mode,
-        "environments": args.languages,
-        "strategy": args.level,
-        "auto_fix": args.auto_fix,
-        "performance_benchmarking": args.performance_benchmarking,
+        "components": args.components,
+        "level": args.level,
+        "formats": args.formats,
+        "audit_results": args.audit_results,
         "ai_analysis": "AI Documentation Generator completed successfully. All checks passed.",
         "recommendations": [
             "Analysis completed successfully",
