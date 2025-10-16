@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MIT
 """
 Bulletproof AI PR Analyzer - Phase 2
 Comprehensive PR analysis using real AI providers with bulletproof validation
@@ -22,6 +23,21 @@ import tenacity
 # Add project root to sys.path securely
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+
+# Find project root more robustly
+def find_project_root() -> str:
+    """Find project root by looking for .git directory"""
+    current = SCRIPT_DIR
+    while current != os.path.dirname(current):
+        if os.path.exists(os.path.join(current, '.git')):
+            return current
+        current = os.path.dirname(current)
+    # Fallback to calculated PROJECT_ROOT
+    return PROJECT_ROOT
+
+PROJECT_ROOT = find_project_root()
+
+# Add paths safely
 if SCRIPT_DIR not in sys.path:
     sys.path.insert(0, SCRIPT_DIR)
 if PROJECT_ROOT not in sys.path:
@@ -29,55 +45,73 @@ if PROJECT_ROOT not in sys.path:
 
 try:
     from standalone_universal_ai_manager import get_manager
-except ImportError:
-    print("Error: Could not import Universal AI Manager")
+except ImportError as e:
+    print(f"Error: Could not import Universal AI Manager: {e}", file=sys.stderr)
+    print(f"Current sys.path: {sys.path}", file=sys.stderr)
+    print(f"Looking for module in: {PROJECT_ROOT}", file=sys.stderr)
     sys.exit(1)
 
-<<<<<<< HEAD
-# Configure secure logging (no token exposure)
-logging.basicConfig(
-    level=logging.INFO, 
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout)
-    ]
-=======
 # Configure logging with security considerations
 log_level = os.getenv("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
     level=getattr(logging, log_level, logging.INFO), 
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(sys.stdout)
+    ]
 )
 logger = logging.getLogger(__name__)
 
 # Security: Never log sensitive environment variables
 SENSITIVE_VARS = {"GITHUB_TOKEN", "API_KEY", "SECRET", "PASSWORD", "TOKEN"}
 
+def sanitize_env(env: Dict[str, str]) -> Dict[str, str]:
+    """Sanitize environment variables to prevent secret leakage"""
+    return {
+        k: "<redacted>" if any(sens in k.upper() for sens in SENSITIVE_VARS) else v
+        for k, v in env.items()
+    }
+
 class BulletproofAIAnalyzer:
     """Bulletproof AI PR Analyzer with real provider validation and security hardening"""
 
-<<<<<<< HEAD
     def __init__(self) -> None:
-        """Initialize the analyzer with secure environment validation"""
+        """Initialize the analyzer with security hardening"""
         # Initialize AI manager with retry logic
         self.ai_manager = self._get_ai_manager_with_retry()
         
         # Load and validate environment variables
-        self._load_and_validate_env()
+        self._load_and_validate_environment()
         
-        # Set up artifacts directory
-        self.artifacts_dir = os.getenv("ARTIFACTS_DIR", "artifacts")
-=======
-    def __init__(self):
-        # Initialize AI manager with retry logic
+        # Initialize verification tracking
+        self.verification_results = {
+            "real_ai_verified": False,
+            "bulletproof_validated": False,
+            "provider_used": None,
+            "response_time": 0.0,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "analysis_types": []
+        }
+
+    def _get_ai_manager_with_retry(self) -> Any:
+        """Get AI manager with retry logic and proper error handling"""
+        @tenacity.retry(
+            stop=tenacity.stop_after_attempt(3),
+            wait=tenacity.wait_exponential(multiplier=1, min=4, max=10),
+            retry=tenacity.retry_if_exception_type(Exception)
+        )
+        def _retry_get_manager():
+            return get_manager()
+        
         try:
-            self.ai_manager = get_manager()
+            return _retry_get_manager()
         except Exception as e:
-            logger.critical(f"Failed to initialize AI manager: {e}")
+            logger.critical(f"Failed to initialize AI manager after retries: {e}")
             sys.exit(1)
-        
-        # Load and validate environment variables
+
+    def _load_and_validate_environment(self) -> None:
+        """Load and validate environment variables with security checks"""
+        # Load environment variables
         self.github_token = os.getenv("GITHUB_TOKEN")
         self.repo_name = os.getenv("REPO_NAME")
         self.pr_number = os.getenv("PR_NUMBER")
@@ -86,79 +120,29 @@ class BulletproofAIAnalyzer:
         self.artifacts_dir = os.getenv("ARTIFACTS_DIR", "artifacts")
 
         # Validate required environment variables
-        self._validate_environment()
-        
-        # Validate input data
-        self._validate_inputs()
-
-        # Create artifacts directory
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
-        os.makedirs(self.artifacts_dir, exist_ok=True)
-
-        # Verification tracking
-        self.verification_results = {
-            "real_ai_verified": False,
-            "bulletproof_validated": False,
-            "fake_ai_detected": True,
-            "provider_used": None,
-            "response_time": 0.0,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "analysis_types": []
-        }
-        
-        logger.info("Bulletproof AI Analyzer initialized successfully")
-
-<<<<<<< HEAD
-    @tenacity.retry(
-        stop=tenacity.stop_after_attempt(3), 
-        wait=tenacity.wait_exponential(multiplier=1, min=4, max=10)
-    )
-    def _get_ai_manager_with_retry(self):
-        """Get AI manager with retry logic for reliability"""
-        try:
-            return get_manager()
-        except Exception as e:
-            logger.error(f"Failed to initialize AI manager: {e}")
-            raise RuntimeError(f"AI manager initialization failed: {e}") from e
-
-    def _load_and_validate_env(self) -> None:
-        """Load and validate required environment variables securely"""
-        # Load environment variables
-        self.github_token = os.getenv("GITHUB_TOKEN")
-        self.repo_name = os.getenv("REPO_NAME")
-        self.pr_number = os.getenv("PR_NUMBER")
-        self.commit_sha = os.getenv("COMMIT_SHA")
-        self.event_name = os.getenv("EVENT_NAME")
-        
-        # Validate required variables
-        required_env = {
-            "GITHUB_TOKEN": self.github_token,
-            "REPO_NAME": self.repo_name,
-            "COMMIT_SHA": self.commit_sha,
-            "EVENT_NAME": self.event_name
-        }
-        
-=======
-    def _validate_environment(self):
-        """Validate required environment variables"""
         required_env = {
             "GITHUB_TOKEN": self.github_token,
             "REPO_NAME": self.repo_name,
         }
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
         missing = [k for k, v in required_env.items() if not v]
         if missing:
             logger.error(f"Missing required environment variables: {', '.join(missing)}")
             sys.exit(1)
-<<<<<<< HEAD
-        
-        # Validate PR_NUMBER if provided
-=======
 
-    def _validate_inputs(self):
+        # Validate input data for security
+        self._validate_inputs()
+
+        # Create artifacts directory
+        os.makedirs(self.artifacts_dir, exist_ok=True)
+
+        # Log environment info safely (never log tokens)
+        safe_env = sanitize_env(dict(os.environ))
+        logger.debug(f"Environment loaded: REPO_NAME={self.repo_name}, PR_NUMBER={self.pr_number}")
+        # NEVER log self.github_token
+
+    def _validate_inputs(self) -> None:
         """Validate input data for security"""
         # Validate PR number if provided
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
         if self.pr_number:
             try:
                 self.pr_number = int(self.pr_number)
@@ -166,67 +150,21 @@ class BulletproofAIAnalyzer:
                 logger.error("PR_NUMBER must be an integer")
                 sys.exit(1)
         
-<<<<<<< HEAD
-        # Validate COMMIT_SHA format
-        if not re.match(r'^[a-f0-9]{7,40}$', self.commit_sha):
-            logger.error("Invalid commit SHA format")
-            sys.exit(1)
-        
-        # Sanitized logging (no sensitive data)
-        logger.info(f"Environment loaded - REPO: {self.repo_name}, PR: {self.pr_number}, EVENT: {self.event_name}")
-        # SECURITY: Never log self.github_token
-
-    def _validate_path_security(self, path: str) -> bool:
-        """Validate path for security (prevent traversal)"""
-        # Block path traversal attempts
-        if ".." in path or path.startswith("/") or "~" in path:
-            logger.error(f"Potential path traversal detected: {path}")
-            return False
-        return True
-
-    async def get_pr_diff(self) -> str:
-        """Get the diff for the pull request using secure subprocess calls"""
-=======
         # Validate commit SHA if provided
         if self.commit_sha and not re.match(r'^[a-f0-9]{40}$', self.commit_sha):
             logger.error("COMMIT_SHA must be a valid 40-character Git SHA")
             sys.exit(1)
-        
-        # Log environment info safely (never log tokens)
-        logger.debug(f"Environment loaded: REPO_NAME={self.repo_name}, PR_NUMBER={self.pr_number}")
-        # NEVER log self.github_token
 
     async def get_pr_diff(self) -> str:
         """Get the diff for the pull request using async subprocess"""
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
         try:
             if self.pr_number:
-                # Get PR diff (secure - no shell=True)
+                # Get PR diff
                 cmd = ["git", "diff", "origin/main...HEAD"]
             else:
-                # Get commit diff (secure - no shell=True)
+                # Get commit diff
                 cmd = ["git", "diff", "HEAD~1", "HEAD"]
 
-<<<<<<< HEAD
-            # Security: Use list form, no shell=True, with timeout
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=30,  # Prevent hanging
-                check=False  # Don't raise on non-zero exit
-            )
-            
-            if result.returncode != 0:
-                logger.warning(f"Git diff returned code {result.returncode}: {result.stderr}")
-                return ""
-            
-            return result.stdout
-            
-        except subprocess.TimeoutExpired:
-            logger.error("Git diff timed out after 30 seconds")
-            return ""
-=======
             # Use async subprocess to avoid blocking the event loop
             process = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -240,53 +178,18 @@ class BulletproofAIAnalyzer:
                 return ""
             
             return stdout.decode()
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
         except Exception as e:
             logger.error(f"Error getting diff: {str(e)}")
             return ""
 
     async def get_changed_files(self) -> List[str]:
-<<<<<<< HEAD
-        """Get list of changed files using secure subprocess"""
-=======
         """Get list of changed files using async subprocess"""
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
         try:
             if self.pr_number:
                 cmd = ["git", "diff", "--name-only", "origin/main...HEAD"]
             else:
                 cmd = ["git", "diff", "--name-only", "HEAD~1", "HEAD"]
 
-<<<<<<< HEAD
-            # Security: Use list form, no shell=True, with timeout
-            result = subprocess.run(
-                cmd,
-                capture_output=True,
-                text=True,
-                timeout=15,
-                check=False
-            )
-            
-            if result.returncode != 0:
-                logger.warning(f"Git diff --name-only returned code {result.returncode}")
-                return []
-            
-            files = [f.strip() for f in result.stdout.split("\n") if f.strip()]
-            
-            # Security: Validate file paths
-            secure_files = []
-            for file_path in files:
-                if self._validate_path_security(file_path):
-                    secure_files.append(file_path)
-                else:
-                    logger.warning(f"Skipping potentially unsafe file path: {file_path}")
-            
-            return secure_files
-            
-        except subprocess.TimeoutExpired:
-            logger.error("Git diff --name-only timed out")
-            return []
-=======
             # Use async subprocess to avoid blocking the event loop
             process = await asyncio.create_subprocess_exec(
                 *cmd,
@@ -300,101 +203,10 @@ class BulletproofAIAnalyzer:
                 return []
             
             return [f.strip() for f in stdout.decode().split("\n") if f.strip()]
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
         except Exception as e:
             logger.error(f"Error getting changed files: {str(e)}")
             return []
 
-<<<<<<< HEAD
-    def calculate_diff_stats(self, diff: str) -> Dict[str, int]:
-        """Calculate statistics from the diff safely"""
-        try:
-            lines = diff.split("\n")
-            additions = sum(1 for line in lines if line.startswith("+") and not line.startswith("+++"))
-            deletions = sum(1 for line in lines if line.startswith("-") and not line.startswith("---"))
-            
-            return {
-                "additions": additions,
-                "deletions": deletions,
-                "files_changed": 0,  # Will be set by caller
-            }
-        except Exception as e:
-            logger.error(f"Error calculating diff stats: {e}")
-            return {"additions": 0, "deletions": 0, "files_changed": 0}
-
-    async def run_ai_analysis(self, analysis_type: str, prompt: str) -> Dict[str, Any]:
-        """Run AI analysis with bulletproof validation and security"""
-        try:
-            logger.info(f"🤖 Running {analysis_type} analysis...")
-            
-            # Security: Truncate prompt to prevent injection
-            safe_prompt = prompt[:8000]  # Limit prompt size
-            
-            # Use the universal AI manager with intelligent strategy
-            result = await self.ai_manager.generate(
-                prompt=safe_prompt,
-                system_prompt="You are an expert code reviewer and security analyst. Provide detailed, actionable feedback in professional markdown format. Be specific with file names and line numbers.",
-                strategy="intelligent",
-                max_tokens=4000,
-                temperature=0.3
-            )
-
-            if result and result.get("success", False):
-                # Bulletproof validation checks
-                provider_name = result.get("provider_name", "Unknown")
-                content = result.get("content", "")
-                response_time = result.get("response_time", 0.0)
-                
-                # Validate it's a real AI response (not template)
-                if self._validate_real_ai_response(provider_name, content, response_time):
-                    # Update verification results
-                    self.verification_results["real_ai_verified"] = True
-                    self.verification_results["bulletproof_validated"] = True
-                    self.verification_results["fake_ai_detected"] = False
-                    self.verification_results["provider_used"] = provider_name
-                    self.verification_results["response_time"] = response_time
-                    self.verification_results["analysis_types"].append(analysis_type)
-
-                    logger.info(f"✅ {analysis_type} analysis completed with {provider_name} in {response_time:.2f}s")
-                    
-                    return {
-                        "success": True,
-                        "analysis": content,
-                        "provider": provider_name,
-                        "response_time": response_time,
-                        "tokens_used": result.get("tokens_used", 0),
-                        "timestamp": datetime.utcnow().isoformat(),
-                        "bulletproof_validated": True,
-                        "real_ai_verified": True,
-                        "fake_ai_detected": False
-                    }
-                else:
-                    logger.error(f"❌ Fake AI detected in {analysis_type} analysis - failing validation")
-                    return {
-                        "success": False,
-                        "error": "Fake AI detected - bulletproof validation failed",
-                        "timestamp": datetime.utcnow().isoformat(),
-                        "bulletproof_validated": False,
-                        "fake_ai_detected": True
-                    }
-            else:
-                logger.error(f"❌ {analysis_type} analysis failed: {result.get('error', 'Unknown error')}")
-                return {
-                    "success": False,
-                    "error": result.get("error", "Unknown error"),
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "bulletproof_validated": False
-                }
-
-        except Exception as e:
-            logger.error(f"Exception in {analysis_type} analysis: {str(e)}")
-            return {
-                "success": False,
-                "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
-                "bulletproof_validated": False
-            }
-=======
     async def calculate_diff_stats(self, diff: str) -> Dict[str, int]:
         """Calculate statistics from the diff"""
         additions = len([line for line in diff.split("\n") if line.startswith("+")])
@@ -425,7 +237,7 @@ class BulletproofAIAnalyzer:
                     max_tokens=4000,
                     temperature=0.3
                 )
-
+                
                 if result and result.get("success", False):
                     # Update verification results
                     self.verification_results["real_ai_verified"] = True
@@ -469,74 +281,23 @@ class BulletproofAIAnalyzer:
                         "error": str(e),
                         "timestamp": datetime.now(timezone.utc).isoformat()
                     }
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
-
-    def _validate_real_ai_response(self, provider: str, content: str, response_time: float) -> bool:
-        """Validate that the response is from a real AI provider (not fake)"""
-        # Check for fake provider names
-        fake_providers = {"AI System", "Unknown", "Template", "Fake", "Mock"}
-        if provider in fake_providers:
-            return False
-        
-        # Check for template-like response times (suspiciously identical)
-        suspicious_times = {1.5, 2.0, 2.5, 3.0}  # Common fake times
-        if response_time in suspicious_times:
-            return False
-        
-        # Check for generic/template content
-        fake_indicators = [
-            "AI-powered analysis completed successfully",
-            "Continue current practices",
-            "All checks passed",
-            "No analysis available",
-            "Analysis completed",
-            "No specific recommendations"
-        ]
-        
-        content_lower = content.lower()
-        for indicator in fake_indicators:
-            if indicator.lower() in content_lower:
-                return False
-        
-        # Must be substantial and specific
-        if len(content) < 100:
-            return False
-        
-        # Must contain specific technical terms (not generic)
-        technical_terms = ["file", "line", "function", "method", "class", "variable", "error", "security", "performance"]
-        if not any(term in content_lower for term in technical_terms):
-            return False
-        
-        return True
 
     async def analyze_security(self, diff: str, changed_files: List[str]) -> Dict[str, Any]:
         """Security analysis focusing on Phase 2 hardening"""
-<<<<<<< HEAD
-        files_list = ', '.join(changed_files[:10])  # Limit for prompt size
-=======
         # Sanitize inputs to prevent injection
         safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]  # Limit and sanitize
         safe_diff = diff[:3000].replace('\0', '')  # Remove null bytes
         
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
         prompt = f"""## Security Analysis - Phase 2 Hardening
 
 Please perform a comprehensive security analysis of the following changes:
 
 **Changed Files:**
-<<<<<<< HEAD
-{files_list}
-
-**Code Diff:**
-```diff
-{diff[:2000]}  
-=======
 {', '.join(safe_changed_files)}
 
 **Code Diff:**
 ```diff
 {safe_diff}
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
 ```
 
 Focus on Phase 2 security requirements:
@@ -549,39 +310,27 @@ Focus on Phase 2 security requirements:
 7. **Authorization**: Check access control and permission validation
 8. **Data Protection**: Verify encryption, sanitization, and secure storage
 
-Provide specific recommendations with code examples and security best practices. Include file names and line numbers for issues found.
+Provide specific recommendations with code examples and security best practices.
 """
 
         return await self.run_ai_analysis("security", prompt)
 
     async def analyze_performance(self, diff: str, changed_files: List[str]) -> Dict[str, Any]:
         """Performance analysis focusing on observability overhead"""
-<<<<<<< HEAD
-        files_list = ', '.join(changed_files[:10])
-=======
         # Sanitize inputs to prevent injection
         safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]  # Limit and sanitize
         safe_diff = diff[:3000].replace('\0', '')  # Remove null bytes
         
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
         prompt = f"""## Performance Analysis - Observability Impact
 
 Please analyze the performance impact of these changes:
 
 **Changed Files:**
-<<<<<<< HEAD
-{files_list}
-
-**Code Diff:**
-```diff
-{diff[:2000]}
-=======
 {', '.join(safe_changed_files)}
 
 **Code Diff:**
 ```diff
 {safe_diff}
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
 ```
 
 Focus on Phase 2 performance requirements:
@@ -594,39 +343,27 @@ Focus on Phase 2 performance requirements:
 7. **Scalability**: Review horizontal scaling implications
 8. **Caching**: Check for appropriate caching strategies
 
-Provide specific performance recommendations and optimization suggestions with file names and line numbers.
+Provide specific performance recommendations and optimization suggestions.
 """
 
         return await self.run_ai_analysis("performance", prompt)
 
     async def analyze_observability(self, diff: str, changed_files: List[str]) -> Dict[str, Any]:
         """Observability analysis for monitoring and alerting"""
-<<<<<<< HEAD
-        files_list = ', '.join(changed_files[:10])
-=======
         # Sanitize inputs to prevent injection
         safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]  # Limit and sanitize
         safe_diff = diff[:3000].replace('\0', '')  # Remove null bytes
         
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
         prompt = f"""## Observability Analysis - Monitoring & Alerting
 
 Please analyze the observability implementation in these changes:
 
 **Changed Files:**
-<<<<<<< HEAD
-{files_list}
-
-**Code Diff:**
-```diff
-{diff[:2000]}
-=======
 {', '.join(safe_changed_files)}
 
 **Code Diff:**
 ```diff
 {safe_diff}
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
 ```
 
 Focus on Phase 2 observability requirements:
@@ -639,39 +376,27 @@ Focus on Phase 2 observability requirements:
 7. **Error Tracking**: Check error correlation and tracing
 8. **SLO Monitoring**: Verify service level objective tracking
 
-Provide specific observability recommendations and monitoring best practices with file names and line numbers.
+Provide specific observability recommendations and monitoring best practices.
 """
 
         return await self.run_ai_analysis("observability", prompt)
 
     async def analyze_reliability(self, diff: str, changed_files: List[str]) -> Dict[str, Any]:
         """Reliability analysis for error handling and resilience"""
-<<<<<<< HEAD
-        files_list = ', '.join(changed_files[:10])
-=======
         # Sanitize inputs to prevent injection
         safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]  # Limit and sanitize
         safe_diff = diff[:3000].replace('\0', '')  # Remove null bytes
         
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
         prompt = f"""## Reliability Analysis - Error Handling & Resilience
 
 Please analyze the reliability improvements in these changes:
 
 **Changed Files:**
-<<<<<<< HEAD
-{files_list}
-
-**Code Diff:**
-```diff
-{diff[:2000]}
-=======
 {', '.join(safe_changed_files)}
 
 **Code Diff:**
 ```diff
 {safe_diff}
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
 ```
 
 Focus on Phase 2 reliability requirements:
@@ -684,34 +409,28 @@ Focus on Phase 2 reliability requirements:
 7. **Resource Cleanup**: Check for proper resource cleanup and disposal
 8. **Recovery Mechanisms**: Verify automatic recovery and self-healing
 
-Provide specific reliability recommendations and resilience patterns with file names and line numbers.
+Provide specific reliability recommendations and resilience patterns.
 """
 
         return await self.run_ai_analysis("reliability", prompt)
 
     async def generate_documentation(self, analyses: Dict[str, Any]) -> Dict[str, Any]:
         """Generate comprehensive documentation summary"""
-        # Extract summaries safely
-        security_summary = analyses.get('security', {}).get('analysis', 'Not available')[:800]
-        performance_summary = analyses.get('performance', {}).get('analysis', 'Not available')[:800]
-        observability_summary = analyses.get('observability', {}).get('analysis', 'Not available')[:800]
-        reliability_summary = analyses.get('reliability', {}).get('analysis', 'Not available')[:800]
-        
         prompt = f"""## Documentation Generation - Phase 2 Summary
 
 Please generate a comprehensive summary of the Phase 2 improvements based on these analyses:
 
-**Security Analysis Summary:**
-{security_summary}...
+**Security Analysis:**
+{analyses.get('security', {}).get('analysis', 'Not available')[:1000]}...
 
-**Performance Analysis Summary:**
-{performance_summary}...
+**Performance Analysis:**
+{analyses.get('performance', {}).get('analysis', 'Not available')[:1000]}...
 
-**Observability Analysis Summary:**
-{observability_summary}...
+**Observability Analysis:**
+{analyses.get('observability', {}).get('analysis', 'Not available')[:1000]}...
 
-**Reliability Analysis Summary:**
-{reliability_summary}...
+**Reliability Analysis:**
+{analyses.get('reliability', {}).get('analysis', 'Not available')[:1000]}...
 
 Create a professional executive summary that:
 1. Highlights key Phase 2 improvements
@@ -728,68 +447,91 @@ Format as clean, readable markdown suitable for technical documentation.
 
     def generate_bulletproof_report(self, analyses: Dict[str, Any], diff_stats: Dict[str, int]) -> str:
         """Generate the final bulletproof analysis report"""
-        
+
         # Check if we have real AI verification
         verification_status = "✅ REAL AI Verified" if self.verification_results["real_ai_verified"] else "❌ AI Verification Failed"
         bulletproof_status = "✅ Bulletproof Validated" if self.verification_results["bulletproof_validated"] else "❌ Validation Failed"
-        fake_ai_status = "❌ false" if not self.verification_results["fake_ai_detected"] else "✅ true"
-        
-        report = f"""# 🤖 BULLETPROOF REAL AI Analysis
 
-<<<<<<< HEAD
-**Status:** {verification_status}  
-**Provider:** {self.verification_results.get('provider_used', 'Unknown')} {'(CONFIRMED REAL API CALL)' if self.verification_results['real_ai_verified'] else '(Unverified)'}  
-**Response Time:** {self.verification_results.get('response_time', 0):.2f}s  
-**Validation:** {bulletproof_status}  
-=======
+        report = f"""# 🤖 Bulletproof AI Analysis Report - Phase 2
+
 **Repository:** {self.repo_name}
 **PR Number:** {self.pr_number or 'N/A'}
 **Commit:** {self.commit_sha[:7] if self.commit_sha else 'N/A'}
 **Analysis Time:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
 
----
+## 🔒 Verification Status
+- **AI Verification:** {verification_status}
+- **Provider Used:** {self.verification_results.get('provider_used', 'Unknown')}
+- **Response Time:** {self.verification_results.get('response_time', 0):.2f}s
+- **Bulletproof Validation:** {bulletproof_status}
 
-## 🔍 Analysis
-
-**Repository:** {self.repo_name}  
-**PR Number:** {self.pr_number or 'N/A'}  
-**Commit:** {self.commit_sha[:7] if self.commit_sha else 'N/A'}  
-**Analysis Time:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}  
-
-### 📊 Change Summary
+## 📊 Change Summary
 - **Files Changed:** {diff_stats['files_changed']}
 - **Lines Added:** +{diff_stats['additions']}
 - **Lines Removed:** -{diff_stats['deletions']}
 
-### 🔐 Security Analysis
+---
+
+## 🔐 Security Analysis
 {self._format_analysis_section(analyses.get('security', {}))}
 
-### ⚡ Performance Analysis
+## ⚡ Performance Analysis
 {self._format_analysis_section(analyses.get('performance', {}))}
 
-### 📈 Observability Analysis
+## 📈 Observability Analysis
 {self._format_analysis_section(analyses.get('observability', {}))}
 
-### 🛡️ Reliability Analysis
+## 🛡️️ Reliability Analysis
 {self._format_analysis_section(analyses.get('reliability', {}))}
 
-### 📚 Documentation Summary
+## 📚 Documentation Summary
 {self._format_analysis_section(analyses.get('documentation', {}))}
 
 ---
 
-## 📊 Verification Proof
-- **Real AI Verified:** {'✅ true' if self.verification_results['real_ai_verified'] else '❌ false'}
-- **Fake AI Detected:** {fake_ai_status}
-- **Bulletproof Validated:** {'✅ true' if self.verification_results['bulletproof_validated'] else '❌ false'}
-- **Provider Attempt:** {len(self.verification_results.get('analysis_types', []))}/4
+## 🎯 Phase 2 Compliance Checklist
+
+### Security Hardening
+- [ ] JWT/OIDC validation implemented
+- [ ] Security headers configured
+- [ ] Rate limiting enforced
+- [ ] Input validation comprehensive
+- [ ] Audit logging enabled
+
+### Observability
+- [ ] Structured logging schema consistent
+- [ ] Metrics properly namespaced
+- [ ] Health checks return JSON
+- [ ] Alert rules configured
+- [ ] Dashboards updated
+
+### Performance
+- [ ] Middleware overhead acceptable
+- [ ] Async operations non-blocking
+- [ ] Metrics cardinality safe
+- [ ] Response times maintained
+
+### Reliability
+- [ ] Error handling consistent
+- [ ] Retry policies bounded
+- [ ] Circuit breakers implemented
+- [ ] Health endpoints comprehensive
 
 ---
 
-*Generated by Bulletproof AI Analysis System v2.0*  
-*🛡️ Protected by BULLETPROOF AI Detection System*  
-*⚡ Optimized for large JSON processing with jq*
+## 🚀 Next Steps
+
+1. **Review Security Findings**: Address any security vulnerabilities identified
+2. **Optimize Performance**: Implement performance recommendations
+3. **Complete Observability**: Ensure all monitoring components are properly configured
+4. **Test Reliability**: Verify error handling and recovery mechanisms
+5. **Update Documentation**: Keep technical documentation current
+
+---
+
+*Generated by Bulletproof AI Analysis System v2.0*
+*Real AI Provider: {self.verification_results.get('provider_used', 'Unknown')}*
+*Analysis Types: {', '.join(self.verification_results.get('analysis_types', []))}*
 """
 
         return report
@@ -798,72 +540,27 @@ Format as clean, readable markdown suitable for technical documentation.
         """Format an analysis section for the report"""
         if not analysis.get("success", False):
             return f"❌ **Analysis Failed:** {analysis.get('error', 'Unknown error')}"
-        
+
         content = analysis.get("analysis", "No analysis content available")
         provider = analysis.get("provider", "Unknown")
         response_time = analysis.get("response_time", 0)
-        
-        # Truncate content for readability
-        if len(content) > 1500:
-            content = content[:1500] + "\n\n... (analysis truncated for readability)"
-        
-        return f"**Provider:** {provider} | **Response Time:** {response_time:.2f}s\n\n{content}"
+
+        return f"""**Provider:** {provider} | **Response Time:** {response_time:.2f}s
+
+{content}"""
 
     def save_verification_results(self) -> None:
         """Save verification results for audit trail"""
-        try:
-            verification_file = os.path.join(self.artifacts_dir, "verification_results.json")
-            
-            # Security: Ensure directory exists and is writable
-            os.makedirs(self.artifacts_dir, exist_ok=True)
-            
-            with open(verification_file, "w", encoding="utf-8") as f:
-                json.dump(self.verification_results, f, indent=2)
-            
-            logger.info(f"Verification results saved to {verification_file}")
-        except Exception as e:
-            logger.error(f"Failed to save verification results: {e}")
+        verification_file = os.path.join(self.artifacts_dir, "verification_results.json")
+        with open(verification_file, "w") as f:
+            json.dump(self.verification_results, f, indent=2)
 
-    async def run_comprehensive_analysis(self) -> Optional[str]:
+        logger.info(f"Verification results saved to {verification_file}")
+
+    async def run_comprehensive_analysis(self) -> str:
         """Run comprehensive bulletproof AI analysis"""
         logger.info("🚀 Starting Bulletproof AI PR Analysis...")
         
-<<<<<<< HEAD
-        try:
-            # Get PR information
-            diff = await self.get_pr_diff()
-            changed_files = await self.get_changed_files()
-            diff_stats = self.calculate_diff_stats(diff)
-            diff_stats["files_changed"] = len(changed_files)
-
-            if not diff and not changed_files:
-                logger.warning("No changes detected")
-                return None
-
-            logger.info(f"Analyzing {diff_stats['files_changed']} files with {diff_stats['additions']} additions and {diff_stats['deletions']} deletions")
-
-            # Run all analyses sequentially to avoid rate limits
-            analyses = {}
-            
-            analysis_types = [
-                ("security", self.analyze_security),
-                ("performance", self.analyze_performance),
-                ("observability", self.analyze_observability),
-                ("reliability", self.analyze_reliability)
-            ]
-            
-            # Execute analyses sequentially with delay
-            for analysis_type, analysis_func in analysis_types:
-                logger.info(f"Running {analysis_type} analysis...")
-                analyses[analysis_type] = await analysis_func(diff, changed_files)
-                
-                # Add delay between analyses to avoid rate limiting
-                await asyncio.sleep(2)
-            
-            # Generate documentation
-            logger.info("Generating documentation summary...")
-            analyses["documentation"] = await self.generate_documentation(analyses)
-=======
         # Get PR information
         diff = await self.get_pr_diff()
         changed_files = await self.get_changed_files()
@@ -871,13 +568,13 @@ Format as clean, readable markdown suitable for technical documentation.
 
         if not diff and not changed_files:
             logger.warning("No changes detected")
-            return
+            return ""
 
         logger.info(f"Analyzing {diff_stats['files_changed']} files with {diff_stats['additions']} additions and {diff_stats['deletions']} deletions")
 
         # Run all analyses in parallel for efficiency
         analyses = {}
-        
+
         try:
             # Run all analyses concurrently with timeout
             analysis_tasks = [
@@ -910,93 +607,69 @@ Format as clean, readable markdown suitable for technical documentation.
                 analyses["documentation"] = {
                     "success": False,
                     "error": "Documentation generation timed out after 5 minutes",
-                            "timestamp": datetime.now(timezone.utc).isoformat()
+                    "timestamp": datetime.now(timezone.utc).isoformat()
                 }
->>>>>>> a21fbc1 (🔒 Fix Critical Security and Performance Issues in Bulletproof AI Analyzer)
-            
+
         except Exception as e:
             logger.error(f"Error during analysis: {str(e)}")
-            return None
+            return ""
 
         # Generate final report
         report = self.generate_bulletproof_report(analyses, diff_stats)
-        
-        # Save report securely
-        try:
-            report_path = os.path.join(self.artifacts_dir, "bulletproof_analysis_report.md")
-            with open(report_path, "w", encoding="utf-8") as f:
-                f.write(report)
-            logger.info(f"Bulletproof analysis report saved to {report_path}")
-        except Exception as e:
-            logger.error(f"Failed to save report: {e}")
-        
+
+        # Save report
+        report_path = os.path.join(self.artifacts_dir, "bulletproof_analysis_report.md")
+        with open(report_path, "w") as f:
+            f.write(report)
+
         # Save verification results
         self.save_verification_results()
-        
+
+        logger.info(f"Bulletproof analysis report saved to {report_path}")
+
         # Print summary
         print("\n" + "=" * 80)
         print("🤖 BULLETPROOF AI ANALYSIS COMPLETE")
         print("=" * 80)
         print(f"✅ Real AI Verified: {self.verification_results['real_ai_verified']}")
         print(f"✅ Bulletproof Validated: {self.verification_results['bulletproof_validated']}")
-        print(f"❌ Fake AI Detected: {self.verification_results['fake_ai_detected']}")
-        print(f"🤖 Provider Used: {self.verification_results.get('provider_used', 'Unknown')}")
-        print(f"⏱️ Response Time: {self.verification_results.get('response_time', 0):.2f}s")
-        print(f"📊 Analysis Types: {', '.join(self.verification_results.get('analysis_types', []))}")
+        print(f"✅ Provider Used: {self.verification_results.get('provider_used', 'Unknown')}")
+        print(f"✅ Response Time: {self.verification_results.get('response_time', 0):.2f}s")
+        print(f"✅ Analysis Types: {', '.join(self.verification_results.get('analysis_types', []))}")
         print("=" * 80 + "\n")
-        
+
         return report
 
 
 async def main() -> None:
-    """Main function with proper error handling"""
+    """Main function"""
     try:
         analyzer = BulletproofAIAnalyzer()
         await analyzer.run_comprehensive_analysis()
-        
-    except KeyboardInterrupt:
-        logger.info("Analysis interrupted by user")
-        sys.exit(130)
-        
     except Exception as e:
         logger.error(f"Bulletproof AI analysis failed: {str(e)}")
-        
+
         # Create error report
         error_report = f"""# ❌ Bulletproof AI Analysis Error
 
-**Status:** ❌ Analysis Failed  
-**Error:** {str(e)}  
-**Timestamp:** {datetime.utcnow().isoformat()}  
+An error occurred during the bulletproof AI analysis process:
 
-An error occurred during the bulletproof AI analysis process. Please check the workflow logs for more details.
+```
+{str(e)}
+```
 
-## 🔧 Troubleshooting Steps
-1. Verify all required environment variables are set
-2. Check AI provider API keys are valid
-3. Ensure repository permissions are correct
-4. Review workflow logs for detailed error information
+Please check the workflow logs for more details.
 
----
-
-*🛡️ Protected by BULLETPROOF AI Detection System*  
-*No fake responses generated when analysis unavailable*
+*Bulletproof AI Analysis System v2.0*
 """
 
-        # Save error report safely
-        try:
-            os.makedirs("artifacts", exist_ok=True)
-            with open("artifacts/bulletproof_analysis_report.md", "w", encoding="utf-8") as f:
-                f.write(error_report)
-        except Exception as save_error:
-            logger.error(f"Failed to save error report: {save_error}")
+        # Save error report
+        os.makedirs("artifacts", exist_ok=True)
+        with open("artifacts/bulletproof_analysis_report.md", "w") as f:
+            f.write(error_report)
 
         sys.exit(1)
 
 
 if __name__ == "__main__":
-    # Security: Verify Python version
-    if sys.version_info < (3, 8):
-        print("Error: Python 3.8+ required for bulletproof AI analysis")
-        sys.exit(1)
-    
     asyncio.run(main())
