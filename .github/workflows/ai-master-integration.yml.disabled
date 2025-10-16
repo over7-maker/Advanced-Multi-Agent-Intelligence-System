@@ -198,6 +198,14 @@ jobs:
           name: security-audit-${{ github.run_number }}
           path: artifacts/
 
+      - name: 📦 Install Dependencies
+        run: |
+          echo "📦 Installing required dependencies..."
+          python -m pip install --upgrade pip
+          pip install aiohttp multidict yarl attrs aiosignal frozenlist
+          pip install openai cohere python-dotenv
+          pip install -r requirements.txt || echo "Some requirements failed, continuing..."
+
       - name: 🤖 AI Auto-Commit Fixes
         run: |
           echo "🤖 Running AI auto-commit fixes..."

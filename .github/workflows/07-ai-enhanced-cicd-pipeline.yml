@@ -166,33 +166,35 @@ jobs:
         echo "Quality Gates: $QUALITY_GATES | Performance Monitoring: $PERFORMANCE_MONITORING"
         echo ""
         
-        # Create a simple analysis result if script doesn't exist
-        if [ ! -f ".github/scripts/ai_pipeline_analyzer.py" ]; then
-          echo "🛠️ Creating mock pipeline analysis for now..."
-          echo '{
-            "status": "success",
-            "analysis": "Pipeline analysis completed - PyYAML Cython issues resolved",
-            "recommendations": [
-              "Use stable dependency versions",
-              "Implement proper error handling",
-              "PyYAML binary wheels successfully used"
-            ],
-            "build_environment": {
-              "cython_fix": "applied",
-              "PyYAML_fix": "binary_wheels",
-              "status": "healthy"
-            }
-          }' > pipeline_analysis_results.json
+        # Install ALL required dependencies for BULLETPROOF AI
+        echo "📦 Installing ALL AI provider dependencies..."
+        python -m pip install --upgrade pip
+        
+        # Install ALL AI provider SDKs
+        pip install aiohttp openai anthropic google-generativeai
+        pip install groq cohere mistralai
+        pip install multidict yarl attrs aiosignal frozenlist
+        
+        # Verify installations
+        python -c "import aiohttp; print('✅ aiohttp installed')"
+        python -c "import openai; print('✅ openai installed')"
+        python -c "import anthropic; print('✅ anthropic installed')"
+        
+        # Create artifacts directory
+        mkdir -p artifacts
+        
+        # Run BULLETPROOF REAL AI Pipeline Analysis
+        echo "🚀 Starting BULLETPROOF REAL AI pipeline analysis..."
+        python .github/scripts/bulletproof_real_ai.py code_quality
+        
+        # CRITICAL VALIDATION - BULLETPROOF verification
+        if grep -q '"bulletproof_validated": true' artifacts/real_code_quality_analysis.json; then
+          echo "✅ BULLETPROOF REAL AI VERIFIED!"
+          # Copy to expected location for compatibility
+          cp artifacts/real_code_quality_analysis.json pipeline_analysis_results.json
         else
-          # Run Intelligent Pipeline Analysis
-          python .github/scripts/ai_pipeline_analyzer.py \
-            --mode $PIPELINE_MODE \
-            --environments $TARGET_ENVIRONMENTS \
-            --strategy $DEPLOYMENT_STRATEGY \
-            --quality-gates $QUALITY_GATES \
-            --performance-monitoring $PERFORMANCE_MONITORING \
-            --use-advanced-manager \
-            --output pipeline_analysis_results.json
+          echo "🚨 FAKE AI DETECTED - HARD FAILURE!"
+          exit 1
         fi
         
         echo "✅ Intelligent Pipeline Analysis completed successfully"
@@ -204,6 +206,11 @@ jobs:
         python -c "import numpy; print('✅ numpy imports successfully')"
         python -c "import fastapi; print('✅ FastAPI imports successfully')"
         echo "✅ All critical packages verified!"
+        
+        # CRITICAL: Validate NO FAKE AI used
+        echo ""
+        echo "🔍 Validating NO FAKE AI used across all workflows..."
+        python .github/scripts/validate_no_fake_ai.py
     
     - name: 📊 Upload Pipeline Analysis Results
       uses: actions/upload-artifact@v4
@@ -211,6 +218,56 @@ jobs:
         name: pipeline-analysis-results-${{ github.run_number }}
         path: pipeline_analysis_results.json
         retention-days: 30
+    
+    - name: 📝 Post BULLETPROOF REAL AI Results
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          
+          try {
+            const data = JSON.parse(fs.readFileSync('artifacts/real_code_quality_analysis.json', 'utf8'));
+            
+            // HARD REJECTION of fake AI
+            if (!data.bulletproof_validated || data.fake_ai_detected) {
+              console.log('🚨 FAKE AI DETECTED - REFUSING TO POST FAKE RESULTS!');
+              throw new Error('Will not post fake AI analysis results');
+            }
+            
+            const body = `## 🤖 BULLETPROOF REAL AI Analysis
+
+**Status:** ✅ REAL AI Analysis Verified
+**Provider:** ${data.provider} (CONFIRMED REAL API CALL)
+**Response Time:** ${data.response_time}s (Actual API Response)
+**Validation:** Bulletproof verified ✓
+
+### 🔍 REAL AI Analysis Results
+${data.analysis}
+
+### 📊 Verification Proof
+- **Real AI Verified:** ✅ ${data.real_ai_verified}
+- **Fake AI Detected:** ❌ ${data.fake_ai_detected} 
+- **Provider Attempt:** ${data.provider_attempt}/${data.total_attempts}
+- **Bulletproof Validated:** ✅ ${data.bulletproof_validated}
+
+*🤖 GUARANTEED REAL AI - Provider: ${data.provider}*
+*This is NOT a template - Actual AI API call performed*`;
+
+            // Post comment to PR
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body
+            });
+            
+            console.log('✅ BULLETPROOF REAL AI comment posted successfully');
+            
+          } catch (error) {
+            console.log('❌ Failed to post comment:', error.message);
+            // Don't fail the workflow, just log the error
+          }
     
     - name: 📈 Generate Pipeline Analysis Summary
       if: always()

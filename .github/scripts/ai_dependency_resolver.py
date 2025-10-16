@@ -1,444 +1,344 @@
 #!/usr/bin/env python3
 """
-AI-Powered Dependency Resolver & Code Auto-Fix Agent
-AMAS - using 16-provider fallback system
+AI Dependency Resolver - Comprehensive dependency analysis and resolution
+Uses 16 AI providers with intelligent fallback and health monitoring
 """
 
 import os
 import sys
-import subprocess
 import json
 import asyncio
-import aiohttp
-import re
+import subprocess
+import importlib
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Any, Optional
 
-# Import our AI agent fallback system
+# Add current directory to path for imports
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from ai_agent_fallback import ai_agent
-from ai_output_processor import AIOutputProcessor
+
+try:
+    from bulletproof_real_ai import BulletproofRealAI
+except ImportError as e:
+    print(f"❌ Failed to import bulletproof_real_ai: {e}")
+    print("Installing required dependencies...")
+    subprocess.run([sys.executable, "-m", "pip", "install", "aiohttp", "openai", "anthropic", "google-generativeai", "groq", "cohere", "mistralai"], check=True)
+    from bulletproof_real_ai import BulletproofRealAI
 
 class AIDependencyResolver:
-    """AI-powered dependency resolver with 16-provider fallback"""
+    """AI-powered dependency resolver with comprehensive analysis"""
     
     def __init__(self):
-        self.start_time = datetime.utcnow()
-        self.errors = []
-        self.fixes_applied = []
-        self.output_processor = AIOutputProcessor()
+        self.issues_detected = {
+            'missing_modules': [],
+            'import_errors': [],
+            'version_conflicts': [],
+            'error_count': 0
+        }
+        self.fixes_applied = {
+            'total_applied': 0,
+            'total_failed': 0,
+            'applied_fixes': [],
+            'failed_fixes': []
+        }
+        self.ai_analysis = {}
         
-    async def collect_dependency_data(self) -> Dict[str, Any]:
-        """Collect comprehensive dependency and error data"""
-        print("🔍 Collecting dependency data...")
+    def detect_missing_modules(self) -> List[str]:
+        """Detect missing Python modules by testing imports"""
+        print("🔍 Detecting missing modules...")
         
-        data = {
-            "timestamp": self.start_time.isoformat(),
-            "python_version": sys.version,
-            "platform": os.name,
-            "pip_freeze": "",
-            "error_logs": [],
-            "missing_modules": [],
-            "conflict_errors": [],
-            "import_errors": [],
-            "workflow_logs": []
+        # Common modules that might be missing
+        test_modules = [
+            'aiohttp', 'openai', 'cohere', 'multidict', 'yarl', 
+            'attrs', 'aiosignal', 'frozenlist', 'httpx', 'requests',
+            'numpy', 'pandas', 'scikit-learn', 'matplotlib', 'seaborn',
+            'plotly', 'sqlalchemy', 'redis', 'neo4j', 'bcrypt',
+            'cryptography', 'jwt', 'beautifulsoup4', 'selenium',
+            'sentence_transformers', 'faiss', 'yaml', 'pydantic'
+        ]
+        
+        missing_modules = []
+        
+        for module in test_modules:
+            try:
+                importlib.import_module(module)
+                print(f"✅ {module} - OK")
+            except ImportError as e:
+                missing_modules.append(module)
+                print(f"❌ {module} - MISSING: {e}")
+                self.issues_detected['error_count'] += 1
+        
+        self.issues_detected['missing_modules'] = missing_modules
+        return missing_modules
+    
+    def analyze_requirements_txt(self) -> Dict[str, Any]:
+        """Analyze requirements.txt for potential issues"""
+        print("📋 Analyzing requirements.txt...")
+        
+        requirements_analysis = {
+            'file_exists': False,
+            'total_packages': 0,
+            'version_pinned': 0,
+            'potential_conflicts': [],
+            'missing_dependencies': []
         }
         
-        try:
-            # Get current pip freeze
-            result = subprocess.run(["pip", "freeze"], capture_output=True, text=True, timeout=30)
-            data["pip_freeze"] = result.stdout
-            if result.stderr:
-                data["error_logs"].append(f"pip freeze stderr: {result.stderr}")
-        except Exception as e:
-            data["error_logs"].append(f"pip freeze failed: {e}")
+        if os.path.exists('requirements.txt'):
+            requirements_analysis['file_exists'] = True
+            
+            with open('requirements.txt', 'r') as f:
+                lines = f.readlines()
+            
+            packages = []
+            for line in lines:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    packages.append(line)
+                    if '==' in line or '>=' in line or '<=' in line:
+                        requirements_analysis['version_pinned'] += 1
+            
+            requirements_analysis['total_packages'] = len(packages)
+            
+            # Check for common missing dependencies
+            common_deps = ['aiohttp', 'multidict', 'yarl', 'attrs', 'aiosignal', 'frozenlist']
+            for dep in common_deps:
+                if not any(dep in pkg for pkg in packages):
+                    requirements_analysis['missing_dependencies'].append(dep)
         
-        # Check for common error patterns
-        error_patterns = [
-            r"ModuleNotFoundError: No module named '([^']+)'",
-            r"ImportError: No module named '([^']+)'",
-            r"ModuleNotFoundError: No module named \"([^\"]+)\"",
-            r"ImportError: No module named \"([^\"]+)\"",
-            r"ERROR: Could not find a version that satisfies the requirement ([^\s]+)",
-            r"ERROR: No matching distribution found for ([^\s]+)",
-            r"ERROR: Failed building wheel for ([^\s]+)",
-            r"ERROR: Command errored out with exit status \d+",
-        ]
-        
-        # Look for error logs in common locations
-        log_locations = [
-            "/tmp/github_workflow_logs.txt",
-            "artifacts/error_logs.txt",
-            ".github/logs/",
-            "logs/",
-            "/var/log/",
-        ]
-        
-        for location in log_locations:
-            if os.path.exists(location):
-                try:
-                    if os.path.isfile(location):
-                        with open(location, 'r', encoding='utf-8', errors='ignore') as f:
-                            content = f.read()
-                            for pattern in error_patterns:
-                                matches = re.findall(pattern, content, re.IGNORECASE)
-                                data["missing_modules"].extend(matches)
-                                if matches:
-                                    data["error_logs"].append(f"Found in {location}: {matches}")
-                    elif os.path.isdir(location):
-                        for root, dirs, files in os.walk(location):
-                            for file in files:
-                                if file.endswith(('.log', '.txt', '.err')):
-                                    filepath = os.path.join(root, file)
-                                    try:
-                                        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
-                                            content = f.read()
-                                            for pattern in error_patterns:
-                                                matches = re.findall(pattern, content, re.IGNORECASE)
-                                                data["missing_modules"].extend(matches)
-                                                if matches:
-                                                    data["error_logs"].append(f"Found in {filepath}: {matches}")
-                                    except Exception:
-                                        continue
-                except Exception as e:
-                    data["error_logs"].append(f"Error reading {location}: {e}")
-        
-        # Remove duplicates and clean up
-        data["missing_modules"] = list(set(data["missing_modules"]))
-        data["error_logs"] = data["error_logs"][:20]  # Limit to 20 most recent errors
-        
-        return data
+        return requirements_analysis
     
-    async def analyze_with_ai(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Use AI to analyze dependency issues and suggest fixes"""
-        print("🤖 Analyzing dependency issues with AI...")
+    async def get_ai_analysis(self, missing_modules: List[str], requirements_analysis: Dict[str, Any]) -> Dict[str, Any]:
+        """Get AI analysis for dependency issues"""
+        print("🤖 Getting AI analysis...")
         
-        # Create comprehensive prompt for AI analysis
+        # Create comprehensive prompt
         prompt = f"""
-As an expert Python dependency and DevOps engineer, analyze these dependency issues and provide actionable fixes.
-
-## Current Environment:
-- Python Version: {data['python_version']}
-- Platform: {data['platform']}
-- Timestamp: {data['timestamp']}
-
-## Error Logs:
-{chr(10).join(data['error_logs'][:10])}
-
-## Missing Modules Detected:
-{', '.join(data['missing_modules'][:20])}
-
-## Current Installed Packages:
-{data['pip_freeze'][:2000]}
-
-## Task:
-1. **Identify the root cause** of dependency failures
-2. **Provide exact pip install commands** to fix missing dependencies
-3. **Suggest requirements.txt updates** with proper version pins
-4. **Recommend workflow YAML changes** if needed
-5. **Provide code patches** if import errors exist
-6. **Suggest preventive measures** to avoid future issues
-
-## Response Format:
-Provide your analysis in this exact JSON format:
-```json
-{{
-  "analysis": "Brief analysis of the issues",
-  "root_cause": "Primary cause of failures",
-  "pip_commands": ["pip install package1==version1", "pip install package2==version2"],
-  "requirements_txt": "Updated requirements.txt content",
-  "workflow_fixes": ["YAML changes needed"],
-  "code_patches": ["Code changes if needed"],
-  "prevention": ["Steps to prevent future issues"],
-  "confidence": 0.95,
-  "priority": "high|medium|low"
-}}
-```
-
-Be specific, actionable, and focus on immediate fixes that will resolve the current failures.
-"""
+        Analyze these Python dependency issues and provide specific, actionable solutions:
+        
+        Missing Modules: {missing_modules}
+        Requirements Analysis: {json.dumps(requirements_analysis, indent=2)}
+        
+        Please provide:
+        1. Root cause analysis
+        2. Priority level (low/medium/high)
+        3. Confidence score (0-1)
+        4. Specific pip install commands to fix issues
+        5. Updated requirements.txt content
+        6. Long-term recommendations
+        
+        Format your response as JSON with these keys:
+        - root_cause: string
+        - priority: string
+        - confidence: float
+        - pip_commands: array of strings
+        - requirements_txt: string
+        - analysis: string
+        - recommendations: object with immediate_actions, long_term_improvements, workflow_changes arrays
+        """
         
         try:
-            print("📝 Sending comprehensive analysis to AI providers...")
             result = await ai_agent.analyze_with_fallback(prompt, "dependency_analysis")
             
-            if result.get('success'):
-                print(f"✅ AI analysis completed using {result.get('provider_used', 'unknown')} provider")
-                print(f"⏱️ Response Time: {result.get('response_time', 0):.2f}s")
-                
-                # Try to extract JSON from AI response
-                content = result.get('content', '')
-                
-                # Clean the AI response using output processor
-                cleaned_content = self.output_processor.clean_ai_response(content)
-                
+            if result['success']:
+                # Parse AI response
                 try:
-                    # Look for JSON in the response
-                    json_match = re.search(r'```json\s*(\{.*?\})\s*```', cleaned_content, re.DOTALL)
-                    if json_match:
-                        ai_analysis = json.loads(json_match.group(1))
-                    else:
-                        # Fallback: create structured response
-                        ai_analysis = {
-                            "analysis": cleaned_content[:500],
-                            "root_cause": "Dependency installation issues",
-                            "pip_commands": self._extract_pip_commands(cleaned_content),
-                            "requirements_txt": self._extract_requirements(cleaned_content),
-                            "workflow_fixes": self._extract_workflow_fixes(cleaned_content),
-                            "code_patches": [],
-                            "prevention": ["Regular dependency updates", "Version pinning"],
-                            "confidence": 0.8,
-                            "priority": "high"
-                        }
+                    ai_data = json.loads(result['content'])
+                    self.ai_analysis = ai_data
                 except json.JSONDecodeError:
-                    # Fallback if JSON parsing fails
-                    ai_analysis = {
-                        "analysis": content[:500],
-                        "root_cause": "Dependency installation issues",
-                        "pip_commands": self._extract_pip_commands(content),
-                        "requirements_txt": "",
-                        "workflow_fixes": [],
-                        "code_patches": [],
-                        "prevention": ["Regular dependency updates"],
-                        "confidence": 0.7,
-                        "priority": "high"
+                    # If not JSON, create structured response
+                    self.ai_analysis = {
+                        'root_cause': 'Dependency installation failures',
+                        'priority': 'high',
+                        'confidence': 0.8,
+                        'pip_commands': [
+                            'pip install --upgrade pip',
+                            'pip install aiohttp multidict yarl attrs aiosignal frozenlist',
+                            'pip install -r requirements.txt'
+                        ],
+                        'requirements_txt': '',
+                        'analysis': result['content'],
+                        'recommendations': {
+                            'immediate_actions': [
+                                'Install missing dependencies',
+                                'Update requirements.txt',
+                                'Verify all imports work'
+                            ],
+                            'long_term_improvements': [
+                                'Pin all dependency versions',
+                                'Use virtual environments',
+                                'Regular dependency audits'
+                            ],
+                            'workflow_changes': [
+                                'Add dependency installation step',
+                                'Test imports in CI/CD',
+                                'Use requirements.txt in workflows'
+                            ]
+                        }
                     }
                 
-                # Process the analysis through output processor
-                processed_analysis = self.output_processor.process_ai_analysis({
-                    "success": True,
-                    "metadata": {
-                        "provider_used": result.get('provider_used'),
-                        "response_time": result.get('response_time', 0)
-                    },
-                    "analysis": ai_analysis.get('analysis', ''),
-                    "root_cause": ai_analysis.get('root_cause', ''),
-                    "priority": ai_analysis.get('priority', 'high'),
-                    "confidence": ai_analysis.get('confidence', 0.8),
-                    "recommendations": {
-                        "immediate_actions": ai_analysis.get('pip_commands', [])
-                    }
-                })
-                
-                return {
-                    "success": True,
-                    "provider_used": result.get('provider_used'),
-                    "response_time": result.get('response_time', 0),
-                    "analysis": processed_analysis,
-                    "raw_response": content
-                }
+                return self.ai_analysis
             else:
                 print(f"❌ AI analysis failed: {result.get('error', 'Unknown error')}")
-                return {
-                    "success": False,
-                    "error": result.get('error', 'AI analysis failed'),
-                    "analysis": self._create_fallback_analysis(data)
-                }
+                return {}
                 
         except Exception as e:
-            print(f"❌ Exception during AI analysis: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "analysis": self._create_fallback_analysis(data)
-            }
+            print(f"❌ Error getting AI analysis: {e}")
+            return {}
     
-    def _extract_pip_commands(self, content: str) -> List[str]:
-        """Extract pip install commands from AI response"""
-        commands = []
-        # Look for pip install patterns
-        pip_patterns = [
-            r'pip install[^\\n]*',
-            r'pip3 install[^\\n]*',
-            r'python -m pip install[^\\n]*'
-        ]
-        
-        for pattern in pip_patterns:
-            matches = re.findall(pattern, content, re.IGNORECASE)
-            commands.extend(matches)
-        
-        return commands[:10]  # Limit to 10 commands
-    
-    def _extract_requirements(self, content: str) -> str:
-        """Extract requirements.txt content from AI response"""
-        # Look for requirements.txt content
-        req_match = re.search(r'requirements\.txt[:\s]*\n(.*?)(?:\n\n|\Z)', content, re.DOTALL | re.IGNORECASE)
-        if req_match:
-            return req_match.group(1).strip()
-        return ""
-    
-    def _extract_workflow_fixes(self, content: str) -> List[str]:
-        """Extract workflow YAML fixes from AI response"""
-        fixes = []
-        # Look for YAML or workflow-related suggestions
-        yaml_patterns = [
-            r'```yaml\s*(.*?)\s*```',
-            r'workflow[^\\n]*',
-            r'pip install[^\\n]*'
-        ]
-        
-        for pattern in yaml_patterns:
-            matches = re.findall(pattern, content, re.DOTALL | re.IGNORECASE)
-            fixes.extend(matches)
-        
-        return fixes[:5]  # Limit to 5 fixes
-    
-    def _create_fallback_analysis(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Create fallback analysis when AI fails"""
-        missing_modules = data.get('missing_modules', [])
-        
-        pip_commands = []
-        for module in missing_modules[:10]:  # Limit to 10 modules
-            pip_commands.append(f"pip install {module}")
-        
-        return {
-            "analysis": f"Detected {len(missing_modules)} missing modules. Applying standard fixes.",
-            "root_cause": "Missing Python dependencies",
-            "pip_commands": pip_commands,
-            "requirements_txt": "",
-            "workflow_fixes": ["Ensure all dependencies are installed with proper versions"],
-            "code_patches": [],
-            "prevention": ["Add missing dependencies to requirements.txt", "Pin versions"],
-            "confidence": 0.6,
-            "priority": "high"
-        }
-    
-    async def apply_fixes(self, analysis: Dict[str, Any]) -> Dict[str, Any]:
-        """Apply suggested fixes automatically"""
+    def apply_fixes(self, ai_analysis: Dict[str, Any]) -> Dict[str, Any]:
+        """Apply AI-suggested fixes"""
         print("🔧 Applying AI-suggested fixes...")
         
         applied_fixes = []
         failed_fixes = []
         
         # Apply pip commands
-        pip_commands = analysis.get('pip_commands', [])
+        pip_commands = ai_analysis.get('pip_commands', [])
         for cmd in pip_commands[:5]:  # Limit to 5 commands
             try:
-                print(f"📦 Running: {cmd}")
+                print(f"Running: {cmd}")
                 result = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=60)
+                
                 if result.returncode == 0:
-                    applied_fixes.append(f"✅ {cmd}")
+                    applied_fixes.append({
+                        'type': 'pip_command',
+                        'command': cmd,
+                        'status': 'success'
+                    })
                     print(f"✅ Success: {cmd}")
                 else:
-                    failed_fixes.append(f"❌ {cmd}: {result.stderr}")
+                    failed_fixes.append({
+                        'type': 'pip_command',
+                        'command': cmd,
+                        'status': 'failed',
+                        'error': result.stderr
+                    })
                     print(f"❌ Failed: {cmd} - {result.stderr}")
+                    
             except Exception as e:
-                failed_fixes.append(f"❌ {cmd}: {e}")
+                failed_fixes.append({
+                    'type': 'pip_command',
+                    'command': cmd,
+                    'status': 'failed',
+                    'error': str(e)
+                })
                 print(f"❌ Exception: {cmd} - {e}")
         
-        return {
-            "applied_fixes": applied_fixes,
-            "failed_fixes": failed_fixes,
-            "total_applied": len(applied_fixes),
-            "total_failed": len(failed_fixes)
-        }
-    
-    async def generate_report(self, data: Dict[str, Any], analysis: Dict[str, Any], fixes: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate comprehensive report"""
-        report = {
-            "metadata": {
-                "timestamp": datetime.utcnow().isoformat(),
-                "resolver_version": "1.0.0",
-                "execution_time": (datetime.utcnow() - self.start_time).total_seconds(),
-                "ai_success": analysis.get('success', False),
-                "provider_used": analysis.get('provider_used'),
-                "response_time": analysis.get('response_time', 0)
-            },
-            "issues_detected": {
-                "missing_modules": data.get('missing_modules', []),
-                "error_count": len(data.get('error_logs', [])),
-                "python_version": data.get('python_version'),
-                "platform": data.get('platform')
-            },
-            "ai_analysis": analysis.get('analysis', {}),
-            "fixes_applied": fixes,
-            "recommendations": {
-                "immediate_actions": analysis.get('analysis', {}).get('pip_commands', []),
-                "long_term_improvements": analysis.get('analysis', {}).get('prevention', []),
-                "workflow_changes": analysis.get('analysis', {}).get('workflow_fixes', [])
-            },
-            "status": "completed" if analysis.get('success') else "partial"
+        # Update requirements.txt if provided
+        requirements_content = ai_analysis.get('requirements_txt', '')
+        if requirements_content.strip():
+            try:
+                with open('requirements.txt', 'w') as f:
+                    f.write(requirements_content)
+                applied_fixes.append({
+                    'type': 'requirements_update',
+                    'status': 'success'
+                })
+                print("✅ Updated requirements.txt")
+            except Exception as e:
+                failed_fixes.append({
+                    'type': 'requirements_update',
+                    'status': 'failed',
+                    'error': str(e)
+                })
+                print(f"❌ Failed to update requirements.txt: {e}")
+        
+        self.fixes_applied = {
+            'total_applied': len(applied_fixes),
+            'total_failed': len(failed_fixes),
+            'applied_fixes': applied_fixes,
+            'failed_fixes': failed_fixes
         }
         
-        return report
+        return self.fixes_applied
+    
+    async def run_analysis(self) -> Dict[str, Any]:
+        """Run complete dependency analysis"""
+        print("🚀 Starting AI Dependency Resolver...")
+        print("=" * 60)
+        
+        try:
+            # Step 1: Detect missing modules
+            missing_modules = self.detect_missing_modules()
+            
+            # Step 2: Analyze requirements.txt
+            requirements_analysis = self.analyze_requirements_txt()
+            
+            # Step 3: Get AI analysis
+            ai_analysis = await self.get_ai_analysis(missing_modules, requirements_analysis)
+            
+            # Step 4: Apply fixes
+            if ai_analysis:
+                fix_results = self.apply_fixes(ai_analysis)
+            
+            # Step 5: Verify fixes
+            print("🧪 Verifying fixes...")
+            final_missing = self.detect_missing_modules()
+            
+            # Create results
+            results = {
+                'metadata': {
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'status': 'completed',
+                    'ai_provider_used': ai_analysis.get('provider_used', 'unknown'),
+                    'response_time': ai_analysis.get('response_time', 0)
+                },
+                'issues_detected': self.issues_detected,
+                'requirements_analysis': requirements_analysis,
+                'ai_analysis': ai_analysis,
+                'fixes_applied': self.fixes_applied,
+                'verification': {
+                    'modules_before': len(missing_modules),
+                    'modules_after': len(final_missing),
+                    'improvement': len(missing_modules) - len(final_missing)
+                }
+            }
+            
+            return results
+            
+        except Exception as e:
+            print(f"❌ Critical error in dependency resolver: {e}")
+            return {
+                'metadata': {
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'status': 'failed',
+                    'error': str(e)
+                },
+                'issues_detected': self.issues_detected,
+                'ai_analysis': {},
+                'fixes_applied': self.fixes_applied
+            }
 
 async def main():
-    """Main function to run AI dependency resolver"""
-    print("🚀 Starting AI Dependency Resolver...")
-    print("=" * 60)
+    """Main function to run dependency resolver"""
+    print("🤖 AI Dependency Resolver Starting...")
     
+    # Create artifacts directory
+    os.makedirs("artifacts", exist_ok=True)
+    
+    # Run resolver
     resolver = AIDependencyResolver()
+    results = await resolver.run_analysis()
     
-    try:
-        # Step 1: Collect dependency data
-        data = await resolver.collect_dependency_data()
-        print(f"📊 Collected data: {len(data['missing_modules'])} missing modules, {len(data['error_logs'])} errors")
-        
-        # Step 2: Analyze with AI
-        analysis = await resolver.analyze_with_ai(data)
-        
-        # Step 3: Apply fixes if analysis was successful
-        fixes = {}
-        if analysis.get('success'):
-            fixes = await resolver.apply_fixes(analysis['analysis'])
-        
-        # Step 4: Generate comprehensive report
-        report = await resolver.generate_report(data, analysis, fixes)
-        
-        # Step 5: Save results
-        os.makedirs("artifacts", exist_ok=True)
-        with open("artifacts/dependency_resolution.json", "w") as f:
-            json.dump(report, f, indent=2)
-        
-        # Step 6: Print summary
-        print("\n" + "=" * 60)
-        print("🎉 AI DEPENDENCY RESOLVER COMPLETE!")
-        print("=" * 60)
-        print(f"📊 Status: {report['status']}")
-        print(f"🤖 AI Provider: {report['metadata'].get('provider_used', 'None')}")
-        print(f"⏱️ Response Time: {report['metadata'].get('response_time', 0):.2f}s")
-        print(f"🔧 Fixes Applied: {fixes.get('total_applied', 0)}")
-        print(f"❌ Fixes Failed: {fixes.get('total_failed', 0)}")
-        print(f"📄 Report saved to: artifacts/dependency_resolution.json")
-        
-        # Print AI recommendations
-        if analysis.get('success') and analysis.get('analysis'):
-            ai_analysis = analysis['analysis']
-            print(f"\n🎯 AI RECOMMENDATIONS:")
-            print(f"Root Cause: {ai_analysis.get('root_cause', 'Unknown')}")
-            print(f"Priority: {ai_analysis.get('priority', 'Unknown')}")
-            print(f"Confidence: {ai_analysis.get('confidence', 0):.2f}")
-            
-            if ai_analysis.get('pip_commands'):
-                print(f"\n📦 Suggested Commands:")
-                for cmd in ai_analysis['pip_commands'][:5]:
-                    print(f"  {cmd}")
-        
-        return report
-        
-    except Exception as e:
-        print(f"❌ Critical error in dependency resolver: {e}")
-        import traceback
-        print(f"🔍 Traceback: {traceback.format_exc()}")
-        
-        # Create minimal error report
-        error_report = {
-            "metadata": {
-                "timestamp": datetime.utcnow().isoformat(),
-                "status": "failed",
-                "error": str(e)
-            },
-            "issues_detected": {"error_count": 1},
-            "ai_analysis": {"analysis": "Failed to analyze due to critical error"},
-            "fixes_applied": {"total_applied": 0, "total_failed": 1},
-            "recommendations": {"immediate_actions": ["Check logs and retry"]}
-        }
-        
-        os.makedirs("artifacts", exist_ok=True)
-        with open("artifacts/dependency_resolution.json", "w") as f:
-            json.dump(error_report, f, indent=2)
-        
-        return error_report
+    # Save results
+    with open("artifacts/dependency_resolution.json", "w") as f:
+        json.dump(results, f, indent=2)
+    
+    # Print summary
+    print("\n" + "=" * 60)
+    print("🎉 AI DEPENDENCY RESOLVER COMPLETE!")
+    print("=" * 60)
+    print(f"📊 Status: {results['metadata']['status']}")
+    print(f"🔍 Issues Detected: {results['issues_detected']['error_count']}")
+    print(f"🔧 Fixes Applied: {results['fixes_applied']['total_applied']}")
+    print(f"❌ Fixes Failed: {results['fixes_applied']['total_failed']}")
+    
+    if results['fixes_applied']['total_applied'] > 0:
+        print("✅ Some fixes were successfully applied")
+    else:
+        print("⚠️ No fixes were applied")
+    
+    return results
 
 if __name__ == "__main__":
     asyncio.run(main())

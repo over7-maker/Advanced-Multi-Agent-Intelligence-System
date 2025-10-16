@@ -50,7 +50,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install aiohttp openai cohere python-dotenv
-          pip install multidict yarl attrs aiosignal frozenlist || true
+          pip install multidict yarl attrs aiosignal frozenlist
+          pip install -r requirements.txt
 
       - name: 🧪 Run AI Dependency Resolver
         id: analyze
@@ -119,6 +120,14 @@ jobs:
           name: ai-dependency-analysis-${{ github.run_number }}
           path: artifacts/
 
+      - name: 📦 Install Dependencies First
+        run: |
+          echo "📦 Installing required dependencies..."
+          python -m pip install --upgrade pip
+          pip install aiohttp multidict yarl attrs aiosignal frozenlist
+          pip install openai cohere python-dotenv
+          pip install -r requirements.txt || echo "Some requirements failed, continuing..."
+
       - name: 🔧 Apply AI-Suggested Fixes
         run: |
           echo "🔧 Applying AI-suggested dependency fixes..."
@@ -126,30 +135,30 @@ jobs:
           if [ -f "artifacts/dependency_resolution.json" ]; then
             # Extract and run pip commands
             python -c "
-          import json
-          import subprocess
-          import sys
-          
-          try:
-              with open('artifacts/dependency_resolution.json', 'r') as f:
-                  data = json.load(f)
-              
-              commands = data.get('ai_analysis', {}).get('pip_commands', [])
-              print(f'Found {len(commands)} suggested commands')
-              
-              for cmd in commands[:5]:  # Limit to 5 commands
-                  print(f'Running: {cmd}')
-                  try:
-                      result = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=60)
-                      if result.returncode == 0:
-                          print(f'✅ Success: {cmd}')
-                      else:
-                          print(f'❌ Failed: {cmd} - {result.stderr}')
-                  except Exception as e:
-                      print(f'❌ Exception: {cmd} - {e}')
-          except Exception as e:
-              print(f'Error processing fixes: {e}')
-          "
+import json
+import subprocess
+import sys
+
+try:
+    with open('artifacts/dependency_resolution.json', 'r') as f:
+        data = json.load(f)
+    
+    commands = data.get('ai_analysis', {}).get('pip_commands', [])
+    print(f'Found {len(commands)} suggested commands')
+    
+    for cmd in commands[:5]:  # Limit to 5 commands
+        print(f'Running: {cmd}')
+        try:
+            result = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=60)
+            if result.returncode == 0:
+                print(f'✅ Success: {cmd}')
+            else:
+                print(f'❌ Failed: {cmd} - {result.stderr}')
+        except Exception as e:
+            print(f'❌ Exception: {cmd} - {e}')
+except Exception as e:
+    print(f'Error processing fixes: {e}')
+"
 
       - name: 📝 Update Requirements.txt (if suggested)
         run: |

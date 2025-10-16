@@ -35,12 +35,26 @@ class AIOutputProcessor:
             if len(line.strip()) < 3:
                 continue
                 
+            # Skip lines that are clearly incomplete commands
+            if line.strip().endswith('pip install') or line.strip().endswith('python -m'):
+                continue
+                
             # Clean up the line
             cleaned_line = line.strip()
             if cleaned_line:
                 cleaned_lines.append(cleaned_line)
         
-        return '\n'.join(cleaned_lines)
+        # Join lines and remove excessive whitespace
+        result = '\n'.join(cleaned_lines)
+        
+        # Remove multiple consecutive empty lines
+        result = re.sub(r'\n\s*\n\s*\n+', '\n\n', result)
+        
+        # Limit total length to prevent extremely long responses
+        if len(result) > 5000:
+            result = result[:5000] + "\n\n... (truncated for readability)"
+        
+        return result
     
     def extract_shell_commands(self, text: str) -> List[str]:
         """Extract valid shell commands from AI response"""
@@ -79,7 +93,17 @@ class AIOutputProcessor:
                 if self.is_valid_command(command):
                     commands.append(command)
         
-        return list(set(commands))  # Remove duplicates
+        # Clean and validate commands
+        cleaned_commands = []
+        for cmd in commands:
+            # Remove incomplete commands
+            if not cmd.endswith('install') and not cmd.endswith('upgrade') and not cmd.endswith('uninstall'):
+                # Check if command has proper arguments
+                parts = cmd.split()
+                if len(parts) >= 2:  # At least command + argument
+                    cleaned_commands.append(cmd)
+        
+        return list(set(cleaned_commands))  # Remove duplicates
     
     def is_valid_command(self, command: str) -> bool:
         """Check if command is valid and safe"""
@@ -158,11 +182,19 @@ class AIOutputProcessor:
         status = "✅ Completed" if processed_analysis.get('success', True) else "❌ Failed"
         comment_lines.append(f"**Status:** {status}")
         
-        # Provider info
+        # Provider info - only show if it's a real provider
         provider = processed_analysis.get('metadata', {}).get('provider_used', 'Unknown')
         response_time = processed_analysis.get('metadata', {}).get('response_time', 0)
-        comment_lines.append(f"**🤖 AI Provider:** {provider}")
-        comment_lines.append(f"**⏱️ Response Time:** {response_time:.2f}s")
+        
+        # Check if this is a real AI response or mock
+        if provider == 'Unknown' and response_time == 0:
+            comment_lines.append("**⚠️ Warning:** This appears to be a mock response")
+            comment_lines.append("**🤖 AI Provider:** Mock/Fallback (No real AI used)")
+            comment_lines.append("**⏱️ Response Time:** 0.00s (Template response)")
+        else:
+            comment_lines.append(f"**🤖 AI Provider:** {provider}")
+            comment_lines.append(f"**⏱️ Response Time:** {response_time:.2f}s")
+        
         comment_lines.append("")
         
         # Analysis
