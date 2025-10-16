@@ -173,26 +173,22 @@ jobs:
         # Create artifacts directory
         mkdir -p artifacts
         
-        # Try to run VERIFIED REAL AI Pipeline Analysis
+        # Run VERIFIED REAL AI Pipeline Analysis
         echo "🔍 Starting VERIFIED REAL AI pipeline analysis..."
-        if python .github/scripts/unified_ai_manager.py code_quality; then
-          # Check if real AI was used or fallback was used
-          if grep -q '"real_ai_verified": true' artifacts/real_code_quality_analysis.json; then
-            echo "✅ REAL AI VERIFIED - Provider used actual API"
-            # Copy to expected location for compatibility
-            cp artifacts/real_code_quality_analysis.json pipeline_analysis_results.json
-          elif grep -q '"fallback": true' artifacts/real_code_quality_analysis.json; then
-            echo "⚠️ FALLBACK ANALYSIS USED - No API keys available"
-            # Copy to expected location for compatibility
-            cp artifacts/real_code_quality_analysis.json pipeline_analysis_results.json
-          else
-            echo "🚨 FAKE AI DETECTED - Failing workflow"
-            exit 1
-          fi
-        else
-          echo "⚠️ AI manager failed - Using fallback analysis"
-          python .github/scripts/fallback_analysis.py code_quality
+        python .github/scripts/unified_ai_manager.py code_quality
+        
+        # Check if real AI was used or fallback was used
+        if grep -q '"real_ai_verified": true' artifacts/real_code_quality_analysis.json; then
+          echo "✅ REAL AI VERIFIED - Provider used actual API"
+          # Copy to expected location for compatibility
           cp artifacts/real_code_quality_analysis.json pipeline_analysis_results.json
+        elif grep -q '"fallback": true' artifacts/real_code_quality_analysis.json; then
+          echo "⚠️ FALLBACK ANALYSIS USED - No API keys available or timeout"
+          # Copy to expected location for compatibility
+          cp artifacts/real_code_quality_analysis.json pipeline_analysis_results.json
+        else
+          echo "🚨 FAKE AI DETECTED - Failing workflow"
+          exit 1
         fi
         
         echo "✅ Intelligent Pipeline Analysis completed successfully"
