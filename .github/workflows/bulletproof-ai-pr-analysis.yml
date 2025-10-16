@@ -43,10 +43,12 @@ jobs:
         python -m ensurepip --upgrade
         python -m pip install --upgrade pip
         python -m pip install --upgrade setuptools wheel
-        if [ -f requirements.txt ]; then
+        if [ -f requirements-ci.txt ]; then
+          python -m pip install -r requirements-ci.txt
+        elif [ -f requirements.txt ]; then
           python -m pip install -r requirements.txt
         fi
-        python -m pip install aiohttp asyncio requests python-dotenv
+        python -m pip install aiohttp asyncio requests python-dotenv tenacity
     
     - name: Run Bulletproof AI Analysis
       env:

@@ -5,3 +5,4 @@ google-generativeai>=0.3.0
 groq>=0.4.0
 cohere>=4.0.0
 mistralai>=0.0.12
+tenacity>=8.0.0

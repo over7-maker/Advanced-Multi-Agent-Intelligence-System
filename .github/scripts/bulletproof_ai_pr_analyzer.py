@@ -21,21 +21,32 @@ from typing import Any, Dict, List, Optional
 import tenacity
 
 # Add project root to sys.path securely
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
 
 # Find project root more robustly
-def find_project_root() -> str:
-    """Find project root by looking for .git directory"""
+def _find_project_root() -> str:
+    """Find project root by looking for .git directory with depth limit"""
+    MAX_TRAVERSAL_DEPTH = 10
+    depth = 0
     current = SCRIPT_DIR
-    while current != os.path.dirname(current):
+    
+    while current != os.path.dirname(current) and depth < MAX_TRAVERSAL_DEPTH:
         if os.path.exists(os.path.join(current, '.git')):
             return current
         current = os.path.dirname(current)
-    # Fallback to calculated PROJECT_ROOT
-    return PROJECT_ROOT
+        depth += 1
+    
+    # Fallback to two directories up from script
+    fallback = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+    
+    # Validate fallback contains expected project files
+    if os.path.exists(os.path.join(fallback, '.git')) or os.path.exists(os.path.join(fallback, 'pyproject.toml')):
+        return fallback
+    
+    # Final fallback to script's parent directory
+    return os.path.dirname(SCRIPT_DIR)
 
-PROJECT_ROOT = find_project_root()
+PROJECT_ROOT: str = _find_project_root()
 
 # Add paths safely
 if SCRIPT_DIR not in sys.path:
@@ -52,12 +63,19 @@ except ImportError as e:
     sys.exit(1)
 
 # Configure logging with security considerations
-log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+VALID_LOG_LEVELS = {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
+log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
+
+if log_level_str not in VALID_LOG_LEVELS:
+    print(f"Warning: Invalid LOG_LEVEL='{log_level_str}', defaulting to INFO", file=sys.stderr)
+    log_level_str = "INFO"
+
 logging.basicConfig(
-    level=getattr(logging, log_level, logging.INFO), 
+    level=getattr(logging, log_level_str, logging.INFO), 
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
-        logging.StreamHandler(sys.stdout)
+        logging.StreamHandler(sys.stderr)
     ]
 )
 logger = logging.getLogger(__name__)
