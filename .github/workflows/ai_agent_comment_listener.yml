@@ -132,12 +132,12 @@ jobs:
               ---
               
               ### 💡 Recommendations
-              ${responseData.recommendations?.map(rec => `- ${rec}`).join('\n') || 'No recommendations available'}
+              ${responseData.recommendations?.map(rec => \`- \${rec}\`).join('\\n') || 'No recommendations available'}
               
               ---
               
               ### 🚀 Actions Taken
-              ${responseData.actions_taken?.map(action => `- ${action}`).join('\n') || 'No actions taken'}
+              ${responseData.actions_taken?.map(action => \`- \${action}\`).join('\\n') || 'No actions taken'}
               
               ---
               
@@ -207,88 +207,112 @@ jobs:
       - name: 📦 Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install aiohttp openai cohere python-dotenv
+          pip install aiohttp openai cohere python-dotenv anthropic google-generativeai groq mistralai
+          pip install multidict yarl attrs aiosignal frozenlist
 
       - name: 🔍 Check AI Provider Availability
+        shell: bash
         run: |
+          set +e  # CRITICAL: do not exit on non-zero tests
           echo "🔍 Checking AI provider availability..."
-          
-          # Count available providers
           available_providers=0
-          
-          if [ -n "$DEEPSEEK_API_KEY" ] && [ ${#DEEPSEEK_API_KEY} -gt 10 ]; then
-            echo "✅ DEEPSEEK_API_KEY: Available (${#DEEPSEEK_API_KEY} chars)"
-            ((available_providers++))
-          else
-            echo "❌ DEEPSEEK_API_KEY: Missing or invalid"
-          fi
-          
-          if [ -n "$NVIDIA_API_KEY" ] && [ ${#NVIDIA_API_KEY} -gt 10 ]; then
-            echo "✅ NVIDIA_API_KEY: Available (${#NVIDIA_API_KEY} chars)"
-            ((available_providers++))
-          else
-            echo "❌ NVIDIA_API_KEY: Missing or invalid"
-          fi
-          
-          if [ -n "$CEREBRAS_API_KEY" ] && [ ${#CEREBRAS_API_KEY} -gt 10 ]; then
-            echo "✅ CEREBRAS_API_KEY: Available (${#CEREBRAS_API_KEY} chars)"
-            ((available_providers++))
-          else
-            echo "❌ CEREBRAS_API_KEY: Missing or invalid"
-          fi
-          
-          if [ -n "$CODESTRAL_API_KEY" ] && [ ${#CODESTRAL_API_KEY} -gt 10 ]; then
-            echo "✅ CODESTRAL_API_KEY: Available (${#CODESTRAL_API_KEY} chars)"
-            ((available_providers++))
-          else
-            echo "❌ CODESTRAL_API_KEY: Missing or invalid"
-          fi
-          
-          if [ -n "$COHERE_API_KEY" ] && [ ${#COHERE_API_KEY} -gt 10 ]; then
-            echo "✅ COHERE_API_KEY: Available (${#COHERE_API_KEY} chars)"
-            ((available_providers++))
-          else
-            echo "❌ COHERE_API_KEY: Missing or invalid"
-          fi
-          
-          echo "📊 Total available providers: $available_providers/16"
-          
-          if [ $available_providers -eq 0 ]; then
+
+          check_key() {
+            local name="$1"
+            local value="${!name}"
+            if [ -n "$value" ] && [ ${#value} -gt 10 ]; then
+              echo "✅ $name: Available (${#value} chars)"
+              # SAFE increment - no arithmetic expansion under -e
+              available_providers=$(($available_providers + 1))
+            else
+              echo "ℹ️ $name: Not set or too short"
+            fi
+          }
+
+          echo "🔎 Checking all supported providers..."
+          check_key "DEEPSEEK_API_KEY"
+          check_key "CEREBRAS_API_KEY"
+          check_key "NVIDIA_API_KEY"
+          check_key "CODESTRAL_API_KEY"
+          check_key "GLM_API_KEY"
+          check_key "GROK_API_KEY"
+          check_key "COHERE_API_KEY"
+          check_key "CLAUDE_API_KEY"
+          check_key "GPT4_API_KEY"
+          check_key "GEMINI_API_KEY"
+          check_key "GROQAI_API_KEY"
+          check_key "MISTRAL_API_KEY"
+          check_key "KIMI_API_KEY"
+          check_key "QWEN_API_KEY"
+          check_key "GPTOSS_API_KEY"
+          check_key "GEMINIAI_API_KEY"
+          check_key "GEMINI2_API_KEY"
+          check_key "GROQ2_API_KEY"
+          check_key "CHUTES_API_KEY"
+
+          echo ""
+          echo "📊 PROVIDER AVAILABILITY SUMMARY:"
+          echo "  Available: $available_providers/19 providers"
+          echo ""
+
+          if [ "$available_providers" -eq 0 ]; then
             echo "🚨 CRITICAL: NO REAL AI PROVIDERS AVAILABLE!"
             echo "❌ Please add at least one valid API key to repository secrets:"
-            echo "   - DEEPSEEK_API_KEY"
-            echo "   - NVIDIA_API_KEY" 
-            echo "   - CEREBRAS_API_KEY"
-            echo "   - CODESTRAL_API_KEY"
-            echo "   - COHERE_API_KEY"
-            echo "   - Or any other supported provider"
+            echo "   - DEEPSEEK_API_KEY (recommended - free tier available)"
+            echo "   - NVIDIA_API_KEY (high performance)"
+            echo "   - CEREBRAS_API_KEY (fast inference)"
+            echo "   - CODESTRAL_API_KEY (code specialist)"
+            echo "   - COHERE_API_KEY, CLAUDE_API_KEY, GPT4_API_KEY"
+            echo ""
+            echo "🔗 Get free API keys:"
+            echo "   - DeepSeek: https://platform.deepseek.com"
+            echo "   - Cerebras: https://cloud.cerebras.ai"
+            echo "   - OpenRouter: https://openrouter.ai (supports multiple models)"
+            set -e  # re-enable for final exit
             exit 1
           else
-            echo "✅ Real AI providers available - proceeding with analysis"
+            echo "✅ Real AI providers available ($available_providers) - proceeding with analysis"
+            # Export for next steps
+            echo "AVAILABLE_PROVIDERS=$available_providers" >> $GITHUB_ENV
+            set -e  # re-enable for remaining steps
           fi
 
       - name: 🤖 Run BULLETPROOF PR Analysis
         run: |
           echo "🚀 Running BULLETPROOF PR analysis..."
+          echo "📊 Using $AVAILABLE_PROVIDERS real AI providers"
           
-          # Install ALL dependencies for bulletproof AI
-          pip install -q aiohttp openai anthropic google-generativeai groq cohere
-          pip install -q multidict yarl attrs aiosignal frozenlist
+          # Ensure artifacts directory exists
+          mkdir -p artifacts
           
           # Run BULLETPROOF real AI analysis
           python .github/scripts/comprehensive_pr_analyzer_bulletproof.py \
             --pr-number "${{ github.event.number }}" \
             --output "artifacts/auto_pr_analysis.json"
           
+          # Verify analysis file was created
+          if [ ! -f "artifacts/auto_pr_analysis.json" ]; then
+            echo "🚨 NO ANALYSIS RESULTS FILE CREATED!"
+            echo "📁 Available files in artifacts/:"
+            ls -la artifacts/ || echo "No artifacts directory"
+            exit 1
+          fi
+          
+          echo "📄 Analysis file created successfully"
+          
           # CRITICAL: Validate bulletproof real AI was used
           if grep -q '"bulletproof_validated": true' artifacts/auto_pr_analysis.json; then
             echo "✅ BULLETPROOF REAL AI VERIFIED!"
-            echo "🤖 Provider used: $(grep -o '"provider": "[^"]*"' artifacts/auto_pr_analysis.json | head -1)"
-            echo "⏱️ Response time: $(grep -o '"response_time": [0-9.]*' artifacts/auto_pr_analysis.json | head -1)"
+            echo "🤖 Provider used: $(grep -o '"provider": "[^"]*"' artifacts/auto_pr_analysis.json | head -1 | cut -d'"' -f4)"
+            echo "⏱️ Response time: $(grep -o '"response_time": [0-9.]*' artifacts/auto_pr_analysis.json | head -1 | cut -d':' -f2 | tr -d ' ')s"
+            echo "🎉 Analysis completed with real AI provider"
           else
-            echo "🚨 FAKE AI DETECTED - FAILING HARD!"
-            echo "📄 Analysis file contents:"
-            cat artifacts/auto_pr_analysis.json || echo "No analysis file found"
+            echo "🚨 BULLETPROOF VALIDATION FAILED!"
+            echo "📋 Analysis file content (first 500 chars):"
+            head -c 500 artifacts/auto_pr_analysis.json
+            echo ""
+            echo "🔍 Full file content:"
+            cat artifacts/auto_pr_analysis.json
             exit 1
           fi
 
@@ -314,7 +338,8 @@ jobs:
             - \`@amas help\` - Show all available commands
             
             ### 🚀 AI Capabilities:
-            - **16-Provider Fallback**: Maximum reliability
+            - **19-Provider Fallback**: Maximum reliability
+            - **Bulletproof Validation**: Only real AI responses
             - **Intelligent Analysis**: Advanced pattern recognition
             - **Automated Fixes**: Self-healing capabilities
             - **Continuous Learning**: Improves over time
@@ -322,6 +347,7 @@ jobs:
             ---
             
             *🤖 AMAS AI Agent - Advanced Multi-Agent Intelligence System v3.0*
+            *🛡️ Protected by BULLETPROOF AI Detection System*
             `;
             
             await github.rest.issues.createComment({
@@ -341,33 +367,124 @@ jobs:
             try {
               const analysisData = JSON.parse(fs.readFileSync('artifacts/auto_pr_analysis.json', 'utf8'));
               
-              const analysisComment = `## 🤖 AMAS AI Agent - Auto Analysis
+              // Check if bulletproof validated
+              if (analysisData.metadata?.bulletproof_validated === true) {
+                const analysisComment = `## 🤖 BULLETPROOF REAL AI Analysis
+                
+                **Status:** ✅ REAL AI Verified
+                **Provider:** ${analysisData.ai_analysis?.provider || 'Unknown'} (CONFIRMED REAL API CALL)
+                **Response Time:** ${analysisData.ai_analysis?.response_time || 0}s (Actual API Response)
+                **Validation:** Bulletproof validated ✓
+                
+                ---
+                
+                ### 🔍 REAL AI Analysis Results
+                ${analysisData.ai_analysis?.analysis || 'No analysis available'}
+                
+                ---
+                
+                ### 💡 AI Recommendations
+                ${analysisData.recommendations?.map(rec => \`- \${rec}\`).join('\\n') || 'No recommendations available'}
+                
+                ---
+                
+                ### 📊 Verification Proof
+                - **Real AI Verified:** ✅ ${analysisData.ai_analysis?.real_ai_verified || false}
+                - **Fake AI Detected:** ❌ ${analysisData.ai_analysis?.fake_ai_detected || false}
+                - **Bulletproof Validated:** ✅ ${analysisData.metadata?.bulletproof_validated || false}
+                - **Provider Attempt:** ${analysisData.ai_analysis?.provider_attempt}/${analysisData.ai_analysis?.total_attempts}
+                
+                ---
+                
+                *🤖 GUARANTEED REAL AI - Provider: ${analysisData.ai_analysis?.provider || 'Unknown'}*
+                *This is NOT a template - Actual AI API call performed*
+                *🛡️ Protected by BULLETPROOF AI Detection System*
+                `;
+                
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: analysisComment
+                });
+                
+                console.log('✅ BULLETPROOF real AI analysis posted successfully');
+              } else {
+                // Bulletproof validation failed - post enforcement message
+                const enforcementComment = `## 🚨 BULLETPROOF AI ENFORCEMENT ACTIVE
+                
+                **Status:** ❌ FAKE AI GENERATION BLOCKED
+                **Protection:** BULLETPROOF validation system
+                
+                ### 🛡️ Why This Message Appears
+                The BULLETPROOF AI system has **refused to generate fake AI responses**.
+                This protects users from misleading template content.
+                
+                ### 🔧 Resolution Required
+                - **Check API key configuration** for real AI providers
+                - **Verify provider availability** (network/quotas)  
+                - **Ensure bulletproof validation** passes
+                
+                ### 📊 Detection Details
+                - **Provider:** ${analysisData.ai_analysis?.provider || 'Unknown'}
+                - **Response Time:** ${analysisData.ai_analysis?.response_time || 0}s
+                - **Real AI Verified:** ❌ ${analysisData.ai_analysis?.real_ai_verified || false}
+                - **Bulletproof Validated:** ❌ ${analysisData.metadata?.bulletproof_validated || false}
+                
+                ---
+                
+                ### ⚡ Quick Fix
+                Add at least one of these API keys to repository secrets:
+                - **DEEPSEEK_API_KEY** (recommended - free tier)
+                - **NVIDIA_API_KEY** (high performance)
+                - **CEREBRAS_API_KEY** (fast inference)
+                - **CODESTRAL_API_KEY** (code specialist)
+                - **COHERE_API_KEY, CLAUDE_API_KEY, GPT4_API_KEY**
+                
+                ### 🔗 Get API Keys:
+                - DeepSeek: https://platform.deepseek.com
+                - Cerebras: https://cloud.cerebras.ai
+                - OpenRouter: https://openrouter.ai (supports multiple models)
+                
+                ---
+                
+                *🚨 No fake AI responses allowed*
+                *🛡️ BULLETPROOF validation protects against template content*
+                `;
+                
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: enforcementComment
+                });
+                
+                console.log('🚨 Bulletproof enforcement message posted');
+              }
+            } catch (error) {
+              console.log('Auto analysis file not found or invalid:', error.message);
               
-              **Status:** ${analysisData.success ? '✅ Completed' : '❌ Failed'}
-              **Provider:** ${analysisData.metadata?.provider_used || 'Unknown'}
-              **Response Time:** ${analysisData.metadata?.response_time || 0}s
-              
-              ---
-              
-              ### 📊 Analysis Summary
-              ${analysisData.analysis || 'No analysis available'}
-              
-              ---
-              
-              ### 💡 Recommendations
-              ${analysisData.recommendations?.map(rec => `- ${rec}`).join('\n') || 'No recommendations available'}
-              
-              ---
-              
-              *🤖 Generated by AMAS AI Agent at ${new Date().toISOString()}*
-              `;
-              
+              // Post analysis unavailable message
               await github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: analysisComment
+                body: `## 🚨 BULLETPROOF AI Analysis Unavailable
+                
+                **Status:** ❌ Analysis Failed
+                **Reason:** ${error.message}
+                
+                ### 🔧 Resolution Required
+                - Check workflow logs for detailed error information
+                - Verify bulletproof AI system configuration
+                - Ensure API keys are properly configured
+                
+                ---
+                
+                *🛡️ Protected by BULLETPROOF AI Detection System*
+                *No fake responses generated when analysis fails*
+                `
               });
-            } catch (error) {
-              console.log('Auto analysis not available or failed');
+              
+              console.log('⚠️ Analysis unavailable message posted');
             }
