@@ -1,5 +1,5 @@
 name: 'Post AI Comment (Enhanced)'
-description: 'Post clean, processed AI analysis comments to PRs with output validation'
+description: 'Post clean, processed AI analysis comments to PRs with output validation. Requires Python 3.11+ (use actions/setup-python@v5 in parent workflow).'
 inputs:
   workflow-type:
     description: 'Type of AI workflow'
@@ -17,10 +17,16 @@ inputs:
     required: false
     default: 'AI analysis completed successfully'
 
+outputs:
+  comment-file:
+    description: 'Path to the generated comment file'
+    value: ${{ steps.process-ai-output.outputs.comment-file }}
+
 runs:
   using: 'composite'
   steps:
     - name: 🤖 Process AI Output
+      id: process-ai-output
       shell: bash
       run: |
         set -euo pipefail
@@ -31,9 +37,21 @@ runs:
         
         echo "::notice::Processing AI output for ${{ inputs.workflow-type }}..."
         
-        # Validate result_file for safe characters only
+        # Validate result_file for safe characters and prevent path traversal
         if [[ ! "$result_file" =~ ^[a-zA-Z0-9._\-/]+$ ]]; then
           echo "::error::Invalid characters in result-file path: $result_file"
+          exit 1
+        fi
+        
+        # Reject absolute paths
+        if [[ "$result_file" = /* ]]; then
+          echo "::error::Absolute paths are not allowed: $result_file"
+          exit 1
+        fi
+        
+        # Reject explicit path traversal attempts
+        if [[ "$result_file" == ".." ]] || [[ "$result_file" == *"/.."* ]] || [[ "$result_file" == *"../"* ]]; then
+          echo "::error::Path traversal not allowed: $result_file"
           exit 1
         fi
         
@@ -52,6 +70,7 @@ runs:
             exit 1
           fi
           echo "::notice::Generated comment: $output_file"
+          echo "comment-file=$output_file" >> $GITHUB_OUTPUT
         else
           echo "::warning::AI result file not found, generating fallback comment: $output_file"
           
@@ -76,6 +95,7 @@ EOF
             echo "::error::Failed to create fallback comment: $output_file"
             exit 1
           fi
+          echo "comment-file=$output_file" >> $GITHUB_OUTPUT
         fi
 
     - name: Post Comment to PR
@@ -109,4 +129,4 @@ EOF
         echo "| Status | Completed |" >> $GITHUB_STEP_SUMMARY
         echo "| Output Processing | Applied |" >> $GITHUB_STEP_SUMMARY
         echo "| Comment Posted | Yes |" >> $GITHUB_STEP_SUMMARY
-        echo "| Output File | ${{ inputs.outputs-file }} |" >> $GITHUB_STEP_SUMMARY
+        echo "| Output File | ${{ steps.process-ai-output.outputs.comment-file }} |" >> $GITHUB_STEP_SUMMARY
