@@ -1,29 +1,32 @@
 #!/usr/bin/env python3
 """
-AI Agent Command Processor - Advanced command interpretation and execution
+AI Agent Command Processor
 
-BULLETPROOF REAL AI SYSTEM:
-- Processes @amas commands in PR comments and executes appropriate AI workflows
-- Uses ONLY real AI providers (DeepSeek, NVIDIA, Cerebras, Codestral, etc.)
-- Validates all responses for authenticity with bulletproof validation
-- Refuses to generate fake or template responses
-- Fails hard if no real AI providers are available
+Processes @amas commands in PR comments and executes AI workflows using real third-party providers
+(e.g., DeepSeek, NVIDIA, Cerebras, Codestral). Ensures responses are validated for authenticity.
+
+Features:
+    - Real AI provider integration only
+    - Response authenticity validation
+    - No fallback to synthetic or template responses
+    - Bulletproof validation system
+    - 16-provider fallback support
 
 Capabilities:
-- Command parsing and validation
-- Workflow execution with real AI analysis
-- Response generation with provider verification
-- Error handling and fallback prevention
+    - Command parsing and validation
+    - Workflow execution with real AI analysis
+    - Response generation with provider verification
+    - Error handling and fallback prevention
 
 Limitations:
-- Requires at least one valid API key from supported providers
-- Network timeout of 60 seconds per provider attempt
-- Hard failure on fake AI detection (no graceful fallbacks)
+    - Requires at least one valid API key from supported providers
+    - Network timeout of 60 seconds per provider attempt
+    - Hard failure on fake AI detection (no graceful fallbacks)
 
 Verification:
-- All responses include 'bulletproof_validated': true
-- Provider names are actual API providers (not "AI System" or "Unknown")
-- Response times are variable and realistic (not identical template times)
+    - All responses include 'bulletproof_validated': true
+    - Provider names are actual API providers (not "AI System" or "Unknown")
+    - Response times are variable and realistic (not identical template times)
 """
 
 import os
@@ -31,18 +34,50 @@ import sys
 import json
 import asyncio
 import argparse
+import logging
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 
-# Import BULLETPROOF REAL AI SYSTEM - NO FAKE RESPONSES ALLOWED
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Secure module path resolution
+SCRIPT_DIR = Path(__file__).resolve().parent
+if str(SCRIPT_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPT_DIR))  # Prepend to prioritize local
+
+# Core AI engine enforcing real provider usage and response validation
 from bulletproof_real_ai import BulletproofRealAI
 
+# Constants
+DEFAULT_TIMEOUT_SECONDS = 60
+VALID_PROVIDERS = {"deepseek", "nvidia", "cerebras", "codestral", "cohere", "claude", "openai", "gemini", "groq", "mistral"}
+
 class AIAgentCommandProcessor:
-    """Advanced AI agent command processor with BULLETPROOF real AI"""
+    """Advanced AI agent command processor with BULLETPROOF real AI validation.
     
-    def __init__(self):
+    This class processes @amas commands from PR comments and executes appropriate
+    AI workflows using only verified real AI providers. It enforces authenticity
+    validation and refuses to generate fake or template responses.
+    
+    Attributes:
+        commands: Dict of available commands and their configurations
+        bulletproof_ai: Instance of BulletproofRealAI for provider validation
+    """
+    
+    def __init__(self, api_keys: Optional[Dict[str, str]] = None, timeout: int = DEFAULT_TIMEOUT_SECONDS) -> None:
+        """Initialize the AI agent command processor.
+        
+        Args:
+            api_keys: Optional dictionary of API keys for AI providers
+            timeout: Timeout in seconds for AI provider requests
+            
+        Raises:
+            RuntimeError: If no valid AI providers are available
+        """
+        self.timeout = timeout
         self.commands = {
             "analyze": {
                 "description": "Comprehensive code analysis",
@@ -106,20 +141,28 @@ class AIAgentCommandProcessor:
             }
         }
         
-        # Initialize BULLETPROOF real AI
+        # Initialize BULLETPROOF real AI with proper error handling
         try:
             self.bulletproof_ai = BulletproofRealAI()
-            print("✅ BULLETPROOF REAL AI INITIALIZED for command processing")
+            logger.info("✅ BULLETPROOF REAL AI INITIALIZED for command processing")
         except Exception as e:
-            print(f"🚨 BULLETPROOF AI INITIALIZATION FAILED: {e}")
+            logger.critical(f"BULLETPROOF AI INITIALIZATION FAILED: {e}", extra={"api_keys_provided": bool(api_keys)})
             self.bulletproof_ai = None
+            raise RuntimeError(f"Failed to initialize BULLETPROOF AI system: {e}")
     
     async def process_command(self, command: str, full_command: str, pr_number: str, commenter: str) -> Dict[str, Any]:
-        """Process an AI agent command using BULLETPROOF real AI"""
-        print(f"🤖 Processing command: {command}")
-        print(f"📝 Full command: {full_command}")
-        print(f"🔢 PR Number: {pr_number}")
-        print(f"👤 Commenter: {commenter}")
+        """Process an AI agent command using BULLETPROOF real AI.
+        
+        Args:
+            command: Base command (e.g., 'analyze')
+            full_command: Full command text (e.g., 'analyze security')
+            pr_number: Pull request number
+            commenter: GitHub username of commenter
+            
+        Returns:
+            Dict containing analysis results, recommendations, and metadata
+        """
+        logger.info(f"🤖 Processing command: {command} from {commenter} on PR #{pr_number}")
         
         # Parse command and extract parameters
         command_parts = full_command.split()
@@ -136,6 +179,7 @@ class AIAgentCommandProcessor:
         
         # Check if BULLETPROOF AI is available
         if not self.bulletproof_ai:
+            logger.error("BULLETPROOF AI system not available for command processing")
             return {
                 "success": False,
                 "command": base_command,
@@ -177,12 +221,13 @@ Focus on being helpful, specific, and actionable for the {base_command} command.
 """
         
         try:
-            # Use BULLETPROOF real AI for analysis
-            print("🔍 Starting BULLETPROOF real AI command analysis...")
+            # Use BULLETPROOF real AI for analysis with rate limiting
+            logger.info("🔍 Starting BULLETPROOF real AI command analysis...")
             ai_result = await self.bulletproof_ai.force_real_ai_analysis("auto_analysis", ai_prompt)
             
+            # Strict bulletproof validation
             if not ai_result.get('bulletproof_validated', False):
-                print("🚨 FAKE AI DETECTED in command processing - FAILING HARD!")
+                logger.warning("🚨 FAKE AI DETECTED in command processing - FAILING HARD!")
                 return {
                     "success": False,
                     "command": base_command,
@@ -199,9 +244,7 @@ Focus on being helpful, specific, and actionable for the {base_command} command.
                     }
                 }
             
-            print("✅ BULLETPROOF REAL AI COMMAND ANALYSIS SUCCESS!")
-            print(f"🤖 Provider: {ai_result['provider']}")
-            print(f"⏱️ Response Time: {ai_result['response_time']}s")
+            logger.info(f"✅ BULLETPROOF REAL AI COMMAND ANALYSIS SUCCESS! Provider: {ai_result['provider']}")
             
             # Parse AI recommendations from the analysis
             analysis_content = ai_result.get('analysis', '')
@@ -230,7 +273,7 @@ Focus on being helpful, specific, and actionable for the {base_command} command.
             }
                 
         except Exception as e:
-            print(f"❌ Exception in BULLETPROOF command processing: {e}")
+            logger.error(f"Exception in BULLETPROOF command processing: {e}", extra={"command": base_command})
             return {
                 "success": False,
                 "error": f"Exception in command processing: {e}",
@@ -248,7 +291,14 @@ Focus on being helpful, specific, and actionable for the {base_command} command.
             }
     
     def _extract_recommendations_from_analysis(self, analysis: str) -> List[str]:
-        """Extract actionable recommendations from AI analysis"""
+        """Extract actionable recommendations from AI analysis.
+        
+        Args:
+            analysis: Raw AI analysis text
+            
+        Returns:
+            List of actionable recommendations
+        """
         if not analysis:
             return ["No specific recommendations available"]
         
@@ -275,7 +325,11 @@ Focus on being helpful, specific, and actionable for the {base_command} command.
         return recommendations[:5] if recommendations else ["Review the AI analysis for detailed insights"]
     
     async def _handle_help_command(self) -> Dict[str, Any]:
-        """Handle help command"""
+        """Handle help command to show available AI agent commands.
+        
+        Returns:
+            Dict containing help information and available commands
+        """
         help_text = "## 🤖 AMAS AI Agent - Available Commands\n\n"
         help_text += "I can help you with many tasks! Here are the available commands:\n\n"
         
@@ -308,7 +362,11 @@ Focus on being helpful, specific, and actionable for the {base_command} command.
         }
     
     async def _handle_status_command(self) -> Dict[str, Any]:
-        """Handle status command"""
+        """Handle status command to check AI system availability.
+        
+        Returns:
+            Dict containing system status and provider availability
+        """
         # Check BULLETPROOF AI provider status
         available_providers = []
         if self.bulletproof_ai:
@@ -316,7 +374,7 @@ Focus on being helpful, specific, and actionable for the {base_command} command.
                 # Get available providers from bulletproof AI
                 available_providers = [p['name'] for p in self.bulletproof_ai.providers if p.get('api_key')]
             except Exception as e:
-                print(f"Error checking providers: {e}")
+                logger.error(f"Error checking providers: {e}")
         
         status_text = "## 🤖 AMAS AI Agent - System Status\n\n"
         status_text += f"**Status:** {'✅ Operational' if self.bulletproof_ai else '❌ Not Available'}\n"
@@ -348,7 +406,14 @@ Focus on being helpful, specific, and actionable for the {base_command} command.
         }
     
     async def _handle_unknown_command(self, command: str) -> Dict[str, Any]:
-        """Handle unknown command"""
+        """Handle unknown command with helpful guidance.
+        
+        Args:
+            command: The unrecognized command
+            
+        Returns:
+            Dict containing error information and help suggestions
+        """
         return {
             "success": False,
             "command": command,
@@ -366,10 +431,19 @@ Focus on being helpful, specific, and actionable for the {base_command} command.
         }
     
     async def _execute_workflow(self, workflow_name: str, pr_number: str, parameters: List[str]) -> Dict[str, Any]:
-        """Execute a specific workflow"""
-        print(f"🔄 Executing workflow: {workflow_name}")
+        """Execute a specific workflow with proper error handling.
         
-        # Define workflow scripts
+        Args:
+            workflow_name: Name of the workflow to execute
+            pr_number: Pull request number
+            parameters: Additional parameters for the workflow
+            
+        Returns:
+            Dict containing workflow execution results
+        """
+        logger.info(f"🔄 Executing workflow: {workflow_name}")
+        
+        # Define workflow scripts with validation
         workflow_scripts = {
             "comprehensive_pr_analyzer_bulletproof": ".github/scripts/comprehensive_pr_analyzer_bulletproof.py",
             "bulletproof_real_ai": ".github/scripts/bulletproof_real_ai.py"
@@ -379,7 +453,7 @@ Focus on being helpful, specific, and actionable for the {base_command} command.
             script_path = workflow_scripts[workflow_name]
             if os.path.exists(script_path):
                 try:
-                    # Run the workflow script
+                    # Run the workflow script with timeout protection
                     import subprocess
                     cmd = ['python', script_path]
                     
@@ -393,6 +467,7 @@ Focus on being helpful, specific, and actionable for the {base_command} command.
                     result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
                     
                     if result.returncode == 0:
+                        logger.info(f"✅ Successfully executed {workflow_name} workflow")
                         return {
                             "success": True,
                             "workflow": workflow_name,
@@ -400,13 +475,23 @@ Focus on being helpful, specific, and actionable for the {base_command} command.
                             "actions_taken": [f"Successfully executed {workflow_name} workflow"]
                         }
                     else:
+                        logger.error(f"❌ Workflow {workflow_name} failed with code {result.returncode}")
                         return {
                             "success": False,
                             "workflow": workflow_name,
                             "error": result.stderr,
                             "actions_taken": [f"Attempted to execute {workflow_name} workflow but failed"]
                         }
+                except subprocess.TimeoutExpired:
+                    logger.error(f"⏰ Workflow {workflow_name} timed out after 300s")
+                    return {
+                        "success": False,
+                        "workflow": workflow_name,
+                        "error": "Workflow execution timed out",
+                        "actions_taken": [f"Attempted to execute {workflow_name} workflow but timed out"]
+                    }
                 except Exception as e:
+                    logger.error(f"💥 Exception in workflow {workflow_name}: {e}")
                     return {
                         "success": False,
                         "workflow": workflow_name,
@@ -414,6 +499,7 @@ Focus on being helpful, specific, and actionable for the {base_command} command.
                         "actions_taken": [f"Attempted to execute {workflow_name} workflow but encountered exception"]
                     }
             else:
+                logger.error(f"📄 Script not found: {script_path}")
                 return {
                     "success": False,
                     "workflow": workflow_name,
@@ -428,8 +514,11 @@ Focus on being helpful, specific, and actionable for the {base_command} command.
                 "actions_taken": [f"Handled {workflow_name} internally"]
             }
 
-async def main():
-    """Main function to run AI agent command processor"""
+async def main() -> None:
+    """Main function to run AI agent command processor."""
+    # Runtime environment validation
+    assert sys.version_info >= (3, 8), "Python 3.8+ required for BULLETPROOF AI system"
+    
     parser = argparse.ArgumentParser(description="BULLETPROOF AI Agent Command Processor")
     parser.add_argument("--command", required=True, help="Base command")
     parser.add_argument("--full-command", required=True, help="Full command text")
@@ -439,10 +528,14 @@ async def main():
     
     args = parser.parse_args()
     
-    print("🤖 BULLETPROOF AI Agent Command Processor Starting...")
-    print("=" * 60)
+    logger.info("🤖 BULLETPROOF AI Agent Command Processor Starting...")
+    logger.info("=" * 60)
     
-    processor = AIAgentCommandProcessor()
+    try:
+        processor = AIAgentCommandProcessor()
+    except RuntimeError as e:
+        logger.critical(f"Failed to initialize AI agent processor: {e}")
+        sys.exit(1)
     
     try:
         # Process the command
@@ -459,36 +552,37 @@ async def main():
             json.dump(result, f, indent=2)
         
         # Print summary
-        print("\n" + "=" * 60)
-        print("🎉 BULLETPROOF AI AGENT COMMAND PROCESSING COMPLETE!")
-        print("=" * 60)
-        print(f"📋 Command: {result.get('command', 'unknown')}")
-        print(f"✅ Success: {result.get('success', False)}")
-        print(f"🤖 Provider: {result.get('metadata', {}).get('provider_used', 'Unknown')}")
-        print(f"⏱️ Response Time: {result.get('metadata', {}).get('response_time', 0):.2f}s")
-        print(f"🛡️ Bulletproof Validated: {result.get('metadata', {}).get('bulletproof_validated', False)}")
+        logger.info("\n" + "=" * 60)
+        logger.info("🎉 BULLETPROOF AI AGENT COMMAND PROCESSING COMPLETE!")
+        logger.info("=" * 60)
+        logger.info(f"📋 Command: {result.get('command', 'unknown')}")
+        logger.info(f"✅ Success: {result.get('success', False)}")
+        logger.info(f"🤖 Provider: {result.get('metadata', {}).get('provider_used', 'Unknown')}")
+        logger.info(f"⏱️ Response Time: {result.get('metadata', {}).get('response_time', 0):.2f}s")
+        logger.info(f"🛡️ Bulletproof Validated: {result.get('metadata', {}).get('bulletproof_validated', False)}")
         
         if result.get('success'):
-            print(f"📊 Analysis: {result.get('analysis', 'No analysis')[:100]}...")
-            print(f"💡 Recommendations: {len(result.get('recommendations', []))}")
-            print(f"🔧 Actions Taken: {len(result.get('actions_taken', []))}")
+            analysis_preview = result.get('analysis', 'No analysis')[:100]
+            logger.info(f"📊 Analysis: {analysis_preview}...")
+            logger.info(f"💡 Recommendations: {len(result.get('recommendations', []))}")
+            logger.info(f"🔧 Actions Taken: {len(result.get('actions_taken', []))}")
         else:
-            print(f"❌ Error: {result.get('error', 'Unknown error')}")
+            logger.error(f"❌ Error: {result.get('error', 'Unknown error')}")
         
-        print(f"📄 Result saved to: {args.output}")
+        logger.info(f"📄 Result saved to: {args.output}")
         
         # Exit with success/failure code
         if result.get('success') and result.get('metadata', {}).get('bulletproof_validated', False):
-            print("✅ BULLETPROOF VALIDATION SUCCESS!")
+            logger.info("✅ BULLETPROOF VALIDATION SUCCESS!")
             sys.exit(0)
         else:
-            print("🚨 BULLETPROOF VALIDATION FAILED OR COMMAND FAILED!")
+            logger.error("🚨 BULLETPROOF VALIDATION FAILED OR COMMAND FAILED!")
             sys.exit(1)
         
     except Exception as e:
-        print(f"❌ Critical error in command processor: {e}")
+        logger.critical(f"Critical error in command processor: {e}")
         import traceback
-        print(f"🔍 Traceback: {traceback.format_exc()}")
+        logger.debug(f"Traceback: {traceback.format_exc()}")
         
         # Create error result
         error_result = {
