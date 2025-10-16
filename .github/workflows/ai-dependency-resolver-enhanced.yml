@@ -44,10 +44,24 @@ jobs:
           python -m pip install --upgrade pip
           pip install aiohttp openai cohere python-dotenv
 
-      - name: 🔍 Run AI Dependency Analysis
+      - name: 🔍 Run BULLETPROOF AI Dependency Analysis
         run: |
-          echo "🔍 Running AI dependency analysis with output processing..."
-          python .github/scripts/ai_dependency_resolver.py
+          echo "🚀 Running BULLETPROOF AI dependency analysis..."
+          
+          # Install ALL dependencies for bulletproof AI
+          pip install -q aiohttp openai anthropic google-generativeai groq cohere mistralai
+          pip install -q multidict yarl attrs aiosignal frozenlist
+          
+          # Run BULLETPROOF real AI dependency analysis
+          python .github/scripts/ai_dependency_resolver_bulletproof.py
+          
+          # CRITICAL: Validate bulletproof real AI was used
+          if grep -q '"bulletproof_validated": true' artifacts/dependency_resolution.json; then
+            echo "✅ BULLETPROOF REAL AI DEPENDENCY ANALYSIS VERIFIED!"
+          else
+            echo "🚨 FAKE AI DETECTED - FAILING HARD!"
+            exit 1
+          fi
 
       - name: 💾 Upload Analysis Artifacts
         uses: actions/upload-artifact@v4

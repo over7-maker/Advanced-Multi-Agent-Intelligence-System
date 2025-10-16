@@ -206,6 +206,11 @@ jobs:
         python -c "import numpy; print('✅ numpy imports successfully')"
         python -c "import fastapi; print('✅ FastAPI imports successfully')"
         echo "✅ All critical packages verified!"
+        
+        # CRITICAL: Validate NO FAKE AI used
+        echo ""
+        echo "🔍 Validating NO FAKE AI used across all workflows..."
+        python .github/scripts/validate_no_fake_ai.py
     
     - name: 📊 Upload Pipeline Analysis Results
       uses: actions/upload-artifact@v4

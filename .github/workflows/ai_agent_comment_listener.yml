@@ -204,12 +204,26 @@ jobs:
           python -m pip install --upgrade pip
           pip install aiohttp openai cohere python-dotenv
 
-      - name: 🤖 Run Automatic PR Analysis
+      - name: 🤖 Run BULLETPROOF PR Analysis
         run: |
-          echo "🤖 Running automatic PR analysis..."
-          python .github/scripts/comprehensive_pr_analyzer.py \
+          echo "🚀 Running BULLETPROOF PR analysis..."
+          
+          # Install ALL dependencies for bulletproof AI
+          pip install -q aiohttp openai anthropic google-generativeai groq cohere
+          pip install -q multidict yarl attrs aiosignal frozenlist
+          
+          # Run BULLETPROOF real AI analysis
+          python .github/scripts/comprehensive_pr_analyzer_bulletproof.py \
             --pr-number "${{ github.event.number }}" \
             --output "artifacts/auto_pr_analysis.json"
+          
+          # CRITICAL: Validate bulletproof real AI was used
+          if grep -q '"bulletproof_validated": true' artifacts/auto_pr_analysis.json; then
+            echo "✅ BULLETPROOF REAL AI VERIFIED!"
+          else
+            echo "🚨 FAKE AI DETECTED - FAILING HARD!"
+            exit 1
+          fi
 
       - name: 📝 Post Welcome Message
         if: github.event.action == 'opened'

@@ -12,10 +12,10 @@ import aiohttp
 from datetime import datetime
 from typing import Dict, Any, List
 
-# Import our AI agent fallback system
+# Import bulletproof real AI system
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from ai_agent_fallback import ai_agent
+from bulletproof_real_ai import BulletproofRealAI
 
 class ComprehensivePRAnalyzer:
     """Real AI-powered PR analyzer using 16-provider fallback system"""
