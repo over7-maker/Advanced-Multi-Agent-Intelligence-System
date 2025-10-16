@@ -1,19 +1,7 @@
 {
-  "success": true,
-  "provider": "fallback",
-  "response_time": 0.1,
-  "analysis": "## Code Quality Analysis (Fallback)\n\n**Status:** \u26a0\ufe0f Fallback Analysis - AI providers unavailable\n\n### General Recommendations:\n1. **Code Structure**: Ensure proper function and class organization\n2. **Error Handling**: Add try-catch blocks for critical operations\n3. **Documentation**: Add docstrings to functions and classes\n4. **Testing**: Implement unit tests for new functionality\n5. **Performance**: Review for potential bottlenecks\n\n### Common Issues to Check:\n- Unused imports\n- Long functions (>50 lines)\n- Missing type hints\n- Hardcoded values\n- Missing error handling\n\n**Note:** This is a fallback analysis. For detailed AI-powered analysis, ensure API keys are configured.",
-  "recommendations": [
-    "Review code structure and organization",
-    "Add comprehensive error handling",
-    "Implement unit tests",
-    "Add documentation and type hints",
-    "Check for performance bottlenecks"
-  ],
-  "task_type": "code_quality",
-  "timestamp": "2025-10-15T23:48:05.646824",
+  "success": false,
+  "error": "\ud83d\udea8 ALL 1 REAL AI PROVIDERS FAILED!",
   "real_ai_verified": false,
-  "fallback": true,
-  "attempt_number": 0,
-  "total_providers_available": 0
+  "fake_ai_detected": true,
+  "timestamp": "2025-10-16T00:18:11.053414"
 }

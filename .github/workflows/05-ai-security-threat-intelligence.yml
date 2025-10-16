@@ -166,24 +166,23 @@ jobs:
         echo "Response Action: $RESPONSE_ACTION"
         echo ""
         
-        # Run VERIFIED REAL AI Security Analysis
-        echo "🔍 Starting VERIFIED REAL AI security analysis..."
-        python .github/scripts/unified_ai_manager.py security
-        # CRITICAL: Validate it used REAL AI
-        if grep -q '"real_ai_verified": true' artifacts/real_security_analysis.json; then
-          echo "✅ REAL AI VERIFIED - Provider used actual API"
-        else
-          echo "🚨 FAKE AI DETECTED - Failing workflow"
-          exit 1
-        fi
+        # Install ALL required dependencies for BULLETPROOF AI
+        echo "📦 Installing ALL AI provider dependencies..."
+        python -m pip install --upgrade pip
+        pip install aiohttp openai anthropic google-generativeai groq cohere mistralai
+        pip install multidict yarl attrs aiosignal frozenlist
         
-        # CRITICAL: Validate it used REAL AI
-        if grep -q '"real_ai_verified": true' artifacts/real_security_analysis.json; then
-          echo "✅ REAL AI VERIFIED - Provider used actual API"
+        # Run BULLETPROOF REAL AI Security Analysis
+        echo "🚀 Starting BULLETPROOF REAL AI security analysis..."
+        python .github/scripts/bulletproof_real_ai.py security
+        
+        # CRITICAL: BULLETPROOF validation
+        if grep -q '"bulletproof_validated": true' artifacts/real_security_analysis.json; then
+          echo "✅ BULLETPROOF REAL AI VERIFIED!"
           # Copy to expected location for compatibility
           cp artifacts/real_security_analysis.json threat_detection_results.json
         else
-          echo "🚨 FAKE AI DETECTED - Failing workflow"
+          echo "🚨 FAKE AI DETECTED - HARD FAILURE!"
           exit 1
         fi
         
