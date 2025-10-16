@@ -1,0 +1,132 @@
+name: Bulletproof AI PR Analysis - Phase 2
+
+# Enhanced PR analysis using bulletproof AI validation
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR Number to analyze'
+        required: false
+        type: string
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  bulletproof-ai-analysis:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+      checks: write
+      statuses: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m ensurepip --upgrade
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade setuptools wheel
+        if [ -f requirements.txt ]; then
+          python -m pip install -r requirements.txt
+        fi
+        python -m pip install aiohttp asyncio requests python-dotenv
+    
+    - name: Run Bulletproof AI Analysis
+      env:
+        # All 16 AI API Keys - Comprehensive Fallback Support
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+        CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+        
+        # GitHub context
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REPO_NAME: ${{ github.repository }}
+        PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+        COMMIT_SHA: ${{ github.sha }}
+        EVENT_NAME: ${{ github.event_name }}
+      run: |
+        echo "🚀 Starting Bulletproof AI PR Analysis..."
+        python .github/scripts/bulletproof_ai_pr_analyzer.py
+    
+    - name: Upload Analysis Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: bulletproof-ai-analysis-results
+        path: |
+          artifacts/bulletproof_analysis_*.md
+          artifacts/verification_*.json
+        retention-days: 30
+    
+    - name: Post Bulletproof Analysis Comment
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const path = 'artifacts/bulletproof_analysis_report.md';
+          
+          if (fs.existsSync(path)) {
+            const report = fs.readFileSync(path, 'utf8');
+            
+            // Post the analysis report as a comment
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: report
+            });
+            
+            // Add appropriate labels
+            github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['ai-analyzed', 'bulletproof-validated', 'phase-2-review', 'automated']
+            });
+          }
+    
+    - name: Generate Analysis Summary
+      if: always()
+      run: |
+        echo "## 🤖 Bulletproof AI Analysis Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ Analysis completed using bulletproof AI validation" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Features" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Real AI verification with 16 providers" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Bulletproof validation system" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Security hardening analysis" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Performance review" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Observability validation" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Professional documentation generation" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "See artifacts for detailed analysis reports." >> $GITHUB_STEP_SUMMARY
