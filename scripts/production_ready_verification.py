@@ -14,8 +14,11 @@ def check_dangerous_code_execution():
     print("🔍 Checking for dangerous code execution...")
 
     dangerous_patterns = [
-        r"(?<!safe_)eval\s*\(",  # eval( but not safe_eval(
-        r"\bexec\s*\(",  # exec(
+        r"(?<!safe_)eval\s*\(",  # # SECURITY: eval() removed - use safer alternatives
+        # eval( but not safe_# SECURITY: eval() removed - use safer alternatives
+        # eval(
+        r"\bexec\s*\(",  # # SECURITY: exec() removed - use safer alternatives
+        # exec(
         r"__import__\s*\(",  # __import__(
         r"compile\s*\(",  # compile(
     ]

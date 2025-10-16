@@ -401,6 +401,10 @@ workflow_*.json
 *precision_*.py
 *surgical_*.py
 *final_*.py
+
+# Exception: Allow .github/scripts/ files
+!.github/scripts/
+!.github/scripts/*
 *SECURITY_FIXES*.py
 *PR_*.md
 *ISSUE_*.md
