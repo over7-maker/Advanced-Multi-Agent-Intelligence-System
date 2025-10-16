@@ -8,6 +8,10 @@ inputs:
     description: 'Path to AI analysis result file'
     required: false
     default: 'artifacts/ai_analysis_results.json'
+  outputs-file:
+    description: 'Path to write the processed PR comment markdown'
+    required: false
+    default: 'pr_comment.md'
   success-message:
     description: 'Success message to show'
     required: false
@@ -16,18 +20,62 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Process AI Output
+    - name: 🤖 Process AI Output
       shell: bash
       run: |
-        echo "Processing AI output for ${{ inputs.workflow-type }}..."
-        mkdir -p artifacts
+        set -euo pipefail
         
-        if [ -f "${{ inputs.result-file }}" ]; then
-          echo "Found AI result file: ${{ inputs.result-file }}"
-          python3 .github/scripts/process_ai_output.py "${{ inputs.result-file }}"
+        # Inputs
+        result_file="${{ inputs.result-file }}"
+        output_file="${{ inputs.outputs-file }}"
+        
+        echo "::notice::Processing AI output for ${{ inputs.workflow-type }}..."
+        
+        # Validate result_file for safe characters only
+        if [[ ! "$result_file" =~ ^[a-zA-Z0-9._\-/]+$ ]]; then
+          echo "::error::Invalid characters in result-file path: $result_file"
+          exit 1
+        fi
+        
+        if [ -f "$result_file" ]; then
+          echo "::notice::Using result file: $result_file"
+          
+          # Run processor with explicit failure handling
+          if ! python3 .github/scripts/process_ai_output.py "$result_file" > "$output_file"; then
+            echo "::error::Failed to process AI output from $result_file"
+            exit 1
+          fi
+          
+          # Verify output was produced
+          if [ ! -s "$output_file" ]; then
+            echo "::error::process_ai_output.py did not generate a non-empty $output_file"
+            exit 1
+          fi
+          echo "::notice::Generated comment: $output_file"
         else
-          echo "AI result file not found, generating fallback comment"
-          python3 .github/scripts/generate_fallback_comment.py "${{ inputs.workflow-type }}"
+          echo "::warning::AI result file not found, generating fallback comment: $output_file"
+          
+          # Complete heredoc (no truncation)
+          cat > "$output_file" << 'EOF'
+🤖 AI Analysis Unavailable
+The expected analysis result file was not found. Showing fallback guidance instead.
+
+## What you can do
+- Re-run the workflow that generates the analysis artifact
+- Ensure required provider API keys are configured
+- Check previous step logs for errors
+
+## Recommended hygiene
+- Use consistent logging (::warning::, ::error::) in workflows
+- Pin Python version to 3.11 with actions/setup-python
+- Perform regular dependency security audits (pip-audit, safety)
+EOF
+          
+          # Double-check fallback file is created
+          if [ ! -s "$output_file" ]; then
+            echo "::error::Failed to create fallback comment: $output_file"
+            exit 1
+          fi
         fi
 
     - name: Post Comment to PR
@@ -36,8 +84,9 @@ runs:
       with:
         script: |
           const fs = require('fs');
+          const outputFile = '${{ inputs.outputs-file }}';
           try {
-            const commentContent = fs.readFileSync('pr_comment.md', 'utf8');
+            const commentContent = fs.readFileSync(outputFile, 'utf8');
             await github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -60,3 +109,4 @@ runs:
         echo "| Status | Completed |" >> $GITHUB_STEP_SUMMARY
         echo "| Output Processing | Applied |" >> $GITHUB_STEP_SUMMARY
         echo "| Comment Posted | Yes |" >> $GITHUB_STEP_SUMMARY
+        echo "| Output File | ${{ inputs.outputs-file }} |" >> $GITHUB_STEP_SUMMARY
