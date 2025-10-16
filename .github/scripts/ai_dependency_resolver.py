@@ -18,12 +18,12 @@ from typing import Dict, List, Any, Optional
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    from ai_agent_fallback import ai_agent
+    from bulletproof_real_ai import BulletproofRealAI
 except ImportError as e:
-    print(f"❌ Failed to import ai_agent_fallback: {e}")
+    print(f"❌ Failed to import bulletproof_real_ai: {e}")
     print("Installing required dependencies...")
-    subprocess.run([sys.executable, "-m", "pip", "install", "aiohttp", "openai", "cohere", "python-dotenv"], check=True)
-    from ai_agent_fallback import ai_agent
+    subprocess.run([sys.executable, "-m", "pip", "install", "aiohttp", "openai", "anthropic", "google-generativeai", "groq", "cohere", "mistralai"], check=True)
+    from bulletproof_real_ai import BulletproofRealAI
 
 class AIDependencyResolver:
     """AI-powered dependency resolver with comprehensive analysis"""
