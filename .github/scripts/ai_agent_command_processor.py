@@ -13,9 +13,9 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 
-# Import our AI agent fallback system
+# Import bulletproof real AI system
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from ai_agent_fallback import ai_agent
+from bulletproof_real_ai import BulletproofRealAI
 
 class AIAgentCommandProcessor:
     """Advanced AI agent command processor with intelligent command interpretation"""
@@ -24,27 +24,27 @@ class AIAgentCommandProcessor:
         self.commands = {
             "analyze": {
                 "description": "Comprehensive code analysis",
-                "workflow": "comprehensive_pr_analyzer",
+                "workflow": "comprehensive_pr_analyzer_bulletproof",
                 "priority": 1
             },
             "fix": {
                 "description": "Fix issues automatically",
-                "workflow": "ai_auto_commit_fixer",
+                "workflow": "bulletproof_real_ai",
                 "priority": 1
             },
             "security": {
                 "description": "Security audit and fixes",
-                "workflow": "ai_security_auditor",
+                "workflow": "bulletproof_real_ai",
                 "priority": 1
             },
             "build": {
                 "description": "Build optimization",
-                "workflow": "ai_dependency_pinner",
+                "workflow": "bulletproof_real_ai",
                 "priority": 2
             },
             "docs": {
                 "description": "Generate documentation",
-                "workflow": "ai_documentation_generator",
+                "workflow": "bulletproof_real_ai",
                 "priority": 2
             },
             "test": {
@@ -69,12 +69,12 @@ class AIAgentCommandProcessor:
             },
             "learn": {
                 "description": "Learn from this PR",
-                "workflow": "ai_learning_system",
+                "workflow": "bulletproof_real_ai",
                 "priority": 2
             },
             "optimize": {
                 "description": "Optimize code and performance",
-                "workflow": "ai_parallel_provider",
+                "workflow": "bulletproof_real_ai",
                 "priority": 1
             },
             "audit": {
@@ -85,12 +85,8 @@ class AIAgentCommandProcessor:
         }
         
         self.workflow_scripts = {
-            "comprehensive_pr_analyzer": ".github/scripts/comprehensive_pr_analyzer.py",
-            "ai_auto_commit_fixer": ".github/scripts/ai_auto_commit_fixer.py",
-            "ai_security_auditor": ".github/scripts/ai_security_auditor.py",
-            "ai_dependency_pinner": ".github/scripts/ai_dependency_pinner.py",
-            "ai_learning_system": ".github/scripts/ai_learning_system.py",
-            "ai_parallel_provider": ".github/scripts/ai_parallel_provider.py"
+            "comprehensive_pr_analyzer_bulletproof": ".github/scripts/comprehensive_pr_analyzer_bulletproof.py",
+            "bulletproof_real_ai": ".github/scripts/bulletproof_real_ai.py"
         }
     
     async def process_command(self, command: str, full_command: str, pr_number: str, commenter: str) -> Dict[str, Any]:

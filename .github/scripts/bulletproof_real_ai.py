@@ -144,21 +144,74 @@ class BulletproofRealAI:
     
     async def _call_real_api(self, provider, task_type, content):
         """Make REAL API call with proper authentication"""
+
+        # Task-specific prompts
+        task_prompts = {
+            "code_quality": """
+Analyze the code quality of this pull request. Focus on:
+1. Code structure and organization
+2. Variable naming and conventions  
+3. Error handling and edge cases
+4. Performance implications
+5. Maintainability issues
+
+Provide specific file names, line numbers, and exact recommendations.
+""",
+            
+            "dependency_analysis": """
+Analyze the dependencies and imports in this code. Focus on:
+1. Missing dependencies in requirements.txt
+2. Unused imports that can be removed
+3. Version compatibility issues
+4. Security vulnerabilities in dependencies
+5. Alternative package recommendations
+
+Be specific about which files and which packages.
+""",
+            
+            "auto_analysis": """
+Perform comprehensive automated analysis of this pull request code:
+1. Code quality issues with specific file names and line numbers
+2. Potential bugs or logic errors with exact locations
+3. Security vulnerabilities with specific details
+4. Performance bottlenecks with actionable recommendations  
+5. Best practice violations with specific suggestions
+
+Provide detailed, specific analysis with exact file names and line numbers.
+""",
+            
+            "security": """
+Perform security analysis of this code. Find actual vulnerabilities:
+1. Input validation issues
+2. Authentication and authorization problems
+3. Data exposure risks
+4. Injection vulnerabilities
+5. Cryptographic issues
+
+List specific security issues with file names, line numbers, and severity levels.
+""",
+            
+            "performance": """
+Analyze performance bottlenecks in this code:
+1. Algorithmic complexity issues
+2. Memory usage problems
+3. Database query inefficiencies
+4. Network call optimizations
+5. Caching opportunities
+
+Identify specific performance issues with file locations and optimization suggestions.
+"""
+        }
+
+        base_prompt = task_prompts.get(task_type, task_prompts["code_quality"])
         
         prompt = f"""
-You are analyzing code changes in a GitHub pull request.
+{base_prompt}
 
-Task: {task_type}
 Code to analyze:
 {content[:2000]}
 
-Provide a detailed, specific analysis including:
-1. Specific file names and line numbers for any issues
-2. Exact code snippets that need improvement
-3. Security vulnerabilities with specific locations
-4. Performance issues with specific recommendations
-
-Be specific and actionable. Avoid generic responses.
+Provide detailed, specific analysis with exact locations and actionable recommendations.
 """
         
         headers = {

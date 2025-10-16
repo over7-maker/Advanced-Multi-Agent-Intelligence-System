@@ -24,10 +24,25 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install aiohttp openai cohere python-dotenv
+          pip install aiohttp openai anthropic google-generativeai groq cohere mistralai
+          pip install multidict yarl attrs aiosignal frozenlist python-dotenv
 
-      - name: Run comprehensive PR analysis
-        run: python .github/scripts/comprehensive_pr_analyzer.py
+      - name: 🤖 Run BULLETPROOF PR Analysis
+        run: |
+          echo "🚀 Running BULLETPROOF PR analysis..."
+          
+          # Run BULLETPROOF real AI analysis
+          python .github/scripts/comprehensive_pr_analyzer_bulletproof.py
+          
+          # CRITICAL: Validate bulletproof real AI was used
+          if grep -q '"bulletproof_validated": true' artifacts/auto_pr_analysis.json; then
+            echo "✅ BULLETPROOF REAL AI VERIFIED!"
+            # Copy for compatibility
+            cp artifacts/auto_pr_analysis.json comprehensive_pr_analysis.json
+          else
+            echo "🚨 FAKE AI DETECTED - FAILING HARD!"
+            exit 1
+          fi
         env:
           # GitHub token for API access
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
