@@ -1,3 +1,4 @@
+from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
 """
 Script to integrate Universal AI Manager into existing codebase
@@ -245,7 +246,7 @@ from openai import OpenAI
 
 deepseek_client = OpenAI(
     base_url="https://api.deepseek.com/v1",
-    api_key=os.getenv('DEEPSEEK_API_KEY')
+    api_key=get_api_key("DEEPSEEK_API_KEY")
 )
 
 try:
@@ -274,21 +275,21 @@ result = await generate_ai_response(
 
 ```yaml
 env:
-  DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-  GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
-  GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
-  KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
-  QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
-  GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
-  GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
-  CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
-  GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
-  CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
-  NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+  DEEPSEEK_API_KEY: ${{ get_api_key("DEEPSEEK_API_KEY") }}
+  GLM_API_KEY: ${{ get_api_key("GLM_API_KEY") }}
+  GROK_API_KEY: ${{ get_api_key("GROK_API_KEY") }}
+  KIMI_API_KEY: ${{ get_api_key("KIMI_API_KEY") }}
+  QWEN_API_KEY: ${{ get_api_key("QWEN_API_KEY") }}
+  GPTOSS_API_KEY: ${{ get_api_key("GPTOSS_API_KEY") }}
+  GROQAI_API_KEY: ${{ get_api_key("GROQAI_API_KEY") }}
+  CEREBRAS_API_KEY: ${{ get_api_key("CEREBRAS_API_KEY") }}
+  GEMINIAI_API_KEY: ${{ get_api_key("GEMINIAI_API_KEY") }}
+  CODESTRAL_API_KEY: ${{ get_api_key("CODESTRAL_API_KEY") }}
+  NVIDIA_API_KEY: ${{ get_api_key("NVIDIA_API_KEY") }}
   GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
   GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
-  COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
-  CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+  COHERE_API_KEY: ${{ get_api_key("COHERE_API_KEY") }}
+  CHUTES_API_KEY: ${{ get_api_key("CHUTES_API_KEY") }}
 ```
 
 ## Circuit Breaker

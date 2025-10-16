@@ -1,0 +1,164 @@
+Generated: 2025-10-11 03:32:06
+============================================================
+
+📊 PROVIDER STATISTICS
+=========================
+
+Total Providers: 16
+Healthy Providers: 16
+Total Calls: 0
+Successful Calls: 0
+Failed Calls: 0
+Success Rate: 0.0%
+
+DETAILED PROVIDER STATS:
+------------------------------
+
+Provider: DeepSeek V3.1
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: GLM 4.5 Air
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: Grok 4 Fast
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: Kimi K2
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: Qwen3 Coder
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: GPT-OSS 120B
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: Gemini 2.0 Flash
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: NVIDIA
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: Codestral
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: Cerebras
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: Cohere
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: Chutes
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: Groq2
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: GeminiAI
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: GroqAI
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+Provider: Claude
+  Total Calls: 0
+  Successful: 0
+  Failed: 0
+  Healthy: True
+  Avg Response Time: 0.00s
+  Last Success: Never
+  Last Failure: Never
+
+
+
+============================================================
+End of Report

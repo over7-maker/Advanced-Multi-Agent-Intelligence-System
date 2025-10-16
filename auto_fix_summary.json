@@ -1,0 +1,116 @@
+{
+  "timestamp": "2025-10-11T00:13:52.653502",
+  "fixes_applied": [
+    {
+      "file": ".github/scripts/ai_incident_response.py",
+      "type": "API Key Migration",
+      "description": "Replaced direct API key usage with centralized manager",
+      "timestamp": "2025-10-11T00:13:52.643284"
+    },
+    {
+      "file": ".github/scripts/ai_threat_intelligence.py",
+      "type": "API Key Migration",
+      "description": "Replaced direct API key usage with centralized manager",
+      "timestamp": "2025-10-11T00:13:52.643981"
+    },
+    {
+      "file": ".github/scripts/ai_security_response.py",
+      "type": "API Key Migration",
+      "description": "Replaced direct API key usage with centralized manager",
+      "timestamp": "2025-10-11T00:13:52.644624"
+    },
+    {
+      "file": ".github/scripts/multi_agent_orchestrator.py",
+      "type": "API Key Migration",
+      "description": "Replaced direct API key usage with centralized manager",
+      "timestamp": "2025-10-11T00:13:52.645160"
+    },
+    {
+      "file": ".github/scripts/ai_osint_collector.py",
+      "type": "API Key Migration",
+      "description": "Replaced direct API key usage with centralized manager",
+      "timestamp": "2025-10-11T00:13:52.645670"
+    },
+    {
+      "file": ".github/scripts/ai_workflow_monitor.py",
+      "type": "API Key Migration",
+      "description": "Replaced direct API key usage with centralized manager",
+      "timestamp": "2025-10-11T00:13:52.646252"
+    },
+    {
+      "file": ".github/scripts/ai_master_orchestrator.py",
+      "type": "API Key Migration",
+      "description": "Replaced direct API key usage with centralized manager",
+      "timestamp": "2025-10-11T00:13:52.646797"
+    },
+    {
+      "file": ".github/scripts/ai_adaptive_prompt_improvement.py",
+      "type": "API Key Migration",
+      "description": "Replaced direct API key usage with centralized manager",
+      "timestamp": "2025-10-11T00:13:52.647397"
+    },
+    {
+      "file": "scripts/integrate_universal_ai_manager.py",
+      "type": "API Key Migration",
+      "description": "Replaced direct API key usage with centralized manager",
+      "timestamp": "2025-10-11T00:13:52.647843"
+    },
+    {
+      "file": ".github/scripts/verify_security_fixes.py",
+      "type": "Exposed Secrets",
+      "description": "Replaced hardcoded secrets with environment variables",
+      "timestamp": "2025-10-11T00:13:52.648368"
+    },
+    {
+      "file": ".github/scripts/ai_code_analyzer.py",
+      "type": "Exposed Secrets",
+      "description": "Replaced hardcoded secrets with environment variables",
+      "timestamp": "2025-10-11T00:13:52.648842"
+    },
+    {
+      "file": ".github/scripts/simple_verify_fixes.py",
+      "type": "Exposed Secrets",
+      "description": "Replaced hardcoded secrets with environment variables",
+      "timestamp": "2025-10-11T00:13:52.649059"
+    },
+    {
+      "file": "monitor-intelligence.py",
+      "type": "Insecure Patterns",
+      "description": "Fixed: os.system -> subprocess.run",
+      "timestamp": "2025-10-11T00:13:52.649324"
+    },
+    {
+      "file": "scripts/production_ready_verification.py",
+      "type": "Insecure Patterns",
+      "description": "Fixed: eval() -> commented out, exec() -> commented out",
+      "timestamp": "2025-10-11T00:13:52.649615"
+    },
+    {
+      "file": ".github/scripts/security_false_positive_analyzer.py",
+      "type": "Insecure Patterns",
+      "description": "Fixed: eval() -> commented out",
+      "timestamp": "2025-10-11T00:13:52.649885"
+    },
+    {
+      "file": "src/amas/services/enterprise_communication_service.py",
+      "type": "Insecure Patterns",
+      "description": "Fixed: pickle.loads() -> commented out",
+      "timestamp": "2025-10-11T00:13:52.650582"
+    },
+    {
+      "file": "scripts/maintenance/run_workflow_verification.py",
+      "type": "Insecure Patterns",
+      "description": "Fixed: exec() -> commented out",
+      "timestamp": "2025-10-11T00:13:52.651039"
+    },
+    {
+      "file": ".github/workflows/00-master-ai-orchestrator.yml",
+      "type": "YAML Syntax",
+      "description": "Fixed YAML syntax and indentation issues",
+      "timestamp": "2025-10-11T00:13:52.653397"
+    }
+  ],
+  "errors": [],
+  "total_fixes": 18,
+  "total_errors": 0
+}

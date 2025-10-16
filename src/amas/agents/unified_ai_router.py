@@ -1,3 +1,4 @@
+from standalone_universal_ai_manager import get_api_key
 """
 Unified AI Router with Intelligent Fallback Mechanism
 Handles multiple AI providers with automatic failover and load balancing
@@ -89,7 +90,7 @@ class UnifiedAIRouter:
         """Load model configurations from environment and config file"""
 
         # OpenRouter configuration (if available)
-        openrouter_key = os.getenv("OPENROUTER_API_KEY") or os.getenv(
+        openrouter_key = get_api_key("OPENROUTER_API_KEY") or os.getenv(
             "DEEPSEEK_API_KEY"
         )
         if openrouter_key and openrouter_key.startswith("sk-or-"):
@@ -122,19 +123,19 @@ class UnifiedAIRouter:
             )
 
         # Direct API configurations
-        if os.getenv("OPENAI_API_KEY"):
+        if get_api_key("OPENAI_API_KEY"):
             self.models["openai_direct"] = ModelConfig(
                 provider=ModelProvider.OPENAI_DIRECT,
                 model_name="gpt-4-turbo-preview",
-                api_key=os.getenv("OPENAI_API_KEY"),
+                api_key=get_api_key("OPENAI_API_KEY"),
                 priority=2,
             )
 
-        if os.getenv("CLAUDE_API_KEY"):
+        if get_api_key("CLAUDE_API_KEY"):
             self.models["claude_direct"] = ModelConfig(
                 provider=ModelProvider.CLAUDE_DIRECT,
                 model_name="claude-3-opus-20240229",
-                api_key=os.getenv("CLAUDE_API_KEY"),
+                api_key=get_api_key("CLAUDE_API_KEY"),
                 priority=2,
             )
 
