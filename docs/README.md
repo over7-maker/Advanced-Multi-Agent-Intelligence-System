@@ -26,6 +26,7 @@ AMAS documentation is organized into several categories to help you find exactly
 Essential documentation for new users and quick setup:
 
 - **[Main README](../README.md)** - Project overview and quick start guide
+- **[AI Agentic Workflow Guide](AI_AGENTIC_WORKFLOW_GUIDE.md)** - Complete AI workflow implementation guide
 - **[Setup Guide](user/SETUP_GUIDE.md)** - Detailed installation and configuration
 - **[Interactive Mode Guide](../README_INTERACTIVE.md)** - Natural language interface guide
 - **[Quick Start Examples](../examples/)** - Code examples and tutorials
@@ -43,6 +44,8 @@ Essential documentation for new users and quick setup:
 Comprehensive guides for using AMAS effectively:
 
 - **[User Guide](user/README.md)** - Complete user manual
+- **[AI Agentic Workflow Guide](AI_AGENTIC_WORKFLOW_GUIDE.md)** - Revolutionary AI workflow system
+- **[AI Agentic Workflow Showcase](AI_AGENTIC_WORKFLOW_SHOWCASE.md)** - Advanced features and capabilities
 - **[AMAS Interactive Guide](AMAS_INTERACTIVE_GUIDE.md)** - Interactive mode details
 - **[Docker Optimization Guide](user/DOCKER_OPTIMIZATION_GUIDE.md)** - Performance tuning
 - **[Offline System Guide](user/OFFLINE_SYSTEM_GUIDE.md)** - Offline operations
@@ -62,6 +65,8 @@ Comprehensive guides for using AMAS effectively:
 Technical documentation for developers and contributors:
 
 - **[Developer Guide](developer/README.md)** - Development overview
+- **[AI Agentic Workflow Guide](AI_AGENTIC_WORKFLOW_GUIDE.md)** - Technical implementation details
+- **[AI Agentic Integration Examples](AI_AGENTIC_INTEGRATION_EXAMPLES.md)** - Practical implementation tutorials
 - **[Architecture Documentation](developer/architecture.md)** - System architecture
 - **[Contributing Guide](development/CONTRIBUTING.md)** - Contribution guidelines
 - **[Testing Guide](../TESTING.md)** - Testing framework and practices
@@ -82,6 +87,8 @@ Technical documentation for developers and contributors:
 System design and architectural documentation:
 
 - **[Architecture Overview](architecture.md)** - High-level system design
+- **[AI Agentic Workflow Guide](AI_AGENTIC_WORKFLOW_GUIDE.md)** - 4-layer AI agent architecture
+- **[AI Agentic Workflow Showcase](AI_AGENTIC_WORKFLOW_SHOWCASE.md)** - Revolutionary capabilities
 - **[Project Structure](../PROJECT_STRUCTURE.md)** - Codebase organization
 - **[AI Release System](AI_RELEASE_SYSTEM.md)** - AI integration architecture
 - **[AI Release System Detailed](AI_RELEASE_SYSTEM_DETAILED.md)** - In-depth AI architecture
@@ -139,6 +146,7 @@ Production deployment and operational guides:
 Complete API documentation and integration guides:
 
 - **[API Documentation](api/README.md)** - API overview and endpoints
+- **[AI Agentic Workflow API](AI_AGENTIC_WORKFLOW_API.md)** - AI workflow API reference
 - **[API Manager Guide](API_MANAGER_GUIDE.md)** - API management system
 - **[API Manager Summary](api/AI_API_MANAGER_SUMMARY.md)** - Quick API reference
 - **[API Fallback System](api/API_FALLBACK_SYSTEM.md)** - Fallback mechanism details
@@ -156,6 +164,9 @@ Complete API documentation and integration guides:
 
 Advanced features and optimization guides:
 
+- **[AI Agentic Workflow Guide](AI_AGENTIC_WORKFLOW_GUIDE.md)** - Complete implementation guide
+- **[AI Agentic Workflow Showcase](AI_AGENTIC_WORKFLOW_SHOWCASE.md)** - Revolutionary capabilities
+- **[AI Agentic Integration Examples](AI_AGENTIC_INTEGRATION_EXAMPLES.md)** - Practical tutorials
 - **[Universal AI Manager Guide](../UNIVERSAL_AI_MANAGER_GUIDE.md)** - 16-provider system
 - **[Feature Showcase](../FEATURE_SHOWCASE.md)** - Complete feature overview
 - **[Latest Features](../LATEST_FEATURES_SHOWCASE.md)** - New feature highlights

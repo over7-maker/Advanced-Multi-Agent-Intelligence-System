@@ -4,18 +4,21 @@
 
 This guide provides comprehensive instructions for deploying the Advanced Multi-Agent Intelligence System (AMAS) in various environments. Whether you're setting up a development instance or preparing for production deployment, this guide will walk you through each step.
 
+**🚀 AI Agentic Workflows** - This deployment guide includes specific requirements and configuration for the revolutionary AI Agentic Workflow System with 4-layer architecture and 16 AI providers.
+
 ## 📋 Table of Contents
 
 1. [Prerequisites](#prerequisites)
-2. [Deployment Options](#deployment-options)
-3. [Quick Start Deployment](#quick-start-deployment)
-4. [Docker Deployment](#docker-deployment)
-5. [Kubernetes Deployment](#kubernetes-deployment)
-6. [Cloud Deployment](#cloud-deployment)
-7. [On-Premises Deployment](#on-premises-deployment)
-8. [Configuration](#configuration)
-9. [Post-Deployment](#post-deployment)
-10. [Troubleshooting](#troubleshooting)
+2. [AI Agentic Workflow Requirements](#ai-agentic-workflow-requirements)
+3. [Deployment Options](#deployment-options)
+4. [Quick Start Deployment](#quick-start-deployment)
+5. [Docker Deployment](#docker-deployment)
+6. [Kubernetes Deployment](#kubernetes-deployment)
+7. [Cloud Deployment](#cloud-deployment)
+8. [On-Premises Deployment](#on-premises-deployment)
+9. [Configuration](#configuration)
+10. [Post-Deployment](#post-deployment)
+11. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -69,6 +72,208 @@ Ensure you have API keys for the AI providers you plan to use:
 - GLM API Key
 - xAI Grok API Key
 - Additional provider keys (see [Universal AI Manager Guide](../../UNIVERSAL_AI_MANAGER_GUIDE.md))
+
+---
+
+## 🚀 AI Agentic Workflow Requirements
+
+### **Revolutionary AI Agentic Workflow System Requirements**
+
+The AI Agentic Workflow System represents the most advanced workflow automation ever created, requiring specific infrastructure and configuration for optimal performance.
+
+#### **Enhanced System Requirements for AI Agentic Workflows**
+
+##### **Minimum Requirements for AI Agentic Workflows**
+- **CPU**: 8 cores (3.0 GHz or higher) - Required for 4-layer AI agent processing
+- **RAM**: 16 GB - Minimum for 16 AI providers and intelligent failover
+- **Storage**: 100 GB SSD - For workflow data, AI model caching, and logs
+- **Network**: 1 Gbps connection - For AI provider API calls and failover
+- **OS**: Ubuntu 22.04 LTS or CentOS 8+ - Optimized for AI workloads
+
+##### **Recommended Requirements for AI Agentic Workflows**
+- **CPU**: 16+ cores (3.5 GHz or higher) - For maximum AI agent performance
+- **RAM**: 32-64 GB - For concurrent workflow execution and AI model processing
+- **Storage**: 500+ GB NVMe SSD - For high-speed AI model access and caching
+- **Network**: 10 Gbps connection - For optimal AI provider communication
+- **GPU**: NVIDIA RTX 4090 or A100 (optional) - For local AI model inference
+
+#### **AI Provider API Requirements**
+
+##### **Required API Keys for AI Agentic Workflows**
+```bash
+# Primary AI Providers (Required)
+DEEPSEEK_API_KEY=your_deepseek_key
+CLAUDE_API_KEY=your_claude_key
+GPT4_API_KEY=your_gpt4_key
+GLM_API_KEY=your_glm_key
+GROK_API_KEY=your_grok_key
+
+# Secondary AI Providers (Recommended)
+KIMI_API_KEY=your_kimi_key
+QWEN_API_KEY=your_qwen_key
+GEMINI_API_KEY=your_gemini_key
+GPTOSS_API_KEY=your_gptoss_key
+GROQAI_API_KEY=your_groqai_key
+
+# Additional AI Providers (Optional)
+CEREBRAS_API_KEY=your_cerebras_key
+GEMINIAI_API_KEY=your_geminiai_key
+COHERE_API_KEY=your_cohere_key
+NVIDIA_API_KEY=your_nvidia_key
+CODESTRAL_API_KEY=your_codestral_key
+GEMINI2_API_KEY=your_gemini2_key
+GROQ2_API_KEY=your_groq2_key
+CHUTES_API_KEY=your_chutes_key
+```
+
+##### **API Provider Configuration**
+```yaml
+# AI Provider Configuration
+ai_providers:
+  deepseek:
+    priority: 1
+    timeout: 30
+    max_retries: 3
+    rate_limit: 1000  # requests per hour
+  claude:
+    priority: 2
+    timeout: 30
+    max_retries: 3
+    rate_limit: 500
+  gpt4:
+    priority: 3
+    timeout: 30
+    max_retries: 3
+    rate_limit: 200
+  # ... additional providers
+```
+
+#### **Workflow Infrastructure Requirements**
+
+##### **GitHub Actions Requirements**
+- **GitHub Repository**: With Actions enabled
+- **GitHub Secrets**: All 16 AI provider API keys configured
+- **Repository Permissions**: Write access for workflow execution
+- **Actions Minutes**: Sufficient minutes for workflow execution
+- **Concurrent Jobs**: At least 4 concurrent jobs for 4-layer architecture
+
+##### **Workflow Storage Requirements**
+```yaml
+# Workflow Storage Configuration
+workflow_storage:
+  artifacts:
+    retention_days: 30
+    max_size: "1GB"
+  logs:
+    retention_days: 90
+    max_size: "500MB"
+  cache:
+    enabled: true
+    ttl: 3600  # 1 hour
+    max_size: "2GB"
+```
+
+#### **Network Requirements for AI Agentic Workflows**
+
+##### **Outbound Network Access**
+```bash
+# Required outbound connections for AI providers
+# DeepSeek API
+curl -I https://api.deepseek.com
+
+# Claude API
+curl -I https://api.anthropic.com
+
+# OpenAI API
+curl -I https://api.openai.com
+
+# Google AI API
+curl -I https://generativelanguage.googleapis.com
+
+# Additional AI provider endpoints
+# ... (all 16 AI providers)
+```
+
+##### **Firewall Configuration**
+```bash
+# Allow outbound HTTPS connections
+sudo ufw allow out 443/tcp
+
+# Allow outbound HTTP connections (if needed)
+sudo ufw allow out 80/tcp
+
+# Allow GitHub API access
+sudo ufw allow out to api.github.com port 443
+
+# Allow webhook endpoints (if using)
+sudo ufw allow in 8080/tcp
+```
+
+#### **Security Requirements for AI Agentic Workflows**
+
+##### **API Key Security**
+```bash
+# Secure API key storage
+chmod 600 /etc/amas/api-keys.env
+chown amas:amas /etc/amas/api-keys.env
+
+# Encrypt API keys at rest
+gpg --symmetric --cipher-algo AES256 api-keys.env
+
+# Use environment variables
+export $(cat /etc/amas/api-keys.env | xargs)
+```
+
+##### **Workflow Security Configuration**
+```yaml
+# Workflow Security Settings
+workflow_security:
+  api_key_rotation:
+    enabled: true
+    rotation_interval: "30d"
+  audit_logging:
+    enabled: true
+    log_level: "info"
+  access_control:
+    enabled: true
+    allowed_ips: ["10.0.0.0/8", "192.168.0.0/16"]
+  encryption:
+    enabled: true
+    algorithm: "AES-256-GCM"
+```
+
+#### **Performance Requirements for AI Agentic Workflows**
+
+##### **Resource Limits**
+```yaml
+# Resource Limits for AI Workflows
+resource_limits:
+  orchestrator:
+    cpu: "2000m"
+    memory: "4Gi"
+    timeout: "30m"
+  self_improver:
+    cpu: "1000m"
+    memory: "2Gi"
+    timeout: "45m"
+  issue_responder:
+    cpu: "500m"
+    memory: "1Gi"
+    timeout: "15m"
+```
+
+##### **Scaling Configuration**
+```yaml
+# Auto-scaling Configuration
+autoscaling:
+  enabled: true
+  min_replicas: 2
+  max_replicas: 10
+  target_cpu_utilization: 70
+  target_memory_utilization: 80
+  scale_up_stabilization: "2m"
+  scale_down_stabilization: "5m"
+```
 
 ---
 
