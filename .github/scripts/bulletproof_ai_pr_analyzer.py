@@ -5,6 +5,7 @@ Bulletproof AI PR Analyzer - Phase 2
 Comprehensive PR analysis using real AI providers with bulletproof validation
 
 Security hardened with input validation, secure subprocess calls, and sanitized logging.
+Enhanced with improved project root finding and structured logging.
 """
 
 import asyncio
@@ -20,33 +21,57 @@ from typing import Any, Dict, List, Optional
 
 import tenacity
 
+# Import enhanced error handling and circuit breaker services
+try:
+    from src.amas.services.circuit_breaker_service import (
+        get_circuit_breaker_service, CircuitBreakerConfig, 
+        CircuitBreakerOpenException, CircuitBreakerTimeoutException
+    )
+    from src.amas.services.error_recovery_service import (
+        get_error_recovery_service, ErrorContext, ErrorSeverity
+    )
+    from src.amas.errors.error_handling import (
+        AMASException, ValidationError, InternalError, ExternalServiceError,
+        TimeoutError as AMASTimeoutError, SecurityError
+    )
+    ENHANCED_ERROR_HANDLING = True
+except ImportError:
+    ENHANCED_ERROR_HANDLING = False
+    logger.warning("Enhanced error handling not available, using basic error handling")
+
 # Add project root to sys.path securely
 SCRIPT_DIR = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
 
-# Find project root more robustly
-def _find_project_root() -> str:
-    """Find project root by looking for .git directory with depth limit"""
-    MAX_TRAVERSAL_DEPTH = 10
-    depth = 0
-    current = SCRIPT_DIR
+# Use enhanced project root finding
+try:
+    from src.amas.utils.project_root import find_project_root, get_project_root, add_project_root_to_path
+    PROJECT_ROOT: str = find_project_root(SCRIPT_DIR)
+    add_project_root_to_path(PROJECT_ROOT)
+except ImportError:
+    # Fallback to legacy method if enhanced module not available
+    def _find_project_root() -> str:
+        """Find project root by looking for .git directory with depth limit"""
+        MAX_TRAVERSAL_DEPTH = 10
+        depth = 0
+        current = SCRIPT_DIR
+        
+        while current != os.path.dirname(current) and depth < MAX_TRAVERSAL_DEPTH:
+            if os.path.exists(os.path.join(current, '.git')):
+                return current
+            current = os.path.dirname(current)
+            depth += 1
+        
+        # Fallback to two directories up from script
+        fallback = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+        
+        # Validate fallback contains expected project files
+        if os.path.exists(os.path.join(fallback, '.git')) or os.path.exists(os.path.join(fallback, 'pyproject.toml')):
+            return fallback
+        
+        # Final fallback to script's parent directory
+        return os.path.dirname(SCRIPT_DIR)
     
-    while current != os.path.dirname(current) and depth < MAX_TRAVERSAL_DEPTH:
-        if os.path.exists(os.path.join(current, '.git')):
-            return current
-        current = os.path.dirname(current)
-        depth += 1
-    
-    # Fallback to two directories up from script
-    fallback = os.path.dirname(os.path.dirname(SCRIPT_DIR))
-    
-    # Validate fallback contains expected project files
-    if os.path.exists(os.path.join(fallback, '.git')) or os.path.exists(os.path.join(fallback, 'pyproject.toml')):
-        return fallback
-    
-    # Final fallback to script's parent directory
-    return os.path.dirname(SCRIPT_DIR)
-
-PROJECT_ROOT: str = _find_project_root()
+    PROJECT_ROOT: str = _find_project_root()
 
 # Add paths safely
 if SCRIPT_DIR not in sys.path:
@@ -62,23 +87,59 @@ except ImportError as e:
     print(f"Looking for module in: {PROJECT_ROOT}", file=sys.stderr)
     sys.exit(1)
 
-# Configure logging with security considerations
-VALID_LOG_LEVELS = {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
-log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
+# Configure enhanced logging with security considerations
+try:
+    from src.amas.services.enhanced_logging_service import (
+        configure_logging, get_logger, LoggingConfig, LogLevel, LogFormat, SecurityLevel
+    )
+    
+    # Configure enhanced logging
+    config = LoggingConfig(
+        level=LogLevel.INFO,
+        format=LogFormat.JSON,
+        security_level=SecurityLevel.MEDIUM,
+        enable_console=True,
+        enable_correlation=True,
+        enable_metrics=True,
+        enable_audit=True,
+        enable_performance=True,
+        include_stack_traces=True
+    )
+    
+    # Override with environment variables
+    log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
+    if log_level_str in {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}:
+        config.level = LogLevel(log_level_str)
+    
+    log_format_str = os.getenv("LOG_FORMAT", "json").lower()
+    if log_format_str in {'json', 'text', 'structured'}:
+        config.format = LogFormat(log_format_str)
+    
+    security_level_str = os.getenv("LOG_SECURITY_LEVEL", "medium").lower()
+    if security_level_str in {'low', 'medium', 'high', 'maximum'}:
+        config.security_level = SecurityLevel(security_level_str)
+    
+    configure_logging(config)
+    logger = get_logger(__name__, "bulletproof_ai_analyzer")
+    
+except ImportError:
+    # Fallback to basic logging if enhanced module not available
+    VALID_LOG_LEVELS = {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
+    log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
 
-if log_level_str not in VALID_LOG_LEVELS:
-    print(f"Warning: Invalid LOG_LEVEL='{log_level_str}', defaulting to INFO", file=sys.stderr)
-    log_level_str = "INFO"
+    if log_level_str not in VALID_LOG_LEVELS:
+        print(f"Warning: Invalid LOG_LEVEL='{log_level_str}', defaulting to INFO", file=sys.stderr)
+        log_level_str = "INFO"
 
-logging.basicConfig(
-    level=getattr(logging, log_level_str, logging.INFO), 
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[
-        logging.StreamHandler(sys.stderr)
-    ]
-)
-logger = logging.getLogger(__name__)
+    logging.basicConfig(
+        level=getattr(logging, log_level_str, logging.INFO), 
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        handlers=[
+            logging.StreamHandler(sys.stderr)
+        ]
+    )
+    logger = logging.getLogger(__name__)
 
 # Security: Never log sensitive environment variables
 SENSITIVE_VARS = {"GITHUB_TOKEN", "API_KEY", "SECRET", "PASSWORD", "TOKEN"}
@@ -110,6 +171,17 @@ class BulletproofAIAnalyzer:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "analysis_types": []
         }
+        
+        # Initialize enhanced error handling if available
+        if ENHANCED_ERROR_HANDLING:
+            self.circuit_breaker_service = get_circuit_breaker_service()
+            self.error_recovery_service = get_error_recovery_service()
+            
+            # Create circuit breakers for different operations
+            self._setup_circuit_breakers()
+        else:
+            self.circuit_breaker_service = None
+            self.error_recovery_service = None
 
     def _get_ai_manager_with_retry(self) -> Any:
         """Get AI manager with retry logic and proper error handling"""
@@ -157,6 +229,41 @@ class BulletproofAIAnalyzer:
         safe_env = sanitize_env(dict(os.environ))
         logger.debug(f"Environment loaded: REPO_NAME={self.repo_name}, PR_NUMBER={self.pr_number}")
         # NEVER log self.github_token
+    
+    def _setup_circuit_breakers(self):
+        """Setup circuit breakers for different operations"""
+        if not ENHANCED_ERROR_HANDLING:
+            return
+        
+        # AI API circuit breaker
+        ai_config = CircuitBreakerConfig(
+            failure_threshold=5,
+            recovery_timeout=60.0,
+            success_threshold=3,
+            timeout=30.0,
+            expected_exceptions=[Exception]
+        )
+        self.circuit_breaker_service.create_breaker("ai_api", ai_config)
+        
+        # Git operations circuit breaker
+        git_config = CircuitBreakerConfig(
+            failure_threshold=3,
+            recovery_timeout=30.0,
+            success_threshold=2,
+            timeout=10.0,
+            expected_exceptions=[Exception]
+        )
+        self.circuit_breaker_service.create_breaker("git_operations", git_config)
+        
+        # File operations circuit breaker
+        file_config = CircuitBreakerConfig(
+            failure_threshold=5,
+            recovery_timeout=30.0,
+            success_threshold=3,
+            timeout=5.0,
+            expected_exceptions=[Exception]
+        )
+        self.circuit_breaker_service.create_breaker("file_operations", file_config)
 
     def _validate_inputs(self) -> None:
         """Validate input data for security"""
@@ -174,56 +281,90 @@ class BulletproofAIAnalyzer:
             sys.exit(1)
 
     async def get_pr_diff(self) -> str:
-        """Get the diff for the pull request using async subprocess"""
+        """Get the diff for the pull request using async subprocess with circuit breaker"""
         try:
-            if self.pr_number:
-                # Get PR diff
-                cmd = ["git", "diff", "origin/main...HEAD"]
+            if ENHANCED_ERROR_HANDLING:
+                # Use circuit breaker for git operations
+                breaker = self.circuit_breaker_service.get_breaker("git_operations")
+                if breaker:
+                    return await breaker.call(self._get_pr_diff_impl)
+                else:
+                    return await self._get_pr_diff_impl()
             else:
-                # Get commit diff
-                cmd = ["git", "diff", "HEAD~1", "HEAD"]
-
-            # Use async subprocess to avoid blocking the event loop
-            process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            stdout, stderr = await process.communicate()
-            
-            if process.returncode != 0:
-                logger.error(f"Git diff failed: {stderr.decode()}")
-                return ""
-            
-            return stdout.decode()
+                return await self._get_pr_diff_impl()
+        except (CircuitBreakerOpenException, CircuitBreakerTimeoutException) as e:
+            logger.error(f"Circuit breaker prevented git diff operation: {e}")
+            return ""
         except Exception as e:
             logger.error(f"Error getting diff: {str(e)}")
+            if ENHANCED_ERROR_HANDLING:
+                # Try to recover from error
+                await self._handle_git_error(e, "get_pr_diff")
             return ""
+    
+    async def _get_pr_diff_impl(self) -> str:
+        """Implementation of getting PR diff"""
+        if self.pr_number:
+            # Get PR diff
+            cmd = ["git", "diff", "origin/main...HEAD"]
+        else:
+            # Get commit diff
+            cmd = ["git", "diff", "HEAD~1", "HEAD"]
+
+        # Use async subprocess to avoid blocking the event loop
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+        
+        if process.returncode != 0:
+            raise Exception(f"Git diff failed: {stderr.decode()}")
+        
+        return stdout.decode()
 
     async def get_changed_files(self) -> List[str]:
-        """Get list of changed files using async subprocess"""
+        """Get list of changed files using async subprocess with circuit breaker"""
         try:
-            if self.pr_number:
-                cmd = ["git", "diff", "--name-only", "origin/main...HEAD"]
+            if ENHANCED_ERROR_HANDLING:
+                # Use circuit breaker for git operations
+                breaker = self.circuit_breaker_service.get_breaker("git_operations")
+                if breaker:
+                    return await breaker.call(self._get_changed_files_impl)
+                else:
+                    return await self._get_changed_files_impl()
             else:
-                cmd = ["git", "diff", "--name-only", "HEAD~1", "HEAD"]
-
-            # Use async subprocess to avoid blocking the event loop
-            process = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
-            )
-            stdout, stderr = await process.communicate()
-            
-            if process.returncode != 0:
-                logger.error(f"Git diff --name-only failed: {stderr.decode()}")
-                return []
-            
-            return [f.strip() for f in stdout.decode().split("\n") if f.strip()]
+                return await self._get_changed_files_impl()
+        except (CircuitBreakerOpenException, CircuitBreakerTimeoutException) as e:
+            logger.error(f"Circuit breaker prevented git operations: {e}")
+            return []
         except Exception as e:
             logger.error(f"Error getting changed files: {str(e)}")
+            if ENHANCED_ERROR_HANDLING:
+                # Try to recover from error
+                await self._handle_git_error(e, "get_changed_files")
             return []
+    
+    async def _get_changed_files_impl(self) -> List[str]:
+        """Implementation of getting changed files"""
+        if self.pr_number:
+            cmd = ["git", "diff", "--name-only", "origin/main...HEAD"]
+        else:
+            cmd = ["git", "diff", "--name-only", "HEAD~1", "HEAD"]
+
+        # Use async subprocess to avoid blocking the event loop
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        stdout, stderr = await process.communicate()
+        
+        if process.returncode != 0:
+            raise Exception(f"Git diff --name-only failed: {stderr.decode()}")
+        
+        return [f.strip() for f in stdout.decode().split("\n") if f.strip()]
 
     async def calculate_diff_stats(self, diff: str) -> Dict[str, int]:
         """Calculate statistics from the diff"""
@@ -240,6 +381,36 @@ class BulletproofAIAnalyzer:
 
     async def run_ai_analysis(self, analysis_type: str, prompt: str) -> Dict[str, Any]:
         """Run AI analysis with bulletproof validation and retry logic"""
+        try:
+            if ENHANCED_ERROR_HANDLING:
+                # Use circuit breaker for AI API calls
+                breaker = self.circuit_breaker_service.get_breaker("ai_api")
+                if breaker:
+                    return await breaker.call(self._run_ai_analysis_impl, analysis_type, prompt)
+                else:
+                    return await self._run_ai_analysis_impl(analysis_type, prompt)
+            else:
+                return await self._run_ai_analysis_impl(analysis_type, prompt)
+        except (CircuitBreakerOpenException, CircuitBreakerTimeoutException) as e:
+            logger.error(f"Circuit breaker prevented AI analysis: {e}")
+            return {
+                "success": False,
+                "error": f"AI service unavailable: {str(e)}",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        except Exception as e:
+            logger.error(f"Error in AI analysis: {str(e)}")
+            if ENHANCED_ERROR_HANDLING:
+                # Try to recover from error
+                await self._handle_ai_error(e, analysis_type)
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+    
+    async def _run_ai_analysis_impl(self, analysis_type: str, prompt: str) -> Dict[str, Any]:
+        """Implementation of AI analysis with retry logic"""
         max_retries = 3
         retry_delay = 1.0
         
@@ -574,6 +745,78 @@ Format as clean, readable markdown suitable for technical documentation.
             json.dump(self.verification_results, f, indent=2)
 
         logger.info(f"Verification results saved to {verification_file}")
+    
+    async def _handle_git_error(self, error: Exception, operation: str):
+        """Handle git operation errors with recovery"""
+        if not ENHANCED_ERROR_HANDLING:
+            return
+        
+        try:
+            context = ErrorContext(
+                error_type="git_error",
+                error_message=str(error),
+                severity=ErrorSeverity.MEDIUM,
+                component="bulletproof_ai_analyzer",
+                operation=operation,
+                metadata={"error_type": type(error).__name__}
+            )
+            
+            success = await self.error_recovery_service.handle_error(context)
+            if success:
+                logger.info(f"Successfully recovered from git error in {operation}")
+            else:
+                logger.warning(f"Failed to recover from git error in {operation}")
+        except Exception as recovery_error:
+            logger.error(f"Error during git error recovery: {recovery_error}")
+    
+    async def _handle_ai_error(self, error: Exception, analysis_type: str):
+        """Handle AI analysis errors with recovery"""
+        if not ENHANCED_ERROR_HANDLING:
+            return
+        
+        try:
+            context = ErrorContext(
+                error_type="ai_analysis_error",
+                error_message=str(error),
+                severity=ErrorSeverity.HIGH,
+                component="bulletproof_ai_analyzer",
+                operation=f"ai_analysis_{analysis_type}",
+                metadata={
+                    "error_type": type(error).__name__,
+                    "analysis_type": analysis_type
+                }
+            )
+            
+            success = await self.error_recovery_service.handle_error(context)
+            if success:
+                logger.info(f"Successfully recovered from AI error in {analysis_type}")
+            else:
+                logger.warning(f"Failed to recover from AI error in {analysis_type}")
+        except Exception as recovery_error:
+            logger.error(f"Error during AI error recovery: {recovery_error}")
+    
+    async def _handle_file_error(self, error: Exception, operation: str):
+        """Handle file operation errors with recovery"""
+        if not ENHANCED_ERROR_HANDLING:
+            return
+        
+        try:
+            context = ErrorContext(
+                error_type="file_error",
+                error_message=str(error),
+                severity=ErrorSeverity.MEDIUM,
+                component="bulletproof_ai_analyzer",
+                operation=operation,
+                metadata={"error_type": type(error).__name__}
+            )
+            
+            success = await self.error_recovery_service.handle_error(context)
+            if success:
+                logger.info(f"Successfully recovered from file error in {operation}")
+            else:
+                logger.warning(f"Failed to recover from file error in {operation}")
+        except Exception as recovery_error:
+            logger.error(f"Error during file error recovery: {recovery_error}")
 
     async def run_comprehensive_analysis(self) -> str:
         """Run comprehensive bulletproof AI analysis"""
