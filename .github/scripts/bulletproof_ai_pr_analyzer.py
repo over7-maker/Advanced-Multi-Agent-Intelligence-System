@@ -21,6 +21,11 @@ from typing import Any, Dict, List, Optional
 
 import tenacity
 
+# Set up basic logging first
+logger = logging.getLogger(__name__)
+if not logging.getLogger().handlers:
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 # Import enhanced error handling and circuit breaker services
 try:
     from src.amas.services.circuit_breaker_service import (
@@ -37,47 +42,88 @@ try:
     ENHANCED_ERROR_HANDLING = True
 except ImportError:
     ENHANCED_ERROR_HANDLING = False
+    # Define fallback exception classes for basic error handling
+    class AMASException(Exception):
+        """Base exception for AMAS system"""
+        pass
+    
+    class ValidationError(AMASException):
+        """Validation error"""
+        pass
+    
+    class InternalError(AMASException):
+        """Internal error"""
+        pass
+    
+    class ExternalServiceError(AMASException):
+        """External service error"""
+        pass
+    
+    class SecurityError(AMASException):
+        """Security error"""
+        pass
+    
+    class AMASTimeoutError(AMASException):
+        """Timeout error"""
+        pass
+    
     logger.warning("Enhanced error handling not available, using basic error handling")
 
 # Add project root to sys.path securely
 SCRIPT_DIR = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
 
-# Use enhanced project root finding
-try:
-    from src.amas.utils.project_root import find_project_root, get_project_root, add_project_root_to_path
-    PROJECT_ROOT: str = find_project_root(SCRIPT_DIR)
-    add_project_root_to_path(PROJECT_ROOT)
-except ImportError:
-    # Fallback to legacy method if enhanced module not available
-    def _find_project_root() -> str:
-        """Find project root by looking for .git directory with depth limit"""
-        MAX_TRAVERSAL_DEPTH = 10
-        depth = 0
-        current = SCRIPT_DIR
+def _setup_project_paths():
+    """Setup project paths for imports"""
+    try:
+        from src.amas.utils.project_root import find_project_root, get_project_root, add_project_root_to_path
+        PROJECT_ROOT: str = find_project_root(SCRIPT_DIR)
+        add_project_root_to_path(PROJECT_ROOT)
+        logger.info(f"Using enhanced project root finding: {PROJECT_ROOT}")
+        return PROJECT_ROOT
+    except ImportError:
+        # Fallback to legacy method if enhanced module not available
+        def _find_project_root() -> str:
+            """Find project root by looking for .git directory with depth limit"""
+            MAX_TRAVERSAL_DEPTH = 10
+            depth = 0
+            current = SCRIPT_DIR
+            
+            while current != os.path.dirname(current) and depth < MAX_TRAVERSAL_DEPTH:
+                if os.path.exists(os.path.join(current, '.git')):
+                    logger.info(f"Found project root: {current}")
+                    return current
+                
+                # Cache parent directory computation
+                parent = os.path.dirname(current)
+                current = parent
+                depth += 1
+            
+            # Fallback to two directories up from script
+            fallback = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+            
+            # Validate fallback contains expected project files
+            if os.path.exists(os.path.join(fallback, '.git')) or os.path.exists(os.path.join(fallback, 'pyproject.toml')):
+                logger.info(f"Using fallback project root: {fallback}")
+                return fallback
+            
+            # Final fallback to script's parent directory
+            final_fallback = os.path.dirname(SCRIPT_DIR)
+            logger.warning(f"Could not find project root within {MAX_TRAVERSAL_DEPTH} levels, using final fallback: {final_fallback}")
+            return final_fallback
         
-        while current != os.path.dirname(current) and depth < MAX_TRAVERSAL_DEPTH:
-            if os.path.exists(os.path.join(current, '.git')):
-                return current
-            current = os.path.dirname(current)
-            depth += 1
+        PROJECT_ROOT: str = _find_project_root()
         
-        # Fallback to two directories up from script
-        fallback = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+        # Add paths safely
+        if SCRIPT_DIR not in sys.path:
+            sys.path.insert(0, SCRIPT_DIR)
+        if PROJECT_ROOT not in sys.path:
+            sys.path.insert(0, PROJECT_ROOT)
         
-        # Validate fallback contains expected project files
-        if os.path.exists(os.path.join(fallback, '.git')) or os.path.exists(os.path.join(fallback, 'pyproject.toml')):
-            return fallback
-        
-        # Final fallback to script's parent directory
-        return os.path.dirname(SCRIPT_DIR)
-    
-    PROJECT_ROOT: str = _find_project_root()
+        logger.info(f"Using legacy project root finding: {PROJECT_ROOT}")
+        return PROJECT_ROOT
 
-# Add paths safely
-if SCRIPT_DIR not in sys.path:
-    sys.path.insert(0, SCRIPT_DIR)
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
+# Setup project paths
+PROJECT_ROOT = _setup_project_paths()
 
 try:
     from standalone_universal_ai_manager import get_manager
