@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """
-Bulletproof AI PR Analyzer - Phase 2
-Comprehensive PR analysis using real AI providers with bulletproof validation
+Bulletproof AI PR Analyzer - Phase 2.
 
+Comprehensive PR analysis using real AI providers with bulletproof validation.
 Security hardened with input validation, secure subprocess calls, and sanitized logging.
 Enhanced with improved project root finding and structured logging.
 """
@@ -31,10 +31,10 @@ import tenacity
 # =============================================================================
 
 # Maximum length for environment variable values in logs to prevent log flooding
-MAX_ENV_LENGTH = 64
+MAX_ENV_LENGTH: int = 64
 
 # High-confidence exact matches for sensitive environment variables
-SENSITIVE_VARS = frozenset([
+SENSITIVE_VARS: frozenset[str] = frozenset([
     "GITHUB_TOKEN", "API_KEY", "SECRET_KEY", "PASSWORD", "ACCESS_TOKEN", 
     "SECRET_TOKEN", "AUTH_TOKEN", "PRIVATE_KEY", "CREDENTIALS",
     "AWS_SECRET_ACCESS_KEY", "AWS_SECRET", "DB_URL", "DATABASE_URL", 
@@ -45,7 +45,7 @@ SENSITIVE_VARS = frozenset([
 ])
 
 # Regex pattern for additional sensitive variable detection using word boundaries
-SENSITIVE_PATTERN = re.compile(
+SENSITIVE_PATTERN: re.Pattern[str] = re.compile(
     r'\b(token|secret|password|passwd|pwd|credential|auth|(?:refresh|access)_?token|private|cert(?:ificate)?|key)\b',
     re.IGNORECASE
 )
@@ -55,7 +55,7 @@ SENSITIVE_PATTERN = re.compile(
 # =============================================================================
 
 # Valid log levels for validation
-VALID_LOG_LEVELS = frozenset({'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'})
+VALID_LOG_LEVELS: frozenset[str] = frozenset({'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'})
 
 
 def find_project_root(marker_files: List[str] = ['.git', 'pyproject.toml', 'README.md']) -> Path:
@@ -81,6 +81,18 @@ def find_project_root(marker_files: List[str] = ['.git', 'pyproject.toml', 'READ
         depth += 1
     
     raise RuntimeError("Project root not found")
+
+
+def get_project_root() -> Path:
+    """Find project root by locating .git or pyproject.toml (alias for find_project_root).
+    
+    Returns:
+        Path to project root directory
+        
+    Raises:
+        RuntimeError: If project root cannot be found
+    """
+    return find_project_root()
 
 
 def validate_log_level(level: str) -> str:
@@ -130,6 +142,21 @@ def sanitize_env(env: Dict[str, str]) -> Dict[str, str]:
             else:
                 sanitized[key] = value
     return sanitized
+
+
+def sanitize_environment(env: Dict[str, str]) -> Dict[str, str]:
+    """Sanitize environment variables for safe logging (alias for sanitize_env).
+    
+    Args:
+        env: Dictionary of environment variables
+        
+    Returns:
+        Sanitized dictionary with sensitive values redacted
+        
+    Raises:
+        TypeError: If env is not a dictionary
+    """
+    return sanitize_env(env)
 
 
 def safe_getenv(key: str, default: str, max_len: int = 64, allowed: Optional[frozenset] = None) -> str:
