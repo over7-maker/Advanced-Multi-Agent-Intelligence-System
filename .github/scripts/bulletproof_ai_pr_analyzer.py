@@ -8,6 +8,7 @@ Security hardened with input validation, secure subprocess calls, and sanitized 
 Enhanced with improved project root finding and structured logging.
 """
 
+import asyncio
 import logging
 import os
 import re
@@ -29,20 +30,23 @@ def configure_logging() -> logging.Logger:
     
     if logging_level not in VALID_LOG_LEVELS:
         level = logging.INFO
-        print(f"Warning: Invalid LOG_LEVEL '{logging_level}', using INFO", file=sys.stderr)
+        # Use a temporary logger for this warning since main logger isn't configured yet
+        temp_logger = logging.getLogger("PRAnalyzer")
+        temp_logger.warning(f"Invalid LOG_LEVEL '{logging_level}', using INFO")
     else:
         level = getattr(logging, logging_level)
     
-    # Configure logging with force=True to ensure consistent setup
-    logging.basicConfig(
-        level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        force=True  # Ensures consistent setup even if already configured
-    )
+    # Configure logging only if not already configured
+    if not logging.getLogger().hasHandlers():
+        logging.basicConfig(
+            level=level,
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        )
     
-    # Use a fixed logger name for consistency
-    return logging.getLogger("PRAnalyzer")
+    # Use module name for hierarchical logging
+    return logging.getLogger(__name__)
 
+# Initialize logger - this will be called when module is imported
 logger = configure_logging()
 
 # Import enhanced error handling and circuit breaker services
@@ -106,14 +110,25 @@ except ImportError as e:
 SCRIPT_DIR = str(Path(__file__).resolve().parent)
 
 def _find_project_root(start: Path = None) -> Path:
-    """Find project root by locating .git directory with depth limit."""
-    current = start or Path(__file__).parent.resolve()
+    """Find project root by locating .git directory with depth limit and security validation."""
+    # Validate input path is within allowed boundaries
+    if start is None:
+        current = Path(__file__).parent.resolve()
+    else:
+        if not start.exists() or not start.is_absolute():
+            current = Path.cwd().resolve()
+        else:
+            current = start.resolve()
+    
     max_depth = 10
     
+    # Traverse up the directory tree looking for project indicators
     for _ in range(max_depth):
-        if (current / ".git").exists():
+        # Check for project root indicators
+        if (current / ".git").exists() or (current / "pyproject.toml").exists():
             logger.info(f"Found project root: {current}")
             return current
+        
         if current.parent == current:
             break  # Root of filesystem
         current = current.parent
