@@ -29,7 +29,10 @@ import tenacity
 # Constants
 MAX_ENV_LENGTH = 64
 VALID_LOG_LEVELS = frozenset({'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'})
-SENSITIVE_VARS = {"GITHUB_TOKEN", "API_KEY", "SECRET", "PASSWORD", "TOKEN"}
+SENSITIVE_VARS = frozenset([
+    "GITHUB_TOKEN", "API_KEY", "SECRET_KEY", "PASSWORD", "ACCESS_TOKEN", 
+    "SECRET_TOKEN", "AUTH_TOKEN", "PRIVATE_KEY", "CREDENTIALS"
+])
 
 
 def safe_getenv(key: str, default: str, max_len: int = 64, allowed: Optional[frozenset] = None) -> str:
@@ -38,13 +41,29 @@ def safe_getenv(key: str, default: str, max_len: int = 64, allowed: Optional[fro
     Args:
         key: Environment variable name
         default: Default value if not found or invalid
-        max_len: Maximum allowed length
+        max_len: Maximum allowed length (must be positive)
         allowed: Optional frozenset of allowed values
         
     Returns:
         Sanitized environment variable value or default
+        
+    Raises:
+        ValueError: If max_len is invalid or default value violates constraints
     """
-    value = os.getenv(key, default)
+    # Validate max_len parameter
+    if max_len <= 0:
+        raise ValueError(f"max_len must be positive, got {max_len}")
+    
+    # Validate and sanitize default value
+    if default is not None:
+        default = str(default).strip()
+        if len(default) > max_len:
+            raise ValueError(f"Default value for {key} exceeds max length {max_len}")
+        if allowed is not None and default not in allowed:
+            raise ValueError(f"Default value for {key} not in allowed set")
+    
+    # Get environment variable
+    value = os.getenv(key)
     if value is None:
         return default
     
@@ -52,10 +71,11 @@ def safe_getenv(key: str, default: str, max_len: int = 64, allowed: Optional[fro
     
     # Length check
     if len(value) > max_len:
+        redacted_value = '***REDACTED***' if key.upper() in SENSITIVE_VARS else value
         logging.warning("%s exceeds max length %d, using default", key, max_len)
         return default
     
-    # Context-aware sanitization - preserve case for most vars, uppercase only for log levels
+    # Context-aware sanitization - normalize case for log levels, preserve case for others
     if key == 'LOG_LEVEL':
         sanitized = re.sub(r'[^A-Z]', '', value.upper())
     else:
@@ -75,6 +95,10 @@ def safe_getenv(key: str, default: str, max_len: int = 64, allowed: Optional[fro
             logging.warning("%s value '%s' not in allowed set, using default", 
                            key, redacted_sanitized)
             return default
+    
+    # For sensitive variables, don't return defaults - raise exception instead
+    if key.upper() in SENSITIVE_VARS and (len(sanitized) == 0 or sanitized != value):
+        raise ValueError(f"Invalid or insecure value for sensitive env var {key}")
     
     return sanitized
 
