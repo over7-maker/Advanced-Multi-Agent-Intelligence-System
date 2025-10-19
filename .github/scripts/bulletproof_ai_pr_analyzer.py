@@ -8,6 +8,7 @@ Security hardened with input validation, secure subprocess calls, and sanitized 
 Enhanced with improved project root finding and structured logging.
 """
 
+# Standard library imports
 import asyncio
 import json
 import logging
@@ -21,6 +22,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+# Third-party imports
 import tenacity
 
 # Set up basic logging first
@@ -28,24 +30,52 @@ def configure_logging() -> logging.Logger:
     """Configure root logging and return module-specific logger with security validation."""
     # Validate log level against whitelist for security
     VALID_LOG_LEVELS = {'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'}
-    logging_level: str = os.getenv('LOG_LEVEL', 'INFO').upper()
     
-    # Sanitize logging_level to prevent log injection
+    # Get and validate LOG_LEVEL with length limit to prevent memory exhaustion
+    raw_level = os.getenv('LOG_LEVEL', 'INFO').strip()
+    if len(raw_level) > 32:
+        # Create a temporary logger for this warning
+        temp_logger = logging.getLogger(__name__ + ".config")
+        temp_logger.setLevel(logging.WARNING)
+        if not temp_logger.handlers:
+            handler = logging.StreamHandler(sys.stderr)
+            formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            temp_logger.addHandler(handler)
+        temp_logger.warning("LOG_LEVEL too long, using INFO")
+        raw_level = 'INFO'
+    
+    logging_level: str = raw_level.upper()
+    
+    # Sanitize logging_level to prevent log injection (hyphen at end for clarity)
     logging_level = re.sub(r"[^\w-]", "", logging_level)
     
     if logging_level not in VALID_LOG_LEVELS:
         level = logging.INFO
-        # Use a temporary logger for this warning since main logger isn't configured yet
+        # Configure temporary logger for this warning
         temp_logger = logging.getLogger(__name__ + ".config")
+        temp_logger.setLevel(logging.WARNING)
+        if not temp_logger.handlers:
+            handler = logging.StreamHandler(sys.stderr)
+            formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
+            handler.setFormatter(formatter)
+            temp_logger.addHandler(handler)
         temp_logger.warning(f"Invalid LOG_LEVEL '{logging_level}', using INFO")
     else:
         level = getattr(logging, logging_level)
     
-    # Configure logging only if not already configured (thread-safe check)
-    if not hasattr(logging, '_handlerList') or not logging._handlerList:
+    # Configure logging only if not already configured (use official method)
+    if not logging.getLogger().hasHandlers():
+        # Create logs directory if it doesn't exist
+        log_dir = Path("logs")
+        log_dir.mkdir(exist_ok=True)
+        log_file = log_dir / "bulletproof_analyzer.log"
+        
         # Create rotating file handler for log management
+        # Note: For concurrent access, consider using a process-safe logging solution
+        # in production environments with multiple parallel processes
         file_handler = RotatingFileHandler(
-            "bulletproof_analyzer.log", 
+            str(log_file), 
             maxBytes=1024*1024,  # 1MB
             backupCount=3
         )
