@@ -9,6 +9,7 @@ Enhanced with improved project root finding and structured logging.
 """
 
 import asyncio
+import json
 import logging
 import os
 import re
@@ -16,6 +17,7 @@ import subprocess
 import sys
 import time
 from datetime import datetime, timezone
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -26,22 +28,46 @@ def configure_logging() -> logging.Logger:
     """Configure root logging and return module-specific logger with security validation."""
     # Validate log level against whitelist for security
     VALID_LOG_LEVELS = {'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'}
-    logging_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+    logging_level: str = os.getenv('LOG_LEVEL', 'INFO').upper()
+    
+    # Sanitize logging_level to prevent log injection
+    logging_level = re.sub(r"[^\w-]", "", logging_level)
     
     if logging_level not in VALID_LOG_LEVELS:
         level = logging.INFO
         # Use a temporary logger for this warning since main logger isn't configured yet
-        temp_logger = logging.getLogger("PRAnalyzer")
+        temp_logger = logging.getLogger(__name__ + ".config")
         temp_logger.warning(f"Invalid LOG_LEVEL '{logging_level}', using INFO")
     else:
         level = getattr(logging, logging_level)
     
-    # Configure logging only if not already configured
-    if not logging.getLogger().hasHandlers():
-        logging.basicConfig(
-            level=level,
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    # Configure logging only if not already configured (thread-safe check)
+    if not hasattr(logging, '_handlerList') or not logging._handlerList:
+        # Create rotating file handler for log management
+        file_handler = RotatingFileHandler(
+            "bulletproof_analyzer.log", 
+            maxBytes=1024*1024,  # 1MB
+            backupCount=3
         )
+        file_handler.setLevel(level)
+        
+        # Create console handler
+        console_handler = logging.StreamHandler(sys.stderr)
+        console_handler.setLevel(level)
+        
+        # Create formatter
+        formatter = logging.Formatter(
+            '%(asctime)sZ - %(name)s - %(levelname)s - %(message)s',
+            datefmt='%Y-%m-%dT%H:%M:%S'
+        )
+        file_handler.setFormatter(formatter)
+        console_handler.setFormatter(formatter)
+        
+        # Configure root logger
+        root_logger = logging.getLogger()
+        root_logger.setLevel(level)
+        root_logger.addHandler(file_handler)
+        root_logger.addHandler(console_handler)
     
     # Use module name for hierarchical logging
     return logging.getLogger(__name__)
@@ -371,6 +397,11 @@ class BulletproofAIAnalyzer:
             logger.error("COMMIT_SHA must be a valid 40-character Git SHA")
             sys.exit(1)
 
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(3),
+        wait=tenacity.wait_exponential(multiplier=1, min=2, max=8),
+        retry=tenacity.retry_if_exception_type((subprocess.CalledProcessError, OSError))
+    )
     async def get_pr_diff(self) -> str:
         """Get the diff for the pull request using async subprocess with circuit breaker"""
         try:
@@ -470,6 +501,11 @@ class BulletproofAIAnalyzer:
             "files_changed": files_changed,
         }
 
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(3),
+        wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
+        retry=tenacity.retry_if_exception_type((Exception,))
+    )
     async def run_ai_analysis(self, analysis_type: str, prompt: str) -> Dict[str, Any]:
         """Run AI analysis with bulletproof validation and retry logic"""
         try:
