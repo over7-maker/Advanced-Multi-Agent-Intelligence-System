@@ -40,7 +40,7 @@ SENSITIVE_VARS = frozenset([
 
 # Regex pattern for additional sensitive variable detection
 SENSITIVE_PATTERN = re.compile(
-    r'(^|[_\\W])(token|secret|password|pass(?:word)?|pwd|cred|auth|(?:refresh|access)_token|private|certificate)(?:_|$|[_\\W])',
+    r'(?:^|[^a-zA-Z])(token|secret|password|passwd|pwd|credential|auth|(?:refresh|access)_?token|private|cert(?:ificate)?)(?:[^a-zA-Z]|$)',
     re.IGNORECASE
 )
 
@@ -57,6 +57,10 @@ def validate_log_level(level: str) -> str:
     Raises:
         ValueError: If log level is not in VALID_LOG_LEVELS
     """
+    level_upper = level.strip().upper()
+    if level_upper not in VALID_LOG_LEVELS:
+        raise ValueError(f"Invalid log level: {level}. Must be one of {sorted(VALID_LOG_LEVELS)}")
+    return level_upper
     if level not in VALID_LOG_LEVELS:
         raise ValueError(f"Invalid log level: {level}. Must be one of {sorted(VALID_LOG_LEVELS)}")
     return level
