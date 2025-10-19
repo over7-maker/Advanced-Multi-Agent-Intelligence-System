@@ -32,45 +32,71 @@ VALID_LOG_LEVELS = frozenset({'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'})
 SENSITIVE_VARS = {"GITHUB_TOKEN", "API_KEY", "SECRET", "PASSWORD", "TOKEN"}
 
 
-def safe_getenv(key: str, default: str, max_len: int = 64, allowed: frozenset = None) -> str:
-    """Safely get environment variable with validation and sanitization."""
-    value = os.getenv(key, default).strip()
-    if len(value) > max_len:
-        logging.warning(f"Environment variable {key} exceeds max length {max_len}, using default")
+def safe_getenv(key: str, default: str, max_len: int = 64, allowed: Optional[frozenset] = None) -> str:
+    """Safely get environment variable with validation and sanitization.
+
+    Args:
+        key: Environment variable name
+        default: Default value if not found or invalid
+        max_len: Maximum allowed length
+        allowed: Optional frozenset of allowed values
+        
+    Returns:
+        Sanitized environment variable value or default
+    """
+    value = os.getenv(key, default)
+    if value is None:
         return default
     
-    # Sanitize input to prevent injection - only allow alphanumeric and common safe chars
-    sanitized = re.sub(r'[^A-Z0-9_-]', '', value.upper())
-    if sanitized != value.upper():
-        logging.warning(f"Environment variable {key} contained invalid chars, sanitized from '{value}' to '{sanitized}'")
+    value = value.strip()
+    
+    # Length check
+    if len(value) > max_len:
+        logging.warning("%s exceeds max length %d, using default", key, max_len)
+        return default
+    
+    # Context-aware sanitization - preserve case for most vars, uppercase only for log levels
+    if key == 'LOG_LEVEL':
+        sanitized = re.sub(r'[^A-Z]', '', value.upper())
+    else:
+        sanitized = re.sub(r'[^A-Za-z0-9_.-]', '', value)
+    
+    # Redact sensitive values in logs
+    redacted_original = '***REDACTED***' if key.upper() in SENSITIVE_VARS else value
+    redacted_sanitized = '***REDACTED***' if key.upper() in SENSITIVE_VARS else sanitized
+    
+    if sanitized != value:
+        logging.warning("%s contained invalid chars, sanitized from '%s' to '%s'", 
+                       key, redacted_original, redacted_sanitized)
     
     # Check against allowed values if provided
     if allowed is not None:
         if sanitized not in allowed:
-            logging.warning(f"Environment variable {key} value '{sanitized}' not in allowed set, using default")
+            logging.warning("%s value '%s' not in allowed set, using default", 
+                           key, redacted_sanitized)
             return default
     
     return sanitized
 
 
-def _find_project_root(start_path: Path = None) -> Path:
-    """Find project root by walking up until .git directory is found.
+def _find_project_root(start_path: Optional[Path] = None) -> Path:
+    """Find project root by walking up until .git or pyproject.toml is found.
     
     Args:
         start_path: Starting path for traversal (defaults to script location)
         
     Returns:
-        Path to project root containing .git directory
+        Path to project root containing .git directory or pyproject.toml
         
     Raises:
         RuntimeError: If project root cannot be found within depth limit
     """
     MAX_TRAVERSAL_DEPTH = 10
-    current = start_path or Path(__file__).resolve().parent
+    current = (start_path or Path(__file__).resolve().parent)
     
     for depth in range(MAX_TRAVERSAL_DEPTH):
-        if (current / ".git").exists():
-            logging.info(f"Found project root at depth {depth}: {current}")
+        if (current / ".git").exists() or (current / "pyproject.toml").exists():
+            logging.info("Found project root at depth %d: %s", depth, current)
             return current
         if current.parent == current:
             break  # Reached filesystem root
@@ -85,40 +111,39 @@ def _find_project_root(start_path: Path = None) -> Path:
     
     for fallback in fallback_paths:
         if (fallback / ".git").exists() or (fallback / "pyproject.toml").exists():
-            logging.info(f"Using fallback project root: {fallback}")
+            logging.info("Using fallback project root: %s", fallback)
             return fallback
     
-    raise RuntimeError(f"Project root with .git not found within {MAX_TRAVERSAL_DEPTH} levels")
+    raise RuntimeError(f"Project root not found within {MAX_TRAVERSAL_DEPTH} levels")
 
 
 def configure_logging() -> logging.Logger:
-    """Configure logging once and return a module-specific logger.
+    """Configure logging once and return a module-specific logger using dictConfig.
     
     Features:
     - Validates LOG_LEVEL via whitelist
-    - Configures rotating file + console handlers
-    - Uses structured formatter with timestamps
+    - Rotating file + console handlers with UTF-8 encoding
+    - Structured formatter with timestamps
     - Idempotent: won't duplicate handlers if already configured
-    - Uses dictConfig for structured configuration
+    - Uses dictConfig for declarative configuration
     
     Returns:
         Module-specific logger instance
     """
-    # Check if already configured to prevent duplicate handlers
     logger_name = 'bulletproof_ai_pr_analyzer'
     logger = logging.getLogger(logger_name)
     if logger.handlers:
         return logger
     
-    # Get and validate LOG_LEVEL
-    input_log_level = safe_getenv('LOG_LEVEL', 'INFO', MAX_ENV_LENGTH, VALID_LOG_LEVELS)
+    # Get validated log level
+    level_str = safe_getenv('LOG_LEVEL', 'INFO', MAX_ENV_LENGTH, VALID_LOG_LEVELS)
     
     # Create logs directory
     log_dir = Path('logs')
     log_dir.mkdir(exist_ok=True)
     log_file = log_dir / 'bulletproof_ai_pr_analyzer.log'
-
-    # Use dictConfig for structured logging configuration
+    
+    # Structured logging configuration using dictConfig
     logging_config = {
         'version': 1,
         'disable_existing_loggers': False,
@@ -131,32 +156,31 @@ def configure_logging() -> logging.Logger:
         'handlers': {
             'console': {
                 'class': 'logging.StreamHandler',
-                'level': input_log_level,
+                'level': level_str,
                 'formatter': 'structured',
                 'stream': 'ext://sys.stderr'
             },
             'file': {
                 'class': 'logging.handlers.RotatingFileHandler',
                 'filename': str(log_file),
-                'maxBytes': 10485760,  # 10 MB
+                'maxBytes': 10 * 1024 * 1024,  # 10 MB
                 'backupCount': 5,
-                'level': input_log_level,
+                'level': level_str,
                 'formatter': 'structured',
                 'encoding': 'utf-8'
             }
         },
         'loggers': {
             logger_name: {
-                'level': input_log_level,
+                'level': level_str,
                 'handlers': ['console', 'file'],
                 'propagate': False
             }
         }
     }
-
+    
     # Apply configuration
     logging.config.dictConfig(logging_config)
-    
     return logging.getLogger(logger_name)
 
 
@@ -166,18 +190,18 @@ logger = configure_logging()
 # Setup project root and paths
 try:
     PROJECT_ROOT = _find_project_root()
-    logger.info(f"Project root found: {PROJECT_ROOT}")
+    logger.info("Project root found: %s", PROJECT_ROOT)
     
     # Add project root to sys.path if not already present
     if str(PROJECT_ROOT) not in sys.path:
         sys.path.insert(0, str(PROJECT_ROOT))
-        logger.debug(f"Added project root to sys.path: {PROJECT_ROOT}")
+        logger.debug("Added project root to sys.path: %s", PROJECT_ROOT)
 except RuntimeError as e:
-    logger.warning(f"Could not find project root: {e}")
-    PROJECT_ROOT = Path(__file__).parent.parent
+    logger.warning("Could not find project root: %s", e)
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
     if str(PROJECT_ROOT) not in sys.path:
         sys.path.insert(0, str(PROJECT_ROOT))
-    logger.info(f"Using fallback project root: {PROJECT_ROOT}")
+    logger.info("Using fallback project root: %s", PROJECT_ROOT)
 
 # Import Universal AI Manager
 try:
@@ -243,7 +267,7 @@ try:
         LoggingConfig, LogLevel, LogFormat, SecurityLevel,
     )
     
-    # Create enhanced logging configuration
+    # Create enhanced logging configuration using safe_getenv
     env_level = safe_getenv('LOG_LEVEL', 'INFO', MAX_ENV_LENGTH, VALID_LOG_LEVELS)
     env_fmt = safe_getenv('LOG_FORMAT', 'json', MAX_ENV_LENGTH, frozenset({'json', 'text', 'structured'}))
     env_sec = safe_getenv('LOG_SECURITY_LEVEL', 'medium', MAX_ENV_LENGTH, frozenset({'low', 'medium', 'high', 'maximum'}))
@@ -252,11 +276,11 @@ try:
         level=LogLevel(env_level),
         format=LogFormat(env_fmt),
         security_level=SecurityLevel(env_sec),
-        enable_console=True, 
-        enable_correlation=True, 
+        enable_console=True,
+        enable_correlation=True,
         enable_metrics=True,
-        enable_audit=True, 
-        enable_performance=True, 
+        enable_audit=True,
+        enable_performance=True,
         include_stack_traces=True,
     )
     
