@@ -40,9 +40,26 @@ SENSITIVE_VARS = frozenset([
 
 # Regex pattern for additional sensitive variable detection
 SENSITIVE_PATTERN = re.compile(
-    r'(token|key|secret|password|pass|cred|pwd|auth|private|cert)', 
+    r'(^|[_\\W])(token|secret|password|pass(?:word)?|pwd|cred|auth|(?:refresh|access)_token|private|certificate)(?:_|$|[_\\W])',
     re.IGNORECASE
 )
+
+
+def validate_log_level(level: str) -> str:
+    """Validate log level against allowed values.
+    
+    Args:
+        level: Log level string to validate
+        
+    Returns:
+        Validated log level string
+        
+    Raises:
+        ValueError: If log level is not in VALID_LOG_LEVELS
+    """
+    if level not in VALID_LOG_LEVELS:
+        raise ValueError(f"Invalid log level: {level}. Must be one of {sorted(VALID_LOG_LEVELS)}")
+    return level
 
 
 def sanitize_env(env: Dict[str, str]) -> Dict[str, str]:
@@ -53,12 +70,24 @@ def sanitize_env(env: Dict[str, str]) -> Dict[str, str]:
         
     Returns:
         Sanitized dictionary with sensitive values redacted
+        
+    Raises:
+        TypeError: If env is not a dictionary
     """
-    return {
-        k: "***REDACTED***" if (k.upper() in SENSITIVE_VARS or SENSITIVE_PATTERN.search(k))
-        else v
-        for k, v in env.items()
-    }
+    if not isinstance(env, dict):
+        raise TypeError("env must be a dictionary")
+    
+    sanitized = {}
+    for key, value in env.items():
+        if key.upper() in SENSITIVE_VARS or SENSITIVE_PATTERN.search(key):
+            sanitized[key] = "***REDACTED***"
+        else:
+            # Truncate long values to prevent log flooding
+            if len(value) > MAX_ENV_LENGTH:
+                sanitized[key] = value[:MAX_ENV_LENGTH] + "..."
+            else:
+                sanitized[key] = value
+    return sanitized
 
 
 def safe_getenv(key: str, default: str, max_len: int = 64, allowed: Optional[frozenset] = None) -> str:
@@ -127,6 +156,18 @@ def safe_getenv(key: str, default: str, max_len: int = 64, allowed: Optional[fro
         raise ValueError(f"Invalid or insecure value for sensitive env var {key}")
     
     return sanitized
+
+
+def log_environment_safely(logger: logging.Logger, level: int = logging.DEBUG) -> None:
+    """Log environment variables safely with sensitive data redacted.
+    
+    Args:
+        logger: Logger instance to use
+        level: Log level to use (default: DEBUG)
+    """
+    if logger.isEnabledFor(level):
+        sanitized_env = sanitize_env(dict(os.environ))
+        logger.log(level, "Environment variables: %s", sanitized_env)
 
 
 def secure_subprocess_run(cmd: List[str], **kwargs) -> subprocess.CompletedProcess:
@@ -220,6 +261,7 @@ def configure_logging() -> logging.Logger:
     
     # Get validated log level
     level_str = safe_getenv('LOG_LEVEL', 'INFO', MAX_ENV_LENGTH, VALID_LOG_LEVELS)
+    level_str = validate_log_level(level_str)
     
     # Create logs directory
     log_dir = Path('logs')
