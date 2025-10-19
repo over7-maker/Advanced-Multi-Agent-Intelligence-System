@@ -17,14 +17,29 @@ import subprocess
 import sys
 import time
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import tenacity
 
 # Set up basic logging first
-logger = logging.getLogger(__name__)
-if not logging.getLogger().handlers:
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+def _setup_logging():
+    """Setup logging configuration safely and idempotently"""
+    logging_level = os.getenv('LOG_LEVEL', 'INFO').upper()
+    try:
+        level = getattr(logging, logging_level)
+    except AttributeError:
+        level = logging.INFO
+    
+    # Configure logging with force=True to ensure consistent setup
+    logging.basicConfig(
+        level=level,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        force=True  # Ensures consistent setup even if already configured
+    )
+    return logging.getLogger(__name__)
+
+logger = _setup_logging()
 
 # Import enhanced error handling and circuit breaker services
 try:
@@ -45,35 +60,47 @@ except ImportError:
     # Define fallback exception classes for basic error handling
     class AMASException(Exception):
         """Base exception for AMAS system"""
-        pass
+        def __init__(self, message: str, safe_message: str = None, details: str = None):
+            super().__init__(safe_message or message)
+            self.details = details  # For internal logging, not user-facing
+            self.original_message = message
     
     class ValidationError(AMASException):
-        """Validation error"""
-        pass
+        """Raised when input/data validation fails"""
+        def __init__(self, message: str, safe_message: str = "Invalid input provided"):
+            super().__init__(message, safe_message)
     
     class InternalError(AMASException):
-        """Internal error"""
-        pass
+        """Raised for internal system errors"""
+        def __init__(self, message: str, safe_message: str = "Internal system error occurred"):
+            super().__init__(message, safe_message)
     
     class ExternalServiceError(AMASException):
-        """External service error"""
-        pass
+        """Raised when external services fail"""
+        def __init__(self, message: str, safe_message: str = "External service temporarily unavailable"):
+            super().__init__(message, safe_message)
     
     class SecurityError(AMASException):
-        """Security error"""
-        pass
+        """Raised for security-related violations"""
+        def __init__(self, message: str, safe_message: str = "Security violation detected"):
+            super().__init__(message, safe_message)
     
     class AMASTimeoutError(AMASException):
-        """Timeout error"""
-        pass
+        """Raised when operations timeout"""
+        def __init__(self, message: str, safe_message: str = "Operation timed out"):
+            super().__init__(message, safe_message)
     
     logger.warning("Enhanced error handling not available, using basic error handling")
+    
+    # For CI environments, we can be more lenient with fallbacks
+    # But log a warning about potential behavior differences
+    logger.warning("Running in fallback mode - some advanced features may not be available")
 
 # Add project root to sys.path securely
-SCRIPT_DIR = os.path.dirname(os.path.abspath(os.path.realpath(__file__)))
+SCRIPT_DIR = str(Path(__file__).resolve().parent)
 
 def _setup_project_paths():
-    """Setup project paths for imports"""
+    """Setup project paths for imports using secure pathlib operations"""
     try:
         from src.amas.utils.project_root import find_project_root, get_project_root, add_project_root_to_path
         PROJECT_ROOT: str = find_project_root(SCRIPT_DIR)
@@ -83,33 +110,31 @@ def _setup_project_paths():
     except ImportError:
         # Fallback to legacy method if enhanced module not available
         def _find_project_root() -> str:
-            """Find project root by looking for .git directory with depth limit"""
+            """Find project root by looking for .git directory with depth limit using pathlib"""
             MAX_TRAVERSAL_DEPTH = 10
-            depth = 0
-            current = SCRIPT_DIR
+            current = Path(__file__).resolve().parent
             
-            while current != os.path.dirname(current) and depth < MAX_TRAVERSAL_DEPTH:
-                if os.path.exists(os.path.join(current, '.git')):
+            for depth in range(MAX_TRAVERSAL_DEPTH):
+                if (current / '.git').exists():
                     logger.info(f"Found project root: {current}")
-                    return current
+                    return str(current)
                 
-                # Cache parent directory computation
-                parent = os.path.dirname(current)
-                current = parent
-                depth += 1
+                if current.parent == current:  # Reached filesystem root
+                    break
+                current = current.parent
             
             # Fallback to two directories up from script
-            fallback = os.path.dirname(os.path.dirname(SCRIPT_DIR))
+            fallback = Path(__file__).resolve().parent.parent.parent
             
             # Validate fallback contains expected project files
-            if os.path.exists(os.path.join(fallback, '.git')) or os.path.exists(os.path.join(fallback, 'pyproject.toml')):
+            if (fallback / '.git').exists() or (fallback / 'pyproject.toml').exists():
                 logger.info(f"Using fallback project root: {fallback}")
-                return fallback
+                return str(fallback)
             
             # Final fallback to script's parent directory
-            final_fallback = os.path.dirname(SCRIPT_DIR)
+            final_fallback = Path(__file__).resolve().parent.parent
             logger.warning(f"Could not find project root within {MAX_TRAVERSAL_DEPTH} levels, using final fallback: {final_fallback}")
-            return final_fallback
+            return str(final_fallback)
         
         PROJECT_ROOT: str = _find_project_root()
         
