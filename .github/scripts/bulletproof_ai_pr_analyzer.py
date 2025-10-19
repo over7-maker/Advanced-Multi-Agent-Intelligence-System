@@ -26,24 +26,36 @@ from typing import Any, Dict, List, Optional
 # Third-party imports
 import tenacity
 
-# Constants
+# =============================================================================
+# SECURITY CONFIGURATION
+# =============================================================================
+
 # Maximum length for environment variable values in logs to prevent log flooding
 MAX_ENV_LENGTH = 64
-VALID_LOG_LEVELS = frozenset({'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'})
+
+# High-confidence exact matches for sensitive environment variables
 SENSITIVE_VARS = frozenset([
     "GITHUB_TOKEN", "API_KEY", "SECRET_KEY", "PASSWORD", "ACCESS_TOKEN", 
     "SECRET_TOKEN", "AUTH_TOKEN", "PRIVATE_KEY", "CREDENTIALS",
     "AWS_SECRET_ACCESS_KEY", "AWS_SECRET", "DB_URL", "DATABASE_URL", 
     "JWT_SECRET", "OPENAI_API_KEY", "SECRET", "TOKEN", "KEY", 
-    "PASSPHRASE", "ENCRYPTION_KEY", "PRIVATE_KEY", "CERTIFICATE",
-    "SSL_KEY", "TLS_KEY", "API_SECRET", "CLIENT_SECRET", "REFRESH_TOKEN"
+    "PASSPHRASE", "ENCRYPTION_KEY", "CERTIFICATE",
+    "SSL_KEY", "TLS_KEY", "API_SECRET", "CLIENT_SECRET", "REFRESH_TOKEN",
+    "X_API_KEY", "BEARER_TOKEN", "SESSION_KEY", "DB_PASS", "ENCRYPTION_PASSPHRASE"
 ])
 
-# Regex pattern for additional sensitive variable detection
+# Regex pattern for additional sensitive variable detection using word boundaries
 SENSITIVE_PATTERN = re.compile(
-    r'(?:^|[^a-zA-Z])(token|secret|password|passwd|pwd|credential|auth|(?:refresh|access)_?token|private|cert(?:ificate)?|key)(?:[^a-zA-Z]|$)',
+    r'\b(token|secret|password|passwd|pwd|credential|auth|(?:refresh|access)_?token|private|cert(?:ificate)?|key)\b',
     re.IGNORECASE
 )
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+
+# Valid log levels for validation
+VALID_LOG_LEVELS = frozenset({'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'})
 
 
 def find_project_root(marker_files: List[str] = ['.git', 'pyproject.toml', 'README.md']) -> Path:
