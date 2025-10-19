@@ -31,8 +31,34 @@ MAX_ENV_LENGTH = 64
 VALID_LOG_LEVELS = frozenset({'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'})
 SENSITIVE_VARS = frozenset([
     "GITHUB_TOKEN", "API_KEY", "SECRET_KEY", "PASSWORD", "ACCESS_TOKEN", 
-    "SECRET_TOKEN", "AUTH_TOKEN", "PRIVATE_KEY", "CREDENTIALS"
+    "SECRET_TOKEN", "AUTH_TOKEN", "PRIVATE_KEY", "CREDENTIALS",
+    "AWS_SECRET_ACCESS_KEY", "AWS_SECRET", "DB_URL", "DATABASE_URL", 
+    "JWT_SECRET", "OPENAI_API_KEY", "SECRET", "TOKEN", "KEY", 
+    "PASSPHRASE", "ENCRYPTION_KEY", "PRIVATE_KEY", "CERTIFICATE",
+    "SSL_KEY", "TLS_KEY", "API_SECRET", "CLIENT_SECRET", "REFRESH_TOKEN"
 ])
+
+# Regex pattern for additional sensitive variable detection
+SENSITIVE_PATTERN = re.compile(
+    r'(token|key|secret|password|pass|cred|pwd|auth|private|cert)', 
+    re.IGNORECASE
+)
+
+
+def sanitize_env(env: Dict[str, str]) -> Dict[str, str]:
+    """Sanitize environment variables for safe logging.
+    
+    Args:
+        env: Dictionary of environment variables
+        
+    Returns:
+        Sanitized dictionary with sensitive values redacted
+    """
+    return {
+        k: "***REDACTED***" if (k.upper() in SENSITIVE_VARS or SENSITIVE_PATTERN.search(k))
+        else v
+        for k, v in env.items()
+    }
 
 
 def safe_getenv(key: str, default: str, max_len: int = 64, allowed: Optional[frozenset] = None) -> str:
@@ -101,6 +127,39 @@ def safe_getenv(key: str, default: str, max_len: int = 64, allowed: Optional[fro
         raise ValueError(f"Invalid or insecure value for sensitive env var {key}")
     
     return sanitized
+
+
+def secure_subprocess_run(cmd: List[str], **kwargs) -> subprocess.CompletedProcess:
+    """Run subprocess with security hardening.
+    
+    Args:
+        cmd: Command as list of strings (prevents shell injection)
+        **kwargs: Additional arguments for subprocess.run
+        
+    Returns:
+        CompletedProcess result
+        
+    Raises:
+        subprocess.CalledProcessError: If command fails
+        ValueError: If command contains shell metacharacters
+    """
+    # Validate command doesn't contain shell metacharacters
+    dangerous_chars = [';', '&', '|', '`', '$', '(', ')', '<', '>', '\\']
+    cmd_str = ' '.join(cmd)
+    if any(char in cmd_str for char in dangerous_chars):
+        raise ValueError(f"Command contains dangerous characters: {cmd_str}")
+    
+    # Set secure defaults
+    secure_kwargs = {
+        'shell': False,  # Prevent shell injection
+        'check': True,   # Raise exception on non-zero exit
+        'capture_output': True,
+        'text': True,
+        'timeout': 30,   # Prevent hanging
+    }
+    secure_kwargs.update(kwargs)
+    
+    return subprocess.run(cmd, **secure_kwargs)
 
 
 def _find_project_root(start_path: Optional[Path] = None) -> Path:
