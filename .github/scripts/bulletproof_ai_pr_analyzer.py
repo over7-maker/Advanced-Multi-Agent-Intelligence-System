@@ -8,8 +8,6 @@ Security hardened with input validation, secure subprocess calls, and sanitized 
 Enhanced with improved project root finding and structured logging.
 """
 
-import asyncio
-import json
 import logging
 import os
 import re
@@ -23,13 +21,17 @@ from typing import Any, Dict, List, Optional
 import tenacity
 
 # Set up basic logging first
-def _setup_logging():
-    """Setup logging configuration safely and idempotently"""
+def configure_logging() -> logging.Logger:
+    """Configure root logging and return module-specific logger with security validation."""
+    # Validate log level against whitelist for security
+    VALID_LOG_LEVELS = {'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'}
     logging_level = os.getenv('LOG_LEVEL', 'INFO').upper()
-    try:
-        level = getattr(logging, logging_level)
-    except AttributeError:
+    
+    if logging_level not in VALID_LOG_LEVELS:
         level = logging.INFO
+        print(f"Warning: Invalid LOG_LEVEL '{logging_level}', using INFO", file=sys.stderr)
+    else:
+        level = getattr(logging, logging_level)
     
     # Configure logging with force=True to ensure consistent setup
     logging.basicConfig(
@@ -37,9 +39,11 @@ def _setup_logging():
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         force=True  # Ensures consistent setup even if already configured
     )
-    return logging.getLogger(__name__)
+    
+    # Use a fixed logger name for consistency
+    return logging.getLogger("PRAnalyzer")
 
-logger = _setup_logging()
+logger = configure_logging()
 
 # Import enhanced error handling and circuit breaker services
 try:
@@ -55,7 +59,8 @@ try:
         TimeoutError as AMASTimeoutError, SecurityError
     )
     ENHANCED_ERROR_HANDLING = True
-except ImportError:
+    logger.info("Enhanced error handling services loaded successfully")
+except ImportError as e:
     ENHANCED_ERROR_HANDLING = False
     # Define fallback exception classes for basic error handling
     class AMASException(Exception):
@@ -91,6 +96,7 @@ except ImportError:
             super().__init__(message, safe_message)
     
     logger.warning("Enhanced error handling not available, using basic error handling")
+    logger.warning(f"Import error details: {e}")
     
     # For CI environments, we can be more lenient with fallbacks
     # But log a warning about potential behavior differences
@@ -99,7 +105,33 @@ except ImportError:
 # Add project root to sys.path securely
 SCRIPT_DIR = str(Path(__file__).resolve().parent)
 
-def _setup_project_paths():
+def _find_project_root(start: Path = None) -> Path:
+    """Find project root by locating .git directory with depth limit."""
+    current = start or Path(__file__).parent.resolve()
+    max_depth = 10
+    
+    for _ in range(max_depth):
+        if (current / ".git").exists():
+            logger.info(f"Found project root: {current}")
+            return current
+        if current.parent == current:
+            break  # Root of filesystem
+        current = current.parent
+    
+    # Fallback to two directories up from script
+    fallback = Path(__file__).resolve().parent.parent.parent
+    
+    # Validate fallback contains expected project files
+    if (fallback / '.git').exists() or (fallback / 'pyproject.toml').exists():
+        logger.info(f"Using fallback project root: {fallback}")
+        return fallback
+    
+    # Final fallback to script's parent directory
+    final_fallback = Path(__file__).resolve().parent.parent
+    logger.warning(f"Could not find project root within {max_depth} levels, using final fallback: {final_fallback}")
+    return final_fallback
+
+def _setup_project_paths() -> str:
     """Setup project paths for imports using secure pathlib operations"""
     try:
         from src.amas.utils.project_root import find_project_root, get_project_root, add_project_root_to_path
@@ -109,34 +141,7 @@ def _setup_project_paths():
         return PROJECT_ROOT
     except ImportError:
         # Fallback to legacy method if enhanced module not available
-        def _find_project_root() -> str:
-            """Find project root by looking for .git directory with depth limit using pathlib"""
-            MAX_TRAVERSAL_DEPTH = 10
-            current = Path(__file__).resolve().parent
-            
-            for depth in range(MAX_TRAVERSAL_DEPTH):
-                if (current / '.git').exists():
-                    logger.info(f"Found project root: {current}")
-                    return str(current)
-                
-                if current.parent == current:  # Reached filesystem root
-                    break
-                current = current.parent
-            
-            # Fallback to two directories up from script
-            fallback = Path(__file__).resolve().parent.parent.parent
-            
-            # Validate fallback contains expected project files
-            if (fallback / '.git').exists() or (fallback / 'pyproject.toml').exists():
-                logger.info(f"Using fallback project root: {fallback}")
-                return str(fallback)
-            
-            # Final fallback to script's parent directory
-            final_fallback = Path(__file__).resolve().parent.parent
-            logger.warning(f"Could not find project root within {MAX_TRAVERSAL_DEPTH} levels, using final fallback: {final_fallback}")
-            return str(final_fallback)
-        
-        PROJECT_ROOT: str = _find_project_root()
+        PROJECT_ROOT = str(_find_project_root())
         
         # Add paths safely
         if SCRIPT_DIR not in sys.path:
@@ -153,9 +158,9 @@ PROJECT_ROOT = _setup_project_paths()
 try:
     from standalone_universal_ai_manager import get_manager
 except ImportError as e:
-    print(f"Error: Could not import Universal AI Manager: {e}", file=sys.stderr)
-    print(f"Current sys.path: {sys.path}", file=sys.stderr)
-    print(f"Looking for module in: {PROJECT_ROOT}", file=sys.stderr)
+    logger.critical(f"Could not import Universal AI Manager: {e}")
+    logger.critical(f"Current sys.path: {sys.path}")
+    logger.critical(f"Looking for module in: {PROJECT_ROOT}")
     sys.exit(1)
 
 # Configure enhanced logging with security considerations
