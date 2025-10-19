@@ -41,7 +41,7 @@ SENSITIVE_VARS = frozenset([
 
 # Regex pattern for additional sensitive variable detection
 SENSITIVE_PATTERN = re.compile(
-    r'(?:^|[^a-zA-Z])(token|secret|password|passwd|pwd|credential|auth|(?:refresh|access)_?token|private|cert(?:ificate)?)(?:[^a-zA-Z]|$)',
+    r'(?:^|[^a-zA-Z])(token|secret|password|passwd|pwd|credential|auth|(?:refresh|access)_?token|private|cert(?:ificate)?|key)(?:[^a-zA-Z]|$)',
     re.IGNORECASE
 )
 
@@ -69,42 +69,6 @@ def find_project_root(marker_files: List[str] = ['.git', 'pyproject.toml', 'READ
         depth += 1
     
     raise RuntimeError("Project root not found")
-
-
-def sanitize_env(env: Dict[str, str]) -> Dict[str, str]:
-    """Redact sensitive environment variables for safe logging.
-    
-    Args:
-        env: Dictionary of environment variables
-        
-    Returns:
-        Dictionary with sensitive values redacted
-        
-    Raises:
-        TypeError: If env is not a dictionary
-    """
-    if not isinstance(env, dict):
-        raise TypeError("env must be a dictionary")
-    
-    return {
-        k: "***REDACTED***" if (
-            k.upper() in SENSITIVE_VARS or 
-            SENSITIVE_PATTERN.search(k)
-        ) else (v[:MAX_ENV_LENGTH] + "..." if len(v) > MAX_ENV_LENGTH else v)
-        for k, v in env.items()
-    }
-
-
-def log_environment_safely(logger: logging.Logger, level: int = logging.DEBUG) -> None:
-    """Log environment variables safely with sensitive data redacted.
-    
-    Args:
-        logger: Logger instance to use
-        level: Log level to use (default: DEBUG)
-    """
-    if logger.isEnabledFor(level):
-        sanitized_env = sanitize_env(dict(os.environ))
-        logger.log(level, "Environment variables: %s", sanitized_env)
 
 
 def validate_log_level(level: str) -> str:
