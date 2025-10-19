@@ -41,9 +41,70 @@ SENSITIVE_VARS = frozenset([
 
 # Regex pattern for additional sensitive variable detection
 SENSITIVE_PATTERN = re.compile(
-    r'\b(token|secret|password|passwd|pwd|credential|auth|(?:refresh|access)_?token|private|cert(?:ificate)?)\b',
+    r'(?:^|[^a-zA-Z])(token|secret|password|passwd|pwd|credential|auth|(?:refresh|access)_?token|private|cert(?:ificate)?)(?:[^a-zA-Z]|$)',
     re.IGNORECASE
 )
+
+
+def find_project_root(marker_files: List[str] = ['.git', 'pyproject.toml', 'README.md']) -> Path:
+    """Find project root by searching for marker files.
+    
+    Args:
+        marker_files: List of files/directories that indicate project root
+        
+    Returns:
+        Path to project root directory
+        
+    Raises:
+        RuntimeError: If project root cannot be found
+    """
+    current = Path(__file__).resolve()
+    max_depth = 10  # Prevent infinite loops
+    depth = 0
+    
+    while current != current.parent and depth < max_depth:
+        if any((current / marker).exists() for marker in marker_files):
+            return current
+        current = current.parent
+        depth += 1
+    
+    raise RuntimeError("Project root not found")
+
+
+def sanitize_env(env: Dict[str, str]) -> Dict[str, str]:
+    """Redact sensitive environment variables for safe logging.
+    
+    Args:
+        env: Dictionary of environment variables
+        
+    Returns:
+        Dictionary with sensitive values redacted
+        
+    Raises:
+        TypeError: If env is not a dictionary
+    """
+    if not isinstance(env, dict):
+        raise TypeError("env must be a dictionary")
+    
+    return {
+        k: "***REDACTED***" if (
+            k.upper() in SENSITIVE_VARS or 
+            SENSITIVE_PATTERN.search(k)
+        ) else (v[:MAX_ENV_LENGTH] + "..." if len(v) > MAX_ENV_LENGTH else v)
+        for k, v in env.items()
+    }
+
+
+def log_environment_safely(logger: logging.Logger, level: int = logging.DEBUG) -> None:
+    """Log environment variables safely with sensitive data redacted.
+    
+    Args:
+        logger: Logger instance to use
+        level: Log level to use (default: DEBUG)
+    """
+    if logger.isEnabledFor(level):
+        sanitized_env = sanitize_env(dict(os.environ))
+        logger.log(level, "Environment variables: %s", sanitized_env)
 
 
 def validate_log_level(level: str) -> str:
