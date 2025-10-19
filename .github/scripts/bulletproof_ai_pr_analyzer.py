@@ -12,6 +12,7 @@ Enhanced with improved project root finding and structured logging.
 import asyncio
 import json
 import logging
+import logging.config
 import os
 import re
 import subprocess
@@ -30,6 +31,28 @@ MAX_ENV_LENGTH = 64
 VALID_LOG_LEVELS = frozenset({'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'})
 
 
+def safe_getenv(key: str, default: str, max_len: int = 64, allowed: frozenset = None) -> str:
+    """Safely get environment variable with validation and sanitization."""
+    value = os.getenv(key, default).strip()
+    if len(value) > max_len or (allowed and value not in allowed):
+        return default
+    # Sanitize input to prevent injection
+    value = re.sub(r'[^A-Z]', '', value.upper())
+    return value if value in (allowed or {}) else default
+
+
+def _find_project_root(start_path: Path = None) -> Path:
+    """Find project root by walking up until .git directory is found."""
+    current = start_path or Path(__file__).resolve()
+    for _ in range(10):
+        if (current / ".git").exists():
+            return current
+        if current.parent == current:
+            break
+        current = current.parent
+    raise RuntimeError("Project root with .git not found within 10 levels")
+
+
 def configure_logging() -> logging.Logger:
     """Configure logging once and return a module-specific logger.
     - Validates LOG_LEVEL via whitelist
@@ -37,49 +60,86 @@ def configure_logging() -> logging.Logger:
     - Uses structured formatter
     - Idempotent: won't duplicate handlers if already configured
     """
-    # Read, normalize, clamp
-    input_log_level = (os.getenv('LOG_LEVEL', 'INFO') or 'INFO').strip().upper()
-    if len(input_log_level) > MAX_ENV_LENGTH or input_log_level not in VALID_LOG_LEVELS:
-        input_log_level = 'INFO'
-
+    # Check if already configured to prevent duplicate handlers
+    logger = logging.getLogger('bulletproof_ai_pr_analyzer')
+    if logger.handlers:
+        return logger
+    
+    # Read, normalize, validate
+    input_log_level = safe_getenv('LOG_LEVEL', 'INFO', MAX_ENV_LENGTH, VALID_LOG_LEVELS)
+    
     # Safe level resolution
     try:
         level = getattr(logging, input_log_level)
     except AttributeError:
         level = logging.INFO
 
-    # Configure root once
-    root_logger = logging.getLogger()
-    if not root_logger.hasHandlers():
-        log_dir = Path('logs')
-        log_dir.mkdir(exist_ok=True)
-        log_file = log_dir / 'bulletproof_analyzer.log'
+    # Create logs directory
+    log_dir = Path('logs')
+    log_dir.mkdir(exist_ok=True)
+    log_file = log_dir / 'bulletproof_ai_pr_analyzer.log'
 
-        # Handlers
-        file_handler = RotatingFileHandler(
-            str(log_file), maxBytes=10 * 1024 * 1024, backupCount=5, encoding='utf-8'
-        )
-        file_handler.setLevel(level)
+    # Use dictConfig for structured logging configuration
+    logging_config = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'structured': {
+                'format': '%(asctime)s.%(msecs)03d | %(levelname)-8s | %(name)s:%(lineno)d | %(message)s',
+                'datefmt': '%Y-%m-%d %H:%M:%S'
+            }
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': input_log_level,
+                'formatter': 'structured',
+                'stream': 'ext://sys.stderr'
+            },
+            'file': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': str(log_file),
+                'maxBytes': 10485760,  # 10 MB
+                'backupCount': 5,
+                'level': input_log_level,
+                'formatter': 'structured',
+                'encoding': 'utf-8'
+            }
+        },
+        'loggers': {
+            'bulletproof_ai_pr_analyzer': {
+                'level': input_log_level,
+                'handlers': ['console', 'file'],
+                'propagate': False
+            }
+        },
+        'root': {
+            'level': input_log_level,
+            'handlers': ['console', 'file']
+        }
+    }
 
-        console_handler = logging.StreamHandler(sys.stderr)
-        console_handler.setLevel(level)
-
-        # Structured formatter
-        formatter = logging.Formatter(
-            fmt='%(asctime)s.%(msecs)03d | %(levelname)-8s | %(name)s:%(lineno)d | %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
-        )
-        file_handler.setFormatter(formatter)
-        console_handler.setFormatter(formatter)
-
-        root_logger.setLevel(level)
-        root_logger.addHandler(file_handler)
-        root_logger.addHandler(console_handler)
-
-    return logging.getLogger(__name__)
+    # Apply configuration
+    logging.config.dictConfig(logging_config)
+    
+    return logging.getLogger('bulletproof_ai_pr_analyzer')
 
 
 logger = configure_logging()
+
+# Setup project root and paths
+try:
+    PROJECT_ROOT = _find_project_root()
+    logger.info(f"Project root found: {PROJECT_ROOT}")
+    
+    # Add project root to sys.path if not already present
+    if str(PROJECT_ROOT) not in sys.path:
+        sys.path.insert(0, str(PROJECT_ROOT))
+        logger.debug(f"Added project root to sys.path: {PROJECT_ROOT}")
+except RuntimeError as e:
+    logger.warning(f"Could not find project root: {e}")
+    PROJECT_ROOT = Path(__file__).parent.parent
+    logger.info(f"Using fallback project root: {PROJECT_ROOT}")
 
 # Import enhanced services with graceful fallback
 try:
