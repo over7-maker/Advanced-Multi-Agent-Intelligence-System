@@ -41,7 +41,7 @@ SENSITIVE_VARS = frozenset([
 
 # Regex pattern for additional sensitive variable detection
 SENSITIVE_PATTERN = re.compile(
-    r'(?:^|[^a-zA-Z])(token|secret|password|passwd|pwd|credential|auth|(?:refresh|access)_?token|private|cert(?:ificate)?)(?:[^a-zA-Z]|$)',
+    r'\b(token|secret|password|passwd|pwd|credential|auth|(?:refresh|access)_?token|private|cert(?:ificate)?)\b',
     re.IGNORECASE
 )
 
@@ -65,13 +65,6 @@ def validate_log_level(level: str) -> str:
     if level_upper not in VALID_LOG_LEVELS:
         raise ValueError(f"Invalid log level '{level}'. Must be one of {sorted(VALID_LOG_LEVELS)}")
     return level_upper
-    level_upper = level.strip().upper()
-    if level_upper not in VALID_LOG_LEVELS:
-        raise ValueError(f"Invalid log level: {level}. Must be one of {sorted(VALID_LOG_LEVELS)}")
-    return level_upper
-    if level not in VALID_LOG_LEVELS:
-        raise ValueError(f"Invalid log level: {level}. Must be one of {sorted(VALID_LOG_LEVELS)}")
-    return level
 
 
 def sanitize_env(env: Dict[str, str]) -> Dict[str, str]:
@@ -430,9 +423,6 @@ except ImportError:
     logger.debug("Enhanced logging service not available; using basic logging")
 
 
-def sanitize_env(env: Dict[str, str]) -> Dict[str, str]:
-    """Sanitize environment variables to prevent secret leakage in logs."""
-    return {k: "<redacted>" if any(s in k.upper() for s in SENSITIVE_VARS) else v for k, v in env.items()}
 
 
 class BulletproofAIAnalyzer:
