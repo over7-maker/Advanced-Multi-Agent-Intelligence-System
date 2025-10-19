@@ -27,6 +27,7 @@ from typing import Any, Dict, List, Optional
 import tenacity
 
 # Constants
+# Maximum length for environment variable values in logs to prevent log flooding
 MAX_ENV_LENGTH = 64
 VALID_LOG_LEVELS = frozenset({'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'})
 SENSITIVE_VARS = frozenset([
@@ -57,6 +58,13 @@ def validate_log_level(level: str) -> str:
     Raises:
         ValueError: If log level is not in VALID_LOG_LEVELS
     """
+    if not isinstance(level, str):
+        raise TypeError(f"Log level must be a string, got {type(level)}")
+    
+    level_upper = level.strip().upper()
+    if level_upper not in VALID_LOG_LEVELS:
+        raise ValueError(f"Invalid log level '{level}'. Must be one of {sorted(VALID_LOG_LEVELS)}")
+    return level_upper
     level_upper = level.strip().upper()
     if level_upper not in VALID_LOG_LEVELS:
         raise ValueError(f"Invalid log level: {level}. Must be one of {sorted(VALID_LOG_LEVELS)}")
