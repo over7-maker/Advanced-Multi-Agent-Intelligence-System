@@ -28,612 +28,393 @@ import tenacity
 # Set up basic logging first
 def configure_logging() -> logging.Logger:
     """Configure root logging and return module-specific logger with security validation."""
-    # Validate log level against whitelist for security
+    # Whitelist for log level
     VALID_LOG_LEVELS = {'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'}
-    
-    # Get and validate LOG_LEVEL with length limit to prevent memory exhaustion
-    raw_level = os.getenv('LOG_LEVEL', 'INFO').strip()
+
+    # Get raw env, clamp length, normalize case
+    raw_level = os.getenv('LOG_LEVEL', 'INFO') or 'INFO'
+    raw_level = raw_level.strip().upper()
     if len(raw_level) > 32:
-        # Create a temporary logger for this warning
-        temp_logger = logging.getLogger(__name__ + ".config")
-        temp_logger.setLevel(logging.WARNING)
-        if not temp_logger.handlers:
-            handler = logging.StreamHandler(sys.stderr)
-            formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-            handler.setFormatter(formatter)
-            temp_logger.addHandler(handler)
-        temp_logger.warning("LOG_LEVEL too long, using INFO")
         raw_level = 'INFO'
-    
-    logging_level: str = raw_level.upper()
-    
-    # Sanitize logging_level to prevent log injection (hyphen at end for clarity)
-    logging_level = re.sub(r"[^\w-]", "", logging_level)
-    
-    if logging_level not in VALID_LOG_LEVELS:
-        level = logging.INFO
-        # Configure temporary logger for this warning
-        temp_logger = logging.getLogger(__name__ + ".config")
-        temp_logger.setLevel(logging.WARNING)
-        if not temp_logger.handlers:
-            handler = logging.StreamHandler(sys.stderr)
-            formatter = logging.Formatter('%(name)s - %(levelname)s - %(message)s')
-            handler.setFormatter(formatter)
-            temp_logger.addHandler(handler)
-        temp_logger.warning(f"Invalid LOG_LEVEL '{logging_level}', using INFO")
-    else:
-        level = getattr(logging, logging_level)
-    
-    # Configure logging only if not already configured (use official method)
-    if not logging.getLogger().hasHandlers():
-        # Create logs directory if it doesn't exist
-        log_dir = Path("logs")
+
+    # Whitelist-only selection to avoid log injection
+    logging_level = raw_level if raw_level in VALID_LOG_LEVELS else 'INFO'
+    level = getattr(logging, logging_level)
+
+    # Configure root logger only once
+    root_logger = logging.getLogger()
+    if not root_logger.hasHandlers():
+        # Create logs directory
+        log_dir = Path('logs')
         log_dir.mkdir(exist_ok=True)
-        log_file = log_dir / "bulletproof_analyzer.log"
-        
-        # Create rotating file handler for log management
-        # Note: For concurrent access, consider using a process-safe logging solution
-        # in production environments with multiple parallel processes
-        file_handler = RotatingFileHandler(
-            str(log_file), 
-            maxBytes=1024*1024,  # 1MB
-            backupCount=3
-        )
+        log_file = log_dir / 'bulletproof_analyzer.log'
+
+        # Handlers
+        file_handler = RotatingFileHandler(str(log_file), maxBytes=1024 * 1024, backupCount=3)
         file_handler.setLevel(level)
-        
-        # Create console handler
         console_handler = logging.StreamHandler(sys.stderr)
         console_handler.setLevel(level)
-        
-        # Create formatter
-        formatter = logging.Formatter(
-            '%(asctime)sZ - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%dT%H:%M:%S'
-        )
+
+        # Formatter (ISO 8601 UTC)
+        formatter = logging.Formatter('%(asctime)sZ - %(name)s - %(levelname)s - %(message)s',
+                                      datefmt='%Y-%m-%dT%H:%M:%S')
         file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)
-        
-        # Configure root logger
-        root_logger = logging.getLogger()
+
+        # Apply
         root_logger.setLevel(level)
         root_logger.addHandler(file_handler)
         root_logger.addHandler(console_handler)
-    
-    # Use module name for hierarchical logging
+
+    # Always return a module logger
     return logging.getLogger(__name__)
 
-# Initialize logger - this will be called when module is imported
+# Initialize logger once on import
 logger = configure_logging()
 
-# Import enhanced error handling and circuit breaker services
+# Import enhanced services (with graceful fallback)
 try:
     from src.amas.services.circuit_breaker_service import (
-        get_circuit_breaker_service, CircuitBreakerConfig, 
-        CircuitBreakerOpenException, CircuitBreakerTimeoutException
+        get_circuit_breaker_service, CircuitBreakerConfig,
+        CircuitBreakerOpenException, CircuitBreakerTimeoutException,
     )
     from src.amas.services.error_recovery_service import (
-        get_error_recovery_service, ErrorContext, ErrorSeverity
+        get_error_recovery_service, ErrorContext, ErrorSeverity,
     )
     from src.amas.errors.error_handling import (
         AMASException, ValidationError, InternalError, ExternalServiceError,
-        TimeoutError as AMASTimeoutError, SecurityError
+        TimeoutError as AMASTimeoutError, SecurityError,
     )
     ENHANCED_ERROR_HANDLING = True
     logger.info("Enhanced error handling services loaded successfully")
 except ImportError as e:
     ENHANCED_ERROR_HANDLING = False
-    # Define fallback exception classes for basic error handling
     class AMASException(Exception):
-        """Base exception for AMAS system"""
         def __init__(self, message: str, safe_message: str = None, details: str = None):
             super().__init__(safe_message or message)
-            self.details = details  # For internal logging, not user-facing
+            self.details = details
             self.original_message = message
-    
     class ValidationError(AMASException):
-        """Raised when input/data validation fails"""
-        def __init__(self, message: str, safe_message: str = "Invalid input provided"):
-            super().__init__(message, safe_message)
-    
+        def __init__(self, message: str, safe_message: str = "Invalid input provided"): super().__init__(message, safe_message)
     class InternalError(AMASException):
-        """Raised for internal system errors"""
-        def __init__(self, message: str, safe_message: str = "Internal system error occurred"):
-            super().__init__(message, safe_message)
-    
+        def __init__(self, message: str, safe_message: str = "Internal system error occurred"): super().__init__(message, safe_message)
     class ExternalServiceError(AMASException):
-        """Raised when external services fail"""
-        def __init__(self, message: str, safe_message: str = "External service temporarily unavailable"):
-            super().__init__(message, safe_message)
-    
+        def __init__(self, message: str, safe_message: str = "External service temporarily unavailable"): super().__init__(message, safe_message)
     class SecurityError(AMASException):
-        """Raised for security-related violations"""
-        def __init__(self, message: str, safe_message: str = "Security violation detected"):
-            super().__init__(message, safe_message)
-    
+        def __init__(self, message: str, safe_message: str = "Security violation detected"): super().__init__(message, safe_message)
     class AMASTimeoutError(AMASException):
-        """Raised when operations timeout"""
-        def __init__(self, message: str, safe_message: str = "Operation timed out"):
-            super().__init__(message, safe_message)
-    
-    logger.warning("Enhanced error handling not available, using basic error handling")
-    logger.warning(f"Import error details: {e}")
-    
-    # For CI environments, we can be more lenient with fallbacks
-    # But log a warning about potential behavior differences
-    logger.warning("Running in fallback mode - some advanced features may not be available")
+        def __init__(self, message: str, safe_message: str = "Operation timed out"): super().__init__(message, safe_message)
+    logger.warning("Enhanced error handling not available, using basic error handling: %s", e)
 
-# Add project root to sys.path securely
+# Project root resolution
 SCRIPT_DIR = str(Path(__file__).resolve().parent)
 
 def _find_project_root(start: Path = None) -> Path:
-    """Find project root by locating .git directory with depth limit and security validation."""
-    # Validate input path is within allowed boundaries
-    if start is None:
-        current = Path(__file__).parent.resolve()
-    else:
-        if not start.exists() or not start.is_absolute():
-            current = Path.cwd().resolve()
-        else:
-            current = start.resolve()
-    
+    """Locate project root using .git/pyproject markers with depth limit and safe fallbacks."""
+    current = (start or Path(__file__).parent).resolve()
     max_depth = 10
-    
-    # Traverse up the directory tree looking for project indicators
     for _ in range(max_depth):
-        # Check for project root indicators
-        if (current / ".git").exists() or (current / "pyproject.toml").exists():
-            logger.info(f"Found project root: {current}")
+        if (current / '.git').exists() or (current / 'pyproject.toml').exists():
+            logger.info("Found project root: %s", current)
             return current
-        
         if current.parent == current:
-            break  # Root of filesystem
+            break
         current = current.parent
-    
-    # Fallback to two directories up from script
     fallback = Path(__file__).resolve().parent.parent.parent
-    
-    # Validate fallback contains expected project files
     if (fallback / '.git').exists() or (fallback / 'pyproject.toml').exists():
-        logger.info(f"Using fallback project root: {fallback}")
+        logger.info("Using fallback project root: %s", fallback)
         return fallback
-    
-    # Final fallback to script's parent directory
     final_fallback = Path(__file__).resolve().parent.parent
-    logger.warning(f"Could not find project root within {max_depth} levels, using final fallback: {final_fallback}")
+    logger.warning("Using final fallback project root: %s", final_fallback)
     return final_fallback
 
 def _setup_project_paths() -> str:
-    """Setup project paths for imports using secure pathlib operations"""
     try:
-        from src.amas.utils.project_root import find_project_root, get_project_root, add_project_root_to_path
-        PROJECT_ROOT: str = find_project_root(SCRIPT_DIR)
-        add_project_root_to_path(PROJECT_ROOT)
-        logger.info(f"Using enhanced project root finding: {PROJECT_ROOT}")
-        return PROJECT_ROOT
+        from src.amas.utils.project_root import find_project_root, add_project_root_to_path
+        project_root: str = find_project_root(SCRIPT_DIR)
+        add_project_root_to_path(project_root)
+        logger.info("Using enhanced project root finding: %s", project_root)
+        return project_root
     except ImportError:
-        # Fallback to legacy method if enhanced module not available
-        PROJECT_ROOT = str(_find_project_root())
-        
-        # Add paths safely
+        project_root = str(_find_project_root())
         if SCRIPT_DIR not in sys.path:
             sys.path.insert(0, SCRIPT_DIR)
-        if PROJECT_ROOT not in sys.path:
-            sys.path.insert(0, PROJECT_ROOT)
-        
-        logger.info(f"Using legacy project root finding: {PROJECT_ROOT}")
-        return PROJECT_ROOT
+        if project_root not in sys.path:
+            sys.path.insert(0, project_root)
+        logger.info("Using legacy project root finding: %s", project_root)
+        return project_root
 
-# Setup project paths
 PROJECT_ROOT = _setup_project_paths()
 
 try:
     from standalone_universal_ai_manager import get_manager
 except ImportError as e:
-    logger.critical(f"Could not import Universal AI Manager: {e}")
-    logger.critical(f"Current sys.path: {sys.path}")
-    logger.critical(f"Looking for module in: {PROJECT_ROOT}")
+    logger.critical("Could not import Universal AI Manager: %s", e)
+    logger.critical("Current sys.path: %s", sys.path)
+    logger.critical("Looking for module in: %s", PROJECT_ROOT)
     sys.exit(1)
 
-# Configure enhanced logging with security considerations
+# Prefer enhanced logging service, fallback to basic already configured above
 try:
     from src.amas.services.enhanced_logging_service import (
-        configure_logging, get_logger, LoggingConfig, LogLevel, LogFormat, SecurityLevel
+        configure_logging as enhanced_configure_logging,
+        get_logger as enhanced_get_logger,
+        LoggingConfig, LogLevel, LogFormat, SecurityLevel,
     )
-    
-    # Configure enhanced logging
-    config = LoggingConfig(
-        level=LogLevel.INFO,
-        format=LogFormat.JSON,
-        security_level=SecurityLevel.MEDIUM,
-        enable_console=True,
-        enable_correlation=True,
-        enable_metrics=True,
-        enable_audit=True,
-        enable_performance=True,
-        include_stack_traces=True
+    cfg = LoggingConfig(
+        level=LogLevel(os.getenv('LOG_LEVEL', 'INFO').upper() if os.getenv('LOG_LEVEL', 'INFO').upper() in {'DEBUG','INFO','WARNING','ERROR','CRITICAL'} else 'INFO'),
+        format=LogFormat(os.getenv('LOG_FORMAT', 'json').lower() if os.getenv('LOG_FORMAT', 'json').lower() in {'json','text','structured'} else 'json'),
+        security_level=SecurityLevel(os.getenv('LOG_SECURITY_LEVEL', 'medium').lower() if os.getenv('LOG_SECURITY_LEVEL', 'medium').lower() in {'low','medium','high','maximum'} else 'medium'),
+        enable_console=True, enable_correlation=True, enable_metrics=True, enable_audit=True, enable_performance=True, include_stack_traces=True,
     )
-    
-    # Override with environment variables
-    log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
-    if log_level_str in {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}:
-        config.level = LogLevel(log_level_str)
-    
-    log_format_str = os.getenv("LOG_FORMAT", "json").lower()
-    if log_format_str in {'json', 'text', 'structured'}:
-        config.format = LogFormat(log_format_str)
-    
-    security_level_str = os.getenv("LOG_SECURITY_LEVEL", "medium").lower()
-    if security_level_str in {'low', 'medium', 'high', 'maximum'}:
-        config.security_level = SecurityLevel(security_level_str)
-    
-    configure_logging(config)
-    logger = get_logger(__name__, "bulletproof_ai_analyzer")
-    
+    enhanced_configure_logging(cfg)
+    logger = enhanced_get_logger(__name__, 'bulletproof_ai_analyzer')
 except ImportError:
-    # Fallback to basic logging if enhanced module not available
-    VALID_LOG_LEVELS = {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
-    log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
+    # Already configured above
+    logger.debug("Enhanced logging not available; using basic logging")
 
-    if log_level_str not in VALID_LOG_LEVELS:
-        print(f"Warning: Invalid LOG_LEVEL='{log_level_str}', defaulting to INFO", file=sys.stderr)
-        log_level_str = "INFO"
-
-    logging.basicConfig(
-        level=getattr(logging, log_level_str, logging.INFO), 
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        handlers=[
-            logging.StreamHandler(sys.stderr)
-        ]
-    )
-    logger = logging.getLogger(__name__)
-
-# Security: Never log sensitive environment variables
 SENSITIVE_VARS = {"GITHUB_TOKEN", "API_KEY", "SECRET", "PASSWORD", "TOKEN"}
 
 def sanitize_env(env: Dict[str, str]) -> Dict[str, str]:
-    """Sanitize environment variables to prevent secret leakage"""
-    return {
-        k: "<redacted>" if any(sens in k.upper() for sens in SENSITIVE_VARS) else v
-        for k, v in env.items()
-    }
+    return {k: "<redacted>" if any(s in k.upper() for s in SENSITIVE_VARS) else v for k, v in env.items()}
 
 class BulletproofAIAnalyzer:
     """Bulletproof AI PR Analyzer with real provider validation and security hardening"""
-
     def __init__(self) -> None:
-        """Initialize the analyzer with security hardening"""
-        # Initialize AI manager with retry logic
         self.ai_manager = self._get_ai_manager_with_retry()
-        
-        # Load and validate environment variables
         self._load_and_validate_environment()
-        
-        # Initialize verification tracking
         self.verification_results = {
             "real_ai_verified": False,
             "bulletproof_validated": False,
             "provider_used": None,
             "response_time": 0.0,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "analysis_types": []
+            "analysis_types": [],
         }
-        
-        # Initialize enhanced error handling if available
         if ENHANCED_ERROR_HANDLING:
             self.circuit_breaker_service = get_circuit_breaker_service()
             self.error_recovery_service = get_error_recovery_service()
-            
-            # Create circuit breakers for different operations
             self._setup_circuit_breakers()
         else:
             self.circuit_breaker_service = None
             self.error_recovery_service = None
 
     def _get_ai_manager_with_retry(self) -> Any:
-        """Get AI manager with retry logic and proper error handling"""
-        @tenacity.retry(
-            stop=tenacity.stop_after_attempt(3),
-            wait=tenacity.wait_exponential(multiplier=1, min=4, max=10),
-            retry=tenacity.retry_if_exception_type(Exception)
-        )
+        @tenacity.retry(stop=tenacity.stop_after_attempt(3),
+                        wait=tenacity.wait_exponential(multiplier=1, min=4, max=10),
+                        retry=tenacity.retry_if_exception_type(Exception))
         def _retry_get_manager():
             return get_manager()
-        
         try:
             return _retry_get_manager()
         except Exception as e:
-            logger.critical(f"Failed to initialize AI manager after retries: {e}")
+            logger.critical("Failed to initialize AI manager after retries: %s", e)
             sys.exit(1)
 
     def _load_and_validate_environment(self) -> None:
-        """Load and validate environment variables with security checks"""
-        # Load environment variables
         self.github_token = os.getenv("GITHUB_TOKEN")
         self.repo_name = os.getenv("REPO_NAME")
         self.pr_number = os.getenv("PR_NUMBER")
         self.commit_sha = os.getenv("COMMIT_SHA")
         self.event_name = os.getenv("EVENT_NAME")
         self.artifacts_dir = os.getenv("ARTIFACTS_DIR", "artifacts")
-
-        # Validate required environment variables
-        required_env = {
-            "GITHUB_TOKEN": self.github_token,
-            "REPO_NAME": self.repo_name,
-        }
-        missing = [k for k, v in required_env.items() if not v]
+        required = {"GITHUB_TOKEN": self.github_token, "REPO_NAME": self.repo_name}
+        missing = [k for k, v in required.items() if not v]
         if missing:
-            logger.error(f"Missing required environment variables: {', '.join(missing)}")
+            logger.error("Missing required environment variables: %s", ", ".join(missing))
             sys.exit(1)
-
-        # Validate input data for security
-        self._validate_inputs()
-
-        # Create artifacts directory
-        os.makedirs(self.artifacts_dir, exist_ok=True)
-
-        # Log environment info safely (never log tokens)
-        safe_env = sanitize_env(dict(os.environ))
-        logger.debug(f"Environment loaded: REPO_NAME={self.repo_name}, PR_NUMBER={self.pr_number}")
-        # NEVER log self.github_token
-    
-    def _setup_circuit_breakers(self):
-        """Setup circuit breakers for different operations"""
-        if not ENHANCED_ERROR_HANDLING:
-            return
-        
-        # AI API circuit breaker
-        ai_config = CircuitBreakerConfig(
-            failure_threshold=5,
-            recovery_timeout=60.0,
-            success_threshold=3,
-            timeout=30.0,
-            expected_exceptions=[Exception]
-        )
-        self.circuit_breaker_service.create_breaker("ai_api", ai_config)
-        
-        # Git operations circuit breaker
-        git_config = CircuitBreakerConfig(
-            failure_threshold=3,
-            recovery_timeout=30.0,
-            success_threshold=2,
-            timeout=10.0,
-            expected_exceptions=[Exception]
-        )
-        self.circuit_breaker_service.create_breaker("git_operations", git_config)
-        
-        # File operations circuit breaker
-        file_config = CircuitBreakerConfig(
-            failure_threshold=5,
-            recovery_timeout=30.0,
-            success_threshold=3,
-            timeout=5.0,
-            expected_exceptions=[Exception]
-        )
-        self.circuit_breaker_service.create_breaker("file_operations", file_config)
-
-    def _validate_inputs(self) -> None:
-        """Validate input data for security"""
-        # Validate PR number if provided
         if self.pr_number:
             try:
                 self.pr_number = int(self.pr_number)
             except (TypeError, ValueError):
                 logger.error("PR_NUMBER must be an integer")
                 sys.exit(1)
-        
-        # Validate commit SHA if provided
         if self.commit_sha and not re.match(r'^[a-f0-9]{40}$', self.commit_sha):
             logger.error("COMMIT_SHA must be a valid 40-character Git SHA")
             sys.exit(1)
+        os.makedirs(self.artifacts_dir, exist_ok=True)
+        logger.debug("Environment loaded: REPO_NAME=%s, PR_NUMBER=%s", self.repo_name, self.pr_number)
 
-    @tenacity.retry(
-        stop=tenacity.stop_after_attempt(3),
-        wait=tenacity.wait_exponential(multiplier=1, min=2, max=8),
-        retry=tenacity.retry_if_exception_type((subprocess.CalledProcessError, OSError))
-    )
+    def _setup_circuit_breakers(self):
+        if not ENHANCED_ERROR_HANDLING:
+            return
+        ai_cfg = CircuitBreakerConfig(failure_threshold=5, recovery_timeout=60.0, success_threshold=3, timeout=30.0, expected_exceptions=[Exception])
+        git_cfg = CircuitBreakerConfig(failure_threshold=3, recovery_timeout=30.0, success_threshold=2, timeout=10.0, expected_exceptions=[Exception])
+        file_cfg = CircuitBreakerConfig(failure_threshold=5, recovery_timeout=30.0, success_threshold=3, timeout=5.0, expected_exceptions=[Exception])
+        self.circuit_breaker_service.create_breaker("ai_api", ai_cfg)
+        self.circuit_breaker_service.create_breaker("git_operations", git_cfg)
+        self.circuit_breaker_service.create_breaker("file_operations", file_cfg)
+
+    @tenacity.retry(stop=tenacity.stop_after_attempt(3),
+                    wait=tenacity.wait_exponential(multiplier=1, min=2, max=8),
+                    retry=tenacity.retry_if_exception_type((subprocess.CalledProcessError, OSError)))
     async def get_pr_diff(self) -> str:
-        """Get the diff for the pull request using async subprocess with circuit breaker"""
         try:
             if ENHANCED_ERROR_HANDLING:
-                # Use circuit breaker for git operations
                 breaker = self.circuit_breaker_service.get_breaker("git_operations")
                 if breaker:
                     return await breaker.call(self._get_pr_diff_impl)
-                else:
-                    return await self._get_pr_diff_impl()
-            else:
-                return await self._get_pr_diff_impl()
+            return await self._get_pr_diff_impl()
         except (CircuitBreakerOpenException, CircuitBreakerTimeoutException) as e:
-            logger.error(f"Circuit breaker prevented git diff operation: {e}")
+            logger.error("Circuit breaker prevented git diff operation: %s", e)
             return ""
         except Exception as e:
-            logger.error(f"Error getting diff: {str(e)}")
+            logger.error("Error getting diff: %s", e)
             if ENHANCED_ERROR_HANDLING:
-                # Try to recover from error
                 await self._handle_git_error(e, "get_pr_diff")
             return ""
-    
-    async def _get_pr_diff_impl(self) -> str:
-        """Implementation of getting PR diff"""
-        if self.pr_number:
-            # Get PR diff
-            cmd = ["git", "diff", "origin/main...HEAD"]
-        else:
-            # Get commit diff
-            cmd = ["git", "diff", "HEAD~1", "HEAD"]
 
-        # Use async subprocess to avoid blocking the event loop
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
+    async def _get_pr_diff_impl(self) -> str:
+        cmd = ["git", "diff", "origin/main...HEAD"] if self.pr_number else ["git", "diff", "HEAD~1", "HEAD"]
+        process = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         stdout, stderr = await process.communicate()
-        
         if process.returncode != 0:
             raise Exception(f"Git diff failed: {stderr.decode()}")
-        
         return stdout.decode()
 
     async def get_changed_files(self) -> List[str]:
-        """Get list of changed files using async subprocess with circuit breaker"""
         try:
             if ENHANCED_ERROR_HANDLING:
-                # Use circuit breaker for git operations
                 breaker = self.circuit_breaker_service.get_breaker("git_operations")
                 if breaker:
                     return await breaker.call(self._get_changed_files_impl)
-                else:
-                    return await self._get_changed_files_impl()
-            else:
-                return await self._get_changed_files_impl()
+            return await self._get_changed_files_impl()
         except (CircuitBreakerOpenException, CircuitBreakerTimeoutException) as e:
-            logger.error(f"Circuit breaker prevented git operations: {e}")
+            logger.error("Circuit breaker prevented git operations: %s", e)
             return []
         except Exception as e:
-            logger.error(f"Error getting changed files: {str(e)}")
+            logger.error("Error getting changed files: %s", e)
             if ENHANCED_ERROR_HANDLING:
-                # Try to recover from error
                 await self._handle_git_error(e, "get_changed_files")
             return []
-    
-    async def _get_changed_files_impl(self) -> List[str]:
-        """Implementation of getting changed files"""
-        if self.pr_number:
-            cmd = ["git", "diff", "--name-only", "origin/main...HEAD"]
-        else:
-            cmd = ["git", "diff", "--name-only", "HEAD~1", "HEAD"]
 
-        # Use async subprocess to avoid blocking the event loop
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
+    async def _get_changed_files_impl(self) -> List[str]:
+        cmd = ["git", "diff", "--name-only", "origin/main...HEAD"] if self.pr_number else ["git", "diff", "--name-only", "HEAD~1", "HEAD"]
+        process = await asyncio.create_subprocess_exec(*cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE)
         stdout, stderr = await process.communicate()
-        
         if process.returncode != 0:
             raise Exception(f"Git diff --name-only failed: {stderr.decode()}")
-        
         return [f.strip() for f in stdout.decode().split("\n") if f.strip()]
 
     async def calculate_diff_stats(self, diff: str) -> Dict[str, int]:
-        """Calculate statistics from the diff"""
         additions = len([line for line in diff.split("\n") if line.startswith("+")])
         deletions = len([line for line in diff.split("\n") if line.startswith("-")])
-        changed_files = await self.get_changed_files()
-        files_changed = len(changed_files)
+        files_changed = len(await self.get_changed_files())
+        return {"additions": additions, "deletions": deletions, "files_changed": files_changed}
 
-        return {
-            "additions": additions,
-            "deletions": deletions,
-            "files_changed": files_changed,
-        }
-
-    @tenacity.retry(
-        stop=tenacity.stop_after_attempt(3),
-        wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
-        retry=tenacity.retry_if_exception_type((Exception,))
-    )
+    @tenacity.retry(stop=tenacity.stop_after_attempt(3),
+                    wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
+                    retry=tenacity.retry_if_exception_type((Exception,)))
     async def run_ai_analysis(self, analysis_type: str, prompt: str) -> Dict[str, Any]:
-        """Run AI analysis with bulletproof validation and retry logic"""
         try:
             if ENHANCED_ERROR_HANDLING:
-                # Use circuit breaker for AI API calls
                 breaker = self.circuit_breaker_service.get_breaker("ai_api")
                 if breaker:
                     return await breaker.call(self._run_ai_analysis_impl, analysis_type, prompt)
-                else:
-                    return await self._run_ai_analysis_impl(analysis_type, prompt)
-            else:
-                return await self._run_ai_analysis_impl(analysis_type, prompt)
+            return await self._run_ai_analysis_impl(analysis_type, prompt)
         except (CircuitBreakerOpenException, CircuitBreakerTimeoutException) as e:
-            logger.error(f"Circuit breaker prevented AI analysis: {e}")
-            return {
-                "success": False,
-                "error": f"AI service unavailable: {str(e)}",
-                "timestamp": datetime.now(timezone.utc).isoformat()
-            }
+            logger.error("Circuit breaker prevented AI analysis: %s", e)
+            return {"success": False, "error": f"AI service unavailable: {e}", "timestamp": datetime.now(timezone.utc).isoformat()}
         except Exception as e:
-            logger.error(f"Error in AI analysis: {str(e)}")
+            logger.error("Error in AI analysis: %s", e)
             if ENHANCED_ERROR_HANDLING:
-                # Try to recover from error
                 await self._handle_ai_error(e, analysis_type)
-            return {
-                "success": False,
-                "error": str(e),
-                "timestamp": datetime.now(timezone.utc).isoformat()
-            }
-    
+            return {"success": False, "error": str(e), "timestamp": datetime.now(timezone.utc).isoformat()}
+
     async def _run_ai_analysis_impl(self, analysis_type: str, prompt: str) -> Dict[str, Any]:
-        """Implementation of AI analysis with retry logic"""
-        max_retries = 3
-        retry_delay = 1.0
-        
+        max_retries, retry_delay = 3, 1.0
         for attempt in range(max_retries):
             try:
-                logger.info(f"🤖 Running {analysis_type} analysis... (attempt {attempt + 1}/{max_retries})")
-                
-                # Use the universal AI manager with intelligent strategy
+                logger.info("Running %s analysis (attempt %d/%d)", analysis_type, attempt + 1, max_retries)
                 result = await self.ai_manager.generate(
                     prompt=prompt,
                     system_prompt="You are an expert code reviewer and security analyst. Provide detailed, actionable feedback in professional markdown format.",
                     strategy="intelligent",
                     max_tokens=4000,
-                    temperature=0.3
+                    temperature=0.3,
                 )
-                
                 if result and result.get("success", False):
-                    # Update verification results
-                    self.verification_results["real_ai_verified"] = True
-                    self.verification_results["bulletproof_validated"] = True
-                    self.verification_results["provider_used"] = result.get("provider_name", "Unknown")
-                    self.verification_results["response_time"] = result.get("response_time", 0.0)
+                    self.verification_results.update({
+                        "real_ai_verified": True,
+                        "bulletproof_validated": True,
+                        "provider_used": result.get("provider_name", "Unknown"),
+                        "response_time": result.get("response_time", 0.0),
+                    })
                     self.verification_results["analysis_types"].append(analysis_type)
-
-                    logger.info(f"✅ {analysis_type} analysis completed with {result.get('provider_name')} in {result.get('response_time', 0):.2f}s")
-                    
                     return {
                         "success": True,
                         "analysis": result.get("content", ""),
                         "provider": result.get("provider_name", "Unknown"),
                         "response_time": result.get("response_time", 0.0),
                         "tokens_used": result.get("tokens_used", 0),
-                        "timestamp": datetime.now(timezone.utc).isoformat()
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     }
-                else:
-                    error_msg = result.get('error', 'Unknown error') if result else 'No result returned'
-                    logger.warning(f"⚠️ {analysis_type} analysis attempt {attempt + 1} failed: {error_msg}")
-                    
-                    if attempt < max_retries - 1:
-                        await asyncio.sleep(retry_delay * (2 ** attempt))  # Exponential backoff
-                        continue
-                    else:
-                        return {
-                            "success": False,
-                            "error": error_msg,
-                            "timestamp": datetime.now(timezone.utc).isoformat()
-                        }
-
+                err = result.get('error', 'Unknown error') if result else 'No result returned'
+                logger.warning("%s analysis attempt %d failed: %s", analysis_type, attempt + 1, err)
             except Exception as e:
-                logger.warning(f"Exception in {analysis_type} analysis attempt {attempt + 1}: {str(e)}")
-                if attempt < max_retries - 1:
-                    await asyncio.sleep(retry_delay * (2 ** attempt))  # Exponential backoff
-                    continue
-                else:
-                    return {
-                        "success": False,
-                        "error": str(e),
-                        "timestamp": datetime.now(timezone.utc).isoformat()
-                    }
+                logger.warning("Exception in %s analysis attempt %d: %s", analysis_type, attempt + 1, e)
+            if attempt < max_retries - 1:
+                await asyncio.sleep(retry_delay * (2 ** attempt))
+        return {"success": False, "error": "Analysis failed after retries", "timestamp": datetime.now(timezone.utc).isoformat()}
+
+    async def _handle_git_error(self, error: Exception, operation: str):
+        if not ENHANCED_ERROR_HANDLING: return
+        try:
+            context = ErrorContext(error_type="git_error", error_message=str(error), severity=ErrorSeverity.MEDIUM,
+                                   component="bulletproof_ai_analyzer", operation=operation, metadata={"error_type": type(error).__name__})
+            success = await self.error_recovery_service.handle_error(context)
+            logger.info("Recovered from git error in %s" if success else "Failed to recover from git error in %s", operation)
+        except Exception as recovery_error:
+            logger.error("Error during git error recovery: %s", recovery_error)
+
+    async def _handle_ai_error(self, error: Exception, analysis_type: str):
+        if not ENHANCED_ERROR_HANDLING: return
+        try:
+            context = ErrorContext(error_type="ai_analysis_error", error_message=str(error), severity=ErrorSeverity.HIGH,
+                                   component="bulletproof_ai_analyzer", operation=f"ai_analysis_{analysis_type}", metadata={"error_type": type(error).__name__, "analysis_type": analysis_type})
+            success = await self.error_recovery_service.handle_error(context)
+            logger.info("Recovered from AI error in %s" if success else "Failed to recover from AI error in %s", analysis_type)
+        except Exception as recovery_error:
+            logger.error("Error during AI error recovery: %s", recovery_error)
+
+    async def run_comprehensive_analysis(self) -> str:
+        logger.info("Starting Bulletproof AI PR Analysis...")
+        diff = await self.get_pr_diff()
+        changed_files = await self.get_changed_files()
+        diff_stats = await self.calculate_diff_stats(diff)
+        if not diff and not changed_files:
+            logger.warning("No changes detected")
+            return ""
+        analyses: Dict[str, Any] = {}
+        tasks = [
+            ("security", self._analysis_wrapper(self.analyze_security, diff, changed_files)),
+            ("performance", self._analysis_wrapper(self.analyze_performance, diff, changed_files)),
+            ("observability", self._analysis_wrapper(self.analyze_observability, diff, changed_files)),
+            ("reliability", self._analysis_wrapper(self.analyze_reliability, diff, changed_files)),
+        ]
+        for name, coro in tasks:
+            try:
+                analyses[name] = await asyncio.wait_for(coro, timeout=300.0)
+            except asyncio.TimeoutError:
+                analyses[name] = {"success": False, "error": f"{name} analysis timed out after 5 minutes", "timestamp": datetime.now(timezone.utc).isoformat()}
+        try:
+            analyses["documentation"] = await asyncio.wait_for(self.generate_documentation(analyses), timeout=300.0)
+        except asyncio.TimeoutError:
+            analyses["documentation"] = {"success": False, "error": "Documentation generation timed out after 5 minutes", "timestamp": datetime.now(timezone.utc).isoformat()}
+        report = self.generate_bulletproof_report(analyses, diff_stats)
+        os.makedirs(self.artifacts_dir, exist_ok=True)
+        with open(os.path.join(self.artifacts_dir, "bulletproof_analysis_report.md"), "w") as f:
+            f.write(report)
+        self.save_verification_results()
+        logger.info("Bulletproof analysis report saved to %s", os.path.join(self.artifacts_dir, "bulletproof_analysis_report.md"))
+        return report
+
+    async def _analysis_wrapper(self, func, diff, changed_files):
+        return await func(diff, changed_files)
 
     async def analyze_security(self, diff: str, changed_files: List[str]) -> Dict[str, Any]:
-        """Security analysis focusing on Phase 2 hardening"""
-        # Sanitize inputs to prevent injection
-        safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]  # Limit and sanitize
-        safe_diff = diff[:3000].replace('\0', '')  # Remove null bytes
-        
+        safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]
+        safe_diff = diff[:3000].replace('\0', '')
         prompt = f"""## Security Analysis - Phase 2 Hardening
 
 Please perform a comprehensive security analysis of the following changes:
@@ -658,15 +439,11 @@ Focus on Phase 2 security requirements:
 
 Provide specific recommendations with code examples and security best practices.
 """
-
         return await self.run_ai_analysis("security", prompt)
 
     async def analyze_performance(self, diff: str, changed_files: List[str]) -> Dict[str, Any]:
-        """Performance analysis focusing on observability overhead"""
-        # Sanitize inputs to prevent injection
-        safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]  # Limit and sanitize
-        safe_diff = diff[:3000].replace('\0', '')  # Remove null bytes
-        
+        safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]
+        safe_diff = diff[:3000].replace('\0', '')
         prompt = f"""## Performance Analysis - Observability Impact
 
 Please analyze the performance impact of these changes:
@@ -691,15 +468,11 @@ Focus on Phase 2 performance requirements:
 
 Provide specific performance recommendations and optimization suggestions.
 """
-
         return await self.run_ai_analysis("performance", prompt)
 
     async def analyze_observability(self, diff: str, changed_files: List[str]) -> Dict[str, Any]:
-        """Observability analysis for monitoring and alerting"""
-        # Sanitize inputs to prevent injection
-        safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]  # Limit and sanitize
-        safe_diff = diff[:3000].replace('\0', '')  # Remove null bytes
-        
+        safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]
+        safe_diff = diff[:3000].replace('\0', '')
         prompt = f"""## Observability Analysis - Monitoring & Alerting
 
 Please analyze the observability implementation in these changes:
@@ -724,15 +497,11 @@ Focus on Phase 2 observability requirements:
 
 Provide specific observability recommendations and monitoring best practices.
 """
-
         return await self.run_ai_analysis("observability", prompt)
 
     async def analyze_reliability(self, diff: str, changed_files: List[str]) -> Dict[str, Any]:
-        """Reliability analysis for error handling and resilience"""
-        # Sanitize inputs to prevent injection
-        safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]  # Limit and sanitize
-        safe_diff = diff[:3000].replace('\0', '')  # Remove null bytes
-        
+        safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]
+        safe_diff = diff[:3000].replace('\0', '')
         prompt = f"""## Reliability Analysis - Error Handling & Resilience
 
 Please analyze the reliability improvements in these changes:
@@ -757,11 +526,9 @@ Focus on Phase 2 reliability requirements:
 
 Provide specific reliability recommendations and resilience patterns.
 """
-
         return await self.run_ai_analysis("reliability", prompt)
 
     async def generate_documentation(self, analyses: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate comprehensive documentation summary"""
         prompt = f"""## Documentation Generation - Phase 2 Summary
 
 Please generate a comprehensive summary of the Phase 2 improvements based on these analyses:
@@ -788,17 +555,12 @@ Create a professional executive summary that:
 
 Format as clean, readable markdown suitable for technical documentation.
 """
-
         return await self.run_ai_analysis("documentation", prompt)
 
     def generate_bulletproof_report(self, analyses: Dict[str, Any], diff_stats: Dict[str, int]) -> str:
-        """Generate the final bulletproof analysis report"""
-
-        # Check if we have real AI verification
         verification_status = "✅ REAL AI Verified" if self.verification_results["real_ai_verified"] else "❌ AI Verification Failed"
         bulletproof_status = "✅ Bulletproof Validated" if self.verification_results["bulletproof_validated"] else "❌ Validation Failed"
-
-        report = f"""# 🤖 Bulletproof AI Analysis Report - Phase 2
+        return f"""# 🤖 Bulletproof AI Analysis Report - Phase 2
 
 **Repository:** {self.repo_name}
 **PR Number:** {self.pr_number or 'N/A'}
@@ -867,11 +629,11 @@ Format as clean, readable markdown suitable for technical documentation.
 
 ## 🚀 Next Steps
 
-1. **Review Security Findings**: Address any security vulnerabilities identified
-2. **Optimize Performance**: Implement performance recommendations
-3. **Complete Observability**: Ensure all monitoring components are properly configured
-4. **Test Reliability**: Verify error handling and recovery mechanisms
-5. **Update Documentation**: Keep technical documentation current
+1. Review Security Findings
+2. Optimize Performance
+3. Complete Observability
+4. Test Reliability
+5. Update Documentation
 
 ---
 
@@ -880,214 +642,35 @@ Format as clean, readable markdown suitable for technical documentation.
 *Analysis Types: {', '.join(self.verification_results.get('analysis_types', []))}*
 """
 
-        return report
-
     def _format_analysis_section(self, analysis: Dict[str, Any]) -> str:
-        """Format an analysis section for the report"""
         if not analysis.get("success", False):
             return f"❌ **Analysis Failed:** {analysis.get('error', 'Unknown error')}"
-
         content = analysis.get("analysis", "No analysis content available")
         provider = analysis.get("provider", "Unknown")
         response_time = analysis.get("response_time", 0)
-
         return f"""**Provider:** {provider} | **Response Time:** {response_time:.2f}s
 
 {content}"""
 
     def save_verification_results(self) -> None:
-        """Save verification results for audit trail"""
         verification_file = os.path.join(self.artifacts_dir, "verification_results.json")
         with open(verification_file, "w") as f:
             json.dump(self.verification_results, f, indent=2)
+        logger.info("Verification results saved to %s", verification_file)
 
-        logger.info(f"Verification results saved to {verification_file}")
-    
-    async def _handle_git_error(self, error: Exception, operation: str):
-        """Handle git operation errors with recovery"""
-        if not ENHANCED_ERROR_HANDLING:
-            return
-        
-        try:
-            context = ErrorContext(
-                error_type="git_error",
-                error_message=str(error),
-                severity=ErrorSeverity.MEDIUM,
-                component="bulletproof_ai_analyzer",
-                operation=operation,
-                metadata={"error_type": type(error).__name__}
-            )
-            
-            success = await self.error_recovery_service.handle_error(context)
-            if success:
-                logger.info(f"Successfully recovered from git error in {operation}")
-            else:
-                logger.warning(f"Failed to recover from git error in {operation}")
-        except Exception as recovery_error:
-            logger.error(f"Error during git error recovery: {recovery_error}")
-    
-    async def _handle_ai_error(self, error: Exception, analysis_type: str):
-        """Handle AI analysis errors with recovery"""
-        if not ENHANCED_ERROR_HANDLING:
-            return
-        
-        try:
-            context = ErrorContext(
-                error_type="ai_analysis_error",
-                error_message=str(error),
-                severity=ErrorSeverity.HIGH,
-                component="bulletproof_ai_analyzer",
-                operation=f"ai_analysis_{analysis_type}",
-                metadata={
-                    "error_type": type(error).__name__,
-                    "analysis_type": analysis_type
-                }
-            )
-            
-            success = await self.error_recovery_service.handle_error(context)
-            if success:
-                logger.info(f"Successfully recovered from AI error in {analysis_type}")
-            else:
-                logger.warning(f"Failed to recover from AI error in {analysis_type}")
-        except Exception as recovery_error:
-            logger.error(f"Error during AI error recovery: {recovery_error}")
-    
-    async def _handle_file_error(self, error: Exception, operation: str):
-        """Handle file operation errors with recovery"""
-        if not ENHANCED_ERROR_HANDLING:
-            return
-        
-        try:
-            context = ErrorContext(
-                error_type="file_error",
-                error_message=str(error),
-                severity=ErrorSeverity.MEDIUM,
-                component="bulletproof_ai_analyzer",
-                operation=operation,
-                metadata={"error_type": type(error).__name__}
-            )
-            
-            success = await self.error_recovery_service.handle_error(context)
-            if success:
-                logger.info(f"Successfully recovered from file error in {operation}")
-            else:
-                logger.warning(f"Failed to recover from file error in {operation}")
-        except Exception as recovery_error:
-            logger.error(f"Error during file error recovery: {recovery_error}")
-
-    async def run_comprehensive_analysis(self) -> str:
-        """Run comprehensive bulletproof AI analysis"""
-        logger.info("🚀 Starting Bulletproof AI PR Analysis...")
-        
-        # Get PR information
-        diff = await self.get_pr_diff()
-        changed_files = await self.get_changed_files()
-        diff_stats = await self.calculate_diff_stats(diff)
-
-        if not diff and not changed_files:
-            logger.warning("No changes detected")
-            return ""
-
-        logger.info(f"Analyzing {diff_stats['files_changed']} files with {diff_stats['additions']} additions and {diff_stats['deletions']} deletions")
-
-        # Run all analyses in parallel for efficiency
-        analyses = {}
-
-        try:
-            # Run all analyses concurrently with timeout
-            analysis_tasks = [
-                ("security", self.analyze_security(diff, changed_files)),
-                ("performance", self.analyze_performance(diff, changed_files)),
-                ("observability", self.analyze_observability(diff, changed_files)),
-                ("reliability", self.analyze_reliability(diff, changed_files))
-            ]
-            
-            # Execute all analyses with timeout (5 minutes per analysis)
-            for analysis_type, task in analysis_tasks:
-                try:
-                    analyses[analysis_type] = await asyncio.wait_for(task, timeout=300.0)
-                except asyncio.TimeoutError:
-                    logger.error(f"❌ {analysis_type} analysis timed out after 5 minutes")
-                    analyses[analysis_type] = {
-                        "success": False,
-                        "error": "Analysis timed out after 5 minutes",
-                        "timestamp": datetime.now(timezone.utc).isoformat()
-                    }
-            
-            # Generate documentation with timeout
-            try:
-                analyses["documentation"] = await asyncio.wait_for(
-                    self.generate_documentation(analyses), 
-                    timeout=300.0
-                )
-            except asyncio.TimeoutError:
-                logger.error("❌ Documentation generation timed out after 5 minutes")
-                analyses["documentation"] = {
-                    "success": False,
-                    "error": "Documentation generation timed out after 5 minutes",
-                    "timestamp": datetime.now(timezone.utc).isoformat()
-                }
-
-        except Exception as e:
-            logger.error(f"Error during analysis: {str(e)}")
-            return ""
-
-        # Generate final report
-        report = self.generate_bulletproof_report(analyses, diff_stats)
-
-        # Save report
-        report_path = os.path.join(self.artifacts_dir, "bulletproof_analysis_report.md")
-        with open(report_path, "w") as f:
-            f.write(report)
-
-        # Save verification results
-        self.save_verification_results()
-
-        logger.info(f"Bulletproof analysis report saved to {report_path}")
-
-        # Print summary
-        print("\n" + "=" * 80)
-        print("🤖 BULLETPROOF AI ANALYSIS COMPLETE")
-        print("=" * 80)
-        print(f"✅ Real AI Verified: {self.verification_results['real_ai_verified']}")
-        print(f"✅ Bulletproof Validated: {self.verification_results['bulletproof_validated']}")
-        print(f"✅ Provider Used: {self.verification_results.get('provider_used', 'Unknown')}")
-        print(f"✅ Response Time: {self.verification_results.get('response_time', 0):.2f}s")
-        print(f"✅ Analysis Types: {', '.join(self.verification_results.get('analysis_types', []))}")
-        print("=" * 80 + "\n")
-
-        return report
-
+    async def _analysis_wrapper(self, func, diff, changed_files):
+        return await func(diff, changed_files)
 
 async def main() -> None:
-    """Main function"""
     try:
         analyzer = BulletproofAIAnalyzer()
         await analyzer.run_comprehensive_analysis()
     except Exception as e:
-        logger.error(f"Bulletproof AI analysis failed: {str(e)}")
-
-        # Create error report
-        error_report = f"""# ❌ Bulletproof AI Analysis Error
-
-An error occurred during the bulletproof AI analysis process:
-
-```
-{str(e)}
-```
-
-Please check the workflow logs for more details.
-
-*Bulletproof AI Analysis System v2.0*
-"""
-
-        # Save error report
+        logger.error("Bulletproof AI analysis failed: %s", e)
         os.makedirs("artifacts", exist_ok=True)
         with open("artifacts/bulletproof_analysis_report.md", "w") as f:
-            f.write(error_report)
-
+            f.write(f"# ❌ Bulletproof AI Analysis Error\n\n``""\n{e}\n``""\n")
         sys.exit(1)
-
 
 if __name__ == "__main__":
     asyncio.run(main())
