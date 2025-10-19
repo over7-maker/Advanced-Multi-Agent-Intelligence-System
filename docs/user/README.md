@@ -4,22 +4,25 @@
 
 ## Welcome to AMAS!
 
-The Advanced Multi-Agent Intelligence System (AMAS) is a powerful AI platform that leverages multiple intelligent agents to perform complex tasks. This guide will help you get the most out of AMAS, whether you're using it for security analysis, data processing, or research.
+The Advanced Multi-Agent Intelligence System (AMAS) is a revolutionary AI platform featuring **AI Agentic Workflows** that leverage multiple intelligent agents to perform complex tasks autonomously. This guide will help you get the most out of AMAS, whether you're using it for security analysis, data processing, research, or automated development workflows.
 
 **✅ 100% Implementation Verified** - All critical improvements from the project audit have been implemented and verified.
+
+**🚀 Revolutionary AI Agentic Workflows** - Experience the future of automated development with our 4-layer AI agent architecture and 16 AI providers.
 
 ## 📋 Table of Contents
 
 1. [Quick Start](#quick-start)
-2. [Interactive Mode](#interactive-mode)
-3. [Command Reference](#command-reference)
-4. [Task Types](#task-types)
-5. [Working with Results](#working-with-results)
-6. [Web Interface](#web-interface)
-7. [API Usage](#api-usage)
-8. [Best Practices](#best-practices)
-9. [Troubleshooting](#troubleshooting)
-10. [FAQ](#faq)
+2. [AI Agentic Workflows](#ai-agentic-workflows)
+3. [Interactive Mode](#interactive-mode)
+4. [Command Reference](#command-reference)
+5. [Task Types](#task-types)
+6. [Working with Results](#working-with-results)
+7. [Web Interface](#web-interface)
+8. [API Usage](#api-usage)
+9. [Best Practices](#best-practices)
+10. [Troubleshooting](#troubleshooting)
+11. [FAQ](#faq)
 
 ---
 
@@ -70,6 +73,290 @@ python scripts/validate_env.py --mode basic --verbose
 ```
 
 That's it! You've just performed your first security scan with AMAS.
+
+---
+
+## 🚀 AI Agentic Workflows
+
+AMAS features revolutionary **AI Agentic Workflows** that provide autonomous, intelligent automation for your development processes. These workflows use a 4-layer AI agent architecture with 16 AI providers for maximum reliability and intelligence.
+
+### **Revolutionary AI Agentic Workflow System**
+
+#### **🧠 Master Enhanced AI Orchestrator v3.0**
+The central brain of the system that coordinates all AI agents with intelligent routing and comprehensive monitoring.
+
+**Key Features**:
+- **4-Layer Architecture**: Detection & Analysis → Intelligence & Decision → Execution & Fix → Orchestration & Management
+- **16 AI Providers**: DeepSeek, Claude, GPT-4, GLM, Grok, Kimi, Qwen, Gemini, and more
+- **Intelligent Failover**: Automatic provider switching for zero-failure guarantee
+- **Self-Healing**: Automatic recovery from any provider failure
+
+**Usage**:
+```bash
+# Trigger Master Orchestrator
+🤖 AMAS> orchestrate intelligent mode for all components
+
+# Emergency response mode
+🤖 AMAS> orchestrate emergency mode for critical issues
+
+# Performance optimization
+🤖 AMAS> orchestrate performance mode for speed optimization
+```
+
+#### **🤖 AI Agentic Project Self-Improver v2.0**
+Continuously improves your project with AI-driven enhancements and automated fixes.
+
+**4-Phase System**:
+1. **Project Analysis & Learning**: Deep project understanding
+2. **Intelligent Improvement Generation**: AI-driven enhancements
+3. **Automated Implementation**: Self-applying improvements
+4. **Learning & Adaptation**: Continuous system evolution
+
+**Usage**:
+```bash
+# Intelligent improvement mode
+🤖 AMAS> improve project with intelligent mode
+
+# Aggressive performance optimization
+🤖 AMAS> improve performance aggressively with auto-apply
+
+# Security-focused improvements
+🤖 AMAS> improve security with comprehensive analysis
+```
+
+#### **🤖 AI Agentic Issue Auto-Responder v3.0**
+Intelligently manages and responds to issues with multi-language support and automated fixes.
+
+**4-Phase System**:
+1. **Issue Analysis & Categorization**: AI-powered understanding
+2. **Intelligent Response Generation**: Context-aware responses
+3. **Automated Response & Fix Implementation**: Self-applying solutions
+4. **Learning & Adaptation**: Continuous improvement
+
+**Usage**:
+```bash
+# Intelligent issue response
+🤖 AMAS> respond to issues with intelligent mode
+
+# Technical-focused auto-fix
+🤖 AMAS> respond with technical mode and auto-fix enabled
+
+# Multi-language support
+🤖 AMAS> respond in spanish with comprehensive analysis
+```
+
+### **AI Agentic Workflow Commands**
+
+#### **Workflow Management**
+```bash
+# List available workflows
+🤖 AMAS> list workflows
+
+# Check workflow status
+🤖 AMAS> status workflow orchestrator
+
+# Trigger specific workflow
+🤖 AMAS> trigger workflow self-improver
+
+# Configure workflow settings
+🤖 AMAS> config workflow orchestrator mode intelligent
+```
+
+#### **Advanced Workflow Operations**
+```bash
+# Batch workflow execution
+🤖 AMAS> run workflows orchestrator,self-improver,issue-responder
+
+# Schedule workflows
+🤖 AMAS> schedule workflow orchestrator every 6 hours
+
+# Monitor workflow performance
+🤖 AMAS> monitor workflows performance
+
+# Optimize workflow settings
+🤖 AMAS> optimize workflows for performance
+```
+
+### **AI Provider Management**
+
+#### **Provider Status and Selection**
+```bash
+# Check AI provider status
+🤖 AMAS> providers status
+
+# List all AI providers
+🤖 AMAS> providers list
+
+# Force specific provider
+🤖 AMAS> use provider deepseek
+
+# Check provider performance
+🤖 AMAS> providers performance
+
+# Test provider connectivity
+🤖 AMAS> test provider claude
+```
+
+#### **Provider Configuration**
+```bash
+# Configure provider priority
+🤖 AMAS> config provider deepseek priority 1
+
+# Set provider timeout
+🤖 AMAS> config provider claude timeout 30
+
+# Enable/disable providers
+🤖 AMAS> enable provider grok
+🤖 AMAS> disable provider gemini
+
+# View provider statistics
+🤖 AMAS> providers stats
+```
+
+### **Workflow Integration Examples**
+
+#### **GitHub Integration**
+```bash
+# Integrate with GitHub repository
+🤖 AMAS> integrate github owner/repo
+
+# Configure GitHub triggers
+🤖 AMAS> config github triggers push,pull_request,issues
+
+# Set up webhooks
+🤖 AMAS> setup webhooks for workflows
+
+# Monitor GitHub events
+🤖 AMAS> monitor github events
+```
+
+#### **CI/CD Integration**
+```bash
+# Integrate with CI/CD pipeline
+🤖 AMAS> integrate cicd pipeline
+
+# Configure build triggers
+🤖 AMAS> config build triggers on push
+
+# Set up deployment workflows
+🤖 AMAS> setup deployment workflows
+
+# Monitor CI/CD performance
+🤖 AMAS> monitor cicd performance
+```
+
+### **Workflow Monitoring and Analytics**
+
+#### **Real-time Monitoring**
+```bash
+# Monitor active workflows
+🤖 AMAS> monitor workflows active
+
+# View workflow logs
+🤖 AMAS> logs workflow orchestrator
+
+# Check workflow health
+🤖 AMAS> health check workflows
+
+# View performance metrics
+🤖 AMAS> metrics workflows performance
+```
+
+#### **Analytics and Reporting**
+```bash
+# Generate workflow report
+🤖 AMAS> report workflows summary
+
+# View success rates
+🤖 AMAS> analytics success rates
+
+# Check provider usage
+🤖 AMAS> analytics provider usage
+
+# Export workflow data
+🤖 AMAS> export workflows data json
+```
+
+### **Advanced AI Agentic Features**
+
+#### **Self-Learning System**
+```bash
+# Enable learning mode
+🤖 AMAS> enable learning mode
+
+# View learning progress
+🤖 AMAS> learning progress
+
+# Optimize learning parameters
+🤖 AMAS> optimize learning parameters
+
+# Export learning data
+🤖 AMAS> export learning data
+```
+
+#### **Predictive Execution**
+```bash
+# Enable predictive mode
+🤖 AMAS> enable predictive mode
+
+# View predictions
+🤖 AMAS> predictions next actions
+
+# Configure prediction settings
+🤖 AMAS> config predictions accuracy 0.95
+
+# Monitor prediction performance
+🤖 AMAS> monitor predictions performance
+```
+
+#### **Adaptive Intelligence**
+```bash
+# Enable adaptive mode
+🤖 AMAS> enable adaptive mode
+
+# View adaptation status
+🤖 AMAS> adaptation status
+
+# Configure adaptation settings
+🤖 AMAS> config adaptation sensitivity high
+
+# Monitor adaptation progress
+🤖 AMAS> monitor adaptation progress
+```
+
+### **Workflow Troubleshooting**
+
+#### **Common Issues**
+```bash
+# Check workflow errors
+🤖 AMAS> errors workflows
+
+# Debug workflow execution
+🤖 AMAS> debug workflow orchestrator
+
+# Reset workflow state
+🤖 AMAS> reset workflow self-improver
+
+# Repair workflow configuration
+🤖 AMAS> repair workflows
+```
+
+#### **Performance Optimization**
+```bash
+# Optimize workflow performance
+🤖 AMAS> optimize workflows performance
+
+# Check resource usage
+🤖 AMAS> resources usage
+
+# Scale workflows
+🤖 AMAS> scale workflows up
+
+# Balance workload
+🤖 AMAS> balance workload
+```
+
+---
 
 ## User Interfaces
 
