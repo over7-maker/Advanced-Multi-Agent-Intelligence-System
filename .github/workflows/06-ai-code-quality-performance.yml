@@ -30,17 +30,6 @@ on:
         required: false
         type: string
         default: 'all'
-        options:
-          - all
-          - python
-          - javascript
-          - typescript
-          - java
-          - cpp
-          - go
-          - rust
-          - php
-          - ruby
       optimization_level:
         description: 'Optimization Level'
         required: true
@@ -68,6 +57,11 @@ env:
   NODE_VERSION: '20'
   QUALITY_PERFORMANCE_VERSION: '2.0'
   AI_SYSTEM_MODE: 'quality_performance'
+  QUALITY_MODE: ${{ github.event.inputs.quality_mode || 'comprehensive' }}
+  TARGET_LANGUAGES: ${{ github.event.inputs.target_languages || 'all' }}
+  OPTIMIZATION_LEVEL: ${{ github.event.inputs.optimization_level || 'aggressive' }}
+  AUTO_FIX: ${{ github.event.inputs.auto_fix || 'false' }}
+  PERFORMANCE_BENCHMARKING: ${{ github.event.inputs.performance_benchmarking || 'true' }}
 
 jobs:
   # Phase 1: Code Quality Analysis
@@ -93,65 +87,41 @@ jobs:
       run: |
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
-        # Set environment variables to force binary wheels
-
-        # Set environment variables to completely avoid compilation
-
-
+        
+        # Set environment variables to force binary wheels and avoid compilation
         export PIP_ONLY_BINARY=all
-
-
         export PIP_NO_BUILD_ISOLATION=1
-
-
-        export PIP_NO_DEPENDENCIES=1
-
-
-        export PIP_NO_COMPILE=1
-
-
         export PIP_NO_CACHE_DIR=1
-
+        
         python -m pip install --upgrade pip setuptools wheel
         
-        # Set environment variables to force binary wheels
-        # Set environment variables to completely avoid compilation
-
-        export PIP_ONLY_BINARY=all
-
-        export PIP_NO_BUILD_ISOLATION=1
-
-        export PIP_NO_DEPENDENCIES=1
-
-        export PIP_NO_COMPILE=1
-
-        export PIP_NO_CACHE_DIR=1
-        
         # Install specific package versions with binary wheels (avoid Cython compilation)
-        # Install minimal packages to avoid Cython compilation
-
-        pip install --no-deps --only-binary=all PyYAML==6.0.1
-
-        pip install --no-deps --only-binary=all numpy==1.26.4
-
-        pip install --no-deps --only-binary=all scikit-learn==1.3.2
-
-        pip install --no-deps --only-binary=all pandas==2.1.4
-
-        pip install --no-deps --only-binary=all matplotlib==3.8.2
-        # Install utility packages with minimal dependencies
-
+        pip install --only-binary=all PyYAML==6.0.1
+        pip install --only-binary=all numpy==1.26.4
+        pip install --only-binary=all requests==2.31.0
         pip install aiohttp==3.9.1
-
-        pip install --no-deps --only-binary=all requests==2.31.0
-
-      - name: 🤖 AI Dependency Auto-Repair
-        if: failure()
-        run: |
-          echo "🚀 Running AI Dependency Resolver for auto-repair..."
-          python .github/scripts/unified_ai_manager.py dependency_analysis
+        pip install tenacity==8.2.3
+        pip install python-dotenv==1.0.0
+    
+    - name: 🤖 Run AI Code Quality Analysis
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REPO_NAME: ${{ github.repository }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        COMMIT_SHA: ${{ github.sha }}
+        EVENT_NAME: ${{ github.event_name }}
+        ARTIFACTS_DIR: artifacts
+        LOG_LEVEL: INFO
+      run: |
+        set -e  # Exit on any error
+        set -o pipefail  # Exit on pipe errors
+        
+        echo "🚀 Running AI Code Quality Analysis..."
+        python .github/scripts/bulletproof_ai_pr_analyzer.py
+        
         # CRITICAL: Validate it used REAL AI
-        if grep -q '"real_ai_verified": true' artifacts/real_dependency_analysis_analysis.json; then
+        if [ -f "artifacts/verification_results.json" ] && grep -q '"real_ai_verified": true' artifacts/verification_results.json; then
           echo "✅ REAL AI VERIFIED - Provider used actual API"
         else
           echo "🚨 FAKE AI DETECTED - Failing workflow"
@@ -160,17 +130,32 @@ jobs:
         
         echo "✅ Real AI Code Analysis completed successfully"
     
+    - name: 🤖 AI Dependency Auto-Repair
+      if: failure()
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      run: |
+        echo "🚀 Running AI Dependency Resolver for auto-repair..."
+        python .github/scripts/unified_ai_manager.py dependency_analysis
+        
+        # CRITICAL: Validate it used REAL AI
+        if grep -q '"real_ai_verified": true' artifacts/real_dependency_analysis_analysis.json; then
+          echo "✅ REAL AI VERIFIED - Provider used actual API"
+        else
+          echo "🚨 FAKE AI DETECTED - Failing workflow"
+          exit 1
+        fi
+    
     - name: 📊 Generate AI Summary
       run: |
-        echo "📊 Generating AI Superhero Summary..."
-        python .github/scripts/generate_pr_summary.py
+        echo "📊 Generating AI Code Quality Summary..."
         
         # Create GitHub Actions Summary
-        echo "# 🤖 AI AGENTIC CODE ENHANCEMENT - WORKFLOW SUMMARY" >> $GITHUB_STEP_SUMMARY
+        echo "# 🤖 AI AGENTIC CODE QUALITY - WORKFLOW SUMMARY" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "## 🎉 AI SUPERHERO POWERS ACTIVATED!" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "This workflow demonstrates the power of our **AI Agentic Code Enhancement System**!" >> $GITHUB_STEP_SUMMARY
+        echo "This workflow demonstrates the power of our **AI Agentic Code Quality System**!" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🚀 What This Workflow Does:" >> $GITHUB_STEP_SUMMARY
         echo "- **Analyzes** 50+ files for quality issues" >> $GITHUB_STEP_SUMMARY
@@ -186,41 +171,29 @@ jobs:
         echo "- Cohere, Chutes, Gemini2, Groq2, Claude 3.5" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 📊 Results:" >> $GITHUB_STEP_SUMMARY
-        if [ -f "code_enhancement_results.json" ]; then
-          echo "✅ Code enhancement analysis completed successfully" >> $GITHUB_STEP_SUMMARY
+        if [ -f "artifacts/bulletproof_analysis_report.md" ]; then
+          echo "✅ Code quality analysis completed successfully" >> $GITHUB_STEP_SUMMARY
           echo "📁 Check artifacts for detailed results" >> $GITHUB_STEP_SUMMARY
         else
           echo "⚠️ Results file not found" >> $GITHUB_STEP_SUMMARY
         fi
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "---" >> $GITHUB_STEP_SUMMARY
-        echo "*Generated by AI Agentic Code Enhancement System* 🤖" >> $GITHUB_STEP_SUMMARY
+        echo "*Generated by AI Agentic Code Quality System* 🤖" >> $GITHUB_STEP_SUMMARY
     
-    - name: 📊 Upload Code Enhancement Results
+    - name: 📊 Upload Code Quality Results
       uses: actions/upload-artifact@v4
-      with:
-        name: code-enhancement-results-${{ github.run_number }}
-        path: code_enhancement_results.json
-        retention-days: 30
-    
-    - name: 📈 Generate Code Enhancement Summary
       if: always()
-      run: |
-        set -e  # Exit on any error
-        set -o pipefail  # Exit on pipe errors
-        echo "## 🔧 Automated Code Enhancement" >> $GITHUB_STEP_SUMMARY
-        echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Mode**: ${{ env.QUALITY_MODE }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Languages**: ${{ env.TARGET_LANGUAGES }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Level**: ${{ env.OPTIMIZATION_LEVEL }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Results**: Uploaded as artifact" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
+      with:
+        name: code-quality-results-${{ github.run_number }}
+        path: artifacts/
+        retention-days: 30
 
-  # Phase 4: Quality Validation & Testing
-  quality_validation_testing:
-    name: ✅ Quality Validation & Testing
+  # Phase 2: Performance Analysis & Optimization
+  performance_analysis_optimization:
+    name: ⚡ Performance Analysis & Optimization
     runs-on: ubuntu-latest
-    needs: automated_code_enhancement
+    needs: code_quality_analysis
     timeout-minutes: 60
     
     steps:
@@ -240,99 +213,57 @@ jobs:
       run: |
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
-        # Set environment variables to force binary wheels
-
-        # Set environment variables to completely avoid compilation
-
-
+        
+        # Set environment variables to force binary wheels and avoid compilation
         export PIP_ONLY_BINARY=all
-
-
         export PIP_NO_BUILD_ISOLATION=1
-
-
-        export PIP_NO_DEPENDENCIES=1
-
-
-        export PIP_NO_COMPILE=1
-
-
         export PIP_NO_CACHE_DIR=1
-
+        
         python -m pip install --upgrade pip setuptools wheel
         
-        # Set environment variables to force binary wheels
-        # Set environment variables to completely avoid compilation
-
-        export PIP_ONLY_BINARY=all
-
-        export PIP_NO_BUILD_ISOLATION=1
-
-        export PIP_NO_DEPENDENCIES=1
-
-        export PIP_NO_COMPILE=1
-
-        export PIP_NO_CACHE_DIR=1
-        
-        # Install specific package versions with binary wheels (avoid Cython compilation)
-        # Install minimal packages to avoid Cython compilation
-
-        pip install --no-deps --only-binary=all PyYAML==6.0.1
-
-        pip install --no-deps --only-binary=all numpy==1.26.4
-
-        pip install --no-deps --only-binary=all scikit-learn==1.3.2
-
-        pip install --no-deps --only-binary=all pandas==2.1.4
-
-        pip install --no-deps --only-binary=all matplotlib==3.8.2
-        # Install utility packages with minimal dependencies
-
+        # Install packages with binary wheels
+        pip install --only-binary=all PyYAML==6.0.1
+        pip install --only-binary=all numpy==1.26.4
+        pip install --only-binary=all requests==2.31.0
         pip install aiohttp==3.9.1
-
-        pip install --no-deps --only-binary=all requests==2.31.0
-
-      - name: 🤖 AI Dependency Auto-Repair
-        if: failure()
-        run: |
-          echo "🚀 Running AI Dependency Resolver for auto-repair..."
-          python .github/scripts/unified_ai_manager.py dependency_analysis
-        # CRITICAL: Validate it used REAL AI
-        if grep -q '"real_ai_verified": true' artifacts/real_dependency_analysis_analysis.json; then
-          echo "✅ REAL AI VERIFIED - Provider used actual API"
-        else
-          echo "🚨 FAKE AI DETECTED - Failing workflow"
-          exit 1
-        fi
-        
-        echo "✅ Quality Validation & Testing completed successfully"
+        pip install tenacity==8.2.3
+        pip install python-dotenv==1.0.0
     
-    - name: 📊 Upload Quality Validation Results
-      uses: actions/upload-artifact@v4
-      with:
-        name: quality-validation-results-${{ github.run_number }}
-        path: quality_validation_results.json
-        retention-days: 30
-    
-    - name: 📈 Generate Quality Validation Summary
-      if: always()
+    - name: ⚡ Run AI Performance Analysis
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        REPO_NAME: ${{ github.repository }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        COMMIT_SHA: ${{ github.sha }}
+        EVENT_NAME: ${{ github.event_name }}
+        ARTIFACTS_DIR: artifacts
+        LOG_LEVEL: INFO
+        ANALYSIS_MODE: performance
       run: |
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
-        echo "## ✅ Quality Validation & Testing" >> $GITHUB_STEP_SUMMARY
-        echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Mode**: ${{ env.QUALITY_MODE }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Languages**: ${{ env.TARGET_LANGUAGES }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Level**: ${{ env.OPTIMIZATION_LEVEL }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Results**: Uploaded as artifact" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        echo "⚡ Running AI Performance Analysis..."
+        python .github/scripts/bulletproof_ai_pr_analyzer.py
+        
+        echo "✅ Performance Analysis completed successfully"
+    
+    - name: 📊 Upload Performance Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: performance-results-${{ github.run_number }}
+        path: artifacts/
+        retention-days: 30
 
   # Final Summary and Integration
   final_summary_integration:
     name: 📊 Final Summary & Integration
     runs-on: ubuntu-latest
-    needs: [code_quality_analysis, performance_analysis_optimization, automated_code_enhancement, quality_validation_testing]
+    needs: [code_quality_analysis, performance_analysis_optimization]
     if: always()
+    timeout-minutes: 30
     
     steps:
     - name: 🚀 Checkout Repository
@@ -351,92 +282,20 @@ jobs:
       run: |
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
-        # Set environment variables to force binary wheels
-
-        # Set environment variables to completely avoid compilation
-
-
-        export PIP_ONLY_BINARY=all
-
-
-        export PIP_NO_BUILD_ISOLATION=1
-
-
-        export PIP_NO_DEPENDENCIES=1
-
-
-        export PIP_NO_COMPILE=1
-
-
-        export PIP_NO_CACHE_DIR=1
-
-        python -m pip install --upgrade pip setuptools wheel
         
-        # Set environment variables to force binary wheels
-        # Set environment variables to completely avoid compilation
-
-        export PIP_ONLY_BINARY=all
-
-        export PIP_NO_BUILD_ISOLATION=1
-
-        export PIP_NO_DEPENDENCIES=1
-
-        export PIP_NO_COMPILE=1
-
-        export PIP_NO_CACHE_DIR=1
-        
-        # Install specific package versions with binary wheels (avoid Cython compilation)
-        # Install minimal packages to avoid Cython compilation
-
-        pip install --no-deps --only-binary=all PyYAML==6.0.1
-
-        pip install --no-deps --only-binary=all numpy==1.26.4
-
-        pip install --no-deps --only-binary=all scikit-learn==1.3.2
-
-        pip install --no-deps --only-binary=all pandas==2.1.4
-
-        pip install --no-deps --only-binary=all matplotlib==3.8.2
-        # Install utility packages with minimal dependencies
-
-        pip install aiohttp==3.9.1
-
-        pip install --no-deps --only-binary=all requests==2.31.0
-
-      - name: 🤖 AI Dependency Auto-Repair
-        if: failure()
-        run: |
-          echo "🚀 Running AI Dependency Resolver for auto-repair..."
-          python .github/scripts/unified_ai_manager.py dependency_analysis
-        # CRITICAL: Validate it used REAL AI
-        if grep -q '"real_ai_verified": true' artifacts/real_dependency_analysis_analysis.json; then
-          echo "✅ REAL AI VERIFIED - Provider used actual API"
-        else
-          echo "🚨 FAKE AI DETECTED - Failing workflow"
-          exit 1
-        fi
-        
-        echo "✅ Final Summary & Integration completed successfully"
+        python -m pip install --upgrade pip
+        pip install requests python-dotenv
     
-    - name: 📊 Upload Final Summary
-      uses: actions/upload-artifact@v4
-      with:
-        name: final-summary-results-${{ github.run_number }}
-        path: final_summary_results.json
-        retention-days: 30
-    
-    - name: 📈 Generate Master Summary
-      if: always()
+    - name: 📊 Generate Master Summary
       run: |
         set -e  # Exit on any error
         set -o pipefail  # Exit on pipe errors
+        
         echo "## ⚡ AI Code Quality & Performance v2.0 Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🏗️ 4-Phase Quality & Performance System" >> $GITHUB_STEP_SUMMARY
+        echo "### 🏗️ Multi-Phase Quality & Performance System" >> $GITHUB_STEP_SUMMARY
         echo "- **Phase 1**: 🔍 Code Quality Analysis - ${{ needs.code_quality_analysis.result }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Phase 2**: ⚡ Performance Analysis & Optimization - ${{ needs.performance_analysis_optimization.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Phase 3**: 🔧 Automated Code Enhancement - ${{ needs.automated_code_enhancement.result }}" >> $GITHUB_STEP_SUMMARY
-        echo "- **Phase 4**: ✅ Quality Validation & Testing - ${{ needs.quality_validation_testing.result }}" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 📊 System Performance" >> $GITHUB_STEP_SUMMARY
         echo "- **Mode**: ${{ env.QUALITY_MODE }}" >> $GITHUB_STEP_SUMMARY
@@ -448,8 +307,7 @@ jobs:
         echo "### 🚀 Revolutionary Capabilities" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ **Code Quality Analysis**: AI-powered comprehensive code assessment" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ **Performance Optimization**: Intelligent performance enhancement" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ **Automated Enhancement**: AI-generated code improvements" >> $GITHUB_STEP_SUMMARY
-        echo "- ✅ **Quality Validation**: Comprehensive testing and validation" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ **Security Analysis**: Automated vulnerability detection" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ **15+ AI Providers**: Intelligent fallback and optimization" >> $GITHUB_STEP_SUMMARY
         echo "- ✅ **Multi-Language Support**: Python, JavaScript, TypeScript, Java, C++, Go, Rust, PHP, Ruby" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
@@ -458,15 +316,19 @@ jobs:
         echo "- **Performance**: Intelligent optimization and benchmarking" >> $GITHUB_STEP_SUMMARY
         echo "- **Security**: Automated security vulnerability detection" >> $GITHUB_STEP_SUMMARY
         echo "- **Maintainability**: Enhanced code structure and readability" >> $GITHUB_STEP_SUMMARY
-        echo "- **Testing**: Comprehensive test coverage and validation" >> $GITHUB_STEP_SUMMARY
-        echo "- **Documentation**: AI-generated code documentation" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🎯 Results" >> $GITHUB_STEP_SUMMARY
         echo "- **All Results**: Uploaded as artifacts" >> $GITHUB_STEP_SUMMARY
         echo "- **Quality Reports**: Comprehensive code quality analysis" >> $GITHUB_STEP_SUMMARY
         echo "- **Performance Metrics**: Detailed performance optimization" >> $GITHUB_STEP_SUMMARY
-        echo "- **Enhancement Suggestions**: AI-generated code improvements" >> $GITHUB_STEP_SUMMARY
-        echo "- **Next Actions**: Recommended by AI quality system" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "---" >> $GITHUB_STEP_SUMMARY
         echo "*⚡ AI Code Quality & Performance v2.0 - The Future of Code Excellence*" >> $GITHUB_STEP_SUMMARY
+    
+    - name: 📊 Upload Final Summary
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: final-summary-results-${{ github.run_number }}
+        path: artifacts/
+        retention-days: 30
