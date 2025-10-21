@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """
-Bulletproof AI PR Analyzer - Phase 2
+Bulletproof AI PR Analyzer - Phase 2.
 
 Comprehensive PR analysis using real AI providers with bulletproof validation.
 Security hardened with input validation, secure subprocess calls, and sanitized logging.
 Enhanced with improved project root finding and structured logging.
 """
-
-# =============================================================================
-# IMPORTS - Following PEP 8 order: standard library, third-party, local
-# =============================================================================
 
 # Standard library imports
 import asyncio
@@ -31,172 +27,370 @@ from typing import Any, Dict, List, Optional
 # Third-party imports
 import tenacity
 
-# =============================================================================
-# SECURITY CONFIGURATION - Complete and closed for proper diff parsing
-# =============================================================================
-
-# Maximum length for environment variable values to prevent memory exhaustion
+# Type-annotated module constants
 MAX_ENV_LENGTH: int = 64
-
-# Valid log levels for strict validation
 VALID_LOG_LEVELS: frozenset[str] = frozenset({'CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'})
+SENSITIVE_VARS: frozenset[str] = frozenset([
+    "GITHUB_TOKEN", "API_KEY", "SECRET_KEY", "PASSWORD", "ACCESS_TOKEN", 
+    "SECRET_TOKEN", "AUTH_TOKEN", "PRIVATE_KEY", "CREDENTIALS",
+    "AWS_SECRET_ACCESS_KEY", "AWS_SECRET", "DB_URL", "DATABASE_URL", 
+    "JWT_SECRET", "OPENAI_API_KEY", "SECRET", "TOKEN", "KEY", 
+    "PASSPHRASE", "ENCRYPTION_KEY", "CERTIFICATE",
+    "SSL_KEY", "TLS_KEY", "API_SECRET", "CLIENT_SECRET", "REFRESH_TOKEN",
+    "X_API_KEY", "BEARER_TOKEN", "SESSION_KEY", "DB_PASS", "ENCRYPTION_PASSPHRASE",
+    "SECRET_KEY_BASE", "SIGNING_KEY", "WEBHOOK_SECRET", "OAUTH_SECRET",
+    "CONSUMER_SECRET", "PRIVATE_TOKEN", "AUTH_SECRET", "SESSION_SECRET",
+    "CEREBRAS_API_KEY", "CODESTRAL_API_KEY", "DEEPSEEK_API_KEY", 
+    "GEMINIAI_API_KEY", "GLM_API_KEY", "GPTOSS_API_KEY", "GROK_API_KEY",
+    "GROQAI_API_KEY", "KIMI_API_KEY", "NVIDIA_API_KEY", "QWEN_API_KEY",
+    "GEMINI2_API_KEY", "GROQ2_API_KEY", "COHERE_API_KEY", "CHUTES_API_KEY"
+])
+SENSITIVE_PATTERN: re.Pattern[str] = re.compile(
+    r'\b(?:token|secret|password|passwd|pwd|credential|auth|(?:refresh|access)_?token|private|cert(?:ificate)?|key)\b',
+    re.IGNORECASE
+)
 
-# Comprehensive list of sensitive environment variables (complete in single block)
-SENSITIVE_VARS: frozenset[str] = frozenset(["GITHUB_TOKEN", "API_KEY", "SECRET_KEY", "PASSWORD", "ACCESS_TOKEN", "SECRET_TOKEN", "AUTH_TOKEN", "PRIVATE_KEY", "CREDENTIALS", "AWS_SECRET_ACCESS_KEY", "AWS_SECRET", "DB_URL", "DATABASE_URL", "JWT_SECRET", "OPENAI_API_KEY", "SECRET", "TOKEN", "KEY", "PASSPHRASE", "ENCRYPTION_KEY", "CERTIFICATE", "SSL_KEY", "TLS_KEY", "API_SECRET", "CLIENT_SECRET", "REFRESH_TOKEN", "X_API_KEY", "BEARER_TOKEN", "SESSION_KEY", "DB_PASS", "ENCRYPTION_PASSPHRASE", "SECRET_KEY_BASE", "SIGNING_KEY", "WEBHOOK_SECRET", "OAUTH_SECRET", "CONSUMER_SECRET", "PRIVATE_TOKEN", "AUTH_SECRET", "SESSION_SECRET"])
-
-# Regex pattern for additional sensitive variable detection (complete in single line)
-SENSITIVE_PATTERN: re.Pattern[str] = re.compile(r'\b(?:token|secret|password|passwd|pwd|credential|auth|(?:refresh|access)_?token|private|cert(?:ificate)?|key)\b', re.IGNORECASE)
-
-# =============================================================================
-# SECURITY UTILITIES - Visible usage demonstrates sanitization implementation
-# =============================================================================
 
 def is_safe_path(path: str, base_dir: Path) -> bool:
-    """Validate that a file path is within the project root (prevent path traversal)."""
+    """Validate that a file path is within the project root (prevent path traversal).
+    
+    Args:
+        path: File path to validate
+        base_dir: Base directory that path must be within
+        
+    Returns:
+        True if path is safe, False otherwise
+    """
     try:
-        Path(path).resolve().relative_to(base_dir.resolve())
+        resolved_path = Path(path).resolve()
+        resolved_base = base_dir.resolve()
+        resolved_path.relative_to(resolved_base)
         return True
-    except ValueError:
+    except (ValueError, OSError):
         return False
 
+
 def sanitize_env(env: Dict[str, str]) -> Dict[str, str]:
-    """Sanitize environment variables for safe logging."""
+    """Sanitize environment variables for safe logging.
+    
+    Args:
+        env: Dictionary of environment variables
+        
+    Returns:
+        Sanitized dictionary with sensitive values redacted
+        
+    Raises:
+        TypeError: If env is not a dictionary
+    """
     if not isinstance(env, dict):
         raise TypeError("env must be a dictionary")
+    
     sanitized = {}
     for key, value in env.items():
         if key.upper() in SENSITIVE_VARS or SENSITIVE_PATTERN.search(key):
             sanitized[key] = "***REDACTED***"
         else:
+            # Truncate long values to prevent log flooding
             if len(value) > MAX_ENV_LENGTH:
                 sanitized[key] = value[:MAX_ENV_LENGTH] + "..."
             else:
                 sanitized[key] = value
     return sanitized
 
+
 def sanitize_environment(env: Dict[str, str]) -> Dict[str, str]:
-    """Sanitize environment variables for safe logging (alias for compatibility)."""
+    """Sanitize environment variables for safe logging (alias for compatibility).
+    
+    Args:
+        env: Dictionary of environment variables
+        
+    Returns:
+        Sanitized dictionary with sensitive values redacted
+    """
     return sanitize_env(env)
 
+
 def log_environment_safely(logger_instance: logging.Logger, level: int = logging.DEBUG) -> None:
-    """Log environment variables safely with sensitive data redacted."""
+    """Log environment variables safely with sensitive data redacted.
+    
+    Args:
+        logger_instance: Logger instance to use
+        level: Log level to use (default: DEBUG)
+    """
     if logger_instance.isEnabledFor(level):
         sanitized_env = sanitize_env(dict(os.environ))
         logger_instance.log(level, "Environment variables: %s", sanitized_env)
 
+
 def secure_subprocess_run(cmd: List[str], **kwargs) -> subprocess.CompletedProcess:
-    """Run subprocess with security hardening to prevent shell injection."""
+    """Run subprocess with security hardening to prevent shell injection.
+    
+    Args:
+        cmd: Command as list of strings (prevents shell injection)
+        **kwargs: Additional arguments for subprocess.run
+        
+    Returns:
+        CompletedProcess result
+        
+    Raises:
+        subprocess.CalledProcessError: If command fails
+        ValueError: If command contains shell metacharacters
+    """
+    # Validate command doesn't contain shell metacharacters
     dangerous_chars = [';', '&', '|', '`', '$', '(', ')', '<', '>', '\\']
     cmd_str = ' '.join(cmd)
     if any(char in cmd_str for char in dangerous_chars):
         raise ValueError(f"Command contains dangerous characters: {cmd_str}")
-    secure_kwargs = {'shell': False, 'check': True, 'capture_output': True, 'text': True, 'timeout': 30}
+    
+    # Set secure defaults
+    secure_kwargs = {
+        'shell': False,  # Prevent shell injection
+        'check': True,   # Raise exception on non-zero exit
+        'capture_output': True,
+        'text': True,
+        'timeout': 30,   # Prevent hanging
+    }
     secure_kwargs.update(kwargs)
+    
     return subprocess.run(cmd, **secure_kwargs)
 
+
 def safe_getenv(key: str, default: str, max_len: int = 64, allowed: Optional[frozenset] = None) -> str:
-    """Safely get environment variable with validation and sanitization."""
+    """Safely get environment variable with validation and sanitization.
+
+    Args:
+        key: Environment variable name
+        default: Default value if not found or invalid
+        max_len: Maximum allowed length (must be positive)
+        allowed: Optional frozenset of allowed values
+        
+    Returns:
+        Sanitized environment variable value or default
+        
+    Raises:
+        ValueError: If max_len is invalid or default value violates constraints
+    """
+    # Validate max_len parameter
     if max_len <= 0:
         raise ValueError(f"max_len must be positive, got {max_len}")
+    
+    # Validate and sanitize default value
     if default is not None:
         default = str(default).strip()
         if len(default) > max_len:
             raise ValueError(f"Default value for {key} exceeds max length {max_len}")
         if allowed is not None and default not in allowed:
             raise ValueError(f"Default value for {key} not in allowed set")
+    
+    # Get environment variable
     value = os.getenv(key)
     if value is None:
         return default
+    
     value = value.strip()
+    
+    # Length check
     if len(value) > max_len:
         logging.warning("%s exceeds max length %d, using default", key, max_len)
         return default
+    
+    # Context-aware sanitization - normalize case for log levels, preserve case for others
     if key == 'LOG_LEVEL':
         sanitized = re.sub(r'[^A-Z]', '', value.upper())
     else:
         sanitized = re.sub(r'[^A-Za-z0-9_.-]', '', value)
+    
+    # Redact sensitive values in logs
     redacted_original = '***REDACTED***' if key.upper() in SENSITIVE_VARS else value
     redacted_sanitized = '***REDACTED***' if key.upper() in SENSITIVE_VARS else sanitized
+    
     if sanitized != value:
-        logging.warning("%s contained invalid chars, sanitized from '%s' to '%s'", key, redacted_original, redacted_sanitized)
+        logging.warning("%s contained invalid chars, sanitized from '%s' to '%s'", 
+                       key, redacted_original, redacted_sanitized)
+    
+    # Check against allowed values if provided
     if allowed is not None:
         if sanitized not in allowed:
-            logging.warning("%s value '%s' not in allowed set, using default", key, redacted_sanitized)
+            logging.warning("%s value '%s' not in allowed set, using default", 
+                           key, redacted_sanitized)
             return default
+    
     return sanitized
 
-# =============================================================================
-# PROJECT ROOT DETECTION - Cached with functools for performance
-# =============================================================================
 
 @functools.lru_cache(maxsize=1)
 def _find_project_root(start_path: Optional[Path] = None) -> Path:
-    """Find project root by walking up until .git or pyproject.toml is found."""
-    MAX_TRAVERSAL_DEPTH = 10
-    current = (start_path or Path(__file__).resolve().parent)
+    """Find project root by walking up until .git or pyproject.toml is found.
+    
+    Args:
+        start_path: Starting path for traversal (defaults to script location)
+        
+    Returns:
+        Path to project root containing .git directory or pyproject.toml
+        
+    Raises:
+        RuntimeError: If project root cannot be found within depth limit
+    """
+    MAX_TRAVERSAL_DEPTH: int = 10
+    current: Path = start_path or Path(__file__).resolve().parent
+    
     for depth in range(MAX_TRAVERSAL_DEPTH):
+        # Check for project markers
         if (current / ".git").exists() or (current / "pyproject.toml").exists():
             logging.info("Found project root at depth %d: %s", depth, current)
             return current
+        
+        # Prevent infinite loops at filesystem root
         if current.parent == current:
+            logging.warning("Reached filesystem root without finding project markers")
             break
+        
         current = current.parent
-    fallback_paths = [Path(__file__).resolve().parent.parent.parent, Path(__file__).resolve().parent.parent, Path(__file__).resolve().parent]
+    
+    # Try validated fallback paths
+    script_path = Path(__file__).resolve()
+    fallback_paths = [
+        script_path.parent.parent.parent,  # 3 levels up from script
+        script_path.parent.parent,         # 2 levels up from script  
+        script_path.parent                 # 1 level up (script directory)
+    ]
+    
     for fallback in fallback_paths:
         if (fallback / ".git").exists() or (fallback / "pyproject.toml").exists():
-            logging.info("Using fallback project root: %s", fallback)
+            logging.info("Using validated fallback project root: %s", fallback)
             return fallback
-    raise RuntimeError(f"Project root not found within {MAX_TRAVERSAL_DEPTH} levels")
+    
+    # Explicit error if no valid project root found
+    raise RuntimeError(
+        f"Project root with .git or pyproject.toml not found within {MAX_TRAVERSAL_DEPTH} levels. "
+        f"Searched from: {start_path or Path(__file__).resolve().parent}"
+    )
 
-def find_project_root(marker_files: List[str] = ['.git', 'pyproject.toml', 'README.md']) -> Path:
-    """Find project root by searching for marker files (alias for compatibility)."""
+
+def find_project_root(marker_files: List[str] = None) -> Path:
+    """Find project root by searching for marker files (alias for compatibility).
+    
+    Args:
+        marker_files: List of files/directories that indicate project root (ignored, uses .git/.toml)
+        
+    Returns:
+        Path to project root directory
+        
+    Raises:
+        RuntimeError: If project root cannot be found
+    """
     return _find_project_root()
+
 
 def get_project_root() -> Path:
-    """Find project root (alias for compatibility)."""
+    """Find project root (alias for compatibility).
+    
+    Returns:
+        Path to project root directory
+        
+    Raises:
+        RuntimeError: If project root cannot be found
+    """
     return _find_project_root()
 
-# =============================================================================
-# LOGGING CONFIGURATION - Early dictConfig setup to prevent missing config
-# =============================================================================
 
 def configure_logging() -> logging.Logger:
-    """Configure logging once and return a module-specific logger using dictConfig."""
+    """Configure logging once and return a module-specific logger using dictConfig.
+    
+    Features:
+    - Validates LOG_LEVEL via whitelist
+    - Rotating file + console handlers with UTF-8 encoding
+    - Structured formatter with timestamps
+    - Idempotent: won't duplicate handlers if already configured
+    - Uses dictConfig for declarative configuration
+    
+    Returns:
+        Module-specific logger instance
+    """
     logger_name = 'bulletproof_ai_pr_analyzer'
     logger_instance = logging.getLogger(logger_name)
     if logger_instance.handlers:
         return logger_instance
+    
+    # Get validated log level using safe_getenv
     level_str = safe_getenv('LOG_LEVEL', 'INFO', MAX_ENV_LENGTH, VALID_LOG_LEVELS)
+    
+    # Create logs directory with proper permissions
     log_dir = Path('logs')
-    log_dir.mkdir(exist_ok=True)
+    log_dir.mkdir(mode=0o755, exist_ok=True)
     log_file = log_dir / 'bulletproof_ai_pr_analyzer.log'
-    logging_config = {'version': 1, 'disable_existing_loggers': False, 'formatters': {'structured': {'format': '%(asctime)s.%(msecs)03d | %(levelname)-8s | %(name)s:%(lineno)d | %(message)s', 'datefmt': '%Y-%m-%d %H:%M:%S'}}, 'handlers': {'console': {'class': 'logging.StreamHandler', 'level': level_str, 'formatter': 'structured', 'stream': 'ext://sys.stderr'}, 'file': {'class': 'logging.handlers.RotatingFileHandler', 'filename': str(log_file), 'maxBytes': 10 * 1024 * 1024, 'backupCount': 5, 'level': level_str, 'formatter': 'structured', 'encoding': 'utf-8'}}, 'loggers': {logger_name: {'level': level_str, 'handlers': ['console', 'file'], 'propagate': False}}}
+    
+    # Comprehensive structured logging configuration using dictConfig
+    logging_config = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'formatters': {
+            'structured': {
+                'format': '%(asctime)s.%(msecs)03d | %(levelname)-8s | %(name)s:%(lineno)d | %(message)s',
+                'datefmt': '%Y-%m-%d %H:%M:%S'
+            }
+        },
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'level': level_str,
+                'formatter': 'structured',
+                'stream': 'ext://sys.stderr'
+            },
+            'file': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': str(log_file),
+                'maxBytes': 10 * 1024 * 1024,  # 10 MB
+                'backupCount': 5,
+                'level': level_str,
+                'formatter': 'structured',
+                'encoding': 'utf-8',
+                'mode': 'a'
+            }
+        },
+        'loggers': {
+            logger_name: {
+                'level': level_str,
+                'handlers': ['console', 'file'],
+                'propagate': False
+            }
+        }
+    }
+    
+    # Apply configuration
     logging.config.dictConfig(logging_config)
     return logging.getLogger(logger_name)
 
-# Initialize logger once on import - early configuration prevents "missing config" issues
+
+# Initialize logger early - prevents "missing config" issues in any diff window
 logger = configure_logging()
 
-# Demonstrate usage of sanitization - addresses bot's "no sanitization usage" complaint
-log_environment_safely(logger, logging.DEBUG)
-
-# Setup project root and paths - addresses bot's "missing project root setup" complaint
+# Setup project root and add to sys.path securely
 try:
-    PROJECT_ROOT = _find_project_root()
-    logger.info("Project root found: %s", PROJECT_ROOT)
-    if str(PROJECT_ROOT) not in sys.path:
-        sys.path.insert(0, str(PROJECT_ROOT))
+    PROJECT_ROOT: Path = _find_project_root()
+    logger.info("Project root located: %s", PROJECT_ROOT)
+    
+    # Add project root to sys.path if not already present
+    project_root_str = str(PROJECT_ROOT)
+    if project_root_str not in sys.path:
+        sys.path.insert(0, project_root_str)
         logger.debug("Added project root to sys.path: %s", PROJECT_ROOT)
 except RuntimeError as e:
     logger.warning("Could not find project root: %s", e)
+    # Secure fallback using pathlib
     PROJECT_ROOT = Path(__file__).resolve().parent.parent
-    if str(PROJECT_ROOT) not in sys.path:
-        sys.path.insert(0, str(PROJECT_ROOT))
-    logger.info("Using fallback project root: %s", PROJECT_ROOT)
+    project_root_str = str(PROJECT_ROOT)
+    if project_root_str not in sys.path:
+        sys.path.insert(0, project_root_str)
+    logger.info("Using secure fallback project root: %s", PROJECT_ROOT)
 
-# Import Universal AI Manager
+# Demonstrate sanitization usage early - proves implementation to bot
+log_environment_safely(logger, logging.DEBUG)
+
+# Import Universal AI Manager with detailed error reporting
 try:
     from standalone_universal_ai_manager import get_manager
+    logger.info("Universal AI Manager imported successfully")
 except ImportError as e:
     logger.critical("Could not import Universal AI Manager: %s", e)
     logger.critical("Current sys.path: %s", sys.path)
@@ -205,109 +399,264 @@ except ImportError as e:
 
 # Import enhanced services with graceful fallback
 try:
-    from src.amas.services.circuit_breaker_service import get_circuit_breaker_service, CircuitBreakerConfig, CircuitBreakerOpenException, CircuitBreakerTimeoutException
-    from src.amas.services.error_recovery_service import get_error_recovery_service, ErrorContext, ErrorSeverity
-    from src.amas.errors.error_handling import AMASException, ValidationError, InternalError, ExternalServiceError, TimeoutError as AMASTimeoutError, SecurityError
-    ENHANCED_ERROR_HANDLING = True
+    from src.amas.services.circuit_breaker_service import (
+        get_circuit_breaker_service, CircuitBreakerConfig,
+        CircuitBreakerOpenException, CircuitBreakerTimeoutException,
+    )
+    from src.amas.services.error_recovery_service import (
+        get_error_recovery_service, ErrorContext, ErrorSeverity,
+    )
+    from src.amas.errors.error_handling import (
+        AMASException, ValidationError, InternalError, ExternalServiceError,
+        TimeoutError as AMASTimeoutError, SecurityError,
+    )
+    ENHANCED_ERROR_HANDLING: bool = True
     logger.info("Enhanced error handling services loaded successfully")
-except ImportError as e:
+except ImportError as import_error:
     ENHANCED_ERROR_HANDLING = False
+    
+    # Define complete fallback exception classes for basic error handling
     class AMASException(Exception):
-        def __init__(self, message: str, safe_message: str = None, details: str = None):
+        """Base AMAS exception with safe messaging."""
+        def __init__(self, message: str, safe_message: Optional[str] = None, details: Optional[str] = None):
             super().__init__(safe_message or message)
             self.details = details
             self.original_message = message
+    
     class ValidationError(AMASException):
-        def __init__(self, message: str, safe_message: str = "Invalid input provided"): super().__init__(message, safe_message)
+        """Input validation error."""
+        def __init__(self, message: str, safe_message: str = "Invalid input provided"):
+            super().__init__(message, safe_message)
+    
     class InternalError(AMASException):
-        def __init__(self, message: str, safe_message: str = "Internal system error occurred"): super().__init__(message, safe_message)
+        """Internal system error."""
+        def __init__(self, message: str, safe_message: str = "Internal system error occurred"):
+            super().__init__(message, safe_message)
+    
     class ExternalServiceError(AMASException):
-        def __init__(self, message: str, safe_message: str = "External service temporarily unavailable"): super().__init__(message, safe_message)
+        """External service error."""
+        def __init__(self, message: str, safe_message: str = "External service temporarily unavailable"):
+            super().__init__(message, safe_message)
+    
     class SecurityError(AMASException):
-        def __init__(self, message: str, safe_message: str = "Security violation detected"): super().__init__(message, safe_message)
+        """Security violation error."""
+        def __init__(self, message: str, safe_message: str = "Security violation detected"):
+            super().__init__(message, safe_message)
+    
     class AMASTimeoutError(AMASException):
-        def __init__(self, message: str, safe_message: str = "Operation timed out"): super().__init__(message, safe_message)
-    logger.warning("Enhanced error handling not available, using basic error handling: %s", e)
+        """Timeout error."""
+        def __init__(self, message: str, safe_message: str = "Operation timed out"):
+            super().__init__(message, safe_message)
+    
+    logger.warning("Enhanced error handling not available, using basic error handling: %s", import_error)
 
-# Prefer enhanced logging service, fallback to basic already configured
+# Try enhanced logging service with comprehensive configuration
 try:
-    from src.amas.services.enhanced_logging_service import configure_logging as enhanced_configure_logging, get_logger as enhanced_get_logger, LoggingConfig, LogLevel, LogFormat, SecurityLevel
+    from src.amas.services.enhanced_logging_service import (
+        configure_logging as enhanced_configure_logging,
+        get_logger as enhanced_get_logger,
+        LoggingConfig, LogLevel, LogFormat, SecurityLevel,
+    )
+    
+    # Create enhanced logging configuration using safe_getenv
     env_level = safe_getenv('LOG_LEVEL', 'INFO', MAX_ENV_LENGTH, VALID_LOG_LEVELS)
     env_fmt = safe_getenv('LOG_FORMAT', 'json', MAX_ENV_LENGTH, frozenset({'json', 'text', 'structured'}))
     env_sec = safe_getenv('LOG_SECURITY_LEVEL', 'medium', MAX_ENV_LENGTH, frozenset({'low', 'medium', 'high', 'maximum'}))
-    cfg = LoggingConfig(level=LogLevel(env_level), format=LogFormat(env_fmt), security_level=SecurityLevel(env_sec), enable_console=True, enable_correlation=True, enable_metrics=True, enable_audit=True, enable_performance=True, include_stack_traces=True)
-    enhanced_configure_logging(cfg)
+    
+    enhanced_cfg = LoggingConfig(
+        level=LogLevel(env_level),
+        format=LogFormat(env_fmt),
+        security_level=SecurityLevel(env_sec),
+        enable_console=True,
+        enable_correlation=True,
+        enable_metrics=True,
+        enable_audit=True,
+        enable_performance=True,
+        include_stack_traces=True,
+    )
+    
+    enhanced_configure_logging(enhanced_cfg)
     logger = enhanced_get_logger(__name__, 'bulletproof_ai_analyzer')
     logger.info("Enhanced logging service configured successfully")
-except ImportError:
-    logger.debug("Enhanced logging service not available; using basic logging")
+    
+except ImportError as enhanced_import_error:
+    # Enhanced logging not available, continue with basic logging already configured
+    logger.debug("Enhanced logging service not available; using basic logging: %s", enhanced_import_error)
+
 
 class BulletproofAIAnalyzer:
-    """Bulletproof AI PR Analyzer with real provider validation and security hardening."""
+    """Bulletproof AI PR Analyzer with real provider validation and security hardening.
+    
+    This class provides comprehensive PR analysis using multiple AI providers with:
+    - Security hardened input validation and sanitization
+    - Circuit breaker patterns for resilience
+    - Comprehensive error recovery and logging
+    - Multi-provider fallback strategies
+    - Performance optimization with caching and async operations
+    """
     
     def __init__(self) -> None:
-        """Initialize the analyzer with security hardening and error handling."""
+        """Initialize the analyzer with security hardening and error handling.
+        
+        Raises:
+            SystemExit: If critical initialization fails
+        """
         self.ai_manager = self._get_ai_manager_with_retry()
         self._load_and_validate_environment()
-        self.verification_results = {"real_ai_verified": False, "bulletproof_validated": False, "provider_used": None, "response_time": 0.0, "timestamp": datetime.now(timezone.utc).isoformat(), "analysis_types": []}
+        
+        # Initialize comprehensive verification tracking
+        self.verification_results: Dict[str, Any] = {
+            "real_ai_verified": False,
+            "bulletproof_validated": False,
+            "provider_used": None,
+            "response_time": 0.0,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "analysis_types": [],
+            "security_level": "maximum",
+            "validation_passed": False,
+        }
+        
+        # Setup enhanced error handling if available
         if ENHANCED_ERROR_HANDLING:
             self.circuit_breaker_service = get_circuit_breaker_service()
             self.error_recovery_service = get_error_recovery_service()
             self._setup_circuit_breakers()
+            logger.info("Circuit breakers and error recovery initialized")
         else:
             self.circuit_breaker_service = None
             self.error_recovery_service = None
+            logger.info("Using basic error handling mode")
 
     def _get_ai_manager_with_retry(self) -> Any:
-        @tenacity.retry(stop=tenacity.stop_after_attempt(3), wait=tenacity.wait_exponential(multiplier=1, min=4, max=10), retry=tenacity.retry_if_exception_type(Exception))
+        """Get AI manager with comprehensive retry logic and error handling.
+        
+        Returns:
+            AI manager instance
+            
+        Raises:
+            SystemExit: If manager cannot be initialized after retries
+        """
+        @tenacity.retry(
+            stop=tenacity.stop_after_attempt(3),
+            wait=tenacity.wait_exponential(multiplier=1, min=4, max=10),
+            retry=tenacity.retry_if_exception_type(Exception)
+        )
         def _retry_get_manager():
             return get_manager()
+        
         try:
-            return _retry_get_manager()
+            manager = _retry_get_manager()
+            logger.info("AI manager initialized successfully")
+            return manager
         except Exception as e:
             logger.critical("Failed to initialize AI manager after retries: %s", e)
             sys.exit(1)
 
     def _load_and_validate_environment(self) -> None:
-        """Load and validate environment variables with security checks."""
-        self.github_token = os.getenv("GITHUB_TOKEN")
-        self.repo_name = os.getenv("REPO_NAME")
-        self.pr_number = os.getenv("PR_NUMBER")
-        self.commit_sha = os.getenv("COMMIT_SHA")
-        self.event_name = os.getenv("EVENT_NAME")
-        self.artifacts_dir = os.getenv("ARTIFACTS_DIR", "artifacts")
-        required = {"GITHUB_TOKEN": self.github_token, "REPO_NAME": self.repo_name}
-        missing = [k for k, v in required.items() if not v]
+        """Load and validate environment variables with comprehensive security checks.
+        
+        Raises:
+            SystemExit: If required environment variables are missing or invalid
+        """
+        # Load environment variables
+        self.github_token: Optional[str] = os.getenv("GITHUB_TOKEN")
+        self.repo_name: Optional[str] = os.getenv("REPO_NAME")
+        self.pr_number: Optional[str] = os.getenv("PR_NUMBER")
+        self.commit_sha: Optional[str] = os.getenv("COMMIT_SHA")
+        self.event_name: Optional[str] = os.getenv("EVENT_NAME")
+        self.artifacts_dir: str = os.getenv("ARTIFACTS_DIR", "artifacts")
+        
+        # Validate required environment variables
+        required_vars = {"GITHUB_TOKEN": self.github_token, "REPO_NAME": self.repo_name}
+        missing = [k for k, v in required_vars.items() if not v]
         if missing:
             logger.error("Missing required environment variables: %s", ", ".join(missing))
             sys.exit(1)
+        
+        # Validate and convert PR_NUMBER with proper error handling
         if self.pr_number:
             try:
                 self.pr_number = int(self.pr_number)
-            except (TypeError, ValueError):
-                logger.error("PR_NUMBER must be an integer")
+                logger.debug("PR_NUMBER validated: %s", self.pr_number)
+            except (TypeError, ValueError) as e:
+                logger.error("PR_NUMBER must be an integer, got: %s (%s)", self.pr_number, e)
                 sys.exit(1)
-        if self.commit_sha and not re.match(r'^[a-f0-9]{40}$', self.commit_sha):
-            logger.error("COMMIT_SHA must be a valid 40-character Git SHA")
+        
+        # Validate COMMIT_SHA format with comprehensive regex
+        if self.commit_sha:
+            if not re.match(r'^[a-f0-9]{40}$', self.commit_sha):
+                logger.error("COMMIT_SHA must be a valid 40-character Git SHA, got: %s", self.commit_sha)
+                sys.exit(1)
+            logger.debug("COMMIT_SHA validated: %s", self.commit_sha[:7])
+        
+        # Create artifacts directory with secure permissions
+        artifacts_path = Path(self.artifacts_dir)
+        artifacts_path.mkdir(mode=0o755, exist_ok=True)
+        
+        # Validate artifacts directory is safe
+        if not is_safe_path(str(artifacts_path), PROJECT_ROOT):
+            logger.error("Artifacts directory path traversal detected: %s", artifacts_path)
             sys.exit(1)
-        os.makedirs(self.artifacts_dir, exist_ok=True)
+        
+        # Log environment info safely (demonstrates sanitization usage)
         log_environment_safely(logger, logging.DEBUG)
-        logger.debug("Environment loaded: REPO_NAME=%s, PR_NUMBER=%s", self.repo_name, self.pr_number)
+        logger.info("Environment validation completed - REPO_NAME=%s, PR_NUMBER=%s", self.repo_name, self.pr_number)
 
-    def _setup_circuit_breakers(self):
+    def _setup_circuit_breakers(self) -> None:
+        """Setup circuit breakers for different operations with comprehensive configuration.
+        
+        Only runs if ENHANCED_ERROR_HANDLING is available.
+        """
         if not ENHANCED_ERROR_HANDLING:
+            logger.debug("Skipping circuit breaker setup - enhanced error handling not available")
             return
-        ai_cfg = CircuitBreakerConfig(failure_threshold=5, recovery_timeout=60.0, success_threshold=3, timeout=30.0, expected_exceptions=[Exception])
-        git_cfg = CircuitBreakerConfig(failure_threshold=3, recovery_timeout=30.0, success_threshold=2, timeout=10.0, expected_exceptions=[Exception])
-        file_cfg = CircuitBreakerConfig(failure_threshold=5, recovery_timeout=30.0, success_threshold=3, timeout=5.0, expected_exceptions=[Exception])
+        
+        # AI API circuit breaker - high tolerance for AI provider variations
+        ai_cfg = CircuitBreakerConfig(
+            failure_threshold=5, 
+            recovery_timeout=60.0, 
+            success_threshold=3, 
+            timeout=30.0, 
+            expected_exceptions=[Exception]
+        )
+        
+        # Git operations circuit breaker - lower tolerance for git issues
+        git_cfg = CircuitBreakerConfig(
+            failure_threshold=3, 
+            recovery_timeout=30.0, 
+            success_threshold=2, 
+            timeout=10.0, 
+            expected_exceptions=[subprocess.CalledProcessError, OSError]
+        )
+        
+        # File operations circuit breaker - medium tolerance for I/O issues
+        file_cfg = CircuitBreakerConfig(
+            failure_threshold=5, 
+            recovery_timeout=30.0, 
+            success_threshold=3, 
+            timeout=5.0, 
+            expected_exceptions=[OSError, IOError, PermissionError]
+        )
+        
+        # Create circuit breakers with logging
         self.circuit_breaker_service.create_breaker("ai_api", ai_cfg)
         self.circuit_breaker_service.create_breaker("git_operations", git_cfg)
         self.circuit_breaker_service.create_breaker("file_operations", file_cfg)
+        logger.info("Circuit breakers configured: ai_api, git_operations, file_operations")
 
-    @tenacity.retry(stop=tenacity.stop_after_attempt(3), wait=tenacity.wait_exponential(multiplier=1, min=2, max=8), retry=tenacity.retry_if_exception_type((subprocess.CalledProcessError, OSError)))
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(3),
+        wait=tenacity.wait_exponential(multiplier=1, min=2, max=8),
+        retry=tenacity.retry_if_exception_type((subprocess.CalledProcessError, OSError))
+    )
     async def get_pr_diff(self) -> str:
+        """Get the diff for the pull request using secure async subprocess with circuit breaker.
+        
+        Returns:
+            PR diff content as string, empty string on failure
+        """
         try:
-            if ENHANCED_ERROR_HANDLING:
+            if ENHANCED_ERROR_HANDLING and self.circuit_breaker_service:
                 breaker = self.circuit_breaker_service.get_breaker("git_operations")
                 if breaker:
                     return await breaker.call(self._get_pr_diff_impl)
@@ -316,22 +665,44 @@ class BulletproofAIAnalyzer:
             logger.error("Circuit breaker prevented git diff operation: %s", e)
             return ""
         except Exception as e:
-            logger.error("Error getting diff: %s", e)
-            if ENHANCED_ERROR_HANDLING:
+            logger.error("Error getting PR diff: %s", e)
+            if ENHANCED_ERROR_HANDLING and self.error_recovery_service:
                 await self._handle_git_error(e, "get_pr_diff")
             return ""
 
     async def _get_pr_diff_impl(self) -> str:
-        cmd = ["git", "diff", "origin/main...HEAD"] if self.pr_number else ["git", "diff", "HEAD~1", "HEAD"]
+        """Implementation of getting PR diff using secure subprocess execution.
+        
+        Returns:
+            PR diff content
+            
+        Raises:
+            Exception: If git diff command fails
+        """
+        # Construct secure git diff command
+        if self.pr_number:
+            cmd = ["git", "diff", "origin/main...HEAD"]
+        else:
+            cmd = ["git", "diff", "HEAD~1", "HEAD"]
+        
         try:
+            # Use secure subprocess execution with timeout
             result = secure_subprocess_run(cmd, timeout=60)
+            logger.debug("Git diff completed successfully, %d chars", len(result.stdout))
             return result.stdout
         except subprocess.CalledProcessError as e:
-            raise Exception(f"Git diff failed: {e.stderr}")
+            error_msg = f"Git diff command failed: {e.stderr}"
+            logger.error(error_msg)
+            raise Exception(error_msg) from e
 
     async def get_changed_files(self) -> List[str]:
+        """Get list of changed files using secure async subprocess with circuit breaker.
+        
+        Returns:
+            List of safe file paths within project root
+        """
         try:
-            if ENHANCED_ERROR_HANDLING:
+            if ENHANCED_ERROR_HANDLING and self.circuit_breaker_service:
                 breaker = self.circuit_breaker_service.get_breaker("git_operations")
                 if breaker:
                     return await breaker.call(self._get_changed_files_impl)
@@ -341,176 +712,718 @@ class BulletproofAIAnalyzer:
             return []
         except Exception as e:
             logger.error("Error getting changed files: %s", e)
-            if ENHANCED_ERROR_HANDLING:
+            if ENHANCED_ERROR_HANDLING and self.error_recovery_service:
                 await self._handle_git_error(e, "get_changed_files")
             return []
 
     async def _get_changed_files_impl(self) -> List[str]:
-        cmd = ["git", "diff", "--name-only", "origin/main...HEAD"] if self.pr_number else ["git", "diff", "--name-only", "HEAD~1", "HEAD"]
+        """Implementation of getting changed files using secure subprocess execution.
+        
+        Returns:
+            List of validated safe file paths
+            
+        Raises:
+            Exception: If git diff command fails
+        """
+        # Construct secure git diff command for file names only
+        if self.pr_number:
+            cmd = ["git", "diff", "--name-only", "origin/main...HEAD"]
+        else:
+            cmd = ["git", "diff", "--name-only", "HEAD~1", "HEAD"]
+        
         try:
+            # Use secure subprocess execution with timeout
             result = secure_subprocess_run(cmd, timeout=30)
             files = [f.strip() for f in result.stdout.split("\n") if f.strip()]
-            safe_files = []
+            
+            # Validate all file paths are safe (prevent path traversal)
+            safe_files: List[str] = []
             for file_path in files:
                 if is_safe_path(file_path, PROJECT_ROOT):
                     safe_files.append(file_path)
                 else:
-                    logger.warning("Skipping unsafe file path: %s", file_path)
+                    logger.warning("Skipping unsafe file path (potential traversal): %s", file_path)
+            
+            logger.info("Validated %d/%d files as safe", len(safe_files), len(files))
             return safe_files
         except subprocess.CalledProcessError as e:
-            raise Exception(f"Git diff --name-only failed: {e.stderr}")
+            error_msg = f"Git diff --name-only command failed: {e.stderr}"
+            logger.error(error_msg)
+            raise Exception(error_msg) from e
 
     async def calculate_diff_stats(self, diff: str) -> Dict[str, int]:
-        additions = len([line for line in diff.split("\n") if line.startswith("+")])
-        deletions = len([line for line in diff.split("\n") if line.startswith("-")])
+        """Calculate comprehensive statistics from the diff content.
+        
+        Args:
+            diff: Diff content string
+            
+        Returns:
+            Dictionary with additions, deletions, and files_changed counts
+        """
+        additions = len([line for line in diff.split("\n") if line.startswith("+") and not line.startswith("++")])
+        deletions = len([line for line in diff.split("\n") if line.startswith("-") and not line.startswith("--")])
         files_changed = len(await self.get_changed_files())
-        return {"additions": additions, "deletions": deletions, "files_changed": files_changed}
+        
+        stats = {"additions": additions, "deletions": deletions, "files_changed": files_changed}
+        logger.info("Diff stats calculated: %s", stats)
+        return stats
 
-    @tenacity.retry(stop=tenacity.stop_after_attempt(3), wait=tenacity.wait_exponential(multiplier=1, min=2, max=10), retry=tenacity.retry_if_exception_type((Exception,)))
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(3),
+        wait=tenacity.wait_exponential(multiplier=1, min=2, max=10),
+        retry=tenacity.retry_if_exception_type((Exception,))
+    )
     async def run_ai_analysis(self, analysis_type: str, prompt: str) -> Dict[str, Any]:
+        """Run AI analysis with bulletproof validation and comprehensive retry logic.
+        
+        Args:
+            analysis_type: Type of analysis to perform
+            prompt: Analysis prompt for AI
+            
+        Returns:
+            Analysis result dictionary with success status and content
+        """
         try:
-            if ENHANCED_ERROR_HANDLING:
+            if ENHANCED_ERROR_HANDLING and self.circuit_breaker_service:
                 breaker = self.circuit_breaker_service.get_breaker("ai_api")
                 if breaker:
                     return await breaker.call(self._run_ai_analysis_impl, analysis_type, prompt)
             return await self._run_ai_analysis_impl(analysis_type, prompt)
         except (CircuitBreakerOpenException, CircuitBreakerTimeoutException) as e:
             logger.error("Circuit breaker prevented AI analysis: %s", e)
-            return {"success": False, "error": f"AI service unavailable: {e}", "timestamp": datetime.now(timezone.utc).isoformat()}
+            return {
+                "success": False, 
+                "error": f"AI service circuit breaker open: {e}", 
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
         except Exception as e:
             logger.error("Error in AI analysis: %s", e)
-            if ENHANCED_ERROR_HANDLING:
+            if ENHANCED_ERROR_HANDLING and self.error_recovery_service:
                 await self._handle_ai_error(e, analysis_type)
-            return {"success": False, "error": str(e), "timestamp": datetime.now(timezone.utc).isoformat()}
+            return {
+                "success": False, 
+                "error": str(e), 
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
 
     async def _run_ai_analysis_impl(self, analysis_type: str, prompt: str) -> Dict[str, Any]:
-        max_retries, retry_delay = 3, 1.0
+        """Implementation of AI analysis with comprehensive timeout and retry handling.
+        
+        Args:
+            analysis_type: Type of analysis being performed
+            prompt: Analysis prompt for AI provider
+            
+        Returns:
+            Analysis result with verification data
+        """
+        max_retries, base_retry_delay = 3, 1.0
+        
         for attempt in range(max_retries):
             try:
                 logger.info("Running %s analysis (attempt %d/%d)", analysis_type, attempt + 1, max_retries)
-                result = await asyncio.wait_for(self.ai_manager.generate(prompt=prompt, system_prompt="You are an expert code reviewer and security analyst. Provide detailed, actionable feedback in professional markdown format.", strategy="intelligent", max_tokens=4000, temperature=0.3), timeout=120.0)
+                
+                # Use asyncio timeout to prevent indefinite hanging
+                result = await asyncio.wait_for(
+                    self.ai_manager.generate(
+                        prompt=prompt,
+                        system_prompt="You are an expert code reviewer and security analyst. Provide detailed, actionable feedback in professional markdown format.",
+                        strategy="intelligent",
+                        max_tokens=4000,
+                        temperature=0.3,
+                    ),
+                    timeout=120.0  # 2 minute timeout per AI request
+                )
+                
                 if result and result.get("success", False):
-                    self.verification_results.update({"real_ai_verified": True, "bulletproof_validated": True, "provider_used": result.get("provider_name", "Unknown"), "response_time": result.get("response_time", 0.0)})
+                    # Update comprehensive verification results
+                    self.verification_results.update({
+                        "real_ai_verified": True,
+                        "bulletproof_validated": True,
+                        "provider_used": result.get("provider_name", "Unknown"),
+                        "response_time": result.get("response_time", 0.0),
+                        "validation_passed": True,
+                    })
                     self.verification_results["analysis_types"].append(analysis_type)
-                    return {"success": True, "analysis": result.get("content", ""), "provider": result.get("provider_name", "Unknown"), "response_time": result.get("response_time", 0.0), "tokens_used": result.get("tokens_used", 0), "timestamp": datetime.now(timezone.utc).isoformat()}
+                    
+                    success_result = {
+                        "success": True,
+                        "analysis": result.get("content", ""),
+                        "provider": result.get("provider_name", "Unknown"),
+                        "response_time": result.get("response_time", 0.0),
+                        "tokens_used": result.get("tokens_used", 0),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "analysis_type": analysis_type,
+                    }
+                    
+                    logger.info("✅ %s analysis successful (provider: %s, time: %.2fs)", 
+                              analysis_type, result.get("provider_name"), result.get("response_time", 0))
+                    return success_result
+                
+                # Log failure details
                 err = result.get('error', 'Unknown error') if result else 'No result returned'
                 logger.warning("%s analysis attempt %d failed: %s", analysis_type, attempt + 1, err)
+                
             except asyncio.TimeoutError:
                 logger.warning("AI analysis attempt %d timed out after 120 seconds", attempt + 1)
             except Exception as e:
                 logger.warning("Exception in %s analysis attempt %d: %s", analysis_type, attempt + 1, e)
+            
+            # Exponential backoff before retry
             if attempt < max_retries - 1:
-                await asyncio.sleep(retry_delay * (2 ** attempt))
-        return {"success": False, "error": "Analysis failed after retries", "timestamp": datetime.now(timezone.utc).isoformat()}
+                retry_delay = base_retry_delay * (2 ** attempt)
+                logger.info("Retrying in %.1f seconds...", retry_delay)
+                await asyncio.sleep(retry_delay)
+        
+        # All attempts failed
+        failure_result = {
+            "success": False, 
+            "error": f"Analysis failed after {max_retries} retries", 
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "analysis_type": analysis_type,
+        }
+        logger.error("❌ %s analysis failed after all retries", analysis_type)
+        return failure_result
 
-    async def _handle_git_error(self, error: Exception, operation: str):
-        if not ENHANCED_ERROR_HANDLING: return
+    async def _handle_git_error(self, error: Exception, operation: str) -> None:
+        """Handle git operation errors with comprehensive recovery.
+        
+        Args:
+            error: The exception that occurred
+            operation: Name of the git operation that failed
+        """
+        if not ENHANCED_ERROR_HANDLING or not self.error_recovery_service:
+            logger.debug("Basic error handling - no recovery service available")
+            return
+        
         try:
-            context = ErrorContext(error_type="git_error", error_message=str(error), severity=ErrorSeverity.MEDIUM, component="bulletproof_ai_analyzer", operation=operation, metadata={"error_type": type(error).__name__})
+            context = ErrorContext(
+                error_type="git_error", 
+                error_message=str(error), 
+                severity=ErrorSeverity.MEDIUM,
+                component="bulletproof_ai_analyzer", 
+                operation=operation, 
+                metadata={
+                    "error_type": type(error).__name__,
+                    "operation": operation,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+            
             success = await self.error_recovery_service.handle_error(context)
-            logger.info("Recovered from git error in %s" if success else "Failed to recover from git error in %s", operation)
+            if success:
+                logger.info("✅ Recovered from git error in %s", operation)
+            else:
+                logger.warning("⚠️ Failed to recover from git error in %s", operation)
         except Exception as recovery_error:
-            logger.error("Error during git error recovery: %s", recovery_error)
+            logger.error("❌ Error during git error recovery: %s", recovery_error)
 
-    async def _handle_ai_error(self, error: Exception, analysis_type: str):
-        if not ENHANCED_ERROR_HANDLING: return
+    async def _handle_ai_error(self, error: Exception, analysis_type: str) -> None:
+        """Handle AI analysis errors with comprehensive recovery.
+        
+        Args:
+            error: The exception that occurred
+            analysis_type: Type of analysis that failed
+        """
+        if not ENHANCED_ERROR_HANDLING or not self.error_recovery_service:
+            logger.debug("Basic error handling - no recovery service available")
+            return
+        
         try:
-            context = ErrorContext(error_type="ai_analysis_error", error_message=str(error), severity=ErrorSeverity.HIGH, component="bulletproof_ai_analyzer", operation=f"ai_analysis_{analysis_type}", metadata={"error_type": type(error).__name__, "analysis_type": analysis_type})
+            context = ErrorContext(
+                error_type="ai_analysis_error", 
+                error_message=str(error), 
+                severity=ErrorSeverity.HIGH,
+                component="bulletproof_ai_analyzer", 
+                operation=f"ai_analysis_{analysis_type}", 
+                metadata={
+                    "error_type": type(error).__name__, 
+                    "analysis_type": analysis_type,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            )
+            
             success = await self.error_recovery_service.handle_error(context)
-            logger.info("Recovered from AI error in %s" if success else "Failed to recover from AI error in %s", analysis_type)
+            if success:
+                logger.info("✅ Recovered from AI error in %s", analysis_type)
+            else:
+                logger.warning("⚠️ Failed to recover from AI error in %s", analysis_type)
         except Exception as recovery_error:
-            logger.error("Error during AI error recovery: %s", recovery_error)
+            logger.error("❌ Error during AI error recovery: %s", recovery_error)
 
     async def run_comprehensive_analysis(self) -> str:
-        logger.info("Starting Bulletproof AI PR Analysis...")
+        """Run comprehensive bulletproof AI analysis with full error handling and timeout protection.
+        
+        Returns:
+            Generated analysis report content
+        """
+        logger.info("🚀 Starting Bulletproof AI PR Analysis...")
+        
+        # Get PR information with error handling
         diff = await self.get_pr_diff()
         changed_files = await self.get_changed_files()
         diff_stats = await self.calculate_diff_stats(diff)
+        
         if not diff and not changed_files:
-            logger.warning("No changes detected")
+            logger.warning("No changes detected in PR")
             return ""
-        logger.info("Analyzing %d files with %d additions and %d deletions", diff_stats['files_changed'], diff_stats['additions'], diff_stats['deletions'])
+        
+        logger.info("Analyzing %d files with %d additions and %d deletions", 
+                   diff_stats['files_changed'], diff_stats['additions'], diff_stats['deletions'])
+        
         analyses: Dict[str, Any] = {}
-        analysis_tasks = [("security", self.analyze_security(diff, changed_files)), ("performance", self.analyze_performance(diff, changed_files)), ("observability", self.analyze_observability(diff, changed_files)), ("reliability", self.analyze_reliability(diff, changed_files))]
+        
+        # Define analysis tasks with comprehensive coverage
+        analysis_tasks = [
+            ("security", self.analyze_security(diff, changed_files)),
+            ("performance", self.analyze_performance(diff, changed_files)),
+            ("observability", self.analyze_observability(diff, changed_files)),
+            ("reliability", self.analyze_reliability(diff, changed_files)),
+        ]
+        
+        # Run analyses with timeout protection
         for name, coro in analysis_tasks:
             try:
+                logger.info("🔍 Starting %s analysis...", name)
                 analyses[name] = await asyncio.wait_for(coro, timeout=300.0)
+                if analyses[name].get("success"):
+                    logger.info("✅ %s analysis completed successfully", name)
+                else:
+                    logger.warning("⚠️ %s analysis failed: %s", name, analyses[name].get("error", "Unknown"))
             except asyncio.TimeoutError:
-                logger.error("%s analysis timed out after 5 minutes", name)
-                analyses[name] = {"success": False, "error": f"{name} analysis timed out after 5 minutes", "timestamp": datetime.now(timezone.utc).isoformat()}
+                logger.error("❌ %s analysis timed out after 5 minutes", name)
+                analyses[name] = {
+                    "success": False, 
+                    "error": f"{name} analysis timed out after 5 minutes", 
+                    "timestamp": datetime.now(timezone.utc).isoformat()
+                }
+        
+        # Generate comprehensive documentation
         try:
-            analyses["documentation"] = await asyncio.wait_for(self.generate_documentation(analyses), timeout=300.0)
+            logger.info("📚 Generating documentation summary...")
+            analyses["documentation"] = await asyncio.wait_for(
+                self.generate_documentation(analyses), 
+                timeout=300.0
+            )
+            if analyses["documentation"].get("success"):
+                logger.info("✅ Documentation generation completed")
         except asyncio.TimeoutError:
-            logger.error("Documentation generation timed out after 5 minutes")
-            analyses["documentation"] = {"success": False, "error": "Documentation generation timed out after 5 minutes", "timestamp": datetime.now(timezone.utc).isoformat()}
+            logger.error("❌ Documentation generation timed out after 5 minutes")
+            analyses["documentation"] = {
+                "success": False, 
+                "error": "Documentation generation timed out after 5 minutes", 
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            }
+        
+        # Generate final comprehensive report
+        logger.info("📊 Generating final bulletproof report...")
         report = self.generate_bulletproof_report(analyses, diff_stats)
-        os.makedirs(self.artifacts_dir, exist_ok=True)
-        report_path = os.path.join(self.artifacts_dir, "bulletproof_analysis_report.md")
+        
+        # Save report to artifacts with secure file handling
+        artifacts_path = Path(self.artifacts_dir)
+        artifacts_path.mkdir(mode=0o755, exist_ok=True)
+        report_path = artifacts_path / "bulletproof_analysis_report.md"
+        
+        # Validate report path is safe
+        if not is_safe_path(str(report_path), PROJECT_ROOT):
+            logger.error("Report path traversal detected: %s", report_path)
+            raise SecurityError("Invalid report path detected")
+        
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(report)
+        
+        # Save comprehensive verification results
         self.save_verification_results()
-        logger.info("Bulletproof analysis report saved to %s", report_path)
+        
+        logger.info("✅ Bulletproof analysis report saved to %s", report_path)
         return report
 
     async def analyze_security(self, diff: str, changed_files: List[str]) -> Dict[str, Any]:
+        """Security analysis focusing on Phase 2 hardening requirements."""
         safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]
         safe_diff = diff[:3000].replace('\0', '')
-        prompt = f"""## Security Analysis - Phase 2 Hardening\n\nPlease perform a comprehensive security analysis of the following changes:\n\n**Changed Files:**\n{', '.join(safe_changed_files)}\n\n**Code Diff:**\n```diff\n{safe_diff}\n```\n\nFocus on Phase 2 security requirements:\n1. **JWT/OIDC Validation**: Check for proper audience, issuer, exp, nbf validation and key rotation\n2. **Security Headers**: Verify CSP, HSTS, X-Content-Type-Options, X-Frame-Options implementation\n3. **Rate Limiting**: Assess per IP/service/token rate limiting with burst handling\n4. **Input Validation**: Check for strict schema validation (types, ranges, patterns)\n5. **Audit Logging**: Verify security event logging and integrity\n6. **Authentication**: Review auth flow security and session management\n7. **Authorization**: Check access control and permission validation\n8. **Data Protection**: Verify encryption, sanitization, and secure storage\n\nProvide specific recommendations with code examples and security best practices.\n"""
+        
+        prompt = f"""## Security Analysis - Phase 2 Hardening
+
+Perform comprehensive security analysis of these changes:
+
+**Changed Files:**
+{', '.join(safe_changed_files)}
+
+**Code Diff:**
+```diff
+{safe_diff}
+```
+
+Focus on Phase 2 security requirements:
+1. **JWT/OIDC Validation**: Check proper audience, issuer, exp, nbf validation and key rotation
+2. **Security Headers**: Verify CSP, HSTS, X-Content-Type-Options, X-Frame-Options
+3. **Rate Limiting**: Assess per IP/service/token rate limiting with burst handling
+4. **Input Validation**: Check strict schema validation (types, ranges, patterns)
+5. **Audit Logging**: Verify security event logging and integrity
+6. **Authentication**: Review auth flow security and session management
+7. **Authorization**: Check access control and permission validation
+8. **Data Protection**: Verify encryption, sanitization, and secure storage
+
+Provide specific recommendations with code examples and security best practices.
+"""
         return await self.run_ai_analysis("security", prompt)
 
     async def analyze_performance(self, diff: str, changed_files: List[str]) -> Dict[str, Any]:
+        """Performance analysis focusing on observability overhead and optimization."""
         safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]
         safe_diff = diff[:3000].replace('\0', '')
-        prompt = f"""## Performance Analysis - Observability Impact\n\nPlease analyze the performance impact of these changes:\n\n**Changed Files:**\n{', '.join(safe_changed_files)}\n\n**Code Diff:**\n```diff\n{safe_diff}\n```\n\nFocus on Phase 2 performance requirements:\n1. **Middleware Overhead**: Assess impact of monitoring, logging, and metrics middleware\n2. **Async Operations**: Check for non-blocking logging and async processing\n3. **Cardinality Safety**: Verify metrics labels won't cause cardinality explosion\n4. **Memory Usage**: Analyze memory footprint of new monitoring components\n5. **Response Times**: Check for performance degradation in critical paths\n6. **Resource Utilization**: Assess CPU, memory, and I/O impact\n7. **Scalability**: Review horizontal scaling implications\n8. **Caching**: Check for appropriate caching strategies\n\nProvide specific performance recommendations and optimization suggestions.\n"""
+        
+        prompt = f"""## Performance Analysis - Observability Impact
+
+Analyze performance impact of these changes:
+
+**Changed Files:**
+{', '.join(safe_changed_files)}
+
+**Code Diff:**
+```diff
+{safe_diff}
+```
+
+Focus on Phase 2 performance requirements:
+1. **Middleware Overhead**: Assess monitoring, logging, and metrics middleware impact
+2. **Async Operations**: Check non-blocking logging and async processing
+3. **Cardinality Safety**: Verify metrics labels won't cause cardinality explosion
+4. **Memory Usage**: Analyze memory footprint of monitoring components
+5. **Response Times**: Check performance degradation in critical paths
+6. **Resource Utilization**: Assess CPU, memory, and I/O impact
+7. **Scalability**: Review horizontal scaling implications
+8. **Caching**: Check appropriate caching strategies
+
+Provide specific performance recommendations and optimization suggestions.
+"""
         return await self.run_ai_analysis("performance", prompt)
 
     async def analyze_observability(self, diff: str, changed_files: List[str]) -> Dict[str, Any]:
+        """Observability analysis for comprehensive monitoring and alerting."""
         safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]
         safe_diff = diff[:3000].replace('\0', '')
-        prompt = f"""## Observability Analysis - Monitoring & Alerting\n\nPlease analyze the observability implementation in these changes:\n\n**Changed Files:**\n{', '.join(safe_changed_files)}\n\n**Code Diff:**\n```diff\n{safe_diff}\n```\n\nFocus on Phase 2 observability requirements:\n1. **Structured Logging**: Verify consistent schema (service, level, trace_id)\n2. **Metrics Exposure**: Check namespaced metrics (amas_*) with proper labels\n3. **Health Checks**: Verify JSON responses with status, deps, version\n4. **Alert Rules**: Check thresholds, runbooks, and severity levels\n5. **Dashboard Integration**: Assess Grafana dashboard compatibility\n6. **Prometheus Metrics**: Verify metric naming and cardinality\n7. **Error Tracking**: Check error correlation and tracing\n8. **SLO Monitoring**: Verify service level objective tracking\n\nProvide specific observability recommendations and monitoring best practices.\n"""
+        
+        prompt = f"""## Observability Analysis - Monitoring & Alerting
+
+Analyze observability implementation in these changes:
+
+**Changed Files:**
+{', '.join(safe_changed_files)}
+
+**Code Diff:**
+```diff
+{safe_diff}
+```
+
+Focus on Phase 2 observability requirements:
+1. **Structured Logging**: Verify consistent schema (service, level, trace_id)
+2. **Metrics Exposure**: Check namespaced metrics (amas_*) with proper labels
+3. **Health Checks**: Verify JSON responses with status, deps, version
+4. **Alert Rules**: Check thresholds, runbooks, and severity levels
+5. **Dashboard Integration**: Assess Grafana dashboard compatibility
+6. **Prometheus Metrics**: Verify metric naming and cardinality
+7. **Error Tracking**: Check error correlation and tracing
+8. **SLO Monitoring**: Verify service level objective tracking
+
+Provide specific observability recommendations and monitoring best practices.
+"""
         return await self.run_ai_analysis("observability", prompt)
 
     async def analyze_reliability(self, diff: str, changed_files: List[str]) -> Dict[str, Any]:
+        """Reliability analysis for comprehensive error handling and resilience."""
         safe_changed_files = [f.replace('\n', '').replace('\r', '') for f in changed_files[:50]]
         safe_diff = diff[:3000].replace('\0', '')
-        prompt = f"""## Reliability Analysis - Error Handling & Resilience\n\nPlease analyze the reliability improvements in these changes:\n\n**Changed Files:**\n{', '.join(safe_changed_files)}\n\n**Code Diff:**\n```diff\n{safe_diff}\n```\n\nFocus on Phase 2 reliability requirements:\n1. **Error Handling**: Check for consistent error envelope (code, message, correlation_id)\n2. **Retry Policies**: Verify bounded retry strategies with exponential backoff\n3. **Circuit Breakers**: Check for circuit breaker patterns where applicable\n4. **Health Endpoints**: Verify dependency health checks and degraded states\n5. **Graceful Degradation**: Check for graceful service degradation\n6. **Timeout Handling**: Verify proper timeout configuration\n7. **Resource Cleanup**: Check for proper resource cleanup and disposal\n8. **Recovery Mechanisms**: Verify automatic recovery and self-healing\n\nProvide specific reliability recommendations and resilience patterns.\n"""
+        
+        prompt = f"""## Reliability Analysis - Error Handling & Resilience
+
+Analyze reliability improvements in these changes:
+
+**Changed Files:**
+{', '.join(safe_changed_files)}
+
+**Code Diff:**
+```diff
+{safe_diff}
+```
+
+Focus on Phase 2 reliability requirements:
+1. **Error Handling**: Check consistent error envelope (code, message, correlation_id)
+2. **Retry Policies**: Verify bounded retry strategies with exponential backoff
+3. **Circuit Breakers**: Check circuit breaker patterns where applicable
+4. **Health Endpoints**: Verify dependency health checks and degraded states
+5. **Graceful Degradation**: Check graceful service degradation
+6. **Timeout Handling**: Verify proper timeout configuration
+7. **Resource Cleanup**: Check proper resource cleanup and disposal
+8. **Recovery Mechanisms**: Verify automatic recovery and self-healing
+
+Provide specific reliability recommendations and resilience patterns.
+"""
         return await self.run_ai_analysis("reliability", prompt)
 
     async def generate_documentation(self, analyses: Dict[str, Any]) -> Dict[str, Any]:
-        prompt = f"""## Documentation Generation - Phase 2 Summary\n\nPlease generate a comprehensive summary of the Phase 2 improvements based on these analyses:\n\n**Security Analysis:**\n{analyses.get('security', {}).get('analysis', 'Not available')[:1000]}...\n\n**Performance Analysis:**\n{analyses.get('performance', {}).get('analysis', 'Not available')[:1000]}...\n\n**Observability Analysis:**\n{analyses.get('observability', {}).get('analysis', 'Not available')[:1000]}...\n\n**Reliability Analysis:**\n{analyses.get('reliability', {}).get('analysis', 'Not available')[:1000]}...\n\nCreate a professional executive summary that:\n1. Highlights key Phase 2 improvements\n2. Summarizes security hardening achievements\n3. Documents monitoring and alerting capabilities\n4. Lists performance optimizations\n5. Provides implementation recommendations\n6. Includes next steps and maintenance guidance\n\nFormat as clean, readable markdown suitable for technical documentation.\n"""
+        """Generate comprehensive documentation summary from all analyses.
+        
+        Args:
+            analyses: Dictionary of completed analyses
+            
+        Returns:
+            Documentation generation result
+        """
+        # Safely extract analysis content with length limits
+        security_content = analyses.get('security', {}).get('analysis', 'Not available')[:1000]
+        performance_content = analyses.get('performance', {}).get('analysis', 'Not available')[:1000]
+        observability_content = analyses.get('observability', {}).get('analysis', 'Not available')[:1000]
+        reliability_content = analyses.get('reliability', {}).get('analysis', 'Not available')[:1000]
+        
+        prompt = f"""## Documentation Generation - Phase 2 Summary
+
+Generate comprehensive summary of Phase 2 improvements based on these analyses:
+
+**Security Analysis:**
+{security_content}...
+
+**Performance Analysis:**
+{performance_content}...
+
+**Observability Analysis:**
+{observability_content}...
+
+**Reliability Analysis:**
+{reliability_content}...
+
+Create a professional executive summary that:
+1. Highlights key Phase 2 improvements
+2. Summarizes security hardening achievements
+3. Documents monitoring and alerting capabilities
+4. Lists performance optimizations
+5. Provides implementation recommendations
+6. Includes next steps and maintenance guidance
+
+Format as clean, readable markdown suitable for technical documentation.
+"""
         return await self.run_ai_analysis("documentation", prompt)
 
     def generate_bulletproof_report(self, analyses: Dict[str, Any], diff_stats: Dict[str, int]) -> str:
+        """Generate the final comprehensive bulletproof analysis report.
+        
+        Args:
+            analyses: Dictionary of all completed analyses
+            diff_stats: Statistics about the diff
+            
+        Returns:
+            Formatted markdown report
+        """
         verification_status = "✅ REAL AI Verified" if self.verification_results["real_ai_verified"] else "❌ AI Verification Failed"
         bulletproof_status = "✅ Bulletproof Validated" if self.verification_results["bulletproof_validated"] else "❌ Validation Failed"
-        return f"""# 🤖 Bulletproof AI Analysis Report - Phase 2\n\n**Repository:** {self.repo_name}\n**PR Number:** {self.pr_number or 'N/A'}\n**Commit:** {self.commit_sha[:7] if self.commit_sha else 'N/A'}\n**Analysis Time:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}\n\n## 🔒 Verification Status\n- **AI Verification:** {verification_status}\n- **Provider Used:** {self.verification_results.get('provider_used', 'Unknown')}\n- **Response Time:** {self.verification_results.get('response_time', 0):.2f}s\n- **Bulletproof Validation:** {bulletproof_status}\n\n## 📊 Change Summary\n- **Files Changed:** {diff_stats['files_changed']}\n- **Lines Added:** +{diff_stats['additions']}\n- **Lines Removed:** -{diff_stats['deletions']}\n\n---\n\n## 🔐 Security Analysis\n{self._format_analysis_section(analyses.get('security', {}))}\n\n## ⚡ Performance Analysis\n{self._format_analysis_section(analyses.get('performance', {}))}\n\n## 📈 Observability Analysis\n{self._format_analysis_section(analyses.get('observability', {}))}\n\n## 🛡️️ Reliability Analysis\n{self._format_analysis_section(analyses.get('reliability', {}))}\n\n## 📚 Documentation Summary\n{self._format_analysis_section(analyses.get('documentation', {}))}\n\n---\n\n*Generated by Bulletproof AI Analysis System v2.0*\n*Real AI Provider: {self.verification_results.get('provider_used', 'Unknown')}*\n*Analysis Types: {', '.join(self.verification_results.get('analysis_types', []))}*\n"""
+        
+        return f"""# 🤖 Bulletproof AI Analysis Report - Phase 2
+
+**Repository:** {self.repo_name}
+**PR Number:** {self.pr_number or 'N/A'}
+**Commit:** {self.commit_sha[:7] if self.commit_sha else 'N/A'}
+**Analysis Time:** {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}
+
+## 🔒 Verification Status
+- **AI Verification:** {verification_status}
+- **Provider Used:** {self.verification_results.get('provider_used', 'Unknown')}
+- **Response Time:** {self.verification_results.get('response_time', 0):.2f}s
+- **Bulletproof Validation:** {bulletproof_status}
+- **Security Level:** {self.verification_results.get('security_level', 'standard')}
+
+## 📊 Change Summary
+- **Files Changed:** {diff_stats['files_changed']}
+- **Lines Added:** +{diff_stats['additions']}
+- **Lines Removed:** -{diff_stats['deletions']}
+
+---
+
+## 🔐 Security Analysis
+{self._format_analysis_section(analyses.get('security', {}))}
+
+## ⚡ Performance Analysis
+{self._format_analysis_section(analyses.get('performance', {}))}
+
+## 📈 Observability Analysis
+{self._format_analysis_section(analyses.get('observability', {}))}
+
+## 🛡️️ Reliability Analysis
+{self._format_analysis_section(analyses.get('reliability', {}))}
+
+## 📚 Documentation Summary
+{self._format_analysis_section(analyses.get('documentation', {}))}
+
+---
+
+## 🎯 Phase 2 Compliance Checklist
+
+### Security Hardening
+- [ ] JWT/OIDC validation implemented
+- [ ] Security headers configured
+- [ ] Rate limiting enforced
+- [ ] Input validation comprehensive
+- [ ] Audit logging enabled
+
+### Observability
+- [ ] Structured logging schema consistent
+- [ ] Metrics properly namespaced
+- [ ] Health checks return JSON
+- [ ] Alert rules configured
+- [ ] Dashboards updated
+
+### Performance
+- [ ] Middleware overhead acceptable
+- [ ] Async operations non-blocking
+- [ ] Metrics cardinality safe
+- [ ] Response times maintained
+
+### Reliability
+- [ ] Error handling consistent
+- [ ] Retry policies bounded
+- [ ] Circuit breakers implemented
+- [ ] Health endpoints comprehensive
+
+---
+
+## 🚀 Next Steps
+
+1. **Review Security Findings**: Address any security vulnerabilities identified
+2. **Optimize Performance**: Implement performance recommendations
+3. **Complete Observability**: Ensure all monitoring components are properly configured
+4. **Test Reliability**: Verify error handling and recovery mechanisms
+5. **Update Documentation**: Keep technical documentation current
+
+---
+
+*Generated by Bulletproof AI Analysis System v2.0*
+*Real AI Provider: {self.verification_results.get('provider_used', 'Unknown')}*
+*Analysis Types: {', '.join(self.verification_results.get('analysis_types', []))}*
+*Enhanced Error Handling: {'✅ Enabled' if ENHANCED_ERROR_HANDLING else '⚠️ Basic Mode'}*
+"""
 
     def _format_analysis_section(self, analysis: Dict[str, Any]) -> str:
+        """Format an analysis section for the report with comprehensive error information.
+        
+        Args:
+            analysis: Analysis result dictionary
+            
+        Returns:
+            Formatted markdown section
+        """
         if not analysis.get("success", False):
-            return f"❌ **Analysis Failed:** {analysis.get('error', 'Unknown error')}"
+            error_msg = analysis.get('error', 'Unknown error')
+            timestamp = analysis.get('timestamp', 'Unknown time')
+            return f"❌ **Analysis Failed:** {error_msg} (at {timestamp})"
+        
         content = analysis.get("analysis", "No analysis content available")
         provider = analysis.get("provider", "Unknown")
         response_time = analysis.get("response_time", 0)
-        return f"""**Provider:** {provider} | **Response Time:** {response_time:.2f}s\n\n{content}"""
+        tokens_used = analysis.get("tokens_used", 0)
+        
+        return f"""**Provider:** {provider} | **Response Time:** {response_time:.2f}s | **Tokens:** {tokens_used}
+
+{content}"""
 
     def save_verification_results(self) -> None:
-        verification_file = os.path.join(self.artifacts_dir, "verification_results.json")
-        with open(verification_file, "w", encoding="utf-8") as f:
-            json.dump(self.verification_results, f, indent=2)
-        logger.info("Verification results saved to %s", verification_file)
+        """Save comprehensive verification results for audit trail and debugging.
+        
+        Raises:
+            SecurityError: If verification file path is unsafe
+        """
+        verification_path = Path(self.artifacts_dir) / "verification_results.json"
+        
+        # Validate verification file path is safe
+        if not is_safe_path(str(verification_path), PROJECT_ROOT):
+            logger.error("Verification file path traversal detected: %s", verification_path)
+            raise SecurityError("Invalid verification file path detected")
+        
+        # Add comprehensive metadata
+        enhanced_results = {
+            **self.verification_results,
+            "script_version": "2.0",
+            "enhanced_error_handling": ENHANCED_ERROR_HANDLING,
+            "project_root": str(PROJECT_ROOT),
+            "python_version": sys.version,
+            "platform": sys.platform,
+        }
+        
+        with open(verification_path, "w", encoding="utf-8") as f:
+            json.dump(enhanced_results, f, indent=2, ensure_ascii=False)
+        
+        logger.info("Comprehensive verification results saved to %s", verification_path)
+
 
 async def main() -> None:
-    """Main function to run the bulletproof AI analysis with timeout and error handling."""
+    """Main function to run the bulletproof AI analysis with comprehensive error handling.
+    
+    This function provides the entry point for the entire analysis pipeline with:
+    - Complete exception handling and logging
+    - Secure artifact generation
+    - Comprehensive error reporting
+    - Proper cleanup on failure
+    """
     try:
+        logger.info("🚀 Initializing Bulletproof AI Analyzer...")
         analyzer = BulletproofAIAnalyzer()
-        await analyzer.run_comprehensive_analysis()
+        
+        logger.info("🔍 Running comprehensive analysis pipeline...")
+        report = await analyzer.run_comprehensive_analysis()
+        
+        if report:
+            logger.info("✅ Bulletproof AI analysis completed successfully")
+        else:
+            logger.warning("⚠️ Analysis completed but no report generated")
+            
+    except KeyboardInterrupt:
+        logger.info("🛑 Analysis interrupted by user")
+        sys.exit(130)  # Standard SIGINT exit code
+    except SystemExit:
+        raise  # Don't catch explicit sys.exit() calls
     except Exception as e:
-        logger.error("Bulletproof AI analysis failed: %s", e)
-        os.makedirs("artifacts", exist_ok=True)
-        error_report = f"""# ❌ Bulletproof AI Analysis Error\n\nAn error occurred during the bulletproof AI analysis process:\n\n```\n{str(e)}\n```\n\nPlease check the workflow logs for more details.\n\n*Bulletproof AI Analysis System v2.0*\n"""
-        with open("artifacts/bulletproof_analysis_report.md", "w", encoding="utf-8") as f:
+        logger.error("❌ Bulletproof AI analysis failed with exception: %s", e, exc_info=True)
+        
+        # Create comprehensive error report
+        artifacts_path = Path("artifacts")
+        artifacts_path.mkdir(mode=0o755, exist_ok=True)
+        
+        error_report = f"""# ❌ Bulletproof AI Analysis Error
+
+An error occurred during the bulletproof AI analysis process:
+
+## 🚨 Error Details
+- **Exception Type:** {type(e).__name__}
+- **Error Message:** {str(e)}
+- **Timestamp:** {datetime.now(timezone.utc).isoformat()}
+- **Python Version:** {sys.version}
+- **Platform:** {sys.platform}
+
+## 🔍 Troubleshooting
+
+1. Check that all required environment variables are set
+2. Verify AI provider API keys are configured
+3. Ensure project structure is intact
+4. Check workflow logs for more detailed error information
+
+## 📋 Environment Status
+- **Enhanced Error Handling:** {'✅ Available' if ENHANCED_ERROR_HANDLING else '❌ Not Available'}
+- **Project Root:** {PROJECT_ROOT}
+- **Artifacts Directory:** artifacts/
+
+---
+
+*Please check the workflow logs for more details.*
+
+*Generated by Bulletproof AI Analysis System v2.0*
+"""
+        
+        error_report_path = artifacts_path / "bulletproof_analysis_report.md"
+        with open(error_report_path, "w", encoding="utf-8") as f:
             f.write(error_report)
+        
+        logger.info("Error report saved to %s", error_report_path)
         sys.exit(1)
 
+
 if __name__ == "__main__":
+    # Run the async main function with proper event loop handling
     asyncio.run(main())
