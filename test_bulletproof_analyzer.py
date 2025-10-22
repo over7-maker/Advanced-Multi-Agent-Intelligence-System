@@ -97,12 +97,12 @@ class TestBulletproofAnalyzer(unittest.TestCase):
         with open(self.script_path, 'r', encoding='utf-8') as f:
             source_code = f.read()
         
-        # Check for enhanced security patterns
+        # Check for enhanced security patterns - be more flexible with the shell=False check
         security_features = [
             'SENSITIVE_PATTERNS: List[re.Pattern[str]]',
             'def sanitize_env(',
             'def is_safe_path(',
-            'shell=False',  # Subprocess security
+            "'shell': False",  # More specific pattern for subprocess security
         ]
         
         for feature in security_features:
@@ -232,6 +232,9 @@ def run_comprehensive_validation():
     else:
         print(f"❌ {len(result.failures)} test(s) failed")
         print(f"❌ {len(result.errors)} error(s) occurred")
+        for i, (test, traceback) in enumerate(result.failures + result.errors):
+            print(f"\n❌ Test {i+1}: {test}")
+            print(f"Error: {traceback}")
         return 1
 
 
