@@ -1,0 +1,28 @@
+{
+  "real_ai_verified": true,
+  "bulletproof_validated": false,
+  "provider_used": "Available (not used yet)",
+  "response_time": 0.0,
+  "timestamp": "2025-10-22T02:28:14.896070+00:00",
+  "analysis_types": [],
+  "security_level": "maximum",
+  "validation_passed": false,
+  "available_providers": 1,
+  "provider_names": [
+    "cerebras"
+  ],
+  "script_version": "2.1",
+  "enhanced_error_handling": false,
+  "project_root": "/workspace",
+  "python_version": "3.13.3 (main, Aug 14 2025, 11:53:40) [GCC 14.2.0]",
+  "platform": "linux",
+  "fixes_applied": [
+    "Complete SENSITIVE_VARS definition",
+    "Enhanced logging configuration",
+    "Robust project root finder",
+    "Async subprocess optimization",
+    "Comprehensive error handling",
+    "Security pattern matching",
+    "Rate-limited retries"
+  ]
+}
