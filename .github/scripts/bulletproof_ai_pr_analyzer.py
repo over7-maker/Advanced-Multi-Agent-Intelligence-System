@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: MIT
 """
-Bulletproof AI PR Analyzer - Phase 2 (FIXED VERSION).
+Bulletproof AI PR Analyzer - Phase 2 (Fixed Version).
 
 Comprehensive PR analysis using real AI providers with bulletproof validation.
 Security hardened with input validation, secure subprocess calls, and sanitized logging.
@@ -17,6 +17,7 @@ This version addresses all issues identified in the PR analysis:
 """
 
 # Standard library imports
+
 import asyncio
 import functools
 import json
