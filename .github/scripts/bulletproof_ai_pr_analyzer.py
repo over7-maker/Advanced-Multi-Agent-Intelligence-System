@@ -30,10 +30,19 @@ import time
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 # Third-party imports
 import tenacity
+
+# Logging setup
+logger = logging.getLogger("bulletproof_pr_analyzer")
+if not logger.handlers:
+    handler = RotatingFileHandler("pr_analyzer.log", maxBytes=10_000_000, backupCount=5)
+    formatter = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
 
 # --- Policy Environment (new) -------------------------------------------------
 # These environment variables are populated by run_analyzer_with_policy.py or CI
@@ -80,6 +89,15 @@ SENSITIVE_VARS: frozenset[str] = frozenset([
 
 # NOTE: SENSITIVE_VARS above is properly formatted and complete
 # All variables are explicitly listed for clarity and maintainability
+
+# Project root finder
+def find_project_root(start: Optional[Path] = None) -> Optional[Path]:
+    """Find project root by looking for .git or common config files."""
+    p = (start or Path.cwd()).resolve()
+    for parent in [p, *p.parents]:
+        if (parent / ".git").exists() or (parent / "pyproject.toml").exists():
+            return parent
+    return None
 
 # Enhanced sensitive patterns for regex-based detection
 SENSITIVE_PATTERNS: List[re.Pattern[str]] = [

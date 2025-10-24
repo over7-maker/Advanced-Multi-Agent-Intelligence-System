@@ -1,4 +1,8 @@
+---
 version: 1
+
+# Cap diff-only findings to 0.4 to avoid overconfidence on partial context;
+# full-file analyses are un-capped by policy and used for blocker decisions.
 
 # Confidence thresholds for AI findings
 confidence_thresholds:
@@ -10,7 +14,7 @@ confidence_thresholds:
 policy:
   require_full_context_for_blockers: true
   forbid_syntax_claims_when_deterministic_ok: true
-  diff_only_caps_confidence: 0.4
+  diff_only_caps_confidence: 0.4  # Cap diff-only findings to avoid overconfidence
 
 # Suppress noisy categories
 suppress:
@@ -20,7 +24,7 @@ suppress:
 # File path rules
 rules:
   - paths:
-      - ".github/scripts/**.py"
+      - ".github/scripts/bulletproof_ai_pr_analyzer.py"
     require_full_file_analysis: true
     enforce_deterministic_first: true
 
