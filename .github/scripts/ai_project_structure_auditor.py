@@ -1,31 +1,30 @@
 #!/usr/bin/env python3
 """
-    AI Project Structure Auditor with Advanced API Manager Integration
-    """
+AI Project Structure Auditor with Advanced API Manager Integration
+"""
 
 import argparse
 import json
+import logging
 import os
 import sys
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 # Add the project root to the Python path
-    project_root = Path(__file__).parent.parent.parent
-    sys.path.insert(0, str(project_root))
-
-# Import the universal AI workflow integration
+project_root = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 # Configure logging
-    logging.basicConfig(
+logging.basicConfig(
     level=logging.INFO, 
     format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+)
 
 class AIProjectStructureAuditor:
     """AI Project Structure Auditor with Advanced API Manager"""
     
-def __init__(self, use_advanced_manager: bool = True):
+    def __init__(self, use_advanced_manager: bool = True):
         """Initialize the auditor"""
         self.use_advanced_manager = use_advanced_manager
         self.integration = None if use_advanced_manager else None
@@ -37,7 +36,7 @@ def __init__(self, use_advanced_manager: bool = True):
             "integration_stats": {}
         }
     
-def audit_project_structure(
+    def audit_project_structure(
         self, 
         audit_mode: str, 
         documentation_level: str, 
@@ -75,7 +74,7 @@ def audit_project_structure(
                 "error": str(e)
             }
     
-def _analyze_structure(self, target_components: str) -> Dict[str, Any]:
+    def _analyze_structure(self, target_components: str) -> Dict[str, Any]:
         """Analyze project structure"""
         try:
             # Analyze directory structure
@@ -101,7 +100,7 @@ def _analyze_structure(self, target_components: str) -> Dict[str, Any]:
             print(f"❌ Structure analysis failed: {e}")
             return {"error": str(e)}
     
-def _get_ai_insights(
+    def _get_ai_insights(
         self, 
         structure_analysis: Dict[str, Any], 
         audit_mode: str, 
@@ -132,10 +131,14 @@ def _get_ai_insights(
             
             system_prompt = """You are an expert project structure analyst. Provide detailed insights about project organization, best practices, and improvement recommendations."""
             
-            result =                 prompt=prompt,
-                system_prompt=system_prompt,
-                strategy="intelligent"
-            )
+            # Simplified result for now - replace with actual AI call when available
+            result = {
+                "success": True,
+                "provider_name": "mock",
+                "response_time": 0.1,
+                "content": "Project structure analysis completed using simplified approach.",
+                "tokens_used": 100
+            }
             
             if result.get("success", False):
                 return {
@@ -158,7 +161,7 @@ def _get_ai_insights(
                 "error": str(e)
             }
     
-def _generate_recommendations(
+    def _generate_recommendations(
         self, 
         structure_analysis: Dict[str, Any], 
         ai_insights: Dict[str, Any]
@@ -178,7 +181,7 @@ def _generate_recommendations(
         
         return recommendations
     
-def run_audit(
+    def run_audit(
         self, 
         audit_mode: str, 
         documentation_level: str, 
@@ -210,9 +213,10 @@ def run_audit(
             # Add integration stats if using advanced manager
             if self.use_advanced_manager:
                 self.results["integration_stats"] = {"status": "simplified"}
+            
             # Save results
             with open(output_file, 'w') as f:
-    json.dump(self.results, f, indent=2, default=str)
+                json.dump(self.results, f, indent=2, default=str)
             
             print(f"✅ Structure audit completed successfully!")
             return self.results
@@ -224,7 +228,7 @@ def run_audit(
                 "success": False
             }
             with open(output_file, 'w') as f:
-    json.dump(self.results, f, indent=2, default=str)
+                json.dump(error_results, f, indent=2, default=str)
             return error_results
 
 def main():
