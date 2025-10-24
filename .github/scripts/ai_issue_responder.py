@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-    AI Issue Responder Script
-    Automatically analyzes GitHub issues and provides intelligent responses
-    using your AI APIs (OpenRouter, DeepSeek, etc.)
-    """
+AI Issue Responder Script
+Automatically analyzes GitHub issues and provides intelligent responses
+using your AI APIs (OpenRouter, DeepSeek, etc.)
+"""
 
 import json
 import os
@@ -14,7 +14,7 @@ import requests
 from openai import OpenAI
 
 class AIIssueResponder:
-def __init__(self):
+    def __init__(self):
         self.github_token = os.environ.get("GITHUB_TOKEN")
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
         self.glm_key = os.environ.get("GLM_API_KEY")
@@ -143,7 +143,7 @@ def __init__(self):
                 f"🤖 Initialized {len(self.ai_clients)} AI clients for issue response"
             )
 
-def analyze_issue_type(self, title: str, body: str) -> str:
+    def analyze_issue_type(self, title: str, body: str) -> str:
         """Analyze the type of issue based on content"""
         title_lower = title.lower()
         body_lower = body.lower()
@@ -182,62 +182,62 @@ def analyze_issue_type(self, title: str, body: str) -> str:
         else:
             return "general"
 
-def create_system_prompt(self, issue_type: str) -> str:
+    def create_system_prompt(self, issue_type: str) -> str:
         """Create system prompt based on issue type"""
         base_prompt = """
 You are an AI assistant for the AMAS (Advanced Multi-Agent Intelligence System) project.
 This is a sophisticated multi-agent AI system for intelligence analysis and automation.
 
-    Project Context:
-    - Multi-agent orchestration with ReAct patterns
-    - OSINT collection and analysis
-    - Digital forensics and investigation
-    - AI-powered code generation
-    - Enterprise security features
+Project Context:
+- Multi-agent orchestration with ReAct patterns
+- OSINT collection and analysis
+- Digital forensics and investigation
+- AI-powered code generation
+- Enterprise security features
 
-    Your role is to provide helpful, technical, and actionable responses to GitHub issues.
-    """
+Your role is to provide helpful, technical, and actionable responses to GitHub issues.
+        """
 
         type_specific_prompts = {
             "bug": """
-    For bug reports:
-    1. Acknowledge the issue professionally
+For bug reports:
+1. Acknowledge the issue professionally
 2. Ask for reproduction steps if missing
-    3. Suggest potential workarounds
-    4. Provide debugging guidance
+3. Suggest potential workarounds
+4. Provide debugging guidance
 5. Mention if this relates to known issues
-    """,
+            """,
             "feature_request": """
-    For feature requests:
+For feature requests:
 1. Thank the user for the suggestion
-    2. Assess feasibility within AMAS architecture
-    3. Suggest implementation approach
+2. Assess feasibility within AMAS architecture
+3. Suggest implementation approach
 4. Ask for clarification if needed
-    5. Mention related existing features
-    """,
+5. Mention related existing features
+            """,
             "question": """
-    For questions:
-    1. Provide clear, helpful answers
-    2. Reference documentation when relevant
+For questions:
+1. Provide clear, helpful answers
+2. Reference documentation when relevant
 3. Offer code examples if applicable
-    4. Suggest additional resources
-    5. Be encouraging and supportive
-    """,
+4. Suggest additional resources
+5. Be encouraging and supportive
+            """,
             "security": """
-    For security issues:
-    1. Take security concerns seriously
-    2. Provide secure coding recommendations
-    3. Reference security best practices
-    4. Suggest immediate mitigation steps
+For security issues:
+1. Take security concerns seriously
+2. Provide secure coding recommendations
+3. Reference security best practices
+4. Suggest immediate mitigation steps
 5. Recommend proper reporting channels for vulnerabilities
-    """,
+            """,
         }
 
         return base_prompt + type_specific_prompts.get(
             issue_type, type_specific_prompts["question"]
         )
 
-def generate_ai_response(
+    def generate_ai_response(
         self, issue_type: str, title: str, body: str
     ) -> Optional[str]:
         """Generate AI response using available APIs with fallback"""
@@ -247,17 +247,17 @@ def generate_ai_response(
         system_prompt = self.create_system_prompt(issue_type)
 
         user_prompt = f"""
-    Issue Title: {title}
+Issue Title: {title}
 
-    Issue Description:
-    {body}
+Issue Description:
+{body}
 
-    Issue Type: {issue_type}
-    Author: {self.issue_author}
+Issue Type: {issue_type}
+Author: {self.issue_author}
 
-    Please provide a helpful, professional response that addresses this issue.
-    Be specific to the AMAS project context and provide actionable guidance.
-    """
+Please provide a helpful, professional response that addresses this issue.
+Be specific to the AMAS project context and provide actionable guidance.
+        """
 
         # Try each AI client in order of preference
         for client_info in self.ai_clients:
@@ -292,7 +292,7 @@ def generate_ai_response(
         print("❌ All AI clients failed")
         return None
 
-def post_github_comment(self, comment: str) -> bool:
+    def post_github_comment(self, comment: str) -> bool:
         """Post comment to GitHub issue"""
         url = f"https://api.github.com/repos/{self.repo_name}/issues/{self.issue_number}/comments"
 
@@ -305,11 +305,11 @@ def post_github_comment(self, comment: str) -> bool:
         # Add AI signature to comment
         ai_comment = f"""{comment}
 
-    ---
-    🤖 *This response was generated by AMAS AI Assistant*
-    💡 *Powered by your integrated AI models*
-    📚 *For more help, check the [project documentation](https://github.com/{self.repo_name}#readme)*
-    """
+---
+🤖 *This response was generated by AMAS AI Assistant*
+💡 *Powered by your integrated AI models*
+📚 *For more help, check the [project documentation](https://github.com/{self.repo_name}#readme)*
+        """
 
         data = {"body": ai_comment}
 
@@ -322,7 +322,7 @@ def post_github_comment(self, comment: str) -> bool:
             print(f"❌ Failed to post comment: {e}")
             return False
 
-def add_issue_labels(self, labels: list) -> bool:
+    def add_issue_labels(self, labels: list) -> bool:
         """Add labels to the issue"""
         url = f"https://api.github.com/repos/{self.repo_name}/issues/{self.issue_number}/labels"
 
@@ -343,7 +343,7 @@ def add_issue_labels(self, labels: list) -> bool:
             print(f"❌ Failed to add labels: {e}")
             return False
 
-def run(self):
+    def run(self):
         """Main execution function"""
         print(f"🚀 Processing issue #{self.issue_number}: {self.issue_title}")
 
@@ -381,18 +381,18 @@ def run(self):
             fallback_message = f"""
 Thank you for opening this issue! 🙏
 
-    I'm the AMAS AI Assistant, and I'll help analyze your issue. However, I'm currently experiencing some technical difficulties with my AI models.
+I'm the AMAS AI Assistant, and I'll help analyze your issue. However, I'm currently experiencing some technical difficulties with my AI models.
 
-    In the meantime, here are some helpful resources:
-    - 📚 [Project Documentation](https://github.com/{self.repo_name}#readme)
-    - 🔧 [Setup Guide](https://github.com/{self.repo_name}/blob/main/SETUP_GUIDE.md)
-    - 💬 [Discussions](https://github.com/{self.repo_name}/discussions)
+In the meantime, here are some helpful resources:
+- 📚 [Project Documentation](https://github.com/{self.repo_name}#readme)
+- 🔧 [Setup Guide](https://github.com/{self.repo_name}/blob/main/SETUP_GUIDE.md)
+- 💬 [Discussions](https://github.com/{self.repo_name}/discussions)
 
 A human maintainer will review your issue soon. Thank you for your patience!
 
-    ---
-    🤖 *AMAS AI Assistant - Currently in fallback mode*
-    """
+---
+🤖 *AMAS AI Assistant - Currently in fallback mode*
+            """
             self.post_github_comment(fallback_message)
             self.add_issue_labels(["ai-analyzed", "needs-human-review"])
 
