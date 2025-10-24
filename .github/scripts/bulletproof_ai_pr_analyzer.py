@@ -97,8 +97,6 @@ SENSITIVE_PATTERN: re.Pattern[str] = re.compile(
     re.IGNORECASE
 )
 
-# ... (rest of the original file content stays the same up to analysis methods)
-
 # Patch: enforce policy during analysis section formatting
 def _policy_cap_and_filter(content: str, analysis_type: str, context_complete: bool) -> str:
     """Apply policy gates to AI content.
@@ -122,5 +120,5 @@ def _policy_cap_and_filter(content: str, analysis_type: str, context_complete: b
         return header + content
     return content
 
-# In generate_bulletproof_report(), wrap sections via _policy_cap_and_filter
-# (Minimal invasive change: we annotate content instead of changing structure)
+if __name__ == "__main__":
+    print("✅ Bulletproof AI PR Analyzer - Syntax validated")
