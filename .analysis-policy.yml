@@ -1,0 +1,33 @@
+version: 1
+
+# Cap diff-only findings to 0.4 to avoid overconfidence on partial context
+# Full-file analyses are un-capped by policy and used for blocker decisions
+
+# Confidence thresholds for AI findings
+confidence_thresholds:
+  blocker: 0.8
+  warning: 0.6
+  info: 0.0
+
+# Policy gates
+policy:
+  require_full_context_for_blockers: true
+  forbid_syntax_claims_when_deterministic_ok: true
+  diff_only_caps_confidence: 0.4
+
+# Suppress noisy categories
+suppress:
+  - truncated-diff-syntax
+  - long-collection-truncation
+
+# File path rules
+rules:
+  - paths:
+      - ".github/scripts/bulletproof_ai_pr_analyzer.py"
+    require_full_file_analysis: true
+    enforce_deterministic_first: true
+
+# Artifacts
+artifacts:
+  write_receipts: true
+  upload_validation_receipt: true

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-""""
+"""
 AMAS Intelligence System - Workflow Verification Runner
 Simple script to run all workflow verification checks
-""""
+"""
 
 import asyncio
 import logging
@@ -29,8 +29,7 @@ async def run_verification_script(script_name: str) -> bool:
         logger.info(f"Running {script_name}...")
 
         # Run the script
-        process = await asyncio.create_subprocess_# SECURITY: exec() removed - use safer alternatives
-        # exec(
+        process = await asyncio.create_subprocess_exec(
             sys.executable,
             script_name,
             stdout=asyncio.subprocess.PIPE,
