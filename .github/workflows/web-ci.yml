@@ -37,7 +37,7 @@ jobs:
 
       - name: Lint
         working-directory: web
-        run: npm run lint -- --max-warnings=0 --quiet --cache
+        run: npm run lint -- --max-warnings=0 --cache
 
       - name: Build
         working-directory: web
