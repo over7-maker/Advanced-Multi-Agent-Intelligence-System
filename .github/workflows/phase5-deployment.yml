@@ -6,7 +6,14 @@ on:
       - 'k8s/**'
       - 'helm/**'
       - 'Dockerfile'
-      - 'src/**'
+      - 'src/backend/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'k8s/**'
+      - 'helm/**'
+      - 'Dockerfile'
+      - 'src/backend/**'
 
 jobs:
   deploy:
@@ -17,6 +24,7 @@ jobs:
       contents: read
       packages: write
       id-token: write
+      security-events: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,6 +34,14 @@ jobs:
         with:
           python-version: '3.12'
 
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
+
       - name: Install detect-secrets
         run: pip install detect-secrets==1.4.0
       - name: Set up Helm
@@ -33,28 +49,32 @@ jobs:
         with:
           version: v3.13.0
 
-      - name: Kube-score (containerized)
-        run: |
-          docker run --rm -v "$PWD/k8s":/project zegl/kube-score:v1.18.0 score /project
-
       - name: Security Scanning - Manifests (kube-score)
         run: docker run --rm -v "$PWD/k8s":/project zegl/kube-score:v1.18.0 score /project
 
       - name: Detect Secrets (fail on findings)
         run: |
           set -euo pipefail
-          detect-secrets scan --all-files --json > .secrets-report.json
+          detect-secrets scan --all-files --json > .secrets-report.json || { echo "detect-secrets failed"; exit 1; }
+          [ -s .secrets-report.json ] || { echo ".secrets-report.json missing or empty"; exit 1; }
           python - <<'PY'
-import json, sys
-with open('.secrets-report.json') as f:
-    data = json.load(f)
-    findings = 0
-    for filepath, results in data.get('results', {}).items():
-        findings += len(results)
-    if findings > 0:
-        print(f"Secrets detected: {findings}")
+import json
+import sys
+try:
+    with open('.secrets-report.json') as f:
+        data = json.load(f)
+    results = data.get('results', {})
+    total = sum(len(v) for v in results.values())
+    if total > 0:
+        print(f"❌ Secrets detected: {total}")
         sys.exit(1)
-print("No secrets detected.")
+    print("✅ No secrets detected.")
+except FileNotFoundError:
+    print("❌ .secrets-report.json not found")
+    sys.exit(1)
+except json.JSONDecodeError as e:
+    print(f"❌ Invalid JSON: {e}")
+    sys.exit(1)
 PY
 
       - name: Trivy Config Scan
@@ -115,6 +135,7 @@ PY
             ghcr.io/${{ github.repository_owner }}/amas:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+        if: github.event_name == 'push'
 
       # Deployment steps intentionally commented (require cluster credentials)
       # - name: Deploy to Staging
