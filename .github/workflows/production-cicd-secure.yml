@@ -32,7 +32,7 @@ on:
 
 env:
   PYTHON_VERSION: '3.11'  # Prefer minor pin for security backports
-  NODE_VERSION: '20.9.0'    # Pinned patch version
+  NODE_VERSION: '20'    # Track latest 20.x for security patches
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: amas
   # SECURITY FIX: Use repository owner instead of actor
@@ -49,6 +49,9 @@ jobs:
     timeout-minutes: 20  # ~P95 over recent runs on medium repos
     permissions:
       contents: read
+    concurrency:
+      group: security-scan-${{ github.ref }}
+      cancel-in-progress: true
     outputs:
       vulnerabilities-found: ${{ steps.scan-results.outputs.vulnerabilities }}
       scan-passed: ${{ steps.scan-results.outputs.passed }}
