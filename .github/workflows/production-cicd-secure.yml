@@ -75,6 +75,10 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
     
+    - name: 🛠️ Ensure pip cache directory exists
+      run: |
+        mkdir -p ~/.cache/pip
+    
     - name: 📦 Cache pip dependencies
       uses: actions/cache@v4
       with:
