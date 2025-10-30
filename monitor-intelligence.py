@@ -1,3 +1,4 @@
+import subprocess
 #!/usr/bin/env python3
 """Monitor AMAS Intelligence Systems"""
 
@@ -30,7 +31,7 @@ async def monitor_intelligence():
             )
 
             # Clear screen and show status
-            os.system("clear" if os.name == "posix" else "cls")
+            subprocess.run("clear" if os.name == "posix" else "cls")
 
             print("🧠 AMAS Intelligence Monitor")
             print("=" * 40)

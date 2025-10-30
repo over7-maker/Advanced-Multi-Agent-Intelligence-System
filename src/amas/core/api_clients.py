@@ -1,3 +1,4 @@
+from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
 """
 AMAS API Clients - Specialized Adapters for Each AI Provider
@@ -396,13 +397,13 @@ async def main():
     test_configs = [
         {
             "name": "codestral",
-            "key": os.getenv("CODESTRAL_API_KEY"),
+            "key": get_api_key("CODESTRAL_API_KEY"),
             "url": "https://codestral.mistral.ai/v1",
             "model": "codestral-latest",
         },
         {
             "name": "deepseek",
-            "key": os.getenv("DEEPSEEK_API_KEY"),
+            "key": get_api_key("DEEPSEEK_API_KEY"),
             "url": "https://api.deepseek.com/v1",
             "model": "deepseek-chat",
         },

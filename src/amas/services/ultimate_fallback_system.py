@@ -1,3 +1,4 @@
+from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
 """
 Ultimate Fallback System - Comprehensive fallback for all 9 AI providers
@@ -39,7 +40,7 @@ class UltimateFallbackSystem:
         self.providers = {
             "deepseek": {
                 "name": "DeepSeek V3.1",
-                "api_key": os.getenv("DEEPSEEK_API_KEY"),
+                "api_key": get_api_key("DEEPSEEK_API_KEY"),
                 "base_url": "https://openrouter.ai/api/v1",
                 "model": "deepseek/deepseek-chat-v3.1:free",
                 "priority": 1,
@@ -54,7 +55,7 @@ class UltimateFallbackSystem:
             },
             "glm": {
                 "name": "GLM 4.5 Air",
-                "api_key": os.getenv("GLM_API_KEY"),
+                "api_key": get_api_key("GLM_API_KEY"),
                 "base_url": "https://openrouter.ai/api/v1",
                 "model": "z-ai/glm-4.5-air:free",
                 "priority": 2,
@@ -69,7 +70,7 @@ class UltimateFallbackSystem:
             },
             "grok": {
                 "name": "xAI Grok 4 Fast",
-                "api_key": os.getenv("GROK_API_KEY"),
+                "api_key": get_api_key("GROK_API_KEY"),
                 "base_url": "https://openrouter.ai/api/v1",
                 "model": "x-ai/grok-4-fast:free",
                 "priority": 3,
@@ -84,7 +85,7 @@ class UltimateFallbackSystem:
             },
             "kimi": {
                 "name": "MoonshotAI Kimi K2",
-                "api_key": os.getenv("KIMI_API_KEY"),
+                "api_key": get_api_key("KIMI_API_KEY"),
                 "base_url": "https://openrouter.ai/api/v1",
                 "model": "moonshotai/kimi-k2:free",
                 "priority": 4,
@@ -99,7 +100,7 @@ class UltimateFallbackSystem:
             },
             "qwen": {
                 "name": "Qwen3 Coder",
-                "api_key": os.getenv("QWEN_API_KEY"),
+                "api_key": get_api_key("QWEN_API_KEY"),
                 "base_url": "https://openrouter.ai/api/v1",
                 "model": "qwen/qwen3-coder:free",
                 "priority": 5,
@@ -114,7 +115,7 @@ class UltimateFallbackSystem:
             },
             "gptoss": {
                 "name": "OpenAI GPT-OSS 120B",
-                "api_key": os.getenv("GPTOSS_API_KEY"),
+                "api_key": get_api_key("GPTOSS_API_KEY"),
                 "base_url": "https://openrouter.ai/api/v1",
                 "model": "openai/gpt-oss-120b:free",
                 "priority": 6,
@@ -129,7 +130,7 @@ class UltimateFallbackSystem:
             },
             "groq": {
                 "name": "Groq AI",
-                "api_key": os.getenv("GROQAI_API_KEY"),
+                "api_key": get_api_key("GROQAI_API_KEY"),
                 "base_url": "https://api.groq.com/openai/v1",
                 "model": "llama-3.3-70b-versatile",
                 "priority": 7,
@@ -144,7 +145,7 @@ class UltimateFallbackSystem:
             },
             "cerebras": {
                 "name": "Cerebras AI",
-                "api_key": os.getenv("CEREBRAS_API_KEY"),
+                "api_key": get_api_key("CEREBRAS_API_KEY"),
                 "base_url": "https://api.cerebras.ai",
                 "model": "qwen-3-235b-a22b-instruct-2507",
                 "priority": 8,
@@ -159,7 +160,7 @@ class UltimateFallbackSystem:
             },
             "gemini": {
                 "name": "Gemini AI",
-                "api_key": os.getenv("GEMINIAI_API_KEY"),
+                "api_key": get_api_key("GEMINIAI_API_KEY"),
                 "base_url": "https://generativelanguage.googleapis.com/v1beta",
                 "model": "gemini-2.5-flash",
                 "priority": 9,

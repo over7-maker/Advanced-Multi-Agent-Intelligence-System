@@ -1,0 +1,37 @@
+name: Validate Architecture Diagram
+
+on:
+  pull_request:
+    paths:
+      - 'docs/images/universal_ai_router_architecture.png'
+      - '.github/workflows/validate-architecture-image.yml'
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'docs/images/universal_ai_router_architecture.png'
+
+jobs:
+  validate-diagram:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check image exists and is a valid PNG
+        run: |
+          FILE="docs/images/universal_ai_router_architecture.png"
+          if [ ! -f "$FILE" ]; then
+            echo "❌ Missing diagram: $FILE"; exit 1; fi
+          file "$FILE" | grep -i 'PNG image data' || { echo "❌ Not a valid PNG: $FILE"; exit 1; }
+
+      - name: Enforce minimum file size (100 KB)
+        run: |
+          FILE="docs/images/universal_ai_router_architecture.png"
+          BYTES=$(wc -c <"$FILE")
+          echo "Diagram size: $BYTES bytes"
+          MIN=$((100*1024))
+          if [ "$BYTES" -lt "$MIN" ]; then
+            echo "❌ Diagram too small (<100KB). Replace placeholder with high-res PNG."; exit 1; fi
+          echo "✅ Diagram passes size check"
+
+      - name: Report success
+        run: echo "✅ Architecture diagram validated successfully."

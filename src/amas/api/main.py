@@ -5,6 +5,7 @@ FastAPI Main Application for AMAS Intelligence System
 import asyncio
 import logging
 import os
+import time
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -36,6 +37,40 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add metrics middleware
+@app.middleware("http")
+async def metrics_middleware(request, call_next):
+    """Middleware to collect HTTP metrics"""
+    start_time = time.time()
+    
+    # Process request
+    response = await call_next(request)
+    
+    # Calculate metrics
+    duration = time.time() - start_time
+    request_size = int(request.headers.get("content-length", 0))
+    response_size = len(response.body) if hasattr(response, 'body') else 0
+    
+    # Record metrics if available
+    try:
+        from src.amas.services.prometheus_metrics_service import get_metrics_service
+        metrics_service = get_metrics_service()
+        metrics_service.record_http_request(
+            method=request.method,
+            endpoint=request.url.path,
+            status_code=response.status_code,
+            duration=duration,
+            request_size=request_size,
+            response_size=response_size
+        )
+    except ImportError:
+        # Prometheus not available, skip metrics
+        pass
+    except Exception as e:
+        logger.error(f"Failed to record metrics: {e}")
+    
+    return response
 
 # Security
 security = HTTPBearer()
@@ -143,21 +178,31 @@ async def shutdown_event():
         logger.info("AMAS Intelligence System shutdown complete")
 
 
-# Health check endpoint
+# Enhanced health check endpoint
 @app.get("/health", response_model=HealthCheck)
 async def health_check():
-    """Get system health status"""
+    """Get comprehensive system health status"""
     try:
-        amas = await get_amas_system()
+        # Use enhanced health check service if available
+        try:
+            from src.amas.services.health_check_service import check_health
+            health_result = await check_health()
+            
+            return HealthCheck(
+                status=health_result.get("status", "unknown"),
+                services=health_result.get("checks", []),
+                timestamp=health_result.get("timestamp", datetime.utcnow().isoformat()),
+            )
+        except ImportError:
+            # Fallback to basic health check
+            amas = await get_amas_system()
+            service_health = await amas.service_manager.health_check_all_services()
 
-        # Get service health
-        service_health = await amas.service_manager.health_check_all_services()
-
-        return HealthCheck(
-            status=service_health.get("overall_status", "unknown"),
-            services=service_health.get("services", {}),
-            timestamp=datetime.utcnow().isoformat(),
-        )
+            return HealthCheck(
+                status=service_health.get("overall_status", "unknown"),
+                services=service_health.get("services", {}),
+                timestamp=datetime.utcnow().isoformat(),
+            )
 
     except Exception as e:
         logger.error(f"Health check failed: {e}")
@@ -166,6 +211,66 @@ async def health_check():
             services={"error": str(e)},
             timestamp=datetime.utcnow().isoformat(),
         )
+
+
+# Readiness probe endpoint
+@app.get("/health/ready")
+async def readiness_probe():
+    """Kubernetes readiness probe endpoint"""
+    try:
+        from src.amas.services.health_check_service import check_health
+        health_result = await check_health()
+        
+        if health_result.get("status") == "healthy":
+            return {"status": "ready", "timestamp": datetime.utcnow().isoformat()}
+        else:
+            return {"status": "not_ready", "timestamp": datetime.utcnow().isoformat()}
+    except Exception as e:
+        logger.error(f"Readiness probe failed: {e}")
+        return {"status": "not_ready", "error": str(e), "timestamp": datetime.utcnow().isoformat()}
+
+
+# Liveness probe endpoint
+@app.get("/health/live")
+async def liveness_probe():
+    """Kubernetes liveness probe endpoint"""
+    try:
+        # Basic liveness check - just ensure the service is responding
+        return {"status": "alive", "timestamp": datetime.utcnow().isoformat()}
+    except Exception as e:
+        logger.error(f"Liveness probe failed: {e}")
+        return {"status": "not_alive", "error": str(e), "timestamp": datetime.utcnow().isoformat()}
+
+
+# Detailed health check endpoint
+@app.get("/health/detailed")
+async def detailed_health_check():
+    """Get detailed health information including metrics"""
+    try:
+        from src.amas.services.health_check_service import check_health
+        health_result = await check_health()
+        
+        # Add additional system information
+        import psutil
+        process = psutil.Process()
+        
+        detailed_info = {
+            **health_result,
+            "system": {
+                "process": {
+                    "pid": process.pid,
+                    "memory_mb": process.memory_info().rss / (1024 * 1024),
+                    "cpu_percent": process.cpu_percent(),
+                    "num_threads": process.num_threads(),
+                },
+                "uptime_seconds": time.time() - process.create_time(),
+            }
+        }
+        
+        return detailed_info
+    except Exception as e:
+        logger.error(f"Detailed health check failed: {e}")
+        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
 
 
 # System status endpoint
@@ -370,6 +475,24 @@ async def get_audit_log(
     except Exception as e:
         logger.error(f"Error getting audit log: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# Prometheus metrics endpoint
+@app.get("/metrics")
+async def metrics():
+    """Prometheus metrics endpoint"""
+    try:
+        from src.amas.services.prometheus_metrics_service import get_metrics_service
+        metrics_service = get_metrics_service()
+        metrics_data = metrics_service.get_metrics()
+        
+        from fastapi.responses import PlainTextResponse
+        return PlainTextResponse(metrics_data, media_type="text/plain")
+    except ImportError:
+        return {"error": "Prometheus metrics not available"}
+    except Exception as e:
+        logger.error(f"Metrics endpoint failed: {e}")
+        return {"error": str(e)}
 
 
 # Root endpoint

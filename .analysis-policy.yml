@@ -1,0 +1,67 @@
+# Advanced Multi-Agent Intelligence System (AMAS) – Bulletproof AI Analysis Policy
+# This configuration controls AI-powered code analysis behavior and quality gates
+schema_version: 1
+
+# Confidence thresholds for AI findings
+# These values determine when AI analysis results in different action types
+confidence_thresholds:
+  blocker: 0.8    # High confidence required to block PRs
+  warning: 0.6    # Medium confidence for warnings
+  info: 0.0       # All findings shown as informational
+
+# Policy gates - Core behavioral controls
+policy:
+  # Require complete file context before making blocking decisions
+  require_full_context_for_blockers: true
+
+  # Prevent AI from making syntax-level assertions when deterministic analysis (e.g., py_compile, linters)
+  # already confirmed correctness. Avoids redundant “syntax error” claims.
+  forbid_syntax_claims_when_deterministic_ok: true
+
+  # Limit AI confidence on diff-only analysis to prevent overreliance on partial context
+  diff_only_caps_confidence: 0.4
+
+  # Enforce the caps strictly for all providers/models (trusted and untrusted)
+  enforce_confidence_caps: strict
+
+  # Exempt very large/binary files from “full context” loading to avoid OOM/timeouts
+  full_context_exemptions:
+    - "*.bin"
+    - "*.pdf"
+    - "*.png"
+    - "*.jpg"
+    - "*.zip"
+
+# Suppress noisy analysis categories (these are analyzer category slugs, not local names)
+suppress:
+  - truncated-diff-syntax
+  - long-collection-truncation
+
+# File-specific analysis rules
+# These rules customize analysis behavior for specific files or patterns
+rules:
+  # Critical bulletproof analyzer requires comprehensive analysis
+  - paths:
+      - ".github/scripts/bulletproof_ai_pr_analyzer.py"
+      - ".github/scripts/*ai*_analyzer*.py"   # pattern fallback if file moves/renames
+    require_full_file_analysis: true    # Always analyze complete file, not just diff
+    enforce_deterministic_first: true   # Run deterministic checks (py_compile, lint) before AI analysis
+
+  # Enhanced code review script needs import/error handling validation
+  - paths:
+      - ".github/scripts/ai_enhanced_code_review.py"
+    require_full_file_analysis: true
+    check_import_errors: true
+    check_error_handling: true
+
+  # AI issue responder – security and error handling validation
+  - paths:
+      - ".github/scripts/ai_issue_responder.py"
+    check_api_key_exposure: true
+    validate_error_handling: true
+
+# Artifact generation settings
+# Control what files are generated during analysis for audit trails
+artifacts:
+  write_receipts: true              # Generate validation receipts for successful analyses
+  upload_validation_receipt: true   # Upload receipts to GitHub Actions artifacts
