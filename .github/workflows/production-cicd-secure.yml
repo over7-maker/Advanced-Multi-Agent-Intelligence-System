@@ -27,7 +27,7 @@ on:
 # SECURITY FIX: Add concurrency protection
 concurrency:
   group: production-deployment-${{ github.ref }}
-  cancel-in-progress: false  # Don't cancel running deployments
+  cancel-in-progress: true  # Cancel older runs to avoid race conditions
 
 env:
   PYTHON_VERSION: '3.11.6'  # Pinned patch version
@@ -80,7 +80,8 @@ jobs:
           safety==3.0.4 \
           pip-audit==2.6.1 \
           bandit==1.7.5 \
-          semgrep==1.45.0
+          semgrep==1.45.0 \
+          detect-secrets==1.5.0
         echo "$HOME/.local/bin" >> $GITHUB_PATH
     
     - name: 🔍 Dependency vulnerability scan
