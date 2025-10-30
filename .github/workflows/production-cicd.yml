@@ -1,5 +1,10 @@
 name: 🚀 AMAS Production CI/CD Pipeline
 
+permissions:
+  contents: read
+  packages: read
+  id-token: write
+
 on:
   push:
     branches: [main]
@@ -39,6 +44,7 @@ jobs:
   dependency-scan:
     name: 🔍 Dependency Security Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       vulnerabilities-found: ${{ steps.scan-results.outputs.vulnerabilities }}
     
@@ -54,11 +60,16 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
     
-    - name: 📦 Install dependencies
+    - name: 📦 Install security tooling (pinned)
       run: |
-        python -m ensurepip --upgrade
         python -m pip install --upgrade pip
-        pip install safety pip-audit bandit semgrep
+        pip install --user \
+          safety==3.0.4 \
+          pip-audit==2.6.1 \
+          bandit==1.7.5 \
+          semgrep==1.45.0 \
+          detect-secrets==1.5.0
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
     
     - name: 🔒 Run Safety scan
       run: |
@@ -78,6 +89,14 @@ jobs:
           p/secrets
           p/owasp-top-ten
         generateSarif: "1"
+
+    - name: 🕵️ Secret detection with baseline
+      run: |
+        if [ ! -f .secrets.baseline ]; then
+          detect-secrets scan --all-files --baseline .secrets.baseline
+          echo "Created secrets baseline"
+        fi
+        detect-secrets scan --baseline .secrets.baseline --all-files
     
     - name: 📊 Upload security reports
       uses: actions/upload-artifact@v4
@@ -102,6 +121,7 @@ jobs:
   code-quality:
     name: 🎨 Code Quality & Standards
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     outputs:
       quality-score: ${{ steps.quality-check.outputs.score }}
     
@@ -163,6 +183,7 @@ jobs:
   unit-tests:
     name: 🧪 Unit Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11']
@@ -209,6 +230,7 @@ jobs:
     name: 🔗 Integration Tests
     runs-on: ubuntu-latest
     needs: [dependency-scan, code-quality]
+    timeout-minutes: 20
     
     services:
       postgres:
@@ -292,6 +314,7 @@ jobs:
     name: 🎭 End-to-End Tests
     runs-on: ubuntu-latest
     needs: [unit-tests, integration-tests]
+    timeout-minutes: 30
     
     steps:
     - name: 📥 Checkout code
@@ -347,6 +370,7 @@ jobs:
     name: ⚡ Performance Tests
     runs-on: ubuntu-latest
     needs: [unit-tests]
+    timeout-minutes: 30
     
     steps:
     - name: 📥 Checkout code
@@ -391,6 +415,7 @@ jobs:
     name: 🐳 Docker Build & Security Scan
     runs-on: ubuntu-latest
     needs: [unit-tests, integration-tests]
+    timeout-minutes: 30
     outputs:
       image-digest: ${{ steps.build.outputs.digest }}
     
@@ -432,7 +457,7 @@ jobs:
           org.opencontainers.image.licenses=MIT
     
     - name: 🔍 Docker security scan with Trivy
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@0.20.0
       with:
         image-ref: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
         format: 'sarif'
@@ -464,6 +489,7 @@ jobs:
     needs: [docker-build, e2e-tests, performance-tests]
     if: github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
     environment: staging
+    timeout-minutes: 20
     
     steps:
     - name: 📥 Checkout code
@@ -494,6 +520,7 @@ jobs:
     needs: [docker-build, e2e-tests, performance-tests]
     if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
     environment: production
+    timeout-minutes: 20
     
     steps:
     - name: 📥 Checkout code
@@ -538,6 +565,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [deploy-staging, deploy-production]
     if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
+    timeout-minutes: 20
     
     steps:
     - name: 📥 Checkout code
@@ -578,6 +606,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [post-deployment-validation]
     if: always()
+    timeout-minutes: 10
     
     steps:
     - name: 🧹 Cleanup old artifacts
@@ -598,6 +627,7 @@ jobs:
     name: 🔄 Rollback Deployment
     runs-on: ubuntu-latest
     if: failure() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+    timeout-minutes: 10
     
     steps:
     - name: 📥 Checkout code

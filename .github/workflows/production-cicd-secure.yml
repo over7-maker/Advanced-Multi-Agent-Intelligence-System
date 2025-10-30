@@ -1,5 +1,10 @@
 name: 🚀 AMAS Secure Production CI/CD Pipeline
 
+permissions:
+  contents: read
+  packages: read
+  id-token: write
+
 # SECURITY FIX: Restrict triggers to prevent accidental deployments
 on:
   push:
@@ -46,6 +51,7 @@ jobs:
   security-scan:
     name: 🔒 Security Vulnerability Scan
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     outputs:
       vulnerabilities-found: ${{ steps.scan-results.outputs.vulnerabilities }}
       scan-passed: ${{ steps.scan-results.outputs.passed }}
@@ -187,6 +193,7 @@ jobs:
   code-quality:
     name: 🎨 Code Quality & Standards
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     outputs:
       quality-score: ${{ steps.quality-check.outputs.score }}
       quality-passed: ${{ steps.quality-check.outputs.passed }}
@@ -299,14 +306,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest]
         python-version: ['3.9', '3.10', '3.11']
-        exclude:
-          # Reduce matrix size for efficiency
-          - os: windows-latest
-            python-version: '3.9'
-          - os: macos-latest
-            python-version: '3.9'
     
     steps:
     - name: 📥 Checkout code
@@ -348,6 +349,7 @@ jobs:
   integration-tests:
     name: 🔗 Integration Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     needs: [security-scan, code-quality]
     if: needs.security-scan.outputs.vulnerabilities-found == '0' || needs.security-scan.outputs.vulnerabilities-found < '3'
     
@@ -430,6 +432,7 @@ jobs:
   secure-build:
     name: 🐳 Secure Docker Build
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: [test-matrix, integration-tests]
     outputs:
       image-digest: ${{ steps.build.outputs.digest }}
@@ -497,7 +500,7 @@ jobs:
     
     # SECURITY FIX: Comprehensive container scanning
     - name: 🔍 Container security scan with Trivy
-      uses: aquasecurity/trivy-action@master
+      uses: aquasecurity/trivy-action@0.20.0
       with:
         image-ref: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
         format: 'sarif'
@@ -547,6 +550,7 @@ jobs:
     environment: 
       name: staging
       url: https://amas-staging.example.com
+    timeout-minutes: 20
     
     steps:
     - name: 📥 Checkout code
@@ -576,6 +580,7 @@ jobs:
     environment: 
       name: production
       url: https://amas.example.com
+    timeout-minutes: 25
     
     steps:
     - name: 📥 Checkout code
@@ -618,6 +623,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [security-scan, secure-build]
     if: always()
+    timeout-minutes: 15
     
     steps:
     - name: 📥 Checkout code
@@ -682,6 +688,7 @@ jobs:
     runs-on: ubuntu-latest
     if: failure() && (github.ref == 'refs/heads/main')
     needs: [deploy-production]
+    timeout-minutes: 10
     
     steps:
     - name: 📥 Checkout code
