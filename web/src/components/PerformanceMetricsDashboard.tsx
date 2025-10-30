@@ -111,10 +111,6 @@ const PerformanceMetricsDashboard: React.FC<PerformanceMetricsDashboardProps> = 
 
   // useCallback version of loadMetrics declared above
 
-  const setupWebSocketListeners = () => {
-    wsService.subscribe('metricsUpdate', handleMetricsUpdate);
-  };
-
   const handleMetricsUpdate = (update: any) => {
     setCurrentMetrics(prev => ({
       ...prev,

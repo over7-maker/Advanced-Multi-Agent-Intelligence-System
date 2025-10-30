@@ -40,6 +40,18 @@ const VoiceCommandInterface: React.FC<VoiceCommandInterfaceProps> = ({
 
   // Audio ref not currently used
 
+  // Define speak before effect to avoid use-before-assign
+  const speak = useCallback((text: string) => {
+    if (isSpeaking) {
+      voiceService.stopSpeaking();
+    }
+    voiceService.speak(text, {
+      onstart: () => setIsSpeaking(true),
+      onend: () => setIsSpeaking(false),
+      onerror: () => setIsSpeaking(false)
+    });
+  }, [isSpeaking]);
+
   useEffect(() => {
     setIsSupported(voiceService.isVoiceSupported());
     
@@ -101,16 +113,7 @@ const VoiceCommandInterface: React.FC<VoiceCommandInterfaceProps> = ({
     }
   };
 
-  const speak = useCallback((text: string) => {
-    if (isSpeaking) {
-      voiceService.stopSpeaking();
-    }
-    voiceService.speak(text, {
-      onstart: () => setIsSpeaking(true),
-      onend: () => setIsSpeaking(false),
-      onerror: () => setIsSpeaking(false)
-    });
-  }, [isSpeaking]);
+  // speak defined above
 
   const stopSpeaking = () => {
     voiceService.stopSpeaking();

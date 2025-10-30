@@ -75,9 +75,7 @@ const AgentStatusGrid: React.FC<AgentStatusGridProps> = ({
     }
   };
 
-  const setupWebSocketListeners = () => {
-    wsService.subscribe('agentUpdate', handleAgentUpdate);
-  };
+  // (listener setup defined above with useCallback)
 
   const handleAgentUpdate = (update: any) => {
     setAgentMetrics(prev => ({

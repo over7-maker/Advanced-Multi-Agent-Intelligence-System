@@ -91,7 +91,8 @@ const AMASControlCenter: React.FC<AMASControlCenterProps> = ({
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [activeTasks, setActiveTasks] = useState<Task[]>([]);
   const [command, setCommand] = useState('');
-  // Voice UI state (unused for now)
+  // Command history for recent inputs
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
 
   // Mock data initialization
   useEffect(() => {
@@ -177,7 +178,7 @@ const AMASControlCenter: React.FC<AMASControlCenterProps> = ({
     if (!command.trim()) return;
 
     // Add to history
-    setCommandHistory(prev => [...prev, command]);
+    setCommandHistory((prev: string[]) => [...prev, command]);
 
     // Mock task creation
     const newTask: Task = {

@@ -79,9 +79,7 @@ const TaskQueueVisualization: React.FC<TaskQueueVisualizationProps> = ({
     }
   };
 
-  const setupWebSocketListeners = () => {
-    wsService.subscribe('taskUpdate', handleTaskUpdate);
-  };
+  // listener setup defined above
 
   const handleTaskUpdate = (update: any) => {
     setTaskProgress(prev => ({
