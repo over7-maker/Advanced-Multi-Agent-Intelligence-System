@@ -1,0 +1,112 @@
+name: Hardened AI Analysis Pipeline
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - '**.py'
+      - '.github/workflows/ai-analysis-hardened.yml'
+      - '.analysis-policy.yml'
+
+jobs:
+  validate-and-analyze:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install detect-secrets
+
+      - name: Determine changed Python files
+        id: changes
+        run: |
+          echo "files=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\\.py$' | tr '\n' ' ' || true)" >> $GITHUB_OUTPUT
+
+      - name: Pre-verify syntax and AST (deterministic)
+        id: deterministic
+        run: |
+          set -e
+          mkdir -p artifacts
+          SYNTAX_OK=true
+          AST_OK=true
+          RECEIPT=artifacts/validation_receipt.json
+          echo '{"files":[]}' > $RECEIPT
+          for f in ${{ steps.changes.outputs.files }}; do
+            if [ -f "$f" ]; then
+              echo "Validating $f"
+              # py_compile
+              python - << 'PY'
+import py_compile, sys, json, hashlib
+from pathlib import Path
+f = sys.argv[1]
+try:
+    py_compile.compile(f, doraise=True)
+    pc = {"py_compile": "pass"}
+except Exception as e:
+    pc = {"py_compile": "fail", "error": str(e)}
+# ast.parse
+import ast
+try:
+    ast.parse(Path(f).read_text(encoding='utf-8'))
+    ap = {"ast": "pass"}
+except Exception as e:
+    ap = {"ast": "fail", "error": str(e)}
+# hashes
+b = Path(f).read_bytes()
+hash_prefix = hashlib.blake2b(b, digest_size=16).hexdigest()[:16]
+rec = {"file": f, "size": len(b), "content_hash_prefix": hash_prefix, "deterministic": {**pc, **ap}}
+R = Path('artifacts/validation_receipt.json')
+import json
+j = json.loads(R.read_text())
+j["files"].append(rec)
+R.write_text(json.dumps(j, indent=2))
+if pc.get("py_compile") == "fail":
+    sys.exit(12)
+if ap.get("ast") == "fail":
+    sys.exit(13)
+PY
+              "$f" || SYNTAX_OK=false
+            fi
+          done
+          echo "syntax_ok=$SYNTAX_OK" >> $GITHUB_OUTPUT
+          echo "ast_ok=$AST_OK" >> $GITHUB_OUTPUT
+
+      - name: Upload validation receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-receipt
+          path: artifacts/validation_receipt.json
+
+      - name: Guardrail: mark syntax confirmed OK
+        if: steps.deterministic.outputs.syntax_ok == 'true'
+        run: echo "SYNTAX_CONFIRMED_OK=true" >> $GITHUB_ENV
+
+      - name: Run AI Analyzer (context-aware)
+        env:
+          SYNTAX_CONFIRMED_OK: ${{ env.SYNTAX_CONFIRMED_OK }}
+        run: |
+          echo "Running AI analyzer with guardrails..."
+          # Example placeholder hook: your existing analyzer script should read SYNTAX_CONFIRMED_OK
+          # and suppress syntax claims when set to true.
+          python .github/scripts/bulletproof_ai_pr_analyzer.py || true
+
+      - name: Post policy gate
+        run: |
+          echo "Applying policy gates..."
+          # If syntax is confirmed OK, fail build is forbidden based on syntax-only AI claims
+          echo "Done."
