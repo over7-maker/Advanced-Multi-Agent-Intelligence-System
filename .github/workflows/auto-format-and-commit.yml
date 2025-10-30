@@ -20,9 +20,11 @@ permissions:
 
 jobs:
   auto-format:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.label.name, 'auto-format'))
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'auto-format')
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    concurrency:
+      group: auto-format-${{ github.ref }}
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4
@@ -32,7 +34,7 @@ jobs:
       - name: 🐍 Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ inputs.python-version || '3.11' }}
+          python-version: ${{ github.event.inputs.python-version || '3.11' }}
           cache: 'pip'
 
       - name: 📦 Install formatters
@@ -43,22 +45,22 @@ jobs:
       - name: 🎨 Run Black
         run: |
           set -e
-          TARGETS="${{ inputs.paths || 'src tests' }}"
+          TARGETS="${{ github.event.inputs.paths || 'src tests' }}"
           echo "Formatting: $TARGETS"
           if [ -f pyproject.toml ]; then
-            black $TARGETS
+            black "$TARGETS"
           else
-            black $TARGETS --line-length 88
+            black "$TARGETS" --line-length 88
           fi
 
       - name: 🔀 Run isort
         run: |
           set -e
-          TARGETS="${{ inputs.paths || 'src tests' }}"
+          TARGETS="${{ github.event.inputs.paths || 'src tests' }}"
           if [ -f pyproject.toml ]; then
-            isort $TARGETS
+            isort "$TARGETS"
           else
-            isort $TARGETS --profile black
+            isort "$TARGETS" --profile black
           fi
 
       - name: 🧾 Commit formatting changes
