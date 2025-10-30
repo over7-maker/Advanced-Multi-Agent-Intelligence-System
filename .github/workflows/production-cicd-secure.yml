@@ -37,8 +37,6 @@ env:
   IMAGE_NAME: amas
   # SECURITY FIX: Use repository owner instead of actor
   REGISTRY_USERNAME: ${{ github.repository_owner }}
-  # Prefer fine-grained PAT if available; fallback to GITHUB_TOKEN
-  REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PAT || secrets.GITHUB_TOKEN }}
 
 jobs:
   # =============================================================================
@@ -59,7 +57,7 @@ jobs:
     - name: 📥 Checkout code
       uses: actions/checkout@v4
       with:
-        fetch-depth: 0
+        fetch-depth: 1
     
     - name: 🧰 Ensure jq is available
       run: |
@@ -523,7 +521,7 @@ jobs:
       with:
         registry: ${{ env.DOCKER_REGISTRY }}
         username: ${{ env.REGISTRY_USERNAME }}
-        password: ${{ env.REGISTRY_PASSWORD }}
+        password: ${{ secrets.REGISTRY_PAT != '' && secrets.REGISTRY_PAT || secrets.GITHUB_TOKEN }}
     
     - name: 🔎 Verify registry credentials scope
       if: github.event_name != 'pull_request'
