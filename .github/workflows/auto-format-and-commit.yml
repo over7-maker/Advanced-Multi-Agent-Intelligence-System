@@ -20,7 +20,12 @@ permissions:
 
 jobs:
   auto-format:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'auto-format')
+    # Security: Only allow trusted actors and prevent fork abuse
+    if: >
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'pull_request' &&
+       github.event.label.name == 'auto-format' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     concurrency:
@@ -30,7 +35,8 @@ jobs:
       - name: 📥 Checkout
         uses: actions/checkout@v4.1.1
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🐍 Setup Python
         uses: actions/setup-python@v5.1.0
@@ -41,7 +47,8 @@ jobs:
       - name: 📦 Install formatters
         run: |
           python -m pip install --upgrade pip
-          pip install black==23.11.0 isort==5.12.0
+          # Security: isort >=5.13.2 fixes CVE-2023-38995 (command injection)
+          pip install black==24.3.0 isort==5.13.2
 
       - name: 🎨 Run Black
         run: |
@@ -64,13 +71,25 @@ jobs:
             isort $TARGETS --profile black
           fi
 
+      - name: 📝 Check for changes
+        id: check-changes
+        run: |
+          if ! git diff --quiet || ! git diff --cached --quiet; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "📝 Changes detected:"
+            git status --short
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "✅ No changes detected"
+          fi
+
       - name: 🧾 Commit formatting changes
-        uses: stefanzweifel/git-auto-commit-action@v5.0.2
+        if: steps.check-changes.outputs.has_changes == 'true'
+        uses: stefanzweifel/git-auto-commit-action@v5.0.0
         with:
-          commit_message: "chore: auto-format code with Black and isort"
-          commit_user_name: amas-bot
-          commit_user_email: amas-bot@users.noreply.github.com
-          push_options: '--no-verify'
+          commit_message: "chore: auto-format code with Black and isort [skip ci]"
+          commit_user_name: github-actions[bot]
+          commit_user_email: github-actions[bot]@users.noreply.github.com
           skip_fetch: true
           file_pattern: |
             **/*.py
@@ -78,5 +97,11 @@ jobs:
             setup.cfg
 
       - name: ✅ Summary
+        if: always()
         run: |
-          echo "Auto-format completed. If changes were committed, re-run failing workflows."
+          if [ "${{ steps.check-changes.outputs.has_changes }}" == "true" ]; then
+            echo "✅ Code formatted and committed successfully!"
+            echo "🔄 Please re-run the 'Code Quality & Standards' CI job to verify."
+          else
+            echo "ℹ️  No formatting changes were needed. Code is already formatted."
+          fi
