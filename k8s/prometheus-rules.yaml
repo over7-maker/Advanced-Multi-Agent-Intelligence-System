@@ -1,0 +1,91 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: amas-alerts
+  namespace: amas
+  labels:
+    app: amas
+    component: monitoring
+spec:
+  groups:
+  - name: amas.rules
+    rules:
+    # High error rate alert
+    - alert: HighErrorRate
+      expr: rate(amas_requests_total{status="error"}[5m]) / rate(amas_requests_total[5m]) * 100 > 5
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High error rate detected"
+        description: "Error rate is {{ $value }}% for the last 5 minutes"
+        
+    # High response time alert
+    - alert: HighResponseTime
+      expr: histogram_quantile(0.95, rate(amas_request_duration_seconds_bucket[5m])) > 2
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High response time detected"
+        description: "95th percentile response time is {{ $value }}s"
+        
+    # High memory usage alert
+    - alert: HighMemoryUsage
+      expr: amas_memory_usage_bytes / (1024*1024*1024) > 3
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High memory usage detected"
+        description: "Memory usage is {{ $value }}GB"
+        
+    # High CPU usage alert
+    - alert: HighCPUUsage
+      expr: amas_cpu_usage_percent > 80
+      for: 2m
+      labels:
+        severity: warning
+      annotations:
+        summary: "High CPU usage detected"
+        description: "CPU usage is {{ $value }}%"
+        
+    # Database connection issues
+    - alert: DatabaseConnectionIssues
+      expr: amas_db_connection_errors_total > 10
+      for: 1m
+      labels:
+        severity: critical
+      annotations:
+        summary: "Database connection issues"
+        description: "{{ $value }} database connection errors in the last minute"
+        
+    # Low cache hit rate
+    - alert: LowCacheHitRate
+      expr: rate(amas_cache_hits_total[5m]) / (rate(amas_cache_hits_total[5m]) + rate(amas_cache_misses_total[5m])) * 100 < 80
+      for: 5m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Low cache hit rate"
+        description: "Cache hit rate is {{ $value }}%"
+        
+    # Pod restart alert
+    - alert: PodRestarting
+      expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+      for: 1m
+      labels:
+        severity: warning
+      annotations:
+        summary: "Pod is restarting"
+        description: "Pod {{ $labels.pod }} is restarting frequently"
+        
+    # HPA scaling alert
+    - alert: HPAScaling
+      expr: kube_horizontalpodautoscaler_status_current_replicas != kube_horizontalpodautoscaler_spec_min_replicas
+      for: 0m
+      labels:
+        severity: info
+      annotations:
+        summary: "HPA is scaling"
+        description: "HPA {{ $labels.horizontalpodautoscaler }} is scaling to {{ $value }} replicas"

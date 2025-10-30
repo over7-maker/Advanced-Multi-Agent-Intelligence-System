@@ -1,0 +1,145 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  namespace: amas
+  labels:
+    app: postgres
+    component: database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+        component: database
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:15-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: "amas"
+        - name: POSTGRES_USER
+          value: "postgres"
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: amas-secrets
+              key: POSTGRES_PASSWORD
+        - name: POSTGRES_INITDB_ARGS
+          value: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+        volumeMounts:
+        - name: postgres-storage
+          mountPath: /var/lib/postgresql/data
+        - name: init-script
+          mountPath: /docker-entrypoint-initdb.d
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - amas
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 5
+        readinessProbe:
+          exec:
+            command:
+            - pg_isready
+            - -U
+            - postgres
+            - -d
+            - amas
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 3
+      volumes:
+      - name: postgres-storage
+        persistentVolumeClaim:
+          claimName: postgres-pvc
+      - name: init-script
+        configMap:
+          name: postgres-init-script
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: amas
+  labels:
+    app: postgres
+    component: database
+spec:
+  selector:
+    app: postgres
+  ports:
+  - port: 5432
+    targetPort: 5432
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: amas
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-script
+  namespace: amas
+data:
+  init-db.sql: |
+    -- Initialize AMAS database
+    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+    CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+    
+    -- Create tables for AMAS
+    CREATE TABLE IF NOT EXISTS agents (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        name VARCHAR(255) NOT NULL,
+        type VARCHAR(100) NOT NULL,
+        status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE TABLE IF NOT EXISTS tasks (
+        id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+        agent_id UUID REFERENCES agents(id),
+        title VARCHAR(500) NOT NULL,
+        description TEXT,
+        status VARCHAR(50) DEFAULT 'pending',
+        priority INTEGER DEFAULT 1,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE INDEX IF NOT EXISTS idx_tasks_agent_id ON tasks(agent_id);
+    CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+    CREATE INDEX IF NOT EXISTS idx_tasks_priority ON tasks(priority);
