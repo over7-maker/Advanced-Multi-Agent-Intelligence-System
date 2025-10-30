@@ -1,0 +1,91 @@
+# AMAS - Advanced Multi-Agent Intelligence System
+# Production-ready requirements with exact versions - PyYAML build fix
+
+# Core Web Framework
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+pydantic==2.10.4
+pydantic-settings==2.7.0
+
+# Build Dependencies (to prevent Cython errors)
+setuptools>=69.0.0
+wheel>=0.42.0
+cython>=3.0.0
+
+# AI and ML Core - Build-compatible versions
+openai==1.58.1
+anthropic==0.40.0
+google-generativeai==0.8.3
+groq==0.13.0
+# Updated cohere to compatible version that supports tokenizers 0.20+
+cohere>=5.11.0
+# Fixed: huggingface-hub version compatible with Python 3.13
+huggingface-hub==0.26.2
+transformers==4.45.0
+# Explicit tokenizers pin for compatibility
+tokenizers==0.20.4
+# Core ML packages - stable versions that build reliably
+scikit-learn>=1.3.0,<1.6.0
+numpy>=1.24.0,<2.0.0
+pandas>=2.0.0,<2.3.0
+
+# Database and Storage
+sqlalchemy==2.0.36
+alembic==1.14.0
+redis==5.2.0
+aioredis==2.0.1
+neo4j==5.28.0
+
+# Monitoring and Performance - stable versions
+psutil>=5.9.0,<6.1.0
+matplotlib>=3.7.0,<3.11.0
+seaborn>=0.12.0,<0.14.0
+plotly>=5.17.0,<5.25.0
+
+# Security and Authentication
+bcrypt==4.2.1
+pyjwt==2.10.1
+cryptography==44.0.0
+bandit==1.7.10
+safety>=3.0.0,<3.3.0
+
+# HTTP and Networking
+httpx==0.28.1
+aiohttp==3.11.11
+requests==2.32.3
+
+# Data Processing
+networkx>=3.2.0,<3.5.0
+joblib>=1.3.0,<1.5.0
+python-multipart==0.0.20
+
+# Development and Testing
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+black==24.10.0
+flake8==7.1.1
+isort==5.13.2
+mypy==1.13.0
+
+# Utilities
+python-dotenv==1.0.1
+click==8.1.7
+rich==13.9.4
+tqdm==4.67.1
+colorama==0.4.6
+
+# Web Scraping (for OSINT)
+beautifulsoup4==4.12.3
+selenium==4.28.0
+
+# Vector Search and Embeddings - pre-built wheels preferred
+sentence-transformers>=2.2.0,<3.4.0
+faiss-cpu>=1.7.0,<1.13.0
+
+# FIXED: PyYAML with pre-built wheels (avoids Cython build issues)
+# Use pre-built binary wheel instead of compiling from source
+PyYAML>=6.0,<7.0
+
+# Email validation for Pydantic
+email-validator==2.2.0

@@ -1,0 +1,284 @@
+groups:
+  - name: amas_alerts
+    rules:
+      # Critical Alerts
+      - alert: AMASDown
+        expr: up{job="amas"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: amas
+        annotations:
+          summary: "AMAS service is down"
+          description: "AMAS service has been down for more than 1 minute"
+          runbook_url: "https://docs.amas.local/runbooks/service-down"
+
+      - alert: HighErrorRate
+        expr: rate(errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          service: amas
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors per second"
+          runbook_url: "https://docs.amas.local/runbooks/high-error-rate"
+
+      - alert: HighMemoryUsage
+        expr: (system_memory_usage_bytes{type="used"} / system_memory_usage_bytes{type="total"}) > 0.9
+        for: 1m
+        labels:
+          severity: critical
+          service: amas
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+          runbook_url: "https://docs.amas.local/runbooks/high-memory-usage"
+
+      - alert: HighCPUUsage
+        expr: system_cpu_usage_percent > 90
+        for: 2m
+        labels:
+          severity: critical
+          service: amas
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}%"
+          runbook_url: "https://docs.amas.local/runbooks/high-cpu-usage"
+
+      - alert: DatabaseDown
+        expr: database_connections_active == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: database
+        annotations:
+          summary: "Database is down"
+          description: "No active database connections"
+          runbook_url: "https://docs.amas.local/runbooks/database-down"
+
+      - alert: RedisDown
+        expr: cache_operations_total == 0 and rate(cache_operations_total[5m]) == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis is down"
+          description: "No cache operations detected"
+          runbook_url: "https://docs.amas.local/runbooks/redis-down"
+
+      # High Priority Alerts
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 5
+        for: 3m
+        labels:
+          severity: high
+          service: amas
+        annotations:
+          summary: "High response time"
+          description: "95th percentile response time is {{ $value }}s"
+          runbook_url: "https://docs.amas.local/runbooks/high-response-time"
+
+      - alert: LowCacheHitRatio
+        expr: cache_hit_ratio < 0.8
+        for: 5m
+        labels:
+          severity: high
+          service: cache
+        annotations:
+          summary: "Low cache hit ratio"
+          description: "Cache hit ratio is {{ $value | humanizePercentage }}"
+          runbook_url: "https://docs.amas.local/runbooks/low-cache-hit-ratio"
+
+      - alert: HighAuthenticationFailures
+        expr: rate(auth_failures_total[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: high
+          service: authentication
+        annotations:
+          summary: "High authentication failure rate"
+          description: "Authentication failure rate is {{ $value }} failures per second"
+          runbook_url: "https://docs.amas.local/runbooks/high-auth-failures"
+
+      - alert: RateLimitViolations
+        expr: rate(rate_limit_exceeded_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: high
+          service: amas
+        annotations:
+          summary: "High rate limit violations"
+          description: "Rate limit violation rate is {{ $value }} violations per second"
+          runbook_url: "https://docs.amas.local/runbooks/rate-limit-violations"
+
+      - alert: DatabaseSlowQueries
+        expr: histogram_quantile(0.95, rate(database_query_duration_seconds_bucket[5m])) > 2
+        for: 3m
+        labels:
+          severity: high
+          service: database
+        annotations:
+          summary: "Slow database queries"
+          description: "95th percentile database query time is {{ $value }}s"
+          runbook_url: "https://docs.amas.local/runbooks/slow-database-queries"
+
+      # Medium Priority Alerts
+      - alert: HighTaskQueue
+        expr: tasks_in_progress > 100
+        for: 5m
+        labels:
+          severity: medium
+          service: task_queue
+        annotations:
+          summary: "High task queue length"
+          description: "{{ $value }} tasks are currently in progress"
+          runbook_url: "https://docs.amas.local/runbooks/high-task-queue"
+
+      - alert: LowActiveSessions
+        expr: active_sessions < 1
+        for: 10m
+        labels:
+          severity: medium
+          service: amas
+        annotations:
+          summary: "No active user sessions"
+          description: "No active user sessions for 10 minutes"
+          runbook_url: "https://docs.amas.local/runbooks/no-active-sessions"
+
+      - alert: HighAgentExecutionTime
+        expr: histogram_quantile(0.95, rate(agent_execution_duration_seconds_bucket[5m])) > 300
+        for: 5m
+        labels:
+          severity: medium
+          service: agents
+        annotations:
+          summary: "Slow agent executions"
+          description: "95th percentile agent execution time is {{ $value }}s"
+          runbook_url: "https://docs.amas.local/runbooks/slow-agent-executions"
+
+      - alert: CircuitBreakerOpen
+        expr: increase(circuit_breaker_opened_total[5m]) > 0
+        for: 1m
+        labels:
+          severity: medium
+          service: circuit_breaker
+        annotations:
+          summary: "Circuit breaker opened"
+          description: "Circuit breaker opened {{ $value }} times in the last 5 minutes"
+          runbook_url: "https://docs.amas.local/runbooks/circuit-breaker-open"
+
+      # Low Priority Alerts
+      - alert: HighDiskUsage
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) > 0.8
+        for: 10m
+        labels:
+          severity: low
+          service: system
+        annotations:
+          summary: "High disk usage"
+          description: "Disk usage is {{ $value | humanizePercentage }}"
+          runbook_url: "https://docs.amas.local/runbooks/high-disk-usage"
+
+      - alert: LowMemoryAvailable
+        expr: system_memory_usage_bytes{type="available"} < 1000000000  # 1GB
+        for: 5m
+        labels:
+          severity: low
+          service: system
+        annotations:
+          summary: "Low available memory"
+          description: "Available memory is {{ $value | humanizeBytes }}"
+          runbook_url: "https://docs.amas.local/runbooks/low-available-memory"
+
+      - alert: HighTaskFailureRate
+        expr: rate(tasks_total{status="failed"}[5m]) / rate(tasks_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: low
+          service: task_queue
+        annotations:
+          summary: "High task failure rate"
+          description: "Task failure rate is {{ $value | humanizePercentage }}"
+          runbook_url: "https://docs.amas.local/runbooks/high-task-failure-rate"
+
+      # Security Alerts
+      - alert: SuspiciousActivity
+        expr: rate(auth_failures_total[5m]) > 0.2
+        for: 1m
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "Suspicious authentication activity"
+          description: "High rate of authentication failures: {{ $value }} failures per second"
+          runbook_url: "https://docs.amas.local/runbooks/suspicious-activity"
+
+      - alert: BruteForceAttack
+        expr: rate(auth_failures_total[5m]) > 1
+        for: 30s
+        labels:
+          severity: critical
+          service: security
+        annotations:
+          summary: "Potential brute force attack"
+          description: "Very high rate of authentication failures: {{ $value }} failures per second"
+          runbook_url: "https://docs.amas.local/runbooks/brute-force-attack"
+
+      - alert: UnauthorizedAccess
+        expr: rate(errors_total{error_type="authorization_error"}[5m]) > 0.05
+        for: 2m
+        labels:
+          severity: high
+          service: security
+        annotations:
+          summary: "High unauthorized access attempts"
+          description: "Rate of authorization errors: {{ $value }} errors per second"
+          runbook_url: "https://docs.amas.local/runbooks/unauthorized-access"
+
+      # Business Logic Alerts
+      - alert: NoAgentExecutions
+        expr: rate(agent_executions_total[10m]) == 0
+        for: 5m
+        labels:
+          severity: medium
+          service: agents
+        annotations:
+          summary: "No agent executions"
+          description: "No agent executions in the last 10 minutes"
+          runbook_url: "https://docs.amas.local/runbooks/no-agent-executions"
+
+      - alert: NoTaskSubmissions
+        expr: rate(tasks_total[10m]) == 0
+        for: 10m
+        labels:
+          severity: low
+          service: task_queue
+        annotations:
+          summary: "No task submissions"
+          description: "No tasks submitted in the last 10 minutes"
+          runbook_url: "https://docs.amas.local/runbooks/no-task-submissions"
+
+      # Infrastructure Alerts
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: monitoring
+        annotations:
+          summary: "Prometheus is down"
+          description: "Prometheus monitoring service is down"
+          runbook_url: "https://docs.amas.local/runbooks/prometheus-down"
+
+      - alert: GrafanaDown
+        expr: up{job="grafana"} == 0
+        for: 2m
+        labels:
+          severity: medium
+          service: monitoring
+        annotations:
+          summary: "Grafana is down"
+          description: "Grafana dashboard service is down"
+          runbook_url: "https://docs.amas.local/runbooks/grafana-down"

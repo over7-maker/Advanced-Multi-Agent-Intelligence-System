@@ -1,3 +1,4 @@
+from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
 """
 Universal AI Manager - Comprehensive fallback system for all 16 AI providers
@@ -128,10 +129,10 @@ class UniversalAIManager:
         logger.info("🚀 Initializing Universal AI Manager with 16 providers...")
 
         # 1. DeepSeek
-        if os.getenv("DEEPSEEK_API_KEY"):
+        if get_api_key("DEEPSEEK_API_KEY"):
             self.providers["deepseek"] = ProviderConfig(
                 name="DeepSeek V3.1",
-                api_key=os.getenv("DEEPSEEK_API_KEY"),
+                api_key=get_api_key("DEEPSEEK_API_KEY"),
                 base_url="https://api.deepseek.com/v1",
                 model="deepseek-chat",
                 provider_type=ProviderType.OPENAI_COMPATIBLE,
@@ -140,10 +141,10 @@ class UniversalAIManager:
             )
 
         # 2. GLM
-        if os.getenv("GLM_API_KEY"):
+        if get_api_key("GLM_API_KEY"):
             self.providers["glm"] = ProviderConfig(
                 name="GLM 4.5 Air",
-                api_key=os.getenv("GLM_API_KEY"),
+                api_key=get_api_key("GLM_API_KEY"),
                 base_url="https://open.bigmodel.cn/api/paas/v4",
                 model="glm-4-flash",
                 provider_type=ProviderType.OPENAI_COMPATIBLE,
@@ -152,10 +153,10 @@ class UniversalAIManager:
             )
 
         # 3. Grok
-        if os.getenv("GROK_API_KEY"):
+        if get_api_key("GROK_API_KEY"):
             self.providers["grok"] = ProviderConfig(
                 name="xAI Grok Beta",
-                api_key=os.getenv("GROK_API_KEY"),
+                api_key=get_api_key("GROK_API_KEY"),
                 base_url="https://api.openrouter.ai/v1",
                 model="x-ai/grok-beta",
                 provider_type=ProviderType.OPENAI_COMPATIBLE,
@@ -164,10 +165,10 @@ class UniversalAIManager:
             )
 
         # 4. Kimi
-        if os.getenv("KIMI_API_KEY"):
+        if get_api_key("KIMI_API_KEY"):
             self.providers["kimi"] = ProviderConfig(
                 name="MoonshotAI Kimi",
-                api_key=os.getenv("KIMI_API_KEY"),
+                api_key=get_api_key("KIMI_API_KEY"),
                 base_url="https://api.moonshot.cn/v1",
                 model="moonshot-v1-8k",
                 provider_type=ProviderType.OPENAI_COMPATIBLE,
@@ -176,10 +177,10 @@ class UniversalAIManager:
             )
 
         # 5. Qwen
-        if os.getenv("QWEN_API_KEY"):
+        if get_api_key("QWEN_API_KEY"):
             self.providers["qwen"] = ProviderConfig(
                 name="Qwen Plus",
-                api_key=os.getenv("QWEN_API_KEY"),
+                api_key=get_api_key("QWEN_API_KEY"),
                 base_url="https://dashscope.aliyuncs.com/api/v1",
                 model="qwen-plus",
                 provider_type=ProviderType.OPENAI_COMPATIBLE,
@@ -188,10 +189,10 @@ class UniversalAIManager:
             )
 
         # 6. GPT OSS
-        if os.getenv("GPTOSS_API_KEY"):
+        if get_api_key("GPTOSS_API_KEY"):
             self.providers["gptoss"] = ProviderConfig(
                 name="GPT OSS",
-                api_key=os.getenv("GPTOSS_API_KEY"),
+                api_key=get_api_key("GPTOSS_API_KEY"),
                 base_url="https://api.openrouter.ai/v1",
                 model="openai/gpt-4o",
                 provider_type=ProviderType.OPENAI_COMPATIBLE,
@@ -200,10 +201,10 @@ class UniversalAIManager:
             )
 
         # 7. Groq AI (primary)
-        if os.getenv("GROQAI_API_KEY"):
+        if get_api_key("GROQAI_API_KEY"):
             self.providers["groq"] = ProviderConfig(
                 name="Groq AI",
-                api_key=os.getenv("GROQAI_API_KEY"),
+                api_key=get_api_key("GROQAI_API_KEY"),
                 base_url="https://api.groq.com/openai/v1",
                 model="llama-3.3-70b-versatile",
                 provider_type=ProviderType.GROQ,
@@ -212,10 +213,10 @@ class UniversalAIManager:
             )
 
         # 8. Cerebras
-        if os.getenv("CEREBRAS_API_KEY"):
+        if get_api_key("CEREBRAS_API_KEY"):
             self.providers["cerebras"] = ProviderConfig(
                 name="Cerebras AI",
-                api_key=os.getenv("CEREBRAS_API_KEY"),
+                api_key=get_api_key("CEREBRAS_API_KEY"),
                 base_url="https://api.cerebras.ai/v1",
                 model="llama3.1-8b",
                 provider_type=ProviderType.CEREBRAS,
@@ -224,10 +225,10 @@ class UniversalAIManager:
             )
 
         # 9. Gemini AI (primary)
-        if os.getenv("GEMINIAI_API_KEY"):
+        if get_api_key("GEMINIAI_API_KEY"):
             self.providers["gemini"] = ProviderConfig(
                 name="Gemini AI",
-                api_key=os.getenv("GEMINIAI_API_KEY"),
+                api_key=get_api_key("GEMINIAI_API_KEY"),
                 base_url="https://generativelanguage.googleapis.com/v1beta",
                 model="gemini-2.0-flash",
                 provider_type=ProviderType.GEMINI,
@@ -236,10 +237,10 @@ class UniversalAIManager:
             )
 
         # 10. Codestral
-        if os.getenv("CODESTRAL_API_KEY"):
+        if get_api_key("CODESTRAL_API_KEY"):
             self.providers["codestral"] = ProviderConfig(
                 name="Codestral",
-                api_key=os.getenv("CODESTRAL_API_KEY"),
+                api_key=get_api_key("CODESTRAL_API_KEY"),
                 base_url="https://codestral.mistral.ai/v1",
                 model="codestral-latest",
                 provider_type=ProviderType.CODESTRAL,
@@ -248,10 +249,10 @@ class UniversalAIManager:
             )
 
         # 11. NVIDIA
-        if os.getenv("NVIDIA_API_KEY"):
+        if get_api_key("NVIDIA_API_KEY"):
             self.providers["nvidia"] = ProviderConfig(
                 name="NVIDIA AI",
-                api_key=os.getenv("NVIDIA_API_KEY"),
+                api_key=get_api_key("NVIDIA_API_KEY"),
                 base_url="https://integrate.api.nvidia.com/v1",
                 model="deepseek-ai/deepseek-r1",
                 provider_type=ProviderType.NVIDIA,
@@ -260,10 +261,10 @@ class UniversalAIManager:
             )
 
         # 12. Gemini 2 (secondary)
-        if os.getenv("GEMINI2_API_KEY"):
+        if get_api_key("GEMINI2_API_KEY"):
             self.providers["gemini2"] = ProviderConfig(
                 name="Gemini 2",
-                api_key=os.getenv("GEMINI2_API_KEY"),
+                api_key=get_api_key("GEMINI2_API_KEY"),
                 base_url="https://generativelanguage.googleapis.com/v1beta",
                 model="gemini-2.0-flash",
                 provider_type=ProviderType.GEMINI,
@@ -272,10 +273,10 @@ class UniversalAIManager:
             )
 
         # 13. Groq 2 (secondary)
-        if os.getenv("GROQ2_API_KEY"):
+        if get_api_key("GROQ2_API_KEY"):
             self.providers["groq2"] = ProviderConfig(
                 name="Groq 2",
-                api_key=os.getenv("GROQ2_API_KEY"),
+                api_key=get_api_key("GROQ2_API_KEY"),
                 base_url="https://api.groq.com/openai/v1",
                 model="llama-3.3-70b-versatile",
                 provider_type=ProviderType.GROQ,
@@ -284,10 +285,10 @@ class UniversalAIManager:
             )
 
         # 14. Cohere
-        if os.getenv("COHERE_API_KEY"):
+        if get_api_key("COHERE_API_KEY"):
             self.providers["cohere"] = ProviderConfig(
                 name="Cohere",
-                api_key=os.getenv("COHERE_API_KEY"),
+                api_key=get_api_key("COHERE_API_KEY"),
                 base_url="https://api.cohere.ai/v1",
                 model="command-r-plus",
                 provider_type=ProviderType.COHERE,
@@ -296,10 +297,10 @@ class UniversalAIManager:
             )
 
         # 15. Chutes AI
-        if os.getenv("CHUTES_API_KEY"):
+        if get_api_key("CHUTES_API_KEY"):
             self.providers["chutes"] = ProviderConfig(
                 name="Chutes AI",
-                api_key=os.getenv("CHUTES_API_KEY"),
+                api_key=get_api_key("CHUTES_API_KEY"),
                 base_url="https://llm.chutes.ai/v1",
                 model="zai-org/GLM-4.5-Air",
                 provider_type=ProviderType.CHUTES,

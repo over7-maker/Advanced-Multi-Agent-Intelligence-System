@@ -1,0 +1,364 @@
+🧪 COMPREHENSIVE TEST SUITE WITH TXT OUTPUT
+============================================================
+Started: 2025-10-11 00:59:56
+Output Directory: test_results/
+
+
+🔍 TESTING YAML SYNTAX...
+========================================
+✅ YAML: ai-agentic-issue-auto-responder.yml: PASS
+✅ YAML: 02-ai-agentic-issue-auto-responder.yml: PASS
+✅ YAML: 07-ai-enhanced-cicd-pipeline.yml: PASS
+✅ YAML: ai-agent-project-audit-documentation.yml: PASS
+✅ YAML: 06-ai-code-quality-performance.yml: PASS
+✅ YAML: 04-ai-enhanced-build-deploy.yml: PASS
+✅ YAML: 03-ai-agent-project-audit-documentation.yml: PASS
+✅ YAML: 05-ai-security-threat-intelligence.yml: PASS
+✅ YAML: workflow-audit-monitor.yml: PASS
+✅ YAML: 00-master-ai-orchestrator.yml: PASS
+✅ YAML: simple-audit-test.yml: PASS
+✅ YAML: ai-adaptive-prompt-improvement.yml: PASS
+✅ YAML: 01-ai-agentic-project-self-improver.yml: PASS
+✅ YAML: comprehensive-audit.yml: PASS
+✅ YAML: ai-enhanced-version-package-build.yml: PASS
+✅ YAML: docker-compose.dev.yml: PASS
+✅ YAML: docker-compose.test.yml: PASS
+✅ YAML: docker-compose-offline.yml: PASS
+✅ YAML: docker-compose.yml: PASS
+✅ YAML: docker-compose.yml: PASS
+✅ YAML: prometheus.yml: PASS
+✅ YAML: prometheus.yml: PASS
+✅ YAML: prometheus.yml: PASS
+✅ YAML: ai-agentic-issue-auto-responder.yml: PASS
+✅ YAML: 02-ai-agentic-issue-auto-responder.yml: PASS
+✅ YAML: 07-ai-enhanced-cicd-pipeline.yml: PASS
+✅ YAML: ai-agent-project-audit-documentation.yml: PASS
+✅ YAML: 06-ai-code-quality-performance.yml: PASS
+✅ YAML: 04-ai-enhanced-build-deploy.yml: PASS
+✅ YAML: 03-ai-agent-project-audit-documentation.yml: PASS
+✅ YAML: 05-ai-security-threat-intelligence.yml: PASS
+✅ YAML: workflow-audit-monitor.yml: PASS
+✅ YAML: 00-master-ai-orchestrator.yml: PASS
+✅ YAML: simple-audit-test.yml: PASS
+✅ YAML: ai-adaptive-prompt-improvement.yml: PASS
+✅ YAML: 01-ai-agentic-project-self-improver.yml: PASS
+✅ YAML: comprehensive-audit.yml: PASS
+✅ YAML: ai-enhanced-version-package-build.yml: PASS
+✅ YAML: datasources.yml: PASS
+
+🐍 TESTING PYTHON SYNTAX...
+========================================
+✅ Python: run_comprehensive_tests.py: PASS
+✅ Python: simple-amas-interactive.py: PASS
+✅ Python: main_simple.py: PASS
+✅ Python: main.py: PASS
+✅ Python: generate_audit_report.py: PASS
+✅ Python: complete_workflow_audit.py: PASS
+✅ Python: remove_legacy_workflows.py: PASS
+✅ Python: update_workflows_for_advanced_api_manager.py: PASS
+✅ Python: monitor-intelligence.py: PASS
+✅ Python: focused_pre_merge_test.py: PASS
+✅ Python: verify_integration.py: PASS
+✅ Python: test-intelligence.py: PASS
+✅ Python: standalone_universal_ai_manager.py: PASS
+✅ Python: amas_legacy.py: PASS
+✅ Python: setup.py: PASS
+✅ Python: learn-intelligence.py: PASS
+✅ Python: validate_environment.py: PASS
+✅ Python: run_all_tests_with_txt_output.py: PASS
+✅ Python: comprehensive_pre_merge_test.py: PASS
+✅ Python: start_amas_unified.py: PASS
+✅ Python: vector_service.py: PASS
+✅ Python: minimal_example.py: PASS
+✅ Python: basic_orchestration.py: PASS
+✅ Python: offline_example.py: PASS
+✅ Python: interactive_examples.py: PASS
+✅ Python: api_manager_usage.py: PASS
+✅ Python: code_generation.py: PASS
+✅ Python: research_pipeline.py: PASS
+✅ Python: simple_workflow_test.py: PASS
+✅ Python: update_version.py: PASS
+✅ Python: create_bandit_report.py: PASS
+✅ Python: cli.py: PASS
+✅ Python: run_tests.py: PASS
+✅ Python: validate_env.py: PASS
+✅ Python: security_hardening.py: PASS
+✅ Python: test_universal_ai_workflow.py: PASS
+✅ Python: generate_release_notes.py: PASS
+✅ Python: generate_changelog.py: PASS
+✅ Python: setup.py: PASS
+✅ Python: benchmark_system.py: PASS
+✅ Python: generate_bandit_report.py: PASS
+✅ Python: update_all_ai_scripts_with_fallback.py: PASS
+✅ Python: verify_implementation.py: PASS
+✅ Python: production_ready_verification.py: PASS
+✅ Python: health_check.py: PASS
+✅ Python: integrate_universal_ai_manager.py: PASS
+✅ Python: phase1_setup.py: PASS
+✅ Python: security_scan.py: PASS
+✅ Python: run_multi_agent_analysis.py: PASS
+✅ Python: run_unified_orchestrator.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: test_api.py: PASS
+✅ Python: test_security_fixes.py: PASS
+✅ Python: conftest.py: PASS
+✅ Python: settings.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: redis.py: PASS
+✅ Python: neo4j.py: PASS
+✅ Python: logging.py: PASS
+✅ Python: security.py: PASS
+✅ Python: monitoring.py: PASS
+✅ Python: manager.py: PASS
+✅ Python: cli.py: PASS
+✅ Python: orchestrator.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: main.py: PASS
+✅ Python: __main__.py: PASS
+✅ Python: prometheus.py: PASS
+✅ Python: connection.py: PASS
+✅ Python: security_utils.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: settings.py: PASS
+✅ Python: ai_config.py: PASS
+✅ Python: minimal_config.py: PASS
+✅ Python: intelligence_manager.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: collective_learning.py: PASS
+✅ Python: predictive_engine.py: PASS
+✅ Python: prompt_maker.py: PASS
+✅ Python: openai_clients.py: PASS
+✅ Python: unified_ai_router.py: PASS
+✅ Python: orchestrator.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: adaptive_personality.py: PASS
+✅ Python: n8n_integration.py: PASS
+✅ Python: agentic_rag.py: PASS
+✅ Python: orchestrator_enhanced.py: PASS
+✅ Python: performance_service_complete.py: PASS
+✅ Python: ai_fallback_manager.py: PASS
+✅ Python: performance_service.py: PASS
+✅ Python: nlp_service.py: PASS
+✅ Python: enterprise_service.py: PASS
+✅ Python: workflow_automation_service.py: PASS
+✅ Python: llm_service.py: PASS
+✅ Python: security_monitoring_service.py: PASS
+✅ Python: security_service.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: incident_response_service.py: PASS
+✅ Python: intelligent_fallback_system.py: PASS
+✅ Python: reinforcement_learning_optimizer.py: PASS
+✅ Python: universal_ai_manager.py: PASS
+✅ Python: ai_service_manager.py: PASS
+✅ Python: monitoring_service_complete.py: PASS
+✅ Python: vector_service.py: PASS
+✅ Python: ultimate_fallback_system.py: PASS
+✅ Python: ml_service.py: PASS
+✅ Python: autonomous_agents_service.py: PASS
+✅ Python: advanced_optimization_service.py: PASS
+✅ Python: n8n_integration.py: PASS
+✅ Python: ai_analytics_service.py: PASS
+✅ Python: monitoring_service.py: PASS
+✅ Python: service_manager.py: PASS
+✅ Python: ml_decision_engine.py: PASS
+✅ Python: advanced_monitoring_service.py: PASS
+✅ Python: database_service.py: PASS
+✅ Python: computer_vision_service.py: PASS
+✅ Python: knowledge_graph_service.py: PASS
+✅ Python: advanced_analytics_service.py: PASS
+❌ Python: enterprise_communication_service.py: FAIL - unterminated string literal (detected at line 4) (enterprise_communication_service.py, line 4)
+✅ Python: audit_logging_service.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: manager.py: PASS
+✅ Python: encryption.py: PASS
+✅ Python: authorization.py: PASS
+✅ Python: secure_config.py: PASS
+✅ Python: authentication.py: PASS
+✅ Python: audit.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: comprehensive_testing_framework.py: PASS
+✅ Python: api_clients.py: PASS
+✅ Python: orchestrator.py: PASS
+✅ Python: api_integration.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: ai_api_manager.py: PASS
+✅ Python: integration_manager.py: PASS
+✅ Python: quick_start.py: PASS
+✅ Python: unified_orchestrator.py: PASS
+✅ Python: agentic_rag.py: PASS
+✅ Python: api_testing_suite.py: PASS
+✅ Python: enhanced_orchestrator.py: PASS
+✅ Python: integration_manager_complete.py: PASS
+✅ Python: unified_intelligence_orchestrator.py: PASS
+✅ Python: performance_monitor.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: main.py: PASS
+✅ Python: server.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: forensics_agent.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: react_agent.py: PASS
+✅ Python: agent_communication.py: PASS
+✅ Python: intelligence_agent.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: data_analysis_agent.py: PASS
+✅ Python: metadata_agent.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: technology_monitor_agent.py: PASS
+✅ Python: compliance_auditor_agent.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: investigation_agent.py: PASS
+✅ Python: link_analysis.py: PASS
+✅ Python: reverse_engineering_agent.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: reporting_agent.py: PASS
+✅ Python: osint_agent_backup.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: osint_agent.py: PASS
+✅ Python: logger.py: PASS
+✅ Python: config_manager.py: PASS
+✅ Python: nlp_engine.py: PASS
+✅ Python: intent_classifier.py: PASS
+✅ Python: context_manager.py: PASS
+✅ Python: task_manager.py: PASS
+✅ Python: visual_interface.py: PASS
+✅ Python: interactive_cli.py: PASS
+✅ Python: agent_coordinator.py: PASS
+✅ Python: quantum_nlp.py: PASS
+✅ Python: quantum_interface.py: PASS
+✅ Python: consciousness_manager.py: PASS
+✅ Python: holographic_renderer.py: PASS
+✅ Python: users.py: PASS
+✅ Python: tasks.py: PASS
+✅ Python: health.py: PASS
+✅ Python: agents.py: PASS
+✅ Python: ai_incident_response.py: PASS
+✅ Python: ai_build_analyzer.py: PASS
+✅ Python: format-code.py: PASS
+✅ Python: workflow_audit_monitor.py: PASS
+✅ Python: universal_multi_agent_orchestrator.py: PASS
+✅ Python: ai_security_response.py: PASS
+❌ Python: ai_code_analyzer.py: FAIL - unterminated string literal (detected at line 5) (ai_code_analyzer.py, line 5)
+✅ Python: enhanced_dependency_auditor.py: PASS
+✅ Python: enhanced_master_orchestrator.py: PASS
+✅ Python: ai_response_generator.py: PASS
+✅ Python: advanced_multi_agent_orchestrator.py: PASS
+✅ Python: comprehensive_audit_engine.py: PASS
+✅ Python: enhanced_conflict_resolver.py: PASS
+✅ Python: enhanced_code_quality_inspector.py: PASS
+✅ Python: intelligent_ai_router.py: PASS
+✅ Python: enhanced_security_scanner.py: PASS
+✅ Python: ai_adaptive_prompt_improvement.py: PASS
+✅ Python: enhanced_automated_fixer.py: PASS
+✅ Python: ai_master_orchestrator.py: PASS
+✅ Python: debug_responder.py: PASS
+✅ Python: ai_project_structure_auditor.py: PASS
+✅ Python: ai_security_scanner.py: PASS
+✅ Python: ai_workflow_monitor.py: PASS
+✅ Python: ai_issue_analyzer.py: PASS
+✅ Python: ai_osint_collector.py: PASS
+✅ Python: security_false_positive_analyzer.py: PASS
+✅ Python: ai_enhanced_code_review.py: PASS
+✅ Python: universal_ai_workflow_integration.py: PASS
+✅ Python: ai_issue_responder.py: PASS
+✅ Python: simple_working_responder.py: PASS
+✅ Python: enhanced_docker_monitor.py: PASS
+❌ Python: simple_verify_fixes.py: FAIL - unterminated string literal (detected at line 4) (simple_verify_fixes.py, line 4)
+✅ Python: verify_security_fixes.py: PASS
+✅ Python: continuous_improvement_system.py: PASS
+✅ Python: multi_agent_orchestrator.py: PASS
+✅ Python: ai_threat_intelligence.py: PASS
+✅ Python: update_9_api_support.py: PASS
+✅ Python: complete_ai_integration.py: PASS
+✅ Python: complete_workflow_setup.py: PASS
+✅ Python: ultimate_ai_integration.py: PASS
+✅ Python: run_comprehensive_test.py: PASS
+✅ Python: complete_security_hardening.py: PASS
+✅ Python: final_workflow_verification.py: PASS
+✅ Python: verify_file_structure.py: PASS
+✅ Python: run_workflow_tests.py: PASS
+❌ Python: run_workflow_verification.py: FAIL - unterminated string literal (detected at line 5) (run_workflow_verification.py, line 5)
+✅ Python: ultimate_security_check.py: PASS
+✅ Python: ultimate_workflow_fixer.py: PASS
+✅ Python: ai_documentation_generator.py: PASS
+✅ Python: ai_performance_analyzer.py: PASS
+✅ Python: ai_issues_responder_v2.py: PASS
+✅ Python: ai_code_analyzer.py: PASS
+✅ Python: ai_security_auditor.py: PASS
+✅ Python: setup_complete.py: PASS
+✅ Python: ai_continuous_developer.py: PASS
+✅ Python: setup_ai_integration.py: PASS
+✅ Python: setup_offline.py: PASS
+✅ Python: setup.py: PASS
+✅ Python: setup_database.py: PASS
+✅ Python: ai_fallback_integration.py: PASS
+✅ Python: ai_issues_responder.py: PASS
+✅ Python: ai_code_improver.py: PASS
+✅ Python: check_secrets.py: PASS
+✅ Python: setup_environment.py: PASS
+✅ Python: validate_workflows.py: PASS
+✅ Python: validate_api_config.py: PASS
+✅ Python: validate_upgrade.py: PASS
+✅ Python: verify_security_fixes.py: PASS
+✅ Python: validate_complete_workflows.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: test_api_health.py: PASS
+✅ Python: __init__.py: PASS
+✅ Python: test_basic.py: PASS
+✅ Python: test_complete_system.py: PASS
+✅ Python: test_ai_integration_complete.py: PASS
+✅ Python: test_simple.py: PASS
+✅ Python: test_fallback_system.py: PASS
+✅ Python: test_9_api_system.py: PASS
+✅ Python: test_ai_system.py: PASS
+✅ Python: test_enhanced_responder.py: PASS
+✅ Python: test_workflow_execution.py: PASS
+✅ Python: test_workflows.py: PASS
+✅ Python: test_ultimate_fallback_system.py: PASS
+✅ Python: test_system.py: PASS
+
+🔑 TESTING API KEY MIGRATION...
+========================================
+❌ API Key Migration: FAIL - Found 150 instances
+
+🛡️ TESTING SECURITY FIXES...
+========================================
+❌ Exposed Secrets: FAIL - Found 2 exposed secrets
+⚠️  Insecure Patterns: WARN - Found 10 insecure patterns
+
+⚙️ TESTING WORKFLOW INTEGRITY...
+========================================
+❌ Workflow: ai-agentic-issue-auto-responder.yml: FAIL - Missing fields: ['on']
+❌ Workflow: 02-ai-agentic-issue-auto-responder.yml: FAIL - Missing fields: ['on']
+❌ Workflow: 07-ai-enhanced-cicd-pipeline.yml: FAIL - Missing fields: ['on']
+❌ Workflow: ai-agent-project-audit-documentation.yml: FAIL - Missing fields: ['on']
+❌ Workflow: 06-ai-code-quality-performance.yml: FAIL - Missing fields: ['on']
+❌ Workflow: 04-ai-enhanced-build-deploy.yml: FAIL - Missing fields: ['on']
+❌ Workflow: 03-ai-agent-project-audit-documentation.yml: FAIL - Missing fields: ['on']
+❌ Workflow: 05-ai-security-threat-intelligence.yml: FAIL - Missing fields: ['on']
+❌ Workflow: workflow-audit-monitor.yml: FAIL - Missing fields: ['on']
+❌ Workflow: 00-master-ai-orchestrator.yml: FAIL - Missing fields: ['on']
+❌ Workflow: simple-audit-test.yml: FAIL - Missing fields: ['on']
+❌ Workflow: ai-adaptive-prompt-improvement.yml: FAIL - Missing fields: ['on']
+❌ Workflow: 01-ai-agentic-project-self-improver.yml: FAIL - Missing fields: ['on']
+❌ Workflow: comprehensive-audit.yml: FAIL - Missing fields: ['on']
+❌ Workflow: ai-enhanced-version-package-build.yml: FAIL - Missing fields: ['on']
+
+🔍 TESTING AUDIT SYSTEM...
+========================================
+✅ Audit Engine: PASS
+✅ Audit Results: PASS
+
+============================================================
+📊 GENERATING FINAL COMPREHENSIVE REPORT
+============================================================
+✅ Final report saved to: test_results/FINAL_COMPREHENSIVE_TEST_REPORT.txt
+📁 All test results saved to: test_results/
+🕐 Completed: 2025-10-11 00:59:57
+
+🎉 TEST SUITE COMPLETED!
+📁 Check the 'test_results/' directory for all results!
+📱 Perfect for mobile viewing on your iPod browser!

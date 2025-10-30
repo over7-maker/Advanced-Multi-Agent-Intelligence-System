@@ -68,6 +68,9 @@ rich==13.9.4
 tqdm==4.67.1
 colorama==0.4.6
 
+# Retry/backoff utilities
+tenacity==8.5.0
+
 # Web Scraping (for OSINT)
 beautifulsoup4==4.12.3
 selenium==4.28.0

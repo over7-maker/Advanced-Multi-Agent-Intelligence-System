@@ -5,9 +5,11 @@
 
 ## Overview
 
-The Advanced Multi-Agent Intelligence System (AMAS) provides a comprehensive RESTful API for interacting with the multi-agent platform. This API enables programmatic access to all AMAS features including agent orchestration, task management, monitoring, and AI provider integration.
+The Advanced Multi-Agent Intelligence System (AMAS) provides a comprehensive RESTful API for interacting with the multi-agent platform. This API enables programmatic access to all AMAS features including agent orchestration, task management, monitoring, AI provider integration, and revolutionary **AI Agentic Workflows**.
 
 **✅ 100% Implementation Verified** - All critical improvements from the project audit have been implemented and verified.
+
+**🚀 AI Agentic Workflows API** - Access the revolutionary 4-layer AI agent architecture and 16 AI providers through comprehensive API endpoints.
 
 ## 🚀 Quick Start
 
@@ -44,10 +46,11 @@ curl -X POST http://localhost:8000/api/v1/tasks \
 
 1. [Authentication](#authentication)
 2. [Core Endpoints](#core-endpoints)
-3. [Agent Management](#agent-management)
-4. [Task Management](#task-management)
-5. [AI Provider Management](#ai-provider-management)
-6. [Monitoring & Metrics](#monitoring--metrics)
+3. [AI Agentic Workflows API](#ai-agentic-workflows-api)
+4. [Agent Management](#agent-management)
+5. [Task Management](#task-management)
+6. [AI Provider Management](#ai-provider-management)
+7. [Monitoring & Metrics](#monitoring--metrics)
 7. [Error Handling](#error-handling)
 8. [Rate Limiting](#rate-limiting)
 9. [Webhooks](#webhooks)
@@ -128,6 +131,502 @@ GET /api/v1/system/info
     "success_rate": 0.999
   }
 }
+```
+
+---
+
+## 🚀 AI Agentic Workflows API
+
+### **Revolutionary AI Agentic Workflow Endpoints**
+
+The AI Agentic Workflows API provides access to the most advanced workflow automation system ever created, featuring a 4-layer AI agent architecture with 16 AI providers and intelligent failover.
+
+#### **Master AI Orchestrator API**
+
+##### **Trigger Master Orchestrator**
+```http
+POST /api/v1/workflows/orchestrator/trigger
+```
+
+**Request Body**:
+```json
+{
+  "orchestration_mode": "intelligent",
+  "target_components": "all",
+  "priority_level": "normal",
+  "ai_providers": "all"
+}
+```
+
+**Parameters**:
+- `orchestration_mode` (string): `intelligent`, `full_analysis`, `emergency_response`, `performance_optimization`, `security_audit`, `documentation_update`
+- `target_components` (string): `all` or comma-separated list of components
+- `priority_level` (string): `low`, `normal`, `high`, `critical`
+- `ai_providers` (string): `all` or comma-separated list of providers
+
+**Response**:
+```json
+{
+  "workflow_id": "orchestrator-abc123",
+  "status": "triggered",
+  "message": "Master AI Orchestrator triggered successfully",
+  "estimated_duration": "5-10 minutes",
+  "layers": {
+    "layer1_detection_analysis": "queued",
+    "layer2_intelligence_decision": "pending",
+    "layer3_execution_fix": "pending",
+    "layer4_orchestration_management": "pending"
+  }
+}
+```
+
+##### **Get Orchestrator Status**
+```http
+GET /api/v1/workflows/orchestrator/{workflow_id}/status
+```
+
+**Response**:
+```json
+{
+  "workflow_id": "orchestrator-abc123",
+  "status": "running",
+  "progress": 45,
+  "current_layer": "layer2_intelligence_decision",
+  "layers": {
+    "layer1_detection_analysis": "completed",
+    "layer2_intelligence_decision": "running",
+    "layer3_execution_fix": "pending",
+    "layer4_orchestration_management": "pending"
+  },
+  "results": {
+    "analysis_results": {...},
+    "decisions": {...}
+  },
+  "ai_providers_used": ["deepseek", "claude", "gpt4"],
+  "estimated_completion": "2025-01-15T10:30:00Z"
+}
+```
+
+#### **AI Agentic Project Self-Improver API**
+
+##### **Trigger Self-Improver**
+```http
+POST /api/v1/workflows/self-improver/trigger
+```
+
+**Request Body**:
+```json
+{
+  "improvement_mode": "intelligent",
+  "target_areas": "all",
+  "learning_depth": "deep",
+  "auto_apply": false
+}
+```
+
+**Parameters**:
+- `improvement_mode` (string): `intelligent`, `aggressive`, `conservative`, `performance_focused`, `security_focused`, `documentation_focused`
+- `target_areas` (string): `all` or comma-separated list of areas
+- `learning_depth` (string): `surface`, `medium`, `deep`, `comprehensive`
+- `auto_apply` (boolean): Whether to automatically apply improvements
+
+**Response**:
+```json
+{
+  "workflow_id": "self-improver-xyz789",
+  "status": "triggered",
+  "message": "AI Agentic Project Self-Improver triggered successfully",
+  "estimated_duration": "10-15 minutes",
+  "phases": {
+    "project_analysis_learning": "queued",
+    "intelligent_improvement_generation": "pending",
+    "automated_implementation": "pending",
+    "learning_adaptation": "pending"
+  }
+}
+```
+
+##### **Get Self-Improver Results**
+```http
+GET /api/v1/workflows/self-improver/{workflow_id}/results
+```
+
+**Response**:
+```json
+{
+  "workflow_id": "self-improver-xyz789",
+  "status": "completed",
+  "phases": {
+    "project_analysis_learning": "completed",
+    "intelligent_improvement_generation": "completed",
+    "automated_implementation": "completed",
+    "learning_adaptation": "completed"
+  },
+  "improvements": [
+    {
+      "type": "code_quality",
+      "description": "Optimized function performance",
+      "file": "src/utils/helper.py",
+      "line": 45,
+      "suggestion": "Use list comprehension instead of for loop",
+      "confidence": 0.95,
+      "applied": true
+    },
+    {
+      "type": "security",
+      "description": "Added input validation",
+      "file": "src/api/endpoints.py",
+      "line": 123,
+      "suggestion": "Validate user input before processing",
+      "confidence": 0.88,
+      "applied": false
+    }
+  ],
+  "metrics": {
+    "total_improvements": 15,
+    "applied_improvements": 12,
+    "confidence_score": 0.91,
+    "performance_gain": "23%"
+  }
+}
+```
+
+#### **AI Agentic Issue Auto-Responder API**
+
+##### **Trigger Issue Responder**
+```http
+POST /api/v1/workflows/issue-responder/trigger
+```
+
+**Request Body**:
+```json
+{
+  "response_mode": "intelligent",
+  "response_depth": "comprehensive",
+  "auto_fix": true,
+  "language_preference": "auto",
+  "target_issues": "all"
+}
+```
+
+**Parameters**:
+- `response_mode` (string): `intelligent`, `aggressive`, `conservative`, `technical_focused`, `user_friendly`, `automated_fix`
+- `response_depth` (string): `basic`, `detailed`, `comprehensive`, `expert`
+- `auto_fix` (boolean): Whether to automatically fix issues
+- `language_preference` (string): `auto`, `english`, `spanish`, `french`, `german`, `chinese`, `japanese`
+- `target_issues` (string): `all` or comma-separated list of issue numbers
+
+**Response**:
+```json
+{
+  "workflow_id": "issue-responder-def456",
+  "status": "triggered",
+  "message": "AI Agentic Issue Auto-Responder triggered successfully",
+  "estimated_duration": "3-5 minutes",
+  "phases": {
+    "issue_analysis_categorization": "queued",
+    "intelligent_response_generation": "pending",
+    "automated_response_fix_implementation": "pending",
+    "learning_adaptation": "pending"
+  }
+}
+```
+
+##### **Get Issue Response Results**
+```http
+GET /api/v1/workflows/issue-responder/{workflow_id}/results
+```
+
+**Response**:
+```json
+{
+  "workflow_id": "issue-responder-def456",
+  "status": "completed",
+  "phases": {
+    "issue_analysis_categorization": "completed",
+    "intelligent_response_generation": "completed",
+    "automated_response_fix_implementation": "completed",
+    "learning_adaptation": "completed"
+  },
+  "responses": [
+    {
+      "issue_number": 123,
+      "title": "Bug in authentication system",
+      "category": "bug",
+      "severity": "high",
+      "response": "I've identified the authentication issue and implemented a fix. The problem was in the token validation logic...",
+      "fix_applied": true,
+      "fix_details": {
+        "file": "src/auth/token_validator.py",
+        "changes": "Added proper token expiration check",
+        "confidence": 0.92
+      },
+      "language": "english"
+    }
+  ],
+  "metrics": {
+    "total_issues_processed": 5,
+    "responses_generated": 5,
+    "fixes_applied": 3,
+    "average_confidence": 0.89
+  }
+}
+```
+
+#### **AI Provider Management API**
+
+##### **Get AI Provider Status**
+```http
+GET /api/v1/ai-providers/status
+```
+
+**Response**:
+```json
+{
+  "providers": [
+    {
+      "name": "deepseek",
+      "priority": 1,
+      "status": "active",
+      "response_time": 1.2,
+      "success_rate": 0.98,
+      "last_used": "2025-01-15T10:25:00Z"
+    },
+    {
+      "name": "claude",
+      "priority": 2,
+      "status": "active",
+      "response_time": 1.5,
+      "success_rate": 0.96,
+      "last_used": "2025-01-15T10:24:00Z"
+    },
+    {
+      "name": "gpt4",
+      "priority": 3,
+      "status": "rate_limited",
+      "response_time": 2.1,
+      "success_rate": 0.94,
+      "last_used": "2025-01-15T10:20:00Z"
+    }
+  ],
+  "failover_strategy": "intelligent",
+  "total_providers": 16,
+  "active_providers": 15
+}
+```
+
+##### **Configure AI Provider**
+```http
+PUT /api/v1/ai-providers/{provider_name}/config
+```
+
+**Request Body**:
+```json
+{
+  "priority": 1,
+  "timeout": 30,
+  "enabled": true,
+  "max_retries": 3
+}
+```
+
+**Response**:
+```json
+{
+  "provider": "deepseek",
+  "config": {
+    "priority": 1,
+    "timeout": 30,
+    "enabled": true,
+    "max_retries": 3
+  },
+  "status": "updated",
+  "message": "Provider configuration updated successfully"
+}
+```
+
+#### **Workflow Monitoring API**
+
+##### **Get Workflow Metrics**
+```http
+GET /api/v1/workflows/metrics
+```
+
+**Query Parameters**:
+- `timeframe` (string): `1h`, `24h`, `7d`, `30d`
+- `workflow_type` (string): `orchestrator`, `self-improver`, `issue-responder`, `all`
+
+**Response**:
+```json
+{
+  "timeframe": "24h",
+  "metrics": {
+    "total_workflows": 45,
+    "success_rate": 0.98,
+    "average_duration": 8.5,
+    "ai_provider_usage": {
+      "deepseek": 35,
+      "claude": 28,
+      "gpt4": 22,
+      "glm": 18
+    },
+    "workflow_types": {
+      "orchestrator": 15,
+      "self-improver": 12,
+      "issue-responder": 18
+    }
+  },
+  "performance": {
+    "fastest_workflow": 2.3,
+    "slowest_workflow": 25.7,
+    "average_response_time": 1.8
+  }
+}
+```
+
+##### **Get Workflow Logs**
+```http
+GET /api/v1/workflows/{workflow_id}/logs
+```
+
+**Query Parameters**:
+- `level` (string): `debug`, `info`, `warning`, `error`
+- `limit` (integer): Number of log entries to return
+
+**Response**:
+```json
+{
+  "workflow_id": "orchestrator-abc123",
+  "logs": [
+    {
+      "timestamp": "2025-01-15T10:25:00Z",
+      "level": "info",
+      "message": "Layer 1 analysis completed successfully",
+      "layer": "detection_analysis"
+    },
+    {
+      "timestamp": "2025-01-15T10:26:00Z",
+      "level": "info",
+      "message": "Layer 2 intelligence processing started",
+      "layer": "intelligence_decision"
+    },
+    {
+      "timestamp": "2025-01-15T10:27:00Z",
+      "level": "warning",
+      "message": "Provider gpt4 rate limited, switching to claude",
+      "layer": "intelligence_decision"
+    }
+  ],
+  "total_logs": 25,
+  "has_more": false
+}
+```
+
+#### **Workflow Configuration API**
+
+##### **Get Workflow Configuration**
+```http
+GET /api/v1/workflows/config
+```
+
+**Response**:
+```json
+{
+  "orchestrator": {
+    "modes": ["intelligent", "full_analysis", "emergency_response", "performance_optimization", "security_audit", "documentation_update"],
+    "components": ["all", "code_quality", "security", "performance", "documentation"],
+    "priorities": ["low", "normal", "high", "critical"]
+  },
+  "self_improver": {
+    "modes": ["intelligent", "aggressive", "conservative", "performance_focused", "security_focused", "documentation_focused"],
+    "areas": ["all", "code_quality", "performance", "security", "documentation", "testing", "architecture", "dependencies"],
+    "depths": ["surface", "medium", "deep", "comprehensive"]
+  },
+  "issue_responder": {
+    "modes": ["intelligent", "aggressive", "conservative", "technical_focused", "user_friendly", "automated_fix"],
+    "depths": ["basic", "detailed", "comprehensive", "expert"],
+    "languages": ["auto", "english", "spanish", "french", "german", "chinese", "japanese"]
+  }
+}
+```
+
+##### **Update Workflow Configuration**
+```http
+PUT /api/v1/workflows/config
+```
+
+**Request Body**:
+```json
+{
+  "orchestrator": {
+    "default_mode": "intelligent",
+    "default_priority": "normal",
+    "timeout": 1800
+  },
+  "self_improver": {
+    "default_mode": "intelligent",
+    "default_depth": "deep",
+    "auto_apply": false
+  },
+  "issue_responder": {
+    "default_mode": "intelligent",
+    "default_depth": "comprehensive",
+    "auto_fix": false
+  }
+}
+```
+
+**Response**:
+```json
+{
+  "status": "updated",
+  "message": "Workflow configuration updated successfully",
+  "config": {
+    "orchestrator": {...},
+    "self_improver": {...},
+    "issue_responder": {...}
+  }
+}
+```
+
+#### **Error Handling**
+
+All AI Agentic Workflow API endpoints return consistent error responses:
+
+```json
+{
+  "error": {
+    "code": "WORKFLOW_TRIGGER_FAILED",
+    "message": "Failed to trigger workflow",
+    "details": "Invalid configuration parameters",
+    "timestamp": "2025-01-15T10:30:00Z",
+    "workflow_id": "orchestrator-abc123"
+  }
+}
+```
+
+**Common Error Codes**:
+- `WORKFLOW_NOT_FOUND`: Workflow ID not found
+- `WORKFLOW_TRIGGER_FAILED`: Failed to trigger workflow
+- `INVALID_CONFIGURATION`: Invalid configuration parameters
+- `AI_PROVIDER_UNAVAILABLE`: AI provider not available
+- `RATE_LIMIT_EXCEEDED`: Rate limit exceeded
+- `AUTHENTICATION_FAILED`: Authentication failed
+
+#### **Rate Limiting**
+
+AI Agentic Workflow API endpoints are rate limited:
+
+- **Orchestrator**: 10 requests per minute
+- **Self-Improver**: 5 requests per minute
+- **Issue Responder**: 20 requests per minute
+- **Provider Management**: 30 requests per minute
+
+Rate limit headers are included in responses:
+```
+X-RateLimit-Limit: 10
+X-RateLimit-Remaining: 7
+X-RateLimit-Reset: 1642248000
 ```
 
 ---

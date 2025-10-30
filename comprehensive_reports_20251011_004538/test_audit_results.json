@@ -1,0 +1,26 @@
+{
+  "audit_metadata": {
+    "audit_type": "quick",
+    "create_issues": false,
+    "notify_on_failure": false,
+    "timestamp": "Sat Oct 11 12:45:41 AM UTC 2025"
+  },
+  "workflow_audit": {},
+  "api_key_audit": {},
+  "legacy_audit": {},
+  "security_audit": {},
+  "performance_audit": {},
+  "recommendations": [],
+  "critical_issues": [],
+  "statistics": {
+    "total_issues": 0,
+    "critical_issues": 0,
+    "high_priority_issues": 0,
+    "medium_priority_issues": 0,
+    "low_priority_issues": 0,
+    "workflow_issues": 0,
+    "api_key_issues": 0,
+    "legacy_issues": 0,
+    "security_issues": 0
+  }
+}

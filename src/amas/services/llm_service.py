@@ -1,3 +1,4 @@
+from standalone_universal_ai_manager import get_api_key
 """
 Enhanced LLM Service Implementation for AMAS with Multiple API Support
 """
@@ -24,10 +25,10 @@ class LLMService:
 
         # API Keys for external services
         self.deepseek_api_key = config.get(
-            "deepseek_api_key", os.getenv("DEEPSEEK_API_KEY")
+            "deepseek_api_key", get_api_key("DEEPSEEK_API_KEY")
         )
-        self.glm_api_key = config.get("glm_api_key", os.getenv("GLM_API_KEY"))
-        self.grok_api_key = config.get("grok_api_key", os.getenv("GROK_API_KEY"))
+        self.glm_api_key = config.get("glm_api_key", get_api_key("GLM_API_KEY"))
+        self.grok_api_key = config.get("grok_api_key", get_api_key("GROK_API_KEY"))
 
         # API endpoints
         self.api_endpoints = {
