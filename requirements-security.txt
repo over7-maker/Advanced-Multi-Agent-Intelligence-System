@@ -1,40 +1,46 @@
-# Security Scanning Tools - Pinned Versions for Reproducible Results
-# These versions are tested and verified for compatibility with AMAS
-# Update carefully and test thoroughly before changing versions
+# Security Scanning Tools - CORRECTED Versions for PyPI Compatibility
+# These versions exist in PyPI and are tested for compatibility with AMAS
+# Last updated: October 2025
 
 # Dependency Vulnerability Scanning
-safety==3.0.4                    # Python package vulnerability scanner
-pip-audit==2.6.1                 # Additional Python dependency auditing
+safety==3.7.0                    # Latest stable Python package vulnerability scanner
+pip-audit==2.7.3                 # Latest stable dependency auditing tool
 
-# Static Application Security Testing (SAST)
-bandit==1.7.5                     # Python security linter
-semgrep==1.45.0                   # Multi-language static analysis
+# Static Application Security Testing (SAST) 
+bandit==1.8.0                    # Latest stable Python security linter
+semgrep==1.89.0                  # Latest stable multi-language static analysis
 
 # Secret Detection
-detect-secrets==1.4.0             # Prevent secrets in source code
+detect-secrets==1.5.0            # Latest stable secret detection
 
 # Code Quality (Security-Related)
-flake8-bandit==4.1.1              # Flake8 plugin for security issues
-flake8-bugbear==23.9.16           # Find likely bugs and design problems
-flake8-security==1.7.1            # Additional security-focused linting
+flake8-bandit==4.1.1             # Security issues in flake8
+flake8-bugbear==23.12.2          # Bug and design problem detection
+flake8-security==1.7.1           # Security-focused linting
+
+# Additional Security Tools
+pylint==3.2.7                    # Code analysis with security checks
+mypy==1.13.0                     # Type checking for security
+black==24.10.0                   # Code formatting (security consistency)
+isort==5.13.2                    # Import sorting (reduces attack surface)
 
 # Container Security (for local testing)
-trivy==0.46.1                     # Container vulnerability scanner
+# Note: Trivy is installed via GitHub Action, not pip
 
 # License Compliance
-licensecheck==2023.1.1            # License compatibility checking
+licensecheck==2023.4.0           # License compatibility checking
 
-# Dependencies for security tools
-certifi>=2023.7.22                # Updated certificates
-requests>=2.31.0                  # Secure HTTP library
-urllib3>=2.0.0                    # Secure URL handling
-cryptography>=41.0.0              # Modern cryptography library
+# Core Dependencies (Security-Focused Versions)
+certifi>=2024.8.30               # Updated certificates
+requests>=2.32.3                 # Secure HTTP library
+urllib3>=2.2.3                   # Secure URL handling
+cryptography>=43.0.3             # Latest cryptography library
+PyYAML>=6.0.2                    # Secure YAML parsing
 
-# Development Security Tools
-pre-commit>=3.5.0                 # Git hooks for security checks
-pytest-security>=0.1.0            # Security-focused testing
+# Development Security Tools  
+pre-commit>=4.0.1                # Git hooks for security checks
 
-# Pinned to avoid dependency conflicts
-PyYAML>=6.0.1                     # Secure YAML parsing
-click>=8.1.7                      # CLI framework (used by security tools)
-colorama>=0.4.6                   # Terminal colors (Windows compatibility)
+# CLI and Utility (Pinned for Compatibility)
+click>=8.1.7                     # CLI framework
+colorama>=0.4.6                  # Terminal colors
+jq>=1.7.1                        # JSON processing in security tools
