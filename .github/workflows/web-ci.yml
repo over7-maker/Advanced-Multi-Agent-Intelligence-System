@@ -5,17 +5,17 @@ on:
     paths:
       - 'web/**'
   push:
-    branches: [ pr-186-improvements ]
+    branches: [ main ]
 
 jobs:
   build-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.7
 
       - name: Use Node.js 18
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v4.0.4
         with:
           node-version: 18
           cache: 'npm'
@@ -31,7 +31,7 @@ jobs:
 
       - name: Lint
         working-directory: web
-        run: npm run lint -- --max-warnings=0 || true
+        run: npm run lint -- --max-warnings=0
 
       - name: Build
         working-directory: web
@@ -39,4 +39,4 @@ jobs:
 
       - name: Test
         working-directory: web
-        run: npm test -- --ci --watchAll=false || true
+        run: npm test -- --ci --watchAll=false
