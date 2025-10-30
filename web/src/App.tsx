@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 // Components
 import { Suspense, lazy } from 'react';
@@ -15,8 +15,6 @@ const VoiceCommandInterface = lazy(() => import('./components/VoiceCommandInterf
 
 // Services
 import { apiService } from './services/api';
-import { wsService } from './services/websocket';
-import { voiceService } from './services/voice';
 
 // Styles
 import './App.css';
@@ -406,7 +404,7 @@ const TaskView: React.FC<{
 const MetricsView: React.FC<{
   appState: AppState;
   onViewChange: (view: AppState['currentView']) => void;
-}> = ({ appState, onViewChange }) => {
+}> = ({ onViewChange }) => {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
@@ -430,7 +428,7 @@ const VoiceView: React.FC<{
   appState: AppState;
   onVoiceCommand: (command: any) => void;
   onViewChange: (view: AppState['currentView']) => void;
-}> = ({ appState, onVoiceCommand, onViewChange }) => {
+}> = ({ onVoiceCommand, onViewChange }) => {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto">

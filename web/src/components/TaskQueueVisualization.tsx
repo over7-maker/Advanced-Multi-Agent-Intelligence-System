@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Clock, 
@@ -8,12 +8,10 @@ import {
   AlertTriangle, 
   Loader,
   Trash2,
-  Eye,
   RotateCcw,
   Zap,
   Calendar,
-  User,
-  Target
+ 
 } from 'lucide-react';
 import { apiService, Task } from '../services/api';
 import { wsService } from '../services/websocket';
@@ -38,18 +36,19 @@ const TaskQueueVisualization: React.FC<TaskQueueVisualizationProps> = ({
   const [sortBy, setSortBy] = useState<'created' | 'priority' | 'status'>('created');
   const [taskProgress, setTaskProgress] = useState<Record<string, number>>({});
 
+  const setupWebSocketListeners = useCallback(() => {
+    wsService.subscribe('taskUpdate', handleTaskUpdate);
+  }, []);
+
   useEffect(() => {
     loadTasks();
     setupWebSocketListeners();
-    
-    // Refresh tasks every 10 seconds
     const interval = setInterval(loadTasks, 10000);
-    
     return () => {
       clearInterval(interval);
       wsService.unsubscribe('taskUpdate', handleTaskUpdate);
     };
-  }, []);
+  }, [setupWebSocketListeners]);
 
   const loadTasks = async () => {
     try {

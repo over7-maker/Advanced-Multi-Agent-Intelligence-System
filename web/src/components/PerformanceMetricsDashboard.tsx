@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Activity, 
@@ -6,14 +6,10 @@ import {
   HardDrive, 
   MemoryStick, 
   Network,
-  TrendingUp,
-  TrendingDown,
   AlertTriangle,
-  CheckCircle,
-  Clock,
-  Zap
+  CheckCircle
 } from 'lucide-react';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import { Line, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -73,26 +69,12 @@ const PerformanceMetricsDashboard: React.FC<PerformanceMetricsDashboardProps> = 
   const [error, setError] = useState<string | null>(null);
   const [timeRange, setTimeRange] = useState<'1h' | '6h' | '24h' | '7d'>('1h');
 
-  useEffect(() => {
-    loadMetrics();
-    setupWebSocketListeners();
-    
-    const interval = setInterval(loadMetrics, refreshInterval);
-    
-    return () => {
-      clearInterval(interval);
-      wsService.unsubscribe('metricsUpdate', handleMetricsUpdate);
-    };
-  }, [refreshInterval]);
-
-  const loadMetrics = async () => {
+  const loadMetrics = useCallback(async () => {
     try {
       setLoading(true);
       const metrics = await apiService.getMetrics();
       setCurrentMetrics(metrics);
       setError(null);
-      
-      // Add to historical data
       setHistoricalData(prev => {
         const newData = {
           timestamp: metrics.timestamp,
@@ -101,10 +83,7 @@ const PerformanceMetricsDashboard: React.FC<PerformanceMetricsDashboardProps> = 
           disk: metrics.disk_usage,
           connections: metrics.active_connections,
         };
-        
         const updated = [...prev, newData];
-        
-        // Keep only data within time range
         const cutoff = Date.now() - getTimeRangeMs(timeRange);
         return updated.filter(data => data.timestamp > cutoff);
       });
@@ -114,7 +93,23 @@ const PerformanceMetricsDashboard: React.FC<PerformanceMetricsDashboardProps> = 
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeRange]);
+
+  const setupWebSocketListeners = useCallback(() => {
+    wsService.subscribe('metricsUpdate', handleMetricsUpdate);
+  }, []);
+
+  useEffect(() => {
+    loadMetrics();
+    setupWebSocketListeners();
+    const interval = setInterval(loadMetrics, refreshInterval);
+    return () => {
+      clearInterval(interval);
+      wsService.unsubscribe('metricsUpdate', handleMetricsUpdate);
+    };
+  }, [refreshInterval, loadMetrics, setupWebSocketListeners]);
+
+  // useCallback version of loadMetrics declared above
 
   const setupWebSocketListeners = () => {
     wsService.subscribe('metricsUpdate', handleMetricsUpdate);
@@ -144,12 +139,7 @@ const PerformanceMetricsDashboard: React.FC<PerformanceMetricsDashboardProps> = 
     return { status: 'healthy', color: 'text-green-500', icon: CheckCircle };
   };
 
-  const formatBytes = (bytes: number): string => {
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-    if (bytes === 0) return '0 Bytes';
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return Math.round(bytes / Math.pow(1024, i) * 100) / 100 + ' ' + sizes[i];
-  };
+  // Removed unused formatBytes
 
   // Chart data
   const cpuChartData = {
@@ -188,17 +178,7 @@ const PerformanceMetricsDashboard: React.FC<PerformanceMetricsDashboardProps> = 
     }]
   };
 
-  const connectionsChartData = {
-    labels: historicalData.map(d => new Date(d.timestamp).toLocaleTimeString()),
-    datasets: [{
-      label: 'Active Connections',
-      data: historicalData.map(d => d.connections),
-      borderColor: '#8b5cf6',
-      backgroundColor: 'rgba(139, 92, 246, 0.1)',
-      fill: true,
-      tension: 0.4
-    }]
-  };
+  // Removed unused connectionsChartData
 
   const systemHealthData = {
     labels: ['CPU', 'Memory', 'Disk', 'Connections'],
