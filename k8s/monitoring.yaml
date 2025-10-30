@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: prometheus
-        image: prom/prometheus:latest
+        image: prom/prometheus:v2.53.0
         ports:
         - containerPort: 9090
         args:
@@ -147,7 +147,7 @@ spec:
     spec:
       containers:
       - name: grafana
-        image: grafana/grafana:latest
+        image: grafana/grafana:10.4.5
         ports:
         - containerPort: 3000
         env:
@@ -170,6 +170,11 @@ spec:
           limits:
             memory: "1Gi"
             cpu: "500m"
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
       volumes:
       - name: grafana-storage
         persistentVolumeClaim:
