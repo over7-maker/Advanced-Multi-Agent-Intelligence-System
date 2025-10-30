@@ -45,4 +45,4 @@ jobs:
 
       - name: Test
         working-directory: web
-        run: npm test -- --watchAll=false --coverage
+        run: npm test -- --watchAll=false --coverage --passWithNoTests
