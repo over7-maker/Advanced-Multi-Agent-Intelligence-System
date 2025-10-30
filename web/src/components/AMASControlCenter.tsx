@@ -92,7 +92,7 @@ const AMASControlCenter: React.FC<AMASControlCenterProps> = ({
   const [activeTasks, setActiveTasks] = useState<Task[]>([]);
   const [command, setCommand] = useState('');
   // Command history for recent inputs
-  const [commandHistory, setCommandHistory] = useState<string[]>([]);
+  const [_commandHistory, setCommandHistory] = useState<string[]>([]);
 
   // Mock data initialization
   useEffect(() => {
