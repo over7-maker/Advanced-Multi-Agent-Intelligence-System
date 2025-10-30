@@ -1,0 +1,69 @@
+name: Phase 5 Production Deployment
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'k8s/**'
+      - 'helm/**'
+      - '.github/workflows/phase5-deployment.yml'
+
+jobs:
+  deploy:
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install tools
+        run: |
+          pip install kube-score detect-secrets
+          curl -sSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+          curl -L https://github.com/aquasecurity/trivy/releases/latest/download/trivy_Linux-64bit.tar.gz | tar zx && sudo mv trivy /usr/local/bin/
+
+      - name: Security Scanning
+        run: |
+          kube-score score k8s/*.yaml || true
+          detect-secrets scan --all-files || true
+          trivy config k8s/ || true
+
+      - name: Build image
+        run: |
+          docker build -t ghcr.io/${{ github.repository_owner }}/amas:${{ github.sha }} .
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image
+        run: docker push ghcr.io/${{ github.repository_owner }}/amas:${{ github.sha }}
+
+      - name: Helm Lint
+        run: |
+          helm lint helm/
+
+      - name: Package chart
+        run: |
+          helm template amas helm/ --values helm/values.yaml --set image.tag=${{ github.sha }} > rendered.yaml
+
+      # Deployment steps intentionally commented (require cluster credentials)
+      # - name: Deploy to Staging
+      #   run: |
+      #     helm upgrade --install amas-staging helm/ \
+      #       --namespace amas-staging \
+      #       --set image.tag=${{ github.sha }} \
+      #       --set environment=staging
+
+      - name: Upload rendered manifests artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-manifests
+          path: rendered.yaml
