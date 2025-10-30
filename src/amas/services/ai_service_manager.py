@@ -1,3 +1,4 @@
+from standalone_universal_ai_manager import get_api_key
 """
 AI Service Manager with Multi-Provider Fallback System
 Handles 6 different AI providers with intelligent failover
@@ -83,7 +84,7 @@ class AIServiceManager:
                 timeout=30,
                 rate_limit=60,
                 priority=1,
-                enabled=bool(os.getenv("DEEPSEEK_API_KEY")),
+                enabled=bool(get_api_key("DEEPSEEK_API_KEY")),
             )
 
             # GLM 4.5 Air
@@ -97,7 +98,7 @@ class AIServiceManager:
                 timeout=30,
                 rate_limit=60,
                 priority=2,
-                enabled=bool(os.getenv("GLM_API_KEY")),
+                enabled=bool(get_api_key("GLM_API_KEY")),
             )
 
             # Grok 4 Fast
@@ -111,7 +112,7 @@ class AIServiceManager:
                 timeout=30,
                 rate_limit=60,
                 priority=3,
-                enabled=bool(os.getenv("GROK_API_KEY")),
+                enabled=bool(get_api_key("GROK_API_KEY")),
             )
 
             # Kimi K2
@@ -125,7 +126,7 @@ class AIServiceManager:
                 timeout=30,
                 rate_limit=60,
                 priority=4,
-                enabled=bool(os.getenv("KIMI_API_KEY")),
+                enabled=bool(get_api_key("KIMI_API_KEY")),
             )
 
             # Qwen3 Coder
@@ -139,7 +140,7 @@ class AIServiceManager:
                 timeout=30,
                 rate_limit=60,
                 priority=5,
-                enabled=bool(os.getenv("QWEN_API_KEY")),
+                enabled=bool(get_api_key("QWEN_API_KEY")),
             )
 
             # GPT OSS 120B
@@ -153,7 +154,7 @@ class AIServiceManager:
                 timeout=30,
                 rate_limit=60,
                 priority=6,
-                enabled=bool(os.getenv("GPTOSS_API_KEY")),
+                enabled=bool(get_api_key("GPTOSS_API_KEY")),
             )
 
             logger.info(

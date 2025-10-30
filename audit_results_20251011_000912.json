@@ -1,0 +1,1000 @@
+{
+  "audit_metadata": {
+    "audit_type": "comprehensive",
+    "create_issues": false,
+    "notify_on_failure": false,
+    "timestamp": "Sat Oct 11 12:09:12 AM UTC 2025"
+  },
+  "workflow_audit": {
+    "total_workflows": 15,
+    "workflow_triggers": {},
+    "duplicate_triggers": [],
+    "conflicting_triggers": [
+      {
+        "workflow": "00-master-ai-orchestrator.yml",
+        "trigger": "parse_error",
+        "issue": "YAML parsing error: while parsing a block mapping\n  in \"<unicode string>\", line 60, column 3:\n      layer1_detection_analysis:\n      ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 210, column 5:\n        runs-on: ubuntu-latest\n        ^"
+      }
+    ],
+    "trigger_statistics": {
+      "total_triggers": 0,
+      "unique_triggers": 0,
+      "duplicate_count": 0,
+      "conflict_count": 1
+    }
+  },
+  "api_key_audit": {
+    "direct_usage": [
+      {
+        "file": ".github/scripts/ai_incident_response.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          447,
+          448,
+          449,
+          450,
+          451,
+          452
+        ]
+      },
+      {
+        "file": ".github/scripts/ai_threat_intelligence.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          397,
+          398,
+          399,
+          400,
+          401,
+          402
+        ]
+      },
+      {
+        "file": ".github/scripts/ai_security_response.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          414,
+          415,
+          416,
+          417,
+          418,
+          419
+        ]
+      },
+      {
+        "file": ".github/scripts/multi_agent_orchestrator.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK"
+        ],
+        "line_numbers": [
+          363,
+          364,
+          365
+        ]
+      },
+      {
+        "file": ".github/scripts/ai_osint_collector.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          393,
+          394,
+          395,
+          396,
+          397,
+          398
+        ]
+      },
+      {
+        "file": ".github/scripts/ai_workflow_monitor.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          519,
+          520,
+          521,
+          522,
+          523,
+          524
+        ]
+      },
+      {
+        "file": ".github/scripts/ai_master_orchestrator.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          494,
+          495,
+          496,
+          497,
+          498,
+          499
+        ]
+      },
+      {
+        "file": ".github/scripts/ai_adaptive_prompt_improvement.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          470,
+          471,
+          472,
+          473,
+          474,
+          475
+        ]
+      },
+      {
+        "file": "scripts/integrate_universal_ai_manager.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK"
+        ],
+        "line_numbers": [
+          248
+        ]
+      },
+      {
+        "file": "scripts/integrate_universal_ai_manager.py",
+        "pattern": "secrets\\.(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS",
+          "GROQAI",
+          "CEREBRAS",
+          "GEMINIAI",
+          "CODESTRAL",
+          "NVIDIA",
+          "GEMINI2",
+          "GROQ2",
+          "COHERE",
+          "CHUTES"
+        ],
+        "line_numbers": [
+          277,
+          278,
+          279,
+          280,
+          281,
+          282,
+          283,
+          284,
+          285,
+          286,
+          287,
+          288,
+          289,
+          290,
+          291
+        ]
+      },
+      {
+        "file": "scripts/development/ai_continuous_developer.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          39,
+          40,
+          41,
+          42,
+          43,
+          44
+        ]
+      },
+      {
+        "file": "scripts/development/ai_code_improver.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          39,
+          40,
+          41,
+          42,
+          43,
+          44
+        ]
+      },
+      {
+        "file": "scripts/development/ai_documentation_generator.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          39,
+          40,
+          41,
+          42,
+          43,
+          44
+        ]
+      },
+      {
+        "file": "scripts/development/ai_code_analyzer.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          39,
+          40,
+          41,
+          42,
+          43,
+          44
+        ]
+      },
+      {
+        "file": "scripts/development/ai_security_auditor.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          39,
+          40,
+          41,
+          42,
+          43,
+          44
+        ]
+      },
+      {
+        "file": "scripts/development/ai_performance_analyzer.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          39,
+          40,
+          41,
+          42,
+          43,
+          44
+        ]
+      },
+      {
+        "file": "scripts/maintenance/run_comprehensive_test.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          171,
+          172,
+          173,
+          174,
+          175,
+          176
+        ]
+      },
+      {
+        "file": "scripts/maintenance/complete_workflow_setup.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          43,
+          44,
+          45,
+          46,
+          47,
+          48
+        ]
+      },
+      {
+        "file": "src/amas/agents/unified_ai_router.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "CLAUDE",
+          "CLAUDE"
+        ],
+        "line_numbers": [
+          133,
+          137
+        ]
+      },
+      {
+        "file": "src/amas/core/ai_api_manager.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "CEREBRAS",
+          "CEREBRAS",
+          "CODESTRAL",
+          "CODESTRAL",
+          "DEEPSEEK",
+          "DEEPSEEK",
+          "GEMINIAI",
+          "GEMINIAI",
+          "GLM",
+          "GLM",
+          "GPTOSS",
+          "GPTOSS",
+          "GROK",
+          "GROK",
+          "GROQAI",
+          "GROQAI",
+          "KIMI",
+          "KIMI",
+          "NVIDIA",
+          "NVIDIA",
+          "QWEN",
+          "QWEN",
+          "GEMINI2",
+          "GEMINI2",
+          "NVIDIA",
+          "NVIDIA",
+          "GROQ2",
+          "GROQ2",
+          "COHERE",
+          "COHERE",
+          "CHUTES",
+          "CHUTES"
+        ],
+        "line_numbers": [
+          113,
+          116,
+          125,
+          128,
+          141,
+          144,
+          153,
+          156,
+          165,
+          168,
+          177,
+          180,
+          189,
+          192,
+          201,
+          204,
+          213,
+          216,
+          225,
+          228,
+          237,
+          240,
+          249,
+          252,
+          261,
+          264,
+          273,
+          276,
+          285,
+          288,
+          297,
+          300
+        ]
+      },
+      {
+        "file": "src/amas/core/api_clients.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "CODESTRAL",
+          "DEEPSEEK"
+        ],
+        "line_numbers": [
+          399,
+          405
+        ]
+      },
+      {
+        "file": "src/amas/services/intelligent_fallback_system.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          37,
+          51,
+          65,
+          79,
+          93,
+          107
+        ]
+      },
+      {
+        "file": "src/amas/services/universal_ai_manager.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "DEEPSEEK",
+          "GLM",
+          "GLM",
+          "GROK",
+          "GROK",
+          "KIMI",
+          "KIMI",
+          "QWEN",
+          "QWEN",
+          "GPTOSS",
+          "GPTOSS",
+          "GROQAI",
+          "GROQAI",
+          "CEREBRAS",
+          "CEREBRAS",
+          "GEMINIAI",
+          "GEMINIAI",
+          "CODESTRAL",
+          "CODESTRAL",
+          "NVIDIA",
+          "NVIDIA",
+          "GEMINI2",
+          "GEMINI2",
+          "GROQ2",
+          "GROQ2",
+          "COHERE",
+          "COHERE",
+          "CHUTES",
+          "CHUTES"
+        ],
+        "line_numbers": [
+          131,
+          134,
+          143,
+          146,
+          155,
+          158,
+          167,
+          170,
+          179,
+          182,
+          191,
+          194,
+          203,
+          206,
+          215,
+          218,
+          227,
+          230,
+          239,
+          242,
+          251,
+          254,
+          263,
+          266,
+          275,
+          278,
+          287,
+          290,
+          299,
+          302
+        ]
+      },
+      {
+        "file": "src/amas/services/ai_service_manager.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          86,
+          100,
+          114,
+          128,
+          142,
+          156
+        ]
+      },
+      {
+        "file": "src/amas/services/ai_fallback_manager.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          27,
+          36,
+          45,
+          54,
+          63,
+          72
+        ]
+      },
+      {
+        "file": "src/amas/services/ultimate_fallback_system.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS",
+          "GROQAI",
+          "CEREBRAS",
+          "GEMINIAI"
+        ],
+        "line_numbers": [
+          42,
+          57,
+          72,
+          87,
+          102,
+          117,
+          132,
+          147,
+          162
+        ]
+      },
+      {
+        "file": "src/amas/services/llm_service.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK"
+        ],
+        "line_numbers": [
+          27,
+          29,
+          30
+        ]
+      },
+      {
+        "file": "src/amas/config/ai_config.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "GLM",
+          "GROK",
+          "KIMI",
+          "QWEN",
+          "GPTOSS"
+        ],
+        "line_numbers": [
+          62,
+          76,
+          90,
+          104,
+          118,
+          132
+        ]
+      },
+      {
+        "file": "src/amas/config/minimal_config.py",
+        "pattern": "getenv\\([\\'\"]?(DEEPSEEK|CLAUDE|GPT4|GLM|GROK|KIMI|QWEN|GEMINI|GPTOSS|GROQAI|CEREBRAS|GEMINIAI|COHERE|NVIDIA|CODESTRAL|GEMINI2|GROQ2|CHUTES)_API_KEY[\\'\"]?\\)",
+        "matches": [
+          "DEEPSEEK",
+          "DEEPSEEK",
+          "GLM",
+          "GLM",
+          "GROK",
+          "GROK",
+          "NVIDIA",
+          "NVIDIA",
+          "CODESTRAL",
+          "CODESTRAL"
+        ],
+        "line_numbers": [
+          130,
+          134,
+          143,
+          147,
+          155,
+          159,
+          167,
+          171,
+          179,
+          183
+        ]
+      }
+    ],
+    "manager_usage": [
+      ".github/scripts/enhanced_code_quality_inspector.py",
+      ".github/scripts/comprehensive_audit_engine.py",
+      ".github/scripts/universal_ai_workflow_integration.py",
+      ".github/scripts/workflow_audit_monitor.py",
+      ".github/scripts/ai_issue_analyzer.py",
+      ".github/scripts/ai_auto_fix_applier.py",
+      ".github/scripts/ai_project_structure_auditor.py",
+      ".github/scripts/ai_response_generator.py",
+      ".github/scripts/ai_build_analyzer.py",
+      "scripts/update_all_ai_scripts_with_fallback.py",
+      "scripts/test_universal_ai_workflow.py",
+      "scripts/development/ai_fallback_integration.py",
+      "scripts/maintenance/ultimate_ai_integration.py",
+      "src/amas/core/integration_manager.py",
+      "src/amas/core/integration_manager_complete.py",
+      ".github/workflows/01-ai-agentic-project-self-improver.yml",
+      ".github/workflows/ai-enhanced-version-package-build.yml",
+      ".github/workflows/05-ai-security-threat-intelligence.yml",
+      ".github/workflows/06-ai-code-quality-performance.yml",
+      ".github/workflows/03-ai-agent-project-audit-documentation.yml",
+      ".github/workflows/ai-agentic-issue-auto-responder.yml",
+      ".github/workflows/02-ai-agentic-issue-auto-responder.yml",
+      ".github/workflows/07-ai-enhanced-cicd-pipeline.yml",
+      ".github/workflows/00-master-ai-orchestrator.yml",
+      ".github/workflows/04-ai-enhanced-build-deploy.yml",
+      ".github/workflows/ai-agent-project-audit-documentation.yml"
+    ],
+    "missing_manager": [
+      {
+        "workflow": "ai-adaptive-prompt-improvement.yml",
+        "api_keys": [
+          "DEEPSEEK_API_KEY",
+          "CLAUDE_API_KEY",
+          "GPT4_API_KEY",
+          "GLM_API_KEY",
+          "GROK_API_KEY",
+          "KIMI_API_KEY",
+          "QWEN_API_KEY",
+          "GEMINI_API_KEY",
+          "GPTOSS_API_KEY"
+        ],
+        "issue": "Uses API keys but not advanced manager"
+      },
+      {
+        "workflow": "comprehensive-audit.yml",
+        "api_keys": [
+          "DEEPSEEK_API_KEY",
+          "CLAUDE_API_KEY",
+          "GPT4_API_KEY",
+          "GLM_API_KEY",
+          "GROK_API_KEY",
+          "KIMI_API_KEY",
+          "QWEN_API_KEY",
+          "GEMINI_API_KEY",
+          "GPTOSS_API_KEY",
+          "GROQAI_API_KEY",
+          "CEREBRAS_API_KEY",
+          "GEMINIAI_API_KEY",
+          "COHERE_API_KEY",
+          "NVIDIA_API_KEY",
+          "CODESTRAL_API_KEY",
+          "GEMINI2_API_KEY",
+          "GROQ2_API_KEY",
+          "CHUTES_API_KEY"
+        ],
+        "issue": "Uses API keys but not advanced manager"
+      }
+    ],
+    "security_issues": [],
+    "statistics": {
+      "direct_usage_count": 29,
+      "manager_usage_count": 26,
+      "missing_manager_count": 2,
+      "security_issues_count": 0
+    }
+  },
+  "legacy_audit": {
+    "stub_workflows": [],
+    "legacy_workflows": [
+      {
+        "workflow": "simple-audit-test.yml",
+        "pattern": "simple",
+        "issue": "Contains legacy naming pattern"
+      }
+    ],
+    "minimal_workflows": [],
+    "broken_workflows": [
+      {
+        "workflow": "00-master-ai-orchestrator.yml",
+        "error": "while parsing a block mapping\n  in \"<unicode string>\", line 60, column 3:\n      layer1_detection_analysis:\n      ^\nexpected <block end>, but found '<block mapping start>'\n  in \"<unicode string>\", line 210, column 5:\n        runs-on: ubuntu-latest\n        ^",
+        "issue": "YAML parsing error"
+      }
+    ],
+    "statistics": {
+      "total_workflows": 15,
+      "stub_count": 0,
+      "legacy_count": 1,
+      "minimal_count": 0,
+      "broken_count": 1
+    }
+  },
+  "security_audit": {
+    "exposed_secrets": [
+      {
+        "file": ".github/scripts/verify_security_fixes.py",
+        "pattern": "password\\s*=\\s*[\"\\'][^\"\\']+[\"\\']",
+        "matches": [
+          "password = \"secretpassword123\""
+        ],
+        "line_numbers": [
+          85
+        ]
+      },
+      {
+        "file": ".github/scripts/ai_code_analyzer.py",
+        "pattern": "password\\s*=\\s*[\"\\'][^\"\\']+[\"\\']",
+        "matches": [
+          "password =\",\n                            '"
+        ],
+        "line_numbers": []
+      },
+      {
+        "file": ".github/scripts/ai_code_analyzer.py",
+        "pattern": "token\\s*=\\s*[\"\\'][^\"\\']+[\"\\']",
+        "matches": [
+          "token =\",\n                            '"
+        ],
+        "line_numbers": []
+      },
+      {
+        "file": ".github/scripts/simple_verify_fixes.py",
+        "pattern": "token\\s*=\\s*[\"\\'][^\"\\']+[\"\\']",
+        "matches": [
+          "token =\" not in line and '"
+        ],
+        "line_numbers": [
+          45
+        ]
+      }
+    ],
+    "insecure_patterns": [
+      {
+        "file": "monitor-intelligence.py",
+        "pattern": "os\\.system\\s*\\(",
+        "matches": [
+          "os.system("
+        ],
+        "line_numbers": [
+          33
+        ]
+      },
+      {
+        "file": "scripts/production_ready_verification.py",
+        "pattern": "eval\\s*\\(",
+        "matches": [
+          "eval(",
+          "eval("
+        ],
+        "line_numbers": [
+          17
+        ]
+      },
+      {
+        "file": "scripts/production_ready_verification.py",
+        "pattern": "exec\\s*\\(",
+        "matches": [
+          "exec("
+        ],
+        "line_numbers": [
+          18
+        ]
+      },
+      {
+        "file": "docker/vector_service.py",
+        "pattern": "pickle\\.loads?\\s*\\(",
+        "matches": [
+          "pickle.load("
+        ],
+        "line_numbers": [
+          102
+        ]
+      },
+      {
+        "file": ".github/scripts/security_false_positive_analyzer.py",
+        "pattern": "eval\\s*\\(",
+        "matches": [
+          "eval("
+        ],
+        "line_numbers": [
+          150
+        ]
+      },
+      {
+        "file": "src/amas/agents/adaptive_personality.py",
+        "pattern": "pickle\\.loads?\\s*\\(",
+        "matches": [
+          "pickle.load("
+        ],
+        "line_numbers": [
+          137
+        ]
+      },
+      {
+        "file": "src/amas/services/ml_service.py",
+        "pattern": "pickle\\.loads?\\s*\\(",
+        "matches": [
+          "pickle.load("
+        ],
+        "line_numbers": [
+          578
+        ]
+      },
+      {
+        "file": "src/amas/services/enterprise_communication_service.py",
+        "pattern": "pickle\\.loads?\\s*\\(",
+        "matches": [
+          "pickle.loads("
+        ],
+        "line_numbers": [
+          834
+        ]
+      },
+      {
+        "file": "src/amas/intelligence/collective_learning.py",
+        "pattern": "pickle\\.loads?\\s*\\(",
+        "matches": [
+          "pickle.load("
+        ],
+        "line_numbers": [
+          147
+        ]
+      },
+      {
+        "file": "scripts/maintenance/run_workflow_verification.py",
+        "pattern": "exec\\s*\\(",
+        "matches": [
+          "exec("
+        ],
+        "line_numbers": [
+          32
+        ]
+      }
+    ],
+    "vulnerable_dependencies": [],
+    "permission_issues": [],
+    "statistics": {
+      "exposed_secrets_count": 4,
+      "insecure_patterns_count": 10,
+      "vulnerable_dependencies_count": 0,
+      "permission_issues_count": 0
+    }
+  },
+  "performance_audit": {},
+  "recommendations": [
+    {
+      "category": "api_keys",
+      "priority": "critical",
+      "title": "Migrate Direct API Key Usage to Manager",
+      "description": "Found 29 instances of direct API key usage",
+      "action": "Replace direct API key usage with centralized manager for better failover"
+    },
+    {
+      "category": "security",
+      "priority": "critical",
+      "title": "Remove Exposed Secrets",
+      "description": "Found 4 exposed secrets",
+      "action": "Remove hardcoded secrets and use environment variables or secrets management"
+    }
+  ],
+  "critical_issues": [
+    {
+      "category": "api_keys",
+      "priority": "critical",
+      "title": "Migrate Direct API Key Usage to Manager",
+      "description": "Found 29 instances of direct API key usage",
+      "action": "Replace direct API key usage with centralized manager for better failover"
+    },
+    {
+      "category": "security",
+      "priority": "critical",
+      "title": "Remove Exposed Secrets",
+      "description": "Found 4 exposed secrets",
+      "action": "Remove hardcoded secrets and use environment variables or secrets management"
+    }
+  ],
+  "statistics": {
+    "total_issues": 2,
+    "critical_issues": 2,
+    "high_priority_issues": 0,
+    "medium_priority_issues": 0,
+    "low_priority_issues": 0,
+    "workflow_issues": 0,
+    "api_key_issues": 1,
+    "legacy_issues": 0,
+    "security_issues": 1
+  }
+}

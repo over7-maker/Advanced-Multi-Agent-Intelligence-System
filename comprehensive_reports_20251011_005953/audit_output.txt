@@ -1,0 +1,29 @@
+🔍 Starting comprehensive audit...
+🔍 Auditing workflow triggers...
+✅ Workflow trigger audit completed: 0 duplicates, 0 conflicts
+🔍 Auditing API key usage...
+✅ API key audit completed: 1 direct usage, 2 missing manager
+🔍 Auditing legacy workflows...
+✅ Legacy audit completed: 0 stubs, 1 legacy
+🔍 Auditing security issues...
+✅ Security audit completed: 0 exposed secrets, 10 insecure patterns
+
+================================================================================
+📊 COMPREHENSIVE AUDIT SUMMARY
+================================================================================
+Total Issues: 1
+Critical Issues: 1
+High Priority: 0
+Medium Priority: 0
+Low Priority: 0
+
+📋 ISSUES BY CATEGORY:
+  Workflow: 0
+  API Keys: 1
+  Legacy: 0
+  Security: 0
+
+🎯 TOP RECOMMENDATIONS:
+  1. [CRITICAL] Migrate Direct API Key Usage to Manager
+================================================================================
+❌ CRITICAL ISSUES FOUND - Review required!
