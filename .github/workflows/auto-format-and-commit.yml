@@ -1,0 +1,79 @@
+name: 🧹 Auto Format and Commit (Black/isort)
+
+on:
+  workflow_dispatch:
+    inputs:
+      paths:
+        description: 'Paths to format (default: src tests)'
+        required: false
+        default: 'src tests'
+      python-version:
+        description: 'Python version for Black/isort'
+        required: false
+        default: '3.11'
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-format:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && contains(github.event.label.name, 'auto-format'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ inputs.python-version || '3.11' }}
+          cache: 'pip'
+
+      - name: 📦 Install formatters
+        run: |
+          python -m pip install --upgrade pip
+          pip install black==23.11.0 isort==5.12.0
+
+      - name: 🎨 Run Black
+        run: |
+          set -e
+          TARGETS="${{ inputs.paths || 'src tests' }}"
+          echo "Formatting: $TARGETS"
+          if [ -f pyproject.toml ]; then
+            black $TARGETS
+          else
+            black $TARGETS --line-length 88
+          fi
+
+      - name: 🔀 Run isort
+        run: |
+          set -e
+          TARGETS="${{ inputs.paths || 'src tests' }}"
+          if [ -f pyproject.toml ]; then
+            isort $TARGETS
+          else
+            isort $TARGETS --profile black
+          fi
+
+      - name: 🧾 Commit formatting changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: "chore: auto-format code with Black and isort"
+          commit_user_name: amas-bot
+          commit_user_email: amas-bot@users.noreply.github.com
+          push_options: '--no-verify'
+          skip_fetch: true
+          file_pattern: |
+            **/*.py
+            pyproject.toml
+            setup.cfg
+
+      - name: ✅ Summary
+        run: |
+          echo "Auto-format completed. If changes were committed, re-run failing workflows."
