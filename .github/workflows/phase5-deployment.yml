@@ -1,0 +1,152 @@
+name: Phase 5 Production Deployment
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'k8s/**'
+      - 'helm/**'
+      - 'Dockerfile'
+      - 'src/backend/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'k8s/**'
+      - 'helm/**'
+      - 'Dockerfile'
+      - 'src/backend/**'
+
+jobs:
+  deploy:
+    concurrency:
+      group: phase5-deploy
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      security-events: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ runner.os }}-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            pip-${{ runner.os }}-
+
+      - name: Install detect-secrets
+        run: pip install detect-secrets==1.4.0
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.13.0
+
+      - name: Security Scanning - Manifests (kube-score)
+        run: docker run --rm -v "$PWD/k8s":/project zegl/kube-score:v1.18.0 score /project
+
+      - name: Detect Secrets (fail on findings)
+        run: |
+          set -euo pipefail
+          detect-secrets scan --all-files --json > .secrets-report.json || { echo "detect-secrets failed"; exit 1; }
+          [ -s .secrets-report.json ] || { echo ".secrets-report.json missing or empty"; exit 1; }
+          python - <<'PY'
+import json
+import sys
+try:
+    with open('.secrets-report.json') as f:
+        data = json.load(f)
+    results = data.get('results', {})
+    total = sum(len(v) for v in results.values())
+    if total > 0:
+        print(f"❌ Secrets detected: {total}")
+        sys.exit(1)
+    print("✅ No secrets detected.")
+except FileNotFoundError:
+    print("❌ .secrets-report.json not found")
+    sys.exit(1)
+except json.JSONDecodeError as e:
+    print(f"❌ Invalid JSON: {e}")
+    sys.exit(1)
+PY
+
+      - name: Trivy Config Scan
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: 'config'
+          scan-ref: 'k8s/'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build (cached)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: ghcr.io/${{ github.repository_owner }}/amas:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Scan Docker Image (fail on CRITICAL/HIGH)
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/amas:${{ github.sha }}
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Helm Lint
+        run: |
+          helm lint helm/
+
+      - name: Validate Helm Values
+        run: test -f helm/values.yaml
+
+      - name: Render Helm Templates
+        run: helm template amas helm/ --values helm/values.yaml --set image.tag=${{ github.sha }} > rendered.yaml
+
+      - name: Phase 2 Compliance Validation
+        run: |
+          python3 scripts/validate_phase2_compliance.py k8s/
+
+      - name: Push image (latest + sha)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/amas:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/amas:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+        if: github.event_name == 'push'
+
+      # Deployment steps intentionally commented (require cluster credentials)
+      # - name: Deploy to Staging
+      #   run: |
+      #     helm upgrade --install amas-staging helm/ \
+      #       --namespace amas-staging \
+      #       --set image.tag=${{ github.sha }} \
+      #       --set environment=staging
+
+      - name: Upload rendered manifests artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rendered-manifests
+          path: rendered.yaml
