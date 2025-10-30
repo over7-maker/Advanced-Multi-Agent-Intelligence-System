@@ -1,9 +1,8 @@
 name: 🚀 AMAS Secure Production CI/CD Pipeline
 
+# Least-privilege defaults; elevate per job only when needed
 permissions:
   contents: read
-  packages: read
-  id-token: write
 
 # SECURITY FIX: Restrict triggers to prevent accidental deployments
 on:
@@ -29,19 +28,17 @@ on:
         default: false
         type: boolean
 
-# SECURITY FIX: Add concurrency protection
-concurrency:
-  group: production-deployment-${{ github.ref }}
-  cancel-in-progress: true  # Cancel older runs to avoid race conditions
+# Note: Concurrency is defined for non-deployment jobs individually below
 
 env:
-  PYTHON_VERSION: '3.11.6'  # Pinned patch version
+  PYTHON_VERSION: '3.11'  # Prefer minor pin for security backports
   NODE_VERSION: '20.9.0'    # Pinned patch version
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: amas
   # SECURITY FIX: Use repository owner instead of actor
   REGISTRY_USERNAME: ${{ github.repository_owner }}
-  REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+  # Prefer fine-grained PAT if available; fallback to GITHUB_TOKEN
+  REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PAT || secrets.GITHUB_TOKEN }}
 
 jobs:
   # =============================================================================
@@ -51,7 +48,9 @@ jobs:
   security-scan:
     name: 🔒 Security Vulnerability Scan
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 20  # ~P95 over recent runs on medium repos
+    permissions:
+      contents: read
     outputs:
       vulnerabilities-found: ${{ steps.scan-results.outputs.vulnerabilities }}
       scan-passed: ${{ steps.scan-results.outputs.passed }}
@@ -68,6 +67,14 @@ jobs:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
     
+    - name: 📦 Cache pip dependencies
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
     # PERFORMANCE FIX: Cache security tools
     - name: 📦 Cache Security Tools
       uses: actions/cache@v4
@@ -77,17 +84,21 @@ jobs:
         restore-keys: |
           security-tools-${{ runner.os }}-
     
-    # SECURITY FIX: Pin all security tool versions
+    # SECURITY: Prefer curated requirements file; fallback to known-good pins
     - name: 📦 Install security tools
       run: |
         # PERFORMANCE FIX: Remove redundant ensurepip
         python -m pip install --upgrade pip
-        pip install --user \
-          safety==3.0.4 \
-          pip-audit==2.6.1 \
-          bandit==1.7.5 \
-          semgrep==1.45.0 \
-          detect-secrets==1.5.0
+        if [ -f requirements-security.txt ]; then
+          pip install --user -r requirements-security.txt
+        else
+          pip install --user \
+            safety==3.0.4 \
+            pip-audit==2.6.1 \
+            bandit==1.7.5 \
+            semgrep==1.45.0 \
+            detect-secrets>=1.5.3
+        fi
         echo "$HOME/.local/bin" >> $GITHUB_PATH
     
     - name: 🔍 Dependency vulnerability scan
@@ -193,7 +204,12 @@ jobs:
   code-quality:
     name: 🎨 Code Quality & Standards
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 20  # ~P95 for formatting+lint+types on repo
+    permissions:
+      contents: read
+    concurrency:
+      group: code-quality-${{ github.ref }}
+      cancel-in-progress: true
     outputs:
       quality-score: ${{ steps.quality-check.outputs.score }}
       quality-passed: ${{ steps.quality-check.outputs.passed }}
@@ -306,8 +322,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        python-version: ['3.9', '3.10', '3.11']
+        include:
+          - os: ubuntu-latest
+            python-version: '3.9'
+          - os: ubuntu-latest
+            python-version: '3.10'
+          - os: ubuntu-latest
+            python-version: '3.11'
+          - os: windows-latest
+            python-version: '3.11'
+          - os: macos-latest
+            python-version: '3.11'
+    concurrency:
+      group: tests-${{ github.ref }}
+      cancel-in-progress: true
     
     steps:
     - name: 📥 Checkout code
@@ -432,8 +460,14 @@ jobs:
   secure-build:
     name: 🐳 Secure Docker Build
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 30  # Build+scan
     needs: [test-matrix, integration-tests]
+    permissions:
+      contents: read
+      packages: write  # Needed for ghcr push when not pull_request
+    concurrency:
+      group: build-${{ github.ref }}
+      cancel-in-progress: true
     outputs:
       image-digest: ${{ steps.build.outputs.digest }}
       image-tag: ${{ steps.meta.outputs.tags }}
@@ -550,7 +584,9 @@ jobs:
     environment: 
       name: staging
       url: https://amas-staging.example.com
-    timeout-minutes: 20
+    timeout-minutes: 20  # Deployment+smoke
+    permissions:
+      contents: read
     
     steps:
     - name: 📥 Checkout code
@@ -580,7 +616,9 @@ jobs:
     environment: 
       name: production
       url: https://amas.example.com
-    timeout-minutes: 25
+    timeout-minutes: 25  # Deployment+validation
+    permissions:
+      contents: read
     
     steps:
     - name: 📥 Checkout code
