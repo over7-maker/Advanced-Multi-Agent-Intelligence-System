@@ -5,6 +5,8 @@ on:
     paths:
       - 'k8s/**'
       - 'helm/**'
+      - 'Dockerfile'
+      - 'src/**'
 
 jobs:
   deploy:
@@ -25,40 +27,18 @@ jobs:
           python-version: '3.12'
 
       - name: Install detect-secrets
-        run: pip install detect-secrets==1.5.3
+        run: pip install detect-secrets==1.4.0
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.13.0
 
-      - name: Install Helm (pinned)
+      - name: Kube-score (containerized)
         run: |
-          HELM_VERSION=v3.13.0
-          wget -q https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz
-          echo "3a7ad96e8b0f3a02d499bd01f8f0f2f2d3b9c3d2dd2a6d3e3c3e1a5fe2b9d9e8  helm-${HELM_VERSION}-linux-amd64.tar.gz" | sha256sum -c - || exit 1
-          tar -zxf helm-${HELM_VERSION}-linux-amd64.tar.gz
-          sudo mv linux-amd64/helm /usr/local/bin/helm
+          docker run --rm -v "$PWD/k8s":/project zegl/kube-score:v1.18.0 score /project
 
-      - name: Install Trivy (pinned + checksum)
-        run: |
-          set -euo pipefail
-          TRIVY_VERSION=0.50.2
-          ARCH=$(uname -m)
-          FILE=trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
-          wget -q https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/${FILE}
-          # Expected SHA256 must be updated when bumping version
-          echo "c4fb5f2f9b4cd2f3a54d1f2b9b8a6a1b6ea8b7a4a1a2b3c4d5e6f7a8b9c0d1e2  ${FILE}" | sha256sum -c -
-          tar -zxf ${FILE}
-          sudo install -m 0755 trivy /usr/local/bin/trivy
-
-      - name: Install kube-score (pinned + checksum)
-        run: |
-          set -euo pipefail
-          KUBESCORE_VERSION=1.18.0
-          BIN=kube-score_${KUBESCORE_VERSION}_linux_amd64
-          wget -q https://github.com/zegl/kube-score/releases/download/v${KUBESCORE_VERSION}/${BIN}
-          # Expected SHA256 must be updated when bumping version
-          echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  ${BIN}" | sha256sum -c -
-          sudo install -m 0755 ${BIN} /usr/local/bin/kube-score
-
-      - name: Security Scanning - Manifests
-        run: kube-score score k8s/*.yaml
+      - name: Security Scanning - Manifests (kube-score)
+        run: docker run --rm -v "$PWD/k8s":/project zegl/kube-score:v1.18.0 score /project
 
       - name: Detect Secrets (fail on findings)
         run: |
@@ -78,7 +58,12 @@ print("No secrets detected.")
 PY
 
       - name: Trivy Config Scan
-        run: trivy config --exit-code 1 --severity CRITICAL,HIGH k8s/
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          scan-type: 'config'
+          scan-ref: 'k8s/'
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -100,7 +85,11 @@ PY
           cache-to: type=gha,mode=max
 
       - name: Scan Docker Image (fail on CRITICAL/HIGH)
-        run: trivy image --exit-code 1 --severity CRITICAL,HIGH ghcr.io/${{ github.repository_owner }}/amas:${{ github.sha }}
+        uses: aquasecurity/trivy-action@0.20.0
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/amas:${{ github.sha }}
+          exit-code: '1'
+          severity: 'CRITICAL,HIGH'
 
       - name: Helm Lint
         run: |
