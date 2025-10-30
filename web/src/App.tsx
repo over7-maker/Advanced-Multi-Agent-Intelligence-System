@@ -79,7 +79,7 @@ function App() {
       }
       
       // Check system health
-      let systemHealth = null;
+      let systemHealth: any = null;
       try {
         systemHealth = await apiService.getHealth();
       } catch (err) {

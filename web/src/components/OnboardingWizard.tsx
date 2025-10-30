@@ -319,9 +319,9 @@ const OnboardingWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
   };
 
   const performDatabaseCheck = async (checkId: string): Promise<void> => {
+    const health = await apiService.getHealth();
     switch (checkId) {
       case 'db_connection':
-        const health = await apiService.getHealth();
         if (health.services.database !== 'healthy') {
           throw new Error('Database connection failed');
         }
