@@ -21,9 +21,15 @@ spec:
         prometheus.io/port: "8000"
         prometheus.io/path: "/metrics"
     spec:
+      serviceAccountName: amas-sa
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 2000
       containers:
       - name: amas
-        image: amas:latest
+        image: ghcr.io/over7-maker/amas:v4.0.0-enterprise
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
           name: http
@@ -33,9 +39,9 @@ spec:
         - name: DATABASE_URL
           value: "postgresql://postgres:$(POSTGRES_PASSWORD)@postgres:5432/amas"
         - name: REDIS_URL
-          value: "redis://:$(REDIS_PASSWORD)@redis:6379/0"
+          value: "rediss://:$(REDIS_PASSWORD)@redis:6379/0"
         - name: NEO4J_URI
-          value: "bolt://neo4j:7687"
+          value: "neo4j+s://neo4j:7687"
         - name: NEO4J_USER
           value: "neo4j"
         - name: NEO4J_PASSWORD
@@ -68,6 +74,13 @@ spec:
           mountPath: /app/logs
         - name: amas-config
           mountPath: /app/config
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop: ["ALL"]
         resources:
           requests:
             memory: "1Gi"
@@ -136,6 +149,24 @@ spec:
             sleep 2
           done
           echo "Neo4j is up - executing command"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values: ["amas"]
+              topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app: amas
 ---
 apiVersion: v1
 kind: Service
