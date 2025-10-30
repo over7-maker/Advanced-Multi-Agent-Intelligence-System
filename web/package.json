@@ -1,18 +1,72 @@
 {
   "name": "amas-web-dashboard",
   "version": "1.0.0",
-  "description": "AMAS Web Dashboard",
+  "description": "AMAS Web Dashboard - Phase 3 User Experience",
   "main": "index.js",
   "scripts": {
-    "build": "echo 'Web dashboard build completed'",
-    "start": "echo 'Web dashboard started'",
-    "dev": "echo 'Web dashboard development mode'"
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "dev": "react-scripts start",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "react-router-dom": "^6.8.0",
+    "axios": "^1.6.8",
+    "chart.js": "^4.2.0",
+    "react-chartjs-2": "^5.2.0",
+    "lucide-react": "^0.263.1",
+    "framer-motion": "^10.0.0",
+    "react-hot-toast": "^2.4.0",
+    "react-hook-form": "^7.43.0",
+    "@tanstack/react-query": "^4.36.1",
+    "socket.io-client": "^4.6.0",
+    "react-dropzone": "^14.2.0",
+    "react-markdown": "^8.0.0",
+    "react-syntax-highlighter": "^15.5.0",
+    "date-fns": "^2.29.0",
+    "clsx": "^1.2.0",
+    "tailwind-merge": "^1.10.0"
   },
   "devDependencies": {
-    "webpack": "^5.0.0"
+    "@typescript-eslint/eslint-plugin": "^5.62.0",
+    "@typescript-eslint/parser": "^5.62.0",
+    "@tanstack/react-query-devtools": "^4.36.1",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.35.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "prettier": "^3.2.5",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@types/node": "^18.0.0",
+    "typescript": "^4.9.0",
+    "tailwindcss": "^3.2.0",
+    "autoprefixer": "^10.4.0",
+    "postcss": "^8.4.0",
+    "@types/react-syntax-highlighter": "^15.5.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
   }
 }
