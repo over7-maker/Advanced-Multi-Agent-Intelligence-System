@@ -21,6 +21,8 @@ spec:
         prometheus.io/port: "8000"
         prometheus.io/path: "/metrics"
     spec:
+      seccompProfile:
+        type: RuntimeDefault
       serviceAccountName: amas-sa
       terminationGracePeriodSeconds: 30
       securityContext:
@@ -75,6 +77,8 @@ spec:
           mountPath: /app/logs
         - name: amas-config
           mountPath: /app/config
+        - name: tmp-dir
+          mountPath: /tmp
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -123,6 +127,8 @@ spec:
       - name: amas-config
         configMap:
           name: amas-config
+      - name: tmp-dir
+        emptyDir: {}
       initContainers:
       - name: wait-for-dependencies
         image: busybox:1.35

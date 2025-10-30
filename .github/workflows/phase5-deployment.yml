@@ -112,6 +112,10 @@ PY
       - name: Render Helm Templates
         run: helm template amas helm/ --values helm/values.yaml --set image.tag=${{ github.sha }} > rendered.yaml
 
+      - name: Phase 2 Compliance Validation
+        run: |
+          python3 scripts/validate_phase2_compliance.py k8s/
+
       - name: Push image (latest + sha)
         uses: docker/build-push-action@v5
         with:
