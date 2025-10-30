@@ -28,7 +28,8 @@ spec:
         fsGroup: 2000
       containers:
       - name: amas
-        image: ghcr.io/over7-maker/amas:v4.0.0-enterprise
+        # Pinned by CI/CD: deploy script replaces ${IMAGE_TAG} with commit SHA
+        image: ghcr.io/over7-maker/amas:${IMAGE_TAG}
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8000
@@ -37,7 +38,7 @@ spec:
           name: dashboard
         env:
         - name: DATABASE_URL
-          value: "postgresql://postgres:$(POSTGRES_PASSWORD)@postgres:5432/amas"
+          value: "postgresql://postgres:$(POSTGRES_PASSWORD)@postgres:5432/amas?sslmode=require"
         - name: REDIS_URL
           value: "rediss://:$(REDIS_PASSWORD)@redis:6379/0"
         - name: NEO4J_URI

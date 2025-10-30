@@ -95,8 +95,8 @@ deploy_database() {
 deploy_application() {
     log_info "Deploying AMAS application..."
     
-    # Update image tag in deployment
-    sed -i "s|image: amas:latest|image: $IMAGE_NAME:$IMAGE_TAG|g" amas-deployment.yaml
+    # Update image tag in deployment (replace ${IMAGE_TAG} placeholder)
+    sed -i "s|ghcr.io/over7-maker/amas:${IMAGE_TAG}|ghcr.io/over7-maker/amas:${IMAGE_TAG}|g" amas-deployment.yaml
     
     # Deploy application
     kubectl apply -f amas-deployment.yaml

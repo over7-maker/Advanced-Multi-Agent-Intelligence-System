@@ -15,6 +15,10 @@ class EnterpriseLoadTesting:
             ("health", HealthCheckScenario()),
             ("root", APIEndpointScenario("/", "GET")),
             ("docs", APIEndpointScenario("/docs", "GET")),
+            # Enterprise endpoints
+            ("sso_start", APIEndpointScenario("/auth/sso/google", "POST")),
+            ("mfa_setup", APIEndpointScenario("/auth/mfa/setup", "POST")),
+            ("users_list", APIEndpointScenario("/users", "GET")),
         ]
         results = {}
         for name, scenario in scenarios:

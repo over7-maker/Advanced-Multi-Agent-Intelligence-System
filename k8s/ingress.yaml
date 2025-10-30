@@ -13,8 +13,8 @@ metadata:
     nginx.ingress.kubernetes.io/proxy-body-size: "10m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-    nginx.ingress.kubernetes.io/rate-limit: "100"
-    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   tls:
@@ -39,6 +39,48 @@ spec:
             name: amas
             port:
               number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amas-auth-ingress
+  namespace: amas
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
+    nginx.ingress.kubernetes.io/proxy-body-size: "5m"
+spec:
+  rules:
+  - host: amas.example.com
+    http:
+      paths:
+      - path: /auth
+        pathType: Prefix
+        backend:
+          service:
+            name: amas
+            port:
+              number: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amas-internal-ingress
+  namespace: amas
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Restrict metrics and Grafana to internal ranges (adjust to your CIDRs)
+    nginx.ingress.kubernetes.io/whitelist-source-range: 10.0.0.0/8,192.168.0.0/16
+spec:
+  tls:
+  - hosts:
+    - amas.example.com
+    secretName: amas-tls
+  rules:
+  - host: amas.example.com
+    http:
+      paths:
       - path: /metrics
         pathType: Prefix
         backend:
