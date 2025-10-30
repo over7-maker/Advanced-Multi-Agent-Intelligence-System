@@ -23,7 +23,9 @@ jobs:
         with:
           node-version: 18
           cache: 'npm'
-          cache-dependency-path: web/package-lock.json
+          cache-dependency-path: |
+            web/package-lock.json
+            web/package.json
 
       - name: Install dependencies
         working-directory: web
@@ -35,7 +37,7 @@ jobs:
 
       - name: Lint
         working-directory: web
-        run: npm run lint -- --max-warnings=0
+        run: npm run lint -- --max-warnings=0 --quiet --cache
 
       - name: Build
         working-directory: web
@@ -43,4 +45,4 @@ jobs:
 
       - name: Test
         working-directory: web
-        run: npm test -- --ci --watchAll=false --coverage
+        run: npm test -- --watchAll=false --coverage
