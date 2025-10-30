@@ -515,6 +515,13 @@ jobs:
         username: ${{ env.REGISTRY_USERNAME }}
         password: ${{ env.REGISTRY_PASSWORD }}
     
+    - name: 🔎 Verify registry credentials scope
+      if: github.event_name != 'pull_request'
+      run: |
+        if [ -z "${{ secrets.REGISTRY_PAT }}" ]; then
+          echo "::warning::Using GITHUB_TOKEN for registry operations. Prefer REGISTRY_PAT with write:packages only."
+        fi
+    
     - name: 🏗️ Build Docker image
       id: build
       uses: docker/build-push-action@v5
@@ -587,6 +594,9 @@ jobs:
     timeout-minutes: 20  # Deployment+smoke
     permissions:
       contents: read
+    concurrency:
+      group: deploy-staging-${{ github.ref }}
+      cancel-in-progress: false
     
     steps:
     - name: 📥 Checkout code
@@ -619,6 +629,9 @@ jobs:
     timeout-minutes: 25  # Deployment+validation
     permissions:
       contents: read
+    concurrency:
+      group: deploy-production-${{ github.ref }}
+      cancel-in-progress: false
     
     steps:
     - name: 📥 Checkout code

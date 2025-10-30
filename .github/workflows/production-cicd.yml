@@ -518,6 +518,9 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+    concurrency:
+      group: deploy-staging-${{ github.ref }}
+      cancel-in-progress: false
     
     steps:
     - name: 📥 Checkout code
@@ -551,6 +554,9 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+    concurrency:
+      group: deploy-production-${{ github.ref }}
+      cancel-in-progress: false
     
     steps:
     - name: 📥 Checkout code
