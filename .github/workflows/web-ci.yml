@@ -1,4 +1,4 @@
-name: Web App CI
+name: Web Dashboard CI Pipeline
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -19,6 +19,9 @@ permissions:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./web
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,21 +34,16 @@ jobs:
           cache-dependency-path: web/package-lock.json
 
       - name: Install dependencies
-        working-directory: web
         run: npm ci
 
       - name: Typecheck
-        working-directory: web
         run: npm run typecheck
 
       - name: Lint
-        working-directory: web
         run: npm run lint -- --max-warnings=0 --cache
 
       - name: Build
-        working-directory: web
         run: npm run build
 
       - name: Test
-        working-directory: web
-        run: npm test -- --watchAll=false --coverage --passWithNoTests
+        run: npm test -- --watchAll=false --coverage
