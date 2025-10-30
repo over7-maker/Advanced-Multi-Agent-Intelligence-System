@@ -34,7 +34,7 @@ concurrency:
   cancel-in-progress: false  # Don't cancel deployments in progress
 
 env:
-  PYTHON_VERSION: '3.11.6'  # SECURITY FIX: Pin patch version
+  PYTHON_VERSION: '3.11.13'  # SECURITY FIX: Pin latest patch
   NODE_VERSION: '20.9.0'    # SECURITY FIX: Pin patch version
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: amas
