@@ -1,15 +1,20 @@
 name: Web App CI
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   pull_request:
     paths:
       - 'web/**'
   push:
     branches: [ main ]
+    paths:
+      - 'web/**'
 
 permissions:
   contents: read
-  packages: read
 
 jobs:
   build-test:
@@ -18,14 +23,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Use Node.js 18
+      - name: Setup Node.js v18 with npm caching
         uses: actions/setup-node@v4
         with:
           node-version: 18
           cache: 'npm'
-          cache-dependency-path: |
-            web/package-lock.json
-            web/package.json
+          cache-dependency-path: web/package-lock.json
 
       - name: Install dependencies
         working-directory: web
