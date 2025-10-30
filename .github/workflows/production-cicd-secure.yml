@@ -62,7 +62,8 @@ jobs:
     - name: 🧰 Ensure jq is available
       run: |
         if ! command -v jq >/dev/null 2>&1; then
-          sudo apt-get update -y && sudo apt-get install -y jq
+          sudo apt-get update -y
+          sudo apt-get install -y jq=1.6* || sudo apt-get install -y jq
         fi
     
     - name: 🐍 Setup Python
@@ -320,8 +321,8 @@ jobs:
     name: 🧪 Cross-Platform Tests
     runs-on: ${{ matrix.os }}
     needs: [security-scan, code-quality]
-    # SECURITY GATE: Only proceed if security scan passes or has minimal issues
-    if: needs.security-scan.outputs.vulnerabilities-found == '0' || needs.security-scan.outputs.vulnerabilities-found < '5'
+    # SECURITY GATE: Proceed only if vulnerability count minimal
+    if: fromJSON(needs.security-scan.outputs.vulnerabilities-found || '0') <= 4
     
     strategy:
       fail-fast: false
@@ -387,7 +388,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     needs: [security-scan, code-quality]
-    if: needs.security-scan.outputs.vulnerabilities-found == '0' || needs.security-scan.outputs.vulnerabilities-found < '3'
+    if: fromJSON(needs.security-scan.outputs.vulnerabilities-found || '0') <= 2
     
     services:
       postgres:
