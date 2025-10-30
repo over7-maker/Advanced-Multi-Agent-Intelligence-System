@@ -22,17 +22,18 @@ jobs:
   auto-format:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.label.name == 'auto-format')
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     concurrency:
-      group: auto-format-${{ github.ref }}
+      group: auto-format-${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - name: 📥 Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v4.1.1
         with:
           fetch-depth: 0
 
       - name: 🐍 Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.1.0
         with:
           python-version: ${{ github.event.inputs.python-version || '3.11' }}
           cache: 'pip'
@@ -48,9 +49,9 @@ jobs:
           TARGETS="${{ github.event.inputs.paths || 'src tests' }}"
           echo "Formatting: $TARGETS"
           if [ -f pyproject.toml ]; then
-            black "$TARGETS"
+            black $TARGETS
           else
-            black "$TARGETS" --line-length 88
+            black $TARGETS --line-length 88
           fi
 
       - name: 🔀 Run isort
@@ -58,13 +59,13 @@ jobs:
           set -e
           TARGETS="${{ github.event.inputs.paths || 'src tests' }}"
           if [ -f pyproject.toml ]; then
-            isort "$TARGETS"
+            isort $TARGETS
           else
-            isort "$TARGETS" --profile black
+            isort $TARGETS --profile black
           fi
 
       - name: 🧾 Commit formatting changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v5.0.2
         with:
           commit_message: "chore: auto-format code with Black and isort"
           commit_user_name: amas-bot
