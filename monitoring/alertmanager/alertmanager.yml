@@ -1,0 +1,271 @@
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'alerts@amas.local'
+  smtp_auth_username: 'alerts@amas.local'
+  smtp_auth_password: 'alert_password'
+  
+  # Slack configuration
+  slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+  
+  # PagerDuty configuration
+  pagerduty_url: 'https://events.pagerduty.com/v2/enqueue'
+
+# Templates for alert messages
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route alerts to different receivers based on labels
+route:
+  group_by: ['alertname', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'default-receiver'
+  routes:
+    # Critical alerts go to on-call team
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 5s
+      repeat_interval: 30m
+      
+    # Security alerts go to security team
+    - match:
+        service: security
+      receiver: 'security-alerts'
+      group_wait: 5s
+      repeat_interval: 15m
+      
+    # Database alerts go to database team
+    - match:
+        service: database
+      receiver: 'database-alerts'
+      group_wait: 10s
+      repeat_interval: 1h
+      
+    # Monitoring alerts go to ops team
+    - match:
+        service: monitoring
+      receiver: 'ops-alerts'
+      group_wait: 10s
+      repeat_interval: 2h
+
+# Inhibit rules to prevent alert spam
+inhibit_rules:
+  # Inhibit high priority alerts when critical alerts are firing
+  - source_match:
+      severity: critical
+    target_match:
+      severity: high
+    equal: ['service']
+    
+  # Inhibit medium priority alerts when high priority alerts are firing
+  - source_match:
+      severity: high
+    target_match:
+      severity: medium
+    equal: ['service']
+    
+  # Inhibit low priority alerts when medium priority alerts are firing
+  - source_match:
+      severity: medium
+    target_match:
+      severity: low
+    equal: ['service']
+
+# Receiver configurations
+receivers:
+  # Default receiver for unmatched alerts
+  - name: 'default-receiver'
+    email_configs:
+      - to: 'ops@amas.local'
+        subject: 'AMAS Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Service: {{ .Labels.service }}
+          Time: {{ .StartsAt }}
+          {{ if .Annotations.runbook_url }}
+          Runbook: {{ .Annotations.runbook_url }}
+          {{ end }}
+          {{ end }}
+    slack_configs:
+      - channel: '#alerts'
+        title: 'AMAS Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* {{ .Labels.severity }}
+          *Service:* {{ .Labels.service }}
+          *Time:* {{ .StartsAt }}
+          {{ if .Annotations.runbook_url }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          {{ end }}
+          {{ end }}
+        color: 'danger'
+
+  # Critical alerts receiver
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'oncall@amas.local'
+        subject: 'CRITICAL: AMAS Alert - {{ .GroupLabels.alertname }}'
+        body: |
+          CRITICAL ALERT - IMMEDIATE ACTION REQUIRED
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Service: {{ .Labels.service }}
+          Time: {{ .StartsAt }}
+          {{ if .Annotations.runbook_url }}
+          Runbook: {{ .Annotations.runbook_url }}
+          {{ end }}
+          {{ end }}
+    slack_configs:
+      - channel: '#critical-alerts'
+        title: '🚨 CRITICAL: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* {{ .Labels.severity }}
+          *Service:* {{ .Labels.service }}
+          *Time:* {{ .StartsAt }}
+          {{ if .Annotations.runbook_url }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          {{ end }}
+          {{ end }}
+        color: 'danger'
+    pagerduty_configs:
+      - service_key: 'YOUR_PAGERDUTY_SERVICE_KEY'
+        description: '{{ .GroupLabels.alertname }} - {{ .CommonAnnotations.summary }}'
+        details:
+          summary: '{{ .CommonAnnotations.summary }}'
+          description: '{{ .CommonAnnotations.description }}'
+          severity: '{{ .CommonLabels.severity }}'
+          service: '{{ .CommonLabels.service }}'
+
+  # Security alerts receiver
+  - name: 'security-alerts'
+    email_configs:
+      - to: 'security@amas.local'
+        subject: 'SECURITY ALERT: {{ .GroupLabels.alertname }}'
+        body: |
+          SECURITY ALERT - IMMEDIATE INVESTIGATION REQUIRED
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Service: {{ .Labels.service }}
+          Time: {{ .StartsAt }}
+          {{ if .Annotations.runbook_url }}
+          Runbook: {{ .Annotations.runbook_url }}
+          {{ end }}
+          {{ end }}
+    slack_configs:
+      - channel: '#security-alerts'
+        title: '🔒 SECURITY: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* {{ .Labels.severity }}
+          *Service:* {{ .Labels.service }}
+          *Time:* {{ .StartsAt }}
+          {{ if .Annotations.runbook_url }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          {{ end }}
+          {{ end }}
+        color: 'warning'
+    pagerduty_configs:
+      - service_key: 'YOUR_SECURITY_PAGERDUTY_KEY'
+        description: 'SECURITY: {{ .GroupLabels.alertname }}'
+        details:
+          summary: '{{ .CommonAnnotations.summary }}'
+          description: '{{ .CommonAnnotations.description }}'
+          severity: '{{ .CommonLabels.severity }}'
+          service: '{{ .CommonLabels.service }}'
+
+  # Database alerts receiver
+  - name: 'database-alerts'
+    email_configs:
+      - to: 'dba@amas.local'
+        subject: 'DATABASE ALERT: {{ .GroupLabels.alertname }}'
+        body: |
+          DATABASE ALERT
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Service: {{ .Labels.service }}
+          Time: {{ .StartsAt }}
+          {{ if .Annotations.runbook_url }}
+          Runbook: {{ .Annotations.runbook_url }}
+          {{ end }}
+          {{ end }}
+    slack_configs:
+      - channel: '#database-alerts'
+        title: '🗄️ DATABASE: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* {{ .Labels.severity }}
+          *Service:* {{ .Labels.service }}
+          *Time:* {{ .StartsAt }}
+          {{ if .Annotations.runbook_url }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          {{ end }}
+          {{ end }}
+        color: 'warning'
+
+  # Operations alerts receiver
+  - name: 'ops-alerts'
+    email_configs:
+      - to: 'ops@amas.local'
+        subject: 'OPS ALERT: {{ .GroupLabels.alertname }}'
+        body: |
+          OPERATIONS ALERT
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Severity: {{ .Labels.severity }}
+          Service: {{ .Labels.service }}
+          Time: {{ .StartsAt }}
+          {{ if .Annotations.runbook_url }}
+          Runbook: {{ .Annotations.runbook_url }}
+          {{ end }}
+          {{ end }}
+    slack_configs:
+      - channel: '#ops-alerts'
+        title: '⚙️ OPS: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          *Alert:* {{ .Annotations.summary }}
+          *Description:* {{ .Annotations.description }}
+          *Severity:* {{ .Labels.severity }}
+          *Service:* {{ .Labels.service }}
+          *Time:* {{ .StartsAt }}
+          {{ if .Annotations.runbook_url }}
+          *Runbook:* {{ .Annotations.runbook_url }}
+          {{ end }}
+          {{ end }}
+        color: 'good'
+
+# Time mute rules (optional)
+# These can be used to mute alerts during maintenance windows
+mute_time_intervals:
+  - name: 'maintenance-window'
+    time_intervals:
+      - times:
+          - start_time: '02:00'
+            end_time: '04:00'
+        weekdays: ['sunday']
+        months: ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december']

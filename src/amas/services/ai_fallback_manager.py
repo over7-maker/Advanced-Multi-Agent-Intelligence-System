@@ -1,3 +1,4 @@
+from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
 """
 AI Fallback Manager - Intelligent fallback system for all 6 AI providers
@@ -24,7 +25,7 @@ class AIFallbackManager:
         self.providers = {
             "deepseek": {
                 "name": "DeepSeek",
-                "api_key": os.getenv("DEEPSEEK_API_KEY"),
+                "api_key": get_api_key("DEEPSEEK_API_KEY"),
                 "base_url": "https://api.deepseek.com/v1",
                 "model": "deepseek-chat",
                 "priority": 1,
@@ -33,7 +34,7 @@ class AIFallbackManager:
             },
             "glm": {
                 "name": "GLM 4.5 Air",
-                "api_key": os.getenv("GLM_API_KEY"),
+                "api_key": get_api_key("GLM_API_KEY"),
                 "base_url": "https://open.bigmodel.cn/api/paas/v4",
                 "model": "glm-4-flash",
                 "priority": 2,
@@ -42,7 +43,7 @@ class AIFallbackManager:
             },
             "grok": {
                 "name": "xAI Grok 4 Fast",
-                "api_key": os.getenv("GROK_API_KEY"),
+                "api_key": get_api_key("GROK_API_KEY"),
                 "base_url": "https://api.openrouter.ai/v1",
                 "model": "x-ai/grok-beta",
                 "priority": 3,
@@ -51,7 +52,7 @@ class AIFallbackManager:
             },
             "kimi": {
                 "name": "MoonshotAI Kimi K2",
-                "api_key": os.getenv("KIMI_API_KEY"),
+                "api_key": get_api_key("KIMI_API_KEY"),
                 "base_url": "https://api.moonshot.cn/v1",
                 "model": "moonshot-v1-8k",
                 "priority": 4,
@@ -60,7 +61,7 @@ class AIFallbackManager:
             },
             "qwen": {
                 "name": "Qwen3 Coder",
-                "api_key": os.getenv("QWEN_API_KEY"),
+                "api_key": get_api_key("QWEN_API_KEY"),
                 "base_url": "https://dashscope.aliyuncs.com/api/v1",
                 "model": "qwen-plus",
                 "priority": 5,
@@ -69,7 +70,7 @@ class AIFallbackManager:
             },
             "gptoss": {
                 "name": "OpenAI GPT-OSS 120B",
-                "api_key": os.getenv("GPTOSS_API_KEY"),
+                "api_key": get_api_key("GPTOSS_API_KEY"),
                 "base_url": "https://api.openrouter.ai/v1",
                 "model": "openai/gpt-4o",
                 "priority": 6,

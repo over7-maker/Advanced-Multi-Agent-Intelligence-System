@@ -1,3 +1,4 @@
+from standalone_universal_ai_manager import get_api_key
 #!/usr/bin/env python3
 """
 AI Security Auditor - Uses multiple AI providers to perform comprehensive security audits
@@ -36,12 +37,12 @@ class AISecurityAuditor:
         """Initialize the security auditor"""
         try:
             config = {
-                "deepseek_api_key": os.getenv("DEEPSEEK_API_KEY"),
-                "glm_api_key": os.getenv("GLM_API_KEY"),
-                "grok_api_key": os.getenv("GROK_API_KEY"),
-                "kimi_api_key": os.getenv("KIMI_API_KEY"),
-                "qwen_api_key": os.getenv("QWEN_API_KEY"),
-                "gptoss_api_key": os.getenv("GPTOSS_API_KEY"),
+                "deepseek_api_key": get_api_key("DEEPSEEK_API_KEY"),
+                "glm_api_key": get_api_key("GLM_API_KEY"),
+                "grok_api_key": get_api_key("GROK_API_KEY"),
+                "kimi_api_key": get_api_key("KIMI_API_KEY"),
+                "qwen_api_key": get_api_key("QWEN_API_KEY"),
+                "gptoss_api_key": get_api_key("GPTOSS_API_KEY"),
             }
 
             self.ai_service = AIServiceManager(config)

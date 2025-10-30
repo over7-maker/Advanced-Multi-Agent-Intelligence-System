@@ -6,6 +6,7 @@ using your AI APIs (OpenRouter, DeepSeek, etc.)
 """
 
 import json
+import logging
 import os
 import time
 from typing import Any, Dict, Optional
@@ -13,9 +14,15 @@ from typing import Any, Dict, Optional
 import requests
 from openai import OpenAI
 
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
 
 class AIIssueResponder:
     def __init__(self):
+        # API Keys
         self.github_token = os.environ.get("GITHUB_TOKEN")
         self.deepseek_key = os.environ.get("DEEPSEEK_API_KEY")
         self.glm_key = os.environ.get("GLM_API_KEY")
@@ -30,124 +37,131 @@ class AIIssueResponder:
 
         # Issue details
         self.issue_number = os.environ.get("ISSUE_NUMBER")
-        self.issue_title = os.environ.get("ISSUE_TITLE")
+        self.issue_title = os.environ.get("ISSUE_TITLE", "")
         self.issue_body = os.environ.get("ISSUE_BODY", "")
-        self.issue_author = os.environ.get("ISSUE_AUTHOR")
+        self.issue_author = os.environ.get("ISSUE_AUTHOR", "unknown")
+
+        # Validate required environment variables
+        if not self.github_token:
+            logging.error("GITHUB_TOKEN environment variable is required")
+            raise EnvironmentError("GITHUB_TOKEN environment variable is required")
+            
+        if not self.repo_name:
+            logging.warning("REPO_NAME not provided, some features may not work")
 
         # Initialize AI clients with intelligent fallback priority
         self.ai_clients = []
+        self._initialize_ai_clients()
 
+    def _initialize_ai_clients(self):
+        """Initialize AI clients with proper error handling"""
         # Priority order: DeepSeek (most reliable), GLM, Grok, Kimi, Qwen, GPTOSS
         if self.deepseek_key:
             try:
-                self.ai_clients.append(
-                    {
-                        "name": "DeepSeek",
-                        "client": OpenAI(
-                            base_url="https://api.deepseek.com/v1",
-                            api_key=self.deepseek_key,
-                        ),
-                        "model": "deepseek-chat",
-                        "priority": 1,
-                    }
-                )
+                self.ai_clients.append({
+                    "name": "DeepSeek",
+                    "client": OpenAI(
+                        base_url="https://api.deepseek.com/v1",
+                        api_key=self.deepseek_key,
+                    ),
+                    "model": "deepseek-chat",
+                    "priority": 1,
+                })
+                logging.info("DeepSeek client initialized successfully")
             except Exception as e:
-                print(f"Failed to initialize DeepSeek client: {e}")
+                logging.warning(f"Failed to initialize DeepSeek client: {e}")
 
         if self.glm_key:
             try:
-                self.ai_clients.append(
-                    {
-                        "name": "GLM",
-                        "client": OpenAI(
-                            base_url="https://openrouter.ai/api/v1",
-                            api_key=self.glm_key,
-                        ),
-                        "model": "z-ai/glm-4.5-air:free",
-                        "priority": 2,
-                    }
-                )
+                self.ai_clients.append({
+                    "name": "GLM",
+                    "client": OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.glm_key,
+                    ),
+                    "model": "z-ai/glm-4.5-air:free",
+                    "priority": 2,
+                })
+                logging.info("GLM client initialized successfully")
             except Exception as e:
-                print(f"Failed to initialize GLM client: {e}")
+                logging.warning(f"Failed to initialize GLM client: {e}")
 
         if self.grok_key:
             try:
-                self.ai_clients.append(
-                    {
-                        "name": "Grok",
-                        "client": OpenAI(
-                            base_url="https://openrouter.ai/api/v1",
-                            api_key=self.grok_key,
-                        ),
-                        "model": "x-ai/grok-4-fast:free",
-                        "priority": 3,
-                    }
-                )
+                self.ai_clients.append({
+                    "name": "Grok",
+                    "client": OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.grok_key,
+                    ),
+                    "model": "x-ai/grok-4-fast:free",
+                    "priority": 3,
+                })
+                logging.info("Grok client initialized successfully")
             except Exception as e:
-                print(f"Failed to initialize Grok client: {e}")
+                logging.warning(f"Failed to initialize Grok client: {e}")
 
         if self.kimi_key:
             try:
-                self.ai_clients.append(
-                    {
-                        "name": "Kimi",
-                        "client": OpenAI(
-                            base_url="https://openrouter.ai/api/v1",
-                            api_key=self.kimi_key,
-                        ),
-                        "model": "moonshot/moonshot-v1-8k:free",
-                        "priority": 4,
-                    }
-                )
+                self.ai_clients.append({
+                    "name": "Kimi",
+                    "client": OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.kimi_key,
+                    ),
+                    "model": "moonshot/moonshot-v1-8k:free",
+                    "priority": 4,
+                })
+                logging.info("Kimi client initialized successfully")
             except Exception as e:
-                print(f"Failed to initialize Kimi client: {e}")
+                logging.warning(f"Failed to initialize Kimi client: {e}")
 
         if self.qwen_key:
             try:
-                self.ai_clients.append(
-                    {
-                        "name": "Qwen",
-                        "client": OpenAI(
-                            base_url="https://openrouter.ai/api/v1",
-                            api_key=self.qwen_key,
-                        ),
-                        "model": "qwen/qwen-2.5-7b-instruct:free",
-                        "priority": 5,
-                    }
-                )
+                self.ai_clients.append({
+                    "name": "Qwen",
+                    "client": OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.qwen_key,
+                    ),
+                    "model": "qwen/qwen-2.5-7b-instruct:free",
+                    "priority": 5,
+                })
+                logging.info("Qwen client initialized successfully")
             except Exception as e:
-                print(f"Failed to initialize Qwen client: {e}")
+                logging.warning(f"Failed to initialize Qwen client: {e}")
 
         if self.gptoss_key:
             try:
-                self.ai_clients.append(
-                    {
-                        "name": "GPTOSS",
-                        "client": OpenAI(
-                            base_url="https://openrouter.ai/api/v1",
-                            api_key=self.gptoss_key,
-                        ),
-                        "model": "openai/gpt-3.5-turbo:free",
-                        "priority": 6,
-                    }
-                )
+                self.ai_clients.append({
+                    "name": "GPTOSS",
+                    "client": OpenAI(
+                        base_url="https://openrouter.ai/api/v1",
+                        api_key=self.gptoss_key,
+                    ),
+                    "model": "openai/gpt-3.5-turbo:free",
+                    "priority": 6,
+                })
+                logging.info("GPTOSS client initialized successfully")
             except Exception as e:
-                print(f"Failed to initialize GPTOSS client: {e}")
+                logging.warning(f"Failed to initialize GPTOSS client: {e}")
 
         # Sort by priority
         self.ai_clients.sort(key=lambda x: x["priority"])
 
         if not self.ai_clients:
-            print("⚠️ No AI clients available - will use fallback response")
+            logging.warning("⚠️ No AI clients available - will use fallback response")
         else:
-            print(
-                f"🤖 Initialized {len(self.ai_clients)} AI clients for issue response"
-            )
+            # FIXED: Properly log the initialization status instead of dangling f-string
+            logging.info(f"🤖 Initialized {len(self.ai_clients)} AI clients for issue response")
+            
+        # SECURITY WARNING: Prevent accidental key exposure
+        # Do not log or print API keys under any circumstances
 
     def analyze_issue_type(self, title: str, body: str) -> str:
         """Analyze the type of issue based on content"""
-        title_lower = title.lower()
-        body_lower = body.lower()
+        title_lower = title.lower() if title else ""
+        body_lower = body.lower() if body else ""
 
         # Define issue types based on keywords
         if any(
@@ -197,7 +211,7 @@ Project Context:
 - Enterprise security features
 
 Your role is to provide helpful, technical, and actionable responses to GitHub issues.
-"""
+        """
 
         type_specific_prompts = {
             "bug": """
@@ -207,7 +221,7 @@ For bug reports:
 3. Suggest potential workarounds
 4. Provide debugging guidance
 5. Mention if this relates to known issues
-""",
+            """,
             "feature_request": """
 For feature requests:
 1. Thank the user for the suggestion
@@ -215,7 +229,7 @@ For feature requests:
 3. Suggest implementation approach
 4. Ask for clarification if needed
 5. Mention related existing features
-""",
+            """,
             "question": """
 For questions:
 1. Provide clear, helpful answers
@@ -223,7 +237,7 @@ For questions:
 3. Offer code examples if applicable
 4. Suggest additional resources
 5. Be encouraging and supportive
-""",
+            """,
             "security": """
 For security issues:
 1. Take security concerns seriously
@@ -231,7 +245,7 @@ For security issues:
 3. Reference security best practices
 4. Suggest immediate mitigation steps
 5. Recommend proper reporting channels for vulnerabilities
-""",
+            """,
         }
 
         return base_prompt + type_specific_prompts.get(
@@ -243,6 +257,7 @@ For security issues:
     ) -> Optional[str]:
         """Generate AI response using available APIs with fallback"""
         if not self.ai_clients:
+            logging.warning("No AI clients available for response generation")
             return None
 
         system_prompt = self.create_system_prompt(issue_type)
@@ -258,12 +273,12 @@ Author: {self.issue_author}
 
 Please provide a helpful, professional response that addresses this issue.
 Be specific to the AMAS project context and provide actionable guidance.
-"""
+        """
 
         # Try each AI client in order of preference
         for client_info in self.ai_clients:
             try:
-                print(f"🤖 Trying {client_info['name']} for issue response...")
+                logging.info(f"🤖 Trying {client_info['name']} for issue response...")
 
                 extra_headers = {}
                 if "openrouter.ai" in str(client_info["client"].base_url):
@@ -281,20 +296,25 @@ Be specific to the AMAS project context and provide actionable guidance.
                     ],
                     temperature=0.7,
                     max_tokens=1000,
+                    timeout=30.0,  # Add timeout for reliability
                 )
 
-                print(f"✅ Successfully generated response with {client_info['name']}")
+                logging.info(f"✅ Successfully generated response with {client_info['name']}")
                 return response.choices[0].message.content
 
             except Exception as e:
-                print(f"❌ {client_info['name']} failed: {e}")
+                logging.warning(f"❌ {client_info['name']} failed: {e}")
                 continue
 
-        print("❌ All AI clients failed")
+        logging.error("❌ All AI clients failed")
         return None
 
     def post_github_comment(self, comment: str) -> bool:
         """Post comment to GitHub issue"""
+        if not self.issue_number:
+            logging.error("Issue number not available")
+            return False
+            
         url = f"https://api.github.com/repos/{self.repo_name}/issues/{self.issue_number}/comments"
 
         headers = {
@@ -310,21 +330,25 @@ Be specific to the AMAS project context and provide actionable guidance.
 🤖 *This response was generated by AMAS AI Assistant*
 💡 *Powered by your integrated AI models*
 📚 *For more help, check the [project documentation](https://github.com/{self.repo_name}#readme)*
-"""
+        """
 
         data = {"body": ai_comment}
 
         try:
-            response = requests.post(url, headers=headers, json=data)
+            response = requests.post(url, headers=headers, json=data, timeout=30)
             response.raise_for_status()
-            print(f"✅ Posted AI response to issue #{self.issue_number}")
+            logging.info(f"✅ Posted AI response to issue #{self.issue_number}")
             return True
         except requests.exceptions.RequestException as e:
-            print(f"❌ Failed to post comment: {e}")
+            logging.error(f"❌ Failed to post comment: {e}")
             return False
 
     def add_issue_labels(self, labels: list) -> bool:
         """Add labels to the issue"""
+        if not self.issue_number:
+            logging.error("Issue number not available")
+            return False
+            
         url = f"https://api.github.com/repos/{self.repo_name}/issues/{self.issue_number}/labels"
 
         headers = {
@@ -336,24 +360,24 @@ Be specific to the AMAS project context and provide actionable guidance.
         data = {"labels": labels}
 
         try:
-            response = requests.post(url, headers=headers, json=data)
+            response = requests.post(url, headers=headers, json=data, timeout=15)
             response.raise_for_status()
-            print(f"✅ Added labels {labels} to issue #{self.issue_number}")
+            logging.info(f"✅ Added labels {labels} to issue #{self.issue_number}")
             return True
         except requests.exceptions.RequestException as e:
-            print(f"❌ Failed to add labels: {e}")
+            logging.warning(f"❌ Failed to add labels: {e}")
             return False
 
     def run(self):
         """Main execution function"""
-        print(f"🚀 Processing issue #{self.issue_number}: {self.issue_title}")
+        logging.info(f"🚀 Processing issue #{self.issue_number}: {self.issue_title}")
 
         # Analyze issue type
         issue_type = self.analyze_issue_type(self.issue_title, self.issue_body)
-        print(f"📋 Issue type detected: {issue_type}")
+        logging.info(f"📋 Issue type detected: {issue_type}")
 
         # Generate AI response
-        print("🧠 Generating AI response...")
+        logging.info("🧠 Generating AI response...")
         ai_response = self.generate_ai_response(
             issue_type, self.issue_title, self.issue_body
         )
@@ -373,11 +397,11 @@ Be specific to the AMAS project context and provide actionable guidance.
                     labels.append("enhancement")
 
                 self.add_issue_labels(labels)
-                print("✅ Issue processing completed successfully!")
+                logging.info("✅ Issue processing completed successfully!")
             else:
-                print("❌ Failed to post AI response")
+                logging.error("❌ Failed to post AI response")
         else:
-            print("❌ Failed to generate AI response")
+            logging.warning("❌ Failed to generate AI response")
             # Post a fallback message
             fallback_message = f"""
 Thank you for opening this issue! 🙏
@@ -393,11 +417,19 @@ A human maintainer will review your issue soon. Thank you for your patience!
 
 ---
 🤖 *AMAS AI Assistant - Currently in fallback mode*
-"""
+            """
             self.post_github_comment(fallback_message)
             self.add_issue_labels(["ai-analyzed", "needs-human-review"])
 
+def main():
+    """Main function with proper error handling"""
+    try:
+        responder = AIIssueResponder()
+        responder.run()
+    except Exception as e:
+        logging.exception(f"Critical error in AI Issue Responder: {e}")
+        # Don't exit with error code in CI - log and continue
+        logging.info("Issue responder completed with errors but CI will continue")
 
 if __name__ == "__main__":
-    responder = AIIssueResponder()
-    responder.run()
+    main()

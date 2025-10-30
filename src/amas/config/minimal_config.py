@@ -1,3 +1,4 @@
+from standalone_universal_ai_manager import get_api_key
 """
 Minimal Configuration System for AMAS
 Supports graceful degradation with 3-4 essential API keys
@@ -127,11 +128,11 @@ class MinimalConfigManager:
         providers = []
 
         # Essential providers (minimal setup)
-        if os.getenv("DEEPSEEK_API_KEY"):
+        if get_api_key("DEEPSEEK_API_KEY"):
             providers.append(
                 ProviderConfig(
                     name="DeepSeek",
-                    api_key=os.getenv("DEEPSEEK_API_KEY"),
+                    api_key=get_api_key("DEEPSEEK_API_KEY"),
                     base_url="https://api.deepseek.com/v1",
                     model="deepseek-chat",
                     priority=1,
@@ -140,11 +141,11 @@ class MinimalConfigManager:
             )
 
         # Optional providers for enhanced functionality
-        if os.getenv("GLM_API_KEY"):
+        if get_api_key("GLM_API_KEY"):
             providers.append(
                 ProviderConfig(
                     name="GLM",
-                    api_key=os.getenv("GLM_API_KEY"),
+                    api_key=get_api_key("GLM_API_KEY"),
                     base_url="https://open.bigmodel.cn/api/paas/v4",
                     model="glm-4-flash",
                     priority=2,
@@ -152,11 +153,11 @@ class MinimalConfigManager:
                 )
             )
 
-        if os.getenv("GROK_API_KEY"):
+        if get_api_key("GROK_API_KEY"):
             providers.append(
                 ProviderConfig(
                     name="Grok",
-                    api_key=os.getenv("GROK_API_KEY"),
+                    api_key=get_api_key("GROK_API_KEY"),
                     base_url="https://api.openrouter.ai/v1",
                     model="x-ai/grok-beta",
                     priority=3,
@@ -164,11 +165,11 @@ class MinimalConfigManager:
                 )
             )
 
-        if os.getenv("NVIDIA_API_KEY"):
+        if get_api_key("NVIDIA_API_KEY"):
             providers.append(
                 ProviderConfig(
                     name="NVIDIA",
-                    api_key=os.getenv("NVIDIA_API_KEY"),
+                    api_key=get_api_key("NVIDIA_API_KEY"),
                     base_url="https://integrate.api.nvidia.com/v1",
                     model="deepseek-ai/deepseek-r1",
                     priority=4,
@@ -176,11 +177,11 @@ class MinimalConfigManager:
                 )
             )
 
-        if os.getenv("CODESTRAL_API_KEY"):
+        if get_api_key("CODESTRAL_API_KEY"):
             providers.append(
                 ProviderConfig(
                     name="Codestral",
-                    api_key=os.getenv("CODESTRAL_API_KEY"),
+                    api_key=get_api_key("CODESTRAL_API_KEY"),
                     base_url="https://codestral.mistral.ai/v1",
                     model="codestral-latest",
                     priority=5,

@@ -14,11 +14,17 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPBearer
 
-from src.api.routes import agents, health, tasks, users
+from src.api.routes import agents, health, tasks, users, auth
 from src.config.settings import get_settings, validate_configuration
 from src.middleware.logging import LoggingMiddleware
 from src.middleware.monitoring import MonitoringMiddleware
 from src.middleware.security import SecurityMiddleware
+from src.middleware.rate_limiting import RateLimitingMiddleware, RequestSizeLimitingMiddleware
+from src.amas.errors.error_handling import (
+    handle_amas_exception,
+    handle_http_exception,
+    handle_general_exception
+)
 
 # Configure logging
 logging.basicConfig(
@@ -108,7 +114,14 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Add middleware
+# Add middleware (order matters - first added is outermost)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
+app.add_middleware(SecurityMiddleware)
+app.add_middleware(RateLimitingMiddleware)
+app.add_middleware(RequestSizeLimitingMiddleware, max_size=10 * 1024 * 1024)  # 10MB
+app.add_middleware(LoggingMiddleware)
+app.add_middleware(MonitoringMiddleware)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=get_settings().security.cors_origins,
@@ -117,13 +130,9 @@ app.add_middleware(
     allow_headers=get_settings().security.cors_allow_headers,
 )
 
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
-app.add_middleware(LoggingMiddleware)
-app.add_middleware(SecurityMiddleware)
-app.add_middleware(MonitoringMiddleware)
-
 # Include routers
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
+app.include_router(auth.router, prefix="/api/v1", tags=["authentication"])
 app.include_router(agents.router, prefix="/api/v1", tags=["agents"])
 app.include_router(tasks.router, prefix="/api/v1", tags=["tasks"])
 app.include_router(users.router, prefix="/api/v1", tags=["users"])
@@ -142,50 +151,169 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Comprehensive health check endpoint"""
     try:
-        # Check database
-        from src.database.connection import is_connected as db_connected
-
-        db_status = await db_connected()
-
-        # Check Redis
-        from src.cache.redis import is_connected as redis_connected
-
-        redis_status = await redis_connected()
-
-        # Check Neo4j
-        from src.graph.neo4j import is_connected as neo4j_connected
-
-        neo4j_status = await neo4j_connected()
-
-        services = {
-            "database": "healthy" if db_status else "unhealthy",
-            "redis": "healthy" if redis_status else "unhealthy",
-            "neo4j": "healthy" if neo4j_status else "neo4j_status",
-        }
-
-        overall_status = (
-            "healthy" if all([db_status, redis_status, neo4j_status]) else "unhealthy"
-        )
-
-        return {
-            "status": overall_status,
+        from src.amas.services.prometheus_metrics_service import get_metrics_service
+        from src.amas.services.structured_logging_service import get_logger
+        
+        health_logger = get_logger("amas.health", "health")
+        metrics_service = get_metrics_service()
+        
+        # Initialize health status
+        health_status = {
+            "status": "healthy",
             "timestamp": time.time(),
             "version": "1.0.0",
-            "uptime": (
-                time.time() - app.state.start_time
-                if hasattr(app.state, "start_time")
-                else 0
-            ),
-            "services": services,
+            "uptime": time.time() - getattr(app.state, "start_time", time.time()),
+            "services": {},
+            "metrics": {},
+            "checks": []
         }
+        
+        # Check database
+        try:
+            from src.database.connection import is_connected as db_connected
+            db_status = await db_connected()
+            health_status["services"]["database"] = "healthy" if db_status else "unhealthy"
+            health_status["checks"].append({
+                "name": "database",
+                "status": "pass" if db_status else "fail",
+                "message": "Database connection successful" if db_status else "Database connection failed"
+            })
+        except Exception as e:
+            health_status["services"]["database"] = "unhealthy"
+            health_status["checks"].append({
+                "name": "database",
+                "status": "fail",
+                "message": f"Database check error: {str(e)}"
+            })
+            health_logger.error(f"Database health check failed: {e}")
+
+        # Check Redis
+        try:
+            from src.cache.redis import is_connected as redis_connected
+            redis_status = await redis_connected()
+            health_status["services"]["redis"] = "healthy" if redis_status else "unhealthy"
+            health_status["checks"].append({
+                "name": "redis",
+                "status": "pass" if redis_status else "fail",
+                "message": "Redis connection successful" if redis_status else "Redis connection failed"
+            })
+        except Exception as e:
+            health_status["services"]["redis"] = "unhealthy"
+            health_status["checks"].append({
+                "name": "redis",
+                "status": "fail",
+                "message": f"Redis check error: {str(e)}"
+            })
+            health_logger.error(f"Redis health check failed: {e}")
+
+        # Check Neo4j
+        try:
+            from src.graph.neo4j import is_connected as neo4j_connected
+            neo4j_status = await neo4j_connected()
+            health_status["services"]["neo4j"] = "healthy" if neo4j_status else "unhealthy"
+            health_status["checks"].append({
+                "name": "neo4j",
+                "status": "pass" if neo4j_status else "fail",
+                "message": "Neo4j connection successful" if neo4j_status else "Neo4j connection failed"
+            })
+        except Exception as e:
+            health_status["services"]["neo4j"] = "unhealthy"
+            health_status["checks"].append({
+                "name": "neo4j",
+                "status": "fail",
+                "message": f"Neo4j check error: {str(e)}"
+            })
+            health_logger.error(f"Neo4j health check failed: {e}")
+
+        # Check system resources
+        try:
+            import psutil
+            memory = psutil.virtual_memory()
+            cpu_percent = psutil.cpu_percent(interval=1)
+            
+            health_status["metrics"]["memory_usage_percent"] = memory.percent
+            health_status["metrics"]["cpu_usage_percent"] = cpu_percent
+            health_status["metrics"]["memory_available_gb"] = memory.available / (1024**3)
+            
+            # Check if system resources are healthy
+            memory_healthy = memory.percent < 90
+            cpu_healthy = cpu_percent < 90
+            
+            health_status["checks"].append({
+                "name": "memory",
+                "status": "pass" if memory_healthy else "warn",
+                "message": f"Memory usage: {memory.percent:.1f}%"
+            })
+            
+            health_status["checks"].append({
+                "name": "cpu",
+                "status": "pass" if cpu_healthy else "warn",
+                "message": f"CPU usage: {cpu_percent:.1f}%"
+            })
+            
+        except ImportError:
+            health_status["checks"].append({
+                "name": "system_resources",
+                "status": "skip",
+                "message": "psutil not available for system metrics"
+            })
+
+        # Check authentication service
+        try:
+            from src.amas.security.enhanced_auth import get_auth_manager
+            auth_manager = get_auth_manager()
+            health_status["services"]["authentication"] = "healthy"
+            health_status["checks"].append({
+                "name": "authentication",
+                "status": "pass",
+                "message": "Authentication service is running"
+            })
+        except Exception as e:
+            health_status["services"]["authentication"] = "unhealthy"
+            health_status["checks"].append({
+                "name": "authentication",
+                "status": "fail",
+                "message": f"Authentication service error: {str(e)}"
+            })
+
+        # Determine overall status
+        service_statuses = list(health_status["services"].values())
+        overall_healthy = all(status == "healthy" for status in service_statuses)
+        health_status["status"] = "healthy" if overall_healthy else "unhealthy"
+        
+        # Record health check metrics
+        metrics_service.record_http_request(
+            method="GET",
+            endpoint="/health",
+            status_code=200 if overall_healthy else 503,
+            duration=0.1  # Placeholder duration
+        )
+
+        # Log health check
+        health_logger.info(
+            f"Health check completed: {health_status['status']}",
+            action="health_check",
+            metadata=health_status
+        )
+
+        status_code = 200 if overall_healthy else 503
+        return JSONResponse(
+            status_code=status_code,
+            content=health_status
+        )
 
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return JSONResponse(
             status_code=503,
-            content={"status": "unhealthy", "timestamp": time.time(), "error": str(e)},
+            content={
+                "status": "unhealthy",
+                "timestamp": time.time(),
+                "error": str(e),
+                "message": "Health check system failure"
+            },
         )
 
 
@@ -226,31 +354,9 @@ async def readiness_check():
         )
 
 
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc):
-    """Global HTTP exception handler"""
-    return JSONResponse(
-        status_code=exc.status_code,
-        content={
-            "error": exc.detail,
-            "status_code": exc.status_code,
-            "timestamp": time.time(),
-        },
-    )
-
-
-@app.exception_handler(Exception)
-async def general_exception_handler(request, exc):
-    """Global exception handler"""
-    logger.error(f"Unhandled exception: {exc}")
-    return JSONResponse(
-        status_code=500,
-        content={
-            "error": "Internal server error",
-            "status_code": 500,
-            "timestamp": time.time(),
-        },
-    )
+# Add exception handlers
+app.add_exception_handler(Exception, handle_general_exception)
+app.add_exception_handler(HTTPException, handle_http_exception)
 
 
 if __name__ == "__main__":
