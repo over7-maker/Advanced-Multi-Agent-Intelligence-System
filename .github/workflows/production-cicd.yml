@@ -46,6 +46,9 @@ jobs:
     timeout-minutes: 15
     permissions:
       contents: read
+    concurrency:
+      group: dependency-scan-${{ github.ref }}
+      cancel-in-progress: true
     outputs:
       vulnerabilities-found: ${{ steps.scan-results.outputs.vulnerabilities }}
     
@@ -60,6 +63,12 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
+    
+    - name: 🧰 Ensure jq is available
+      run: |
+        if ! command -v jq >/dev/null 2>&1; then
+          sudo apt-get update -y && sudo apt-get install -y jq
+        fi
     
     - name: 📦 Install security tooling (prefer requirements file)
       run: |
@@ -129,6 +138,9 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+    concurrency:
+      group: code-quality-${{ github.ref }}
+      cancel-in-progress: true
     outputs:
       quality-score: ${{ steps.quality-check.outputs.score }}
     
@@ -204,6 +216,9 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11']
+    concurrency:
+      group: unit-tests-${{ github.ref }}
+      cancel-in-progress: true
     
     steps:
     - name: 📥 Checkout code
@@ -250,6 +265,9 @@ jobs:
     timeout-minutes: 20
     permissions:
       contents: read
+    concurrency:
+      group: integration-tests-${{ github.ref }}
+      cancel-in-progress: true
     
     services:
       postgres:
@@ -442,6 +460,9 @@ jobs:
     permissions:
       contents: read
       packages: write  # Needed for ghcr push when not pull_request
+    concurrency:
+      group: docker-build-${{ github.ref }}
+      cancel-in-progress: true
     outputs:
       image-digest: ${{ steps.build.outputs.digest }}
     

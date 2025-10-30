@@ -61,6 +61,12 @@ jobs:
       with:
         fetch-depth: 0
     
+    - name: 🧰 Ensure jq is available
+      run: |
+        if ! command -v jq >/dev/null 2>&1; then
+          sudo apt-get update -y && sudo apt-get install -y jq
+        fi
+    
     - name: 🐍 Setup Python
       uses: actions/setup-python@v5
       with:
@@ -355,12 +361,16 @@ jobs:
     
     - name: 🧪 Run unit tests
       run: |
-        pytest tests/unit/ -v \
-          --tb=short \
-          --cov=src \
-          --cov-report=xml \
-          --cov-report=term-missing \
-          --cov-fail-under=80 || echo "Unit tests completed with issues"
+        if ls tests/unit/*.py >/dev/null 2>&1; then \
+          pytest tests/unit/ -v \
+            --tb=short \
+            --cov=src \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=80 || echo "Unit tests completed with issues"; \
+        else \
+          echo "No unit tests found. Skipping."; \
+        fi
       env:
         AMAS_ENVIRONMENT: testing
         AMAS_LOG_LEVEL: DEBUG
