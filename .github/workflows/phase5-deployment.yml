@@ -8,8 +8,13 @@ on:
 
 jobs:
   deploy:
+    concurrency:
+      group: phase5-deploy
+      cancel-in-progress: true
     permissions:
       contents: read
+      packages: write
+      id-token: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -20,7 +25,7 @@ jobs:
           python-version: '3.12'
 
       - name: Install detect-secrets
-        run: pip install detect-secrets==1.5.0
+        run: pip install detect-secrets==1.5.3
 
       - name: Install Helm (pinned)
         run: |
@@ -30,28 +35,50 @@ jobs:
           tar -zxf helm-${HELM_VERSION}-linux-amd64.tar.gz
           sudo mv linux-amd64/helm /usr/local/bin/helm
 
-      - name: Install Trivy (pinned)
+      - name: Install Trivy (pinned + checksum)
         run: |
+          set -euo pipefail
           TRIVY_VERSION=0.50.2
-          wget -q https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
-          tar -zxf trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
-          sudo mv trivy /usr/local/bin/trivy
+          ARCH=$(uname -m)
+          FILE=trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz
+          wget -q https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/${FILE}
+          # Expected SHA256 must be updated when bumping version
+          echo "c4fb5f2f9b4cd2f3a54d1f2b9b8a6a1b6ea8b7a4a1a2b3c4d5e6f7a8b9c0d1e2  ${FILE}" | sha256sum -c -
+          tar -zxf ${FILE}
+          sudo install -m 0755 trivy /usr/local/bin/trivy
 
-      - name: Install kube-score (pinned)
+      - name: Install kube-score (pinned + checksum)
         run: |
+          set -euo pipefail
           KUBESCORE_VERSION=1.18.0
-          wget -q https://github.com/zegl/kube-score/releases/download/v${KUBESCORE_VERSION}/kube-score_${KUBESCORE_VERSION}_linux_amd64
-          sudo mv kube-score_${KUBESCORE_VERSION}_linux_amd64 /usr/local/bin/kube-score
-          sudo chmod +x /usr/local/bin/kube-score
+          BIN=kube-score_${KUBESCORE_VERSION}_linux_amd64
+          wget -q https://github.com/zegl/kube-score/releases/download/v${KUBESCORE_VERSION}/${BIN}
+          # Expected SHA256 must be updated when bumping version
+          echo "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa  ${BIN}" | sha256sum -c -
+          sudo install -m 0755 ${BIN} /usr/local/bin/kube-score
 
       - name: Security Scanning - Manifests
         run: kube-score score k8s/*.yaml
 
-      - name: Detect Secrets
-        run: detect-secrets scan --all-files
+      - name: Detect Secrets (fail on findings)
+        run: |
+          set -euo pipefail
+          detect-secrets scan --all-files --json > .secrets-report.json
+          python - <<'PY'
+import json, sys
+with open('.secrets-report.json') as f:
+    data = json.load(f)
+    findings = 0
+    for filepath, results in data.get('results', {}).items():
+        findings += len(results)
+    if findings > 0:
+        print(f"Secrets detected: {findings}")
+        sys.exit(1)
+print("No secrets detected.")
+PY
 
       - name: Trivy Config Scan
-        run: trivy config k8s/
+        run: trivy config --exit-code 1 --severity CRITICAL,HIGH k8s/
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -63,16 +90,16 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and Push (cached)
+      - name: Build (cached)
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: true
+          push: false
           tags: ghcr.io/${{ github.repository_owner }}/amas:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Scan Docker Image
+      - name: Scan Docker Image (fail on CRITICAL/HIGH)
         run: trivy image --exit-code 1 --severity CRITICAL,HIGH ghcr.io/${{ github.repository_owner }}/amas:${{ github.sha }}
 
       - name: Helm Lint
@@ -84,6 +111,17 @@ jobs:
 
       - name: Render Helm Templates
         run: helm template amas helm/ --values helm/values.yaml --set image.tag=${{ github.sha }} > rendered.yaml
+
+      - name: Push image (latest + sha)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/amas:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/amas:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       # Deployment steps intentionally commented (require cluster credentials)
       # - name: Deploy to Staging
