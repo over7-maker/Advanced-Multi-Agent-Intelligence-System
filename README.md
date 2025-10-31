@@ -99,7 +99,7 @@ graph TB
 
 #### **Tier 1 - Premium Speed**
 - **Cerebras** - Ultra-fast inference (see [Performance Benchmarks](docs/performance_benchmarks.md))
-- **NVIDIA** - OpenAI-compatible API (see [Performance Benchmarks](docs/performance_benchmarks.md))
+- **NVIDIA** - OpenAI-compatible API (see [Performance Benchmarks](docs/performance_benchmarks.md) and [NVIDIA NIM Integration](docs/developer/component-integration-guide.md#nvidia-nim-integration))
 
 #### **Tier 2 - High Quality**
 - **Google Gemini 2.0** - Advanced reasoning (see [Performance Benchmarks](docs/performance_benchmarks.md))
