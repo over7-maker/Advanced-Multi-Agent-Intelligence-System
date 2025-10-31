@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Activity, 
   CheckCircle, 
   AlertTriangle, 
   Clock, 
-  Zap,
   Brain,
   Shield,
   Search,
@@ -35,18 +34,19 @@ const AgentStatusGrid: React.FC<AgentStatusGridProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [agentMetrics, setAgentMetrics] = useState<Record<string, any>>({});
 
+  const setupWebSocketListeners = useCallback(() => {
+    wsService.subscribe('agentUpdate', handleAgentUpdate);
+  }, []);
+
   useEffect(() => {
     loadAgents();
     setupWebSocketListeners();
-    
-    // Refresh agents every 30 seconds
     const interval = setInterval(loadAgents, 30000);
-    
     return () => {
       clearInterval(interval);
       wsService.unsubscribe('agentUpdate', handleAgentUpdate);
     };
-  }, []);
+  }, [setupWebSocketListeners]);
 
   const loadAgents = async () => {
     try {
@@ -75,9 +75,7 @@ const AgentStatusGrid: React.FC<AgentStatusGridProps> = ({
     }
   };
 
-  const setupWebSocketListeners = () => {
-    wsService.subscribe('agentUpdate', handleAgentUpdate);
-  };
+  // (listener setup defined above with useCallback)
 
   const handleAgentUpdate = (update: any) => {
     setAgentMetrics(prev => ({

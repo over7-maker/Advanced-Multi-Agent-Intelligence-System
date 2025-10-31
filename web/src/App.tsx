@@ -1,21 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from 'react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 // Components
-import OnboardingWizard from './components/OnboardingWizard';
-import AMASControlCenter from './components/AMASControlCenter';
-import AgentStatusGrid from './components/AgentStatusGrid';
-import TaskQueueVisualization from './components/TaskQueueVisualization';
-import PerformanceMetricsDashboard from './components/PerformanceMetricsDashboard';
-import VoiceCommandInterface from './components/VoiceCommandInterface';
+import { Suspense, lazy } from 'react';
+const OnboardingWizard = lazy(() => import('./components/OnboardingWizard'));
+const AMASControlCenter = lazy(() => import('./components/AMASControlCenter'));
+const AgentStatusGrid = lazy(() => import('./components/AgentStatusGrid'));
+const TaskQueueVisualization = lazy(() => import('./components/TaskQueueVisualization'));
+const PerformanceMetricsDashboard = lazy(() => import('./components/PerformanceMetricsDashboard'));
+const VoiceCommandInterface = lazy(() => import('./components/VoiceCommandInterface'));
 
 // Services
 import { apiService } from './services/api';
-import { wsService } from './services/websocket';
-import { voiceService } from './services/voice';
 
 // Styles
 import './App.css';
@@ -78,7 +77,7 @@ function App() {
       }
       
       // Check system health
-      let systemHealth = null;
+      let systemHealth: any = null;
       try {
         systemHealth = await apiService.getHealth();
       } catch (err) {
@@ -221,14 +220,16 @@ function App() {
             }}
           />
           
-          <Routes>
-            <Route path="/" element={<MainDashboard appState={appState} onViewChange={handleViewChange} onAgentSelect={handleAgentSelect} onTaskSelect={handleTaskSelect} onVoiceCommand={handleVoiceCommand} onLogout={handleLogout} />} />
-            <Route path="/agents" element={<AgentView appState={appState} onAgentSelect={handleAgentSelect} onViewChange={handleViewChange} />} />
-            <Route path="/tasks" element={<TaskView appState={appState} onTaskSelect={handleTaskSelect} onViewChange={handleViewChange} />} />
-            <Route path="/metrics" element={<MetricsView appState={appState} onViewChange={handleViewChange} />} />
-            <Route path="/voice" element={<VoiceView appState={appState} onVoiceCommand={handleVoiceCommand} onViewChange={handleViewChange} />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
+          <Suspense fallback={<div className="p-6 text-gray-300">Loading...</div>}>
+            <Routes>
+              <Route path="/" element={<MainDashboard appState={appState} onViewChange={handleViewChange} onAgentSelect={handleAgentSelect} onTaskSelect={handleTaskSelect} onVoiceCommand={handleVoiceCommand} onLogout={handleLogout} />} />
+              <Route path="/agents" element={<AgentView appState={appState} onAgentSelect={handleAgentSelect} onViewChange={handleViewChange} />} />
+              <Route path="/tasks" element={<TaskView appState={appState} onTaskSelect={handleTaskSelect} onViewChange={handleViewChange} />} />
+              <Route path="/metrics" element={<MetricsView appState={appState} onViewChange={handleViewChange} />} />
+              <Route path="/voice" element={<VoiceView appState={appState} onVoiceCommand={handleVoiceCommand} onViewChange={handleViewChange} />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
         </div>
       </Router>
     </QueryClientProvider>
@@ -403,7 +404,7 @@ const TaskView: React.FC<{
 const MetricsView: React.FC<{
   appState: AppState;
   onViewChange: (view: AppState['currentView']) => void;
-}> = ({ appState, onViewChange }) => {
+}> = ({ onViewChange }) => {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto">
@@ -427,7 +428,7 @@ const VoiceView: React.FC<{
   appState: AppState;
   onVoiceCommand: (command: any) => void;
   onViewChange: (view: AppState['currentView']) => void;
-}> = ({ appState, onVoiceCommand, onViewChange }) => {
+}> = ({ onVoiceCommand, onViewChange }) => {
   return (
     <div className="min-h-screen p-6">
       <div className="max-w-7xl mx-auto">

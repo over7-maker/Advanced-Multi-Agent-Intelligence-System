@@ -13,7 +13,7 @@ import {
   Clock,
   Users
 } from 'lucide-react';
-import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import { Line, Doughnut } from 'react-chartjs-2';
 import VoiceCommandInterface from './VoiceCommandInterface';
 import {
   Chart as ChartJS,
@@ -83,18 +83,15 @@ interface AMASControlCenterProps {
 
 const AMASControlCenter: React.FC<AMASControlCenterProps> = ({
   onViewChange,
-  onAgentSelect,
   onTaskSelect,
   onVoiceCommand,
   onLogout,
-  systemHealth
 }) => {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [activeTasks, setActiveTasks] = useState<Task[]>([]);
   const [command, setCommand] = useState('');
-  const [isListening, setIsListening] = useState(false);
-  const [commandHistory, setCommandHistory] = useState<string[]>([]);
+  // Command history not tracked currently
 
   // Mock data initialization
   useEffect(() => {
@@ -179,8 +176,7 @@ const AMASControlCenter: React.FC<AMASControlCenterProps> = ({
     e.preventDefault();
     if (!command.trim()) return;
 
-    // Add to history
-    setCommandHistory(prev => [...prev, command]);
+    // History tracking disabled
 
     // Mock task creation
     const newTask: Task = {

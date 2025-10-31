@@ -18,7 +18,7 @@ export interface VoiceConfig {
 }
 
 class VoiceService {
-  private recognition: SpeechRecognition | null = null;
+  private recognition: any | null = null;
   private isListening: boolean = false;
   private isSupported: boolean = false;
   private config: VoiceConfig = {
@@ -34,7 +34,7 @@ class VoiceService {
 
   private initializeSpeechRecognition(): void {
     if (typeof window !== 'undefined') {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const SpeechRecognition: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       
       if (SpeechRecognition) {
         this.recognition = new SpeechRecognition();
@@ -65,23 +65,23 @@ class VoiceService {
       console.log('Voice recognition ended');
     };
 
-    this.recognition.onerror = (event) => {
-      console.error('Voice recognition error:', event.error);
+    this.recognition.onerror = (event: any) => {
+      console.error('Voice recognition error:', (event as any).error);
       this.isListening = false;
     };
 
-    this.recognition.onresult = (event) => {
+    this.recognition.onresult = (event: any) => {
       this.handleRecognitionResult(event);
     };
   }
 
-  private async handleRecognitionResult(event: SpeechRecognitionEvent): Promise<void> {
-    const results = Array.from(event.results);
-    const lastResult = results[results.length - 1];
+  private async handleRecognitionResult(event: any): Promise<void> {
+    const results = Array.from(event.results as any);
+    const lastResult: any = results[results.length - 1];
 
     if (lastResult.isFinal) {
-      const command = lastResult[0].transcript.trim();
-      const confidence = lastResult[0].confidence;
+      const command = (lastResult as any)[0].transcript.trim();
+      const confidence = (lastResult as any)[0].confidence;
 
       console.log('Voice command detected:', command, 'Confidence:', confidence);
 
@@ -236,7 +236,7 @@ class VoiceService {
   }
 
   // Text-to-Speech for feedback
-  public speak(text: string, options?: SpeechSynthesisUtterance): void {
+  public speak(text: string, options?: Partial<SpeechSynthesisUtterance>): void {
     if ('speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text);
       
@@ -266,7 +266,7 @@ export default voiceService;
 // Extend Window interface for TypeScript
 declare global {
   interface Window {
-    SpeechRecognition: typeof SpeechRecognition;
-    webkitSpeechRecognition: typeof SpeechRecognition;
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
   }
 }

@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mic, 
   MicOff, 
-  Volume2, 
   VolumeX, 
   Settings, 
   History,
   Zap,
   CheckCircle,
   AlertTriangle,
-  Clock,
   Brain,
   Shield,
   Search,
@@ -38,9 +36,21 @@ const VoiceCommandInterface: React.FC<VoiceCommandInterfaceProps> = ({
   const [showHistory, setShowHistory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [voiceConfig, setVoiceConfig] = useState(voiceService.getConfig());
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessing] = useState(false);
 
-  const audioRef = useRef<HTMLAudioElement>(null);
+  // Audio ref not currently used
+
+  // Define speak before effect to avoid use-before-assign
+  const speak = useCallback((text: string) => {
+    if (isSpeaking) {
+      voiceService.stopSpeaking();
+    }
+    voiceService.speak(text, {
+      onstart: () => setIsSpeaking(true),
+      onend: () => setIsSpeaking(false),
+      onerror: () => setIsSpeaking(false)
+    });
+  }, [isSpeaking]);
 
   useEffect(() => {
     setIsSupported(voiceService.isVoiceSupported());
@@ -86,7 +96,7 @@ const VoiceCommandInterface: React.FC<VoiceCommandInterfaceProps> = ({
       window.removeEventListener('speechEnd', handleSpeechEnd);
       window.removeEventListener('speechResult', handleSpeechResult);
     };
-  }, [onCommandProcessed]);
+  }, [onCommandProcessed, speak]);
 
   const toggleListening = async () => {
     try {
@@ -103,16 +113,7 @@ const VoiceCommandInterface: React.FC<VoiceCommandInterfaceProps> = ({
     }
   };
 
-  const speak = (text: string) => {
-    if (isSpeaking) {
-      voiceService.stopSpeaking();
-    }
-    voiceService.speak(text, {
-      onstart: () => setIsSpeaking(true),
-      onend: () => setIsSpeaking(false),
-      onerror: () => setIsSpeaking(false)
-    });
-  };
+  // speak defined above
 
   const stopSpeaking = () => {
     voiceService.stopSpeaking();

@@ -30,13 +30,17 @@ export interface SystemUpdate {
   throughput_per_second: number;
 }
 
+type ConnectionState = 'connecting' | 'connected' | 'reconnecting' | 'closing' | 'disconnected' | 'unknown';
+
 class WebSocketService extends EventEmitter {
   private ws: WebSocket | null = null;
-  private reconnectInterval: number = 5000;
+  // Backoff configuration
+  private baseReconnectMs: number = 1000; // 1s base
   private reconnectAttempts: number = 0;
   private maxReconnectAttempts: number = 10;
   private isConnecting: boolean = false;
   private heartbeatInterval: NodeJS.Timeout | null = null;
+  private connectionState: ConnectionState = 'disconnected';
 
   constructor() {
     super();
@@ -49,6 +53,7 @@ class WebSocketService extends EventEmitter {
     }
 
     this.isConnecting = true;
+    this.setConnectionState(this.reconnectAttempts > 0 ? 'reconnecting' : 'connecting');
     const wsUrl = process.env.REACT_APP_WS_URL || 'ws://localhost:8000/ws';
     
     try {
@@ -68,6 +73,7 @@ class WebSocketService extends EventEmitter {
       this.isConnecting = false;
       this.reconnectAttempts = 0;
       this.startHeartbeat();
+      this.setConnectionState('connected');
       this.emit('connected');
     };
 
@@ -84,6 +90,7 @@ class WebSocketService extends EventEmitter {
       console.log('WebSocket disconnected:', event.code, event.reason);
       this.isConnecting = false;
       this.stopHeartbeat();
+      this.setConnectionState('disconnected');
       this.emit('disconnected');
       
       if (event.code !== 1000) { // Not a normal closure
@@ -94,6 +101,7 @@ class WebSocketService extends EventEmitter {
     this.ws.onerror = (error) => {
       console.error('WebSocket error:', error);
       this.isConnecting = false;
+      this.setConnectionState('disconnected');
       this.emit('error', error);
     };
   }
@@ -132,10 +140,15 @@ class WebSocketService extends EventEmitter {
 
     this.reconnectAttempts++;
     console.log(`Attempting to reconnect... (${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
-    
+
+    // Exponential backoff with full jitter: sleep = rand(0, min(cap, base * 2^attempt))
+    const capMs = 30000; // 30s cap
+    const expMs = Math.min(capMs, this.baseReconnectMs * Math.pow(2, this.reconnectAttempts));
+    const delayMs = Math.floor(Math.random() * expMs);
+
     setTimeout(() => {
       this.connect();
-    }, this.reconnectInterval);
+    }, delayMs);
   }
 
   private startHeartbeat(): void {
@@ -172,6 +185,7 @@ class WebSocketService extends EventEmitter {
   public disconnect(): void {
     this.stopHeartbeat();
     if (this.ws) {
+      this.setConnectionState('closing');
       this.ws.close(1000, 'Client disconnect');
       this.ws = null;
     }
@@ -181,12 +195,15 @@ class WebSocketService extends EventEmitter {
     return this.ws !== null && this.ws.readyState === WebSocket.OPEN;
   }
 
-  public getConnectionState(): string {
-    if (!this.ws) return 'disconnected';
-    
+  public getConnectionState(): ConnectionState {
+    if (!this.ws) {
+      return this.connectionState;
+    }
+
+    // Prefer internal state for transitional phases; fall back to ws.readyState
     switch (this.ws.readyState) {
       case WebSocket.CONNECTING:
-        return 'connecting';
+        return this.connectionState === 'reconnecting' ? 'reconnecting' : 'connecting';
       case WebSocket.OPEN:
         return 'connected';
       case WebSocket.CLOSING:
@@ -195,6 +212,13 @@ class WebSocketService extends EventEmitter {
         return 'disconnected';
       default:
         return 'unknown';
+    }
+  }
+
+  private setConnectionState(state: ConnectionState): void {
+    if (this.connectionState !== state) {
+      this.connectionState = state;
+      this.emit('connectionStateChange', state);
     }
   }
 }

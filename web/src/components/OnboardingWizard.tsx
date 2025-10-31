@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import { 
   CheckCircle, 
   AlertCircle, 
@@ -14,7 +14,7 @@ import {
   Check
 } from 'lucide-react';
 import { apiService } from '../services/api';
-import { toast } from 'react-hot-toast';
+// import { toast } from 'react-hot-toast';
 
 interface OnboardingStep {
   id: string;
@@ -177,17 +177,17 @@ const OnboardingWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
   const [isRunning, setIsRunning] = useState(false);
   const [overallProgress, setOverallProgress] = useState(0);
 
-  useEffect(() => {
-    calculateOverallProgress();
-  }, [steps]);
-
-  const calculateOverallProgress = () => {
+  const calculateOverallProgress = useCallback(() => {
     const totalChecks = steps.reduce((acc, step) => acc + step.checks.length, 0);
     const completedChecks = steps.reduce((acc, step) => 
       acc + step.checks.filter(check => check.status === 'passed').length, 0
     );
     setOverallProgress((completedChecks / totalChecks) * 100);
-  };
+  }, [steps]);
+
+  useEffect(() => {
+    calculateOverallProgress();
+  }, [calculateOverallProgress]);
 
   const runStepChecks = async (stepIndex: number) => {
     const step = steps[stepIndex];
@@ -319,9 +319,9 @@ const OnboardingWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
   };
 
   const performDatabaseCheck = async (checkId: string): Promise<void> => {
+    const health = await apiService.getHealth();
     switch (checkId) {
       case 'db_connection':
-        const health = await apiService.getHealth();
         if (health.services.database !== 'healthy') {
           throw new Error('Database connection failed');
         }
@@ -440,7 +440,7 @@ const OnboardingWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
 
           {/* Checks List */}
           <div className="space-y-4 mb-8">
-            {currentStepData.checks.map((check, index) => (
+            {currentStepData.checks.map((check) => (
               <div key={check.id} className="flex items-center space-x-4 p-4 bg-slate-800/50 rounded-lg">
                 {getStatusIcon(check.status)}
                 <div className="flex-1">
@@ -499,13 +499,13 @@ const OnboardingWizard: React.FC<{ onComplete: () => void }> = ({ onComplete }) 
 
         {/* Step Indicators */}
         <div className="flex justify-center mt-8 space-x-2">
-          {steps.map((_, index) => (
+          {steps.map((_, idx) => (
             <div
-              key={index}
+              key={`step-${idx}`}
               className={`w-3 h-3 rounded-full transition-colors ${
-                index === currentStep
+                idx === currentStep
                   ? 'bg-blue-500'
-                  : index < currentStep
+                  : idx < currentStep
                   ? 'bg-green-500'
                   : 'bg-gray-600'
               }`}
