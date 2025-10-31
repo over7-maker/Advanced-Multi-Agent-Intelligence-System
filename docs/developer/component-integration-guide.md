@@ -1,0 +1,1 @@
+[migrated from COMPONENT_INTEGRATION_GUIDE.md]

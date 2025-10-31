@@ -26,9 +26,9 @@ Welcome to the AMAS Developer Guide! This comprehensive documentation will help 
 12. [Security Considerations](#security-considerations)
 13. [Contributing](#contributing)
 14. [**External Integration (Phase 5)**](#external-integration-phase-5)
-    - [Quick Integration Examples](QUICK_INTEGRATION_EXAMPLES.md) ⚡
-    - [Full Integration Guide](PHASE_5_INTEGRATION_GUIDE.md) 📚
-    - [Component Integration](COMPONENT_INTEGRATION_GUIDE.md) 🧩
+    - [Quick Integration Examples](quick-integration-examples.md) ⚡
+    - [Full Integration Guide](phase-5-integration-guide.md) 📚
+    - [Component Integration](component-integration-guide.md) 🧩
 
 ---
 
@@ -2275,13 +2275,13 @@ chore: update dependencies
 
 For developers who want to use AMAS components in their own projects, we provide comprehensive integration documentation:
 
-#### **⚡ [Quick Integration Examples](QUICK_INTEGRATION_EXAMPLES.md)** - 5-Minute Quick Start
+#### **⚡ [Quick Integration Examples](quick-integration-examples.md)** - 5-Minute Quick Start
 - Minimal setup (3 lines of code)
 - Common patterns (FastAPI, Django, Flask, CLI)
 - Environment variables quick reference
 - Error handling patterns
 
-#### **📖 [Full Integration Guide](PHASE_5_INTEGRATION_GUIDE.md)** - Comprehensive Documentation
+#### **📖 [Full Integration Guide](phase-5-integration-guide.md)** - Comprehensive Documentation
 - Complete Universal AI Router integration
 - Python SDK usage
 - REST API client examples (Python & JavaScript)
@@ -2290,7 +2290,7 @@ For developers who want to use AMAS components in their own projects, we provide
 - Advanced use cases (custom providers, multi-tenant, batch processing)
 - Troubleshooting guide
 
-#### **🧩 [Component Integration Guide](COMPONENT_INTEGRATION_GUIDE.md)** - Standalone Components
+#### **🧩 [Component Integration Guide](component-integration-guide.md)** - Standalone Components
 - Individual component usage (Router, Agents, Services)
 - Minimal dependency setups
 - Package structure examples
@@ -2322,7 +2322,7 @@ docker run -p 8000:8000 \
   amas/universal-router:latest
 ```
 
-**Start with**: [Quick Integration Examples](QUICK_INTEGRATION_EXAMPLES.md) for immediate results, then refer to the [Full Integration Guide](PHASE_5_INTEGRATION_GUIDE.md) for comprehensive documentation.
+**Start with**: [Quick Integration Examples](quick-integration-examples.md) for immediate results, then refer to the [Full Integration Guide](phase-5-integration-guide.md) for comprehensive documentation.
 
 ---
 

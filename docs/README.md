@@ -185,9 +185,9 @@ Complete technical documentation for developers and contributors:
 ### **🚀 Phase 5 - External Integration** (NEW!)
 For developers integrating AMAS components into external projects:
 
-- **[⚡ Quick Integration Examples](developer/QUICK_INTEGRATION_EXAMPLES.md)** - 5-minute quick start with common patterns
-- **[📖 Full Integration Guide](developer/PHASE_5_INTEGRATION_GUIDE.md)** - Comprehensive integration documentation
-- **[🧩 Component Integration Guide](developer/COMPONENT_INTEGRATION_GUIDE.md)** - Standalone component usage
+- **[⚡ Quick Integration Examples](developer/quick-integration-examples.md)** - 5-minute quick start with common patterns
+- **[📖 Full Integration Guide](developer/phase-5-integration-guide.md)** - Comprehensive integration documentation
+- **[🧩 Component Integration Guide](developer/component-integration-guide.md)** - Standalone component usage
 
 ### **🎯 Developer Features**
 - **🔌 Complete API Reference** - Every endpoint documented

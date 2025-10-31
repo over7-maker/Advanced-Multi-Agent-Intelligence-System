@@ -542,9 +542,9 @@ policy:
 ### **🚀 Phase 5 - External Integration** (NEW!)
 For developers integrating AMAS into external projects:
 
-- **[⚡ Quick Integration Examples](docs/developer/QUICK_INTEGRATION_EXAMPLES.md)** - 5-minute quick start
-- **[📖 Full Integration Guide](docs/developer/PHASE_5_INTEGRATION_GUIDE.md)** - Comprehensive guide
-- **[🧩 Component Integration](docs/developer/COMPONENT_INTEGRATION_GUIDE.md)** - Standalone components
+- **[⚡ Quick Integration Examples](docs/developer/quick-integration-examples.md)** - 5-minute quick start
+- **[📖 Full Integration Guide](docs/developer/phase-5-integration-guide.md)** - Comprehensive guide
+- **[🧩 Component Integration](docs/developer/component-integration-guide.md)** - Standalone components
 
 ---
 
