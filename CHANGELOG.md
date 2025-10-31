@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.1.1] - 2025-10-31
 
+### Added
+- Enterprise authentication core (JWT/OIDC SSO hooks) and RBAC enforcement hooks
+- Server-side session management with Redis backend and security controls
+- Data protection utilities (encryption and secure serialization)
+
 ### Changed
-- Documentation and READMEs updated to reflect Phase 4 upgrades merged in PR #189:
-  - Added Phase 4 summary section to `README.md` with explicit environment variable documentation
-  - Updated security sections in `docs/README.md` and `docs/developer/README.md` to reference new modules
-  - Created comprehensive Phase 4 Developer Integration Guide (`docs/developer/PHASE_4_DEVELOPER_GUIDE.md`)
-  - Added direct links to source code implementations for better traceability
-  - Removed internal branch names from public documentation per security best practices
+- Security documentation updated across `docs/` and `README.md` with env vars and best practices
+- Phase 4 Developer Integration Guide added: `docs/developer/PHASE_4_DEVELOPER_GUIDE.md`
+- Direct source links added in `README.md` for traceability
+- Removed internal branch names from public documentation
 
 
 ## [1.1.0] - 2025-01-05

@@ -279,12 +279,19 @@ The merged PR #189 introduced additional enterprise security and session feature
   - Role-based access control (RBAC)
   - Multi-factor authentication (MFA) hooks
   - Implementation: [`src/amas/security/enterprise_auth.py`](src/amas/security/enterprise_auth.py)
+  - Entry point: `EnterpriseAuth` (see Phase 4 Developer Guide for usage)
+  - Fallback: supports configurable timeouts and basic fallback mode when IdP is unavailable
 
 - **Session Management**:
   - Server-side session handling with Redis backend
   - Session timeout and security controls
   - Multi-device session tracking
   - Implementation: [`src/amas/security/session_management.py`](src/amas/security/session_management.py)
+  - Best practices:
+    - Use Redis with TLS, auth, and private networking
+    - Set TTL to `session_timeout + 5m` and use `SETEX` semantics
+    - Encrypt/sign session payloads; avoid plaintext storage
+    - Optionally cap concurrent sessions per user (e.g., max 5)
 
 - **User Management**:
   - User CRUD operations with audit logging
@@ -312,6 +319,7 @@ Phase 4 introduces the following environment variables (configured via `src/amas
 - `AMAS_OIDC_CLIENT_SECRET` - OIDC client secret (if using OIDC)
 - `AMAS_REDIS_HOST` - Redis host for session storage (default: `localhost`)
 - `AMAS_REDIS_PORT` - Redis port (default: `6379`)
+ - `AMAS_REDIS_PASSWORD` - Redis password (if required)
 
 **⚠️ Security Note**: Change default JWT and encryption keys in production. Generate secure keys:
 ```bash
@@ -331,7 +339,9 @@ export AMAS_ENCRYPTION_KEY="$(openssl rand -base64 32)"
 1. **Review environment variables**: Ensure all new `AMAS_*` variables are configured
 2. **Generate secure keys**: Replace default JWT and encryption keys (see above)
 3. **Validate configuration**: Run `python scripts/validate_env.py --mode basic --verbose`
-4. **Test authentication**: Verify JWT/OIDC flows work correctly
+4. **Test authentication**: Verify JWT/OIDC flows and fallback behavior
+5. **Secure Redis**: Enable TLS, authentication, and network isolation; set TTLs on session keys
+6. **RBAC enforcement**: Ensure policies are enforced at API ingress, agent dispatcher, and data-access layers (default deny)
 
 ---
 
