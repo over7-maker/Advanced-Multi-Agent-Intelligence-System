@@ -24,6 +24,54 @@
 
 ---
 
+## 🔸 Phase‑06 Documentation & Readme Updates
+
+The documentation has been updated to reflect the latest Phase‑06 improvements. Highlights:
+
+- Unified Orchestrator now available at `src/amas/core/unified_orchestrator.py`
+- Minimal configuration modes: Basic (3 keys), Standard (4 keys), Full (6 keys)
+- New validation and benchmarking: `scripts/validate_env.py`, `scripts/benchmark_system.py`
+- Docker development environment: `docker-compose.dev.yml`
+- Honest feature status and migration notes: see `COMPREHENSIVE_IMPROVEMENT_SUMMARY.md`, `IMPLEMENTATION_STATUS.md`, `MIGRATION_GUIDE.md`
+
+Quick minimal setup for Phase‑06:
+
+```bash
+# Minimal keys (Basic mode)
+export DEEPSEEK_API_KEY="your_key"
+export GLM_API_KEY="your_key"
+export GROK_API_KEY="your_key"
+
+# Validate environment
+python scripts/validate_env.py --mode basic --verbose
+
+# Optional: start dev stack (Docker Compose v2+)
+docker compose -f docker-compose.dev.yml up -d
+```
+
+⚠️ Security tip: Prefer storing secrets in a `.env` file instead of exporting in shell history.
+
+```bash
+cat > .env <<'EOF'
+DEEPSEEK_API_KEY=your_key
+GLM_API_KEY=your_key
+GROK_API_KEY=your_key
+EOF
+
+source .env  # or use python-dotenv in your app
+```
+
+Recommended: use a virtual environment and pinned dependencies.
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+See: `CONFIGURATION_GUIDE.md` and `COMPLETE_PROJECT_UPDATE.md` for details.
+
+---
+
 ## 📋 **Table of Contents**
 
 - [What is AMAS?](#what-is-amas)
@@ -260,6 +308,8 @@ python -m amas.cli test-security --comprehensive
 ```
 
 **📚 [Complete Security Guide →](docs/PHASE_2_FEATURES.md)**
+
+> Note (Phase‑06): Some enterprise security items are staged for incremental rollout. Refer to `IMPLEMENTATION_STATUS.md` for accurate, current status and timelines.
 
 ---
 
@@ -633,6 +683,8 @@ policy:
 | **[Monitoring Guide](docs/MONITORING_GUIDE.md)** | Observability setup | 35KB | ✅ Available |
 | **[Architecture Guide](docs/ARCHITECTURE.md)** | System design | 30KB | ✅ Available |
 | **[Phase 3 Developer Guide](docs/developer/PHASE_3_DEVELOPER_GUIDE.md)** | External integration (router, security, observability) | 18KB | ✅ Available |
+| **[Configuration Guide](CONFIGURATION_GUIDE.md)** | Minimal/standard/full modes + env validation | — | ✅ Available |
+| **[Migration Guide](MIGRATION_GUIDE.md)** | Phase‑06 migration steps | — | ✅ Available |
 
 ### See also
 - Universal AI Router guide: `docs/UNIVERSAL_AI_ROUTER.md`
@@ -674,7 +726,9 @@ For developers integrating AMAS into external projects:
 #### **"No providers configured"**
 ```bash
 # Set minimum required environment variables
-export CEREBRAS_API_KEY="your-key"
+export DEEPSEEK_API_KEY="your_key"
+export GLM_API_KEY="your_key"
+export GROK_API_KEY="your_key"
 source .env  # If using .env file
 python -m amas.cli config show  # Verify configuration
 ```
@@ -807,8 +861,8 @@ else:
 
 ### **Docker Deployment**
 ```bash
-# Production deployment with security
-docker-compose -f docker-compose.prod.yml up -d
+# Production deployment with security (Docker Compose v2+)
+docker compose -f docker-compose.prod.yml up -d
 
 # Verify deployment health
 curl -s http://localhost:8080/health

@@ -8,6 +8,7 @@ import asyncio
 # import hashlib
 import json
 import logging
+from json import JSONDecodeError
 
 # import uuid
 import zlib
@@ -821,8 +822,8 @@ class EnterpriseCommunicationService:
                 "compressed": message.compressed,
             }
 
-            # Use JSON for safe serialization; encode to bytes for Redis storage
-            return json.dumps(message_dict, ensure_ascii=False).encode("utf-8")
+            # Safe, compact JSON serialization for Redis storage
+            return json.dumps(message_dict, separators=(",", ":")).encode("utf-8")
 
         except Exception as e:
             logger.error(f"Failed to serialize message: {e}")
@@ -831,8 +832,11 @@ class EnterpriseCommunicationService:
     async def _deserialize_message(self, data: bytes) -> Message:
         """Deserialize message from bytes"""
         try:
-            # Decode JSON bytes to dict for safe deserialization
-            message_dict = json.loads(data.decode("utf-8"))
+            try:
+                message_dict = json.loads(data.decode("utf-8"))
+            except (UnicodeDecodeError, JSONDecodeError) as e:
+                logger.error(f"Failed to decode message JSON: {e}")
+                raise
 
             return Message(
                 id=message_dict["id"],

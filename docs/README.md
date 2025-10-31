@@ -63,6 +63,8 @@ Essential documentation for immediate setup and first steps:
 - **[📖 Main README](../README.md)** - **50KB** - Project overview and comprehensive guide
 - **[🔧 Setup Guide](user/SETUP_GUIDE.md)** - Detailed installation and configuration
 - **[🤖 Interactive Mode Guide](AMAS_INTERACTIVE_GUIDE.md)** - Natural language interface
+ - **[⚙️ Configuration Guide](../CONFIGURATION_GUIDE.md)** - Minimal/standard/full modes + env validation (Phase‑06)
+ - **[🧭 Migration Guide](../MIGRATION_GUIDE.md)** - Phase‑06 migration steps
 
 ### **🎯 First Steps Checklist**
 1. **📖 Read Overview** - [Main README](../README.md) for complete understanding
@@ -83,7 +85,7 @@ The Universal AI Router is the core of Phase 3 upgrades, providing never-fail AI
 - **[🔧 Integration Examples](INTEGRATION_GUIDE.md)** - Code examples and integration patterns
 
 ### **🎯 Core Features**
-- **15+ AI Providers** - Cerebras, NVIDIA, Gemini 2.0, Codestral, Cohere, Groq variants, Chutes, OpenRouter models
+- Phase‑06 note: current reference implementations are validated for core providers; see `COMPREHENSIVE_IMPROVEMENT_SUMMARY.md` for the exact set validated in this phase.
 - **Zero-Fail Guarantee** - Router never crashes workflows, always returns structured results
 - **Intelligent Failover** - Automatic provider switching with tiered prioritization
 - **Health Monitoring** - Real-time provider status and performance tracking
@@ -188,6 +190,7 @@ Comprehensive guides for using AMAS effectively:
 - **[🐳 Docker Optimization](user/DOCKER_OPTIMIZATION_GUIDE.md)** - Performance tuning
 - **[📱 Offline System Guide](user/OFFLINE_SYSTEM_GUIDE.md)** - Offline operation
 - **[🔍 Workflow Verification](user/WORKFLOW_VERIFICATION_GUIDE.md)** - Workflow testing
+ - **[✅ Implementation Status](../IMPLEMENTATION_STATUS.md)** - Honest, current feature status (Phase‑06)
 
 ### **🎯 User Features**
 - **🤖 Interactive Mode** - Natural language interface
@@ -211,6 +214,7 @@ Complete technical documentation for developers and contributors:
 - **[🔄 Phase 4 Integration Guide](developer/PHASE_4_DEVELOPER_GUIDE.md)** - Phase 4 components for external integration
 - **[📊 API Manager Guide](API_MANAGER_GUIDE.md)** - API management
 - **[🚀 Phase 3 Developer Guide](developer/PHASE_3_DEVELOPER_GUIDE.md)** - Integrate Universal AI Router, Bulletproof validation, security & observability into external projects
+ - **[🧪 Validation & Benchmarks](../COMPREHENSIVE_IMPROVEMENT_SUMMARY.md)** - Unified orchestrator, tests, benchmarks, Docker dev env (Phase‑06)
 
 ### **🚀 Phase 5 - External Integration** (NEW!)
 For developers integrating AMAS components into external projects:
@@ -256,6 +260,7 @@ Complete guides for production deployment and operations:
 - **[📋 Deployment Checklist](deployment/DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist
 - **[🏭 Production Deployment](deployment/PRODUCTION_DEPLOYMENT.md)** - Enterprise deployment
 - **[✅ Production Readiness](deployment/PRODUCTION_READINESS_CHECKLIST.md)** - Readiness checklist
+ - Phase‑06: For local development, prefer `docker-compose.dev.yml` and `scripts/validate_env.py` to verify configuration.
 
 ### **🛡️ Bulletproof AI Analysis Examples**
 - **[Real AI Analysis Example](../artifacts/bulletproof_real_ai_analysis_example.md)** - Sample bulletproof analysis with security recommendations
@@ -377,6 +382,6 @@ Complete guides for production deployment and operations:
 
 ---
 
-*Last Updated: October 2025 | Version: 3.0.0 | Status: Production Ready*
+*Last Updated: October 2025 | Version: 3.0.0 | Status: Production Ready (Phase‑06 docs refreshed)*
 
 </div>
