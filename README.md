@@ -45,8 +45,27 @@ export GROK_API_KEY="your_key"
 # Validate environment
 python scripts/validate_env.py --mode basic --verbose
 
-# Optional: start dev stack
-docker-compose -f docker-compose.dev.yml up -d
+# Optional: start dev stack (Docker Compose v2+)
+docker compose -f docker-compose.dev.yml up -d
+```
+
+⚠️ Security tip: Prefer storing secrets in a `.env` file instead of exporting in shell history.
+
+```bash
+cat > .env <<'EOF'
+DEEPSEEK_API_KEY=your_key
+GLM_API_KEY=your_key
+GROK_API_KEY=your_key
+EOF
+
+source .env  # or use python-dotenv in your app
+```
+
+Recommended: use a virtual environment and pinned dependencies.
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 See: `CONFIGURATION_GUIDE.md` and `COMPLETE_PROJECT_UPDATE.md` for details.
@@ -842,8 +861,8 @@ else:
 
 ### **Docker Deployment**
 ```bash
-# Production deployment with security
-docker-compose -f docker-compose.prod.yml up -d
+# Production deployment with security (Docker Compose v2+)
+docker compose -f docker-compose.prod.yml up -d
 
 # Verify deployment health
 curl -s http://localhost:8080/health
