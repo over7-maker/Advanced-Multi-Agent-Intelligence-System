@@ -523,18 +523,19 @@ policy:
 
 ## 🧩 **Phase 2 Core Services**
 
+> Phase 2 focuses on resilience, security, and operational maturity. These components are production-ready building blocks you can use in or outside this project.
 > **🚀 [Developer Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md)** - Complete guide for using Phase 2 components in external projects
 
-- Graceful Shutdown Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#4-graceful-shutdown-service)
-- Timeout Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#5-timeout-service)
-- Retry Utilities — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#9-retry-utilities)
-- Enhanced Authentication & Authorization — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [API docs](docs/API_DOCUMENTATION.md#-authentication-endpoints) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#-authentication-integration)
-- Rate Limiting Middleware — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#-rate-limiting-middleware)
-- Circuit Breaker Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#2-circuit-breaker-service)
-- Error Recovery Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#3-error-recovery-service)
-- Health Check Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [API docs](docs/API_DOCUMENTATION.md#-health-check-service) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#1-health-check-service)
-- Prometheus Metrics Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Monitoring Guide](docs/MONITORING_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#6-prometheus-metrics-service)
-- Structured Logging Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#7-structured-logging-service)
+- Graceful Shutdown Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#graceful-shutdown-service)
+- Timeout Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#timeout-service)
+- Retry Utilities — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#retry-utilities)
+- Enhanced Authentication & Authorization — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [API docs](docs/API_DOCUMENTATION.md#authentication-endpoints) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#authentication-integration)
+- Rate Limiting Middleware — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#rate-limiting-middleware)
+- Circuit Breaker Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#circuit-breaker-service)
+- Error Recovery Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#error-recovery-service)
+- Health Check Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#health-check-service)
+- Prometheus Metrics Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Monitoring Guide](docs/MONITORING_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#prometheus-metrics-service)
+- Structured Logging Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#structured-logging-service)
 
 <a name="documentation"></a>
 ## 📚 **Complete Documentation**
