@@ -25,7 +25,8 @@ Welcome to the AMAS Developer Guide! This comprehensive documentation will help 
 10. [Debugging](#debugging)
 11. [Performance Optimization](#performance-optimization)
 12. [Security Considerations](#security-considerations)
-13. [Phase 4 Integration Guide](#phase-4-integration-guide)
+13. [Phase 2 Integration Guide](PHASE_2_INTEGRATION_GUIDE.md)** - Use Phase 2 components in external projects
+14. [Phase 4 Integration Guide](#phase-4-integration-guide)
 14. [Contributing](#contributing)
 
 ---

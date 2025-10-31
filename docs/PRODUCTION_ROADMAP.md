@@ -113,11 +113,11 @@
 - [x] **RD-040**: Create monitoring documentation and runbooks
 
 **Phase 2 Success Criteria**:
-- ✅ Real authentication works
-- ✅ Security headers implemented
-- ✅ Error handling is comprehensive
-- ✅ Monitoring dashboard is functional
-- ✅ Alerts are configured
+- ✅ Real authentication works — JWT/OIDC + RBAC
+- ✅ Security headers implemented — CSP, HSTS, X-Frame, etc.
+- ✅ Error handling is comprehensive — Retries, timeouts, circuit breakers, recovery (RFC7807 pending)
+- ✅ Monitoring dashboard is functional — Grafana dashboards provided
+- ✅ Alerts are configured — Prometheus/Alertmanager rules
 
 ---
 
@@ -402,9 +402,9 @@ All deliverables must include tests, documentation, and operational runbooks.
 
 ### Documentation
 - [ ] Deployment guide exists
-- [ ] API documentation is complete
-- [ ] Troubleshooting runbooks exist
-- [ ] User training materials ready
+- [x] API documentation is complete — `docs/API_DOCUMENTATION.md`
+- [x] Troubleshooting runbooks exist — Monitoring & Feature Guides
+- [x] User training materials ready — Quick Start & User Guides
 
 ### User Experience
 - [x] Web dashboard is functional
