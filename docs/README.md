@@ -105,9 +105,11 @@ The most comprehensive AI provider management system ever created:
 - **[📊 Performance Monitoring](AI_PROVIDERS_GUIDE.md#-provider-performance-monitoring)** - Real-time metrics
 
 ### **🎯 Provider Categories**
-- **🏆 Primary Providers**: DeepSeek V3.1, Claude, GPT-4, GLM 4.5 Air, Grok
-- **🎯 Secondary Providers**: Kimi, Qwen, Gemini, GPT OSS, Groq AI
-- **🚀 Advanced Providers**: Cerebras, Cohere, NVIDIA, Codestral, Gemini 2, Groq 2, Chutes AI
+- **⚡ Tier 1 - Premium Speed**: Cerebras, NVIDIA
+- **🧠 Tier 2 - High Quality**: Gemini 2.0, Codestral
+- **💼 Tier 3 - Commercial**: Cohere, Groq2 (placeholder), GroqAI (placeholder)
+- **🎯 Tier 4 - Specialized**: Chutes AI
+- **🆓 Tier 5 - Free Fallbacks**: DeepSeek, GLM 4.5, Grok, Kimi, Qwen, GPT-OSS (via OpenRouter)
 
 ---
 

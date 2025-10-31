@@ -41,10 +41,10 @@ AMAS features the most advanced AI provider management system ever created, with
 
 | **Provider** | **Priority** | **Specialization** | **Response Time** | **Success Rate** |
 |--------------|--------------|-------------------|-------------------|------------------|
-| **🧠 DeepSeek V3.1** | 1 | Primary provider, General purpose | 0.8s | 99.8% |
-| **🤖 Claude API** | 2 | Advanced reasoning, Code analysis | 1.2s | 99.6% |
-| **🚀 GPT-4** | 3 | Creative tasks, Complex reasoning | 1.5s | 99.4% |
-| **⚡ GLM 4.5 Air** | 4 | Code analysis, Technical tasks | 0.9s | 99.7% |
+| **⚡ Cerebras** | 1 | Ultra-fast inference, SDK/HTTP support | 2.1s | 99.8% |
+| **🚀 NVIDIA** | 2 | GPU-accelerated, OpenAI-compatible | 2.3s | 99.7% |
+| **🧠 Gemini 2.0** | 3 | Advanced reasoning, Multimodal | 3.2s | 98.9% |
+| **💻 Codestral** | 4 | Code generation, Programming tasks | 1.2s | 99.4% |
 | **🔥 xAI Grok Beta** | 5 | Creative tasks, Humor, Analysis | 1.1s | 99.5% |
 
 </div>
@@ -208,10 +208,10 @@ ai_providers:
 class AIProviderManager:
     def __init__(self):
         self.providers = {
-            'deepseek': DeepSeekProvider(priority=1),
-            'claude': ClaudeProvider(priority=2),
-            'gpt4': GPT4Provider(priority=3),
-            # ... all 16 providers
+            'cerebras': CerebrasProvider(priority=1),
+            'nvidia': NVIDIAProvider(priority=2),
+            'gemini2': Gemini2Provider(priority=3),
+            # ... all 15+ providers
         }
         self.failover_strategies = {
             'intelligent': IntelligentFailover(),
@@ -305,12 +305,11 @@ class ProviderMonitor:
 
 | **Task Type** | **Best Provider** | **Reason** | **Performance** |
 |---------------|-------------------|------------|-----------------|
-| **💻 Code Generation** | Codestral, Claude | Specialized in programming | **99.8%** |
-| **🔍 Code Analysis** | DeepSeek, GLM | Technical expertise | **99.7%** |
-| **🎨 Creative Writing** | GPT-4, Grok | Creative capabilities | **99.6%** |
-| **🌍 Multilingual** | Qwen, Gemini | Language support | **99.9%** |
-| **⚡ Real-time** | Groq AI, Groq 2 | Speed optimization | **99.9%** |
-| **🏢 Enterprise** | Cohere, Claude | Business features | **99.5%** |
+| **💻 Code Generation** | Codestral | Specialized in programming | **99.8%** |
+| **🔍 Code Analysis** | DeepSeek (via OpenRouter), GLM 4.5 | Technical expertise | **99.7%** |
+| **🌍 Multilingual** | Qwen, Gemini 2.0 | Language support | **99.9%** |
+| **⚡ Real-time** | Cerebras, NVIDIA | Speed optimization | **99.9%** |
+| **🏢 Enterprise** | Cohere | Business features | **99.5%** |
 
 </div>
 
