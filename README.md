@@ -98,12 +98,12 @@ graph TB
 ### **🤖 Supported AI Providers (15+ Total)**
 
 #### **Tier 1 - Premium Speed**
-- **Cerebras** - Ultra-fast inference (1-3s response, SDK/HTTP supported)
-- **NVIDIA** - OpenAI-compatible API (2-4s response, GPU-accelerated)
+- **Cerebras** - Ultra-fast inference (see [Performance Benchmarks](docs/performance_benchmarks.md))
+- **NVIDIA** - OpenAI-compatible API (see [Performance Benchmarks](docs/performance_benchmarks.md))
 
 #### **Tier 2 - High Quality**
-- **Google Gemini 2.0** - Advanced reasoning (3-8s response, multimodal)
-- **Mistral Codestral** - Code-specific analysis (3-7s response, high accuracy)
+- **Google Gemini 2.0** - Advanced reasoning (see [Performance Benchmarks](docs/performance_benchmarks.md))
+- **Mistral Codestral** - Code-specific analysis (see [Performance Benchmarks](docs/performance_benchmarks.md))
 
 #### **Tier 3 - Commercial**
 - **Cohere** - Chat v2 API (4-8s response, enterprise features)
@@ -111,13 +111,11 @@ graph TB
 > ⚠️ Groq2 and GroqAI: Planned – Not Yet Implemented (adapters in development)
 
 #### **Tier 4 - Specialized**
-- **Chutes AI** - OpenAI-style chat completions (10-30s response, specialized models)
+- **Chutes AI** - OpenAI-style chat completions (see [Performance Benchmarks](docs/performance_benchmarks.md))
 
 #### **Tier 5 - Free Fallbacks (via OpenRouter)**
-Access multiple providers through [OpenRouter.ai](https://openrouter.ai) with automatic routing:
-- **DeepSeek** (3-6s) • **GLM 4.5** (8-15s) • **xAI Grok** (6-14s) • **Moonshot Kimi** (10-20s) • **Qwen** (8-16s) • **GPT-OSS** (5-12s)
-
-> *Response times are approximate p95 latency based on US-east region over HTTPS. OpenRouter manages rate limiting, routing, and failover for Tier 5 providers.*
+Access multiple providers through [OpenRouter.ai](https://openrouter.ai) with automatic routing (see [Performance Benchmarks](docs/performance_benchmarks.md)):
+- **DeepSeek** • **GLM 4.5** • **xAI Grok** • **Moonshot Kimi** • **Qwen** • **GPT-OSS**
 
 ---
 
