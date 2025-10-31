@@ -139,6 +139,25 @@ Gaps remaining for Phase 4 scope:
 
 ---
 
+### Phase 4 Remaining TODOs (Actionable)
+- [ ] RD-059: Finish SSO (SAML) provider wiring and end-to-end tests
+- [ ] RD-060: Implement LDAP/Active Directory auth provider with mapping rules
+- [ ] RD-061: Deliver full MFA flow (TOTP/WebAuthn) with policy-based enforcement
+- [ ] RD-062: Add device-based auth policies (device binding, anomaly checks)
+- [ ] RD-066: Promote vulnerability scanning pipeline to production gates with SLAs
+- [ ] RD-067: Implement security incident response automation with alerting
+- [ ] RD-069: Add compliance reporting (GDPR/SOC2/HIPAA) with exportable reports
+- [ ] RD-070: Formalize security audit procedures and runbooks
+- [ ] RD-071: Data versioning (DVC) for model/data artifacts
+- [ ] RD-072: Define and enforce data retention policies
+- [ ] RD-073: Backup and recovery procedures with validation drills
+- [ ] RD-074: Privacy controls (GDPR/CCPA) with DSR workflows
+- [ ] RD-075: Data lineage tracking across pipelines
+  
+Acceptance criteria for all above: unit/integration tests, documentation updates, and runbooks included.
+
+---
+
 ### Phase 5: Scalability & Performance (Weeks 9-10)
 
 #### Auto-Scaling & Load Management (HIGH)

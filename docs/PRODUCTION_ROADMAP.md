@@ -219,6 +219,21 @@
 
 ---
 
+### Phase 4 Remaining TODOs (Actionable)
+- [ ] RD-059: SAML SSO provider (end-to-end) with tests and docs
+- [ ] RD-060: LDAP/AD integration with user/role mapping
+- [ ] RD-061: Full MFA (TOTP/WebAuthn) with policy engine and tests
+- [ ] RD-062: Device policies (binding, geo/device anomaly detection)
+- [ ] RD-066: CI security scanning → production gating with SLAs
+- [ ] RD-067: Incident response automation (playbooks, alerting)
+- [ ] RD-069: Compliance reports (GDPR/SOC2/HIPAA) exports
+- [ ] RD-070: Formal audit procedures and runbooks
+- [ ] RD-071–RD-075: Data management (DVC, retention, backups, privacy/DSR, lineage)
+  
+All deliverables must include tests, documentation, and operational runbooks.
+
+---
+
 ## ⚡ Phase 5: Scalability & Performance (Weeks 9-10)
 
 ### Goal: Handle production-scale workloads
