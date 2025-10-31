@@ -1,9 +1,0 @@
-🛡️ SECURITY TEST RESULTS
-==================================================
-
-Exposed Secrets: 2
-Insecure Patterns: 13
-Total Security Issues: 15
-
-❌ EXPOSED SECRETS DETECTED!
-❌ Many insecure patterns found
