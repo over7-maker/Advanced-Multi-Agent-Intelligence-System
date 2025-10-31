@@ -1,9 +1,6 @@
 {
   "ignorePatterns": [
     {
-      "pattern": "^https://github.com"
-    },
-    {
       "pattern": "^http://localhost"
     },
     {
@@ -16,16 +13,8 @@
       "replacement": "{{BASEURL}}/"
     }
   ],
-  "httpHeaders": [
-    {
-      "urls": ["https://github.com"],
-      "headers": {
-        "Authorization": "token $GITHUB_TOKEN"
-      }
-    }
-  ],
   "retryOn429": true,
-  "retryCount": 3,
-  "fallbackRetryDelay": "10s",
-  "timeout": "30s"
+  "retryCount": 2,
+  "fallbackRetryDelay": "3s",
+  "timeout": "15s"
 }
