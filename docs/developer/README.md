@@ -24,11 +24,9 @@ Welcome to the AMAS Developer Guide! This comprehensive documentation will help 
 10. [Debugging](#debugging)
 11. [Performance Optimization](#performance-optimization)
 12. [Security Considerations](#security-considerations)
-13. [Contributing](#contributing)
-14. [**External Integration (Phase 5)**](#external-integration-phase-5)
-    - [Quick Integration Examples](quick-integration-examples.md) ⚡
-    - [Full Integration Guide](phase-5-integration-guide.md) 📚
-    - [Component Integration](component-integration-guide.md) 🧩
+13. [Phase 2 Integration Guide](PHASE_2_INTEGRATION_GUIDE.md)** - Use Phase 2 components in external projects
+14. [Phase 4 Integration Guide](#phase-4-integration-guide)
+14. [Contributing](#contributing)
 
 ---
 
@@ -1421,6 +1419,14 @@ async def expensive_computation(params):
 
 ### Authentication & Authorization
 
+Note (Phase 4 upgrades - PR #189): Enterprise auth and session features were expanded. See:
+- `src/amas/security/enterprise_auth.py`
+- `src/amas/security/session_management.py`
+- `src/amas/security/user_management.py`
+- `src/amas/security/advanced_security.py`
+- `src/amas/security/data_management.py`
+
+
 ```python
 # JWT-based authentication
 from amas.security import SecurityService
@@ -2133,6 +2139,30 @@ async def process_batch(items: List[Item], batch_size: int = 100):
         batch = items[i:i + batch_size]
         await process_items(batch)
 ```
+
+---
+
+## Phase 4 Integration Guide
+
+For developers wanting to integrate or extend Phase 4 security/auth/session components in external services or custom deployments, see:
+
+**[📖 Phase 4 Developer Integration Guide](PHASE_4_DEVELOPER_GUIDE.md)** - Complete guide covering:
+- Integration patterns for FastAPI and ASGI services
+- Standalone service integration examples
+- Authentication middleware setup
+- Session management
+- RBAC implementation
+- Data protection utilities
+- Testing checklist
+- Troubleshooting guide
+
+The guide includes working code examples for:
+- FastAPI authentication middleware
+- Route-level protection and RBAC
+- Session management
+- Data encryption/decryption
+- User management operations
+- Standalone service integration (non-AMAS projects)
 
 ---
 

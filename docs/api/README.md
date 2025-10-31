@@ -11,6 +11,12 @@ The Advanced Multi-Agent Intelligence System (AMAS) provides a comprehensive RES
 
 **🚀 AI Agentic Workflows API** - Access the revolutionary 4-layer AI agent architecture and 16 AI providers through comprehensive API endpoints.
 
+### Phase 4 API Notes (PR #189)
+- Security/auth internals enhanced; API surface remains compatible
+- Sessions and user management improved for stability and auditing
+- Relevant modules: `src/amas/security/enterprise_auth.py`, `session_management.py`, `user_management.py`, `advanced_security.py`, `data_management.py`
+- Operators: review auth/session configuration per `docs/security/AUTHENTICATION_SETUP.md`
+
 ## 🚀 Quick Start
 
 ### Base URL
