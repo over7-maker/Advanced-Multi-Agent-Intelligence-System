@@ -1,7 +1,7 @@
-""""
+"""
 Enterprise-Grade Communication Service for AMAS Intelligence System
 Provides advanced message queuing, routing, and coordination protocols
-""""
+"""
 
 import asyncio
 
@@ -105,7 +105,7 @@ class MessageQueue:
 
 
 class EnterpriseCommunicationService:
-    """"
+    """
     Enterprise-Grade Communication Service for AMAS Intelligence System
 
     Provides:
@@ -115,7 +115,7 @@ class EnterpriseCommunicationService:
     - Dead letter queues and retry mechanisms
     - Agent coordination and discovery
     - Message persistence and replay
-    """"
+    """
 
     def __init__(self, config: Dict[str, Any]):
         """Initialize the enterprise communication service"""
@@ -831,8 +831,9 @@ class EnterpriseCommunicationService:
     async def _deserialize_message(self, data: bytes) -> Message:
         """Deserialize message from bytes"""
         try:
-            message_dict = # SECURITY: pickle.loads() removed - use safer alternatives
-        # pickle.loads(data)
+            # Using pickle to match the serializer above. Consider migrating both
+            # serialization and deserialization to a safer format.
+            message_dict = pickle.loads(data)
 
             return Message(
                 id=message_dict["id"],

@@ -9,14 +9,15 @@ import logging
 import secrets
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
 
 class SessionStatus(Enum):
     """Session status enumeration"""
+
     ACTIVE = "active"
     EXPIRED = "expired"
     SUSPENDED = "suspended"
@@ -26,6 +27,7 @@ class SessionStatus(Enum):
 
 class SessionType(Enum):
     """Session type enumeration"""
+
     WEB = "web"
     API = "api"
     MOBILE = "mobile"
@@ -35,6 +37,7 @@ class SessionType(Enum):
 
 class SecurityEvent(Enum):
     """Security event types"""
+
     LOGIN = "login"
     LOGOUT = "logout"
     SESSION_CREATED = "session_created"
@@ -56,7 +59,9 @@ class Session:
         self.status = SessionStatus.ACTIVE
         self.created_at = datetime.utcnow()
         self.last_activity = datetime.utcnow()
-        self.expires_at = kwargs.get("expires_at", datetime.utcnow() + timedelta(hours=8))
+        self.expires_at = kwargs.get(
+            "expires_at", datetime.utcnow() + timedelta(hours=8)
+        )
         self.ip_address = kwargs.get("ip_address", "")
         self.user_agent = kwargs.get("user_agent", "")
         self.device_id = kwargs.get("device_id")
@@ -126,7 +131,9 @@ class SessionManager:
         self.idle_timeout = config.get("idle_timeout", 2 * 3600)  # 2 hours
         self.absolute_timeout = config.get("absolute_timeout", 24 * 3600)  # 24 hours
         self.risk_threshold = config.get("risk_threshold", 70)
-        self.suspicious_activity_threshold = config.get("suspicious_activity_threshold", 3)
+        self.suspicious_activity_threshold = config.get(
+            "suspicious_activity_threshold", 3
+        )
 
     async def create_session(
         self,
@@ -139,7 +146,7 @@ class SessionManager:
         location: Optional[Dict[str, Any]] = None,
         security_level: str = "standard",
         mfa_verified: bool = False,
-        **kwargs
+        **kwargs,
     ) -> Session:
         """Create a new session"""
         try:
@@ -174,7 +181,7 @@ class SessionManager:
                 security_level=security_level,
                 mfa_verified=mfa_verified,
                 risk_score=risk_score,
-                **kwargs
+                **kwargs,
             )
 
             # Store session
@@ -186,7 +193,7 @@ class SessionManager:
                 user_id=user_id,
                 session_id=session_id,
                 ip_address=ip_address,
-                details={"session_type": session_type, "risk_score": risk_score}
+                details={"session_type": session_type, "risk_score": risk_score},
             )
 
             logger.info(f"Created session {session_id} for user {user_id}")
@@ -196,7 +203,9 @@ class SessionManager:
             logger.error(f"Failed to create session: {e}")
             raise
 
-    async def validate_session(self, session_id: str, ip_address: str = None) -> Optional[Session]:
+    async def validate_session(
+        self, session_id: str, ip_address: str = None
+    ) -> Optional[Session]:
         """Validate and return session if valid"""
         try:
             session = self.sessions.get(session_id)
@@ -229,7 +238,9 @@ class SessionManager:
             logger.error(f"Failed to validate session: {e}")
             return None
 
-    async def terminate_session(self, session_id: str, reason: str = "user_logout") -> bool:
+    async def terminate_session(
+        self, session_id: str, reason: str = "user_logout"
+    ) -> bool:
         """Terminate a session"""
         try:
             session = self.sessions.get(session_id)
@@ -243,12 +254,15 @@ class SessionManager:
             logger.error(f"Failed to terminate session: {e}")
             return False
 
-    async def terminate_user_sessions(self, user_id: str, reason: str = "user_logout") -> int:
+    async def terminate_user_sessions(
+        self, user_id: str, reason: str = "user_logout"
+    ) -> int:
         """Terminate all sessions for a user"""
         try:
             terminated_count = 0
             sessions_to_terminate = [
-                session_id for session_id, session in self.sessions.items()
+                session_id
+                for session_id, session in self.sessions.items()
                 if session.user_id == user_id and session.is_active()
             ]
 
@@ -277,7 +291,7 @@ class SessionManager:
                 SecurityEvent.SESSION_CREATED,  # Reuse event type for extension
                 user_id=session.user_id,
                 session_id=session_id,
-                details={"action": "extended", "additional_hours": additional_hours}
+                details={"action": "extended", "additional_hours": additional_hours},
             )
 
             logger.info(f"Extended session {session_id} by {additional_hours} hours")
@@ -292,7 +306,8 @@ class SessionManager:
         try:
             await self._cleanup_expired_sessions()
             return [
-                session for session in self.sessions.values()
+                session
+                for session in self.sessions.values()
                 if session.user_id == user_id and session.is_active()
             ]
         except Exception as e:
@@ -303,11 +318,13 @@ class SessionManager:
         """Get session statistics"""
         try:
             await self._cleanup_expired_sessions()
-            
+
             total_sessions = len(self.sessions)
             active_sessions = len([s for s in self.sessions.values() if s.is_active()])
-            expired_sessions = len([s for s in self.sessions.values() if s.is_expired()])
-            
+            expired_sessions = len(
+                [s for s in self.sessions.values() if s.is_expired()]
+            )
+
             # Group by session type
             session_types = {}
             for session in self.sessions.values():
@@ -347,13 +364,15 @@ class SessionManager:
         ip_address: str,
         user_agent: str,
         device_id: Optional[str],
-        location: Optional[Dict[str, Any]]
+        location: Optional[Dict[str, Any]],
     ) -> int:
         """Calculate risk score for session"""
         risk_score = 0
 
         # Check for multiple sessions from different IPs
-        user_sessions = [s for s in self.sessions.values() if s.user_id == user_id and s.is_active()]
+        user_sessions = [
+            s for s in self.sessions.values() if s.user_id == user_id and s.is_active()
+        ]
         unique_ips = set(s.ip_address for s in user_sessions)
         if len(unique_ips) > 1:
             risk_score += 30
@@ -416,12 +435,18 @@ class SessionManager:
     async def _enforce_session_limits(self, user_id: str):
         """Enforce maximum sessions per user"""
         try:
-            user_sessions = [s for s in self.sessions.values() if s.user_id == user_id and s.is_active()]
-            
+            user_sessions = [
+                s
+                for s in self.sessions.values()
+                if s.user_id == user_id and s.is_active()
+            ]
+
             if len(user_sessions) >= self.max_sessions_per_user:
                 # Terminate oldest session
                 oldest_session = min(user_sessions, key=lambda s: s.created_at)
-                await self._terminate_session(oldest_session.session_id, "session_limit_exceeded")
+                await self._terminate_session(
+                    oldest_session.session_id, "session_limit_exceeded"
+                )
 
         except Exception as e:
             logger.error(f"Failed to enforce session limits: {e}")
@@ -432,16 +457,16 @@ class SessionManager:
             session = self.sessions.get(session_id)
             if session:
                 session.terminate(reason)
-                
+
                 # Move to history
                 self.session_history.append(session.to_dict())
-                
+
                 # Log security event
                 await self._log_security_event(
                     SecurityEvent.SESSION_TERMINATED,
                     user_id=session.user_id,
                     session_id=session_id,
-                    details={"reason": reason}
+                    details={"reason": reason},
                 )
 
                 # Remove from active sessions
@@ -462,13 +487,15 @@ class SessionManager:
                 user_id=session.user_id,
                 session_id=session.session_id,
                 ip_address=new_ip,
-                details={"old_ip": old_ip, "new_ip": new_ip}
+                details={"old_ip": old_ip, "new_ip": new_ip},
             )
 
             # Increase risk score
             session.risk_score = min(session.risk_score + 20, 100)
 
-            logger.warning(f"IP change detected for session {session.session_id}: {old_ip} -> {new_ip}")
+            logger.warning(
+                f"IP change detected for session {session.session_id}: {old_ip} -> {new_ip}"
+            )
 
         except Exception as e:
             logger.error(f"Failed to handle IP change: {e}")
@@ -478,9 +505,11 @@ class SessionManager:
         try:
             # Check for rapid session creation
             recent_sessions = [
-                s for s in self.session_history
-                if s["user_id"] == session.user_id and
-                datetime.fromisoformat(s["created_at"]) > datetime.utcnow() - timedelta(minutes=10)
+                s
+                for s in self.session_history
+                if s["user_id"] == session.user_id
+                and datetime.fromisoformat(s["created_at"])
+                > datetime.utcnow() - timedelta(minutes=10)
             ]
 
             if len(recent_sessions) > self.suspicious_activity_threshold:
@@ -488,7 +517,10 @@ class SessionManager:
                     SecurityEvent.SUSPICIOUS_ACTIVITY,
                     user_id=session.user_id,
                     session_id=session.session_id,
-                    details={"activity": "rapid_session_creation", "count": len(recent_sessions)}
+                    details={
+                        "activity": "rapid_session_creation",
+                        "count": len(recent_sessions),
+                    },
                 )
 
                 # Increase risk score
@@ -503,7 +535,7 @@ class SessionManager:
         user_id: str = None,
         session_id: str = None,
         ip_address: str = None,
-        details: Dict[str, Any] = None
+        details: Dict[str, Any] = None,
     ):
         """Log security event"""
         try:
@@ -528,7 +560,7 @@ class SessionManager:
         self,
         user_id: Optional[str] = None,
         event_type: Optional[str] = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[Dict[str, Any]]:
         """Get security events with filters"""
         try:
@@ -559,31 +591,40 @@ class SessionManager:
             # Calculate metrics
             total_sessions = len(self.sessions)
             active_sessions = len([s for s in self.sessions.values() if s.is_active()])
-            
+
             # Average session duration
             completed_sessions = [
-                s for s in self.session_history
+                s
+                for s in self.session_history
                 if s["status"] == SessionStatus.TERMINATED.value
             ]
-            
+
             avg_duration = 0
             if completed_sessions:
                 durations = []
                 for session in completed_sessions:
                     created = datetime.fromisoformat(session["created_at"])
-                    terminated = datetime.fromisoformat(session.get("terminated_at", session["created_at"]))
+                    terminated = datetime.fromisoformat(
+                        session.get("terminated_at", session["created_at"])
+                    )
                     duration = (terminated - created).total_seconds() / 3600  # hours
                     durations.append(duration)
                 avg_duration = sum(durations) / len(durations)
 
             # Risk score distribution
-            risk_scores = [s.risk_score for s in self.sessions.values() if s.is_active()]
-            high_risk_sessions = len([score for score in risk_scores if score > self.risk_threshold])
+            risk_scores = [
+                s.risk_score for s in self.sessions.values() if s.is_active()
+            ]
+            high_risk_sessions = len(
+                [score for score in risk_scores if score > self.risk_threshold]
+            )
 
             # Security events in last 24 hours
             recent_events = [
-                e for e in self.security_events
-                if datetime.fromisoformat(e["timestamp"]) > datetime.utcnow() - timedelta(hours=24)
+                e
+                for e in self.security_events
+                if datetime.fromisoformat(e["timestamp"])
+                > datetime.utcnow() - timedelta(hours=24)
             ]
 
             return {
@@ -592,7 +633,9 @@ class SessionManager:
                 "average_session_duration_hours": round(avg_duration, 2),
                 "high_risk_sessions": high_risk_sessions,
                 "security_events_24h": len(recent_events),
-                "risk_score_average": round(sum(risk_scores) / len(risk_scores), 2) if risk_scores else 0,
+                "risk_score_average": (
+                    round(sum(risk_scores) / len(risk_scores), 2) if risk_scores else 0
+                ),
                 "last_updated": datetime.utcnow().isoformat(),
             }
 

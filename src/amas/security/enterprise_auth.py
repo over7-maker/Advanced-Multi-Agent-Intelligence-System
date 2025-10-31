@@ -68,7 +68,9 @@ class SAMLProvider(SSOProvider):
         }
         return f"{self.sso_url}?{urlencode(params)}"
 
-    async def exchange_code_for_token(self, saml_response: str, state: str) -> Dict[str, Any]:
+    async def exchange_code_for_token(
+        self, saml_response: str, state: str
+    ) -> Dict[str, Any]:
         """Process SAML response"""
         # Mock implementation - in reality, you'd parse and validate the SAML response
         return {
@@ -90,7 +92,9 @@ class SAMLProvider(SSOProvider):
     def _create_saml_request(self) -> str:
         """Create SAML authentication request"""
         # Mock implementation
-        return base64.b64encode(b"<samlp:AuthnRequest>...</samlp:AuthnRequest>").decode()
+        return base64.b64encode(
+            b"<samlp:AuthnRequest>...</samlp:AuthnRequest>"
+        ).decode()
 
 
 class OAuth2Provider(SSOProvider):
@@ -148,9 +152,13 @@ class LDAPProvider:
         self.bind_dn = config.get("bind_dn")
         self.bind_password = config.get("bind_password")
         self.user_search_filter = config.get("user_search_filter", "(uid={username})")
-        self.group_search_filter = config.get("group_search_filter", "(member={user_dn})")
+        self.group_search_filter = config.get(
+            "group_search_filter", "(member={user_dn})"
+        )
 
-    async def authenticate_user(self, username: str, password: str) -> Optional[Dict[str, Any]]:
+    async def authenticate_user(
+        self, username: str, password: str
+    ) -> Optional[Dict[str, Any]]:
         """Authenticate user against LDAP/AD"""
         try:
             # In a real implementation, you would use python-ldap or ldap3
@@ -200,6 +208,7 @@ class MFAProvider:
         """Verify TOTP token"""
         try:
             import pyotp
+
             totp = pyotp.TOTP(secret)
             return totp.verify(token, valid_window=self.totp_window)
         except ImportError:
@@ -210,13 +219,13 @@ class MFAProvider:
     async def send_sms_code(self, phone_number: str) -> str:
         """Send SMS verification code"""
         code = f"{secrets.randbelow(900000) + 100000:06d}"  # 6-digit code
-        
+
         if self.sms_provider == "mock":
             logger.info(f"Mock SMS sent to {phone_number}: {code}")
         else:
             # In production, integrate with real SMS provider
             await self._send_real_sms(phone_number, code)
-        
+
         return code
 
     async def _send_real_sms(self, phone_number: str, code: str):
@@ -224,7 +233,9 @@ class MFAProvider:
         # Implement with Twilio, AWS SNS, etc.
         pass
 
-    async def verify_sms_code(self, phone_number: str, code: str, stored_code: str) -> bool:
+    async def verify_sms_code(
+        self, phone_number: str, code: str, stored_code: str
+    ) -> bool:
         """Verify SMS code"""
         return code == stored_code
 
@@ -234,14 +245,16 @@ class DeviceAuthProvider:
 
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.device_registration_required = config.get("device_registration_required", True)
+        self.device_registration_required = config.get(
+            "device_registration_required", True
+        )
         self.trusted_device_duration = config.get("trusted_device_duration", 30)  # days
         self.max_devices_per_user = config.get("max_devices_per_user", 5)
 
     async def register_device(self, user_id: str, device_info: Dict[str, Any]) -> str:
         """Register a new device for user"""
         device_id = self._generate_device_id(device_info)
-        
+
         device_data = {
             "device_id": device_id,
             "user_id": user_id,
@@ -250,7 +263,7 @@ class DeviceAuthProvider:
             "last_used": datetime.utcnow(),
             "is_trusted": False,
         }
-        
+
         # In production, store in database
         self._store_device(device_data)
         return device_id
@@ -260,11 +273,11 @@ class DeviceAuthProvider:
         device = self._get_device(device_id)
         if not device or device["user_id"] != user_id:
             return False
-        
+
         # Update last used timestamp
         device["last_used"] = datetime.utcnow()
         self._store_device(device)
-        
+
         return device.get("is_trusted", False)
 
     async def trust_device(self, user_id: str, device_id: str) -> bool:
@@ -301,14 +314,16 @@ class EnterpriseAuthManager:
         self.ldap_provider = None
         self.mfa_provider = None
         self.device_provider = None
-        
+
         # Initialize providers based on configuration
         self._initialize_providers()
 
     def _initialize_providers(self):
         """Initialize authentication providers"""
         # Initialize SSO providers
-        for provider_name, provider_config in self.config.get("sso_providers", {}).items():
+        for provider_name, provider_config in self.config.get(
+            "sso_providers", {}
+        ).items():
             if provider_config.get("type") == "saml":
                 self.sso_providers[provider_name] = SAMLProvider(provider_config)
             elif provider_config.get("type") == "oauth2":
@@ -326,37 +341,41 @@ class EnterpriseAuthManager:
         if self.config.get("device_auth"):
             self.device_provider = DeviceAuthProvider(self.config["device_auth"])
 
-    async def authenticate_sso(self, provider_name: str, code: str, state: str) -> Optional[Dict[str, Any]]:
+    async def authenticate_sso(
+        self, provider_name: str, code: str, state: str
+    ) -> Optional[Dict[str, Any]]:
         """Authenticate user via SSO"""
         if provider_name not in self.sso_providers:
             logger.error(f"SSO provider {provider_name} not configured")
             return None
 
         provider = self.sso_providers[provider_name]
-        
+
         try:
             # Exchange code for token
             token_data = await provider.exchange_code_for_token(code, state)
             access_token = token_data.get("access_token")
-            
+
             if not access_token:
                 logger.error("No access token received from SSO provider")
                 return None
 
             # Get user information
             user_info = await provider.get_user_info(access_token)
-            
+
             # Add provider information
             user_info["auth_provider"] = provider_name
             user_info["auth_method"] = "sso"
-            
+
             return user_info
 
         except Exception as e:
             logger.error(f"SSO authentication error: {e}")
             return None
 
-    async def authenticate_ldap(self, username: str, password: str) -> Optional[Dict[str, Any]]:
+    async def authenticate_ldap(
+        self, username: str, password: str
+    ) -> Optional[Dict[str, Any]]:
         """Authenticate user via LDAP/AD"""
         if not self.ldap_provider:
             logger.error("LDAP provider not configured")
@@ -379,7 +398,7 @@ class EnterpriseAuthManager:
             raise ValueError("MFA provider not configured")
 
         totp_secret = await self.mfa_provider.generate_totp_secret(user_id)
-        
+
         return {
             "totp_secret": totp_secret,
             "qr_code_url": f"otpauth://totp/AMAS:{user_id}?secret={totp_secret}&issuer=AMAS",
@@ -407,7 +426,9 @@ class EnterpriseAuthManager:
 
         return await self.device_provider.verify_device(user_id, device_id)
 
-    async def get_sso_authorization_url(self, provider_name: str, state: str) -> Optional[str]:
+    async def get_sso_authorization_url(
+        self, provider_name: str, state: str
+    ) -> Optional[str]:
         """Get SSO authorization URL"""
         if provider_name not in self.sso_providers:
             return None
@@ -420,38 +441,44 @@ class EnterpriseAuthManager:
 
         # Add SSO methods
         for provider_name, provider in self.sso_providers.items():
-            methods.append({
-                "name": provider_name,
-                "type": "sso",
-                "display_name": provider_name.upper(),
-                "enabled": True,
-            })
+            methods.append(
+                {
+                    "name": provider_name,
+                    "type": "sso",
+                    "display_name": provider_name.upper(),
+                    "enabled": True,
+                }
+            )
 
         # Add LDAP method
         if self.ldap_provider:
-            methods.append({
-                "name": "ldap",
-                "type": "ldap",
-                "display_name": "LDAP/Active Directory",
-                "enabled": True,
-            })
+            methods.append(
+                {
+                    "name": "ldap",
+                    "type": "ldap",
+                    "display_name": "LDAP/Active Directory",
+                    "enabled": True,
+                }
+            )
 
         # Add MFA method
         if self.mfa_provider:
-            methods.append({
-                "name": "mfa",
-                "type": "mfa",
-                "display_name": "Multi-Factor Authentication",
-                "enabled": True,
-            })
+            methods.append(
+                {
+                    "name": "mfa",
+                    "type": "mfa",
+                    "display_name": "Multi-Factor Authentication",
+                    "enabled": True,
+                }
+            )
 
         return methods
 
     async def create_enterprise_session(
-        self, 
-        user_info: Dict[str, Any], 
+        self,
+        user_info: Dict[str, Any],
         device_id: Optional[str] = None,
-        mfa_verified: bool = False
+        mfa_verified: bool = False,
     ) -> Dict[str, Any]:
         """Create enterprise session with all security features"""
         session_data = {
@@ -470,7 +497,7 @@ class EnterpriseAuthManager:
 
         # Store session (in production, use database)
         self._store_session(session_data)
-        
+
         return session_data
 
     def _store_session(self, session_data: Dict[str, Any]):
@@ -478,14 +505,22 @@ class EnterpriseAuthManager:
         # Mock implementation
         pass
 
-    async def get_enterprise_user_permissions(self, user_info: Dict[str, Any]) -> List[str]:
+    async def get_enterprise_user_permissions(
+        self, user_info: Dict[str, Any]
+    ) -> List[str]:
         """Get enterprise user permissions based on roles and groups"""
         permissions = []
         roles = user_info.get("groups", [])
-        
+
         # Map enterprise roles to permissions
         role_permissions = {
-            "admin": ["read:all", "write:all", "delete:all", "manage:users", "manage:system"],
+            "admin": [
+                "read:all",
+                "write:all",
+                "delete:all",
+                "manage:users",
+                "manage:system",
+            ],
             "manager": ["read:all", "write:all", "manage:users", "manage:agents"],
             "analyst": ["read:all", "write:own", "submit:tasks", "execute:workflows"],
             "user": ["read:own", "write:own", "submit:tasks"],
@@ -501,7 +536,7 @@ class EnterpriseAuthManager:
         # Add enterprise-specific permissions
         if user_info.get("auth_provider") in ["saml", "oauth2"]:
             permissions.append("sso:authenticated")
-        
+
         if user_info.get("auth_provider") == "ldap":
             permissions.append("ldap:authenticated")
 

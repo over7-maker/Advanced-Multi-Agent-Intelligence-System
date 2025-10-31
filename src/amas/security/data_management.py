@@ -14,9 +14,9 @@ import shutil
 import subprocess
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
 from enum import Enum
 from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
 import yaml
 
@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 
 class DataClassification(Enum):
     """Data classification levels"""
+
     PUBLIC = "public"
     INTERNAL = "internal"
     CONFIDENTIAL = "confidential"
@@ -33,6 +34,7 @@ class DataClassification(Enum):
 
 class DataRetentionPolicy(Enum):
     """Data retention policy types"""
+
     IMMEDIATE = "immediate"
     SHORT_TERM = "short_term"  # 30 days
     MEDIUM_TERM = "medium_term"  # 1 year
@@ -42,6 +44,7 @@ class DataRetentionPolicy(Enum):
 
 class BackupType(Enum):
     """Backup types"""
+
     FULL = "full"
     INCREMENTAL = "incremental"
     DIFFERENTIAL = "differential"
@@ -60,7 +63,9 @@ class DataVersionManager:
         """Initialize DVC repository"""
         try:
             # Check if DVC is installed
-            result = subprocess.run(["dvc", "--version"], capture_output=True, text=True)
+            result = subprocess.run(
+                ["dvc", "--version"], capture_output=True, text=True
+            )
             if result.returncode != 0:
                 logger.error("DVC not installed")
                 return False
@@ -71,7 +76,7 @@ class DataVersionManager:
                     ["dvc", "init", "--no-scm"],
                     cwd=self.data_dir,
                     capture_output=True,
-                    text=True
+                    text=True,
                 )
                 if result.returncode != 0:
                     logger.error(f"Failed to initialize DVC: {result.stderr}")
@@ -82,7 +87,7 @@ class DataVersionManager:
                 ["dvc", "remote", "add", "-d", "storage", self.dvc_remote],
                 cwd=self.data_dir,
                 capture_output=True,
-                text=True
+                text=True,
             )
             if result.returncode != 0:
                 logger.warning(f"Failed to add DVC remote: {result.stderr}")
@@ -94,7 +99,9 @@ class DataVersionManager:
             logger.error(f"Failed to initialize DVC: {e}")
             return False
 
-    async def add_data_file(self, file_path: str, classification: str = DataClassification.INTERNAL.value) -> bool:
+    async def add_data_file(
+        self, file_path: str, classification: str = DataClassification.INTERNAL.value
+    ) -> bool:
         """Add data file to DVC tracking"""
         try:
             file_path = Path(file_path)
@@ -107,7 +114,7 @@ class DataVersionManager:
                 ["dvc", "add", str(file_path)],
                 cwd=self.data_dir,
                 capture_output=True,
-                text=True
+                text=True,
             )
             if result.returncode != 0:
                 logger.error(f"Failed to add file to DVC: {result.stderr}")
@@ -134,10 +141,7 @@ class DataVersionManager:
         """Commit data changes to DVC"""
         try:
             result = subprocess.run(
-                ["dvc", "commit"],
-                cwd=self.data_dir,
-                capture_output=True,
-                text=True
+                ["dvc", "commit"], cwd=self.data_dir, capture_output=True, text=True
             )
             if result.returncode != 0:
                 logger.error(f"Failed to commit DVC changes: {result.stderr}")
@@ -145,10 +149,7 @@ class DataVersionManager:
 
             # Push to remote storage
             result = subprocess.run(
-                ["dvc", "push"],
-                cwd=self.data_dir,
-                capture_output=True,
-                text=True
+                ["dvc", "push"], cwd=self.data_dir, capture_output=True, text=True
             )
             if result.returncode != 0:
                 logger.warning(f"Failed to push to remote: {result.stderr}")
@@ -167,7 +168,7 @@ class DataVersionManager:
                 ["dvc", "show", "versions", str(file_path)],
                 cwd=self.data_dir,
                 capture_output=True,
-                text=True
+                text=True,
             )
             if result.returncode != 0:
                 logger.error(f"Failed to get versions: {result.stderr}")
@@ -175,12 +176,14 @@ class DataVersionManager:
 
             # Parse DVC output (simplified)
             versions = []
-            for line in result.stdout.split('\n'):
+            for line in result.stdout.split("\n"):
                 if line.strip():
-                    versions.append({
-                        "version": line.strip(),
-                        "timestamp": datetime.utcnow().isoformat(),  # Mock timestamp
-                    })
+                    versions.append(
+                        {
+                            "version": line.strip(),
+                            "timestamp": datetime.utcnow().isoformat(),  # Mock timestamp
+                        }
+                    )
 
             return versions
 
@@ -195,7 +198,7 @@ class DataVersionManager:
                 ["dvc", "checkout", f"{file_path}@{version}"],
                 cwd=self.data_dir,
                 capture_output=True,
-                text=True
+                text=True,
             )
             if result.returncode != 0:
                 logger.error(f"Failed to checkout version: {result.stderr}")
@@ -268,7 +271,9 @@ class DataRetentionManager:
                 return False
 
             # Calculate file age
-            file_age = datetime.utcnow() - datetime.fromtimestamp(file_path.stat().st_mtime)
+            file_age = datetime.utcnow() - datetime.fromtimestamp(
+                file_path.stat().st_mtime
+            )
             age_days = file_age.days
 
             # Check if file should be deleted
@@ -285,7 +290,9 @@ class DataRetentionManager:
             logger.error(f"Failed to apply retention policy: {e}")
             return False
 
-    async def _delete_expired_data(self, file_path: Path, data_type: str, policy: Dict[str, Any]):
+    async def _delete_expired_data(
+        self, file_path: Path, data_type: str, policy: Dict[str, Any]
+    ):
         """Delete expired data file"""
         try:
             # Create backup before deletion if required
@@ -298,21 +305,23 @@ class DataRetentionManager:
 
             # Log deletion event
             await self._log_data_lifecycle(
-                file_path, data_type, policy, 
+                file_path,
+                data_type,
+                policy,
                 datetime.utcnow().timestamp(),
-                action="deleted"
+                action="deleted",
             )
 
         except Exception as e:
             logger.error(f"Failed to delete expired data: {e}")
 
     async def _log_data_lifecycle(
-        self, 
-        file_path: Path, 
-        data_type: str, 
-        policy: Dict[str, Any], 
+        self,
+        file_path: Path,
+        data_type: str,
+        policy: Dict[str, Any],
         age_days: int,
-        action: str = "retention_check"
+        action: str = "retention_check",
     ):
         """Log data lifecycle event"""
         event = {
@@ -330,7 +339,7 @@ class DataRetentionManager:
         """Create backup of file before deletion"""
         backup_dir = Path("backups") / "retention"
         backup_dir.mkdir(parents=True, exist_ok=True)
-        
+
         backup_path = backup_dir / f"{file_path.name}.{int(time.time())}"
         shutil.copy2(file_path, backup_path)
         logger.info(f"Created backup: {backup_path}")
@@ -347,16 +356,16 @@ class DataBackupManager:
         self.backup_history = []
 
     async def create_backup(
-        self, 
-        source_path: str, 
+        self,
+        source_path: str,
         backup_type: str = BackupType.FULL.value,
-        description: str = ""
+        description: str = "",
     ) -> Dict[str, Any]:
         """Create data backup"""
         try:
             backup_id = f"backup_{secrets.token_hex(8)}"
             timestamp = datetime.utcnow()
-            
+
             backup_info = {
                 "backup_id": backup_id,
                 "source_path": source_path,
@@ -372,14 +381,20 @@ class DataBackupManager:
             if backup_type == BackupType.FULL.value:
                 backup_path = await self._create_full_backup(source_path, backup_id)
             elif backup_type == BackupType.INCREMENTAL.value:
-                backup_path = await self._create_incremental_backup(source_path, backup_id)
+                backup_path = await self._create_incremental_backup(
+                    source_path, backup_id
+                )
             else:
-                backup_path = await self._create_differential_backup(source_path, backup_id)
+                backup_path = await self._create_differential_backup(
+                    source_path, backup_id
+                )
 
             if backup_path:
                 backup_info["backup_path"] = str(backup_path)
                 backup_info["status"] = "completed"
-                backup_info["size_bytes"] = await self._calculate_backup_size(backup_path)
+                backup_info["size_bytes"] = await self._calculate_backup_size(
+                    backup_path
+                )
                 backup_info["file_count"] = await self._count_backup_files(backup_path)
             else:
                 backup_info["status"] = "failed"
@@ -392,25 +407,29 @@ class DataBackupManager:
             logger.error(f"Failed to create backup: {e}")
             return {"error": str(e)}
 
-    async def _create_full_backup(self, source_path: str, backup_id: str) -> Optional[Path]:
+    async def _create_full_backup(
+        self, source_path: str, backup_id: str
+    ) -> Optional[Path]:
         """Create full backup"""
         try:
             backup_dir = Path("backups") / "full" / backup_id
             backup_dir.mkdir(parents=True, exist_ok=True)
-            
+
             source = Path(source_path)
             if source.is_file():
                 shutil.copy2(source, backup_dir / source.name)
             else:
                 shutil.copytree(source, backup_dir / source.name)
-            
+
             return backup_dir
 
         except Exception as e:
             logger.error(f"Failed to create full backup: {e}")
             return None
 
-    async def _create_incremental_backup(self, source_path: str, backup_id: str) -> Optional[Path]:
+    async def _create_incremental_backup(
+        self, source_path: str, backup_id: str
+    ) -> Optional[Path]:
         """Create incremental backup"""
         try:
             # Find last backup
@@ -421,29 +440,34 @@ class DataBackupManager:
 
             backup_dir = Path("backups") / "incremental" / backup_id
             backup_dir.mkdir(parents=True, exist_ok=True)
-            
+
             # Copy only changed files since last backup
             source = Path(source_path)
             last_backup_time = datetime.fromisoformat(last_backup["created_at"])
-            
+
             if source.is_file():
                 if source.stat().st_mtime > last_backup_time.timestamp():
                     shutil.copy2(source, backup_dir / source.name)
             else:
                 for file_path in source.rglob("*"):
-                    if file_path.is_file() and file_path.stat().st_mtime > last_backup_time.timestamp():
+                    if (
+                        file_path.is_file()
+                        and file_path.stat().st_mtime > last_backup_time.timestamp()
+                    ):
                         rel_path = file_path.relative_to(source)
                         dest_path = backup_dir / rel_path
                         dest_path.parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy2(file_path, dest_path)
-            
+
             return backup_dir
 
         except Exception as e:
             logger.error(f"Failed to create incremental backup: {e}")
             return None
 
-    async def _create_differential_backup(self, source_path: str, backup_id: str) -> Optional[Path]:
+    async def _create_differential_backup(
+        self, source_path: str, backup_id: str
+    ) -> Optional[Path]:
         """Create differential backup"""
         # Simplified implementation - same as incremental for now
         return await self._create_incremental_backup(source_path, backup_id)
@@ -452,7 +476,7 @@ class DataBackupManager:
         """Find the most recent backup"""
         if not self.backup_history:
             return None
-        
+
         return max(self.backup_history, key=lambda x: x["created_at"])
 
     async def _calculate_backup_size(self, backup_path: Path) -> int:
@@ -559,10 +583,10 @@ class DataPrivacyManager:
         }
 
     async def register_data_subject(
-        self, 
-        subject_id: str, 
+        self,
+        subject_id: str,
         personal_data: Dict[str, Any],
-        consent_given: bool = False
+        consent_given: bool = False,
     ) -> bool:
         """Register a data subject for privacy tracking"""
         try:
@@ -570,7 +594,9 @@ class DataPrivacyManager:
                 "subject_id": subject_id,
                 "personal_data": personal_data,
                 "consent_given": consent_given,
-                "consent_date": datetime.utcnow().isoformat() if consent_given else None,
+                "consent_date": (
+                    datetime.utcnow().isoformat() if consent_given else None
+                ),
                 "registered_at": datetime.utcnow().isoformat(),
                 "data_retention_until": None,
                 "privacy_preferences": {},
@@ -590,10 +616,7 @@ class DataPrivacyManager:
             return False
 
     async def process_data_subject_request(
-        self, 
-        subject_id: str, 
-        request_type: str,
-        request_data: Dict[str, Any]
+        self, subject_id: str, request_type: str, request_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Process data subject privacy requests"""
         try:
@@ -666,7 +689,9 @@ class DataPrivacyManager:
         data_subject["consent_withdrawn_at"] = datetime.utcnow().isoformat()
         return "completed"
 
-    async def _log_consent(self, subject_id: str, consent_type: str, data: Dict[str, Any]):
+    async def _log_consent(
+        self, subject_id: str, consent_type: str, data: Dict[str, Any]
+    ):
         """Log consent events"""
         consent_record = {
             "subject_id": subject_id,
@@ -692,7 +717,7 @@ class DataLineageTracker:
         operation_type: str,
         input_data: List[str],
         output_data: List[str],
-        metadata: Dict[str, Any]
+        metadata: Dict[str, Any],
     ) -> bool:
         """Track a data operation for lineage"""
         try:
@@ -712,12 +737,18 @@ class DataLineageTracker:
             # Update lineage graph
             for input_file in input_data:
                 if input_file not in self.lineage_graph:
-                    self.lineage_graph[input_file] = {"produced_by": [], "consumed_by": []}
+                    self.lineage_graph[input_file] = {
+                        "produced_by": [],
+                        "consumed_by": [],
+                    }
                 self.lineage_graph[input_file]["consumed_by"].append(operation_id)
 
             for output_file in output_data:
                 if output_file not in self.lineage_graph:
-                    self.lineage_graph[output_file] = {"produced_by": [], "consumed_by": []}
+                    self.lineage_graph[output_file] = {
+                        "produced_by": [],
+                        "consumed_by": [],
+                    }
                 self.lineage_graph[output_file]["produced_by"].append(operation_id)
 
             logger.info(f"Tracked data operation: {operation_id}")
@@ -742,12 +773,26 @@ class DataLineageTracker:
 
             # Get operation details
             for operation_id in self.lineage_graph[data_file]["produced_by"]:
-                operation = next((op for op in self.data_operations if op["operation_id"] == operation_id), None)
+                operation = next(
+                    (
+                        op
+                        for op in self.data_operations
+                        if op["operation_id"] == operation_id
+                    ),
+                    None,
+                )
                 if operation:
                     lineage_info["produced_by"].append(operation)
 
             for operation_id in self.lineage_graph[data_file]["consumed_by"]:
-                operation = next((op for op in self.data_operations if op["operation_id"] == operation_id), None)
+                operation = next(
+                    (
+                        op
+                        for op in self.data_operations
+                        if op["operation_id"] == operation_id
+                    ),
+                    None,
+                )
                 if operation:
                     lineage_info["consumed_by"].append(operation)
 
@@ -777,13 +822,22 @@ class DataLineageTracker:
         visited.add(data_file)
 
         for operation_id in self.lineage_graph[data_file]["produced_by"]:
-            operation = next((op for op in self.data_operations if op["operation_id"] == operation_id), None)
+            operation = next(
+                (
+                    op
+                    for op in self.data_operations
+                    if op["operation_id"] == operation_id
+                ),
+                None,
+            )
             if operation:
                 for input_file in operation["input_data"]:
-                    ancestors.append({
-                        "file": input_file,
-                        "operation": operation,
-                    })
+                    ancestors.append(
+                        {
+                            "file": input_file,
+                            "operation": operation,
+                        }
+                    )
                     await self._find_ancestors(input_file, ancestors, visited)
 
     async def _find_descendants(self, data_file: str, descendants: List, visited: Set):
@@ -793,13 +847,22 @@ class DataLineageTracker:
         visited.add(data_file)
 
         for operation_id in self.lineage_graph[data_file]["consumed_by"]:
-            operation = next((op for op in self.data_operations if op["operation_id"] == operation_id), None)
+            operation = next(
+                (
+                    op
+                    for op in self.data_operations
+                    if op["operation_id"] == operation_id
+                ),
+                None,
+            )
             if operation:
                 for output_file in operation["output_data"]:
-                    descendants.append({
-                        "file": output_file,
-                        "operation": operation,
-                    })
+                    descendants.append(
+                        {
+                            "file": output_file,
+                            "operation": operation,
+                        }
+                    )
                     await self._find_descendants(output_file, descendants, visited)
 
 
@@ -820,7 +883,9 @@ class DataManagementService:
             # Initialize DVC
             dvc_initialized = await self.version_manager.initialize_dvc()
             if not dvc_initialized:
-                logger.warning("DVC initialization failed, continuing without version control")
+                logger.warning(
+                    "DVC initialization failed, continuing without version control"
+                )
 
             logger.info("Data management system initialized")
             return True
@@ -842,7 +907,11 @@ class DataManagementService:
             },
             "backup_status": {
                 "total_backups": len(self.backup_manager.backup_history),
-                "last_backup": self.backup_manager.backup_history[-1]["created_at"] if self.backup_manager.backup_history else None,
+                "last_backup": (
+                    self.backup_manager.backup_history[-1]["created_at"]
+                    if self.backup_manager.backup_history
+                    else None
+                ),
             },
             "privacy_compliance": {
                 "data_subjects": len(self.privacy_manager.data_subjects),

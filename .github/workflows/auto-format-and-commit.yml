@@ -1,0 +1,357 @@
+name: Auto Format and Commit (Black/isort)
+
+on:
+  workflow_dispatch:
+    inputs:
+      paths:
+        description: 'Paths to format (default: src tests)'
+        required: false
+        default: 'src tests'
+      python-version:
+        description: 'Python version for Black/isort'
+        required: false
+        default: '3.11'
+        type: choice
+        options:
+          - '3.9'
+          - '3.10'
+          - '3.11'
+          - '3.12'
+      ref:
+        description: 'Branch or ref to format (default: current branch/PR head)'
+        required: false
+        default: ''  # Empty default - will use github.head_ref or github.ref in checkout step
+  pull_request:
+    types: [labeled]
+
+permissions:
+  contents: write  # Required to push formatted code back to PR branch
+  pull-requests: write  # Required to comment on PR after formatting (GitHub requires full write for comments)
+
+jobs:
+  auto-format:
+    # Security: Only allow trusted actors and prevent fork abuse
+    # Note: Won't re-trigger on its own commits because label must be manually added
+    # Fork Protection: Only process PRs from same repo (not forks) to prevent unauthorized code execution
+    # Label Note: Label name comparison is case-sensitive - use exact label 'auto-format'
+    if: >
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'pull_request' &&
+       github.event.action == 'labeled' &&
+       github.event.label &&
+       github.event.label.name == 'auto-format' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      # Use PR number for PRs, run_id for workflow_dispatch (better isolation)
+      # Include repository scope to prevent cross-repo conflicts
+      # Use fixed workflow ID (sanitized) - workflow name has emojis/spaces that break group names
+      group: auto-format-${{ github.repository }}-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: true
+    steps:
+      - name: 🔒 Validate Event Context
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd "$GITHUB_WORKSPACE" || exit 1
+          
+          echo "=========================================="
+          echo "🔒 Security Validation"
+          echo "=========================================="
+          echo "Validating event context for security..."
+          
+          EVENT_TYPE="${{ github.event_name }}"
+          ACTOR="${{ github.actor }}"
+          
+          # Validate event type
+          if [[ "$EVENT_TYPE" == "pull_request" ]]; then
+            # Extra security check: verify PR is from same repo
+            REPO_FULL_NAME="${{ github.event.pull_request.head.repo.full_name }}"
+            CURRENT_REPO="${{ github.repository }}"
+            
+            if [[ "$REPO_FULL_NAME" != "$CURRENT_REPO" ]]; then
+              echo "❌ Security: PR from fork detected. Refusing to format."
+              echo "   PR repo: $REPO_FULL_NAME"
+              echo "   Current repo: $CURRENT_REPO"
+              exit 1
+            fi
+            
+            # Check if PR is draft (optional: skip drafts)
+            IS_DRAFT="${{ github.event.pull_request.draft }}"
+            if [[ "$IS_DRAFT" == "true" ]]; then
+              echo "⚠️  Warning: PR is in draft status"
+            fi
+            
+            echo "✅ PR is from same repository"
+            echo "   PR #${{ github.event.pull_request.number }}"
+            echo "   Actor: $ACTOR"
+            
+          elif [[ "$EVENT_TYPE" == "workflow_dispatch" ]]; then
+            # For manual dispatch, log actor but allow (can be restricted via branch protection)
+            echo "✅ Manual workflow dispatch"
+            echo "   Actor: $ACTOR"
+            echo "   Ref: ${{ github.ref }}"
+            echo "⚠️  Note: Manual dispatch from any authorized user"
+          else
+            echo "❌ Unexpected event type: $EVENT_TYPE"
+            exit 1
+          fi
+          
+          echo "✅ Security validation passed"
+          echo "=========================================="
+
+      - name: 📥 Checkout
+        uses: actions/checkout@v4.1.1
+        with:
+          # Use ref input for workflow_dispatch, head_ref for PRs, fallback to current ref
+          ref: ${{ inputs.ref || github.head_ref || github.ref }}
+          # fetch-depth: 0 needed for git push to work correctly with branch refs
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: ${{ inputs.python-version || '3.11' }}
+          cache: 'pip'
+
+      - name: 🔍 Validate and Sanitize Inputs
+        id: sanitize
+        shell: bash
+        run: |
+          set -euo pipefail  # Fail on error, undefined vars, pipe failures
+          
+          # Validate Python version (security: prevent invalid versions)
+          PYTHON_VERSION="${{ inputs.python-version || '3.11' }}"
+          case "$PYTHON_VERSION" in
+            "3.9"|"3.10"|"3.11"|"3.12")
+              echo "✅ Valid Python version: $PYTHON_VERSION"
+              ;;
+            *)
+              echo "❌ Invalid Python version: $PYTHON_VERSION"
+              echo "✅ Valid versions: 3.9, 3.10, 3.11, 3.12"
+              exit 1
+              ;;
+          esac
+
+          # Sanitize and validate paths (security: prevent command injection and directory traversal)
+          RAW_PATHS="${{ inputs.paths || 'src tests' }}"
+          echo "Raw paths input: $RAW_PATHS"
+          
+          # Step 1: Sanitize paths - remove all dangerous characters
+          SANITIZED=$(echo "$RAW_PATHS" | tr -cd '[:alnum:][:space:]/._-')
+          PATHS="$SANITIZED"
+          
+          # Check for directory traversal
+          if [[ "$PATHS" =~ \.\./ ]] || [[ "$PATHS" =~ \.\.\\ ]]; then
+            echo "❌ Invalid paths: $PATHS"
+            echo "✅ Directory traversal (../) not allowed for security"
+            exit 1
+          fi
+          
+          # Check for shell injection attempts (semicolons, pipes, redirects, etc.)
+          if [[ "$PATHS" =~ [;&|`$<>] ]]; then
+            echo "❌ Invalid paths: $PATHS"
+            echo "✅ Shell metacharacters not allowed for security"
+            exit 1
+          fi
+          
+          # Only allow alphanumeric, spaces, slashes, dots, hyphens, underscores
+          if [[ ! "$PATHS" =~ ^[a-zA-Z0-9 /._-]+$ ]]; then
+            echo "❌ Invalid paths: $PATHS"
+            echo "✅ Only alphanumeric characters, spaces, slashes, dots, hyphens, and underscores allowed"
+            exit 1
+          fi
+
+          # Store sanitized paths for use in later steps
+          echo "SANITIZED_PATHS=$SANITIZED" >> $GITHUB_ENV
+          echo "sanitized_paths=$SANITIZED" >> $GITHUB_OUTPUT
+
+          echo "✅ Input validation and sanitization passed"
+          echo "   Python version: $PYTHON_VERSION"
+          echo "   Sanitized paths: $SANITIZED"
+
+      - name: 📦 Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-formatters-${{ hashFiles('.github/workflows/auto-format-and-commit.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-formatters-
+
+      - name: 📦 Install formatters
+        run: |
+          # Security: isort >=5.13.2 fixes CVE-2023-38995 (command injection)
+          pip install black==24.3.0 isort==5.13.2
+
+      - name: 🎨 Run Black
+        id: format-black
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Use sanitized paths from validation step (security: prevents command injection)
+          TARGETS="${{ env.SANITIZED_PATHS || steps.sanitize.outputs.sanitized_paths || 'src tests' }}"
+          echo "Formatting with Black: $TARGETS"
+          
+          # Check if target paths exist
+          MISSING_PATHS=""
+          for target in $TARGETS; do
+            if [ ! -e "$target" ]; then
+              MISSING_PATHS="$MISSING_PATHS $target"
+            fi
+          done
+          
+          if [ -n "$MISSING_PATHS" ]; then
+            echo "⚠️  Warning: Some paths don't exist:$MISSING_PATHS"
+            echo "Continuing with available paths..."
+          fi
+          
+          if [ -f pyproject.toml ]; then
+            black $TARGETS || {
+              echo "❌ Black formatting failed"
+              exit 1
+            }
+          else
+            black $TARGETS --line-length 88 || {
+              echo "❌ Black formatting failed"
+              exit 1
+            }
+          fi
+          echo "✅ Black formatting completed"
+
+      - name: 🔀 Run isort
+        id: format-isort
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Use sanitized paths from validation step (security: prevents command injection)
+          TARGETS="${{ env.SANITIZED_PATHS || steps.sanitize.outputs.sanitized_paths || 'src tests' }}"
+          echo "Sorting imports with isort: $TARGETS"
+          
+          if [ -f pyproject.toml ]; then
+            isort $TARGETS || {
+              echo "❌ isort import sorting failed"
+              exit 1
+            }
+          else
+            isort $TARGETS --profile black || {
+              echo "❌ isort import sorting failed"
+              exit 1
+            }
+          fi
+          echo "✅ isort import sorting completed"
+
+      - name: ⚙️ Configure Git
+        shell: bash
+        run: |
+          git config --local user.name "github-actions[bot]"
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Ensure remote URL is set for pushing
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+          
+          # Determine branch name (for PRs use head_ref, otherwise use ref name)
+          if [ -n "${{ github.head_ref }}" ]; then
+            BRANCH_NAME="${{ github.head_ref }}"
+          else
+            BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          fi
+          
+          echo "Branch name: $BRANCH_NAME"
+          
+          # If in detached HEAD, checkout the branch properly
+          if [ "$(git rev-parse --abbrev-ref HEAD)" = "HEAD" ]; then
+            git checkout -b "$BRANCH_NAME" || git checkout "$BRANCH_NAME"
+          fi
+          
+          # Fetch the branch from remote to ensure it exists locally
+          git fetch origin "$BRANCH_NAME:$BRANCH_NAME" || true
+
+      - name: 📝 Check for changes
+        id: check-changes
+        run: |
+          if ! git diff --quiet || ! git diff --cached --quiet; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "📝 Changes detected:"
+            git status --short
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "✅ No changes detected"
+          fi
+
+      - name: 🧾 Commit formatting changes
+        if: steps.check-changes.outputs.has_changes == 'true'
+        uses: stefanzweifel/git-auto-commit-action@v5.0.0
+        with:
+          commit_message: "chore: auto-format code with Black and isort"
+          commit_user_name: github-actions[bot]
+          commit_user_email: github-actions[bot]@users.noreply.github.com
+          file_pattern: |
+            **/*.py
+            pyproject.toml
+            setup.cfg
+
+      - name: 💬 Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        env:
+          HAS_CHANGES: ${{ steps.check-changes.outputs.has_changes }}
+          BLACK_STATUS: ${{ steps.format-black.outcome }}
+          ISORT_STATUS: ${{ steps.format-isort.outcome }}
+        with:
+          script: |
+            let message;
+            
+            // Check for formatting failures
+            if (process.env.BLACK_STATUS === 'failure' || process.env.ISORT_STATUS === 'failure') {
+              message = `❌ **Auto-format failed!**\n\n` +
+                `Formatting encountered errors. Please check the workflow logs for details.\n\n` +
+                `You can run formatting locally:\n` +
+                `\`\`\`bash\n` +
+                `pip install black==24.3.0 isort==5.13.2\n` +
+                `black src tests\n` +
+                `isort src tests\n` +
+                `\`\`\``;
+            } else if (process.env.HAS_CHANGES === 'true') {
+              message = `✅ **Auto-format complete!**\n\n` +
+                `Code has been formatted with Black and isort and committed to this PR.\n\n` +
+                `CI checks should run automatically on the new commit.`;
+            } else {
+              message = `ℹ️  **No formatting changes needed.**\n\n` +
+                `Code is already properly formatted.`;
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
+
+      - name: ✅ Summary
+        if: always()
+        run: |
+          echo "=========================================="
+          echo "📊 Auto-Format Workflow Summary"
+          echo "=========================================="
+          
+          # Check formatting step outcomes
+          BLACK_OUTCOME="${{ steps.format-black.outcome }}"
+          ISORT_OUTCOME="${{ steps.format-isort.outcome }}"
+          CHANGES_MADE="${{ steps.check-changes.outputs.has_changes }}"
+          
+          if [ "$BLACK_OUTCOME" = "failure" ] || [ "$ISORT_OUTCOME" = "failure" ]; then
+            echo "❌ Workflow failed during formatting"
+            echo "   Black: $BLACK_OUTCOME"
+            echo "   isort: $ISORT_OUTCOME"
+            exit 1
+          elif [ "$CHANGES_MADE" = "true" ]; then
+            echo "✅ Code formatted and committed successfully!"
+            echo "🔄 CI checks should now run automatically on this commit."
+          else
+            echo "ℹ️  No formatting changes were needed."
+            echo "   Code is already properly formatted."
+          fi
+          
+          echo "=========================================="

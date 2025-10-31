@@ -12,8 +12,8 @@ import secrets
 import subprocess
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 import httpx
 import yaml
@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 class SecurityLevel(Enum):
     """Security level enumeration"""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -31,6 +32,7 @@ class SecurityLevel(Enum):
 
 class VulnerabilityType(Enum):
     """Vulnerability type enumeration"""
+
     SQL_INJECTION = "sql_injection"
     XSS = "xss"
     CSRF = "csrf"
@@ -45,6 +47,7 @@ class VulnerabilityType(Enum):
 
 class IncidentStatus(Enum):
     """Security incident status enumeration"""
+
     OPEN = "open"
     INVESTIGATING = "investigating"
     CONTAINED = "contained"
@@ -63,16 +66,16 @@ class VulnerabilityScanner:
     async def scan_dependencies(self) -> List[Dict[str, Any]]:
         """Scan dependencies for vulnerabilities"""
         vulnerabilities = []
-        
+
         try:
             # Run safety check
             result = subprocess.run(
                 ["safety", "check", "--json"],
                 capture_output=True,
                 text=True,
-                timeout=300
+                timeout=300,
             )
-            
+
             if result.returncode == 0:
                 logger.info("No dependency vulnerabilities found")
             else:
@@ -80,110 +83,117 @@ class VulnerabilityScanner:
                 try:
                     safety_data = json.loads(result.stdout)
                     for vuln in safety_data:
-                        vulnerabilities.append({
-                            "type": VulnerabilityType.DEPENDENCY.value,
-                            "package": vuln.get("package_name"),
-                            "version": vuln.get("installed_version"),
-                            "vulnerability_id": vuln.get("vulnerability_id"),
-                            "severity": self._map_severity(vuln.get("severity", "medium")),
-                            "description": vuln.get("advisory"),
-                            "cve": vuln.get("cve"),
-                            "scanned_at": datetime.utcnow().isoformat(),
-                        })
+                        vulnerabilities.append(
+                            {
+                                "type": VulnerabilityType.DEPENDENCY.value,
+                                "package": vuln.get("package_name"),
+                                "version": vuln.get("installed_version"),
+                                "vulnerability_id": vuln.get("vulnerability_id"),
+                                "severity": self._map_severity(
+                                    vuln.get("severity", "medium")
+                                ),
+                                "description": vuln.get("advisory"),
+                                "cve": vuln.get("cve"),
+                                "scanned_at": datetime.utcnow().isoformat(),
+                            }
+                        )
                 except json.JSONDecodeError:
                     logger.error("Failed to parse safety output")
-                    
+
         except subprocess.TimeoutExpired:
             logger.error("Dependency scan timed out")
         except FileNotFoundError:
             logger.warning("Safety tool not installed, skipping dependency scan")
-            
+
         return vulnerabilities
 
     async def scan_code_security(self, code_path: str) -> List[Dict[str, Any]]:
         """Scan code for security issues using bandit"""
         vulnerabilities = []
-        
+
         try:
             # Run bandit security scan
             result = subprocess.run(
                 ["bandit", "-r", code_path, "-f", "json"],
                 capture_output=True,
                 text=True,
-                timeout=600
+                timeout=600,
             )
-            
+
             if result.returncode == 0:
                 logger.info("No code security issues found")
             else:
                 try:
                     bandit_data = json.loads(result.stdout)
                     for issue in bandit_data.get("results", []):
-                        vulnerabilities.append({
-                            "type": self._map_bandit_severity(issue.get("issue_severity")),
-                            "severity": self._map_bandit_severity(issue.get("issue_severity")),
-                            "confidence": issue.get("issue_confidence"),
-                            "description": issue.get("issue_text"),
-                            "filename": issue.get("filename"),
-                            "line_number": issue.get("line_number"),
-                            "test_id": issue.get("test_id"),
-                            "scanned_at": datetime.utcnow().isoformat(),
-                        })
+                        vulnerabilities.append(
+                            {
+                                "type": self._map_bandit_severity(
+                                    issue.get("issue_severity")
+                                ),
+                                "severity": self._map_bandit_severity(
+                                    issue.get("issue_severity")
+                                ),
+                                "confidence": issue.get("issue_confidence"),
+                                "description": issue.get("issue_text"),
+                                "filename": issue.get("filename"),
+                                "line_number": issue.get("line_number"),
+                                "test_id": issue.get("test_id"),
+                                "scanned_at": datetime.utcnow().isoformat(),
+                            }
+                        )
                 except json.JSONDecodeError:
                     logger.error("Failed to parse bandit output")
-                    
+
         except subprocess.TimeoutExpired:
             logger.error("Code security scan timed out")
         except FileNotFoundError:
             logger.warning("Bandit tool not installed, skipping code security scan")
-            
+
         return vulnerabilities
 
     async def scan_network_security(self, target: str) -> List[Dict[str, Any]]:
         """Scan network for security issues"""
         vulnerabilities = []
-        
+
         try:
             # Run nmap scan
             result = subprocess.run(
                 ["nmap", "-sV", "-sC", "--script", "vuln", target, "-oX", "-"],
                 capture_output=True,
                 text=True,
-                timeout=1800
+                timeout=1800,
             )
-            
+
             if result.returncode == 0:
                 # Parse nmap XML output (simplified)
                 vulnerabilities.extend(self._parse_nmap_output(result.stdout))
-                
+
         except subprocess.TimeoutExpired:
             logger.error("Network scan timed out")
         except FileNotFoundError:
             logger.warning("Nmap tool not installed, skipping network scan")
-            
+
         return vulnerabilities
 
     async def scan_ssl_certificates(self, domain: str) -> List[Dict[str, Any]]:
         """Scan SSL certificates for issues"""
         vulnerabilities = []
-        
+
         try:
             # Run sslscan
             result = subprocess.run(
-                ["sslscan", domain],
-                capture_output=True,
-                text=True,
-                timeout=300
+                ["sslscan", domain], capture_output=True, text=True, timeout=300
             )
-            
+
             if result.returncode == 0:
                 vulnerabilities.extend(self._parse_sslscan_output(result.stdout))
-                
+
         except subprocess.TimeoutExpired:
             logger.error("SSL scan timed out")
         except FileNotFoundError:
             logger.warning("SSLScan tool not installed, skipping SSL scan")
-            
+
         return vulnerabilities
 
     def _map_severity(self, severity: str) -> str:
@@ -230,32 +240,32 @@ class PenetrationTester:
     async def run_web_application_tests(self, target_url: str) -> List[Dict[str, Any]]:
         """Run web application penetration tests"""
         vulnerabilities = []
-        
+
         try:
             # Run OWASP ZAP scan
             result = subprocess.run(
                 ["zap-baseline.py", "-t", target_url, "-J", "zap-report.json"],
                 capture_output=True,
                 text=True,
-                timeout=3600
+                timeout=3600,
             )
-            
+
             if result.returncode == 0:
                 logger.info("Web application tests completed")
                 # Parse ZAP report
                 vulnerabilities.extend(await self._parse_zap_report("zap-report.json"))
-                
+
         except subprocess.TimeoutExpired:
             logger.error("Web application tests timed out")
         except FileNotFoundError:
             logger.warning("OWASP ZAP not installed, skipping web application tests")
-            
+
         return vulnerabilities
 
     async def run_api_security_tests(self, api_endpoint: str) -> List[Dict[str, Any]]:
         """Run API security tests"""
         vulnerabilities = []
-        
+
         # Test for common API vulnerabilities
         test_cases = [
             self._test_sql_injection,
@@ -264,14 +274,14 @@ class PenetrationTester:
             self._test_input_validation,
             self._test_rate_limiting,
         ]
-        
+
         for test_case in test_cases:
             try:
                 results = await test_case(api_endpoint)
                 vulnerabilities.extend(results)
             except Exception as e:
                 logger.error(f"API security test failed: {e}")
-                
+
         return vulnerabilities
 
     async def _test_sql_injection(self, endpoint: str) -> List[Dict[str, Any]]:
@@ -282,43 +292,50 @@ class PenetrationTester:
             "'; DROP TABLE users; --",
             "' UNION SELECT * FROM users --",
         ]
-        
+
         for payload in payloads:
             try:
                 async with httpx.AsyncClient() as client:
                     response = await client.get(f"{endpoint}?id={payload}")
-                    if "error" in response.text.lower() or "sql" in response.text.lower():
-                        vulnerabilities.append({
-                            "type": VulnerabilityType.SQL_INJECTION.value,
-                            "severity": SecurityLevel.HIGH.value,
-                            "description": f"Potential SQL injection vulnerability detected with payload: {payload}",
-                            "endpoint": endpoint,
-                            "tested_at": datetime.utcnow().isoformat(),
-                        })
+                    if (
+                        "error" in response.text.lower()
+                        or "sql" in response.text.lower()
+                    ):
+                        vulnerabilities.append(
+                            {
+                                "type": VulnerabilityType.SQL_INJECTION.value,
+                                "severity": SecurityLevel.HIGH.value,
+                                "description": f"Potential SQL injection vulnerability detected with payload: {payload}",
+                                "endpoint": endpoint,
+                                "tested_at": datetime.utcnow().isoformat(),
+                            }
+                        )
             except Exception as e:
                 logger.error(f"SQL injection test failed: {e}")
-                
+
         return vulnerabilities
 
     async def _test_authentication_bypass(self, endpoint: str) -> List[Dict[str, Any]]:
         """Test for authentication bypass vulnerabilities"""
         vulnerabilities = []
-        
+
         # Test without authentication
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(endpoint)
                 if response.status_code == 200:
-                    vulnerabilities.append({
-                        "type": VulnerabilityType.AUTHENTICATION.value,
-                        "severity": SecurityLevel.HIGH.value,
-                        "description": "Endpoint accessible without authentication",
-                        "endpoint": endpoint,
-                        "tested_at": datetime.utcnow().isoformat(),
-                    })
+                    vulnerabilities.append(
+                        {
+                            "type": VulnerabilityType.AUTHENTICATION.value,
+                            "severity": SecurityLevel.HIGH.value,
+                            "description": "Endpoint accessible without authentication",
+                            "endpoint": endpoint,
+                            "tested_at": datetime.utcnow().isoformat(),
+                        }
+                    )
         except Exception as e:
             logger.error(f"Authentication bypass test failed: {e}")
-            
+
         return vulnerabilities
 
     async def _test_authorization_bypass(self, endpoint: str) -> List[Dict[str, Any]]:
@@ -343,7 +360,7 @@ class PenetrationTester:
         """Parse OWASP ZAP report"""
         vulnerabilities = []
         try:
-            with open(report_file, 'r') as f:
+            with open(report_file, "r") as f:
                 zap_data = json.load(f)
                 # Parse ZAP JSON report
                 # Implementation would depend on ZAP report format
@@ -402,11 +419,11 @@ class SecurityIncidentResponse:
         description: str,
         severity: str,
         affected_systems: List[str],
-        detected_by: str
+        detected_by: str,
     ) -> Dict[str, Any]:
         """Create a new security incident"""
         incident_id = f"incident_{secrets.token_hex(8)}"
-        
+
         incident = {
             "incident_id": incident_id,
             "type": incident_type,
@@ -420,12 +437,12 @@ class SecurityIncidentResponse:
             "actions_taken": [],
             "timeline": [],
         }
-        
+
         self.incidents.append(incident)
-        
+
         # Trigger automated response
         await self._trigger_automated_response(incident)
-        
+
         return incident
 
     async def _trigger_automated_response(self, incident: Dict[str, Any]):
@@ -434,11 +451,11 @@ class SecurityIncidentResponse:
         if not playbook:
             logger.warning(f"No playbook found for incident type: {incident['type']}")
             return
-            
+
         # Execute automated actions
         for action in playbook["actions"]:
             await self._execute_response_action(incident, action)
-            
+
         # Update incident status
         incident["status"] = IncidentStatus.INVESTIGATING.value
         incident["updated_at"] = datetime.utcnow().isoformat()
@@ -453,7 +470,7 @@ class SecurityIncidentResponse:
             "contain_breach": self._contain_breach,
             "activate_ddos_protection": self._activate_ddos_protection,
         }
-        
+
         handler = action_handlers.get(action)
         if handler:
             await handler(incident)
@@ -467,7 +484,9 @@ class SecurityIncidentResponse:
 
     async def _collect_forensic_evidence(self, incident: Dict[str, Any]):
         """Collect forensic evidence"""
-        logger.info(f"Collecting forensic evidence for incident {incident['incident_id']}")
+        logger.info(
+            f"Collecting forensic evidence for incident {incident['incident_id']}"
+        )
         # Implementation would depend on forensic tools
 
     async def _notify_security_team(self, incident: Dict[str, Any]):
@@ -487,27 +506,27 @@ class SecurityIncidentResponse:
 
     async def _activate_ddos_protection(self, incident: Dict[str, Any]):
         """Activate DDoS protection"""
-        logger.info(f"Activating DDoS protection for incident {incident['incident_id']}")
+        logger.info(
+            f"Activating DDoS protection for incident {incident['incident_id']}"
+        )
         # Implementation would depend on DDoS protection service
 
     async def update_incident_status(
-        self, 
-        incident_id: str, 
-        status: str, 
-        updated_by: str,
-        notes: str = ""
+        self, incident_id: str, status: str, updated_by: str, notes: str = ""
     ) -> bool:
         """Update incident status"""
         for incident in self.incidents:
             if incident["incident_id"] == incident_id:
                 incident["status"] = status
                 incident["updated_at"] = datetime.utcnow().isoformat()
-                incident["timeline"].append({
-                    "timestamp": datetime.utcnow().isoformat(),
-                    "action": f"Status changed to {status}",
-                    "updated_by": updated_by,
-                    "notes": notes,
-                })
+                incident["timeline"].append(
+                    {
+                        "timestamp": datetime.utcnow().isoformat(),
+                        "action": f"Status changed to {status}",
+                        "updated_by": updated_by,
+                        "notes": notes,
+                    }
+                )
                 return True
         return False
 
@@ -528,7 +547,7 @@ class ComplianceReporter:
         """Generate compliance report for specific framework"""
         if framework not in self.compliance_frameworks:
             raise ValueError(f"Unsupported compliance framework: {framework}")
-            
+
         requirements = self.compliance_frameworks[framework]()
         report = {
             "framework": framework,
@@ -537,11 +556,15 @@ class ComplianceReporter:
             "compliance_score": 0,
             "status": "in_progress",
         }
-        
+
         # Calculate compliance score
-        report["compliance_score"] = await self._calculate_compliance_score(requirements)
-        report["status"] = "compliant" if report["compliance_score"] >= 80 else "non_compliant"
-        
+        report["compliance_score"] = await self._calculate_compliance_score(
+            requirements
+        )
+        report["status"] = (
+            "compliant" if report["compliance_score"] >= 80 else "non_compliant"
+        )
+
         return report
 
     def _gdpr_requirements(self) -> List[Dict[str, Any]]:
@@ -627,14 +650,16 @@ class ComplianceReporter:
             },
         ]
 
-    async def _calculate_compliance_score(self, requirements: List[Dict[str, Any]]) -> int:
+    async def _calculate_compliance_score(
+        self, requirements: List[Dict[str, Any]]
+    ) -> int:
         """Calculate compliance score based on requirements"""
         if not requirements:
             return 0
-            
+
         compliant_count = sum(1 for req in requirements if req["status"] == "compliant")
         total_count = len(requirements)
-        
+
         return int((compliant_count / total_count) * 100)
 
     async def generate_audit_report(self, audit_type: str) -> Dict[str, Any]:
@@ -648,13 +673,13 @@ class ComplianceReporter:
             "recommendations": [],
             "overall_rating": "satisfactory",
         }
-        
+
         # Add audit findings based on type
         if audit_type == "security":
             report["findings"] = await self._get_security_findings()
         elif audit_type == "compliance":
             report["findings"] = await self._get_compliance_findings()
-            
+
         return report
 
     async def _get_security_findings(self) -> List[Dict[str, Any]]:
@@ -707,40 +732,44 @@ class AdvancedSecurityManager:
             "vulnerabilities": [],
             "recommendations": [],
         }
-        
+
         # Run all security scans
         try:
             # Dependency scan
             dep_vulns = await self.vulnerability_scanner.scan_dependencies()
             scan_results["vulnerabilities"].extend(dep_vulns)
-            
+
             # Code security scan
             code_vulns = await self.vulnerability_scanner.scan_code_security("src/")
             scan_results["vulnerabilities"].extend(code_vulns)
-            
+
             # Network security scan
             if self.config.get("network_scan_enabled", False):
                 network_vulns = await self.vulnerability_scanner.scan_network_security(
                     self.config.get("target_host", "localhost")
                 )
                 scan_results["vulnerabilities"].extend(network_vulns)
-            
+
             # Generate recommendations
-            scan_results["recommendations"] = await self._generate_security_recommendations(
-                scan_results["vulnerabilities"]
+            scan_results["recommendations"] = (
+                await self._generate_security_recommendations(
+                    scan_results["vulnerabilities"]
+                )
             )
-            
+
         except Exception as e:
             logger.error(f"Security scan failed: {e}")
             scan_results["error"] = str(e)
-            
+
         scan_results["completed_at"] = datetime.utcnow().isoformat()
         return scan_results
 
-    async def _generate_security_recommendations(self, vulnerabilities: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def _generate_security_recommendations(
+        self, vulnerabilities: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """Generate security recommendations based on vulnerabilities"""
         recommendations = []
-        
+
         # Group vulnerabilities by type
         vuln_by_type = {}
         for vuln in vulnerabilities:
@@ -748,24 +777,28 @@ class AdvancedSecurityManager:
             if vuln_type not in vuln_by_type:
                 vuln_by_type[vuln_type] = []
             vuln_by_type[vuln_type].append(vuln)
-        
+
         # Generate recommendations for each type
         for vuln_type, vulns in vuln_by_type.items():
             if vuln_type == VulnerabilityType.DEPENDENCY.value:
-                recommendations.append({
-                    "type": "dependency_update",
-                    "priority": "high",
-                    "description": f"Update {len(vulns)} vulnerable dependencies",
-                    "action": "Run 'pip install --upgrade <package>' for each vulnerable package",
-                })
+                recommendations.append(
+                    {
+                        "type": "dependency_update",
+                        "priority": "high",
+                        "description": f"Update {len(vulns)} vulnerable dependencies",
+                        "action": "Run 'pip install --upgrade <package>' for each vulnerable package",
+                    }
+                )
             elif vuln_type == VulnerabilityType.SQL_INJECTION.value:
-                recommendations.append({
-                    "type": "code_review",
-                    "priority": "critical",
-                    "description": "Fix SQL injection vulnerabilities",
-                    "action": "Use parameterized queries and input validation",
-                })
-                
+                recommendations.append(
+                    {
+                        "type": "code_review",
+                        "priority": "critical",
+                        "description": "Fix SQL injection vulnerabilities",
+                        "action": "Use parameterized queries and input validation",
+                    }
+                )
+
         return recommendations
 
     async def get_security_dashboard_data(self) -> Dict[str, Any]:
@@ -785,24 +818,32 @@ class AdvancedSecurityManager:
     async def _get_critical_vulnerabilities(self) -> List[Dict[str, Any]]:
         """Get critical vulnerabilities"""
         all_vulns = await self._get_all_vulnerabilities()
-        return [v for v in all_vulns if v.get("severity") == SecurityLevel.CRITICAL.value]
+        return [
+            v for v in all_vulns if v.get("severity") == SecurityLevel.CRITICAL.value
+        ]
 
     async def _get_open_incidents(self) -> List[Dict[str, Any]]:
         """Get open security incidents"""
-        return [i for i in self.incident_response.incidents if i["status"] != IncidentStatus.RESOLVED.value]
+        return [
+            i
+            for i in self.incident_response.incidents
+            if i["status"] != IncidentStatus.RESOLVED.value
+        ]
 
     async def _get_overall_compliance_score(self) -> int:
         """Get overall compliance score"""
         frameworks = ["gdpr", "sox", "pci_dss", "iso27001"]
         scores = []
-        
+
         for framework in frameworks:
             try:
-                report = await self.compliance_reporter.generate_compliance_report(framework)
+                report = await self.compliance_reporter.generate_compliance_report(
+                    framework
+                )
                 scores.append(report["compliance_score"])
             except Exception as e:
                 logger.error(f"Failed to get compliance score for {framework}: {e}")
-                
+
         return int(sum(scores) / len(scores)) if scores else 0
 
     async def _get_last_scan_date(self) -> Optional[str]:

@@ -31,7 +31,7 @@ on:
 # Note: Concurrency is defined for non-deployment jobs individually below
 
 env:
-  PYTHON_VERSION: '3.11'  # Prefer minor pin for security backports
+  PYTHON_VERSION: '3.11.13'  # Pin patch for stability/security
   NODE_VERSION: '20'    # Track latest 20.x for security patches
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: amas
@@ -50,11 +50,12 @@ jobs:
     permissions:
       contents: read
     concurrency:
-      group: security-scan-${{ github.ref }}
+      group: security-scan-${{ github.ref }}-${{ github.event.inputs.environment || 'push' }}
       cancel-in-progress: true
     outputs:
       vulnerabilities-found: ${{ steps.scan-results.outputs.vulnerabilities }}
-      scan-passed: ${{ steps.scan-results.outputs.passed }}
+      critical-vulnerabilities: ${{ steps.scan-results.outputs['critical-vulnerabilities'] }}
+      passed: ${{ steps.scan-results.outputs.passed }}
     
     steps:
     - name: 📥 Checkout code
@@ -74,6 +75,10 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         cache: 'pip'
+    
+    - name: 🛠️ Ensure pip cache directory exists
+      run: |
+        mkdir -p ~/.cache/pip
     
     - name: 📦 Cache pip dependencies
       uses: actions/cache@v4
@@ -186,6 +191,7 @@ jobs:
       run: |
         # Count total vulnerabilities
         vuln_count=0
+        critical_count=0
         
         if [ -f safety-report.json ] && [ -s safety-report.json ]; then
           safety_vulns=$(jq length safety-report.json 2>/dev/null || echo "0")
@@ -194,18 +200,21 @@ jobs:
         
         if [ -f bandit-report.json ] && [ -s bandit-report.json ]; then
           bandit_issues=$(jq '.results | length' bandit-report.json 2>/dev/null || echo "0")
+          bandit_high=$(jq '[.results[] | select(.issue_severity == "HIGH")] | length' bandit-report.json 2>/dev/null || echo "0")
           vuln_count=$((vuln_count + bandit_issues))
+          critical_count=$((critical_count + bandit_high))
         fi
         
         echo "vulnerabilities=$vuln_count" >> $GITHUB_OUTPUT
+        echo "critical-vulnerabilities=$critical_count" >> $GITHUB_OUTPUT
         
         # Determine if scan passed (no critical/high vulnerabilities)
-        if [ "$vuln_count" -eq 0 ]; then
+        if [ "$critical_count" -eq 0 ] && [ "$vuln_count" -eq 0 ]; then
           echo "passed=true" >> $GITHUB_OUTPUT
           echo "✅ Security scan passed - no vulnerabilities found"
         else
           echo "passed=false" >> $GITHUB_OUTPUT
-          echo "❌ Security scan failed - $vuln_count vulnerabilities found"
+          echo "❌ Security scan failed - $vuln_count total, $critical_count critical/high"
           # Don't exit here, let the workflow decide based on vulnerability count
         fi
 
