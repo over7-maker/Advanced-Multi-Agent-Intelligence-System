@@ -1,31 +1,14 @@
 {
   "ignorePatterns": [
-    {
-      "pattern": "^http://localhost"
-    },
-    {
-      "pattern": "^https://.*\\.github\\.io"
-    },
-    {
-      "pattern": "^docs/troubleshooting\\.md$"
-    },
-    {
-      "pattern": "^.*/ARCHITECTURE\\.md$"
-    },
-    {
-      "pattern": "^mailto:"
-    }
-  ],
-  "replacementPatterns": [
-    {
-      "pattern": "^/",
-      "replacement": "{{BASEURL}}/"
-    }
+    { "pattern": "^http://localhost" },
+    { "pattern": "^mailto:" },
+    { "pattern": "^.*/ARCHITECTURE\\.md$" },
+    { "pattern": "^docs/troubleshooting\\.md$" }
   ],
   "retryOn429": true,
-  "retryCount": 2,
-  "fallbackRetryDelay": "3s",
-  "timeout": "15s",
+  "retryCount": 3,
+  "fallbackRetryDelay": "5s",
+  "timeout": "30s",
   "ignoreDirectory": [
     "backup",
     "node_modules",

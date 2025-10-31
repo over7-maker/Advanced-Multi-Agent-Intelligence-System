@@ -28,11 +28,17 @@ jobs:
           config-file: '.github/markdown-link-check-config.json'
           check-modified-files-only: true
           base-branch: main
+          output-file: link-check-report.txt
 
-      - name: Link check results
+      - name: Link check results summary
         if: always()
         run: |
           echo "✅ Markdown link check completed"
-          echo "ℹ️  Note: Status 400 errors for local file paths (docs/*.md) are expected"
-          echo "ℹ️  The tool validates HTTP links but local file paths cannot be validated via HTTP"
-          echo "ℹ️  Critical: HTTP/HTTPS link failures above should be reviewed manually"
+          echo "ℹ️  Local file path checks can produce false negatives in this action; HTTP/HTTPS links are the primary focus."
+          if [ -f link-check-report.txt ]; then
+            echo "--- Broken HTTP/HTTPS links detected (if any):"
+            # Show only http/https failures from report for quick triage
+            grep -E "^\[✖\] https?://" link-check-report.txt || echo "(none)"
+          else
+            echo "No report file generated."
+          fi
