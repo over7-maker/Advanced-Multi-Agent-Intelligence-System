@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "AMAS Provider Config",
+  "type": "object",
+  "required": ["providers", "tiers", "routing", "metadata"],
+  "properties": {
+    "providers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "code_name", "tier", "status"],
+        "properties": {
+          "name": { "type": "string" },
+          "code_name": { "type": "string" },
+          "tier": { "type": ["string", "number"] },
+          "purpose": { "type": ["string", "null"] },
+          "supports": { "type": "array", "items": { "type": "string" } },
+          "latency_s": { "type": ["array", "null"] },
+          "api_key_env": { "type": ["string", "null"] },
+          "model": { "type": ["string", "null"] },
+          "status": { "type": "string", "enum": ["active", "planned", "development"] },
+          "supported": { "type": ["boolean", "null"] },
+          "message": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "tiers": { "type": "object" },
+    "routing": { "type": "object" },
+    "metadata": { "type": "object" }
+  }
+}

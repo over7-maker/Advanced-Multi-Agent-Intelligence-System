@@ -98,29 +98,24 @@ graph TB
 ### **🤖 Supported AI Providers (15+ Total)**
 
 #### **Tier 1 - Premium Speed**
-- **Cerebras Cloud** - Ultra-fast inference (1-3s response)
-- **NVIDIA NIM** - GPU-accelerated processing (2-4s response)
+- **Cerebras** - Ultra-fast inference (see [Performance Benchmarks](docs/performance_benchmarks.md))
+- **NVIDIA** - OpenAI-compatible API (see [Performance Benchmarks](docs/performance_benchmarks.md) and [NVIDIA NIM Integration](docs/developer/component-integration-guide.md#nvidia-nim-integration))
 
 #### **Tier 2 - High Quality**
-- **Google Gemini 2.0** - Advanced reasoning (3-8s response)
-- **Mistral Codestral** - Code-specific analysis (3-7s response)
+- **Google Gemini 2.0** - Advanced reasoning (see [Performance Benchmarks](docs/performance_benchmarks.md))
+- **Mistral Codestral** - Code-specific analysis (see [Performance Benchmarks](docs/performance_benchmarks.md))
 
 #### **Tier 3 - Commercial**
-- **Cohere Command** - NLP tasks (4-8s response)
-- **Groq LPU** - Fast inference (1-2s response)
-- **GroqAI** - Alternative endpoint (2-5s response)
+- **Cohere** - Chat v2 API (4-8s response, enterprise features)
+
+> ⚠️ Groq2 and GroqAI: Planned – Not Yet Implemented (adapters in development)
 
 #### **Tier 4 - Specialized**
-- **Chutes AI** - Final fallback provider (10-30s response)
+- **Chutes AI** - OpenAI-style chat completions (see [Performance Benchmarks](docs/performance_benchmarks.md))
 
-#### **Tier 5 - Free Fallbacks**
-- **DeepSeek v3** - Code understanding (3-6s response)
-- **GLM-4.5** - Chinese/English analysis (8-15s response)
-- **xAI Grok** - X.AI integration (6-14s response)
-- **Moonshot Kimi** - Long context processing (10-20s response)
-- **Alibaba Qwen** - Cloud integration (8-16s response)
-- **GPT-OSS** - Open source models (5-12s response)
-- **Gemini AI** - Google V1 API (7-15s response)
+#### **Tier 5 - Free Fallbacks (via OpenRouter)**
+Access multiple providers through [OpenRouter.ai](https://openrouter.ai) with automatic routing (see [Performance Benchmarks](docs/performance_benchmarks.md)):
+- **DeepSeek** • **GLM 4.5** • **xAI Grok** • **Moonshot Kimi** • **Qwen** • **GPT-OSS**
 
 ---
 
@@ -476,9 +471,11 @@ print(f"Bulletproof validation: {health['bulletproof_active']}")
 ### **Provider Tiers & Failover Chain**
 1. **Tier 1**: Premium Speed — Cerebras, NVIDIA
 2. **Tier 2**: High Quality — Gemini 2.0, Codestral
-3. **Tier 3**: Commercial — Cohere, Groq2, GroqAI
-4. **Tier 4**: Specialized — Chutes
-5. **Tier 5**: Free Fallbacks — DeepSeek, GLM, Grok, Kimi, Qwen, GPT-OSS
+3. **Tier 3**: Commercial — Cohere (Groq2 and GroqAI adapters in development)
+4. **Tier 4**: Specialized — Chutes AI
+5. **Tier 5**: Free Fallbacks (OpenRouter) — DeepSeek, GLM, Grok, Kimi, Qwen, GPT-OSS
+
+> **Failover Strategy**: Router attempts providers in tier order (1→5), with automatic fallback on errors. OpenRouter manages Tier 5 provider selection based on availability and cost.
 
 ---
 
@@ -650,6 +647,13 @@ policy:
 - **🐍 Python SDK** - Library reference with examples
 - **💻 CLI Commands** - Command-line interface guide
 - **⚙️ Configuration** - Environment setup options
+
+### **🚀 Phase 5 - External Integration** (NEW!)
+For developers integrating AMAS into external projects:
+
+- **[⚡ Quick Integration Examples](docs/developer/quick-integration-examples.md)** - 5-minute quick start
+- **[📖 Full Integration Guide](docs/developer/phase-5-integration-guide.md)** - Comprehensive guide
+- **[🧩 Component Integration](docs/developer/component-integration-guide.md)** - Standalone components
 
 ---
 

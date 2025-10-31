@@ -1,7 +1,6 @@
 # 👨‍💻 AMAS Developer Guide - Complete Integration Documentation
-# 👨‍💻 AMAS Developer Guide
 
-> **Last Updated**: January 2025 | **Integration Status**: ✅ Fully Integrated
+> **Last Updated**: October 2025 | **Version**: 3.0.0 | **Integration Status**: ✅ Fully Integrated
 
 ## Overview
 
@@ -193,7 +192,8 @@ The AI Agentic Workflow System represents the most advanced workflow automation 
 | 13 | **Groq 2** | Enhanced speed | Load balancing |
 | 14 | **Cohere** | Enterprise features | Intelligent selection |
 | 15 | **Chutes AI** | Specialized tasks | Adaptive routing |
-| 16 | **Claude API** | Ultimate fallback | Zero-failure guarantee |
+
+**Note**: Groq2 and GroqAI are placeholder implementations pending official SDK availability.
 
 ### **Core AI Agentic Workflows**
 
@@ -332,10 +332,10 @@ class AIIssueAutoResponder:
 class AIProviderManager:
     def __init__(self):
         self.providers = {
-            'deepseek': DeepSeekProvider(priority=1),
-            'claude': ClaudeProvider(priority=2),
-            'gpt4': GPT4Provider(priority=3),
-            'glm': GLMProvider(priority=4),
+            'cerebras': CerebrasProvider(priority=1),
+            'nvidia': NVIDIAProvider(priority=2),
+            'gemini2': Gemini2Provider(priority=3),
+            'codestral': CodestralProvider(priority=4),
             'grok': GrokProvider(priority=5),
             'kimi': KimiProvider(priority=6),
             'qwen': QwenProvider(priority=7),
@@ -629,14 +629,14 @@ class TestWorkflowIntegration:
         with patch.object(provider_manager.providers['deepseek'], 'generate_response') as mock_deepseek:
             mock_deepseek.side_effect = Exception("Provider failed")
             
-            with patch.object(provider_manager.providers['claude'], 'generate_response') as mock_claude:
-                mock_claude.return_value = "Response from Claude"
+            with patch.object(provider_manager.providers['gemini2'], 'generate_response') as mock_gemini2:
+                mock_gemini2.return_value = "Response from Gemini 2.0"
                 
                 response = await provider_manager.get_response("Test prompt")
                 
-                assert response == "Response from Claude"
-                mock_deepseek.assert_called_once()
-                mock_claude.assert_called_once()
+                assert response == "Response from Gemini 2.0"
+                mock_cerebras.assert_called_once()
+                mock_gemini2.assert_called_once()
 ```
 
 ### **Performance Optimization**
@@ -2295,6 +2295,67 @@ chore: update dependencies
 
 ---
 
-**Last Updated**: January 2025  
-**Version**: 1.1.0  
+---
+
+## 🚀 External Integration (Phase 5)
+
+> **New in Phase 5**: Comprehensive guide for integrating AMAS components into external projects!
+
+### **📚 Phase 5 Integration Documentation**
+
+For developers who want to use AMAS components in their own projects, we provide comprehensive integration documentation:
+
+#### **⚡ [Quick Integration Examples](quick-integration-examples.md)** - 5-Minute Quick Start
+- Minimal setup (3 lines of code)
+- Common patterns (FastAPI, Django, Flask, CLI)
+- Environment variables quick reference
+- Error handling patterns
+
+#### **📖 [Full Integration Guide](phase-5-integration-guide.md)** - Comprehensive Documentation
+- Complete Universal AI Router integration
+- Python SDK usage
+- REST API client examples (Python & JavaScript)
+- Docker deployment options
+- Configuration management
+- Advanced use cases (custom providers, multi-tenant, batch processing)
+- Troubleshooting guide
+
+#### **🧩 [Component Integration Guide](component-integration-guide.md)** - Standalone Components
+- Individual component usage (Router, Agents, Services)
+- Minimal dependency setups
+- Package structure examples
+- Performance optimization
+- Integration patterns for each component
+
+### **Quick Example - Universal AI Router**
+
+```python
+from src.amas.ai.router import generate
+
+result = await generate(
+    prompt="Your prompt here",
+    system_prompt="System context",
+    timeout=30.0
+)
+
+if result["success"]:
+    print(f"Response from {result['provider_name']}: {result['content']}")
+else:
+    print(f"Error: {result['error']}")
+```
+
+### **Quick Example - Docker Service**
+
+```bash
+docker run -p 8000:8000 \
+  -e CEREBRAS_API_KEY=your-key \
+  amas/universal-router:latest
+```
+
+**Start with**: [Quick Integration Examples](quick-integration-examples.md) for immediate results, then refer to the [Full Integration Guide](phase-5-integration-guide.md) for comprehensive documentation.
+
+---
+
+**Last Updated**: October 2025  
+**Version**: 3.0.0  
 **Maintainers**: AMAS Development Team

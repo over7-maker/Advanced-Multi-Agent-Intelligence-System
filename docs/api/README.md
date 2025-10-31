@@ -1247,6 +1247,6 @@ When migrating between versions:
 
 ---
 
-**Last Updated**: January 2025  
+**Last Updated**: October 2025  
 **API Version**: v1  
 **Documentation Version**: 1.1.0

@@ -129,9 +129,11 @@ The most comprehensive AI provider management system ever created:
 - **[📊 Performance Monitoring](AI_PROVIDERS_GUIDE.md#-provider-performance-monitoring)** - Real-time metrics
 
 ### **🎯 Provider Categories**
-- **🏆 Primary Providers**: DeepSeek V3.1, Claude, GPT-4, GLM 4.5 Air, Grok
-- **🎯 Secondary Providers**: Kimi, Qwen, Gemini, GPT OSS, Groq AI
-- **🚀 Advanced Providers**: Cerebras, Cohere, NVIDIA, Codestral, Gemini 2, Groq 2, Chutes AI
+- **⚡ Tier 1 - Premium Speed**: Cerebras, NVIDIA
+- **🧠 Tier 2 - High Quality**: Gemini 2.0, Codestral
+- **💼 Tier 3 - Commercial**: Cohere, Groq2 (placeholder), GroqAI (placeholder)
+- **🎯 Tier 4 - Specialized**: Chutes AI
+- **🆓 Tier 5 - Free Fallbacks**: DeepSeek, GLM 4.5, Grok, Kimi, Qwen, GPT-OSS (via OpenRouter)
 
 ---
 
@@ -140,10 +142,10 @@ The most comprehensive AI provider management system ever created:
 ### **🛡️ Enterprise-Grade Security**
 Military-grade security implementation with comprehensive compliance:
 
-- **[🔒 Phase 2 Security Features](SECURITY_PHASE2.md)** - **34KB** - Enterprise security guide
+- **[🔒 Phase 2 Security Features](PHASE_2_FEATURES.md)** - **34KB** - Enterprise security guide
 - **[🔐 Authentication Setup](security/AUTHENTICATION_SETUP.md)** - JWT/OIDC integration
 - **[🛡️ Security Guide](security/SECURITY.md)** - Comprehensive security practices
-- **[📊 Compliance Matrix](SECURITY_PHASE2.md#-enterprise-compliance-matrix)** - SOC 2, GDPR, HIPAA
+- **[📊 Compliance Matrix](PHASE_2_FEATURES.md)** - SOC 2, GDPR, HIPAA
 
 Updated in Phase 4 (PR #189): enterprise auth/session modules and data protection layers:
 - `src/amas/security/enterprise_auth.py`, `session_management.py`, `user_management.py`, `advanced_security.py`, `data_management.py`
@@ -209,6 +211,13 @@ Complete technical documentation for developers and contributors:
 - **[🔄 Phase 4 Integration Guide](developer/PHASE_4_DEVELOPER_GUIDE.md)** - Phase 4 components for external integration
 - **[📊 API Manager Guide](API_MANAGER_GUIDE.md)** - API management
 - **[🚀 Phase 3 Developer Guide](developer/PHASE_3_DEVELOPER_GUIDE.md)** - Integrate Universal AI Router, Bulletproof validation, security & observability into external projects
+
+### **🚀 Phase 5 - External Integration** (NEW!)
+For developers integrating AMAS components into external projects:
+
+- **[⚡ Quick Integration Examples](developer/quick-integration-examples.md)** - 5-minute quick start with common patterns
+- **[📖 Full Integration Guide](developer/phase-5-integration-guide.md)** - Comprehensive integration documentation
+- **[🧩 Component Integration Guide](developer/component-integration-guide.md)** - Standalone component usage
 
 ### **🎯 Developer Features**
 - **🔌 Complete API Reference** - Every endpoint documented
@@ -329,7 +338,7 @@ Complete guides for production deployment and operations:
 
 [![Quick Start](https://img.shields.io/badge/Quick%20Start-10%20Minutes-brightgreen?style=for-the-badge&logo=rocket)](QUICK_START.md)
 [![AI Workflows](https://img.shields.io/badge/AI%20Workflows-Revolutionary-blue?style=for-the-badge&logo=robot)](AI_AGENTIC_WORKFLOW_GUIDE.md)
-[![Security](https://img.shields.io/badge/Security-Enterprise%20Grade-red?style=for-the-badge&logo=shield)](SECURITY_PHASE2.md)
+[![Security](https://img.shields.io/badge/Security-Enterprise%20Grade-red?style=for-the-badge&logo=shield)](PHASE_2_FEATURES.md)
 [![API Reference](https://img.shields.io/badge/API%20Reference-Complete-green?style=for-the-badge&logo=api)](api/README.md)
 
 **Experience the most comprehensive AI system documentation ever created!**
@@ -346,7 +355,7 @@ Complete guides for production deployment and operations:
 |-----------|--------------|----------|
 | **🔧 Setup Problems** | [Troubleshooting Guide](AI_AGENTIC_TROUBLESHOOTING.md) | 5 min |
 | **🤖 AI Provider Issues** | [AI Providers Guide](AI_PROVIDERS_GUIDE.md) | 10 min |
-| **🔒 Security Questions** | [Security Guide](SECURITY_PHASE2.md) | 15 min |
+| **🔒 Security Questions** | [Security Guide](PHASE_2_FEATURES.md) | 15 min |
 | **📊 Advanced Features** | [Complete Documentation](../README.md) | 30 min |
 
 </div>
@@ -368,6 +377,6 @@ Complete guides for production deployment and operations:
 
 ---
 
-*Last Updated: January 2025 | Version: 3.0.0 | Status: Production Ready*
+*Last Updated: October 2025 | Version: 3.0.0 | Status: Production Ready*
 
 </div>
