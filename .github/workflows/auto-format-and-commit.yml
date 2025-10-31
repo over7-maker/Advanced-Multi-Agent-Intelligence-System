@@ -15,8 +15,8 @@ on:
     types: [labeled]
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: write  # Required to push formatted code back to PR branch
+  pull-requests: write  # Required to comment on PR after formatting
 
 jobs:
   auto-format:
@@ -33,13 +33,15 @@ jobs:
     timeout-minutes: 20
     concurrency:
       # Use PR number for PRs, run_id for workflow_dispatch (better isolation)
-      group: auto-format-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+      # Use fixed workflow ID (sanitized) - workflow name has emojis/spaces that break group names
+      group: auto-format-workflow-${{ github.event.pull_request.number || github.run_id }}
       cancel-in-progress: true
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4.1.1
         with:
           ref: ${{ github.head_ref || github.ref }}
+          # fetch-depth: 0 needed for git push to work correctly with branch refs
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -52,19 +54,42 @@ jobs:
       - name: 🔍 Validate Inputs
         shell: bash
         run: |
+          set -euo pipefail  # Fail on error, undefined vars, pipe failures
+          
           # Validate Python version (security: prevent invalid versions)
           PYTHON_VERSION="${{ inputs.python-version || '3.11' }}"
-          if [[ ! "$PYTHON_VERSION" =~ ^3\.(9|10|11|12)$ ]]; then
-            echo "❌ Invalid Python version: $PYTHON_VERSION"
-            echo "✅ Valid versions: 3.9, 3.10, 3.11, 3.12"
+          case "$PYTHON_VERSION" in
+            "3.9"|"3.10"|"3.11"|"3.12")
+              echo "✅ Valid Python version: $PYTHON_VERSION"
+              ;;
+            *)
+              echo "❌ Invalid Python version: $PYTHON_VERSION"
+              echo "✅ Valid versions: 3.9, 3.10, 3.11, 3.12"
+              exit 1
+              ;;
+          esac
+
+          # Validate paths (security: prevent command injection and directory traversal)
+          PATHS="${{ inputs.paths || 'src tests' }}"
+          
+          # Check for directory traversal
+          if [[ "$PATHS" =~ \.\./ ]] || [[ "$PATHS" =~ \.\.\\ ]]; then
+            echo "❌ Invalid paths: $PATHS"
+            echo "✅ Directory traversal (../) not allowed for security"
             exit 1
           fi
-
-          # Validate paths (security: prevent directory traversal attacks)
-          PATHS="${{ inputs.paths || 'src tests' }}"
-          if [[ "$PATHS" =~ \.\./ ]]; then
+          
+          # Check for shell injection attempts (semicolons, pipes, redirects, etc.)
+          if [[ "$PATHS" =~ [;&|`$<>] ]]; then
             echo "❌ Invalid paths: $PATHS"
-            echo "✅ Directory traversal not allowed for security"
+            echo "✅ Shell metacharacters not allowed for security"
+            exit 1
+          fi
+          
+          # Only allow alphanumeric, spaces, slashes, dots, hyphens, underscores
+          if [[ ! "$PATHS" =~ ^[a-zA-Z0-9 /._-]+$ ]]; then
+            echo "❌ Invalid paths: $PATHS"
+            echo "✅ Only alphanumeric characters, spaces, slashes, dots, hyphens, and underscores allowed"
             exit 1
           fi
 
