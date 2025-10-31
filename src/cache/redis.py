@@ -17,12 +17,12 @@ _redis_client: Optional[redis.Redis] = None
 async def init_redis() -> None:
     """Initialize Redis connection"""
     global _redis_client
-    
+
     try:
         from src.config.settings import get_settings
-        
+
         settings = get_settings()
-        
+
         _redis_client = redis.Redis(
             host=settings.redis.host,
             port=settings.redis.port,
@@ -31,11 +31,11 @@ async def init_redis() -> None:
             max_connections=settings.redis.max_connections,
             decode_responses=True,
         )
-        
+
         # Test connection
         await _redis_client.ping()
         logger.info("Redis connection initialized successfully")
-        
+
     except Exception as e:
         logger.error(f"Failed to initialize Redis: {e}")
         raise
@@ -44,7 +44,7 @@ async def init_redis() -> None:
 async def close_redis() -> None:
     """Close Redis connection"""
     global _redis_client
-    
+
     if _redis_client:
         await _redis_client.close()
         _redis_client = None
@@ -55,7 +55,7 @@ async def is_connected() -> bool:
     """Check if Redis is connected"""
     if not _redis_client:
         return False
-    
+
     try:
         await _redis_client.ping()
         return True
@@ -73,7 +73,7 @@ async def get(key: str) -> Optional[str]:
     """Get value from Redis"""
     if not _redis_client:
         return None
-    
+
     try:
         return await _redis_client.get(key)
     except Exception as e:
@@ -85,7 +85,7 @@ async def set(key: str, value: str, ttl: Optional[int] = None) -> bool:
     """Set value in Redis"""
     if not _redis_client:
         return False
-    
+
     try:
         if ttl:
             await _redis_client.setex(key, ttl, value)
@@ -101,7 +101,7 @@ async def delete(key: str) -> bool:
     """Delete key from Redis"""
     if not _redis_client:
         return False
-    
+
     try:
         await _redis_client.delete(key)
         return True
@@ -114,7 +114,7 @@ async def exists(key: str) -> bool:
     """Check if key exists in Redis"""
     if not _redis_client:
         return False
-    
+
     try:
         result = await _redis_client.exists(key)
         return bool(result)

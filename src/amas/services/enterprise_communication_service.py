@@ -1,14 +1,13 @@
-""""
+"""
 Enterprise-Grade Communication Service for AMAS Intelligence System
 Provides advanced message queuing, routing, and coordination protocols
-""""
+"""
 
 import asyncio
 
 # import hashlib
 import json
 import logging
-from json import JSONDecodeError
 
 # import uuid
 import zlib
@@ -17,7 +16,8 @@ import zlib
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from json import JSONDecodeError
+from typing import Any, Dict, List, Optional, cast
 
 import aioredis
 
@@ -105,7 +105,7 @@ class MessageQueue:
 
 
 class EnterpriseCommunicationService:
-    """"
+    """
     Enterprise-Grade Communication Service for AMAS Intelligence System
 
     Provides:
@@ -115,7 +115,7 @@ class EnterpriseCommunicationService:
     - Dead letter queues and retry mechanisms
     - Agent coordination and discovery
     - Message persistence and replay
-    """"
+    """
 
     def __init__(self, config: Dict[str, Any]):
         """Initialize the enterprise communication service"""
@@ -822,7 +822,7 @@ class EnterpriseCommunicationService:
                 "compressed": message.compressed,
             }
 
-            # Safe, text-based serialization
+            # Safe, compact JSON serialization for Redis storage
             return json.dumps(message_dict, separators=(",", ":")).encode("utf-8")
 
         except Exception as e:

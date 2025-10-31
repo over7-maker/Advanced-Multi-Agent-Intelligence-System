@@ -372,7 +372,6 @@ class AMASInteractiveCLI:
             TimeElapsedColumn(),
             console=self.console,
         ) as progress:
-
             # Create progress task
             progress_task = progress.add_task(
                 f"Executing {task.intent} task...", total=100
@@ -768,9 +767,7 @@ AMAS remembers your previous commands and can build upon them:
         status_table.add_row(
             "🔒 Security Layer", "✅ Hardened", "0 vulnerabilities detected"
         )
-        status_table.add_row(
-            "⚡ Fallback System", "✅ Ready", "16 providers configured"
-        )
+        status_table.add_row("⚡ Fallback System", "✅ Ready", "16 providers configured")
         status_table.add_row("📊 Monitoring", "✅ Active", "Real-time metrics enabled")
         status_table.add_row(
             "🗣️ NLP Engine", "✅ Ready", "Natural language processing active"
@@ -982,9 +979,7 @@ AMAS remembers your previous commands and can build upon them:
                     continue
 
                 # Process command
-                self.console.print(
-                    f"\n🧠 Processing: '{user_input}'", style="bold blue"
-                )
+                self.console.print(f"\n🧠 Processing: '{user_input}'", style="bold blue")
 
                 # Process with NLP and intent classification
                 task_config = await self.process_command(user_input)

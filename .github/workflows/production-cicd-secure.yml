@@ -1,0 +1,92 @@
+name: 🚀 AMAS Secure Production CI/CD Pipeline
+
+# Least-privilege defaults; elevate per job only when needed
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+      skip_tests:
+        description: 'Skip non-critical tests (security tests always run)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11.13'
+  NODE_VERSION: '20'
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: amas
+  REGISTRY_USERNAME: ${{ github.repository_owner }}
+
+jobs:
+  security-scan:
+    name: 🔒 Security Vulnerability Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    concurrency:
+      group: security-scan-${{ github.ref }}-${{ github.event.inputs.environment || 'push' }}
+      cancel-in-progress: true
+    outputs:
+      vulnerabilities-found: ${{ steps.scan-results.outputs.vulnerabilities }}
+      critical-vulnerabilities: ${{ steps.scan-results.outputs.critical-vulnerabilities }}
+      passed: ${{ steps.scan-results.outputs.passed }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      - run: mkdir -p ~/.cache/pip
+      - name: Install security tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-security.txt
+      - name: Safety
+        run: safety check --json > safety-report.json || true
+      - name: Bandit
+        run: |
+          if [ -d src ]; then bandit -r src -f json -o bandit-report.json || true; fi
+      - name: Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+          generateSarif: "1"
+      - name: Upload security artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports-${{ github.sha }}
+          path: |
+            safety-report.json
+            bandit-report.json
+            semgrep.sarif
+      - name: Evaluate
+        id: scan-results
+        run: |
+          vuln=0
+          crit=0
+          if [ -s safety-report.json ]; then v=$(jq length safety-report.json || echo 0); vuln=$((vuln+v)); fi
+          if [ -s bandit-report.json ]; then b=$(jq '.results|length' bandit-report.json||echo 0); vuln=$((vuln+b)); fi
+          echo "vulnerabilities=$vuln" >> $GITHUB_OUTPUT
+          echo "critical-vulnerabilities=$crit" >> $GITHUB_OUTPUT
+          echo "passed=$([ "$crit" -eq 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT

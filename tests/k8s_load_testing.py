@@ -1,4 +1,5 @@
 import asyncio
+
 from kubernetes import client, config
 
 
@@ -13,8 +14,12 @@ class KubernetesLoadTest:
         self.k8s_core = client.CoreV1Api()
         self.k8s_networking = client.NetworkingV1Api()
 
-    async def simulate_pod_failures(self, label_selector: str = "app=amas", count: int = 2) -> None:
-        pods = self.k8s_core.list_namespaced_pod(self.namespace, label_selector=label_selector)
+    async def simulate_pod_failures(
+        self, label_selector: str = "app=amas", count: int = 2
+    ) -> None:
+        pods = self.k8s_core.list_namespaced_pod(
+            self.namespace, label_selector=label_selector
+        )
         for pod in pods.items[:count]:
             print(f"Terminating pod: {pod.metadata.name}")
             self.k8s_core.delete_namespaced_pod(
@@ -22,11 +27,15 @@ class KubernetesLoadTest:
             )
             await asyncio.sleep(30)
 
-    async def scale_test(self, deployment_name: str = "amas", targets = (2, 5, 10)) -> None:
+    async def scale_test(
+        self, deployment_name: str = "amas", targets=(2, 5, 10)
+    ) -> None:
         for target in targets:
             print(f"Scaling to {target} replicas")
             self.k8s_apps.patch_namespaced_deployment_scale(
-                name=deployment_name, namespace=self.namespace, body={"spec": {"replicas": target}}
+                name=deployment_name,
+                namespace=self.namespace,
+                body={"spec": {"replicas": target}},
             )
             await asyncio.sleep(60)
 
@@ -40,6 +49,10 @@ class KubernetesLoadTest:
                 egress=[],
             ),
         )
-        self.k8s_networking.create_namespaced_network_policy(namespace=self.namespace, body=np)
+        self.k8s_networking.create_namespaced_network_policy(
+            namespace=self.namespace, body=np
+        )
         await asyncio.sleep(120)
-        self.k8s_networking.delete_namespaced_network_policy(name="partition-test", namespace=self.namespace)
+        self.k8s_networking.delete_namespaced_network_policy(
+            name="partition-test", namespace=self.namespace
+        )

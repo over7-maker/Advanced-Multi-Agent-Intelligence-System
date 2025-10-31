@@ -52,5 +52,6 @@ class TestBasicFunctionality:
     def test_environment_variables(self):
         """Test that environment variables can be set"""
         import os
-        os.environ['TEST_VAR'] = 'test_value'
-        assert os.environ.get('TEST_VAR') == 'test_value'
+
+        os.environ["TEST_VAR"] = "test_value"
+        assert os.environ.get("TEST_VAR") == "test_value"

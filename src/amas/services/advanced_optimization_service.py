@@ -6,8 +6,8 @@ Phase 7: Advanced performance optimization, caching, and resource management
 import asyncio
 import gc
 import gzip
-import logging
 import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum

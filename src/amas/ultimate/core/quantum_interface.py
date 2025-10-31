@@ -313,9 +313,7 @@ class QuantumAMASInterface:
             return quantum_command
 
         except Exception as e:
-            self.console.print(
-                f"❌ Quantum command processing failed: {e}", style="red"
-            )
+            self.console.print(f"❌ Quantum command processing failed: {e}", style="red")
             raise e
 
     def _analyze_user_consciousness(self, command_text: str) -> ConsciousnessLevel:

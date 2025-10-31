@@ -415,9 +415,9 @@ Focus on accuracy, helpfulness, and professional communication.""",
 
             # Add context from previous phases
             if context:
-                phase["prompt"] = (
-                    f"Context from previous analysis:\n{context}\n\n{phase['prompt']}"
-                )
+                phase[
+                    "prompt"
+                ] = f"Context from previous analysis:\n{context}\n\n{phase['prompt']}"
 
             # Execute phase
             result = await self.execute_task(**phase)

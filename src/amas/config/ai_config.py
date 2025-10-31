@@ -1,4 +1,5 @@
 from standalone_universal_ai_manager import get_api_key
+
 """
 AI Configuration Manager - Handles all AI provider configurations
 """

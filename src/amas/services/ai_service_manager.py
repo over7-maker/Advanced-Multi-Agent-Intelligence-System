@@ -1,4 +1,5 @@
 from standalone_universal_ai_manager import get_api_key
+
 """
 AI Service Manager with Multi-Provider Fallback System
 Handles 6 different AI providers with intelligent failover
@@ -276,7 +277,6 @@ class AIServiceManager:
                 headers=headers,
                 timeout=aiohttp.ClientTimeout(total=config.timeout),
             ) as response:
-
                 await self._increment_rate_limit(provider)
 
                 if response.status == 200:

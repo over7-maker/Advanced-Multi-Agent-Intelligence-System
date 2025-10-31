@@ -226,9 +226,7 @@ class QuickStartIntegration:
         print(f"\n🎯 Overall Results: {passed}/{len(results)} tests passed")
 
         if passed == len(results):
-            print(
-                "🎉 All tests passed! The AI API Manager is ready for production use."
-            )
+            print("🎉 All tests passed! The AI API Manager is ready for production use.")
         else:
             print("⚠️  Some tests failed. Please check the configuration and API keys.")
 

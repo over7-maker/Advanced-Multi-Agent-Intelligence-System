@@ -40,9 +40,7 @@ class AMASIntelligenceManager:
         for agent in agents:
             self.personality_orchestrator.register_agent(agent)
 
-        self.logger.info(
-            f"✅ Registered {len(agents)} agents with intelligence systems"
-        )
+        self.logger.info(f"✅ Registered {len(agents)} agents with intelligence systems")
 
     async def start_intelligence_systems(self):
         """Start all intelligence systems"""

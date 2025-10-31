@@ -2,10 +2,10 @@ import asyncio
 from typing import Dict
 
 from scripts.load_testing import (
+    APIEndpointScenario,
+    HealthCheckScenario,
     LoadTestConfig,
     LoadTestRunner,
-    HealthCheckScenario,
-    APIEndpointScenario,
 )
 
 
@@ -38,6 +38,7 @@ class EnterpriseLoadTesting:
 
 
 if __name__ == "__main__":
+
     async def main():
         tester = EnterpriseLoadTesting()
         res = await tester.run_enterprise_benchmark("http://localhost:8000")

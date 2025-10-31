@@ -1,0 +1,116 @@
+name: Auto Format and Commit
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch or ref to format (defaults to PR head or current ref)"
+        required: false
+        default: ""
+      paths:
+        description: "Space-separated paths to format"
+        required: false
+        default: "src tests"
+  pull_request:
+    types: [labeled, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || 'dispatch' }}
+  cancel-in-progress: true
+
+jobs:
+  format:
+    name: Run Black + isort
+    runs-on: ubuntu-22.04
+    if: >
+      (github.event_name == 'workflow_dispatch') ||
+      (
+        github.event_name == 'pull_request' &&
+        (github.event.action == 'labeled' || github.event.action == 'synchronize' || github.event.action == 'reopened') &&
+        contains(github.event.pull_request.labels.*.name, 'auto-format') &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      )
+
+    steps:
+      - name: Validate ref exists (if provided)
+        if: inputs.ref != ''
+        run: |
+          git ls-remote --exit-code origin ${{ inputs.ref }} || (echo "Ref '${{ inputs.ref }}' does not exist" && exit 1)
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Use ref input if provided, else PR head, else current ref
+          ref: ${{ inputs.ref || github.head_ref || github.ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml', '**/setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install formatters
+        run: |
+          python -m pip install --upgrade pip
+          pip install black==23.11.0 isort==5.12.0
+
+      - name: Run formatters
+        id: runfmt
+        env:
+          TARGETS: ${{ inputs.paths || 'src tests' }}
+        run: |
+          set -e
+          echo "Formatting paths: ${TARGETS}"
+          # Safety exclude common dirs
+          EXCLUDES="--exclude '(\.venv|venv|\.tox|\.git|dist|build|\.pytest_cache|htmlcov)'"
+          black ${TARGETS} --line-length 88 ${EXCLUDES} || true
+          isort ${TARGETS} --profile black || true
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit formatting changes
+        if: steps.runfmt.outputs.changed == 'true'
+        run: |
+          # Prevent accidental pushes to protected branches
+          if [ "${{ github.ref_name }}" = "main" ] || [ "${{ github.ref_name }}" = "develop" ]; then
+            echo "Refusing to push to protected branch: ${{ github.ref_name }}"
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore(format): apply Black/isort"
+          git push
+
+      - name: Comment on result
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const changed = core.getInput('changed', { required: false }) || '${{ steps.runfmt.outputs.changed }}'
+            const body = changed === 'true'
+              ? '✅ Auto-format pushed updates to this PR.'
+              : 'ℹ️ Auto-format found no changes.'
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            })

@@ -268,9 +268,7 @@ class ConsciousnessManager:
 
     def _initialize_consciousness_manager(self):
         """Initialize consciousness manager"""
-        self.console.print(
-            "🧠 Initializing Consciousness Manager...", style="bold cyan"
-        )
+        self.console.print("🧠 Initializing Consciousness Manager...", style="bold cyan")
 
         # Establish consciousness connections
         self._establish_consciousness_connections()
@@ -661,9 +659,7 @@ class ConsciousnessManager:
             # Update network coherence
             self._update_network_coherence()
 
-            self.console.print(
-                f"✅ Consciousness node '{node_id}' added", style="green"
-            )
+            self.console.print(f"✅ Consciousness node '{node_id}' added", style="green")
             return node_id
 
         except Exception as e:
