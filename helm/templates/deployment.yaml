@@ -1,0 +1,109 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "amas.fullname" . }}
+  labels:
+    app: {{ include "amas.name" . }}
+    chart: {{ include "amas.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "amas.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "amas.name" . }}
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: {{ include "amas.fullname" . }}
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: {{ .Values.security.fsGroup }}
+      containers:
+        - name: amas
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8000
+              name: http
+            - containerPort: 3000
+              name: dashboard
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://postgres:$(POSTGRES_PASSWORD)@postgres:5432/amas?sslmode=require"
+            - name: REDIS_URL
+              value: "rediss://:$(REDIS_PASSWORD)@redis:6379/0"
+            - name: NEO4J_URI
+              value: "neo4j+s://neo4j:7687"
+            - name: NEO4J_USER
+              value: "neo4j"
+          envFrom:
+            - configMapRef:
+                name: {{ include "amas.fullname" . }}
+          volumeMounts:
+            - name: amas-data
+              mountPath: /app/data
+            - name: amas-logs
+              mountPath: /app/logs
+            - name: amas-config
+              mountPath: /app/config
+            - name: tmp-dir
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: {{ .Values.security.allowPrivilegeEscalation | default false }}
+            readOnlyRootFilesystem: {{ .Values.security.readOnlyRootFilesystem | default true }}
+            runAsNonRoot: true
+            runAsUser: {{ .Values.security.runAsUser }}
+            capabilities:
+              drop: ["ALL"]
+          resources:
+{{ toYaml .Values.resources | indent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+      volumes:
+        - name: amas-data
+          persistentVolumeClaim:
+            claimName: amas-data-pvc
+        - name: amas-logs
+          persistentVolumeClaim:
+            claimName: amas-logs-pvc
+        - name: amas-config
+          configMap:
+            name: {{ include "amas.fullname" . }}
+        - name: tmp-dir
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values: ["{{ include "amas.name" . }}"]
+                topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app: {{ include "amas.name" . }}

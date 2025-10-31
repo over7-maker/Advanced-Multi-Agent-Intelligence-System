@@ -1,0 +1,238 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: amas-dashboard
+  namespace: amas
+  labels:
+    app: grafana
+    component: dashboard
+data:
+  amas-dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "AMAS Performance Dashboard",
+        "tags": ["amas", "performance"],
+        "style": "dark",
+        "timezone": "browser",
+        "panels": [
+          {
+            "id": 1,
+            "title": "Request Rate",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(amas_requests_total[5m])",
+                "legendFormat": "{{method}} {{endpoint}}"
+              }
+            ],
+            "xAxis": {
+              "show": true
+            },
+            "yAxes": [
+              {
+                "label": "Requests/sec",
+                "show": true
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 0,
+              "y": 0
+            }
+          },
+          {
+            "id": 2,
+            "title": "Response Time",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.50, rate(amas_request_duration_seconds_bucket[5m]))",
+                "legendFormat": "50th percentile"
+              },
+              {
+                "expr": "histogram_quantile(0.95, rate(amas_request_duration_seconds_bucket[5m]))",
+                "legendFormat": "95th percentile"
+              },
+              {
+                "expr": "histogram_quantile(0.99, rate(amas_request_duration_seconds_bucket[5m]))",
+                "legendFormat": "99th percentile"
+              }
+            ],
+            "xAxis": {
+              "show": true
+            },
+            "yAxes": [
+              {
+                "label": "Seconds",
+                "show": true
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 12,
+              "y": 0
+            }
+          },
+          {
+            "id": 3,
+            "title": "Error Rate",
+            "type": "singlestat",
+            "targets": [
+              {
+                "expr": "rate(amas_requests_total{status=\"error\"}[5m]) / rate(amas_requests_total[5m]) * 100",
+                "legendFormat": "Error Rate %"
+              }
+            ],
+            "valueName": "current",
+            "format": "percent",
+            "thresholds": "1,5",
+            "colorBackground": true,
+            "colorValue": false,
+            "colors": ["#d44a3a", "#e24d42", "#299c46"],
+            "gridPos": {
+              "h": 4,
+              "w": 6,
+              "x": 0,
+              "y": 8
+            }
+          },
+          {
+            "id": 4,
+            "title": "Memory Usage",
+            "type": "singlestat",
+            "targets": [
+              {
+                "expr": "amas_memory_usage_bytes / (1024*1024*1024)",
+                "legendFormat": "Memory GB"
+              }
+            ],
+            "valueName": "current",
+            "format": "short",
+            "thresholds": "2,4",
+            "colorBackground": true,
+            "colorValue": false,
+            "colors": ["#299c46", "#e24d42", "#d44a3a"],
+            "gridPos": {
+              "h": 4,
+              "w": 6,
+              "x": 6,
+              "y": 8
+            }
+          },
+          {
+            "id": 5,
+            "title": "CPU Usage",
+            "type": "singlestat",
+            "targets": [
+              {
+                "expr": "amas_cpu_usage_percent",
+                "legendFormat": "CPU %"
+              }
+            ],
+            "valueName": "current",
+            "format": "short",
+            "thresholds": "70,90",
+            "colorBackground": true,
+            "colorValue": false,
+            "colors": ["#299c46", "#e24d42", "#d44a3a"],
+            "gridPos": {
+              "h": 4,
+              "w": 6,
+              "x": 12,
+              "y": 8
+            }
+          },
+          {
+            "id": 6,
+            "title": "Active Connections",
+            "type": "singlestat",
+            "targets": [
+              {
+                "expr": "amas_active_connections",
+                "legendFormat": "Connections"
+              }
+            ],
+            "valueName": "current",
+            "format": "short",
+            "gridPos": {
+              "h": 4,
+              "w": 6,
+              "x": 18,
+              "y": 8
+            }
+          },
+          {
+            "id": 7,
+            "title": "Database Connections",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "amas_db_connections_active",
+                "legendFormat": "Active"
+              },
+              {
+                "expr": "amas_db_connections_idle",
+                "legendFormat": "Idle"
+              },
+              {
+                "expr": "amas_db_connections_total",
+                "legendFormat": "Total"
+              }
+            ],
+            "xAxis": {
+              "show": true
+            },
+            "yAxes": [
+              {
+                "label": "Connections",
+                "show": true
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 0,
+              "y": 12
+            }
+          },
+          {
+            "id": 8,
+            "title": "Cache Performance",
+            "type": "graph",
+            "targets": [
+              {
+                "expr": "rate(amas_cache_hits_total[5m])",
+                "legendFormat": "Cache Hits"
+              },
+              {
+                "expr": "rate(amas_cache_misses_total[5m])",
+                "legendFormat": "Cache Misses"
+              }
+            ],
+            "xAxis": {
+              "show": true
+            },
+            "yAxes": [
+              {
+                "label": "Operations/sec",
+                "show": true
+              }
+            ],
+            "gridPos": {
+              "h": 8,
+              "w": 12,
+              "x": 12,
+              "y": 12
+            }
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "refresh": "30s"
+      }
+    }
