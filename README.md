@@ -521,6 +521,31 @@ policy:
 
 ---
 
+## 🧩 **Phase 2 Core Services**
+
+> Phase 2 focuses on resilience, security, and operational maturity. These components are production-ready building blocks you can use in or outside this project.
+> **🚀 [Developer Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md)** - Complete guide for using Phase 2 components in external projects
+>
+> **Status**: ✅ All services stable | **Version**: v3.0.0+ | **API Compatibility**: Backward compatible within v3.x
+
+- Graceful Shutdown Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#graceful-shutdown-service)
+- Timeout Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#timeout-service)
+- Retry Utilities — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#retry-utilities)
+- Enhanced Authentication & Authorization — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [API docs](docs/API_DOCUMENTATION.md#authentication-endpoints) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#authentication-integration)
+- Rate Limiting Middleware — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#rate-limiting-middleware)
+- Circuit Breaker Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#circuit-breaker-service)
+- Error Recovery Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#error-recovery-service)
+- Health Check Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#health-check-service)
+- Prometheus Metrics Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Monitoring Guide](docs/MONITORING_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#prometheus-metrics-service)
+- Structured Logging Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#structured-logging-service)
+
+### 🧩 Phase 2 Compatibility
+- Python: 3.10+
+- Frameworks: FastAPI (primary), compatible with Starlette/Flask with adapters
+- Versioning: Semantic; patch updates maintain backward compatibility for public APIs
+
+> ⚠️ Security note: Always enforce RBAC checks on protected endpoints, use short‑lived access tokens with refresh rotation, and apply rate limiting on auth endpoints.
+
 <a name="documentation"></a>
 ## 📚 **Complete Documentation**
 

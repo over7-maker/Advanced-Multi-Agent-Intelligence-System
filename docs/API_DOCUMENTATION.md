@@ -108,6 +108,180 @@ Comprehensive health information endpoint.
 
 ---
 
+## 🔐 **Authentication Endpoints**
+
+### **POST /api/auth/login**
+Authenticate user and return access/refresh tokens.
+
+**Request Body:**
+```json
+{
+  "username": "user@example.com",
+  "password": "secure_password"
+}
+```
+
+**Response:**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "expires_in": 3600
+}
+```
+
+**Status Codes:**
+- `200` - Success
+- `401` - Invalid credentials
+- `429` - Rate limit exceeded
+
+---
+
+### **POST /api/auth/refresh**
+Refresh access token using refresh token.
+
+**Request Body:**
+```json
+{
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Response:**
+```json
+{
+  "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "token_type": "bearer",
+  "expires_in": 3600
+}
+```
+
+**Status Codes:**
+- `200` - Success
+- `401` - Invalid refresh token
+
+---
+
+### **POST /api/auth/logout**
+Logout user and revoke tokens.
+
+**Headers:**
+- `Authorization: Bearer <access_token>`
+
+**Response:**
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+
+**Status Codes:**
+- `200` - Success
+
+---
+
+### **GET /api/auth/me**
+Get current authenticated user information.
+
+**Headers:**
+- `Authorization: Bearer <access_token>`
+
+**Response:**
+```json
+{
+  "id": "user-123",
+  "username": "user@example.com",
+  "email": "user@example.com",
+  "full_name": "John Doe",
+  "roles": ["user", "analyst"],
+  "permissions": ["agent:read", "agent:write"],
+  "is_active": true,
+  "is_verified": true,
+  "created_at": "2024-01-15T10:30:00Z",
+  "last_login": "2024-01-15T12:30:00Z"
+}
+```
+
+**Status Codes:**
+- `200` - Success
+- `401` - Unauthorized
+
+---
+
+### **GET /api/auth/permissions**
+Get current user permissions.
+
+**Headers:**
+- `Authorization: Bearer <access_token>`
+
+**Response:**
+```json
+["agent:read", "agent:write", "user:read"]
+```
+
+**Status Codes:**
+- `200` - Success
+- `401` - Unauthorized
+
+---
+
+### **GET /api/auth/roles**
+Get current user roles.
+
+**Headers:**
+- `Authorization: Bearer <access_token>`
+
+**Response:**
+```json
+["user", "analyst"]
+```
+
+**Status Codes:**
+- `200` - Success
+- `401` - Unauthorized
+
+---
+
+### **POST /api/auth/users**
+Create a new user (requires `user:manage` permission).
+
+**Headers:**
+- `Authorization: Bearer <access_token>`
+
+**Request Body:**
+```json
+{
+  "username": "newuser@example.com",
+  "email": "newuser@example.com",
+  "password": "secure_password",
+  "full_name": "New User",
+  "roles": ["user"]
+}
+```
+
+**Response:**
+```json
+{
+  "id": "user-456",
+  "username": "newuser@example.com",
+  "email": "newuser@example.com",
+  "roles": ["user"],
+  "is_active": true,
+  "created_at": "2024-01-15T10:30:00Z"
+}
+```
+
+**Status Codes:**
+- `201` - User created
+- `400` - Invalid input
+- `401` - Unauthorized
+- `403` - Forbidden (missing permission)
+- `409` - User already exists
+
+---
+
 ## 📊 **Metrics Endpoints**
 
 ### **GET /metrics**
