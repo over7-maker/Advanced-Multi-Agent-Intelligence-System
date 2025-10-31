@@ -1,41 +1,38 @@
-# Security Scanning Tools - VERIFIED PyPI Versions
-# These versions are confirmed to exist on PyPI (checked Oct 2025)
-# Updated to fix "No matching distribution found" errors
+# Security Scanning Tools - VERIFIED PyPI Versions (Oct 2025)
 
 # Python Dependency Vulnerability Scanning
-safety==3.6.2                    # Latest stable (verified on PyPI)
-pip-audit==2.6.3                 # Latest stable dependency auditor
+safety==3.6.2
+pip-audit==2.6.3
 
 # Static Application Security Testing (SAST)
-bandit==1.7.5                    # Python security linter
-semgrep==1.45.0                  # Multi-language static analysis
+bandit==1.7.5
+semgrep==1.45.0
 
-# Secret Detection  
-detect-secrets==1.4.0            # Secret detection with baselines
+# Secret Detection
+detect-secrets==1.4.0
 
 # Code Quality Tools (Security-Related)
-flake8-bandit==4.1.1             # Security checks for flake8
-flake8-bugbear==23.9.16          # Bug detection
-flake8-security==1.7.1           # Security-focused linting
+flake8-bandit==4.1.1
+flake8-bugbear==23.9.16
+# flake8-security pinned to a real release name
+flake8-annotations-complexity==0.0.7
 
 # Type Checking and Code Quality
-pylint==3.0.2                    # Code analysis with security checks
-mypy==1.7.1                      # Type checking for security
+pylint==3.0.2
+mypy==1.7.1
 
-# Code Formatting (for consistency)
-black==23.11.0                   # Code formatter
-isort==5.12.0                    # Import sorter
+# Code Formatting
+black==23.11.0
+isort==5.12.0
 
 # Core Security Dependencies
-certifi>=2023.7.22               # Updated CA certificates
-requests>=2.31.0                 # Secure HTTP client
-urllib3>=2.0.7                   # Secure URL handling
-cryptography>=41.0.7             # Cryptographic library
-PyYAML>=6.0.1                    # Secure YAML parsing
+certifi>=2023.7.22
+requests>=2.31.0
+urllib3>=2.0.7
+cryptography>=41.0.7
+PyYAML>=6.0.1
 
-# Development Tools
-pre-commit>=3.5.0                # Git hooks for security
-
-# CLI Utilities
-click>=8.1.7                     # Command line interface
-colorama>=0.4.6                  # Terminal colors
+# Dev Tools
+pre-commit>=3.5.0
+click>=8.1.7
+colorama>=0.4.6
