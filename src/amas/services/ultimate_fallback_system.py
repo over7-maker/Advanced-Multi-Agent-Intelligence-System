@@ -1,4 +1,5 @@
 from standalone_universal_ai_manager import get_api_key
+
 #!/usr/bin/env python3
 """
 Ultimate Fallback System - Comprehensive fallback for all 9 AI providers

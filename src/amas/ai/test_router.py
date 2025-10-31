@@ -6,17 +6,25 @@ Test Suite for Universal AI Router
 Comprehensive tests to validate failover behavior and provider integration.
 """
 
-import unittest
 import asyncio
 import os
-from unittest.mock import patch, MagicMock, AsyncMock
 import sys
+import unittest
+from unittest.mock import AsyncMock, MagicMock, patch
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../../..'))
 
 from src.amas.ai.router import (
-    generate, get_available_providers, get_provider_status, health_check,
-    build_provider_priority, ProviderError, _enabled, _env
+    ProviderError,
+    _enabled,
+    _env,
+    build_provider_priority,
+    generate,
+    get_available_providers,
+    get_provider_status,
+    health_check,
 )
+
 
 class TestUniversalRouter(unittest.TestCase):
     """Test cases for universal AI router."""

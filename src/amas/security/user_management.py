@@ -7,14 +7,15 @@ import asyncio
 import logging
 import secrets
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
 from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
 
 
 class UserStatus(Enum):
     """User status enumeration"""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     SUSPENDED = "suspended"
@@ -24,6 +25,7 @@ class UserStatus(Enum):
 
 class UserRole(Enum):
     """User role enumeration"""
+
     SUPER_ADMIN = "super_admin"
     ADMIN = "admin"
     MANAGER = "manager"
@@ -35,42 +37,43 @@ class UserRole(Enum):
 
 class Permission(Enum):
     """Permission enumeration"""
+
     # System permissions
     SYSTEM_READ = "system:read"
     SYSTEM_WRITE = "system:write"
     SYSTEM_DELETE = "system:delete"
     SYSTEM_MANAGE = "system:manage"
-    
+
     # User management permissions
     USER_READ = "user:read"
     USER_WRITE = "user:write"
     USER_DELETE = "user:delete"
     USER_MANAGE = "user:manage"
-    
+
     # Agent permissions
     AGENT_READ = "agent:read"
     AGENT_WRITE = "agent:write"
     AGENT_DELETE = "agent:delete"
     AGENT_MANAGE = "agent:manage"
     AGENT_EXECUTE = "agent:execute"
-    
+
     # Workflow permissions
     WORKFLOW_READ = "workflow:read"
     WORKFLOW_WRITE = "workflow:write"
     WORKFLOW_DELETE = "workflow:delete"
     WORKFLOW_EXECUTE = "workflow:execute"
-    
+
     # Data permissions
     DATA_READ = "data:read"
     DATA_WRITE = "data:write"
     DATA_DELETE = "data:delete"
     DATA_EXPORT = "data:export"
-    
+
     # Security permissions
     SECURITY_READ = "security:read"
     SECURITY_MANAGE = "security:manage"
     AUDIT_READ = "audit:read"
-    
+
     # Enterprise permissions
     SSO_MANAGE = "sso:manage"
     LDAP_MANAGE = "ldap:manage"
@@ -87,7 +90,9 @@ class User:
         self.email = email
         self.first_name = kwargs.get("first_name", "")
         self.last_name = kwargs.get("last_name", "")
-        self.display_name = kwargs.get("display_name", f"{self.first_name} {self.last_name}".strip())
+        self.display_name = kwargs.get(
+            "display_name", f"{self.first_name} {self.last_name}".strip()
+        )
         self.status = UserStatus(kwargs.get("status", UserStatus.ACTIVE.value))
         self.roles = kwargs.get("roles", [])
         self.permissions = kwargs.get("permissions", [])
@@ -119,8 +124,14 @@ class User:
             "last_name": self.last_name,
             "display_name": self.display_name,
             "status": self.status.value,
-            "roles": [role.value if isinstance(role, UserRole) else role for role in self.roles],
-            "permissions": [perm.value if isinstance(perm, Permission) else perm for perm in self.permissions],
+            "roles": [
+                role.value if isinstance(role, UserRole) else role
+                for role in self.roles
+            ],
+            "permissions": [
+                perm.value if isinstance(perm, Permission) else perm
+                for perm in self.permissions
+            ],
             "groups": self.groups,
             "department": self.department,
             "title": self.title,
@@ -131,7 +142,11 @@ class User:
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "last_login": self.last_login.isoformat() if self.last_login else None,
-            "password_changed_at": self.password_changed_at.isoformat() if self.password_changed_at else None,
+            "password_changed_at": (
+                self.password_changed_at.isoformat()
+                if self.password_changed_at
+                else None
+            ),
             "mfa_enabled": self.mfa_enabled,
             "devices": self.devices,
             "preferences": self.preferences,
@@ -140,7 +155,9 @@ class User:
 
     def has_permission(self, permission: Union[str, Permission]) -> bool:
         """Check if user has specific permission"""
-        perm_str = permission.value if isinstance(permission, Permission) else permission
+        perm_str = (
+            permission.value if isinstance(permission, Permission) else permission
+        )
         return perm_str in self.permissions
 
     def has_role(self, role: Union[str, UserRole]) -> bool:
@@ -178,8 +195,14 @@ class UserGroup:
             "group_id": self.group_id,
             "name": self.name,
             "description": self.description,
-            "roles": [role.value if isinstance(role, UserRole) else role for role in self.roles],
-            "permissions": [perm.value if isinstance(perm, Permission) else perm for perm in self.permissions],
+            "roles": [
+                role.value if isinstance(role, UserRole) else role
+                for role in self.roles
+            ],
+            "permissions": [
+                perm.value if isinstance(perm, Permission) else perm
+                for perm in self.permissions
+            ],
             "members": self.members,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
@@ -277,15 +300,15 @@ class UserManagementService:
         timezone: str = "UTC",
         language: str = "en",
         created_by: str = None,
-        **kwargs
+        **kwargs,
     ) -> User:
         """Create a new user"""
         user_id = f"user_{secrets.token_hex(8)}"
-        
+
         # Set default roles
         if roles is None:
             roles = [UserRole.USER.value]
-        
+
         if groups is None:
             groups = []
 
@@ -305,7 +328,7 @@ class UserManagementService:
             timezone=timezone,
             language=language,
             created_by=created_by,
-            **kwargs
+            **kwargs,
         )
 
         # Calculate permissions based on roles
@@ -320,7 +343,7 @@ class UserManagementService:
             user_id=user_id,
             username=username,
             created_by=created_by,
-            details={"roles": roles, "groups": groups}
+            details={"roles": roles, "groups": groups},
         )
 
         return user
@@ -343,7 +366,9 @@ class UserManagementService:
                 return user
         return None
 
-    async def update_user(self, user_id: str, updates: Dict[str, Any], updated_by: str = None) -> Optional[User]:
+    async def update_user(
+        self, user_id: str, updates: Dict[str, Any], updated_by: str = None
+    ) -> Optional[User]:
         """Update user information"""
         user = await self.get_user(user_id)
         if not user:
@@ -362,10 +387,7 @@ class UserManagementService:
 
         # Log audit event
         await self._log_audit_event(
-            "user_updated",
-            user_id=user_id,
-            updated_by=updated_by,
-            details=updates
+            "user_updated", user_id=user_id, updated_by=updated_by, details=updates
         )
 
         return user
@@ -383,7 +405,7 @@ class UserManagementService:
             "user_deleted",
             user_id=user_id,
             username=user.username,
-            deleted_by=deleted_by
+            deleted_by=deleted_by,
         )
 
         return True
@@ -395,7 +417,7 @@ class UserManagementService:
         group: Optional[str] = None,
         department: Optional[str] = None,
         limit: int = 100,
-        offset: int = 0
+        offset: int = 0,
     ) -> List[User]:
         """List users with filters"""
         filtered_users = []
@@ -417,9 +439,11 @@ class UserManagementService:
         filtered_users.sort(key=lambda x: x.created_at, reverse=True)
 
         # Apply pagination
-        return filtered_users[offset:offset + limit]
+        return filtered_users[offset : offset + limit]
 
-    async def assign_role(self, user_id: str, role: str, assigned_by: str = None) -> bool:
+    async def assign_role(
+        self, user_id: str, role: str, assigned_by: str = None
+    ) -> bool:
         """Assign role to user"""
         user = await self.get_user(user_id)
         if not user:
@@ -432,15 +456,14 @@ class UserManagementService:
 
             # Log audit event
             await self._log_audit_event(
-                "role_assigned",
-                user_id=user_id,
-                role=role,
-                assigned_by=assigned_by
+                "role_assigned", user_id=user_id, role=role, assigned_by=assigned_by
             )
 
         return True
 
-    async def remove_role(self, user_id: str, role: str, removed_by: str = None) -> bool:
+    async def remove_role(
+        self, user_id: str, role: str, removed_by: str = None
+    ) -> bool:
         """Remove role from user"""
         user = await self.get_user(user_id)
         if not user:
@@ -453,15 +476,14 @@ class UserManagementService:
 
             # Log audit event
             await self._log_audit_event(
-                "role_removed",
-                user_id=user_id,
-                role=role,
-                removed_by=removed_by
+                "role_removed", user_id=user_id, role=role, removed_by=removed_by
             )
 
         return True
 
-    async def assign_permission(self, user_id: str, permission: str, assigned_by: str = None) -> bool:
+    async def assign_permission(
+        self, user_id: str, permission: str, assigned_by: str = None
+    ) -> bool:
         """Assign permission to user"""
         user = await self.get_user(user_id)
         if not user:
@@ -476,12 +498,14 @@ class UserManagementService:
                 "permission_assigned",
                 user_id=user_id,
                 permission=permission,
-                assigned_by=assigned_by
+                assigned_by=assigned_by,
             )
 
         return True
 
-    async def remove_permission(self, user_id: str, permission: str, removed_by: str = None) -> bool:
+    async def remove_permission(
+        self, user_id: str, permission: str, removed_by: str = None
+    ) -> bool:
         """Remove permission from user"""
         user = await self.get_user(user_id)
         if not user:
@@ -496,7 +520,7 @@ class UserManagementService:
                 "permission_removed",
                 user_id=user_id,
                 permission=permission,
-                removed_by=removed_by
+                removed_by=removed_by,
             )
 
         return True
@@ -507,11 +531,11 @@ class UserManagementService:
         description: str = "",
         roles: List[str] = None,
         permissions: List[str] = None,
-        created_by: str = None
+        created_by: str = None,
     ) -> UserGroup:
         """Create a new user group"""
         group_id = f"group_{secrets.token_hex(8)}"
-        
+
         if roles is None:
             roles = []
         if permissions is None:
@@ -523,26 +547,25 @@ class UserManagementService:
             description=description,
             roles=roles,
             permissions=permissions,
-            created_by=created_by
+            created_by=created_by,
         )
 
         self.groups[group_id] = group
 
         # Log audit event
         await self._log_audit_event(
-            "group_created",
-            group_id=group_id,
-            name=name,
-            created_by=created_by
+            "group_created", group_id=group_id, name=name, created_by=created_by
         )
 
         return group
 
-    async def add_user_to_group(self, user_id: str, group_id: str, added_by: str = None) -> bool:
+    async def add_user_to_group(
+        self, user_id: str, group_id: str, added_by: str = None
+    ) -> bool:
         """Add user to group"""
         user = await self.get_user(user_id)
         group = self.groups.get(group_id)
-        
+
         if not user or not group:
             return False
 
@@ -559,16 +582,18 @@ class UserManagementService:
                 "user_added_to_group",
                 user_id=user_id,
                 group_id=group_id,
-                added_by=added_by
+                added_by=added_by,
             )
 
         return True
 
-    async def remove_user_from_group(self, user_id: str, group_id: str, removed_by: str = None) -> bool:
+    async def remove_user_from_group(
+        self, user_id: str, group_id: str, removed_by: str = None
+    ) -> bool:
         """Remove user from group"""
         user = await self.get_user(user_id)
         group = self.groups.get(group_id)
-        
+
         if not user or not group:
             return False
 
@@ -586,12 +611,14 @@ class UserManagementService:
                 "user_removed_from_group",
                 user_id=user_id,
                 group_id=group_id,
-                removed_by=removed_by
+                removed_by=removed_by,
             )
 
         return True
 
-    async def change_user_status(self, user_id: str, status: str, changed_by: str = None) -> bool:
+    async def change_user_status(
+        self, user_id: str, status: str, changed_by: str = None
+    ) -> bool:
         """Change user status"""
         user = await self.get_user(user_id)
         if not user:
@@ -607,7 +634,7 @@ class UserManagementService:
             user_id=user_id,
             old_status=old_status,
             new_status=status,
-            changed_by=changed_by
+            changed_by=changed_by,
         )
 
         return True
@@ -628,7 +655,9 @@ class UserManagementService:
 
         return user.has_permission(permission)
 
-    def _calculate_user_permissions(self, roles: List[str], groups: List[str]) -> List[str]:
+    def _calculate_user_permissions(
+        self, roles: List[str], groups: List[str]
+    ) -> List[str]:
         """Calculate user permissions based on roles and groups"""
         permissions = set()
 
@@ -650,7 +679,7 @@ class UserManagementService:
         event = {
             "event_type": event_type,
             "timestamp": datetime.utcnow().isoformat(),
-            **kwargs
+            **kwargs,
         }
         self.audit_log.append(event)
 
@@ -659,7 +688,7 @@ class UserManagementService:
         user_id: Optional[str] = None,
         event_type: Optional[str] = None,
         limit: int = 100,
-        offset: int = 0
+        offset: int = 0,
     ) -> List[Dict[str, Any]]:
         """Get audit log with filters"""
         filtered_events = []
@@ -677,15 +706,21 @@ class UserManagementService:
         filtered_events.sort(key=lambda x: x["timestamp"], reverse=True)
 
         # Apply pagination
-        return filtered_events[offset:offset + limit]
+        return filtered_events[offset : offset + limit]
 
     async def get_user_statistics(self) -> Dict[str, Any]:
         """Get user statistics"""
         total_users = len(self.users)
-        active_users = len([u for u in self.users.values() if u.status == UserStatus.ACTIVE])
-        inactive_users = len([u for u in self.users.values() if u.status == UserStatus.INACTIVE])
-        suspended_users = len([u for u in self.users.values() if u.status == UserStatus.SUSPENDED])
-        
+        active_users = len(
+            [u for u in self.users.values() if u.status == UserStatus.ACTIVE]
+        )
+        inactive_users = len(
+            [u for u in self.users.values() if u.status == UserStatus.INACTIVE]
+        )
+        suspended_users = len(
+            [u for u in self.users.values() if u.status == UserStatus.SUSPENDED]
+        )
+
         role_counts = {}
         for user in self.users.values():
             for role in user.roles:

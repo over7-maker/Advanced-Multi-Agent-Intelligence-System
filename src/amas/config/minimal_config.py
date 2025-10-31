@@ -1,4 +1,5 @@
 from standalone_universal_ai_manager import get_api_key
+
 """
 Minimal Configuration System for AMAS
 Supports graceful degradation with 3-4 essential API keys

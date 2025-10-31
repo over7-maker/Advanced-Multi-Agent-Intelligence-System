@@ -16,7 +16,9 @@ class EnterpriseMetrics:
 
         # Security metrics
         self.failed_auth_attempts = Counter(
-            "amas_failed_auth_attempts_total", "Failed auth attempts", ["method", "user"]
+            "amas_failed_auth_attempts_total",
+            "Failed auth attempts",
+            ["method", "user"],
         )
         self.security_events = Counter(
             "amas_security_events_total", "Security events", ["event_type", "severity"]
@@ -27,7 +29,9 @@ class EnterpriseMetrics:
             "amas_db_pool_utilization_percent", "DB pool utilization"
         )
         self.cache_operation_duration = Histogram(
-            "amas_cache_operation_duration_seconds", "Cache operation duration", ["operation"]
+            "amas_cache_operation_duration_seconds",
+            "Cache operation duration",
+            ["operation"],
         )
 
     def record_user_login(self, auth_method: str, role: str) -> None:
