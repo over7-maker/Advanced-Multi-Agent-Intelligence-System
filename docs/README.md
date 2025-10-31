@@ -175,6 +175,7 @@ Comprehensive guides for using AMAS effectively:
 Complete technical documentation for developers and contributors:
 
 - **[👨‍💻 Developer Guide](developer/README.md)** - Technical implementation
+- **[🚀 Phase 2 Integration Guide](developer/PHASE_2_INTEGRATION_GUIDE.md)** - **NEW!** Use Phase 2 components externally
 - **[🏗️ Architecture Guide](developer/architecture.md)** - System architecture
 - **[🔒 Hardening Guide](developer/hardening.md)** - Security hardening
 - **[🔒 Enhanced Hardening](developer/hardening_enhanced.md)** - Advanced security

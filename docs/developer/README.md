@@ -18,14 +18,15 @@ Welcome to the AMAS Developer Guide! This comprehensive documentation will help 
 3. [Architecture Overview](#architecture-overview)
 4. [AI Agentic Workflows](#ai-agentic-workflows)
 5. [Core Components](#core-components)
-6. [Agent Development](#agent-development)
-7. [API Development](#api-development)
-8. [Testing](#testing)
-9. [Code Style Guide](#code-style-guide)
-10. [Debugging](#debugging)
-11. [Performance Optimization](#performance-optimization)
-12. [Security Considerations](#security-considerations)
-13. [Contributing](#contributing)
+6. **[Phase 2 Integration Guide](PHASE_2_INTEGRATION_GUIDE.md)** - Use Phase 2 components in external projects
+7. [Agent Development](#agent-development)
+8. [API Development](#api-development)
+9. [Testing](#testing)
+10. [Code Style Guide](#code-style-guide)
+11. [Debugging](#debugging)
+12. [Performance Optimization](#performance-optimization)
+13. [Security Considerations](#security-considerations)
+14. [Contributing](#contributing)
 
 ---
 
