@@ -212,7 +212,9 @@ class VisualInterface:
             status_icon = (
                 "🟢"
                 if agent_info.get("status") == "idle"
-                else "🟡" if agent_info.get("status") == "busy" else "🔴"
+                else "🟡"
+                if agent_info.get("status") == "busy"
+                else "🔴"
             )
 
             agent_table.add_row(
@@ -257,7 +259,6 @@ class VisualInterface:
             TimeElapsedColumn(),
             console=self.console,
         ) as progress:
-
             task = progress.add_task(
                 f"Executing {progress_data.get('intent', 'task')}...", total=100
             )

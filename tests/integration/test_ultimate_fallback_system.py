@@ -335,19 +335,19 @@ class UltimateFallbackSystemTester:
         test_results["ultimate_error_handling"] = self.test_ultimate_error_handling()
 
         # Test 4: Ultimate Workflow Integration
-        test_results["ultimate_workflow_integration"] = (
-            self.test_ultimate_workflow_integration()
-        )
+        test_results[
+            "ultimate_workflow_integration"
+        ] = self.test_ultimate_workflow_integration()
 
         # Test 5: Ultimate AI Scripts Integration
-        test_results["ultimate_ai_scripts_integration"] = (
-            self.test_ultimate_ai_scripts_integration()
-        )
+        test_results[
+            "ultimate_ai_scripts_integration"
+        ] = self.test_ultimate_ai_scripts_integration()
 
         # Test 6: Ultimate Fallback Statistics
-        test_results["ultimate_fallback_statistics"] = (
-            self.test_ultimate_fallback_statistics()
-        )
+        test_results[
+            "ultimate_fallback_statistics"
+        ] = self.test_ultimate_fallback_statistics()
 
         # Test 7: Ultimate Reliability
         test_results["ultimate_reliability"] = self.test_ultimate_reliability()

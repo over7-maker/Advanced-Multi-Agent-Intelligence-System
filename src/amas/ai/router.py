@@ -259,7 +259,9 @@ async def call_cerebras_http(
             error_type = (
                 "auth"
                 if resp.status == 401
-                else "quota" if resp.status == 429 else "error"
+                else "quota"
+                if resp.status == 429
+                else "error"
             )
             raise ProviderError(
                 f"Cerebras HTTP {resp.status}: {error_text}", "cerebras", error_type
@@ -330,7 +332,9 @@ async def call_nvidia(
         error_type = (
             "quota"
             if "quota" in str(e).lower()
-            else "auth" if "401" in str(e) else "error"
+            else "auth"
+            if "401" in str(e)
+            else "error"
         )
         raise ProviderError(f"NVIDIA failed: {e}", "nvidia", error_type)
 
@@ -376,7 +380,9 @@ async def call_gemini2(
                 error_type = (
                     "auth"
                     if resp.status == 401
-                    else "quota" if resp.status == 429 else "error"
+                    else "quota"
+                    if resp.status == 429
+                    else "error"
                 )
                 raise ProviderError(
                     f"Gemini2 HTTP {resp.status}: {error_text}", "gemini2", error_type
@@ -449,7 +455,9 @@ async def call_codestral(
         error_type = (
             "quota"
             if "quota" in str(e).lower()
-            else "auth" if "401" in str(e) else "error"
+            else "auth"
+            if "401" in str(e)
+            else "error"
         )
         raise ProviderError(f"Codestral failed: {e}", "codestral", error_type)
 
@@ -481,7 +489,9 @@ async def call_cohere(
                 error_type = (
                     "auth"
                     if resp.status == 401
-                    else "quota" if resp.status == 429 else "error"
+                    else "quota"
+                    if resp.status == 429
+                    else "error"
                 )
                 raise ProviderError(
                     f"Cohere HTTP {resp.status}: {error_text}", "cohere", error_type
@@ -540,7 +550,9 @@ async def call_chutes(
                 error_type = (
                     "auth"
                     if resp.status == 401
-                    else "quota" if resp.status == 429 else "error"
+                    else "quota"
+                    if resp.status == 429
+                    else "error"
                 )
                 raise ProviderError(
                     f"Chutes HTTP {resp.status}: {error_text}", "chutes", error_type
@@ -634,7 +646,9 @@ async def call_openrouter(
         error_type = (
             "quota"
             if "quota" in str(e).lower()
-            else "auth" if "401" in str(e) else "error"
+            else "auth"
+            if "401" in str(e)
+            else "error"
         )
         raise ProviderError(
             f"OpenRouter ({selected_model}) failed: {e}", "openrouter", error_type

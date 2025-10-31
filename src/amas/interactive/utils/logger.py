@@ -290,9 +290,7 @@ class InteractiveLogger:
             with open(file_path, "w") as f:
                 json.dump(logs_data, f, indent=2)
 
-            self.console.print(
-                f"✅ Session logs exported to {file_path}", style="green"
-            )
+            self.console.print(f"✅ Session logs exported to {file_path}", style="green")
 
         except Exception as e:
             self.console.print(f"❌ Failed to export session logs: {e}", style="red")

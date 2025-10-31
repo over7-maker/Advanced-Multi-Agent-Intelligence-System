@@ -52,7 +52,6 @@ def start(ctx, host, port, workers, reload):
         TextColumn("[progress.description]{task.description}"),
         console=console,
     ) as progress:
-
         task = progress.add_task("Starting AMAS system...", total=None)
 
         try:
@@ -102,7 +101,6 @@ def submit_task(ctx, task_type, description, priority, params, wait):
                 TextColumn("[progress.description]{task.description}"),
                 console=console,
             ) as progress:
-
                 submit_task = progress.add_task("Submitting task...", total=None)
                 task_id = await app.submit_task(task_data)
                 progress.update(submit_task, description=f"Task submitted: {task_id}")

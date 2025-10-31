@@ -225,9 +225,7 @@ class AIFallbackManager:
                         self.fallback_stats["fallback_usage"].get(provider_id, 0) + 1
                     )
 
-                    logger.info(
-                        f"✅ Success with {self.providers[provider_id]['name']}"
-                    )
+                    logger.info(f"✅ Success with {self.providers[provider_id]['name']}")
                     return result
                 else:
                     logger.warning(

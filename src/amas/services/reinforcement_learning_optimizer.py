@@ -988,7 +988,9 @@ class ReinforcementLearningOptimizer:
                 "current_model": (
                     "PPO"
                     if self.current_model == self.ppo_model
-                    else "DQN" if self.current_model == self.dqn_model else "A2C"
+                    else "DQN"
+                    if self.current_model == self.dqn_model
+                    else "A2C"
                 ),
                 "training_data_size": len(self.training_data),
                 "optimization_history_size": len(self.optimization_history),

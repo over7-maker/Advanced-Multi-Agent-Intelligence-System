@@ -277,7 +277,6 @@ class AIServiceManager:
                 headers=headers,
                 timeout=aiohttp.ClientTimeout(total=config.timeout),
             ) as response:
-
                 await self._increment_rate_limit(provider)
 
                 if response.status == 200:

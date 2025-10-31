@@ -751,10 +751,10 @@ class AdvancedSecurityManager:
                 scan_results["vulnerabilities"].extend(network_vulns)
 
             # Generate recommendations
-            scan_results["recommendations"] = (
-                await self._generate_security_recommendations(
-                    scan_results["vulnerabilities"]
-                )
+            scan_results[
+                "recommendations"
+            ] = await self._generate_security_recommendations(
+                scan_results["vulnerabilities"]
             )
 
         except Exception as e:

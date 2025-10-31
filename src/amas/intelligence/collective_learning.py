@@ -145,9 +145,7 @@ class CollectiveIntelligenceEngine:
         try:
             with open(self.knowledge_db_path, "rb") as f:
                 self.shared_knowledge = pickle.load(f)
-            self.logger.info(
-                f"✅ Loaded {len(self.shared_knowledge)} knowledge entries"
-            )
+            self.logger.info(f"✅ Loaded {len(self.shared_knowledge)} knowledge entries")
         except FileNotFoundError:
             self.logger.info("📝 Creating new collective knowledge base")
             self.shared_knowledge = {}
@@ -243,9 +241,9 @@ class CollectiveIntelligenceEngine:
             # Update existing knowledge
             self.shared_knowledge[knowledge_key].patterns.append(task_pattern)
             self.shared_knowledge[knowledge_key].usage_count += 1
-            self.shared_knowledge[knowledge_key].last_updated = (
-                datetime.now().isoformat()
-            )
+            self.shared_knowledge[
+                knowledge_key
+            ].last_updated = datetime.now().isoformat()
 
             # Recalculate effectiveness score
             patterns = self.shared_knowledge[knowledge_key].patterns
@@ -696,7 +694,6 @@ class CollectiveIntelligenceEngine:
                             context in self.agent_specializations[agent]
                             for context in insight.applicable_contexts
                         ):
-
                             transfer_opportunities.append(
                                 {
                                     "from_agent": other_agent,
