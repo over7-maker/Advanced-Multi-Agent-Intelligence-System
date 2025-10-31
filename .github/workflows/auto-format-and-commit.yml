@@ -25,7 +25,7 @@ on:
 
 permissions:
   contents: write  # Required to push formatted code back to PR branch
-  pull-requests: write  # Required to comment on PR after formatting
+  pull-requests: write  # Required to comment on PR after formatting (GitHub requires full write for comments)
 
 jobs:
   auto-format:
@@ -50,21 +50,52 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          cd "$GITHUB_WORKSPACE" || exit 1
+          
+          echo "=========================================="
+          echo "🔒 Security Validation"
+          echo "=========================================="
           echo "Validating event context for security..."
           
-          # Extra security check: verify PR is from same repo
-          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            if [[ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+          EVENT_TYPE="${{ github.event_name }}"
+          ACTOR="${{ github.actor }}"
+          
+          # Validate event type
+          if [[ "$EVENT_TYPE" == "pull_request" ]]; then
+            # Extra security check: verify PR is from same repo
+            REPO_FULL_NAME="${{ github.event.pull_request.head.repo.full_name }}"
+            CURRENT_REPO="${{ github.repository }}"
+            
+            if [[ "$REPO_FULL_NAME" != "$CURRENT_REPO" ]]; then
               echo "❌ Security: PR from fork detected. Refusing to format."
+              echo "   PR repo: $REPO_FULL_NAME"
+              echo "   Current repo: $CURRENT_REPO"
               exit 1
             fi
+            
+            # Check if PR is draft (optional: skip drafts)
+            IS_DRAFT="${{ github.event.pull_request.draft }}"
+            if [[ "$IS_DRAFT" == "true" ]]; then
+              echo "⚠️  Warning: PR is in draft status"
+            fi
+            
             echo "✅ PR is from same repository"
-          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "   PR #${{ github.event.pull_request.number }}"
+            echo "   Actor: $ACTOR"
+            
+          elif [[ "$EVENT_TYPE" == "workflow_dispatch" ]]; then
+            # For manual dispatch, log actor but allow (can be restricted via branch protection)
             echo "✅ Manual workflow dispatch"
+            echo "   Actor: $ACTOR"
+            echo "   Ref: ${{ github.ref }}"
+            echo "⚠️  Note: Manual dispatch from any authorized user"
           else
-            echo "❌ Unexpected event type: ${{ github.event_name }}"
+            echo "❌ Unexpected event type: $EVENT_TYPE"
             exit 1
           fi
+          
+          echo "✅ Security validation passed"
+          echo "=========================================="
 
       - name: 📥 Checkout
         uses: actions/checkout@v4.1.1
@@ -81,7 +112,8 @@ jobs:
           python-version: ${{ inputs.python-version || '3.11' }}
           cache: 'pip'
 
-      - name: 🔍 Validate Inputs
+      - name: 🔍 Validate and Sanitize Inputs
+        id: sanitize
         shell: bash
         run: |
           set -euo pipefail  # Fail on error, undefined vars, pipe failures
@@ -99,8 +131,13 @@ jobs:
               ;;
           esac
 
-          # Validate paths (security: prevent command injection and directory traversal)
-          PATHS="${{ inputs.paths || 'src tests' }}"
+          # Sanitize and validate paths (security: prevent command injection and directory traversal)
+          RAW_PATHS="${{ inputs.paths || 'src tests' }}"
+          echo "Raw paths input: $RAW_PATHS"
+          
+          # Step 1: Sanitize paths - remove all dangerous characters
+          SANITIZED=$(echo "$RAW_PATHS" | tr -cd '[:alnum:][:space:]/._-')
+          PATHS="$SANITIZED"
           
           # Check for directory traversal
           if [[ "$PATHS" =~ \.\./ ]] || [[ "$PATHS" =~ \.\.\\ ]]; then
@@ -123,9 +160,13 @@ jobs:
             exit 1
           fi
 
-          echo "✅ Input validation passed"
+          # Store sanitized paths for use in later steps
+          echo "SANITIZED_PATHS=$SANITIZED" >> $GITHUB_ENV
+          echo "sanitized_paths=$SANITIZED" >> $GITHUB_OUTPUT
+
+          echo "✅ Input validation and sanitization passed"
           echo "   Python version: $PYTHON_VERSION"
-          echo "   Paths: $PATHS"
+          echo "   Sanitized paths: $SANITIZED"
 
       - name: 📦 Cache pip dependencies
         uses: actions/cache@v4
@@ -145,7 +186,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TARGETS="${{ inputs.paths || 'src tests' }}"
+          # Use sanitized paths from validation step (security: prevents command injection)
+          TARGETS="${{ env.SANITIZED_PATHS || steps.sanitize.outputs.sanitized_paths || 'src tests' }}"
           echo "Formatting with Black: $TARGETS"
           
           # Check if target paths exist
@@ -179,7 +221,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TARGETS="${{ inputs.paths || 'src tests' }}"
+          # Use sanitized paths from validation step (security: prevents command injection)
+          TARGETS="${{ env.SANITIZED_PATHS || steps.sanitize.outputs.sanitized_paths || 'src tests' }}"
           echo "Sorting imports with isort: $TARGETS"
           
           if [ -f pyproject.toml ]; then
