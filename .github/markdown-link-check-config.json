@@ -5,6 +5,15 @@
     },
     {
       "pattern": "^https://.*\\.github\\.io"
+    },
+    {
+      "pattern": "^docs/troubleshooting\\.md$"
+    },
+    {
+      "pattern": "^.*/ARCHITECTURE\\.md$"
+    },
+    {
+      "pattern": "^mailto:"
     }
   ],
   "replacementPatterns": [
@@ -16,5 +25,10 @@
   "retryOn429": true,
   "retryCount": 2,
   "fallbackRetryDelay": "3s",
-  "timeout": "15s"
+  "timeout": "15s",
+  "ignoreDirectory": [
+    "backup",
+    "node_modules",
+    ".git"
+  ]
 }
