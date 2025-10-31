@@ -121,6 +121,9 @@ Military-grade security implementation with comprehensive compliance:
 - **[🛡️ Security Guide](security/SECURITY.md)** - Comprehensive security practices
 - **[📊 Compliance Matrix](SECURITY_PHASE2.md#-enterprise-compliance-matrix)** - SOC 2, GDPR, HIPAA
 
+Updated in Phase 4 (PR #189): enterprise auth/session modules and data protection layers:
+- `src/amas/security/enterprise_auth.py`, `session_management.py`, `user_management.py`, `advanced_security.py`, `data_management.py`
+
 ### **🎯 Security Features**
 - **🔐 JWT/OIDC Integration** - Enterprise authentication
 - **🛡️ Multi-tier Rate Limiting** - DDoS protection

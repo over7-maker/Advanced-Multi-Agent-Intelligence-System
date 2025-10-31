@@ -1417,6 +1417,14 @@ async def expensive_computation(params):
 
 ### Authentication & Authorization
 
+Note (Phase 4 upgrades - PR #189): Enterprise auth and session features were expanded. See:
+- `src/amas/security/enterprise_auth.py`
+- `src/amas/security/session_management.py`
+- `src/amas/security/user_management.py`
+- `src/amas/security/advanced_security.py`
+- `src/amas/security/data_management.py`
+
+
 ```python
 # JWT-based authentication
 from amas.security import SecurityService

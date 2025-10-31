@@ -5,6 +5,15 @@ All notable changes to the Advanced Multi-Agent Intelligence System (AMAS) will 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2025-10-31
+
+### Changed
+- Documentation and READMEs updated to reflect Phase 4 upgrades merged in PR #189 (branch: cursor/implement-phase-4-project-upgrades-9084):
+  - Added Phase 4 summary section to `README.md`
+  - Updated security sections in `docs/README.md` and `docs/developer/README.md` to reference new modules
+  - Noted dependency hardening in requirements
+
+
 ## [1.1.0] - 2025-01-05
 
 ### 🚀 Major Release - Enterprise AI Platform Transformation

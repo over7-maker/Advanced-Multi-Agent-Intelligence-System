@@ -268,6 +268,27 @@ python -m amas.cli test-security --comprehensive
 
 ---
 
+## 🔄 Phase 4 Upgrades (post-PR #189)
+
+The merged PR "cursor/implement-phase-4-project-upgrades-9084" introduced additional enterprise security and session features. Highlights now reflected across the docs and codebase:
+
+- New/updated security modules:
+  - `src/amas/security/advanced_security.py`
+  - `src/amas/security/data_management.py`
+  - `src/amas/security/enterprise_auth.py`
+  - `src/amas/security/session_management.py`
+  - `src/amas/security/user_management.py`
+- Dependency hardening in `requirements.txt` (including resiliency pins)
+
+Where to read more:
+- Security overview: `docs/security/SECURITY.md`
+- Auth setup: `docs/security/AUTHENTICATION_SETUP.md`
+- User/Session management: developer details in `docs/developer/README.md` (Security sections)
+
+Action for upgraders: re-run environment validation and review any new required env vars referenced by the above modules.
+
+---
+
 <a name="performance-data"></a>
 ## 📊 **Performance & Reliability**
 
