@@ -1086,5 +1086,5 @@ A: Use the update command: `docker-compose pull && docker-compose up -d` or foll
 
 **Happy Analyzing with AMAS! 🚀🤖✨**
 
-**Last Updated**: January 2025  
-**Version**: 1.1.0
+**Last Updated**: October 2025  
+**Version**: 3.0.0
