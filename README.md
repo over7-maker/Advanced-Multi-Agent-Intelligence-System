@@ -268,6 +268,83 @@ python -m amas.cli test-security --comprehensive
 
 ---
 
+## 🔄 Phase 4 Upgrades (post-PR #189)
+
+The merged PR #189 introduced additional enterprise security and session features. Highlights now reflected across the docs and codebase:
+
+### What's New
+
+- **Enterprise Authentication & Authorization**:
+  - JWT/OIDC integration with SSO support
+  - Role-based access control (RBAC)
+  - Multi-factor authentication (MFA) hooks
+  - Implementation: [`src/amas/security/enterprise_auth.py`](src/amas/security/enterprise_auth.py)
+  - Entry point: `EnterpriseAuth` (see Phase 4 Developer Guide for usage)
+  - Fallback: supports configurable timeouts and basic fallback mode when IdP is unavailable
+
+- **Session Management**:
+  - Server-side session handling with Redis backend
+  - Session timeout and security controls
+  - Multi-device session tracking
+  - Implementation: [`src/amas/security/session_management.py`](src/amas/security/session_management.py)
+  - Best practices:
+    - Use Redis with TLS, auth, and private networking
+    - Set TTL to `session_timeout + 5m` and use `SETEX` semantics
+    - Encrypt/sign session payloads; avoid plaintext storage
+    - Optionally cap concurrent sessions per user (e.g., max 5)
+
+- **User Management**:
+  - User CRUD operations with audit logging
+  - Role and permission management
+  - Implementation: [`src/amas/security/user_management.py`](src/amas/security/user_management.py)
+
+- **Data Protection**:
+  - Encryption utilities for sensitive data
+  - Secure data serialization
+  - Implementation: [`src/amas/security/advanced_security.py`](src/amas/security/advanced_security.py) and [`src/amas/security/data_management.py`](src/amas/security/data_management.py)
+
+- **Dependency Hardening**: Updated `requirements.txt` with version pins for security resilience
+
+### Environment Variables
+
+Phase 4 introduces the following environment variables (configured via `src/amas/config/settings.py`):
+
+**Required for Authentication:**
+- `AMAS_JWT_SECRET` - JWT signing secret (default: insecure placeholder - **must be changed in production**)
+- `AMAS_ENCRYPTION_KEY` - Encryption key for data protection (default: insecure placeholder - **must be changed in production**)
+
+**Optional Configuration:**
+- `AMAS_AUDIT_ENABLED` - Enable audit logging (default: `true`)
+- `AMAS_OIDC_CLIENT_ID` - OIDC client ID (if using OIDC)
+- `AMAS_OIDC_CLIENT_SECRET` - OIDC client secret (if using OIDC)
+- `AMAS_REDIS_HOST` - Redis host for session storage (default: `localhost`)
+- `AMAS_REDIS_PORT` - Redis port (default: `6379`)
+ - `AMAS_REDIS_PASSWORD` - Redis password (if required)
+
+**⚠️ Security Note**: Change default JWT and encryption keys in production. Generate secure keys:
+```bash
+export AMAS_JWT_SECRET="$(openssl rand -base64 32)"
+export AMAS_ENCRYPTION_KEY="$(openssl rand -base64 32)"
+```
+
+### Documentation
+
+- **Security overview**: [`docs/security/SECURITY.md`](docs/security/SECURITY.md)
+- **Auth setup**: [`docs/security/AUTHENTICATION_SETUP.md`](docs/security/AUTHENTICATION_SETUP.md)
+- **Developer integration guide**: [`docs/developer/PHASE_4_DEVELOPER_GUIDE.md`](docs/developer/PHASE_4_DEVELOPER_GUIDE.md) - Complete guide for integrating Phase 4 components in external services
+- **User/Session management**: Developer details in [`docs/developer/README.md`](docs/developer/README.md) (Security sections)
+
+### Upgrade Actions
+
+1. **Review environment variables**: Ensure all new `AMAS_*` variables are configured
+2. **Generate secure keys**: Replace default JWT and encryption keys (see above)
+3. **Validate configuration**: Run `python scripts/validate_env.py --mode basic --verbose`
+4. **Test authentication**: Verify JWT/OIDC flows and fallback behavior
+5. **Secure Redis**: Enable TLS, authentication, and network isolation; set TTLs on session keys
+6. **RBAC enforcement**: Ensure policies are enforced at API ingress, agent dispatcher, and data-access layers (default deny)
+
+---
+
 <a name="performance-data"></a>
 ## 📊 **Performance & Reliability**
 
