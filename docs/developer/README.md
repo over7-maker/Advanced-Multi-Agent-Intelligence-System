@@ -26,6 +26,9 @@ Welcome to the AMAS Developer Guide! This comprehensive documentation will help 
 12. [Security Considerations](#security-considerations)
 13. [Contributing](#contributing)
 14. [**External Integration (Phase 5)**](#external-integration-phase-5)
+    - [Quick Integration Examples](QUICK_INTEGRATION_EXAMPLES.md) ⚡
+    - [Full Integration Guide](PHASE_5_INTEGRATION_GUIDE.md) 📚
+    - [Component Integration](COMPONENT_INTEGRATION_GUIDE.md) 🧩
 
 ---
 
@@ -2268,24 +2271,34 @@ chore: update dependencies
 
 > **New in Phase 5**: Comprehensive guide for integrating AMAS components into external projects!
 
-### **📚 Phase 5 Integration Guide**
+### **📚 Phase 5 Integration Documentation**
 
-For developers who want to use AMAS components in their own projects, see the comprehensive integration guide:
+For developers who want to use AMAS components in their own projects, we provide comprehensive integration documentation:
 
-**[📖 Phase 5 Integration Guide](PHASE_5_INTEGRATION_GUIDE.md)**
+#### **⚡ [Quick Integration Examples](QUICK_INTEGRATION_EXAMPLES.md)** - 5-Minute Quick Start
+- Minimal setup (3 lines of code)
+- Common patterns (FastAPI, Django, Flask, CLI)
+- Environment variables quick reference
+- Error handling patterns
 
-This guide covers:
-- ✅ **Universal AI Router** - Standalone multi-provider AI routing
-- ✅ **Individual Component Integration** - Use agents/services independently
-- ✅ **Python SDK** - Library for seamless integration
-- ✅ **REST API Integration** - HTTP-based integration examples
-- ✅ **Docker Integration** - Container-based deployment
-- ✅ **Configuration Management** - Best practices for setup
-- ✅ **Advanced Use Cases** - Custom providers, multi-tenant, batch processing
+#### **📖 [Full Integration Guide](PHASE_5_INTEGRATION_GUIDE.md)** - Comprehensive Documentation
+- Complete Universal AI Router integration
+- Python SDK usage
+- REST API client examples (Python & JavaScript)
+- Docker deployment options
+- Configuration management
+- Advanced use cases (custom providers, multi-tenant, batch processing)
+- Troubleshooting guide
 
-### **Quick Integration Examples**
+#### **🧩 [Component Integration Guide](COMPONENT_INTEGRATION_GUIDE.md)** - Standalone Components
+- Individual component usage (Router, Agents, Services)
+- Minimal dependency setups
+- Package structure examples
+- Performance optimization
+- Integration patterns for each component
 
-#### Standalone Router Usage
+### **Quick Example - Universal AI Router**
+
 ```python
 from src.amas.ai.router import generate
 
@@ -2294,16 +2307,22 @@ result = await generate(
     system_prompt="System context",
     timeout=30.0
 )
+
+if result["success"]:
+    print(f"Response from {result['provider_name']}: {result['content']}")
+else:
+    print(f"Error: {result['error']}")
 ```
 
-#### Docker Service Integration
+### **Quick Example - Docker Service**
+
 ```bash
 docker run -p 8000:8000 \
   -e CEREBRAS_API_KEY=your-key \
   amas/universal-router:latest
 ```
 
-See the [full integration guide](PHASE_5_INTEGRATION_GUIDE.md) for complete examples and best practices.
+**Start with**: [Quick Integration Examples](QUICK_INTEGRATION_EXAMPLES.md) for immediate results, then refer to the [Full Integration Guide](PHASE_5_INTEGRATION_GUIDE.md) for comprehensive documentation.
 
 ---
 

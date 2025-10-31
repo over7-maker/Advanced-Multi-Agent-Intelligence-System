@@ -182,6 +182,13 @@ Complete technical documentation for developers and contributors:
 - **[🔒 Enhanced Hardening](developer/hardening_enhanced.md)** - Advanced security
 - **[📊 API Manager Guide](API_MANAGER_GUIDE.md)** - API management
 
+### **🚀 Phase 5 - External Integration** (NEW!)
+For developers integrating AMAS components into external projects:
+
+- **[⚡ Quick Integration Examples](developer/QUICK_INTEGRATION_EXAMPLES.md)** - 5-minute quick start with common patterns
+- **[📖 Full Integration Guide](developer/PHASE_5_INTEGRATION_GUIDE.md)** - Comprehensive integration documentation
+- **[🧩 Component Integration Guide](developer/COMPONENT_INTEGRATION_GUIDE.md)** - Standalone component usage
+
 ### **🎯 Developer Features**
 - **🔌 Complete API Reference** - Every endpoint documented
 - **📚 Code Examples** - 150+ real-world samples
