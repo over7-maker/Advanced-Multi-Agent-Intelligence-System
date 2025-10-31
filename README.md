@@ -538,6 +538,10 @@ policy:
 - Universal AI Router guide: `docs/UNIVERSAL_AI_ROUTER.md`
 - Changelog v3.0.0 (Phase 3): `CHANGELOG.md`
 
+### **Bulletproof AI Analysis Examples**
+- **[Real AI Analysis Example](artifacts/bulletproof_real_ai_analysis_example.md)** - Sample bulletproof analysis with security recommendations
+- **[Phase 2 Fixed Report](artifacts/bulletproof_phase2_fixed_report.md)** - Phase 2 compliance checklist and fixes
+
 ### **API Reference**
 - **🔗 Universal Router API** - Never-fail async interface
 - **🐍 Python SDK** - Library reference with examples

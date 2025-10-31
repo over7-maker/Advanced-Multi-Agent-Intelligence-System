@@ -242,6 +242,10 @@ Complete guides for production deployment and operations:
 - **[🏭 Production Deployment](deployment/PRODUCTION_DEPLOYMENT.md)** - Enterprise deployment
 - **[✅ Production Readiness](deployment/PRODUCTION_READINESS_CHECKLIST.md)** - Readiness checklist
 
+### **🛡️ Bulletproof AI Analysis Examples**
+- **[Real AI Analysis Example](../artifacts/bulletproof_real_ai_analysis_example.md)** - Sample bulletproof analysis with security recommendations
+- **[Phase 2 Fixed Report](../artifacts/bulletproof_phase2_fixed_report.md)** - Phase 2 compliance checklist and fixes
+
 ### **🎯 Deployment Options**
 - **🐳 Docker Deployment** - Container-based deployment
 - **☁️ Cloud Deployment** - AWS, Azure, GCP support
