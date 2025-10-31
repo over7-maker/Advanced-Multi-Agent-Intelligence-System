@@ -33,7 +33,7 @@ jobs:
           node-version: '20'
 
       - name: Install markdown-link-check (pinned)
-        run: npm install -g markdown-link-check@3.12.0 --ignore-scripts
+        run: npm install -g markdown-link-check@3.10.0 --ignore-scripts
         shell: bash
 
       - name: Run link check (all markdown files)
