@@ -5,6 +5,7 @@ safety==3.6.2
 pip-audit==2.6.3
 
 # Static Application Security Testing (SAST)
+# Note: semgrep 1.45.0 requires urllib3~=1.26; pin urllib3 accordingly below
 bandit==1.7.5
 semgrep==1.45.0
 
@@ -14,7 +15,6 @@ detect-secrets==1.4.0
 # Code Quality Tools (Security-Related)
 flake8-bandit==4.1.1
 flake8-bugbear==23.9.16
-# flake8-security pinned to a real release name
 flake8-annotations-complexity==0.0.7
 
 # Type Checking and Code Quality
@@ -28,7 +28,8 @@ isort==5.12.0
 # Core Security Dependencies
 certifi>=2023.7.22
 requests>=2.31.0
-urllib3>=2.0.7
+# Pin urllib3 to 1.26 compatible with semgrep 1.45.0
+urllib3==1.26.18
 cryptography>=41.0.7
 PyYAML>=6.0.1
 
