@@ -8,7 +8,6 @@ import asyncio
 # import hashlib
 import json
 import logging
-import pickle
 
 # import uuid
 import zlib
@@ -822,7 +821,8 @@ class EnterpriseCommunicationService:
                 "compressed": message.compressed,
             }
 
-            return pickle.dumps(message_dict)
+            # Use JSON for safe serialization; encode to bytes for Redis storage
+            return json.dumps(message_dict, ensure_ascii=False).encode("utf-8")
 
         except Exception as e:
             logger.error(f"Failed to serialize message: {e}")
@@ -831,9 +831,8 @@ class EnterpriseCommunicationService:
     async def _deserialize_message(self, data: bytes) -> Message:
         """Deserialize message from bytes"""
         try:
-            # Using pickle to match the serializer above. Consider migrating both
-            # serialization and deserialization to a safer format.
-            message_dict = pickle.loads(data)
+            # Decode JSON bytes to dict for safe deserialization
+            message_dict = json.loads(data.decode("utf-8"))
 
             return Message(
                 id=message_dict["id"],
