@@ -7,7 +7,7 @@ import asyncio
 import gc
 import gzip
 import logging
-import pickle
+import json
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
@@ -529,7 +529,12 @@ class AdvancedOptimizationService:
                 self.compression_enabled
                 and len(str(value)) > self.compression_threshold
             ):
-                value = gzip.compress(pickle.dumps(value))
+                try:
+                    serialized = json.dumps(value).encode("utf-8")
+                except (TypeError, ValueError):
+                    # Fallback to string representation if not JSON-serializable
+                    serialized = str(value).encode("utf-8")
+                value = gzip.compress(serialized)
                 compressed = True
             else:
                 compressed = False
