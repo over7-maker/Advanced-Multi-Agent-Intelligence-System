@@ -621,7 +621,7 @@ docker-compose restart
 - **🔒 [Phase 2 Security Features](PHASE_2_FEATURES.md)** - Complete security implementation
 - **📊 [Monitoring & Observability](MONITORING_GUIDE.md)** - Production monitoring setup
 - **🤖 [AI Providers Guide](AI_PROVIDERS.md)** - Advanced provider configuration
-- **🏗️ [Architecture Deep Dive](ARCHITECTURE.md)** - System design and components
+- **🏗️ [Architecture Deep Dive](architecture.md)** - System design and components
 
 ### **👥 Community & Support**
 - **💬 [GitHub Discussions](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/discussions)** - Community Q&A

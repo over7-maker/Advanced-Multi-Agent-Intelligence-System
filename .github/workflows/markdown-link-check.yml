@@ -1,0 +1,69 @@
+name: Markdown Link Check
+
+on:
+  pull_request:
+    paths:
+      - '**.md'
+      - 'docs/**'
+  push:
+    branches: [main]
+    paths:
+      - '**.md'
+      - 'docs/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  markdown-link-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install markdown-link-check (pinned)
+        run: npm install -g markdown-link-check@3.10.0 --ignore-scripts
+        shell: bash
+
+      - name: Run link check (all markdown files)
+        id: linkcheck
+        run: |
+          set -euo pipefail
+          rm -f link-check-report.txt
+          while IFS= read -r -d '' file; do
+            echo "\n=== Checking: $file ===" | tee -a link-check-report.txt
+            markdown-link-check "$file" --config .github/markdown-link-check-config.json | tee -a link-check-report.txt || true
+          done < <(find . -type f -name '*.md' -not -path './node_modules/*' -print0)
+          exit 0
+        shell: bash
+
+      - name: Link check results summary
+        if: always()
+        run: |
+          echo "✅ Markdown link check completed"
+          echo "ℹ️ HTTP/HTTPS links checked; external failures will fail this job. Local file paths are informational."
+          if [ -f link-check-report.txt ]; then
+            echo "--- Broken HTTP/HTTPS links detected (if any):"
+            BROKEN=$(grep -E "^\[✖\] https?://" link-check-report.txt || true)
+            if [ -n "$BROKEN" ]; then
+              echo "$BROKEN"
+              echo "❌ External link failures detected"
+              exit 1
+            else
+              echo "(none)"
+            fi
+          else
+            echo "No report file generated."
+          fi
+        shell: bash

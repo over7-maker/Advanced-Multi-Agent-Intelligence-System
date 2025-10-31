@@ -98,29 +98,24 @@ graph TB
 ### **🤖 Supported AI Providers (15+ Total)**
 
 #### **Tier 1 - Premium Speed**
-- **Cerebras Cloud** - Ultra-fast inference (1-3s response)
-- **NVIDIA NIM** - GPU-accelerated processing (2-4s response)
+- **Cerebras** - Ultra-fast inference (see [Performance Benchmarks](docs/performance_benchmarks.md))
+- **NVIDIA** - OpenAI-compatible API (see [Performance Benchmarks](docs/performance_benchmarks.md) and [NVIDIA NIM Integration](docs/developer/component-integration-guide.md#nvidia-nim-integration))
 
 #### **Tier 2 - High Quality**
-- **Google Gemini 2.0** - Advanced reasoning (3-8s response)
-- **Mistral Codestral** - Code-specific analysis (3-7s response)
+- **Google Gemini 2.0** - Advanced reasoning (see [Performance Benchmarks](docs/performance_benchmarks.md))
+- **Mistral Codestral** - Code-specific analysis (see [Performance Benchmarks](docs/performance_benchmarks.md))
 
 #### **Tier 3 - Commercial**
-- **Cohere Command** - NLP tasks (4-8s response)
-- **Groq LPU** - Fast inference (1-2s response)
-- **GroqAI** - Alternative endpoint (2-5s response)
+- **Cohere** - Chat v2 API (4-8s response, enterprise features)
+
+> ⚠️ Groq2 and GroqAI: Planned – Not Yet Implemented (adapters in development)
 
 #### **Tier 4 - Specialized**
-- **Chutes AI** - Final fallback provider (10-30s response)
+- **Chutes AI** - OpenAI-style chat completions (see [Performance Benchmarks](docs/performance_benchmarks.md))
 
-#### **Tier 5 - Free Fallbacks**
-- **DeepSeek v3** - Code understanding (3-6s response)
-- **GLM-4.5** - Chinese/English analysis (8-15s response)
-- **xAI Grok** - X.AI integration (6-14s response)
-- **Moonshot Kimi** - Long context processing (10-20s response)
-- **Alibaba Qwen** - Cloud integration (8-16s response)
-- **GPT-OSS** - Open source models (5-12s response)
-- **Gemini AI** - Google V1 API (7-15s response)
+#### **Tier 5 - Free Fallbacks (via OpenRouter)**
+Access multiple providers through [OpenRouter.ai](https://openrouter.ai) with automatic routing (see [Performance Benchmarks](docs/performance_benchmarks.md)):
+- **DeepSeek** • **GLM 4.5** • **xAI Grok** • **Moonshot Kimi** • **Qwen** • **GPT-OSS**
 
 ---
 
@@ -268,6 +263,83 @@ python -m amas.cli test-security --comprehensive
 
 ---
 
+## 🔄 Phase 4 Upgrades (post-PR #189)
+
+The merged PR #189 introduced additional enterprise security and session features. Highlights now reflected across the docs and codebase:
+
+### What's New
+
+- **Enterprise Authentication & Authorization**:
+  - JWT/OIDC integration with SSO support
+  - Role-based access control (RBAC)
+  - Multi-factor authentication (MFA) hooks
+  - Implementation: [`src/amas/security/enterprise_auth.py`](src/amas/security/enterprise_auth.py)
+  - Entry point: `EnterpriseAuth` (see Phase 4 Developer Guide for usage)
+  - Fallback: supports configurable timeouts and basic fallback mode when IdP is unavailable
+
+- **Session Management**:
+  - Server-side session handling with Redis backend
+  - Session timeout and security controls
+  - Multi-device session tracking
+  - Implementation: [`src/amas/security/session_management.py`](src/amas/security/session_management.py)
+  - Best practices:
+    - Use Redis with TLS, auth, and private networking
+    - Set TTL to `session_timeout + 5m` and use `SETEX` semantics
+    - Encrypt/sign session payloads; avoid plaintext storage
+    - Optionally cap concurrent sessions per user (e.g., max 5)
+
+- **User Management**:
+  - User CRUD operations with audit logging
+  - Role and permission management
+  - Implementation: [`src/amas/security/user_management.py`](src/amas/security/user_management.py)
+
+- **Data Protection**:
+  - Encryption utilities for sensitive data
+  - Secure data serialization
+  - Implementation: [`src/amas/security/advanced_security.py`](src/amas/security/advanced_security.py) and [`src/amas/security/data_management.py`](src/amas/security/data_management.py)
+
+- **Dependency Hardening**: Updated `requirements.txt` with version pins for security resilience
+
+### Environment Variables
+
+Phase 4 introduces the following environment variables (configured via `src/amas/config/settings.py`):
+
+**Required for Authentication:**
+- `AMAS_JWT_SECRET` - JWT signing secret (default: insecure placeholder - **must be changed in production**)
+- `AMAS_ENCRYPTION_KEY` - Encryption key for data protection (default: insecure placeholder - **must be changed in production**)
+
+**Optional Configuration:**
+- `AMAS_AUDIT_ENABLED` - Enable audit logging (default: `true`)
+- `AMAS_OIDC_CLIENT_ID` - OIDC client ID (if using OIDC)
+- `AMAS_OIDC_CLIENT_SECRET` - OIDC client secret (if using OIDC)
+- `AMAS_REDIS_HOST` - Redis host for session storage (default: `localhost`)
+- `AMAS_REDIS_PORT` - Redis port (default: `6379`)
+ - `AMAS_REDIS_PASSWORD` - Redis password (if required)
+
+**⚠️ Security Note**: Change default JWT and encryption keys in production. Generate secure keys:
+```bash
+export AMAS_JWT_SECRET="$(openssl rand -base64 32)"
+export AMAS_ENCRYPTION_KEY="$(openssl rand -base64 32)"
+```
+
+### Documentation
+
+- **Security overview**: [`docs/security/SECURITY.md`](docs/security/SECURITY.md)
+- **Auth setup**: [`docs/security/AUTHENTICATION_SETUP.md`](docs/security/AUTHENTICATION_SETUP.md)
+- **Developer integration guide**: [`docs/developer/PHASE_4_DEVELOPER_GUIDE.md`](docs/developer/PHASE_4_DEVELOPER_GUIDE.md) - Complete guide for integrating Phase 4 components in external services
+- **User/Session management**: Developer details in [`docs/developer/README.md`](docs/developer/README.md) (Security sections)
+
+### Upgrade Actions
+
+1. **Review environment variables**: Ensure all new `AMAS_*` variables are configured
+2. **Generate secure keys**: Replace default JWT and encryption keys (see above)
+3. **Validate configuration**: Run `python scripts/validate_env.py --mode basic --verbose`
+4. **Test authentication**: Verify JWT/OIDC flows and fallback behavior
+5. **Secure Redis**: Enable TLS, authentication, and network isolation; set TTLs on session keys
+6. **RBAC enforcement**: Ensure policies are enforced at API ingress, agent dispatcher, and data-access layers (default deny)
+
+---
+
 <a name="performance-data"></a>
 ## 📊 **Performance & Reliability**
 
@@ -399,9 +471,11 @@ print(f"Bulletproof validation: {health['bulletproof_active']}")
 ### **Provider Tiers & Failover Chain**
 1. **Tier 1**: Premium Speed — Cerebras, NVIDIA
 2. **Tier 2**: High Quality — Gemini 2.0, Codestral
-3. **Tier 3**: Commercial — Cohere, Groq2, GroqAI
-4. **Tier 4**: Specialized — Chutes
-5. **Tier 5**: Free Fallbacks — DeepSeek, GLM, Grok, Kimi, Qwen, GPT-OSS
+3. **Tier 3**: Commercial — Cohere (Groq2 and GroqAI adapters in development)
+4. **Tier 4**: Specialized — Chutes AI
+5. **Tier 5**: Free Fallbacks (OpenRouter) — DeepSeek, GLM, Grok, Kimi, Qwen, GPT-OSS
+
+> **Failover Strategy**: Router attempts providers in tier order (1→5), with automatic fallback on errors. OpenRouter manages Tier 5 provider selection based on availability and cost.
 
 ---
 
@@ -521,6 +595,31 @@ policy:
 
 ---
 
+## 🧩 **Phase 2 Core Services**
+
+> Phase 2 focuses on resilience, security, and operational maturity. These components are production-ready building blocks you can use in or outside this project.
+> **🚀 [Developer Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md)** - Complete guide for using Phase 2 components in external projects
+>
+> **Status**: ✅ All services stable | **Version**: v3.0.0+ | **API Compatibility**: Backward compatible within v3.x
+
+- Graceful Shutdown Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#graceful-shutdown-service)
+- Timeout Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#timeout-service)
+- Retry Utilities — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#retry-utilities)
+- Enhanced Authentication & Authorization — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [API docs](docs/API_DOCUMENTATION.md#authentication-endpoints) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#authentication-integration)
+- Rate Limiting Middleware — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#rate-limiting-middleware)
+- Circuit Breaker Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#circuit-breaker-service)
+- Error Recovery Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#error-recovery-service)
+- Health Check Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#health-check-service)
+- Prometheus Metrics Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Monitoring Guide](docs/MONITORING_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#prometheus-metrics-service)
+- Structured Logging Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#structured-logging-service)
+
+### 🧩 Phase 2 Compatibility
+- Python: 3.10+
+- Frameworks: FastAPI (primary), compatible with Starlette/Flask with adapters
+- Versioning: Semantic; patch updates maintain backward compatibility for public APIs
+
+> ⚠️ Security note: Always enforce RBAC checks on protected endpoints, use short‑lived access tokens with refresh rotation, and apply rate limiting on auth endpoints.
+
 <a name="documentation"></a>
 ## 📚 **Complete Documentation**
 
@@ -548,6 +647,13 @@ policy:
 - **🐍 Python SDK** - Library reference with examples
 - **💻 CLI Commands** - Command-line interface guide
 - **⚙️ Configuration** - Environment setup options
+
+### **🚀 Phase 5 - External Integration** (NEW!)
+For developers integrating AMAS into external projects:
+
+- **[⚡ Quick Integration Examples](docs/developer/quick-integration-examples.md)** - 5-minute quick start
+- **[📖 Full Integration Guide](docs/developer/phase-5-integration-guide.md)** - Comprehensive guide
+- **[🧩 Component Integration](docs/developer/component-integration-guide.md)** - Standalone components
 
 ---
 

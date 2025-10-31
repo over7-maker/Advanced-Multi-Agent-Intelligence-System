@@ -321,6 +321,323 @@ PROMETHEUS_METRICS_PATH=/metrics
 
 ---
 
+### **7. Graceful Shutdown Service**
+
+#### **Implementation**
+- **File**: `src/amas/services/graceful_shutdown_service.py`
+- **Purpose**: Production-ready graceful shutdown handling
+- **Features**: Phased shutdown, connection draining, service priority, signal handling
+
+#### **Key Features**
+```python
+from src.amas.services.graceful_shutdown_service import (
+    GracefulShutdownService, ShutdownConfig, ServicePriority, ShutdownPhase
+)
+
+# Create shutdown service
+shutdown_service = GracefulShutdownService(
+    config=ShutdownConfig(
+        shutdown_timeout=30.0,
+        drain_timeout=10.0,
+        service_timeout=5.0,
+        force_shutdown_timeout=5.0,
+        enable_health_checks=True,
+        enable_metrics_collection=True,
+        enable_audit_logging=True
+    )
+)
+
+# Register services with priorities
+shutdown_service.register_service(
+    "database",
+    shutdown_func=close_database_connections,
+    priority=ServicePriority.CRITICAL
+)
+
+shutdown_service.register_service(
+    "cache",
+    shutdown_func=close_cache_connections,
+    priority=ServicePriority.HIGH
+)
+
+# Register cleanup tasks
+shutdown_service.register_cleanup_task(
+    "cleanup_temp_files",
+    cleanup_func=cleanup_temporary_files
+)
+
+# Initialize graceful shutdown handlers
+shutdown_service.initialize()
+```
+
+#### **Shutdown Phases**
+1. **INITIATED**: Shutdown signal received
+2. **STOPPING_ACCEPTORS**: Stop accepting new requests
+3. **DRAINING_CONNECTIONS**: Drain existing connections
+4. **STOPPING_SERVICES**: Stop services in priority order
+5. **CLEANING_UP**: Execute cleanup tasks
+6. **COMPLETED**: Shutdown complete
+
+#### **Configuration**
+```python
+# Environment variables
+GRACEFUL_SHUTDOWN_ENABLED=true
+GRACEFUL_SHUTDOWN_TIMEOUT=30.0
+GRACEFUL_SHUTDOWN_DRAIN_TIMEOUT=10.0
+GRACEFUL_SHUTDOWN_SERVICE_TIMEOUT=5.0
+GRACEFUL_SHUTDOWN_FORCE_TIMEOUT=5.0
+```
+
+---
+
+### **8. Timeout Service**
+
+#### **Implementation**
+- **File**: `src/amas/services/timeout_service.py`
+- **Purpose**: Comprehensive timeout handling for all operations
+- **Features**: Multiple timeout types, configurable timeouts, context managers
+
+#### **Key Features**
+```python
+from src.amas.services.timeout_service import (
+    TimeoutService, TimeoutConfig, TimeoutType, TimeoutException
+)
+
+# Create timeout service
+timeout_service = TimeoutService(
+    config=TimeoutConfig(
+        default_timeout=30.0,
+        timeouts={
+            TimeoutType.HTTP_REQUEST: 30.0,
+            TimeoutType.DATABASE_QUERY: 10.0,
+            TimeoutType.CACHE_OPERATION: 5.0,
+            TimeoutType.EXTERNAL_API: 60.0,
+            TimeoutType.AGENT_EXECUTION: 300.0
+        },
+        enable_graceful_shutdown=True,
+        max_timeout=300.0,
+        min_timeout=0.1
+    )
+)
+
+# Use timeout context manager
+try:
+    async with timeout_service.timeout(TimeoutType.HTTP_REQUEST, timeout=30.0):
+        response = await make_http_request(url)
+except TimeoutException:
+    logger.warning("HTTP request timed out")
+    # Handle timeout
+```
+
+#### **Timeout Types**
+- **HTTP_REQUEST**: HTTP API calls
+- **DATABASE_QUERY**: Database operations
+- **CACHE_OPERATION**: Cache operations
+- **EXTERNAL_API**: External API calls
+- **FILE_OPERATION**: File I/O operations
+- **AGENT_EXECUTION**: Agent execution tasks
+- **TASK_EXECUTION**: Long-running tasks
+- **GENERAL**: General operations
+
+#### **Configuration**
+```python
+# Environment variables
+TIMEOUT_ENABLED=true
+TIMEOUT_DEFAULT=30.0
+TIMEOUT_HTTP_REQUEST=30.0
+TIMEOUT_DATABASE_QUERY=10.0
+TIMEOUT_CACHE_OPERATION=5.0
+TIMEOUT_EXTERNAL_API=60.0
+TIMEOUT_AGENT_EXECUTION=300.0
+TIMEOUT_TASK_EXECUTION=600.0
+TIMEOUT_MAX=300.0
+TIMEOUT_MIN=0.1
+```
+
+---
+
+### **9. Retry Utilities**
+
+#### **Implementation**
+- **File**: `src/amas/utils/retry_utils.py`
+- **Purpose**: Robust retry mechanisms with exponential backoff
+- **Features**: Multiple retry strategies, configurable conditions, jitter support
+
+#### **Key Features**
+```python
+from src.amas.utils.retry_utils import (
+    retry_with_backoff, RetryConfig, RetryStrategy, RetryCondition
+)
+
+# Configure retry behavior
+retry_config = RetryConfig(
+    max_attempts=3,
+    base_delay=1.0,
+    max_delay=60.0,
+    strategy=RetryStrategy.EXPONENTIAL,
+    jitter=True,
+    backoff_multiplier=2.0,
+    condition=RetryCondition.HTTP_ERRORS,
+    exceptions=[ConnectionError, TimeoutError]
+)
+
+# Use retry decorator
+@retry_with_backoff(config=retry_config)
+async def call_external_api(url: str):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url) as response:
+            response.raise_for_status()
+            return await response.json()
+
+# Use retry context manager
+from src.amas.utils.retry_utils import RetryContext
+
+async def process_with_retry():
+    async with RetryContext(config=retry_config) as retry:
+        while retry.should_retry():
+            try:
+                result = await call_external_api("https://api.example.com")
+                retry.mark_success()
+                return result
+            except Exception as e:
+                if retry.should_retry_exception(e):
+                    await retry.wait_before_retry()
+                else:
+                    raise
+```
+
+#### **Retry Strategies**
+- **FIXED**: Fixed delay between retries
+- **EXPONENTIAL**: Exponential backoff (default)
+- **LINEAR**: Linear increase in delay
+- **CUSTOM**: Custom delay function
+
+#### **Retry Conditions**
+- **ANY_EXCEPTION**: Retry on any exception
+- **HTTP_ERRORS**: Retry on HTTP errors (4xx, 5xx)
+- **TIMEOUT_ERRORS**: Retry on timeout errors
+- **CONNECTION_ERRORS**: Retry on connection errors
+- **CUSTOM**: Custom condition function
+
+#### **Configuration**
+```python
+# Environment variables
+RETRY_MAX_ATTEMPTS=3
+RETRY_BASE_DELAY=1.0
+RETRY_MAX_DELAY=60.0
+RETRY_STRATEGY=exponential
+RETRY_JITTER=true
+RETRY_BACKOFF_MULTIPLIER=2.0
+```
+
+---
+
+### **10. Enhanced Authentication & Authorization**
+
+#### **Implementation**
+- **File**: `src/amas/security/enhanced_auth.py`
+- **Purpose**: JWT/OIDC authentication with RBAC
+- **Features**: Token management, role-based access, permission checks
+
+#### **Key Features**
+```python
+from src.amas.security.enhanced_auth import (
+    EnhancedAuthManager, User, UserRole, Permission,
+    LoginRequest, TokenResponse, get_auth_manager,
+    get_current_user, require_role, require_permission
+)
+
+# Initialize auth manager
+auth_manager = get_auth_manager()
+
+# Login
+login_request = LoginRequest(username="user", password="pass")
+token_response = await auth_manager.login(login_request, client_ip="127.0.0.1")
+
+# Use in endpoints
+from fastapi import APIRouter
+router = APIRouter()
+
+@router.get("/protected")
+@require_role(UserRole.USER)
+@require_permission(Permission.AGENT_READ)
+async def protected_endpoint(current_user: User = Depends(get_current_user)):
+    return {"message": "Access granted", "user": current_user.username}
+```
+
+#### **Authentication Features**
+- **JWT Tokens**: Access and refresh token support
+- **OIDC Integration**: OpenID Connect provider support
+- **Password Hashing**: Secure password storage
+- **Token Refresh**: Automatic token refresh
+- **Session Management**: Session tracking and invalidation
+
+#### **Authorization Features**
+- **Role-Based Access**: User roles (Admin, User, Viewer, Analyst, Manager)
+- **Permission-Based Access**: Fine-grained permissions
+- **Resource Authorization**: Resource-level access control
+- **Policy Enforcement**: Automatic policy checking
+
+---
+
+### **11. Rate Limiting Middleware**
+
+#### **Implementation**
+- **File**: `src/middleware/rate_limiting.py`
+- **Purpose**: API rate limiting with token bucket algorithm
+- **Features**: Per-IP, per-user, per-token rate limiting
+
+#### **Key Features**
+```python
+from src.middleware.rate_limiting import (
+    RateLimiter, RateLimitConfig, TokenBucket
+)
+
+# Create rate limiter
+rate_limiter = RateLimiter(
+    config=RateLimitConfig(
+        requests_per_minute=60,
+        requests_per_hour=1000,
+        burst_limit=10,
+        window_size=60
+    )
+)
+
+# Use in FastAPI
+from fastapi import FastAPI, Request
+app = FastAPI()
+
+@app.middleware("http")
+async def rate_limit_middleware(request: Request, call_next):
+    client_ip = request.client.host
+    if not await rate_limiter.is_allowed(client_ip):
+        return JSONResponse(
+            status_code=429,
+            content={"error": "Rate limit exceeded"}
+        )
+    response = await call_next(request)
+    await rate_limiter.record_request(client_ip)
+    return response
+```
+
+#### **Rate Limiting Types**
+- **Per-IP**: Rate limit by client IP address
+- **Per-User**: Rate limit by authenticated user
+- **Per-Token**: Rate limit by API token
+- **Global**: Global rate limiting
+
+#### **Configuration**
+```python
+# Environment variables
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_REQUESTS_PER_MINUTE=60
+RATE_LIMIT_REQUESTS_PER_HOUR=1000
+RATE_LIMIT_BURST_LIMIT=10
+RATE_LIMIT_WINDOW_SIZE=60
+```
+
+---
+
 ## 🔧 **Integration Examples**
 
 ### **1. Complete Service Integration**
@@ -737,10 +1054,32 @@ print(metrics_data)
 This implementation guide provides comprehensive documentation for all Phase 2 enhancements. The system now includes enterprise-grade reliability, security, and observability features that make it production-ready for any organization.
 
 Key benefits:
-- **Enhanced Reliability**: Circuit breakers, retry policies, error recovery
-- **Comprehensive Security**: Input validation, audit logging, PII redaction
-- **Full Observability**: Structured logging, metrics, health monitoring
+- **Enhanced Reliability**: Circuit breakers, retry policies, error recovery, graceful shutdown, timeout handling
+- **Comprehensive Security**: JWT/OIDC authentication, RBAC authorization, rate limiting, input validation, audit logging, PII redaction
+- **Full Observability**: Structured logging, Prometheus metrics, health monitoring, distributed tracing
 - **Easy Integration**: Simple APIs and configuration options
 - **Production Ready**: Enterprise-grade features and best practices
+
+## 📋 **Phase 2 Complete Feature List**
+
+### **Core Services (11 Total)**
+1. ✅ **Enhanced Logging Service** - Structured logging with security
+2. ✅ **Health Check Service** - Comprehensive health monitoring
+3. ✅ **Circuit Breaker Service** - Fault tolerance for external services
+4. ✅ **Error Recovery Service** - Automated error recovery
+5. ✅ **Prometheus Metrics Service** - Metrics collection
+6. ✅ **Structured Logging Service** - JSON logging with correlation
+7. ✅ **Graceful Shutdown Service** - Production shutdown handling
+8. ✅ **Timeout Service** - Comprehensive timeout management
+9. ✅ **Retry Utilities** - Robust retry mechanisms
+10. ✅ **Enhanced Authentication** - JWT/OIDC with RBAC
+11. ✅ **Rate Limiting Middleware** - API rate limiting
+
+### **Infrastructure Components**
+- ✅ **Universal AI Router** - Multi-provider failover
+- ✅ **Project Root Utilities** - Secure project detection
+- ✅ **Error Handling** - Comprehensive error management
+- ✅ **Security Middleware** - Request security
+- ✅ **Auth API Routes** - Authentication endpoints
 
 For additional support or questions, refer to the troubleshooting section or create an issue in the repository.
