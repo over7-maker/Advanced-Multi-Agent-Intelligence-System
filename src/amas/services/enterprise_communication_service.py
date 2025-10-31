@@ -8,7 +8,6 @@ import asyncio
 # import hashlib
 import json
 import logging
-from typing import cast
 
 # import uuid
 import zlib
@@ -17,7 +16,7 @@ import zlib
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import aioredis
 
