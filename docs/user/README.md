@@ -10,6 +10,17 @@ The Advanced Multi-Agent Intelligence System (AMAS) is a revolutionary AI platfo
 
 **🚀 AI Agentic Workflows** — 4‑layer architecture with intelligent failover across configured providers. See `COMPREHENSIVE_IMPROVEMENT_SUMMARY.md` for the exact provider set validated in Phase‑06.
 
+### Phase 4 User-Facing Changes (PR #189)
+- Enhanced security, authentication and session reliability
+- No breaking CLI/API changes for end users
+- Internals improved via:
+  - `src/amas/security/enterprise_auth.py`
+  - `src/amas/security/session_management.py`
+  - `src/amas/security/user_management.py`
+  - `src/amas/security/advanced_security.py`
+  - `src/amas/security/data_management.py`
+- If you run in production, re-validate env and auth settings: see `docs/security/AUTHENTICATION_SETUP.md`
+
 ## 📋 Table of Contents
 
 1. [Quick Start](#quick-start)
