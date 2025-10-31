@@ -1,14 +1,14 @@
 # 📖 AMAS User Guide - Production Ready System
 
-> **Version**: 2.0.0 | **Status**: ✅ Fully Integrated and Production Ready
+> **Version**: 3.0.0 | **Status**: ✅ Production Ready (Phase‑06)
 
 ## Welcome to AMAS!
 
 The Advanced Multi-Agent Intelligence System (AMAS) is a revolutionary AI platform featuring **AI Agentic Workflows** that leverage multiple intelligent agents to perform complex tasks autonomously. This guide will help you get the most out of AMAS, whether you're using it for security analysis, data processing, research, or automated development workflows.
 
-**✅ 100% Implementation Verified** - All critical improvements from the project audit have been implemented and verified.
+**✅ Phase‑06 Improvements Applied** — Unified Orchestrator, minimal configuration modes, validation scripts, Docker dev env.
 
-**🚀 Revolutionary AI Agentic Workflows** - Experience the future of automated development with our 4-layer AI agent architecture and 16 AI providers.
+**🚀 AI Agentic Workflows** — 4‑layer architecture with intelligent failover across configured providers. See `COMPREHENSIVE_IMPROVEMENT_SUMMARY.md` for the exact provider set validated in Phase‑06.
 
 ## 📋 Table of Contents
 
@@ -56,10 +56,13 @@ docker-compose up -d
 python -m uvicorn src.amas.api.main:app --reload
 ```
 
-#### 2. Environment Validation
+#### 4. Validate & Benchmark (optional)
 ```bash
-# Validate your setup with minimal configuration
+# Validate again after starting services
 python scripts/validate_env.py --mode basic --verbose
+
+# Run a quick benchmark
+python scripts/benchmark_system.py --mode basic
 ```
 
 #### 3. Try Your First Command
@@ -78,7 +81,7 @@ That's it! You've just performed your first security scan with AMAS.
 
 ## 🚀 AI Agentic Workflows
 
-AMAS features revolutionary **AI Agentic Workflows** that provide autonomous, intelligent automation for your development processes. These workflows use a 4-layer AI agent architecture with 16 AI providers for maximum reliability and intelligence.
+AMAS features revolutionary **AI Agentic Workflows** that provide autonomous, intelligent automation for your development processes. These workflows use a 4-layer AI agent architecture with intelligent failover across your configured providers.
 
 ### **Revolutionary AI Agentic Workflow System**
 
@@ -87,7 +90,7 @@ The central brain of the system that coordinates all AI agents with intelligent 
 
 **Key Features**:
 - **4-Layer Architecture**: Detection & Analysis → Intelligence & Decision → Execution & Fix → Orchestration & Management
-- **16 AI Providers**: DeepSeek, Claude, GPT-4, GLM, Grok, Kimi, Qwen, Gemini, and more
+- **Provider Failover**: Automatic switching across configured providers
 - **Intelligent Failover**: Automatic provider switching for zero-failure guarantee
 - **Self-Healing**: Automatic recovery from any provider failure
 
@@ -983,7 +986,7 @@ AMAS uses machine learning to optimize every aspect of operation:
 ```
 
 ### Multi-Provider AI Fallback
-Never experience AI failures with our 15+ provider system:
+Intelligent failover across your configured providers:
 
 ```bash
 # Check provider status
@@ -1031,7 +1034,7 @@ Built-in compliance for regulated industries:
 ### General Questions
 
 **Q: What makes AMAS different from other security tools?**
-A: AMAS uses multiple AI agents working together, providing more comprehensive analysis than single-purpose tools. It also features intelligent fallback across 16 AI providers, ensuring reliable operation.
+A: AMAS uses multiple AI agents working together, providing more comprehensive analysis than single-purpose tools. It also features intelligent fallback across your configured providers, ensuring reliable operation.
 
 **Q: Can I use AMAS offline?**
 A: Yes! AMAS supports offline operation for sensitive environments. See the [Offline Guide](OFFLINE_SYSTEM_GUIDE.md).
@@ -1042,7 +1045,7 @@ A: AMAS provides REST APIs, webhooks, and SDKs for easy integration. It also sup
 ### Technical Questions
 
 **Q: What AI providers does AMAS support?**
-A: AMAS supports 16 AI providers including DeepSeek, GLM, Grok, and more. It automatically fails over between providers for maximum reliability.
+A: Phase‑06 validates a core set of providers (e.g., DeepSeek, GLM, Grok, Kimi, Qwen, GPT‑OSS). The system automatically fails over between configured providers. See `COMPREHENSIVE_IMPROVEMENT_SUMMARY.md` for the current list.
 
 **Q: How secure is AMAS?**
 A: AMAS implements enterprise-grade security including encryption, authentication, and compliance with GDPR, SOC2, HIPAA, and other frameworks.
@@ -1086,5 +1089,5 @@ A: Use the update command: `docker-compose pull && docker-compose up -d` or foll
 
 **Happy Analyzing with AMAS! 🚀🤖✨**
 
-**Last Updated**: January 2025  
-**Version**: 1.1.0
+**Last Updated**: October 2025  
+**Version**: 3.0.0 (Phase‑06)
