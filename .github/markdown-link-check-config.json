@@ -1,0 +1,16 @@
+{
+  "ignorePatterns": [
+    { "pattern": "^http://localhost" },
+    { "pattern": "^mailto:" }
+  ],
+  "retryOn429": true,
+  "retryCount": 3,
+  "retryDelay": "5s",
+  "fallbackRetryDelay": "5s",
+  "timeout": "30s",
+  "ignoreDirectory": [
+    "backup_*",
+    "node_modules",
+    ".git"
+  ]
+}

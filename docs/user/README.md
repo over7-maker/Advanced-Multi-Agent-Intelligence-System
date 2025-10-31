@@ -10,6 +10,17 @@ The Advanced Multi-Agent Intelligence System (AMAS) is a revolutionary AI platfo
 
 **🚀 Revolutionary AI Agentic Workflows** - Experience the future of automated development with our 4-layer AI agent architecture and 16 AI providers.
 
+### Phase 4 User-Facing Changes (PR #189)
+- Enhanced security, authentication and session reliability
+- No breaking CLI/API changes for end users
+- Internals improved via:
+  - `src/amas/security/enterprise_auth.py`
+  - `src/amas/security/session_management.py`
+  - `src/amas/security/user_management.py`
+  - `src/amas/security/advanced_security.py`
+  - `src/amas/security/data_management.py`
+- If you run in production, re-validate env and auth settings: see `docs/security/AUTHENTICATION_SETUP.md`
+
 ## 📋 Table of Contents
 
 1. [Quick Start](#quick-start)
@@ -1086,5 +1097,5 @@ A: Use the update command: `docker-compose pull && docker-compose up -d` or foll
 
 **Happy Analyzing with AMAS! 🚀🤖✨**
 
-**Last Updated**: January 2025  
-**Version**: 1.1.0
+**Last Updated**: October 2025  
+**Version**: 3.0.0
