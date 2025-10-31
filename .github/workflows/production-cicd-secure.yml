@@ -4,12 +4,11 @@ name: 🚀 AMAS Secure Production CI/CD Pipeline
 permissions:
   contents: read
 
-# SECURITY FIX: Restrict triggers to prevent accidental deployments
 on:
   push:
-    branches: [main]  # Only main branch triggers production
+    branches: [main]
   pull_request:
-    branches: [main]  # Only PRs to main
+    branches: [main]
   release:
     types: [published]
   workflow_dispatch:
@@ -21,758 +20,73 @@ on:
         type: choice
         options:
           - staging
-          # production requires manual approval via environment protection
       skip_tests:
         description: 'Skip non-critical tests (security tests always run)'
         required: false
         default: false
         type: boolean
 
-# Note: Concurrency is defined for non-deployment jobs individually below
-
 env:
-  PYTHON_VERSION: '3.11.13'  # Pin patch for stability/security
-  NODE_VERSION: '20'    # Track latest 20.x for security patches
+  PYTHON_VERSION: '3.11.13'
+  NODE_VERSION: '20'
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: amas
-  # SECURITY FIX: Use repository owner instead of actor
   REGISTRY_USERNAME: ${{ github.repository_owner }}
 
 jobs:
-  # =============================================================================
-  # PHASE 1: SECURITY & QUALITY GATES
-  # =============================================================================
-  
   security-scan:
     name: 🔒 Security Vulnerability Scan
     runs-on: ubuntu-latest
-    timeout-minutes: 20  # ~P95 over recent runs on medium repos
-    permissions:
-      contents: read
+    timeout-minutes: 20
     concurrency:
       group: security-scan-${{ github.ref }}-${{ github.event.inputs.environment || 'push' }}
       cancel-in-progress: true
     outputs:
       vulnerabilities-found: ${{ steps.scan-results.outputs.vulnerabilities }}
-      critical-vulnerabilities: ${{ steps.scan-results.outputs['critical-vulnerabilities'] }}
+      critical-vulnerabilities: ${{ steps.scan-results.outputs.critical-vulnerabilities }}
       passed: ${{ steps.scan-results.outputs.passed }}
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 1
-    
-    - name: 🧰 Ensure jq is available
-      run: |
-        if ! command -v jq >/dev/null 2>&1; then
-          sudo apt-get update -y
-          sudo apt-get install -y jq=1.6* || sudo apt-get install -y jq
-        fi
-    
-    - name: 🐍 Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-    
-    - name: 🛠️ Ensure pip cache directory exists
-      run: |
-        mkdir -p ~/.cache/pip
-    
-    - name: 📦 Cache pip dependencies
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    
-    # PERFORMANCE FIX: Cache security tools
-    - name: 📦 Cache Security Tools
-      uses: actions/cache@v4
-      with:
-        path: ~/.local/bin
-        key: security-tools-${{ runner.os }}-v2
-        restore-keys: |
-          security-tools-${{ runner.os }}-
-    
-    # SECURITY: Prefer curated requirements file; fallback to known-good pins
-    - name: 📦 Install security tools
-      run: |
-        # PERFORMANCE FIX: Remove redundant ensurepip
-        python -m pip install --upgrade pip
-        if [ -f requirements-security.txt ]; then
-          pip install --user -r requirements-security.txt
-        else
-          pip install --user \
-            safety==3.0.4 \
-            pip-audit==2.6.1 \
-            bandit==1.7.5 \
-            semgrep==1.45.0 \
-            detect-secrets>=1.5.3
-        fi
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-    
-    - name: 🔍 Dependency vulnerability scan
-      id: safety-scan
-      run: |
-        echo "Running safety scan..."
-        safety check --json > safety-report.json || SAFETY_EXIT_CODE=$?
-        safety check --short-report || true
-        
-        # Set outputs based on results
-        if [ -f safety-report.json ] && [ -s safety-report.json ]; then
-          vuln_count=$(jq length safety-report.json 2>/dev/null || echo "0")
-          echo "vulnerabilities=$vuln_count" >> $GITHUB_OUTPUT
-          if [ "$vuln_count" -gt 0 ]; then
-            echo "⚠️ Found $vuln_count vulnerabilities"
-            jq -r '.[] | "- \(.vulnerability_id): \(.package_name) \(.analyzed_version)"' safety-report.json
-          fi
-        else
-          echo "vulnerabilities=0" >> $GITHUB_OUTPUT
-        fi
-    
-    - name: 🔍 Additional dependency audit
-      run: |
-        echo "Running pip-audit..."
-        pip-audit --format=json --output=pip-audit-report.json || true
-        pip-audit --desc --summary || true
-    
-    - name: 🔍 Code security scan with Bandit
-      run: |
-        echo "Running Bandit security scan..."
-        bandit -r src/ -f json -o bandit-report.json || true
-        bandit -r src/ --severity-level medium || true
-    
-    - name: 🛡️ Advanced security scan with Semgrep
-      uses: returntocorp/semgrep-action@v1
-      with:
-        config: >-
-          p/security-audit
-          p/secrets
-          p/owasp-top-ten
-          p/cwe-top-25
-        generateSarif: "1"
-    
-    # SECURITY FIX: Proper secret detection with baseline
-    - name: 🕵️ Secret detection scan
-      run: |
-        echo "Running secret detection..."
-        # Create baseline if it doesn't exist
-        if [ ! -f .secrets.baseline ]; then
-          detect-secrets scan --all-files --baseline .secrets.baseline
-          echo "Created secrets baseline"
-        fi
-        
-        # Scan for new secrets
-        detect-secrets scan --baseline .secrets.baseline --all-files || {
-          echo "❌ New secrets detected!"
-          detect-secrets scan --all-files | jq -r '.results | to_entries[] | "\(.key): Found \(.value | length) potential secrets"'
-          exit 1
-        }
-        
-        echo "✅ No new secrets detected"
-    
-    - name: 📊 Upload security artifacts
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: security-reports-${{ github.sha }}
-        path: |
-          safety-report.json
-          pip-audit-report.json
-          bandit-report.json
-          semgrep.sarif
-        retention-days: 30
-    
-    - name: 📋 Evaluate security results
-      id: scan-results
-      run: |
-        # Count total vulnerabilities
-        vuln_count=0
-        critical_count=0
-        
-        if [ -f safety-report.json ] && [ -s safety-report.json ]; then
-          safety_vulns=$(jq length safety-report.json 2>/dev/null || echo "0")
-          vuln_count=$((vuln_count + safety_vulns))
-        fi
-        
-        if [ -f bandit-report.json ] && [ -s bandit-report.json ]; then
-          bandit_issues=$(jq '.results | length' bandit-report.json 2>/dev/null || echo "0")
-          bandit_high=$(jq '[.results[] | select(.issue_severity == "HIGH")] | length' bandit-report.json 2>/dev/null || echo "0")
-          vuln_count=$((vuln_count + bandit_issues))
-          critical_count=$((critical_count + bandit_high))
-        fi
-        
-        echo "vulnerabilities=$vuln_count" >> $GITHUB_OUTPUT
-        echo "critical-vulnerabilities=$critical_count" >> $GITHUB_OUTPUT
-        
-        # Determine if scan passed (no critical/high vulnerabilities)
-        if [ "$critical_count" -eq 0 ] && [ "$vuln_count" -eq 0 ]; then
-          echo "passed=true" >> $GITHUB_OUTPUT
-          echo "✅ Security scan passed - no vulnerabilities found"
-        else
-          echo "passed=false" >> $GITHUB_OUTPUT
-          echo "❌ Security scan failed - $vuln_count total, $critical_count critical/high"
-          # Don't exit here, let the workflow decide based on vulnerability count
-        fi
 
-  code-quality:
-    name: 🎨 Code Quality & Standards
-    runs-on: ubuntu-latest
-    timeout-minutes: 20  # ~P95 for formatting+lint+types on repo
-    permissions:
-      contents: read
-    concurrency:
-      group: code-quality-${{ github.ref }}
-      cancel-in-progress: true
-    outputs:
-      quality-score: ${{ steps.quality-check.outputs.score }}
-      quality-passed: ${{ steps.quality-check.outputs.passed }}
-    
     steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
-    
-    - name: 🐍 Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-    
-    - name: 📦 Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt || echo "requirements.txt not found"
-        pip install -r requirements-dev.txt || echo "requirements-dev.txt not found"
-        
-        # Install quality tools with pinned versions
-        pip install \
-          black==23.9.1 \
-          isort==5.12.0 \
-          flake8==6.1.0 \
-          pylint==3.0.2 \
-          mypy==1.7.1
-    
-    - name: 🎨 Code formatting validation
-      run: |
-        echo "Checking code formatting..."
-        black --check --diff src/ tests/ || {
-          echo "❌ Code formatting issues found. Run 'black src/ tests/' to fix."
-          exit 1
-        }
-        
-        echo "Checking import sorting..."
-        isort --check-only --diff src/ tests/ || {
-          echo "❌ Import sorting issues found. Run 'isort src/ tests/' to fix."
-          exit 1
-        }
-        
-        echo "✅ Code formatting is correct"
-    
-    - name: 🔍 Linting validation
-      run: |
-        echo "Running flake8 linting..."
-        flake8 src/ tests/ \
-          --max-complexity=10 \
-          --max-line-length=100 \
-          --statistics \
-          --count || {
-          echo "❌ Linting issues found"
-          exit 1
-        }
-        
-        echo "Running pylint..."
-        pylint src/ \
-          --disable=C0114,C0116 \
-          --score=yes \
-          --reports=no \
-          --output-format=text || true
-    
-    - name: 🏷️ Type checking
-      run: |
-        echo "Running mypy type checking..."
-        mypy src/ \
-          --ignore-missing-imports \
-          --strict-optional \
-          --warn-redundant-casts \
-          --warn-unused-ignores || true
-    
-    - name: 📊 Calculate quality score
-      id: quality-check
-      run: |
-        # Simple quality scoring
-        score=100
-        
-        # Run pylint and capture score
-        pylint_output=$(pylint src/ --score=yes 2>&1 || true)
-        if echo "$pylint_output" | grep -q "rated at"; then
-          pylint_score=$(echo "$pylint_output" | grep "rated at" | grep -o '[0-9.]\+' | head -1)
-          score=$(printf "%.0f" "$pylint_score")
-        fi
-        
-        echo "score=$score" >> $GITHUB_OUTPUT
-        
-        # Quality gate: must be >= 8.0
-        if [ "$score" -ge 80 ]; then
-          echo "passed=true" >> $GITHUB_OUTPUT
-          echo "✅ Code quality passed (score: $score/100)"
-        else
-          echo "passed=false" >> $GITHUB_OUTPUT
-          echo "❌ Code quality failed (score: $score/100, minimum: 80)"
-        fi
-
-  # =============================================================================
-  # PHASE 2: COMPREHENSIVE TESTING
-  # =============================================================================
-  
-  test-matrix:
-    name: 🧪 Cross-Platform Tests
-    runs-on: ${{ matrix.os }}
-    needs: [security-scan, code-quality]
-    # SECURITY GATE: Proceed only if vulnerability count minimal
-    if: fromJSON(needs.security-scan.outputs.vulnerabilities-found || '0') <= 4
-    
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            python-version: '3.9'
-          - os: ubuntu-latest
-            python-version: '3.10'
-          - os: ubuntu-latest
-            python-version: '3.11'
-          - os: windows-latest
-            python-version: '3.11'
-          - os: macos-latest
-            python-version: '3.11'
-    concurrency:
-      group: tests-${{ github.ref }}
-      cancel-in-progress: true
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-    
-    - name: 🐍 Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-    
-    - name: 📦 Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt || echo "requirements.txt not found"
-        pip install -r requirements-test.txt || pip install pytest pytest-cov pytest-asyncio
-    
-    - name: 🧪 Run unit tests
-      run: |
-        if ls tests/unit/*.py >/dev/null 2>&1; then \
-          pytest tests/unit/ -v \
-            --tb=short \
-            --cov=src \
-            --cov-report=xml \
-            --cov-report=term-missing \
-            --cov-fail-under=80 || echo "Unit tests completed with issues"; \
-        else \
-          echo "No unit tests found. Skipping."; \
-        fi
-      env:
-        AMAS_ENVIRONMENT: testing
-        AMAS_LOG_LEVEL: DEBUG
-    
-    - name: 📊 Upload coverage
-      uses: codecov/codecov-action@v3
-      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
-      with:
-        file: ./coverage.xml
-        flags: unittests
-        name: codecov-${{ matrix.os }}-${{ matrix.python-version }}
-        fail_ci_if_error: false
-
-  integration-tests:
-    name: 🔗 Integration Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    needs: [security-scan, code-quality]
-    if: fromJSON(needs.security-scan.outputs.vulnerabilities-found || '0') <= 2
-    
-    services:
-      postgres:
-        image: postgres:15-alpine
-        env:
-          POSTGRES_PASSWORD: test_password_123
-          POSTGRES_DB: amas_test
-          POSTGRES_INITDB_ARGS: --encoding=UTF-8
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
-      
-      redis:
-        image: redis:7-alpine
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 6379:6379
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-    
-    - name: 🐍 Setup Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'
-    
-    - name: 📦 Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt || echo "requirements.txt not found"
-        pip install -r requirements-test.txt || pip install pytest pytest-cov pytest-asyncio
-    
-    - name: 🏗️ Setup test environment
-      run: |
-        mkdir -p logs data models
-        
-        # Create test environment file
-        cat > .env.test << EOF
-        AMAS_ENVIRONMENT=testing
-        AMAS_LOG_LEVEL=DEBUG
-        AMAS_DB_HOST=localhost
-        AMAS_DB_PORT=5432
-        AMAS_DB_USER=postgres
-        AMAS_DB_PASSWORD=test_password_123
-        AMAS_DB_NAME=amas_test
-        AMAS_REDIS_HOST=localhost
-        AMAS_REDIS_PORT=6379
-        EOF
-    
-    - name: 🔗 Run integration tests
-      run: |
-        pytest tests/integration/ -v \
-          --tb=short \
-          --cov=src \
-          --cov-report=xml \
-          --maxfail=5 || echo "Integration tests completed with issues"
-      env:
-        AMAS_ENVIRONMENT: testing
-        AMAS_DB_HOST: localhost
-        AMAS_DB_PASSWORD: test_password_123
-        AMAS_DB_NAME: amas_test
-        AMAS_REDIS_HOST: localhost
-
-  # =============================================================================
-  # PHASE 3: SECURE BUILD & CONTAINER SCANNING
-  # =============================================================================
-  
-  secure-build:
-    name: 🐳 Secure Docker Build
-    runs-on: ubuntu-latest
-    timeout-minutes: 30  # Build+scan
-    needs: [test-matrix, integration-tests]
-    permissions:
-      contents: read
-      packages: write  # Needed for ghcr push when not pull_request
-    concurrency:
-      group: build-${{ github.ref }}
-      cancel-in-progress: true
-    outputs:
-      image-digest: ${{ steps.build.outputs.digest }}
-      image-tag: ${{ steps.meta.outputs.tags }}
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-    
-    # SECURITY FIX: Architecture verification
-    - name: 🖥️ Verify build environment
-      run: |
-        echo "Build architecture: $(uname -m)"
-        echo "Available platforms: $(docker buildx ls)"
-        
-        # Verify we're not making assumptions about architecture
-        ARCH=$(uname -m)
-        if [ "$ARCH" = "x86_64" ]; then
-          echo "DOCKER_PLATFORM=linux/amd64" >> $GITHUB_ENV
-        elif [ "$ARCH" = "aarch64" ]; then
-          echo "DOCKER_PLATFORM=linux/arm64" >> $GITHUB_ENV
-        else
-          echo "⚠️ Unexpected architecture: $ARCH"
-          echo "DOCKER_PLATFORM=linux/amd64,linux/arm64" >> $GITHUB_ENV
-        fi
-    
-    - name: 🐳 Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    
-    - name: 🏷️ Extract metadata
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=sha,prefix={{branch}}-
-          type=raw,value=latest,enable={{is_default_branch}}
-    
-    - name: 🔑 Login to Container Registry
-      if: github.event_name != 'pull_request'
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.DOCKER_REGISTRY }}
-        username: ${{ env.REGISTRY_USERNAME }}
-        password: ${{ secrets.REGISTRY_PAT != '' && secrets.REGISTRY_PAT || secrets.GITHUB_TOKEN }}
-    
-    - name: 🔎 Verify registry credentials scope
-      if: github.event_name != 'pull_request'
-      run: |
-        if [ -z "${{ secrets.REGISTRY_PAT }}" ]; then
-          echo "::warning::Using GITHUB_TOKEN for registry operations. Prefer REGISTRY_PAT with write:packages only."
-        fi
-    
-    - name: 🏗️ Build Docker image
-      id: build
-      uses: docker/build-push-action@v5
-      with:
-        context: .
-        platforms: ${{ env.DOCKER_PLATFORM }}
-        push: ${{ github.event_name != 'pull_request' }}
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
-        # SECURITY: Build with security-focused options
-        build-args: |
-          BUILDKIT_INLINE_CACHE=1
-        provenance: true
-        sbom: true
-    
-    # SECURITY FIX: Comprehensive container scanning
-    - name: 🔍 Container security scan with Trivy
-      uses: aquasecurity/trivy-action@0.20.0
-      with:
-        image-ref: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        format: 'sarif'
-        output: 'trivy-results.sarif'
-        severity: 'CRITICAL,HIGH,MEDIUM'
-        exit-code: '1'  # Fail on critical/high vulnerabilities
-    
-    - name: 📊 Upload Trivy results
-      uses: github/codeql-action/upload-sarif@v3
-      if: always()
-      with:
-        sarif_file: 'trivy-results.sarif'
-    
-    - name: 🛡️ Additional container security with Grype
-      if: github.event_name != 'pull_request'
-      run: |
-        # Install Grype for additional scanning
-        curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin
-        
-        # Scan the image
-        grype ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-          --output json \
-          --file grype-results.json || true
-        
-        # Show summary
-        grype ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }} || true
-    
-    - name: 📊 Upload container scan artifacts
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: container-security-${{ github.sha }}
-        path: |
-          trivy-results.sarif
-          grype-results.json
-        retention-days: 30
-
-  # =============================================================================
-  # PHASE 4: SECURE DEPLOYMENT
-  # =============================================================================
-  
-  deploy-staging:
-    name: 🚀 Deploy to Staging
-    runs-on: ubuntu-latest
-    needs: [secure-build]
-    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
-    environment: 
-      name: staging
-      url: https://amas-staging.example.com
-    timeout-minutes: 20  # Deployment+smoke
-    permissions:
-      contents: read
-    concurrency:
-      group: deploy-staging-${{ github.ref }}
-      cancel-in-progress: false
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-    
-    - name: 🚀 Deploy to staging
-      run: |
-        echo "🚀 Deploying to staging environment..."
-        # Add actual deployment commands here
-        echo "Image: ${{ needs.secure-build.outputs.image-tag }}"
-        echo "Digest: ${{ needs.secure-build.outputs.image-digest }}"
-    
-    - name: 🧪 Run smoke tests
-      run: |
-        echo "🧪 Running staging smoke tests..."
-        # Add smoke test commands
-    
-    - name: 📊 Update deployment status
-      run: |
-        echo "✅ Staging deployment completed successfully"
-
-  deploy-production:
-    name: 🌟 Deploy to Production
-    runs-on: ubuntu-latest
-    needs: [secure-build, deploy-staging]
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-    environment: 
-      name: production
-      url: https://amas.example.com
-    timeout-minutes: 25  # Deployment+validation
-    permissions:
-      contents: read
-    concurrency:
-      group: deploy-production-${{ github.ref }}
-      cancel-in-progress: false
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-    
-    - name: 🔒 Pre-deployment security validation
-      run: |
-        echo "🔒 Running final security validation..."
-        # Validate that all security gates have passed
-        if [ "${{ needs.secure-build.result }}" != "success" ]; then
-          echo "❌ Secure build did not pass, aborting deployment"
-          exit 1
-        fi
-        echo "✅ Security validation passed"
-    
-    - name: 🚀 Deploy to production
-      run: |
-        echo "🚀 Deploying to production environment..."
-        echo "Image: ${{ needs.secure-build.outputs.image-tag }}"
-        echo "Digest: ${{ needs.secure-build.outputs.image-digest }}"
-        # Add blue-green deployment logic here
-    
-    - name: 🧪 Run production validation
-      run: |
-        echo "🧪 Running production validation tests..."
-        # Add production validation
-    
-    - name: 📢 Notify successful deployment
-      if: success()
-      run: |
-        echo "🎉 Production deployment completed successfully!"
-        # Add notification logic (Slack, email, etc.)
-
-  # =============================================================================
-  # SECURITY & COMPLIANCE REPORTING
-  # =============================================================================
-  
-  security-report:
-    name: 📋 Security Compliance Report
-    runs-on: ubuntu-latest
-    needs: [security-scan, secure-build]
-    if: always()
-    timeout-minutes: 15
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-    
-    - name: 📊 Download security artifacts
-      uses: actions/download-artifact@v4
-      with:
-        pattern: '*security*'
-        merge-multiple: true
-    
-    - name: 📋 Generate security report
-      run: |
-        echo "# 🔒 Security Compliance Report" > security-report.md
-        echo "" >> security-report.md
-        echo "**Date:** $(date -u)" >> security-report.md
-        echo "**Commit:** ${{ github.sha }}" >> security-report.md
-        echo "**Branch:** ${{ github.ref_name }}" >> security-report.md
-        echo "" >> security-report.md
-        
-        echo "## 🔍 Vulnerability Scan Results" >> security-report.md
-        echo "" >> security-report.md
-        
-        if [ "${{ needs.security-scan.outputs.vulnerabilities-found }}" = "0" ]; then
-          echo "✅ **No vulnerabilities found**" >> security-report.md
-        else
-          echo "⚠️ **${{ needs.security-scan.outputs.vulnerabilities-found }} vulnerabilities found**" >> security-report.md
-        fi
-        
-        echo "" >> security-report.md
-        echo "## 🐳 Container Security" >> security-report.md
-        echo "" >> security-report.md
-        
-        if [ "${{ needs.secure-build.result }}" = "success" ]; then
-          echo "✅ **Container security scan passed**" >> security-report.md
-        else
-          echo "❌ **Container security scan failed**" >> security-report.md
-        fi
-        
-        echo "" >> security-report.md
-        echo "## 📊 Compliance Status" >> security-report.md
-        echo "" >> security-report.md
-        echo "- **OWASP Top 10:** Scanned ✅" >> security-report.md
-        echo "- **CWE Top 25:** Scanned ✅" >> security-report.md
-        echo "- **Secret Detection:** Scanned ✅" >> security-report.md
-        echo "- **Dependency Audit:** Scanned ✅" >> security-report.md
-        echo "- **Container Security:** Scanned ✅" >> security-report.md
-    
-    - name: 📤 Upload security report
-      uses: actions/upload-artifact@v4
-      with:
-        name: security-compliance-report-${{ github.sha }}
-        path: security-report.md
-        retention-days: 90
-
-  # =============================================================================
-  # ROLLBACK CAPABILITY
-  # =============================================================================
-  
-  rollback:
-    name: 🔄 Emergency Rollback
-    runs-on: ubuntu-latest
-    if: failure() && (github.ref == 'refs/heads/main')
-    needs: [deploy-production]
-    timeout-minutes: 10
-    
-    steps:
-    - name: 📥 Checkout code
-      uses: actions/checkout@v4
-    
-    - name: 🔄 Execute emergency rollback
-      run: |
-        echo "🔄 Executing emergency rollback..."
-        # Add rollback logic here
-        echo "Previous stable version restored"
-    
-    - name: 📢 Notify rollback
-      run: |
-        echo "⚠️ Emergency rollback completed - team notified"
-        # Add emergency notification logic
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      - run: mkdir -p ~/.cache/pip
+      - name: Install security tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-security.txt
+      - name: Safety
+        run: safety check --json > safety-report.json || true
+      - name: Bandit
+        run: |
+          if [ -d src ]; then bandit -r src -f json -o bandit-report.json || true; fi
+      - name: Semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/secrets
+            p/owasp-top-ten
+          generateSarif: "1"
+      - name: Upload security artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-reports-${{ github.sha }}
+          path: |
+            safety-report.json
+            bandit-report.json
+            semgrep.sarif
+      - name: Evaluate
+        id: scan-results
+        run: |
+          vuln=0
+          crit=0
+          if [ -s safety-report.json ]; then v=$(jq length safety-report.json || echo 0); vuln=$((vuln+v)); fi
+          if [ -s bandit-report.json ]; then b=$(jq '.results|length' bandit-report.json||echo 0); vuln=$((vuln+b)); fi
+          echo "vulnerabilities=$vuln" >> $GITHUB_OUTPUT
+          echo "critical-vulnerabilities=$crit" >> $GITHUB_OUTPUT
+          echo "passed=$([ "$crit" -eq 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
