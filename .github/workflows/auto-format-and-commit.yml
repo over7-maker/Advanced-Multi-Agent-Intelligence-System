@@ -1,4 +1,4 @@
-name: 🧹 Auto Format and Commit (Black/isort)
+name: Auto Format and Commit (Black/isort)
 
 on:
   workflow_dispatch:
@@ -11,6 +11,15 @@ on:
         description: 'Python version for Black/isort'
         required: false
         default: '3.11'
+        type: choice
+        options:
+          - '3.9'
+          - '3.10'
+          - '3.11'
+          - '3.12'
+      ref:
+        description: 'Branch or ref to format (default: current branch)'
+        required: false
   pull_request:
     types: [labeled]
 
@@ -37,10 +46,31 @@ jobs:
       group: auto-format-workflow-${{ github.event.pull_request.number || github.run_id }}
       cancel-in-progress: true
     steps:
+      - name: 🔒 Validate Event Context
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Validating event context for security..."
+          
+          # Extra security check: verify PR is from same repo
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            if [[ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]]; then
+              echo "❌ Security: PR from fork detected. Refusing to format."
+              exit 1
+            fi
+            echo "✅ PR is from same repository"
+          elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "✅ Manual workflow dispatch"
+          else
+            echo "❌ Unexpected event type: ${{ github.event_name }}"
+            exit 1
+          fi
+
       - name: 📥 Checkout
         uses: actions/checkout@v4.1.1
         with:
-          ref: ${{ github.head_ref || github.ref }}
+          # Use ref input for workflow_dispatch, head_ref for PRs, fallback to current ref
+          ref: ${{ inputs.ref || github.head_ref || github.ref }}
           # fetch-depth: 0 needed for git push to work correctly with branch refs
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -111,28 +141,59 @@ jobs:
           pip install black==24.3.0 isort==5.13.2
 
       - name: 🎨 Run Black
+        id: format-black
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           TARGETS="${{ inputs.paths || 'src tests' }}"
-          echo "Formatting: $TARGETS"
-          if [ -f pyproject.toml ]; then
-            black $TARGETS || exit 1
-          else
-            black $TARGETS --line-length 88 || exit 1
+          echo "Formatting with Black: $TARGETS"
+          
+          # Check if target paths exist
+          MISSING_PATHS=""
+          for target in $TARGETS; do
+            if [ ! -e "$target" ]; then
+              MISSING_PATHS="$MISSING_PATHS $target"
+            fi
+          done
+          
+          if [ -n "$MISSING_PATHS" ]; then
+            echo "⚠️  Warning: Some paths don't exist:$MISSING_PATHS"
+            echo "Continuing with available paths..."
           fi
+          
+          if [ -f pyproject.toml ]; then
+            black $TARGETS || {
+              echo "❌ Black formatting failed"
+              exit 1
+            }
+          else
+            black $TARGETS --line-length 88 || {
+              echo "❌ Black formatting failed"
+              exit 1
+            }
+          fi
+          echo "✅ Black formatting completed"
 
       - name: 🔀 Run isort
+        id: format-isort
         shell: bash
         run: |
-          set -e
+          set -euo pipefail
           TARGETS="${{ inputs.paths || 'src tests' }}"
-          echo "Sorting imports: $TARGETS"
+          echo "Sorting imports with isort: $TARGETS"
+          
           if [ -f pyproject.toml ]; then
-            isort $TARGETS || exit 1
+            isort $TARGETS || {
+              echo "❌ isort import sorting failed"
+              exit 1
+            }
           else
-            isort $TARGETS --profile black || exit 1
+            isort $TARGETS --profile black || {
+              echo "❌ isort import sorting failed"
+              exit 1
+            }
           fi
+          echo "✅ isort import sorting completed"
 
       - name: ⚙️ Configure Git
         shell: bash
@@ -187,11 +248,32 @@ jobs:
       - name: 💬 Comment on PR
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
+        env:
+          HAS_CHANGES: ${{ steps.check-changes.outputs.has_changes }}
+          BLACK_STATUS: ${{ steps.format-black.outcome }}
+          ISORT_STATUS: ${{ steps.format-isort.outcome }}
         with:
           script: |
-            const message = `${{ steps.check-changes.outputs.has_changes == 'true' 
-              ? '✅ **Auto-format complete!**\n\nCode has been formatted with Black and isort and committed to this PR.\n\nCI checks should run automatically on the new commit.'
-              : 'ℹ️  **No formatting changes needed.**\n\nCode is already properly formatted.' }}`;
+            let message;
+            
+            // Check for formatting failures
+            if (process.env.BLACK_STATUS === 'failure' || process.env.ISORT_STATUS === 'failure') {
+              message = `❌ **Auto-format failed!**\n\n` +
+                `Formatting encountered errors. Please check the workflow logs for details.\n\n` +
+                `You can run formatting locally:\n` +
+                `\`\`\`bash\n` +
+                `pip install black==24.3.0 isort==5.13.2\n` +
+                `black src tests\n` +
+                `isort src tests\n` +
+                `\`\`\``;
+            } else if (process.env.HAS_CHANGES === 'true') {
+              message = `✅ **Auto-format complete!**\n\n` +
+                `Code has been formatted with Black and isort and committed to this PR.\n\n` +
+                `CI checks should run automatically on the new commit.`;
+            } else {
+              message = `ℹ️  **No formatting changes needed.**\n\n` +
+                `Code is already properly formatted.`;
+            }
             
             github.rest.issues.createComment({
               issue_number: context.issue.number,
@@ -203,9 +285,26 @@ jobs:
       - name: ✅ Summary
         if: always()
         run: |
-          if [ "${{ steps.check-changes.outputs.has_changes }}" == "true" ]; then
+          echo "=========================================="
+          echo "📊 Auto-Format Workflow Summary"
+          echo "=========================================="
+          
+          # Check formatting step outcomes
+          BLACK_OUTCOME="${{ steps.format-black.outcome }}"
+          ISORT_OUTCOME="${{ steps.format-isort.outcome }}"
+          CHANGES_MADE="${{ steps.check-changes.outputs.has_changes }}"
+          
+          if [ "$BLACK_OUTCOME" = "failure" ] || [ "$ISORT_OUTCOME" = "failure" ]; then
+            echo "❌ Workflow failed during formatting"
+            echo "   Black: $BLACK_OUTCOME"
+            echo "   isort: $ISORT_OUTCOME"
+            exit 1
+          elif [ "$CHANGES_MADE" = "true" ]; then
             echo "✅ Code formatted and committed successfully!"
             echo "🔄 CI checks should now run automatically on this commit."
           else
-            echo "ℹ️  No formatting changes were needed. Code is already formatted."
+            echo "ℹ️  No formatting changes were needed."
+            echo "   Code is already properly formatted."
           fi
+          
+          echo "=========================================="
