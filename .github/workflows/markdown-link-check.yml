@@ -12,6 +12,13 @@ on:
       - 'docs/**'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   markdown-link-check:
     runs-on: ubuntu-latest
@@ -20,7 +27,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Check Markdown Links
-        uses: gaurav-nelson/github-action-markdown-link-check@v1
+        uses: gaurav-nelson/github-action-markdown-link-check@v1.0.13
         continue-on-error: true
         id: link-check
         with:
@@ -37,8 +44,14 @@ jobs:
           echo "ℹ️  Local file path checks can produce false negatives in this action; HTTP/HTTPS links are the primary focus."
           if [ -f link-check-report.txt ]; then
             echo "--- Broken HTTP/HTTPS links detected (if any):"
-            # Show only http/https failures from report for quick triage
-            grep -E "^\[✖\] https?://" link-check-report.txt || echo "(none)"
+            BROKEN=$(grep -E "^\[✖\] https?://" link-check-report.txt || true)
+            if [ -n "$BROKEN" ]; then
+              echo "$BROKEN"
+              echo "❌ External link failures detected"
+              exit 1
+            else
+              echo "(none)"
+            fi
           else
             echo "No report file generated."
           fi

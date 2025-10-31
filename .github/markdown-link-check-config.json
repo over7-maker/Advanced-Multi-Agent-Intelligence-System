@@ -10,8 +10,9 @@
   "fallbackRetryDelay": "5s",
   "timeout": "30s",
   "ignoreDirectory": [
-    "backup",
+    "backup_",
     "node_modules",
     ".git"
-  ]
+  ],
+  "retryDelaySeconds": 10
 }
