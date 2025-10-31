@@ -116,10 +116,10 @@ The most comprehensive AI provider management system ever created:
 ### **🛡️ Enterprise-Grade Security**
 Military-grade security implementation with comprehensive compliance:
 
-- **[🔒 Phase 2 Security Features](SECURITY_PHASE2.md)** - **34KB** - Enterprise security guide
+- **[🔒 Phase 2 Security Features](PHASE_2_FEATURES.md)** - **34KB** - Enterprise security guide
 - **[🔐 Authentication Setup](security/AUTHENTICATION_SETUP.md)** - JWT/OIDC integration
 - **[🛡️ Security Guide](security/SECURITY.md)** - Comprehensive security practices
-- **[📊 Compliance Matrix](SECURITY_PHASE2.md#-enterprise-compliance-matrix)** - SOC 2, GDPR, HIPAA
+- **[📊 Compliance Matrix](PHASE_2_FEATURES.md)** - SOC 2, GDPR, HIPAA
 
 ### **🎯 Security Features**
 - **🔐 JWT/OIDC Integration** - Enterprise authentication
@@ -295,7 +295,7 @@ Complete guides for production deployment and operations:
 
 [![Quick Start](https://img.shields.io/badge/Quick%20Start-10%20Minutes-brightgreen?style=for-the-badge&logo=rocket)](QUICK_START.md)
 [![AI Workflows](https://img.shields.io/badge/AI%20Workflows-Revolutionary-blue?style=for-the-badge&logo=robot)](AI_AGENTIC_WORKFLOW_GUIDE.md)
-[![Security](https://img.shields.io/badge/Security-Enterprise%20Grade-red?style=for-the-badge&logo=shield)](SECURITY_PHASE2.md)
+[![Security](https://img.shields.io/badge/Security-Enterprise%20Grade-red?style=for-the-badge&logo=shield)](PHASE_2_FEATURES.md)
 [![API Reference](https://img.shields.io/badge/API%20Reference-Complete-green?style=for-the-badge&logo=api)](api/README.md)
 
 **Experience the most comprehensive AI system documentation ever created!**
@@ -312,7 +312,7 @@ Complete guides for production deployment and operations:
 |-----------|--------------|----------|
 | **🔧 Setup Problems** | [Troubleshooting Guide](AI_AGENTIC_TROUBLESHOOTING.md) | 5 min |
 | **🤖 AI Provider Issues** | [AI Providers Guide](AI_PROVIDERS_GUIDE.md) | 10 min |
-| **🔒 Security Questions** | [Security Guide](SECURITY_PHASE2.md) | 15 min |
+| **🔒 Security Questions** | [Security Guide](PHASE_2_FEATURES.md) | 15 min |
 | **📊 Advanced Features** | [Complete Documentation](../README.md) | 30 min |
 
 </div>

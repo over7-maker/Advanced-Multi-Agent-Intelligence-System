@@ -532,7 +532,7 @@ policy:
 | **[AI Providers](docs/AI_PROVIDERS.md)** | Provider configuration | 25KB | ✅ Available |
 | **[Security Features](docs/PHASE_2_FEATURES.md)** | Security implementation | 45KB | ✅ Available |
 | **[Monitoring Guide](docs/MONITORING_GUIDE.md)** | Observability setup | 35KB | ✅ Available |
-| **[Architecture Guide](docs/ARCHITECTURE.md)** | System design | 30KB | ✅ Available |
+| **[Architecture Guide](docs/architecture.md)** | System design | 30KB | ✅ Available |
 
 ### **API Reference**
 - **🔗 Universal Router API** - Never-fail async interface
