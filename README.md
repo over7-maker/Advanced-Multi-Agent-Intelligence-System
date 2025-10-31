@@ -534,6 +534,10 @@ policy:
 | **[Monitoring Guide](docs/MONITORING_GUIDE.md)** | Observability setup | 35KB | ✅ Available |
 | **[Architecture Guide](docs/ARCHITECTURE.md)** | System design | 30KB | ✅ Available |
 
+### See also
+- Universal AI Router guide: `docs/UNIVERSAL_AI_ROUTER.md`
+- Changelog v3.0.0 (Phase 3): `CHANGELOG.md`
+
 ### **API Reference**
 - **🔗 Universal Router API** - Never-fail async interface
 - **🐍 Python SDK** - Library reference with examples
