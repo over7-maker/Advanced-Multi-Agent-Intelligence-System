@@ -521,6 +521,19 @@ policy:
 
 ---
 
+## 🧩 **Phase 2 Core Services**
+
+- Graceful Shutdown Service — see Feature Implementation Guide → docs/FEATURE_IMPLEMENTATION_GUIDE.md
+- Timeout Service — see Feature Implementation Guide → docs/FEATURE_IMPLEMENTATION_GUIDE.md
+- Retry Utilities — see Feature Implementation Guide → docs/FEATURE_IMPLEMENTATION_GUIDE.md
+- Enhanced Authentication & Authorization — see Feature Implementation Guide → docs/FEATURE_IMPLEMENTATION_GUIDE.md and API docs → docs/API_DOCUMENTATION.md
+- Rate Limiting Middleware — see Feature Implementation Guide → docs/FEATURE_IMPLEMENTATION_GUIDE.md
+- Circuit Breaker Service — see Feature Implementation Guide → docs/FEATURE_IMPLEMENTATION_GUIDE.md
+- Error Recovery Service — see Feature Implementation Guide → docs/FEATURE_IMPLEMENTATION_GUIDE.md
+- Health Check Service — see Feature Implementation Guide → docs/FEATURE_IMPLEMENTATION_GUIDE.md and API docs → docs/API_DOCUMENTATION.md
+- Prometheus Metrics Service — see Feature Implementation Guide → docs/FEATURE_IMPLEMENTATION_GUIDE.md and Monitoring Guide → docs/MONITORING_GUIDE.md
+- Structured Logging Service — see Feature Implementation Guide → docs/FEATURE_IMPLEMENTATION_GUIDE.md
+
 <a name="documentation"></a>
 ## 📚 **Complete Documentation**
 
