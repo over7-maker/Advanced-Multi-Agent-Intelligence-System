@@ -1,4 +1,4 @@
-name: 🛠️ Auto Format and Commit
+name: Auto Format and Commit
 
 on:
   workflow_dispatch:
@@ -19,7 +19,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || 'dispatch' }}
   cancel-in-progress: true
 
 jobs:
@@ -27,14 +27,20 @@ jobs:
     name: Run Black + isort
     runs-on: ubuntu-22.04
     if: >
-      (github.event_name == 'workflow_dispatch')
-      ||
-      (github.event_name == 'pull_request'
-       && github.event.action == 'labeled'
-       && (github.event.label.name == 'auto-format' || toJson(github.event.label.name) == '"auto-format"')
-       && github.event.pull_request.head.repo.full_name == github.repository)
+      (github.event_name == 'workflow_dispatch') ||
+      (
+        github.event_name == 'pull_request' &&
+        (github.event.action == 'labeled' || github.event.action == 'synchronize' || github.event.action == 'reopened') &&
+        contains(github.event.pull_request.labels.*.name, 'auto-format') &&
+        github.event.pull_request.head.repo.full_name == github.repository
+      )
 
     steps:
+      - name: Validate ref exists (if provided)
+        if: inputs.ref != ''
+        run: |
+          git ls-remote --exit-code origin ${{ inputs.ref }} || (echo "Ref '${{ inputs.ref }}' does not exist" && exit 1)
+
       - name: Checkout code
         uses: actions/checkout@v4
         with:
@@ -48,14 +54,11 @@ jobs:
           python-version: "3.11"
           cache: "pip"
 
-      - name: Ensure pip cache directory exists
-        run: mkdir -p ~/.cache/pip
-
       - name: Cache pip
         uses: actions/cache@v4
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt', '**/pyproject.toml', '**/setup.py') }}
           restore-keys: |
             ${{ runner.os }}-pip-
 
