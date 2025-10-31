@@ -40,9 +40,15 @@ jobs:
         id: linkcheck
         run: |
           set -euo pipefail
-          markdown-link-check "**/*.md" \
-            --config .github/markdown-link-check-config.json \
-            --parallel --concurrency 8 | tee link-check-report.txt
+          rm -f link-check-report.txt
+          EXIT_CODE=0
+          while IFS= read -r -d '' file; do
+            echo "\n=== Checking: $file ===" | tee -a link-check-report.txt
+            if ! markdown-link-check "$file" --config .github/markdown-link-check-config.json | tee -a link-check-report.txt; then
+              EXIT_CODE=1
+            fi
+          done < <(find . -type f -name '*.md' -not -path './node_modules/*' -print0)
+          exit $EXIT_CODE
         shell: bash
 
       - name: Link check results summary
