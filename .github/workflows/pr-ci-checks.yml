@@ -5,7 +5,7 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches-ignore:
-      - '**'  # Don't run on direct pushes, only PRs
+      - '**'  # Don't run on direct pushes,  only PRs
 
 permissions:
   contents: read
