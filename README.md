@@ -98,29 +98,23 @@ graph TB
 ### **🤖 Supported AI Providers (15+ Total)**
 
 #### **Tier 1 - Premium Speed**
-- **Cerebras Cloud** - Ultra-fast inference (1-3s response)
-- **NVIDIA NIM** - GPU-accelerated processing (2-4s response)
+- **Cerebras** - Ultra-fast inference (SDK/HTTP supported)
+- **NVIDIA** - OpenAI-compatible Integrate API
 
 #### **Tier 2 - High Quality**
-- **Google Gemini 2.0** - Advanced reasoning (3-8s response)
-- **Mistral Codestral** - Code-specific analysis (3-7s response)
+- **Google Gemini 2.0** - Advanced reasoning
+- **Mistral Codestral** - Code-oriented analysis
 
 #### **Tier 3 - Commercial**
-- **Cohere Command** - NLP tasks (4-8s response)
-- **Groq LPU** - Fast inference (1-2s response)
-- **GroqAI** - Alternative endpoint (2-5s response)
+- **Cohere** - Chat v2 API
+- **Groq2** - Placeholder (adapter planned)
+- **GroqAI** - Placeholder (adapter planned)
 
 #### **Tier 4 - Specialized**
-- **Chutes AI** - Final fallback provider (10-30s response)
+- **Chutes AI** - OpenAI-style chat completions
 
-#### **Tier 5 - Free Fallbacks**
-- **DeepSeek v3** - Code understanding (3-6s response)
-- **GLM-4.5** - Chinese/English analysis (8-15s response)
-- **xAI Grok** - X.AI integration (6-14s response)
-- **Moonshot Kimi** - Long context processing (10-20s response)
-- **Alibaba Qwen** - Cloud integration (8-16s response)
-- **GPT-OSS** - Open source models (5-12s response)
-- **Gemini AI** - Google V1 API (7-15s response)
+#### **Tier 5 - Free Fallbacks (via OpenRouter)**
+- **DeepSeek** • **GLM 4.5** • **xAI Grok** • **Moonshot Kimi** • **Qwen** • **GPT-OSS**
 
 ---
 
@@ -399,9 +393,9 @@ print(f"Bulletproof validation: {health['bulletproof_active']}")
 ### **Provider Tiers & Failover Chain**
 1. **Tier 1**: Premium Speed — Cerebras, NVIDIA
 2. **Tier 2**: High Quality — Gemini 2.0, Codestral
-3. **Tier 3**: Commercial — Cohere, Groq2, GroqAI
+3. **Tier 3**: Commercial — Cohere, Groq2 (placeholder), GroqAI (placeholder)
 4. **Tier 4**: Specialized — Chutes
-5. **Tier 5**: Free Fallbacks — DeepSeek, GLM, Grok, Kimi, Qwen, GPT-OSS
+5. **Tier 5**: Free Fallbacks (OpenRouter) — DeepSeek, GLM, Grok, Kimi, Qwen, GPT-OSS
 
 ---
 
