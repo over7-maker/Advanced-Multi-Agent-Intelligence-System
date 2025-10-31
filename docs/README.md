@@ -181,6 +181,7 @@ Complete technical documentation for developers and contributors:
 - **[🏗️ Architecture Guide](developer/architecture.md)** - System architecture
 - **[🔒 Hardening Guide](developer/hardening.md)** - Security hardening
 - **[🔒 Enhanced Hardening](developer/hardening_enhanced.md)** - Advanced security
+- **[🔄 Phase 4 Integration Guide](developer/PHASE_4_DEVELOPER_GUIDE.md)** - Phase 4 components for external integration
 - **[📊 API Manager Guide](API_MANAGER_GUIDE.md)** - API management
 
 ### **🎯 Developer Features**

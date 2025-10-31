@@ -281,9 +281,10 @@ The merged PR "cursor/implement-phase-4-project-upgrades-9084" introduced additi
 - Dependency hardening in `requirements.txt` (including resiliency pins)
 
 Where to read more:
-- Security overview: `docs/security/SECURITY.md`
-- Auth setup: `docs/security/AUTHENTICATION_SETUP.md`
-- User/Session management: developer details in `docs/developer/README.md` (Security sections)
+- **Security overview**: `docs/security/SECURITY.md`
+- **Auth setup**: `docs/security/AUTHENTICATION_SETUP.md`
+- **Developer integration guide**: `docs/developer/PHASE_4_DEVELOPER_GUIDE.md` - Complete guide for integrating Phase 4 components in external services
+- **User/Session management**: Developer details in `docs/developer/README.md` (Security sections)
 
 Action for upgraders: re-run environment validation and review any new required env vars referenced by the above modules.
 

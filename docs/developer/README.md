@@ -25,7 +25,8 @@ Welcome to the AMAS Developer Guide! This comprehensive documentation will help 
 10. [Debugging](#debugging)
 11. [Performance Optimization](#performance-optimization)
 12. [Security Considerations](#security-considerations)
-13. [Contributing](#contributing)
+13. [Phase 4 Integration Guide](#phase-4-integration-guide)
+14. [Contributing](#contributing)
 
 ---
 
@@ -2137,6 +2138,30 @@ async def process_batch(items: List[Item], batch_size: int = 100):
         batch = items[i:i + batch_size]
         await process_items(batch)
 ```
+
+---
+
+## Phase 4 Integration Guide
+
+For developers wanting to integrate or extend Phase 4 security/auth/session components in external services or custom deployments, see:
+
+**[📖 Phase 4 Developer Integration Guide](PHASE_4_DEVELOPER_GUIDE.md)** - Complete guide covering:
+- Integration patterns for FastAPI and ASGI services
+- Standalone service integration examples
+- Authentication middleware setup
+- Session management
+- RBAC implementation
+- Data protection utilities
+- Testing checklist
+- Troubleshooting guide
+
+The guide includes working code examples for:
+- FastAPI authentication middleware
+- Route-level protection and RBAC
+- Session management
+- Data encryption/decryption
+- User management operations
+- Standalone service integration (non-AMAS projects)
 
 ---
 
