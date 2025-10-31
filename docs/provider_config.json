@@ -64,7 +64,9 @@
       "latency_s": null,
       "api_key_env": "GROQ2_API_KEY",
       "model": null,
-      "status": "development"
+      "status": "planned",
+      "supported": false,
+      "message": "Implementation pending. Refer to roadmap Phase 6."
     },
     {
       "name": "GroqAI",
@@ -75,7 +77,9 @@
       "latency_s": null,
       "api_key_env": "GROQAI_API_KEY",
       "model": null,
-      "status": "development"
+      "status": "planned",
+      "supported": false,
+      "message": "Implementation pending. Refer to roadmap Phase 6."
     },
     {
       "name": "Chutes AI",

@@ -103,12 +103,12 @@ graph TB
 
 #### **Tier 2 - High Quality**
 - **Google Gemini 2.0** - Advanced reasoning (3-8s response, multimodal)
-- **Codestral (Mistral)** - Code-oriented analysis (3-7s response)
+- **Mistral Codestral** - Code-specific analysis (3-7s response, high accuracy)
 
 #### **Tier 3 - Commercial**
 - **Cohere** - Chat v2 API (4-8s response, enterprise features)
 
-> **Note**: Groq2 and GroqAI adapters are in development and will be available in a future release.
+> ⚠️ Groq2 and GroqAI: Planned – Not Yet Implemented (adapters in development)
 
 #### **Tier 4 - Specialized**
 - **Chutes AI** - OpenAI-style chat completions (10-30s response, specialized models)

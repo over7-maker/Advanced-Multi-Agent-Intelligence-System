@@ -42,6 +42,32 @@ def extract_providers_from_readme():
     
     return providers
 
+def canonical_name_map():
+    """Map display names in README to canonical code names."""
+    return {
+        "Cerebras": "cerebras",
+        "NVIDIA": "nvidia",
+        "Google Gemini 2.0": "gemini2",
+        "Codestral (Mistral)": "codestral",
+        "Mistral Codestral": "codestral",
+        "Cohere": "cohere",
+        "Chutes AI": "chutes",
+        "DeepSeek": "deepseek",
+        "GLM 4.5": "glm",
+        "xAI Grok": "grok",
+        "Moonshot Kimi": "kimi",
+        "Qwen": "qwen",
+        "GPT-OSS": "gptoss",
+    }
+
+def load_active_provider_codes(config):
+    codes = set()
+    for p in config.get("providers", []):
+        # Only consider supported active providers
+        if p.get("status") == "active" and p.get("supported", True):
+            codes.add(p.get("code_name"))
+    return codes
+
 def validate():
     """Validate provider documentation"""
     config = load_provider_config()
@@ -50,12 +76,29 @@ def validate():
     errors = []
     warnings = []
     
-    # Check all config providers appear in README
-    config_provider_names = {p["name"] for p in config["providers"] if p["status"] == "active"}
+    # Build canonical mapping
+    name_map = canonical_name_map()
+    active_codes = load_active_provider_codes(config)
+    readme_codes = set()
+    for display_name in readme_providers.keys():
+        code = name_map.get(display_name)
+        if code:
+            readme_codes.add(code)
+        else:
+            # If no mapping, record as warning but don't fail
+            warnings.append(f"⚠️  Unmapped provider display name in README.md: '{display_name}'")
     
-    for provider_name in config_provider_names:
-        if provider_name not in readme_providers:
-            warnings.append(f"⚠️  Provider '{provider_name}' in config but not found in README.md")
+    # Check that all active providers are at least represented
+    for code in active_codes:
+        if code not in readme_codes:
+            warnings.append(f"⚠️  Active provider '{code}' in config not represented in README.md")
+    
+    # Flag any providers documented in README but not supported
+    unsupported = [p for p in config.get("providers", []) if not p.get("supported", True)]
+    unsupported_names = {p["name"] for p in unsupported}
+    for display_name in readme_providers.keys():
+        if display_name in unsupported_names:
+            warnings.append(f"⚠️  README documents unsupported provider '{display_name}' (planned)")
     
     # Check README providers match config (allow for slight naming differences)
     readme_provider_set = set(readme_providers.keys())
