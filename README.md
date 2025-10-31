@@ -610,6 +610,15 @@ policy:
 | **[Security Features](docs/PHASE_2_FEATURES.md)** | Security implementation | 45KB | ✅ Available |
 | **[Monitoring Guide](docs/MONITORING_GUIDE.md)** | Observability setup | 35KB | ✅ Available |
 | **[Architecture Guide](docs/ARCHITECTURE.md)** | System design | 30KB | ✅ Available |
+| **[Phase 3 Developer Guide](docs/developer/PHASE_3_DEVELOPER_GUIDE.md)** | External integration (router, security, observability) | 18KB | ✅ Available |
+
+### See also
+- Universal AI Router guide: `docs/UNIVERSAL_AI_ROUTER.md`
+- Changelog v3.0.0 (Phase 3): `CHANGELOG.md`
+
+### **Bulletproof AI Analysis Examples**
+- **[Real AI Analysis Example](artifacts/bulletproof_real_ai_analysis_example.md)** - Sample bulletproof analysis with security recommendations
+- **[Phase 2 Fixed Report](artifacts/bulletproof_phase2_fixed_report.md)** - Phase 2 compliance checklist and fixes
 
 ### **API Reference**
 - **🔗 Universal Router API** - Never-fail async interface

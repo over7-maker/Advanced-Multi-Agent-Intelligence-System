@@ -1,0 +1,123 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amas-ingress
+  namespace: amas
+  labels:
+    app: amas
+    component: ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+  - hosts:
+    - amas.example.com
+    secretName: amas-tls
+  rules:
+  - host: amas.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: amas
+            port:
+              number: 8000
+      - path: /dashboard
+        pathType: Prefix
+        backend:
+          service:
+            name: amas
+            port:
+              number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amas-auth-ingress
+  namespace: amas
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
+    nginx.ingress.kubernetes.io/proxy-body-size: "5m"
+spec:
+  rules:
+  - host: amas.example.com
+    http:
+      paths:
+      - path: /auth
+        pathType: Prefix
+        backend:
+          service:
+            name: amas
+            port:
+              number: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amas-internal-ingress
+  namespace: amas
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Restrict metrics and Grafana to internal ranges (adjust to your CIDRs)
+    nginx.ingress.kubernetes.io/whitelist-source-range: 10.0.0.0/8,192.168.0.0/16
+spec:
+  tls:
+  - hosts:
+    - amas.example.com
+    secretName: amas-tls
+  rules:
+  - host: amas.example.com
+    http:
+      paths:
+      - path: /metrics
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus
+            port:
+              number: 9090
+      - path: /grafana
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: amas-loadbalancer
+  namespace: amas
+  labels:
+    app: amas
+    component: loadbalancer
+spec:
+  type: LoadBalancer
+  selector:
+    app: amas
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 8000
+    protocol: TCP
+  - name: dashboard
+    port: 3000
+    targetPort: 3000
+    protocol: TCP

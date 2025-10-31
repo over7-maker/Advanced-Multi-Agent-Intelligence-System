@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: amas-metrics
+  namespace: amas
+  labels:
+    app: amas
+spec:
+  selector:
+    matchLabels:
+      app: amas
+  endpoints:
+  - port: http
+    path: /metrics
+    interval: 15s
+    scrapeTimeout: 10s
