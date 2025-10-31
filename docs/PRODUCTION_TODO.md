@@ -254,14 +254,14 @@
 ## ✅ Phase 5 Achievements (This Release)
 
 - Added comprehensive Phase 5 developer documentation for external integration:
-  - Quick Integration Examples (docs/developer/QUICK_INTEGRATION_EXAMPLES.md)
-  - Full Integration Guide (docs/developer/PHASE_5_INTEGRATION_GUIDE.md)
-  - Component Integration Guide (docs/developer/COMPONENT_INTEGRATION_GUIDE.md)
+  - [Quick Integration Examples](developer/QUICK_INTEGRATION_EXAMPLES.md)
+  - [Full Integration Guide](developer/PHASE_5_INTEGRATION_GUIDE.md)
+  - [Component Integration Guide](developer/COMPONENT_INTEGRATION_GUIDE.md)
 - Updated and standardized main README and docs links; fixed broken/legacy references
 - Normalized provider naming and tiers to match implementation
 - Restored provider performance ranges and documented OpenRouter routing strategy
-- Created provider_config.json (single source of truth for providers)
-- Added validation script to prevent doc-code drift (scripts/validate_provider_docs.py)
+- Created [provider_config.json](../provider_config.json) (single source of truth for providers)
+- Added validation script to prevent doc-code drift ([scripts/validate_provider_docs.py](../../scripts/validate_provider_docs.py))
 
 Notes:
 - Groq2 / GroqAI adapters: design documented; implementation pending (placeholders remain by design)

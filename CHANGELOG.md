@@ -1,3 +1,24 @@
+## [3.0.0] - 2025-10-13
+
+### 📚 Phase 5 – Documentation & Developer Integration
+
+#### Added
+- Comprehensive Phase 5 external developer docs:
+  - [Quick Integration Examples](docs/developer/QUICK_INTEGRATION_EXAMPLES.md)
+  - [Full Integration Guide](docs/developer/PHASE_5_INTEGRATION_GUIDE.md)
+  - [Component Integration Guide](docs/developer/COMPONENT_INTEGRATION_GUIDE.md)
+- Provider source-of-truth file: [docs/provider_config.json](docs/provider_config.json)
+- Validation script to prevent doc-code drift: [scripts/validate_provider_docs.py](scripts/validate_provider_docs.py)
+
+#### Changed
+- Standardized provider names and tiers to reflect actual implementation
+- Restored provider performance ranges and documented OpenRouter routing strategy
+- Fixed outdated/broken links (architecture, security phase docs)
+- Updated main README and docs/README with Phase 5 developer section and links
+
+#### Notes
+- Groq2/GroqAI adapters: design documented; implementation pending (placeholders by design)
+
 # Changelog
 
 All notable changes to the Advanced Multi-Agent Intelligence System (AMAS) will be documented in this file.
