@@ -14,7 +14,7 @@
 - Standardized provider names and tiers to reflect actual implementation
 - Restored provider performance ranges and documented OpenRouter routing strategy
 - Fixed outdated/broken links (architecture, security phase docs)
-- Updated main README and docs/README with Phase 5 developer section and links
+- Added 'Phase 5 – External Integration' section to README and docs/README with links to quick-start, full integration guide, and component integration docs
 
 #### Notes
 - Groq2/GroqAI adapters: interfaces and configuration placeholders added; full implementation deferred to Phase 6

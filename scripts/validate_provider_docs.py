@@ -12,6 +12,12 @@ import re
 import sys
 from pathlib import Path
 
+try:
+    import jsonschema  # type: ignore
+    HAS_JSONSCHEMA = True
+except Exception:
+    HAS_JSONSCHEMA = False
+
 def load_provider_config():
     """Load provider configuration from JSON with basic path hardening and schema checks."""
     base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
@@ -23,6 +29,15 @@ def load_provider_config():
 
     with open(config_path, encoding="utf-8") as f:
         data = json.load(f)
+
+    # Optional: JSON Schema validation if available
+    if HAS_JSONSCHEMA:
+        schema_path = os.path.abspath(os.path.join(base_dir, "docs", "provider_config.schema.json"))
+        if not schema_path.startswith(base_dir):
+            raise ValueError("Invalid schema path (path traversal detected)")
+        with open(schema_path, encoding="utf-8") as sf:
+            schema = json.load(sf)
+        jsonschema.validate(instance=data, schema=schema)
 
     # Minimal schema validation
     required_top_fields = {"providers", "tiers", "routing", "metadata"}
