@@ -1,0 +1,120 @@
+name: 🔍 PR CI Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches-ignore:
+      - '**'  # Don't run on direct pushes, only PRs
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  code-quality:
+    name: 🎨 Code Quality & Standards
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4.1.1
+        with:
+          fetch-depth: 1
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: '3.11.13'
+          cache: 'pip'
+
+      - name: 🛠️ Ensure pip cache directory exists
+        run: |
+          mkdir -p ~/.cache/pip
+
+      - name: 📦 Install dependencies and quality tools
+        run: |
+          pip install -r requirements.txt || echo "No requirements.txt found"
+          pip install -r requirements-dev.txt || pip install \
+            black==24.3.0 \
+            isort==5.13.2 \
+            flake8==6.1.0 \
+            pylint==3.0.2 \
+            mypy==1.7.1
+
+      - name: 🎨 Code formatting check
+        run: |
+          echo "Checking code formatting..."
+          if [ -d "src/" ] || [ -d "tests/" ]; then
+            black --check --diff src/ tests/ || {
+              echo "❌ Code formatting issues found. Run 'black src/ tests/' to fix."
+              exit 1
+            }
+            
+            isort --check-only --diff src/ tests/ || {
+              echo "❌ Import sorting issues found. Run 'isort src/ tests/' to fix."
+              exit 1
+            }
+            echo "✅ Code formatting is correct"
+          else
+            echo "⚠️  No src/ or tests/ directories found, skipping formatting check"
+          fi
+
+      - name: 🔍 Linting validation
+        run: |
+          echo "Running linting..."
+          if [ -d "src/" ]; then
+            flake8 src/ tests/ \
+              --max-complexity=10 \
+              --max-line-length=100 \
+              --statistics \
+              --count || {
+              echo "❌ Linting issues found"
+              exit 1
+            }
+            echo "✅ Linting passed"
+          else
+            echo "⚠️  No src/ directory found, skipping linting"
+          fi
+
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4.1.1
+        with:
+          fetch-depth: 1
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5.1.0
+        with:
+          python-version: '3.11.13'
+          cache: 'pip'
+
+      - name: 🛠️ Ensure pip cache directory exists
+        run: |
+          mkdir -p ~/.cache/pip
+
+      - name: 📦 Install security tools
+        run: |
+          if [ -f requirements-security.txt ]; then
+            pip install --user -r requirements-security.txt
+          else
+            pip install --user \
+              safety==3.6.2 \
+              pip-audit==2.6.3 \
+              bandit==1.7.5 \
+              detect-secrets==1.4.0
+          fi
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: 🔒 Run safety check
+        run: |
+          safety check --short-report || echo "⚠️  Safety scan found issues (non-blocking)"
+
+      - name: 🛡️ Run bandit scan
+        if: exists('src/')
+        run: |
+          bandit -r src/ --severity-level medium || echo "⚠️  Bandit found issues (non-blocking)"
