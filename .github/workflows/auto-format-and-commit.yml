@@ -131,7 +131,7 @@ jobs:
         run: |
           if [ "${{ steps.check-changes.outputs.has_changes }}" == "true" ]; then
             echo "✅ Code formatted and committed successfully!"
-            echo "🔄 Please re-run the 'Code Quality & Standards' CI job to verify."
+            echo "🔄 CI checks should now run automatically on this commit."
           else
             echo "ℹ️  No formatting changes were needed. Code is already formatted."
           fi
