@@ -537,6 +537,13 @@ policy:
 - Prometheus Metrics Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Monitoring Guide](docs/MONITORING_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#prometheus-metrics-service)
 - Structured Logging Service — see [Feature Implementation Guide](docs/FEATURE_IMPLEMENTATION_GUIDE.md) | [Integration Guide](docs/developer/PHASE_2_INTEGRATION_GUIDE.md#structured-logging-service)
 
+### 🧩 Phase 2 Compatibility
+- Python: 3.10+
+- Frameworks: FastAPI (primary), compatible with Starlette/Flask with adapters
+- Versioning: Semantic; patch updates maintain backward compatibility for public APIs
+
+> ⚠️ Security note: Always enforce RBAC checks on protected endpoints, use short‑lived access tokens with refresh rotation, and apply rate limiting on auth endpoints.
+
 <a name="documentation"></a>
 ## 📚 **Complete Documentation**
 
