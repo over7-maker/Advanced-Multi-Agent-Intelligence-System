@@ -18,8 +18,9 @@ on:
           - '3.11'
           - '3.12'
       ref:
-        description: 'Branch or ref to format (default: current branch)'
+        description: 'Branch or ref to format (default: current branch/PR head)'
         required: false
+        default: ''  # Empty default - will use github.head_ref or github.ref in checkout step
   pull_request:
     types: [labeled]
 
@@ -31,6 +32,7 @@ jobs:
   auto-format:
     # Security: Only allow trusted actors and prevent fork abuse
     # Note: Won't re-trigger on its own commits because label must be manually added
+    # Fork Protection: Only process PRs from same repo (not forks) to prevent unauthorized code execution
     if: >
       (github.event_name == 'workflow_dispatch') ||
       (github.event_name == 'pull_request' &&
@@ -42,8 +44,9 @@ jobs:
     timeout-minutes: 20
     concurrency:
       # Use PR number for PRs, run_id for workflow_dispatch (better isolation)
+      # Include repository scope to prevent cross-repo conflicts
       # Use fixed workflow ID (sanitized) - workflow name has emojis/spaces that break group names
-      group: auto-format-workflow-${{ github.event.pull_request.number || github.run_id }}
+      group: auto-format-${{ github.repository }}-${{ github.event.pull_request.number || github.run_id }}
       cancel-in-progress: true
     steps:
       - name: 🔒 Validate Event Context
