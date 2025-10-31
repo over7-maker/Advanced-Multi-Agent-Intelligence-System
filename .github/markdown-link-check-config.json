@@ -1,9 +1,7 @@
 {
   "ignorePatterns": [
     { "pattern": "^http://localhost" },
-    { "pattern": "^mailto:" },
-    { "pattern": "^.*/ARCHITECTURE\\.md$" },
-    { "pattern": "^docs/troubleshooting\\.md$" }
+    { "pattern": "^mailto:" }
   ],
   "retryOn429": true,
   "retryCount": 3,

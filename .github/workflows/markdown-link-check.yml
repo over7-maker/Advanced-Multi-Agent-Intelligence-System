@@ -26,24 +26,25 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
 
-      - name: Install markdown-link-check
-        run: npm install -g markdown-link-check
+      - name: Install markdown-link-check (pinned)
+        run: npm install markdown-link-check@3.10.0 --ignore-scripts --no-audit
+        shell: bash
 
       - name: Run link check (all markdown files)
         id: linkcheck
         run: |
-          set -e
-          find . -name '*.md' -not -path './node_modules/*' \
-            -exec markdown-link-check '{}' --config .github/markdown-link-check-config.json ';' \
-            | tee link-check-report.txt || true
+          set -euo pipefail
+          npx markdown-link-check "**/*.md" \
+            --config .github/markdown-link-check-config.json \
+            --parallel | tee link-check-report.txt
+        shell: bash
 
       - name: Link check results summary
         if: always()
@@ -63,3 +64,4 @@ jobs:
           else
             echo "No report file generated."
           fi
+        shell: bash
