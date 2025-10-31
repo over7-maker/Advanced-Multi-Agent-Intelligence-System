@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# AMAS Deployment Script
-# This script deploys the complete AMAS system using Docker Compose
+# AMAS Production Deployment Script
+# One-command deployment for production readiness
 
-set -e
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
@@ -13,239 +13,276 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-ENVIRONMENT=${1:-development}
-COMPOSE_FILE="docker-compose.yml"
-ENV_FILE=".env"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_NAME="AMAS"
+LOG_FILE="${SCRIPT_DIR}/logs/deployment.log"
+ENV_FILE="${SCRIPT_DIR}/.env"
 
-# Functions
-log_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+# Create logs directory if it doesn't exist
+mkdir -p "${SCRIPT_DIR}/logs"
+
+# Logging function
+log() {
+    echo -e "${BLUE}[$(date +'%Y-%m-%d %H:%M:%S')]${NC} $1" | tee -a "$LOG_FILE"
 }
 
 log_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+    echo -e "${GREEN}[$(date +'%Y-%m-%d %H:%M:%S')] ✅ $1${NC}" | tee -a "$LOG_FILE"
 }
 
 log_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    echo -e "${YELLOW}[$(date +'%Y-%m-%d %H:%M:%S')] ⚠️  $1${NC}" | tee -a "$LOG_FILE"
 }
 
 log_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ❌ $1${NC}" | tee -a "$LOG_FILE"
 }
 
-check_requirements() {
-    log_info "Checking requirements..."
+# Pre-flight checks
+preflight_checks() {
+    log "Running pre-flight checks..."
     
-    # Check Docker
+    # Check if Docker is installed
     if ! command -v docker &> /dev/null; then
         log_error "Docker is not installed. Please install Docker first."
         exit 1
     fi
     
-    # Check Docker Compose
+    # Check if Docker Compose is installed
     if ! command -v docker-compose &> /dev/null; then
         log_error "Docker Compose is not installed. Please install Docker Compose first."
         exit 1
     fi
     
-    # Check if Docker is running
-    if ! docker info &> /dev/null; then
-        log_error "Docker is not running. Please start Docker first."
-        exit 1
+    # Check if .env file exists
+    if [[ ! -f "$ENV_FILE" ]]; then
+        log_warning ".env file not found. Creating from .env.example..."
+        if [[ -f "${SCRIPT_DIR}/.env.example" ]]; then
+            cp "${SCRIPT_DIR}/.env.example" "$ENV_FILE"
+            log_success "Created .env file from .env.example"
+        else
+            log_error ".env.example file not found. Please create .env file manually."
+            exit 1
+        fi
     fi
     
-    log_success "All requirements met"
+    # Check available disk space (minimum 5GB)
+    available_space=$(df -BG . | awk 'NR==2 {print $4}' | sed 's/G//')
+    if [[ $available_space -lt 5 ]]; then
+        log_warning "Low disk space: ${available_space}GB available. Recommended: 5GB+"
+    fi
+    
+    # Check available memory (minimum 4GB)
+    total_memory=$(free -g | awk 'NR==2{print $2}')
+    if [[ $total_memory -lt 4 ]]; then
+        log_warning "Low memory: ${total_memory}GB available. Recommended: 4GB+"
+    fi
+    
+    log_success "Pre-flight checks completed"
 }
 
-create_env_file() {
-    log_info "Creating environment file..."
+# Create necessary directories
+create_directories() {
+    log "Creating necessary directories..."
     
-    if [ ! -f "$ENV_FILE" ]; then
-        cat > "$ENV_FILE" << EOF
-# AMAS Environment Configuration
-AMAS_ENVIRONMENT=$ENVIRONMENT
+    directories=(
+        "data"
+        "logs"
+        "config"
+        "nginx"
+        "nginx/ssl"
+        "nginx/logs"
+        "monitoring"
+        "monitoring/grafana/provisioning"
+        "scripts"
+    )
+    
+    for dir in "${directories[@]}"; do
+        mkdir -p "${SCRIPT_DIR}/${dir}"
+        log "Created directory: ${dir}"
+    done
+    
+    log_success "Directories created successfully"
+}
 
-# Database Configuration
-POSTGRES_DB=amas
-POSTGRES_USER=amas
-POSTGRES_PASSWORD=amas_secure_password_123
+# Create configuration files
+create_config_files() {
+    log "Creating configuration files..."
+    
+    # Create nginx configuration
+    cat > "${SCRIPT_DIR}/nginx/nginx.conf" << 'EOF'
+events {
+    worker_connections 1024;
+}
 
-# Redis Configuration
-REDIS_PASSWORD=amas_redis_password_123
-
-# Neo4j Configuration
-NEO4J_AUTH=neo4j/amas_neo4j_password_123
-
-# Security Configuration
-JWT_SECRET=your_super_secret_jwt_key_change_this_in_production
-ENCRYPTION_KEY=your_32_byte_encryption_key_change_this_in_production
-
-# API Configuration
-API_HOST=0.0.0.0
-API_PORT=8000
-
-# Monitoring Configuration
-PROMETHEUS_RETENTION=30d
-GRAFANA_ADMIN_PASSWORD=amas_admin_password
+http {
+    upstream amas_backend {
+        server amas:8000;
+    }
+    
+    upstream amas_frontend {
+        server amas:3000;
+    }
+    
+    server {
+        listen 80;
+        server_name localhost;
+        
+        # Security headers
+        add_header X-Frame-Options DENY;
+        add_header X-Content-Type-Options nosniff;
+        add_header X-XSS-Protection "1; mode=block";
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        
+        # API routes
+        location /api/ {
+            proxy_pass http://amas_backend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+        
+        # Health check
+        location /health {
+            proxy_pass http://amas_backend/health;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+        
+        # Frontend routes
+        location / {
+            proxy_pass http://amas_frontend;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+}
 EOF
-        log_success "Environment file created: $ENV_FILE"
-    else
-        log_info "Environment file already exists: $ENV_FILE"
-    fi
+    
+    # Create Prometheus configuration
+    cat > "${SCRIPT_DIR}/monitoring/prometheus.yml" << 'EOF'
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'amas'
+    static_configs:
+      - targets: ['amas:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 30s
+EOF
+    
+    # Create database initialization script
+    cat > "${SCRIPT_DIR}/scripts/init-db.sql" << 'EOF'
+-- AMAS Database Initialization Script
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_agents_created_at ON agents(created_at);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_agent_id ON tasks(agent_id);
+EOF
+    
+    log_success "Configuration files created successfully"
 }
 
-build_images() {
-    log_info "Building Docker images..."
+# Deploy the application
+deploy_application() {
+    log "Deploying AMAS application..."
     
-    # Build main API image
-    log_info "Building AMAS API image..."
-    docker-compose build amas-api
+    # Stop existing containers
+    log "Stopping existing containers..."
+    docker-compose down --remove-orphans || true
     
-    # Build vector service image
-    log_info "Building Vector Service image..."
-    docker-compose build vector-service
+    # Build and start services
+    log "Building and starting services..."
+    docker-compose up -d --build
     
-    log_success "All images built successfully"
-}
-
-start_services() {
-    log_info "Starting AMAS services..."
-    
-    # Start infrastructure services first
-    log_info "Starting infrastructure services..."
-    docker-compose up -d postgres redis neo4j
-    
-    # Wait for infrastructure to be ready
-    log_info "Waiting for infrastructure services to be ready..."
+    # Wait for services to be healthy
+    log "Waiting for services to be healthy..."
     sleep 30
     
-    # Start application services
-    log_info "Starting application services..."
-    docker-compose up -d ollama vector-service amas-api
+    # Check service health
+    check_service_health
     
-    # Wait for application services
-    log_info "Waiting for application services to be ready..."
-    sleep 30
-    
-    # Start monitoring and load balancer
-    log_info "Starting monitoring and load balancer..."
-    docker-compose up -d prometheus grafana nginx
-    
-    log_success "All services started successfully"
+    log_success "Application deployed successfully"
 }
 
-check_health() {
-    log_info "Checking service health..."
+# Check service health
+check_service_health() {
+    log "Checking service health..."
     
-    # Check API health
-    if curl -f http://localhost:8000/health &> /dev/null; then
-        log_success "API service is healthy"
-    else
-        log_warning "API service health check failed"
-    fi
+    services=("postgres" "redis" "neo4j" "amas" "nginx")
     
-    # Check Neo4j
-    if curl -f http://localhost:7474 &> /dev/null; then
-        log_success "Neo4j is accessible"
-    else
-        log_warning "Neo4j health check failed"
-    fi
+    for service in "${services[@]}"; do
+        if docker-compose ps "$service" | grep -q "healthy\|Up"; then
+            log_success "$service is healthy"
+        else
+            log_error "$service is not healthy"
+            docker-compose logs "$service" | tail -20
+        fi
+    done
+}
+
+# Display deployment information
+display_info() {
+    log_success "🎉 AMAS Deployment Complete!"
+    echo ""
+    echo "📊 Service URLs:"
+    echo "  • AMAS API: http://localhost:8000"
+    echo "  • AMAS Dashboard: http://localhost:3000"
+    echo "  • Neo4j Browser: http://localhost:7474"
+    echo "  • Prometheus: http://localhost:9090"
+    echo "  • Grafana: http://localhost:3001"
+    echo ""
+    echo "🔧 Management Commands:"
+    echo "  • View logs: docker-compose logs -f"
+    echo "  • Stop services: docker-compose down"
+    echo "  • Restart services: docker-compose restart"
+    echo "  • Update services: docker-compose pull && docker-compose up -d"
+    echo ""
+    echo "📝 Default Credentials:"
+    echo "  • PostgreSQL: postgres/amas_password"
+    echo "  • Neo4j: neo4j/amas_password"
+    echo "  • Redis: amas_redis_password"
+    echo "  • Grafana: admin/amas_grafana_password"
+    echo ""
+    echo "📋 Health Check:"
+    echo "  • API Health: curl http://localhost:8000/health"
+    echo "  • Dashboard: http://localhost:3000"
+    echo ""
+}
+
+# Main deployment function
+main() {
+    log "🚀 Starting AMAS Production Deployment"
+    log "Project: $PROJECT_NAME"
+    log "Directory: $SCRIPT_DIR"
     
-    # Check Grafana
-    if curl -f http://localhost:3001 &> /dev/null; then
-        log_success "Grafana is accessible"
-    else
-        log_warning "Grafana health check failed"
-    fi
+    preflight_checks
+    create_directories
+    create_config_files
+    deploy_application
+    display_info
+    
+    log_success "Deployment completed successfully!"
 }
 
-show_status() {
-    log_info "AMAS System Status:"
-    echo ""
-    echo "🌐 Web Interface: http://localhost"
-    echo "🔧 API Endpoints: http://localhost/api"
-    echo "📊 Grafana Dashboard: http://localhost:3001"
-    echo "🔍 Neo4j Browser: http://localhost:7474"
-    echo "📈 Prometheus: http://localhost:9090"
-    echo ""
-    echo "📋 Service Status:"
-    docker-compose ps
-}
+# Handle script interruption
+trap 'log_error "Deployment interrupted by user"; exit 1' INT TERM
 
-cleanup() {
-    log_info "Cleaning up..."
-    docker-compose down
-    log_success "Cleanup completed"
-}
-
-show_help() {
-    echo "AMAS Deployment Script"
-    echo ""
-    echo "Usage: $0 [ENVIRONMENT] [COMMAND]"
-    echo ""
-    echo "Environments:"
-    echo "  development  - Development environment (default)"
-    echo "  production   - Production environment"
-    echo ""
-    echo "Commands:"
-    echo "  deploy       - Deploy the system (default)"
-    echo "  start        - Start existing services"
-    echo "  stop         - Stop services"
-    echo "  restart      - Restart services"
-    echo "  status       - Show service status"
-    echo "  logs         - Show service logs"
-    echo "  cleanup      - Stop and remove all containers"
-    echo "  help         - Show this help message"
-    echo ""
-    echo "Examples:"
-    echo "  $0 development deploy"
-    echo "  $0 production start"
-    echo "  $0 status"
-}
-
-# Main script logic
-case "${2:-deploy}" in
-    "deploy")
-        log_info "Deploying AMAS system in $ENVIRONMENT mode..."
-        check_requirements
-        create_env_file
-        build_images
-        start_services
-        check_health
-        show_status
-        log_success "AMAS system deployed successfully!"
-        ;;
-    "start")
-        log_info "Starting AMAS services..."
-        docker-compose up -d
-        show_status
-        ;;
-    "stop")
-        log_info "Stopping AMAS services..."
-        docker-compose down
-        log_success "Services stopped"
-        ;;
-    "restart")
-        log_info "Restarting AMAS services..."
-        docker-compose restart
-        show_status
-        ;;
-    "status")
-        show_status
-        ;;
-    "logs")
-        docker-compose logs -f
-        ;;
-    "cleanup")
-        cleanup
-        ;;
-    "help")
-        show_help
-        ;;
-    *)
-        log_error "Unknown command: $2"
-        show_help
-        exit 1
-        ;;
-esac
+# Run main function
+main "$@"
