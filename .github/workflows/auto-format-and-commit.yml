@@ -33,6 +33,7 @@ jobs:
     # Security: Only allow trusted actors and prevent fork abuse
     # Note: Won't re-trigger on its own commits because label must be manually added
     # Fork Protection: Only process PRs from same repo (not forks) to prevent unauthorized code execution
+    # Label Note: Label name comparison is case-sensitive - use exact label 'auto-format'
     if: >
       (github.event_name == 'workflow_dispatch') ||
       (github.event_name == 'pull_request' &&
