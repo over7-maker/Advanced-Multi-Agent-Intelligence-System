@@ -533,6 +533,7 @@ policy:
 | **[Security Features](docs/PHASE_2_FEATURES.md)** | Security implementation | 45KB | ✅ Available |
 | **[Monitoring Guide](docs/MONITORING_GUIDE.md)** | Observability setup | 35KB | ✅ Available |
 | **[Architecture Guide](docs/ARCHITECTURE.md)** | System design | 30KB | ✅ Available |
+| **[Phase 3 Developer Guide](docs/developer/PHASE_3_DEVELOPER_GUIDE.md)** | External integration (router, security, observability) | 18KB | ✅ Available |
 
 ### See also
 - Universal AI Router guide: `docs/UNIVERSAL_AI_ROUTER.md`

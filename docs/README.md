@@ -203,6 +203,7 @@ Complete technical documentation for developers and contributors:
 - **[🔒 Hardening Guide](developer/hardening.md)** - Security hardening
 - **[🔒 Enhanced Hardening](developer/hardening_enhanced.md)** - Advanced security
 - **[📊 API Manager Guide](API_MANAGER_GUIDE.md)** - API management
+- **[🚀 Phase 3 Developer Guide](developer/PHASE_3_DEVELOPER_GUIDE.md)** - Integrate Universal AI Router, Bulletproof validation, security & observability into external projects
 
 ### **🎯 Developer Features**
 - **🔌 Complete API Reference** - Every endpoint documented
