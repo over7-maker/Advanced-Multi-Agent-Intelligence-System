@@ -22,26 +22,34 @@ concurrency:
 jobs:
   markdown-link-check:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Check Markdown Links
-        uses: gaurav-nelson/github-action-markdown-link-check@v1.0.13
-        continue-on-error: true
-        id: link-check
         with:
-          use-verbose-mode: false
-          config-file: '.github/markdown-link-check-config.json'
-          check-modified-files-only: true
-          base-branch: main
-          output-file: link-check-report.txt
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install markdown-link-check
+        run: npm install -g markdown-link-check
+
+      - name: Run link check (all markdown files)
+        id: linkcheck
+        run: |
+          set -e
+          find . -name '*.md' -not -path './node_modules/*' \
+            -exec markdown-link-check '{}' --config .github/markdown-link-check-config.json ';' \
+            | tee link-check-report.txt || true
 
       - name: Link check results summary
         if: always()
         run: |
           echo "✅ Markdown link check completed"
-          echo "ℹ️  Local file path checks can produce false negatives in this action; HTTP/HTTPS links are the primary focus."
+          echo "ℹ️  HTTP/HTTPS link failures will fail this job; local file path mismatches are not considered fatal."
           if [ -f link-check-report.txt ]; then
             echo "--- Broken HTTP/HTTPS links detected (if any):"
             BROKEN=$(grep -E "^\[✖\] https?://" link-check-report.txt || true)
