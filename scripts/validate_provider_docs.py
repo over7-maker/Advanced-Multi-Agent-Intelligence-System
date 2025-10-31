@@ -7,15 +7,41 @@ Validates against src/amas/ai/router.py and docs/provider_config.json
 """
 
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
 def load_provider_config():
-    """Load provider configuration from JSON"""
-    config_path = Path(__file__).parent.parent / "docs" / "provider_config.json"
-    with open(config_path) as f:
-        return json.load(f)
+    """Load provider configuration from JSON with basic path hardening and schema checks."""
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
+    config_path = os.path.abspath(os.path.join(base_dir, "docs", "provider_config.json"))
+
+    # Ensure config_path is inside repo directory
+    if not config_path.startswith(base_dir):
+        raise ValueError("Invalid config path (path traversal detected)")
+
+    with open(config_path, encoding="utf-8") as f:
+        data = json.load(f)
+
+    # Minimal schema validation
+    required_top_fields = {"providers", "tiers", "routing", "metadata"}
+    if not required_top_fields.issubset(set(data.keys())):
+        raise ValueError("provider_config.json missing required top-level fields")
+
+    required_provider_fields = {"name", "code_name", "tier", "status"}
+    for p in data.get("providers", []):
+        if not required_provider_fields.issubset(set(p.keys())):
+            raise ValueError(f"Provider missing required fields: {p}")
+        # Validate tier exists in tiers mapping
+        if str(p["tier"]) not in data.get("tiers", {}):
+            raise ValueError(f"Provider tier '{p['tier']}' not defined in tiers mapping for {p['code_name']}")
+
+        # If supported flag present and false, ensure status reflects planned/development
+        if p.get("supported") is False and p.get("status") not in {"planned", "development"}:
+            raise ValueError(f"Unsupported provider must be planned/development: {p['code_name']}")
+
+    return data
 
 def extract_providers_from_readme():
     """Extract provider information from README.md"""
@@ -100,7 +126,7 @@ def validate():
         if display_name in unsupported_names:
             warnings.append(f"⚠️  README documents unsupported provider '{display_name}' (planned)")
     
-    # Check README providers match config (allow for slight naming differences)
+    # Use set-based operations for performance
     readme_provider_set = set(readme_providers.keys())
     
     print("✅ Provider Documentation Validation")
