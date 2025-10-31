@@ -25,27 +25,60 @@ jobs:
     if: >
       (github.event_name == 'workflow_dispatch') ||
       (github.event_name == 'pull_request' &&
+       github.event.action == 'labeled' &&
+       github.event.label &&
        github.event.label.name == 'auto-format' &&
        github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 20
     concurrency:
-      # Use PR number for PRs, ref for other events (better isolation)
-      group: auto-format-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      # Use PR number for PRs, run_id for workflow_dispatch (better isolation)
+      group: auto-format-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
       cancel-in-progress: true
     steps:
       - name: 📥 Checkout
         uses: actions/checkout@v4.1.1
         with:
           ref: ${{ github.head_ref || github.ref }}
-          fetch-depth: 1
+          fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🐍 Setup Python
         uses: actions/setup-python@v5.1.0
         with:
-          python-version: ${{ github.event.inputs.python-version || '3.11' }}
+          python-version: ${{ inputs.python-version || '3.11' }}
           cache: 'pip'
+
+      - name: 🔍 Validate Inputs
+        shell: bash
+        run: |
+          # Validate Python version (security: prevent invalid versions)
+          PYTHON_VERSION="${{ inputs.python-version || '3.11' }}"
+          if [[ ! "$PYTHON_VERSION" =~ ^3\.(9|10|11|12)$ ]]; then
+            echo "❌ Invalid Python version: $PYTHON_VERSION"
+            echo "✅ Valid versions: 3.9, 3.10, 3.11, 3.12"
+            exit 1
+          fi
+
+          # Validate paths (security: prevent directory traversal attacks)
+          PATHS="${{ inputs.paths || 'src tests' }}"
+          if [[ "$PATHS" =~ \.\./ ]]; then
+            echo "❌ Invalid paths: $PATHS"
+            echo "✅ Directory traversal not allowed for security"
+            exit 1
+          fi
+
+          echo "✅ Input validation passed"
+          echo "   Python version: $PYTHON_VERSION"
+          echo "   Paths: $PATHS"
+
+      - name: 📦 Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-formatters-${{ hashFiles('.github/workflows/auto-format-and-commit.yml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-formatters-
 
       - name: 📦 Install formatters
         run: |
@@ -56,7 +89,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          TARGETS="${{ github.event.inputs.paths || 'src tests' }}"
+          TARGETS="${{ inputs.paths || 'src tests' }}"
           echo "Formatting: $TARGETS"
           if [ -f pyproject.toml ]; then
             black $TARGETS || exit 1
@@ -68,7 +101,7 @@ jobs:
         shell: bash
         run: |
           set -e
-          TARGETS="${{ github.event.inputs.paths || 'src tests' }}"
+          TARGETS="${{ inputs.paths || 'src tests' }}"
           echo "Sorting imports: $TARGETS"
           if [ -f pyproject.toml ]; then
             isort $TARGETS || exit 1
@@ -125,6 +158,22 @@ jobs:
             **/*.py
             pyproject.toml
             setup.cfg
+
+      - name: 💬 Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const message = `${{ steps.check-changes.outputs.has_changes == 'true' 
+              ? '✅ **Auto-format complete!**\n\nCode has been formatted with Black and isort and committed to this PR.\n\nCI checks should run automatically on the new commit.'
+              : 'ℹ️  **No formatting changes needed.**\n\nCode is already properly formatted.' }}`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });
 
       - name: ✅ Summary
         if: always()
