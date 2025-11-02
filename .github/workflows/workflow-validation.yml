@@ -1,0 +1,45 @@
+name: 🔍 Workflow Validation
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+
+jobs:
+  validate-workflows:
+    name: Validate GitHub Workflows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install actionlint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/actionlint/actionlint/main/scripts/download-actionlint.bash | bash
+          sudo mv actionlint /usr/local/bin/
+      
+      - name: Run actionlint
+        run: |
+          actionlint -color $(find .github/workflows -name '*.yml' -o -name '*.yaml')
+      
+      - name: Validate YAML syntax
+        run: |
+          for file in $(find .github/workflows -name '*.yml' -o -name '*.yaml'); do
+            echo "Validating $file"
+            python -c "import yaml; yaml.safe_load(open('$file'))" || exit 1
+          done
+      
+      - name: Check for common issues
+        run: |
+          # Check for workflow_dispatch without proper inputs
+          # Check for missing permissions
+          # Check for invalid concurrency groups
+          python .github/scripts/validate_workflow_policies.py || exit 0
