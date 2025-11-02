@@ -55,23 +55,41 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
       - run: mkdir -p ~/.cache/pip
+      
+      - name: Validate workflow YAML (actionlint)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/actionlint/actionlint/main/scripts/download-actionlint.bash | bash
+          sudo mv actionlint /usr/local/bin/
+          actionlint -color || echo "Actionlint found issues (non-blocking)"
+      
       - name: Install security tools
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-security.txt
+          pip install pip-tools
+          # Use lockfile if available, fallback to requirements file
+          if [ -f requirements-security-lock.txt ]; then
+            pip install -r requirements-security-lock.txt
+          else
+            pip install -r requirements-security.txt
+          fi
+          pip install semgrep
       - name: Safety
         run: safety check --json > safety-report.json || true
       - name: Bandit
         run: |
           if [ -d src ]; then bandit -r src -f json -o bandit-report.json || true; fi
       - name: Semgrep
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: >-
-            p/security-audit
-            p/secrets
-            p/owasp-top-ten
-          generateSarif: "1"
+        run: |
+          pip install semgrep
+          semgrep scan --config=auto \
+            --config=p/security-audit \
+            --config=p/secrets \
+            --config=p/owasp-top-ten \
+            --sarif --output=semgrep.sarif || true
+      
+      - name: Semgrep CI
+        run: |
+          semgrep ci --sarif --output=semgrep-ci.sarif || true
       - name: Upload security artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -80,6 +98,7 @@ jobs:
             safety-report.json
             bandit-report.json
             semgrep.sarif
+            semgrep-ci.sarif
       - name: Evaluate
         id: scan-results
         run: |

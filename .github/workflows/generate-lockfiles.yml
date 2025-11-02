@@ -1,0 +1,66 @@
+name: 🔒 Generate Dependency Lockfiles
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+  push:
+    paths:
+      - 'requirements*.in'
+      - 'requirements*.txt'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate-lockfiles:
+    name: Generate Lockfiles
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install pip-tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-tools
+      
+      - name: Generate app lockfile
+        run: |
+          if [ -f requirements-lock.in ]; then
+            pip-compile requirements-lock.in -o requirements-lock.txt
+          fi
+      
+      - name: Generate security lockfile
+        run: |
+          if [ -f requirements-security-lock.in ]; then
+            pip-compile requirements-security-lock.in -o requirements-security-lock.txt
+          fi
+      
+      - name: Check for changes
+        id: check-changes
+        run: |
+          if [ -n "$(git status --porcelain requirements*-lock.txt)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Create PR for lockfile updates
+        if: steps.check-changes.outputs.changed == 'true' && github.event_name != 'pull_request'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(deps): update dependency lockfiles"
+          title: "chore(deps): update dependency lockfiles"
+          body: |
+            Auto-generated lockfile update from pip-compile.
+            
+            This PR updates dependency lockfiles to ensure reproducible builds.
+          branch: chore/update-lockfiles
+          delete-branch: true
