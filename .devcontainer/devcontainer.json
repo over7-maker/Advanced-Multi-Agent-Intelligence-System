@@ -30,7 +30,7 @@
     }
   },
 
-  "postCreateCommand": "set -euxo pipefail; if [ -f requirements.txt ]; then pip install --no-input --progress-bar off -r requirements.txt || exit 1; else echo '?? Warning: requirements.txt not found'; exit 1; fi; if [ -f requirements-dev.txt ]; then pip install --no-input --progress-bar off -r requirements-dev.txt && echo '? Dependencies installed' && python -c \"import sys; print(f'Python {sys.version}')\"; else echo '?? requirements-dev.txt not found (optional)'; python -c \"import sys; print(f'Python {sys.version}')\"; fi",
+  "postCreateCommand": "chmod +x .devcontainer/setup.sh && .devcontainer/setup.sh postCreate",
   
   "remoteUser": "vscode",
   
@@ -38,7 +38,9 @@
     "source=pip-cache,target=/home/vscode/.cache/pip,type=volume"
   ],
   
-  "onCreateCommand": "if [ -f .env.example ]; then cp .env.example .env && echo '? Created .env from .env.example'; else echo '? Warning: .env.example not found. Create .env manually.'; fi",
+  "onCreateCommand": "chmod +x .devcontainer/setup.sh && .devcontainer/setup.sh onCreate",
+  
+  "updateContentCommand": "chmod +x .devcontainer/setup.sh && .devcontainer/setup.sh postCreate",
 
   "forwardPorts": [
     8000,
