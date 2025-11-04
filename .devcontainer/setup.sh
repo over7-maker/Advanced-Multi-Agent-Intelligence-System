@@ -1,6 +1,13 @@
 #!/bin/bash
 set -euxo pipefail
 
+# Log all output for debugging
+exec > >(tee -a /tmp/devcontainer-setup.log) 2>&1
+echo "=========================================="
+echo "Dev Container Setup: $1"
+echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%SZ")"
+echo "=========================================="
+
 # Dev Container Setup Script
 # Handles both onCreate and postCreate operations
 
@@ -57,15 +64,22 @@ case "$ACTION" in
     
   updateContent)
     echo "🔄 Running updateContent (dependency refresh)..."
-    # Only update dependencies if requirements files changed
+    # Activate venv if it exists, create if not
+    if [ ! -d /home/vscode/venv ]; then
+      echo "Creating virtual environment..."
+      python3 -m venv /home/vscode/venv
+    fi
+    source /home/vscode/venv/bin/activate
+    export VIRTUAL_ENV=/home/vscode/venv
+    export PATH="$VIRTUAL_ENV/bin:$PATH"
+    
+    # Only update dependencies if requirements files exist
     if [ -f requirements.txt ]; then
-      source /home/vscode/venv/bin/activate 2>/dev/null || python3 -m venv /home/vscode/venv && source /home/vscode/venv/bin/activate
       pip install --upgrade pip --quiet
       pip install --no-input --progress-bar off -r requirements.txt --upgrade
       echo "✓ Updated requirements.txt"
     fi
     if [ -f requirements-dev.txt ]; then
-      source /home/vscode/venv/bin/activate
       pip install --no-input --progress-bar off -r requirements-dev.txt --upgrade
       echo "✓ Updated requirements-dev.txt"
     fi

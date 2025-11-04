@@ -1,5 +1,6 @@
 {
   "name": "AMAS Development Environment",
+  "version": "0.1.0",
   "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
   
   "features": {
@@ -36,12 +37,14 @@
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   
   "mounts": [
-    "source=pip-cache,target=/home/vscode/.cache/pip,type=volume"
+    "source=amas-pip-cache,target=/home/vscode/.cache/pip,type=volume"
   ],
   
   "onCreateCommand": ".devcontainer/setup.sh onCreate",
   
   "updateContentCommand": ".devcontainer/setup.sh updateContent",
+  
+  "initializeCommand": "python3 -c 'import sys; print(f\"Python {sys.version} ready\")'",
 
   "forwardPorts": [
     8000,
@@ -60,7 +63,6 @@
   },
 
   "remoteEnv": {
-    "PYTHONPATH": "${containerWorkspaceFolder}",
     "AMAS_ENV": "development"
   }
 }
