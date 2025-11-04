@@ -7,7 +7,6 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   
-  "_comment": "WARNING: docker-in-docker enables privileged operations. Only enable in trusted environments.",
 
   "customizations": {
     "vscode": {
@@ -23,13 +22,15 @@
         "python.formatting.provider": "black",
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
-          "source.organizeImports": true
-        }
+          "source.organizeImports": true,
+          "source.fixAll": false
+        },
+        "python.linting.enabled": true
       }
     }
   },
 
-  "postCreateCommand": "pip install -r requirements.txt -r requirements-dev.txt && python -c 'import sys; print(f\"Python {sys.version}\")'",
+  "postCreateCommand": "pip install --no-input --progress-bar off -r requirements.txt -r requirements-dev.txt && python -c \"import sys; print(f'Python {sys.version}')\"",
   
   "remoteUser": "vscode",
 
@@ -61,7 +62,7 @@
     },
     "7687": {
       "label": "Neo4j Bolt",
-      "onAutoForward": "ignore"
+      "onAutoForward": "notify"
     },
     "8181": {
       "label": "OPA (Policy Engine)",
