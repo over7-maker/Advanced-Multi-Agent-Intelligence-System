@@ -7,6 +7,8 @@
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
   
+  "_comment": "Dev container for AMAS: FastAPI + PostgreSQL + Redis + Neo4j + OPA. Scripts in .devcontainer/setup.sh handle service initialization.",
+  
 
   "customizations": {
     "vscode": {
@@ -34,6 +36,8 @@
   
   "remoteUser": "vscode",
   
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  
   "mounts": [
     "source=pip-cache,target=/home/vscode/.cache/pip,type=volume"
   ],
@@ -44,11 +48,7 @@
 
   "forwardPorts": [
     8000,
-    8080,
-    5432,
-    6379,
-    7687,
-    8181
+    8080
   ],
 
   "portsAttributes": {
@@ -59,22 +59,6 @@
     "8080": {
       "label": "Dashboard",
       "onAutoForward": "silent"
-    },
-    "5432": {
-      "label": "PostgreSQL",
-      "onAutoForward": "ignore"
-    },
-    "6379": {
-      "label": "Redis",
-      "onAutoForward": "ignore"
-    },
-    "7687": {
-      "label": "Neo4j Bolt",
-      "onAutoForward": "notify"
-    },
-    "8181": {
-      "label": "OPA (Policy Engine)",
-      "onAutoForward": "notify"
     }
   },
 
