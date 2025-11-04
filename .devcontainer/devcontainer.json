@@ -6,9 +6,6 @@
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  
-  "_comment": "Dev container for AMAS: FastAPI + PostgreSQL + Redis + Neo4j + OPA. Scripts in .devcontainer/setup.sh handle service initialization.",
-  
 
   "customizations": {
     "vscode": {
