@@ -27,15 +27,20 @@ class JWTMiddleware:
                  audience: str, 
                  jwks_uri: str,
                  cache_ttl: int = 3600,
-                 algorithms: List[str] = None):
+                 algorithms: List[str] = None,
+                 expected_azp: Optional[str] = None,
+                 refresh_interval: int = 300):
         self.issuer = issuer
         self.audience = audience
         self.jwks_uri = jwks_uri
         self.cache_ttl = cache_ttl
         self.algorithms = algorithms or ['RS256']
+        self.expected_azp = expected_azp  # Expected authorized party (client ID)
+        self.refresh_interval = refresh_interval  # Background refresh interval in seconds
         self._jwks_cache = {}
         self._cache_timestamp = None
         self._cache_lock = asyncio.Lock()
+        self._refresh_task: Optional[asyncio.Task] = None
         
         logger.info(f"JWT Middleware initialized for issuer: {issuer}")
     
@@ -72,6 +77,38 @@ class JWTMiddleware:
                     status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                     detail="Unable to validate tokens - JWKS unavailable"
                 )
+    
+    async def start_background_refresh(self):
+        """Start background task for periodic JWKS refresh"""
+        async def refresh_loop():
+            while True:
+                try:
+                    await asyncio.sleep(self.refresh_interval)
+                    # Force refresh by clearing cache timestamp
+                    async with self._cache_lock:
+                        self._cache_timestamp = None
+                    # Trigger refresh
+                    await self.get_jwks()
+                    logger.debug("Background JWKS refresh completed")
+                except asyncio.CancelledError:
+                    break
+                except Exception as e:
+                    logger.error(f"Background JWKS refresh error: {e}")
+                    # Continue even if refresh fails
+                    await asyncio.sleep(60)  # Wait before retrying
+        
+        self._refresh_task = asyncio.create_task(refresh_loop())
+        logger.info(f"Started background JWKS refresh (interval: {self.refresh_interval}s)")
+    
+    async def stop_background_refresh(self):
+        """Stop background refresh task"""
+        if self._refresh_task:
+            self._refresh_task.cancel()
+            try:
+                await self._refresh_task
+            except asyncio.CancelledError:
+                pass
+            logger.info("Stopped background JWKS refresh")
     
     async def validate_token(self, token: str) -> Dict[str, Any]:
         """Validate JWT token and return verified claims"""
@@ -150,6 +187,16 @@ class JWTMiddleware:
                     detail="Token missing subject claim",
                     headers={"WWW-Authenticate": "Bearer"}
                 )
+            
+            # Validate authorized party (azp) if present and expected
+            if 'azp' in payload:
+                if self.expected_azp and payload['azp'] != self.expected_azp:
+                    logger.warning(f"Token azp mismatch: expected {self.expected_azp}, got {payload['azp']}")
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Token authorized party mismatch",
+                        headers={"WWW-Authenticate": "Bearer"}
+                    )
             
             # Check token age (optional security measure)
             iat = payload.get('iat')
@@ -424,13 +471,19 @@ class SecureAuthenticationManager:
         self.config = config
         auth_config = config.get("authentication", {})
         
-        # Initialize JWT middleware
+        # Initialize JWT middleware with enhanced settings
         oidc_config = auth_config.get("oidc", {})
+        import os
+        expected_azp = oidc_config.get("expected_azp") or os.getenv("OIDC_EXPECTED_AZP")
+        refresh_interval = oidc_config.get("refresh_interval", 300)
+        
         self.jwt_middleware = JWTMiddleware(
             issuer=oidc_config.get("issuer"),
             audience=oidc_config.get("audience"),
             jwks_uri=oidc_config.get("jwks_uri"),
-            cache_ttl=oidc_config.get("cache_ttl", 3600)
+            cache_ttl=oidc_config.get("cache_ttl", 3600),
+            expected_azp=expected_azp,
+            refresh_interval=refresh_interval
         )
         
         # Initialize security headers

@@ -184,7 +184,6 @@ jobs:
           p/secrets
           p/owasp-top-ten
           p/cwe-top-25
-        generateSarif: "1"
         publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}
     
     # SECURITY FIX: Proper secret detection with baseline

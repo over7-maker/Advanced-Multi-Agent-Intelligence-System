@@ -267,11 +267,34 @@ class PolicyCache:
         self._last_cleanup = datetime.now(timezone.utc)
     
     def _generate_cache_key(self, policy_path: str, input_data: Dict[str, Any]) -> str:
-        """Generate cache key from policy path and input"""
-        # Create deterministic hash of input data
-        input_json = json.dumps(input_data, sort_keys=True)
-        input_hash = hashlib.sha256(input_json.encode()).hexdigest()[:16]
-        return f"{policy_path}:{input_hash}"
+        """Generate cache key from policy path and input with full context"""
+        # Include all relevant context: user_id, resource_id, action, timestamp (rounded to minute)
+        context_parts = []
+        
+        # Extract key fields for cache key
+        user_id = input_data.get('user_id', '')
+        resource_id = input_data.get('resource_id') or input_data.get('agent_id') or input_data.get('tool_name', '')
+        action = input_data.get('action', '')
+        timestamp = input_data.get('timestamp', '')
+        
+        # Round timestamp to minute for cache effectiveness (60s TTL)
+        if timestamp:
+            try:
+                from datetime import datetime
+                dt = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                # Round to minute
+                rounded_dt = dt.replace(second=0, microsecond=0)
+                timestamp = rounded_dt.isoformat()
+            except:
+                pass
+        
+        # Build cache key with explicit context
+        context_parts = [policy_path, user_id, resource_id, action, timestamp]
+        context_str = ':'.join(str(p) for p in context_parts if p)
+        
+        # Create hash for deterministic key
+        context_hash = hashlib.sha256(context_str.encode()).hexdigest()[:16]
+        return f"{policy_path}:{context_hash}"
     
     def get(self, policy_path: str, input_data: Dict[str, Any]) -> Optional[PolicyEvaluationResult]:
         """Get cached policy decision"""

@@ -51,7 +51,7 @@ async def lifespan(app: FastAPI):
     try:
         # Initialize security layer first (before other services)
         try:
-            security_manager = initialize_security()
+            security_manager = await initialize_security()
             logger.info("Security layer initialized")
         except Exception as e:
             logger.warning(f"Security initialization failed (may be expected in dev): {e}")

@@ -9,10 +9,12 @@ authentication:
     issuer: "${OIDC_ISSUER:-https://your-oidc-provider.com}"
     audience: "${OIDC_AUDIENCE:-amas-api}"
     jwks_uri: "${OIDC_JWKS_URI:-https://your-oidc-provider.com/.well-known/jwks.json}"
+    expected_azp: "${OIDC_EXPECTED_AZP:-}"  # Optional: Expected authorized party (client ID)
     
     # JWT Validation Settings
     algorithms: ["RS256", "ES256"]
     cache_ttl: 3600  # JWKS cache TTL in seconds
+    refresh_interval: 300  # Background JWKS refresh interval in seconds (5 minutes)
     
     # Token Validation
     require_exp: true

@@ -71,7 +71,6 @@ jobs:
             p/security-audit
             p/secrets
             p/owasp-top-ten
-          generateSarif: "1"
       - name: Upload security artifacts
         uses: actions/upload-artifact@v4
         with:

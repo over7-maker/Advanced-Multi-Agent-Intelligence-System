@@ -85,14 +85,18 @@ class PIIRedactor:
     """Redacts PII from audit log data"""
     
     def __init__(self):
-        # PII patterns
+        # PII patterns - comprehensive coverage
         self.pii_patterns = {
             'email': re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', re.IGNORECASE),
             'ssn': re.compile(r'\b\d{3}-\d{2}-\d{4}\b|\b\d{9}\b'),
-            'phone': re.compile(r'\b\d{3}-\d{3}-\d{4}\b|\(\d{3}\)\s?\d{3}-\d{4}'),
-            'credit_card': re.compile(r'\b(?:4\d{12}(?:\d{3})?|5[1-5]\d{14}|3[47]\d{13})\b'),
-            'api_key': re.compile(r'\b[A-Za-z0-9]{32,}\b|sk-[A-Za-z0-9]{48}'),
-            'ip_address': re.compile(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b')
+            'phone': re.compile(r'\b\d{3}-\d{3}-\d{4}\b|\(\d{3}\)\s?\d{3}-\d{4}|\+\d{1,3}\s?\d{3}[-.\s]?\d{3}[-.\s]?\d{4}'),
+            'credit_card': re.compile(r'\b(?:4\d{12}(?:\d{3})?|5[1-5]\d{14}|3[47]\d{13}|6(?:011|5\d{2})\d{12})\b'),
+            'api_key': re.compile(r'\b[A-Za-z0-9]{32,}\b|sk-[A-Za-z0-9]{48,}|Bearer\s+[A-Za-z0-9\-_\.]+', re.IGNORECASE),
+            'ip_address': re.compile(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b'),
+            'internal_ip': re.compile(r'\b(?:10\.|172\.(?:1[6-9]|2[0-9]|3[01])\.|192\.168\.)[0-9]{1,3}\.[0-9]{1,3}\b'),
+            'session_token': re.compile(r'(?:session[_-]?id|session[_-]?token|sid)[=:]\s*([A-Za-z0-9\-_]+)', re.IGNORECASE),
+            'patient_id': re.compile(r'\b(?:patient[_-]?id|pt[_-]?id)[=:]\s*([A-Za-z0-9\-_]+)', re.IGNORECASE),
+            'employee_id': re.compile(r'\b(?:employee[_-]?id|emp[_-]?id)[=:]\s*([A-Za-z0-9\-_]+)', re.IGNORECASE),
         }
         
         # Sensitive field names
@@ -111,11 +115,16 @@ class PIIRedactor:
         redacted_text = text
         pii_found = False
         
-        # Apply PII patterns
+        # Apply PII patterns - redact all matches
         for pii_type, pattern in self.pii_patterns.items():
+            matches = pattern.findall(redacted_text) if hasattr(pattern, 'findall') else pattern.finditer(redacted_text)
             if pattern.search(redacted_text):
                 pii_found = True
-                redacted_text = pattern.sub(f'[{pii_type.upper()}_REDACTED]', redacted_text)
+                # For patterns with capture groups, redact the full match
+                if pii_type in ['session_token', 'patient_id', 'employee_id']:
+                    redacted_text = pattern.sub(f'[{pii_type.upper()}_REDACTED]', redacted_text)
+                else:
+                    redacted_text = pattern.sub(f'[{pii_type.upper()}_REDACTED]', redacted_text)
         
         return redacted_text, pii_found
     
@@ -188,6 +197,8 @@ class AuditLogger:
         self._buffer_lock = asyncio.Lock()
         self._last_flush = datetime.now(timezone.utc)
         self._flush_task: Optional[asyncio.Task] = None
+        self._write_queue: Optional[asyncio.Queue] = None
+        self._writer_task: Optional[asyncio.Task] = None
         
         self.pii_redactor = PIIRedactor() if enable_redaction else None
         
@@ -196,6 +207,10 @@ class AuditLogger:
         
         # Setup structured logging
         self.logger = self._setup_logger()
+        
+        # Start async write queue and writer task
+        self._write_queue = asyncio.Queue(maxsize=1000)
+        self._start_async_writer()
         
         # Start background flush task
         self._start_flush_task()
@@ -227,6 +242,43 @@ class AuditLogger:
         audit_logger.propagate = False
         
         return audit_logger
+    
+    def _start_async_writer(self):
+        """Start background task for async log writing"""
+        async def async_writer():
+            """Async writer that processes events from queue"""
+            while True:
+                try:
+                    # Get event from queue (with timeout to allow cancellation)
+                    try:
+                        event = await asyncio.wait_for(self._write_queue.get(), timeout=1.0)
+                    except asyncio.TimeoutError:
+                        continue
+                    
+                    # Write event to log file
+                    try:
+                        event_dict = asdict(event)
+                        self.logger.info(json.dumps(event_dict, default=str))
+                    except Exception as e:
+                        logger.error(f"Failed to write audit event: {e}")
+                    
+                    self._write_queue.task_done()
+                    
+                except asyncio.CancelledError:
+                    # Process remaining events before shutdown
+                    while not self._write_queue.empty():
+                        try:
+                            event = self._write_queue.get_nowait()
+                            event_dict = asdict(event)
+                            self.logger.info(json.dumps(event_dict, default=str))
+                        except Exception as e:
+                            logger.error(f"Failed to write final audit event: {e}")
+                    break
+                except Exception as e:
+                    logger.error(f"Error in async writer: {e}")
+        
+        self._writer_task = asyncio.create_task(async_writer())
+        logger.debug("Started async audit writer")
     
     def _start_flush_task(self):
         """Start background task for periodic buffer flushing"""
@@ -277,16 +329,20 @@ class AuditLogger:
         self._buffer.clear()
         self._last_flush = datetime.now(timezone.utc)
         
-        # Write events to log file (outside the lock)
+        # Add events to async write queue (non-blocking)
         try:
             for event in events_to_flush:
-                event_dict = asdict(event)
-                self.logger.info(json.dumps(event_dict, default=str))
+                # Use put_nowait to avoid blocking; if queue is full, log warning
+                try:
+                    self._write_queue.put_nowait(event)
+                except asyncio.QueueFull:
+                    logger.warning("Audit write queue full, dropping event")
+                    # In production, consider using a bounded queue or alerting
             
-            logger.debug(f"Flushed {len(events_to_flush)} audit events")
+            logger.debug(f"Queued {len(events_to_flush)} audit events for async write")
             
         except Exception as e:
-            logger.error(f"Failed to flush audit events: {e}")
+            logger.error(f"Failed to queue audit events: {e}")
             # Re-add events to buffer for retry
             async with self._buffer_lock:
                 self._buffer.extend(events_to_flush)
@@ -588,6 +644,18 @@ class AuditLogger:
         
         # Final flush
         await self.flush_buffer()
+        
+        # Wait for write queue to drain
+        if self._write_queue:
+            await self._write_queue.join()
+        
+        # Cancel writer task
+        if self._writer_task:
+            self._writer_task.cancel()
+            try:
+                await self._writer_task
+            except asyncio.CancelledError:
+                pass
         
         logger.info("Audit logger shutdown complete")
 

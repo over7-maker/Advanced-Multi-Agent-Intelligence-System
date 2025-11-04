@@ -113,12 +113,20 @@ class SecurityManager:
             },
         }
     
-    def initialize(self):
+    async def initialize(self):
         """Initialize all security components"""
         try:
             # Initialize authentication
+            auth_config = self.config.get("authentication", {})
+            oidc_config = auth_config.get("oidc", {})
+            
+            # Initialize auth manager
             self.auth_manager = SecureAuthenticationManager(self.config)
-            logger.info("Authentication manager initialized")
+            
+            # Start background JWKS refresh if available
+            if hasattr(self.auth_manager, 'jwt_middleware') and hasattr(self.auth_manager.jwt_middleware, 'start_background_refresh'):
+                await self.auth_manager.jwt_middleware.start_background_refresh()
+            logger.info("Authentication manager initialized with background JWKS refresh")
             
             # Initialize security headers
             self.security_headers = SecurityHeadersMiddleware()
@@ -168,18 +176,18 @@ class SecurityManager:
 _security_manager: Optional[SecurityManager] = None
 
 
-def get_security_manager(config_path: Optional[str] = None) -> SecurityManager:
+async def get_security_manager(config_path: Optional[str] = None) -> SecurityManager:
     """Get global security manager instance"""
     global _security_manager
     if _security_manager is None:
         _security_manager = SecurityManager(config_path)
-        _security_manager.initialize()
+        await _security_manager.initialize()
     return _security_manager
 
 
-def initialize_security(config_path: Optional[str] = None) -> SecurityManager:
+async def initialize_security(config_path: Optional[str] = None) -> SecurityManager:
     """Initialize global security manager"""
     global _security_manager
     _security_manager = SecurityManager(config_path)
-    _security_manager.initialize()
+    await _security_manager.initialize()
     return _security_manager
