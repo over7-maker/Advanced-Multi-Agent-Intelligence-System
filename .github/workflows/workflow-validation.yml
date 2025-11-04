@@ -23,8 +23,11 @@ jobs:
       
       - name: Install actionlint
         run: |
-          curl -sSfL https://raw.githubusercontent.com/actionlint/actionlint/main/scripts/download-actionlint.bash | bash
+          # Use GitHub release binary instead of script
+          VERSION="1.7.0"
+          curl -sSfL "https://github.com/actionlint/actionlint/releases/download/v${VERSION}/actionlint_${VERSION}_linux_amd64.tar.gz" | tar -xz
           sudo mv actionlint /usr/local/bin/
+          actionlint --version
       
       - name: Run actionlint
         run: |

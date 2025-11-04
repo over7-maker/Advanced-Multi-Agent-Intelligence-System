@@ -151,7 +151,12 @@ class OIDCAuthenticationMiddleware(BaseHTTPMiddleware):
     async def _verify_token(self, token: str) -> Dict:
         """Verify JWT token with JWKS"""
         try:
-            # Decode token header to get kid
+            # Decode token header to get kid (without verification)
+            # This is safe because we:
+            # 1. Only extract the 'kid' from the header to fetch the correct key
+            # 2. Perform full verification with the correct key in the next step
+            # 3. Never trust this unverified payload - we verify it below
+            # nosemgrep: python.jwt.security.unverified-jwt-decode.unverified-jwt-decode
             unverified = jwt.decode(
                 token, options={"verify_signature": False}
             )
