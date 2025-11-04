@@ -21,37 +21,39 @@ jobs:
         with:
           node-version: '20'
       
-      - name: Install actionlint
-        run: |
-          # Use the official installation script (most reliable)
-          set +e  # Don't fail on errors
-          curl -sSfL https://raw.githubusercontent.com/rhymond/actionlint/main/scripts/install-actionlint.bash | bash -s
-          if [ -f ./actionlint ]; then
-            sudo mv ./actionlint /usr/local/bin/actionlint
-            chmod +x /usr/local/bin/actionlint
-          elif [ -f actionlint ]; then
-            sudo mv actionlint /usr/local/bin/actionlint
-            chmod +x /usr/local/bin/actionlint
-          fi
-          
-          # Verify installation
-          if command -v actionlint >/dev/null 2>&1; then
-            actionlint --version
-          else
-            echo "::warning::Actionlint installation failed, skipping validation"
-            echo "This is non-blocking - workflow will continue"
-          fi
-      
-      - name: Run actionlint
-        if: success() || failure()  # Always run if step exists
+      - name: Install and run actionlint
         continue-on-error: true
         run: |
+          # Try to install actionlint (non-blocking)
+          echo "Attempting to install actionlint..."
+          
+          # Method 1: Try official install script
+          curl -sSfL https://raw.githubusercontent.com/rhymond/actionlint/main/scripts/install-actionlint.bash 2>/dev/null | bash -s 2>/dev/null || true
+          
+          # Method 2: Try direct binary download (v1.7.7 known to work)
+          if ! command -v actionlint >/dev/null 2>&1; then
+            echo "Trying direct download..."
+            curl -sSfL https://github.com/rhymond/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz -o /tmp/actionlint.tar.gz 2>/dev/null || true
+            if [ -f /tmp/actionlint.tar.gz ]; then
+              tar -xzf /tmp/actionlint.tar.gz -C /tmp actionlint 2>/dev/null || true
+              if [ -f /tmp/actionlint ]; then
+                sudo mv /tmp/actionlint /usr/local/bin/ 2>/dev/null || true
+                chmod +x /usr/local/bin/actionlint 2>/dev/null || true
+              fi
+            fi
+          fi
+          
+          # Run actionlint if available
           if command -v actionlint >/dev/null 2>&1; then
-            actionlint -color $(find .github/workflows -name '*.yml' -o -name '*.yaml') || {
+            echo "✅ Actionlint installed successfully"
+            actionlint --version
+            echo "Running actionlint validation..."
+            actionlint -color $(find .github/workflows -name '*.yml' -o -name '*.yaml' 2>/dev/null) || {
               echo "::warning::Actionlint found issues (non-blocking)"
             }
           else
-            echo "::warning::Actionlint not available, skipping validation"
+            echo "::warning::Actionlint not available - skipping validation"
+            echo "This is non-blocking. Workflow will continue with YAML syntax validation only."
           fi
       
       - name: Validate YAML syntax
