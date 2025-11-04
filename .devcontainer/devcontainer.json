@@ -30,7 +30,7 @@
     }
   },
 
-  "postCreateCommand": "pip install --no-input --progress-bar off -r requirements.txt -r requirements-dev.txt && echo '? Dependencies installed successfully.' || echo '? Dependency install failed.'; python -c \"import sys; print(f'Python {sys.version}')\"",
+  "postCreateCommand": "set -e; pip install --no-input --progress-bar off -r requirements.txt -r requirements-dev.txt && echo '? Dependencies installed' && python -c \"import sys; print(f'Python {sys.version}')\" || (echo '? Dependency install failed' && exit 1)",
   
   "remoteUser": "vscode",
   
