@@ -1,0 +1,341 @@
+# Argo Rollouts Configuration for AMAS Progressive Deployment
+# Enables canary deployments with automatic analysis and rollback
+
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: amas-orchestrator
+  namespace: amas-prod
+  labels:
+    app: amas-orchestrator
+    version: v1
+spec:
+  replicas: 5
+  revisionHistoryLimit: 5
+  
+  strategy:
+    canary:
+      maxSurge: "25%"
+      maxUnavailable: 0
+      
+      # Analysis configuration
+      analysis:
+        templates:
+        - templateName: success-rate
+        - templateName: latency-p95
+        - templateName: error-budget
+        args:
+        - name: service-name
+          value: amas-orchestrator
+        - name: namespace
+          value: amas-prod
+      
+      # Canary steps with progressive traffic shifting
+      steps:
+      # Initial canary - 10% traffic
+      - setWeight: 10
+      - pause:
+          duration: 2m
+      
+      # First expansion - 25% traffic with analysis
+      - setWeight: 25
+      - pause:
+          duration: 2m
+      - analysis:
+          templates:
+          - templateName: success-rate
+          args:
+          - name: service-name
+            value: amas-orchestrator
+          - name: namespace
+            value: amas-prod
+      
+      # Major expansion - 50% traffic with comprehensive analysis
+      - setWeight: 50
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency-p95
+          - templateName: error-budget
+          args:
+          - name: service-name
+            value: amas-orchestrator
+          - name: namespace
+            value: amas-prod
+      
+      # Near full deployment - 75% traffic
+      - setWeight: 75
+      - pause:
+          duration: 5m
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency-p95
+          args:
+          - name: service-name
+            value: amas-orchestrator
+      
+      # Full deployment
+      - setWeight: 100
+      
+      # Traffic routing configuration
+      trafficRouting:
+        nginx:
+          stableIngress: amas-orchestrator-stable
+          annotationPrefix: nginx.ingress.kubernetes.io
+          additionalIngressAnnotations:
+            canary-by-header: X-Canary
+            canary-weight-total: "100"
+  
+  # Pod template specification
+  selector:
+    matchLabels:
+      app: amas-orchestrator
+      
+  template:
+    metadata:
+      labels:
+        app: amas-orchestrator
+        version: "{{.Values.image.tag}}"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8080"
+        prometheus.io/path: "/metrics"
+        
+    spec:
+      serviceAccountName: amas-orchestrator
+      
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      
+      containers:
+      - name: orchestrator
+        image: ghcr.io/over7-maker/amas-orchestrator:latest
+        imagePullPolicy: Always
+        
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        - containerPort: 8080
+          name: metrics
+          protocol: TCP
+        
+        env:
+        - name: ENVIRONMENT
+          value: production
+        - name: LOG_LEVEL
+          value: INFO
+        - name: OTLP_ENDPOINT
+          value: "http://otel-collector.monitoring.svc.cluster.local:4317"
+        - name: PROMETHEUS_ENDPOINT
+          value: "http://prometheus.monitoring.svc.cluster.local:9090"
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: amas-secrets
+              key: redis-url
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: amas-secrets
+              key: database-url
+        
+        # Resource limits and requests
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+            ephemeral-storage: "1Gi"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+            ephemeral-storage: "2Gi"
+        
+        # Health checks
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          
+        startupProbe:
+          httpGet:
+            path: /health/startup
+            port: 8000
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 30
+        
+        # Security context for container
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        
+        # Volume mounts for temporary storage
+        volumeMounts:
+        - name: tmp-volume
+          mountPath: /tmp
+        - name: cache-volume
+          mountPath: /app/cache
+      
+      # Volumes
+      volumes:
+      - name: tmp-volume
+        emptyDir:
+          sizeLimit: 1Gi
+      - name: cache-volume
+        emptyDir:
+          sizeLimit: 2Gi
+      
+      # Pod scheduling
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - amas-orchestrator
+              topologyKey: kubernetes.io/hostname
+      
+      tolerations:
+      - key: "amas-workload"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      
+      nodeSelector:
+        workload-type: "amas"
+      
+      # Termination grace period
+      terminationGracePeriodSeconds: 60
+      
+      # DNS configuration
+      dnsPolicy: ClusterFirst
+      dnsConfig:
+        options:
+        - name: ndots
+          value: "2"
+        - name: edns0
+
+---
+# Service for stable traffic
+apiVersion: v1
+kind: Service
+metadata:
+  name: amas-orchestrator-stable
+  namespace: amas-prod
+  labels:
+    app: amas-orchestrator
+    service-type: stable
+spec:
+  selector:
+    app: amas-orchestrator
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+    protocol: TCP
+  - name: metrics
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP
+
+---
+# Service for canary traffic  
+apiVersion: v1
+kind: Service
+metadata:
+  name: amas-orchestrator-canary
+  namespace: amas-prod
+  labels:
+    app: amas-orchestrator
+    service-type: canary
+spec:
+  selector:
+    app: amas-orchestrator
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+    protocol: TCP
+  - name: metrics
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP
+
+---
+# Ingress for external access
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amas-orchestrator-ingress
+  namespace: amas-prod
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    
+    # Rate limiting
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains";
+spec:
+  tls:
+  - hosts:
+    - amas.example.com
+    secretName: amas-tls-cert
+  
+  rules:
+  - host: amas.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: amas-orchestrator-stable
+            port:
+              number: 80
