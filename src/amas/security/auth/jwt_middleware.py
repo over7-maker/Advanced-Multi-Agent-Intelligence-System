@@ -95,6 +95,21 @@ class JWTMiddleware:
                     headers={"WWW-Authenticate": "Bearer"}
                 )
             
+            # Check token blacklist first (before expensive validation)
+            try:
+                unverified_payload = jwt.decode(token, options={"verify_signature": False})
+                token_jti = unverified_payload.get("jti")
+                if token_jti and token_blacklist.is_blacklisted(token_jti):
+                    logger.warning(f"Blacklisted token attempted: {token_jti[:8]}...")
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Token has been revoked",
+                        headers={"WWW-Authenticate": "Bearer"}
+                    )
+            except jwt.InvalidTokenError:
+                # If we can't decode even unverified, continue to full validation
+                pass
+            
             # Get public key from JWKS
             jwks = await self.get_jwks()
             key = None
