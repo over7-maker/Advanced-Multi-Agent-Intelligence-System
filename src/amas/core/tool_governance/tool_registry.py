@@ -9,12 +9,14 @@ import yaml
 import json
 import logging
 import asyncio
+import uuid
+import jsonschema
 from typing import Dict, List, Set, Optional, Any, Callable
 from pathlib import Path
 from dataclasses import dataclass, asdict
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from enum import Enum
-from .base_agent_contract import ToolCapability, ContractViolationError
+from ..agent_contracts.base_agent_contract import ToolCapability, ContractViolationError
 
 logger = logging.getLogger(__name__)
 
@@ -367,7 +369,7 @@ class ToolPermissionsEngine:
         """Generate comprehensive usage report"""
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         recent_records = [
-            record for record in self.usage_records
+            record for record in self.registry.usage_records
             if record.timestamp >= cutoff_time
         ]
         
