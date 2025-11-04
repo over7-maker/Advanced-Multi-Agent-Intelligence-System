@@ -176,6 +176,14 @@ jobs:
           echo "bandit-status=skipped" >> $GITHUB_OUTPUT
         fi
     
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    - name: Install Semgrep
+      run: |
+        python -m pip install --upgrade pip
+        pip install "semgrep>=1.65.0"
     - name: 🛡️ Run Semgrep security scan
       uses: returntocorp/semgrep-action@v1
       with:
@@ -187,12 +195,17 @@ jobs:
         publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}
     - name: Generate SARIF report
       run: |
-        pip install semgrep || true
-        semgrep scan --sarif --output=semgrep.sarif --config="p/security-audit p/secrets p/owasp-top-ten p/cwe-top-25" || true
+        semgrep scan \
+          --sarif \
+          --output=semgrep.sarif \
+          --config=p/security-audit \
+          --config=p/secrets \
+          --config=p/owasp-top-ten \
+          --config=p/cwe-top-25
       continue-on-error: true
     - name: Upload SARIF
       uses: github/codeql-action/upload-sarif@v3
-      if: always()
+      if: always() && hashFiles('semgrep.sarif') != ''
       with:
         sarif_file: semgrep.sarif
     

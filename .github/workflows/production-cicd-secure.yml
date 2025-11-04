@@ -64,7 +64,15 @@ jobs:
       - name: Bandit
         run: |
           if [ -d src ]; then bandit -r src -f json -o bandit-report.json || true; fi
-      - name: Semgrep
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install Semgrep
+        run: |
+          python -m pip install --upgrade pip
+          pip install "semgrep>=1.65.0"
+      - name: Semgrep Scan
         uses: returntocorp/semgrep-action@v1
         with:
           config: >-
@@ -73,12 +81,16 @@ jobs:
             p/owasp-top-ten
       - name: Generate SARIF report
         run: |
-          pip install semgrep || true
-          semgrep scan --sarif --output=semgrep.sarif --config="p/security-audit p/secrets p/owasp-top-ten" || true
+          semgrep scan \
+            --sarif \
+            --output=semgrep.sarif \
+            --config=p/security-audit \
+            --config=p/secrets \
+            --config=p/owasp-top-ten
         continue-on-error: true
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
-        if: always()
+        if: always() && hashFiles('semgrep.sarif') != ''
         with:
           sarif_file: semgrep.sarif
       - name: Upload security artifacts
