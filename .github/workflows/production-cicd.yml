@@ -187,7 +187,9 @@ jobs:
         publishToken: ${{ secrets.SEMGREP_APP_TOKEN }}
     - name: Generate SARIF report
       run: |
+        pip install semgrep || true
         semgrep scan --sarif --output=semgrep.sarif --config="p/security-audit p/secrets p/owasp-top-ten p/cwe-top-25" || true
+      continue-on-error: true
     - name: Upload SARIF
       uses: github/codeql-action/upload-sarif@v3
       if: always()

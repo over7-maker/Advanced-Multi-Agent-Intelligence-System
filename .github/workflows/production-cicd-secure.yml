@@ -73,7 +73,9 @@ jobs:
             p/owasp-top-ten
       - name: Generate SARIF report
         run: |
+          pip install semgrep || true
           semgrep scan --sarif --output=semgrep.sarif --config="p/security-audit p/secrets p/owasp-top-ten" || true
+        continue-on-error: true
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
         if: always()
