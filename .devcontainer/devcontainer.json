@@ -23,7 +23,7 @@
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
           "source.organizeImports": true,
-          "source.fixAll": false
+          "source.fixAll": true
         },
         "python.linting.enabled": true
       }
@@ -36,7 +36,7 @@
   
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   
-  "onCreateCommand": "cp .env.example .env 2>/dev/null || echo 'No .env.example found (optional)'",
+  "onCreateCommand": "if [ -f .env.example ]; then cp .env.example .env && echo 'Created .env from example'; else echo 'Optional file .env.example not present'; fi",
 
   "forwardPorts": [
     8000,
