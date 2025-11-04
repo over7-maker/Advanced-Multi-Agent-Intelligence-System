@@ -3,10 +3,11 @@
   "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
   
   "features": {
-    // WARNING: docker-in-docker enables privileged operations. Only enable in trusted environments.
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
+  
+  "_comment": "WARNING: docker-in-docker enables privileged operations. Only enable in trusted environments.",
 
   "customizations": {
     "vscode": {
@@ -31,11 +32,6 @@
   "postCreateCommand": "pip install -r requirements.txt -r requirements-dev.txt && python -c 'import sys; print(f\"Python {sys.version}\")'",
   
   "remoteUser": "vscode",
-  
-  // Proxy mount removed - add back if needed with proper postCreateCommand handling
-  // "mounts": [
-  //   "source=${localWorkspaceFolder}/.devcontainer/proxy,destination=/tmp/proxy,type=bind,consistency=cached"
-  // ],
 
   "forwardPorts": [
     8000,
