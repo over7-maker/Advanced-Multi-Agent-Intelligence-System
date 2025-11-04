@@ -30,9 +30,13 @@
     }
   },
 
-  "postCreateCommand": "pip install --no-input --progress-bar off -r requirements.txt -r requirements-dev.txt && python -c \"import sys; print(f'Python {sys.version}')\"",
+  "postCreateCommand": "pip install --no-input --progress-bar off -r requirements.txt -r requirements-dev.txt && echo '? Dependencies installed successfully.' || echo '? Dependency install failed.'; python -c \"import sys; print(f'Python {sys.version}')\"",
   
   "remoteUser": "vscode",
+  
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  
+  "onCreateCommand": "cp .env.example .env 2>/dev/null || echo 'No .env.example found (optional)'",
 
   "forwardPorts": [
     8000,
