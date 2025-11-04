@@ -1,6 +1,21 @@
 # AMAS Agent Capabilities Configuration
 # Defines what tools each agent can access and their operational constraints
 
+schema_version: "1.0"
+
+# Default agent policy (applied to all agents unless overridden)
+_defaults:
+  constraints:
+    max_iterations: 5
+    timeout_seconds: 300
+    cost_budget_tokens: 10000
+  rate_limits:
+    requests_per_minute: 15
+    tokens_per_hour: 8000
+  quality_gates:
+    require_human_approval: true
+    output_validation_required: true
+
 agents:
   research_agent_v1:
     role: "research"
@@ -276,3 +291,4 @@ environments:
       audit_logging:
         retention_days: 365
         backup_enabled: true
+
