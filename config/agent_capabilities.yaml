@@ -1,0 +1,278 @@
+# AMAS Agent Capabilities Configuration
+# Defines what tools each agent can access and their operational constraints
+
+agents:
+  research_agent_v1:
+    role: "research"
+    description: "Web research and information gathering specialist"
+    allowed_tools:
+      - "web_search"
+      - "api_call"
+      - "file_read"
+      - "vector_search"
+      - "document_generation"
+    constraints:
+      max_iterations: 8
+      timeout_seconds: 600
+      cost_budget_tokens: 20000
+    rate_limits:
+      requests_per_minute: 30
+      tokens_per_hour: 15000
+    quality_gates:
+      require_human_approval: false
+      output_validation_required: true
+      fact_checking_enabled: true
+    
+  analysis_agent_v1:
+    role: "analysis"
+    description: "Data analysis and statistical processing specialist"
+    allowed_tools:
+      - "file_read"
+      - "database_query"
+      - "data_analysis"
+      - "document_generation"
+    constraints:
+      max_iterations: 5
+      timeout_seconds: 900
+      cost_budget_tokens: 15000
+    rate_limits:
+      requests_per_minute: 20
+      tokens_per_hour: 10000
+    quality_gates:
+      require_human_approval: false
+      output_validation_required: true
+      statistical_validation_required: true
+  
+  synthesis_agent_v1:
+    role: "synthesis"
+    description: "Content synthesis and document generation specialist"
+    allowed_tools:
+      - "file_read"
+      - "file_write"
+      - "document_generation"
+      - "vector_search"
+    constraints:
+      max_iterations: 3
+      timeout_seconds: 300
+      cost_budget_tokens: 10000
+    rate_limits:
+      requests_per_minute: 15
+      tokens_per_hour: 8000
+    quality_gates:
+      require_human_approval: false
+      output_validation_required: true
+      plagiarism_check_enabled: true
+  
+  orchestrator_agent_v1:
+    role: "orchestrator"
+    description: "Multi-agent coordination and workflow management"
+    allowed_tools:
+      - "web_search"
+      - "file_read"
+      - "file_write"
+      - "api_call"
+      - "database_query"
+      - "vector_search"
+      - "document_generation"
+    constraints:
+      max_iterations: 15
+      timeout_seconds: 1800
+      cost_budget_tokens: 50000
+    rate_limits:
+      requests_per_minute: 50
+      tokens_per_hour: 30000
+    quality_gates:
+      require_human_approval: false
+      output_validation_required: true
+      workflow_validation_required: true
+  
+  communication_agent_v1:
+    role: "communication"
+    description: "External communication and notification specialist"
+    allowed_tools:
+      - "email_send"
+      - "api_call"
+      - "file_read"
+      - "document_generation"
+    constraints:
+      max_iterations: 2
+      timeout_seconds: 180
+      cost_budget_tokens: 5000
+    rate_limits:
+      requests_per_minute: 10
+      tokens_per_hour: 3000
+    quality_gates:
+      require_human_approval: true  # Communications require approval
+      output_validation_required: true
+      content_safety_check: true
+  
+  validation_agent_v1:
+    role: "validation"
+    description: "Output validation and quality assurance specialist"
+    allowed_tools:
+      - "file_read"
+      - "api_call"
+      - "data_analysis"
+    constraints:
+      max_iterations: 3
+      timeout_seconds: 120
+      cost_budget_tokens: 3000
+    rate_limits:
+      requests_per_minute: 40
+      tokens_per_hour: 5000
+    quality_gates:
+      require_human_approval: false
+      output_validation_required: false  # Validator doesn't need validation
+      bias_detection_enabled: true
+
+# Tool-specific configurations
+tool_configurations:
+  web_search:
+    max_results_per_query: 50
+    timeout_per_query_seconds: 30
+    allowed_domains: []  # Empty means all domains allowed
+    blocked_domains:
+      - "malicious-site.com"
+      - "spam-domain.net"
+    content_filters:
+      - "adult_content"
+      - "violent_content"
+      - "hate_speech"
+  
+  file_read:
+    allowed_extensions:
+      - ".txt"
+      - ".json"
+      - ".csv"
+      - ".md"
+      - ".yaml"
+      - ".yml"
+    max_file_size_mb: 100
+    blocked_paths:
+      - "/etc/*"
+      - "/usr/*"
+      - "*.env"
+      - "*secret*"
+      - "*password*"
+  
+  file_write:
+    allowed_extensions:
+      - ".txt"
+      - ".json"
+      - ".csv"
+      - ".md"
+      - ".yaml"
+    max_file_size_mb: 50
+    allowed_directories:
+      - "outputs/"
+      - "reports/"
+      - "documents/"
+    blocked_directories:
+      - "/"
+      - "/etc/"
+      - "/usr/"
+      - "/var/"
+  
+  database_query:
+    allowed_operations: ["SELECT"]
+    blocked_operations: ["DELETE", "DROP", "ALTER", "CREATE", "INSERT", "UPDATE"]
+    max_rows_returned: 10000
+    timeout_seconds: 60
+    allowed_tables:
+      - "public.research_data"
+      - "public.analysis_results"
+      - "public.document_metadata"
+    blocked_tables:
+      - "users"
+      - "auth_tokens"
+      - "system_config"
+  
+  api_call:
+    allowed_methods: ["GET", "POST"]
+    blocked_methods: ["DELETE", "PUT", "PATCH"]
+    max_response_size_mb: 10
+    timeout_seconds: 60
+    rate_limit_per_endpoint: 100
+    allowed_headers:
+      - "Content-Type"
+      - "Authorization"
+      - "User-Agent"
+      - "Accept"
+    blocked_headers:
+      - "X-Forwarded-For"
+      - "X-Real-IP"
+  
+  code_execution:
+    allowed_languages: ["python"]
+    max_execution_time_seconds: 300
+    max_memory_mb: 512
+    max_cpu_percent: 50
+    network_access: false
+    filesystem_access: false
+    sandbox_required: true
+    allowed_libraries:
+      - "pandas"
+      - "numpy"
+      - "matplotlib"
+      - "seaborn"
+      - "scikit-learn"
+    blocked_libraries:
+      - "os"
+      - "subprocess"
+      - "socket"
+      - "urllib"
+
+# Global security policies
+security_policies:
+  pii_detection:
+    enabled: true
+    redact_in_logs: true
+    block_pii_in_outputs: true
+  
+  content_safety:
+    enabled: true
+    scan_inputs: true
+    scan_outputs: true
+    block_unsafe_content: true
+  
+  audit_logging:
+    enabled: true
+    log_all_tool_calls: true
+    log_parameters: true
+    log_outputs: false  # Outputs may contain sensitive data
+    retention_days: 90
+  
+  approval_workflows:
+    default_approvers:
+      - "admin@amas.com"
+      - "security@amas.com"
+    approval_timeout_minutes: 30
+    auto_deny_on_timeout: true
+    escalation_enabled: true
+
+# Environment-specific overrides
+environments:
+  development:
+    security_policies:
+      approval_workflows:
+        auto_approve_low_risk: true
+      audit_logging:
+        retention_days: 30
+  
+  staging:
+    security_policies:
+      approval_workflows:
+        auto_approve_low_risk: false
+      audit_logging:
+        retention_days: 60
+  
+  production:
+    security_policies:
+      pii_detection:
+        block_pii_in_outputs: true
+      approval_workflows:
+        auto_approve_low_risk: false
+        require_dual_approval_high_risk: true
+      audit_logging:
+        retention_days: 365
+        backup_enabled: true
