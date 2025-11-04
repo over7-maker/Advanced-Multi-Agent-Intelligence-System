@@ -1,0 +1,658 @@
+"""
+Data Classification and PII Detection for AMAS
+
+Provides automatic data classification, PII detection,
+and compliance-ready data governance capabilities.
+"""
+
+import re
+import json
+import logging
+import hashlib
+from typing import Dict, List, Set, Optional, Any, Tuple
+from dataclasses import dataclass, field
+from enum import Enum
+from datetime import datetime, timezone
+import uuid
+
+logger = logging.getLogger(__name__)
+
+class DataClassification(str, Enum):
+    PUBLIC = "public"
+    INTERNAL = "internal" 
+    CONFIDENTIAL = "confidential"
+    RESTRICTED = "restricted"
+    TOP_SECRET = "top_secret"
+
+class PIIType(str, Enum):
+    EMAIL = "email"
+    PHONE = "phone"
+    SSN = "ssn"
+    CREDIT_CARD = "credit_card"
+    IP_ADDRESS = "ip_address"
+    NAME = "name"
+    ADDRESS = "address"
+    DATE_OF_BIRTH = "date_of_birth"
+    PASSPORT = "passport"
+    DRIVER_LICENSE = "driver_license"
+    API_KEY = "api_key"
+    TOKEN = "token"
+    BIOMETRIC = "biometric"
+
+@dataclass
+class PIIDetection:
+    """Result of PII detection in data"""
+    pii_type: PIIType
+    confidence: float  # 0.0 to 1.0
+    location: str      # Where in the data
+    value_hash: str    # Hashed value for tracking
+    redacted_value: str
+    context: Optional[str] = None
+
+@dataclass
+class ClassificationResult:
+    """Result of data classification analysis"""
+    data_id: str
+    classification: DataClassification
+    confidence: float
+    
+    # PII analysis
+    pii_detected: List[PIIDetection] = field(default_factory=list)
+    pii_count: int = 0
+    highest_pii_confidence: float = 0.0
+    
+    # Compliance flags
+    requires_gdpr_protection: bool = False
+    requires_hipaa_protection: bool = False
+    requires_pci_protection: bool = False
+    
+    # Metadata
+    classified_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    classifier_version: str = "1.0.0"
+    processing_time_ms: float = 0.0
+
+class PIIDetector:
+    """Advanced PII detection with configurable patterns and ML-ready"""
+    
+    def __init__(self):
+        self.patterns = {
+            PIIType.EMAIL: [
+                re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', re.IGNORECASE),
+                re.compile(r'\b[\w._%+-]+@[\w.-]+\.[A-Z|a-z]{2,}\b', re.IGNORECASE)
+            ],
+            
+            PIIType.PHONE: [
+                re.compile(r'\b\d{3}-\d{3}-\d{4}\b'),                    # 123-456-7890
+                re.compile(r'\(\d{3}\)\s?\d{3}-\d{4}'),                  # (123) 456-7890
+                re.compile(r'\b\d{10}\b'),                               # 1234567890
+                re.compile(r'\+1\s?\d{3}\s?\d{3}\s?\d{4}'),             # +1 123 456 7890
+                re.compile(r'\b1-\d{3}-\d{3}-\d{4}\b')                   # 1-123-456-7890
+            ],
+            
+            PIIType.SSN: [
+                re.compile(r'\b\d{3}-\d{2}-\d{4}\b'),                    # 123-45-6789
+                re.compile(r'\b\d{9}\b'),                               # 123456789
+                re.compile(r'\b\d{3}\s\d{2}\s\d{4}\b')                  # 123 45 6789
+            ],
+            
+            PIIType.CREDIT_CARD: [
+                re.compile(r'\b4\d{12}(?:\d{3})?\b'),                   # Visa
+                re.compile(r'\b5[1-5]\d{14}\b'),                        # MasterCard
+                re.compile(r'\b3[47]\d{13}\b'),                         # American Express
+                re.compile(r'\b6(?:011|5\d{2})\d{12}\b')                # Discover
+            ],
+            
+            PIIType.IP_ADDRESS: [
+                re.compile(r'\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b'),      # IPv4
+                re.compile(r'\b(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}\b')  # IPv6
+            ],
+            
+            PIIType.API_KEY: [
+                re.compile(r'\bsk-[A-Za-z0-9]{48}\b'),                  # OpenAI style
+                re.compile(r'\b[A-Za-z0-9]{32,64}\b'),                  # Generic API key
+                re.compile(r'\bAIza[A-Za-z0-9_-]{35}\b'),               # Google API
+                re.compile(r'\bxoxb-[A-Za-z0-9-]{50,}\b')               # Slack bot token
+            ],
+            
+            PIIType.TOKEN: [
+                re.compile(r'\bBearer\s+[A-Za-z0-9\._-]+\b'),           # Bearer tokens
+                re.compile(r'\bToken\s+[A-Za-z0-9\._-]+\b'),            # Generic tokens
+                re.compile(r'\bghp_[A-Za-z0-9]{36}\b'),                 # GitHub personal access token
+                re.compile(r'\baws_[A-Za-z0-9+/]{40}\b')                # AWS access key
+            ],
+            
+            PIIType.PASSPORT: [
+                re.compile(r'\b[A-Z][0-9]{8}\b'),                      # US passport
+                re.compile(r'\b[A-Z]{2}[0-9]{7}\b'),                   # EU passport
+            ],
+            
+            PIIType.DRIVER_LICENSE: [
+                re.compile(r'\b[A-Z]\d{7}\b'),                         # Simple format
+                re.compile(r'\b[A-Z]{1,2}\d{6,8}\b')                   # Varied format
+            ]
+        }
+        
+        # Contextual keywords that increase PII confidence
+        self.context_keywords = {
+            PIIType.EMAIL: ['email', 'e-mail', 'mail', 'contact'],
+            PIIType.PHONE: ['phone', 'mobile', 'tel', 'call', 'number'],
+            PIIType.NAME: ['name', 'full name', 'first name', 'last name'],
+            PIIType.ADDRESS: ['address', 'street', 'city', 'zip', 'postal'],
+            PIIType.SSN: ['ssn', 'social security', 'social'],
+            PIIType.DATE_OF_BIRTH: ['birth', 'dob', 'birthday', 'born']
+        }
+        
+        logger.info(f"PII Detector initialized with {len(self.patterns)} pattern types")
+    
+    def detect_pii_in_text(self, text: str, context: Optional[str] = None) -> List[PIIDetection]:
+        """Detect PII in text content with confidence scoring"""
+        if not text or not isinstance(text, str):
+            return []
+        
+        detections = []
+        
+        for pii_type, patterns in self.patterns.items():
+            for pattern in patterns:
+                matches = pattern.finditer(text)
+                
+                for match in matches:
+                    matched_value = match.group()
+                    
+                    # Calculate confidence based on pattern strength and context
+                    confidence = self._calculate_confidence(
+                        pii_type, matched_value, text, context
+                    )
+                    
+                    # Create redacted value
+                    redacted_value = self._create_redacted_value(pii_type, matched_value)
+                    
+                    # Generate hash for tracking
+                    value_hash = hashlib.sha256(matched_value.encode()).hexdigest()[:16]
+                    
+                    detection = PIIDetection(
+                        pii_type=pii_type,
+                        confidence=confidence,
+                        location=f"position_{match.start()}_{match.end()}",
+                        value_hash=value_hash,
+                        redacted_value=redacted_value,
+                        context=context
+                    )
+                    
+                    detections.append(detection)
+        
+        return detections
+    
+    def detect_pii_in_dict(self, data: Dict[str, Any], parent_key: str = "") -> List[PIIDetection]:
+        """Recursively detect PII in dictionary structures"""
+        detections = []
+        
+        for key, value in data.items():
+            full_key = f"{parent_key}.{key}" if parent_key else key
+            
+            if isinstance(value, str):
+                # Check if field name suggests PII
+                context = key if any(keyword in key.lower() 
+                                   for keywords in self.context_keywords.values() 
+                                   for keyword in keywords) else None
+                
+                text_detections = self.detect_pii_in_text(value, context)
+                for detection in text_detections:
+                    detection.location = f"field_{full_key}"
+                detections.extend(text_detections)
+                
+            elif isinstance(value, dict):
+                nested_detections = self.detect_pii_in_dict(value, full_key)
+                detections.extend(nested_detections)
+                
+            elif isinstance(value, list):
+                for i, item in enumerate(value):
+                    if isinstance(item, str):
+                        item_detections = self.detect_pii_in_text(item)
+                        for detection in item_detections:
+                            detection.location = f"field_{full_key}[{i}]"
+                        detections.extend(item_detections)
+                    elif isinstance(item, dict):
+                        item_detections = self.detect_pii_in_dict(item, f"{full_key}[{i}]")
+                        detections.extend(item_detections)
+        
+        return detections
+    
+    def _calculate_confidence(self, 
+                            pii_type: PIIType, 
+                            matched_value: str, 
+                            full_text: str,
+                            context: Optional[str]) -> float:
+        """Calculate confidence score for PII detection"""
+        base_confidence = 0.7  # Base confidence for pattern match
+        
+        # Boost confidence based on context keywords
+        if context and pii_type in self.context_keywords:
+            context_lower = context.lower()
+            if any(keyword in context_lower for keyword in self.context_keywords[pii_type]):
+                base_confidence = min(0.95, base_confidence + 0.2)
+        
+        # Boost confidence for strong patterns
+        if pii_type == PIIType.EMAIL and '@' in matched_value and '.' in matched_value:
+            base_confidence = min(0.95, base_confidence + 0.15)
+        elif pii_type == PIIType.SSN and '-' in matched_value:
+            base_confidence = min(0.95, base_confidence + 0.2)
+        elif pii_type == PIIType.CREDIT_CARD and len(matched_value) >= 15:
+            base_confidence = min(0.95, base_confidence + 0.2)
+        
+        # Reduce confidence for potential false positives
+        if pii_type == PIIType.IP_ADDRESS:
+            # Check if it's a common internal IP
+            if matched_value.startswith(('192.168.', '10.', '172.')):
+                base_confidence = max(0.3, base_confidence - 0.3)
+        
+        return round(base_confidence, 2)
+    
+    def _create_redacted_value(self, pii_type: PIIType, original_value: str) -> str:
+        """Create appropriate redacted representation"""
+        if pii_type == PIIType.EMAIL:
+            parts = original_value.split('@')
+            if len(parts) == 2:
+                return f"***@{parts[1]}"
+        elif pii_type == PIIType.PHONE:
+            if len(original_value) >= 10:
+                return f"***-***-{original_value[-4:]}"
+        elif pii_type == PIIType.SSN:
+            return "***-**-****"
+        elif pii_type == PIIType.CREDIT_CARD:
+            if len(original_value) >= 12:
+                return f"****-****-****-{original_value[-4:]}"
+        
+        # Default redaction
+        return f"[{pii_type.value.upper()}_REDACTED]"
+
+class DataClassifier:
+    """Intelligent data classifier with compliance mapping"""
+    
+    def __init__(self):
+        self.pii_detector = PIIDetector()
+        
+        # Classification rules based on content analysis
+        self.classification_rules = {
+            # High-sensitivity indicators
+            DataClassification.TOP_SECRET: [
+                'top secret', 'classified', 'confidential business', 'trade secret',
+                'proprietary algorithm', 'security key', 'master password'
+            ],
+            
+            DataClassification.RESTRICTED: [
+                'restricted', 'internal only', 'employee only', 'not for distribution',
+                'customer data', 'personal information', 'financial data',
+                'medical record', 'health information', 'payment info'
+            ],
+            
+            DataClassification.CONFIDENTIAL: [
+                'confidential', 'sensitive', 'private', 'internal use',
+                'business sensitive', 'competitive', 'strategic'
+            ],
+            
+            DataClassification.INTERNAL: [
+                'internal', 'company', 'organization', 'team only',
+                'draft', 'preliminary', 'planning'
+            ]
+        }
+        
+        # Compliance framework mappings
+        self.compliance_frameworks = {
+            'gdpr': {
+                'triggers': [PIIType.EMAIL, PIIType.NAME, PIIType.ADDRESS, PIIType.PHONE],
+                'min_classification': DataClassification.CONFIDENTIAL
+            },
+            'hipaa': {
+                'triggers': [PIIType.SSN, PIIType.DATE_OF_BIRTH],
+                'keywords': ['medical', 'health', 'patient', 'diagnosis', 'treatment'],
+                'min_classification': DataClassification.RESTRICTED
+            },
+            'pci': {
+                'triggers': [PIIType.CREDIT_CARD],
+                'keywords': ['payment', 'card', 'transaction', 'billing'],
+                'min_classification': DataClassification.RESTRICTED
+            }
+        }
+    
+    def classify_data(self, 
+                     data: Any, 
+                     data_id: Optional[str] = None,
+                     context: Optional[Dict[str, Any]] = None) -> ClassificationResult:
+        """Classify data and detect compliance requirements"""
+        start_time = time.time()
+        data_id = data_id or str(uuid.uuid4())
+        
+        # Convert data to analyzable format
+        if isinstance(data, dict):
+            text_content = json.dumps(data, default=str)
+            pii_detections = self.pii_detector.detect_pii_in_dict(data)
+        elif isinstance(data, str):
+            text_content = data
+            pii_detections = self.pii_detector.detect_pii_in_text(data)
+        else:
+            text_content = str(data)
+            pii_detections = self.pii_detector.detect_pii_in_text(text_content)
+        
+        # Determine base classification
+        base_classification = self._classify_by_content(text_content.lower())
+        
+        # Adjust classification based on PII content
+        pii_classification = self._classify_by_pii(pii_detections)
+        
+        # Take the more restrictive classification
+        final_classification = self._max_classification(base_classification, pii_classification)
+        
+        # Calculate overall confidence
+        content_confidence = self._calculate_content_confidence(text_content, final_classification)
+        pii_confidence = max([d.confidence for d in pii_detections], default=0.0)
+        overall_confidence = max(content_confidence, pii_confidence)
+        
+        # Determine compliance requirements
+        compliance_flags = self._determine_compliance_requirements(pii_detections, text_content)
+        
+        # Calculate processing time
+        processing_time_ms = (time.time() - start_time) * 1000
+        
+        result = ClassificationResult(
+            data_id=data_id,
+            classification=final_classification,
+            confidence=overall_confidence,
+            pii_detected=pii_detections,
+            pii_count=len(pii_detections),
+            highest_pii_confidence=pii_confidence,
+            processing_time_ms=processing_time_ms,
+            **compliance_flags
+        )
+        
+        logger.debug(f"Data classified as {final_classification.value} "
+                    f"(confidence: {overall_confidence:.2f}, PII items: {len(pii_detections)})")
+        
+        return result
+    
+    def _classify_by_content(self, text_lower: str) -> DataClassification:
+        """Classify data based on content keywords"""
+        for classification, keywords in self.classification_rules.items():
+            for keyword in keywords:
+                if keyword in text_lower:
+                    return classification
+        
+        # Default to internal if no specific classification found
+        return DataClassification.INTERNAL
+    
+    def _classify_by_pii(self, pii_detections: List[PIIDetection]) -> DataClassification:
+        """Classify data based on PII content"""
+        if not pii_detections:
+            return DataClassification.PUBLIC
+        
+        # High-confidence PII requires restricted classification
+        high_confidence_pii = [d for d in pii_detections if d.confidence >= 0.8]
+        if high_confidence_pii:
+            sensitive_types = {PIIType.SSN, PIIType.CREDIT_CARD, PIIType.PASSPORT, PIIType.BIOMETRIC}
+            if any(d.pii_type in sensitive_types for d in high_confidence_pii):
+                return DataClassification.RESTRICTED
+            else:
+                return DataClassification.CONFIDENTIAL
+        
+        # Medium-confidence PII requires confidential classification
+        medium_confidence_pii = [d for d in pii_detections if d.confidence >= 0.6]
+        if medium_confidence_pii:
+            return DataClassification.CONFIDENTIAL
+        
+        # Any PII requires at least internal classification
+        return DataClassification.INTERNAL
+    
+    def _max_classification(self, 
+                          class1: DataClassification, 
+                          class2: DataClassification) -> DataClassification:
+        """Return the more restrictive classification"""
+        order = [
+            DataClassification.PUBLIC,
+            DataClassification.INTERNAL,
+            DataClassification.CONFIDENTIAL,
+            DataClassification.RESTRICTED,
+            DataClassification.TOP_SECRET
+        ]
+        
+        index1 = order.index(class1)
+        index2 = order.index(class2)
+        
+        return order[max(index1, index2)]
+    
+    def _calculate_content_confidence(self, text: str, classification: DataClassification) -> float:
+        """Calculate confidence in content-based classification"""
+        text_lower = text.lower()
+        matching_keywords = []
+        
+        if classification in self.classification_rules:
+            for keyword in self.classification_rules[classification]:
+                if keyword in text_lower:
+                    matching_keywords.append(keyword)
+        
+        # Base confidence increases with number of matching keywords
+        keyword_confidence = min(0.9, 0.4 + (len(matching_keywords) * 0.1))
+        
+        # Adjust based on text length (more text = potentially more reliable)
+        length_bonus = min(0.1, len(text) / 10000)  # Up to 0.1 bonus for long text
+        
+        return keyword_confidence + length_bonus
+    
+    def _determine_compliance_requirements(self, 
+                                         pii_detections: List[PIIDetection], 
+                                         text: str) -> Dict[str, bool]:
+        """Determine which compliance frameworks apply"""
+        text_lower = text.lower()
+        
+        compliance_flags = {
+            'requires_gdpr_protection': False,
+            'requires_hipaa_protection': False,
+            'requires_pci_protection': False
+        }
+        
+        # Check each compliance framework
+        for framework, rules in self.compliance_frameworks.items():
+            framework_triggered = False
+            
+            # Check PII triggers
+            if 'triggers' in rules:
+                detected_types = {d.pii_type for d in pii_detections if d.confidence >= 0.7}
+                if any(trigger_type in detected_types for trigger_type in rules['triggers']):
+                    framework_triggered = True
+            
+            # Check keyword triggers
+            if 'keywords' in rules and not framework_triggered:
+                if any(keyword in text_lower for keyword in rules['keywords']):
+                    framework_triggered = True
+            
+            if framework_triggered:
+                compliance_flags[f'requires_{framework}_protection'] = True
+        
+        return compliance_flags
+    
+    def redact_data(self, data: Any, classification_result: ClassificationResult) -> Any:
+        """Redact PII from data based on classification result"""
+        if not classification_result.pii_detected:
+            return data
+        
+        if isinstance(data, str):
+            redacted_text = data
+            # Apply redactions in reverse order to maintain position accuracy
+            for detection in reversed(sorted(classification_result.pii_detected, 
+                                           key=lambda d: int(d.location.split('_')[1]) if '_' in d.location else 0)):
+                if detection.confidence >= 0.7:  # Only redact high-confidence PII
+                    # This is simplified - real implementation would use location info
+                    redacted_text = redacted_text.replace(
+                        "[VALUE_TO_REPLACE]",  # Would use actual value from detection
+                        detection.redacted_value
+                    )
+            return redacted_text
+            
+        elif isinstance(data, dict):
+            return self._redact_dict(data, classification_result.pii_detected)
+            
+        else:
+            return data
+    
+    def _redact_dict(self, data: Dict[str, Any], pii_detections: List[PIIDetection]) -> Dict[str, Any]:
+        """Redact PII from dictionary based on field locations"""
+        redacted_data = data.copy()
+        
+        for detection in pii_detections:
+            if detection.confidence >= 0.7 and detection.location.startswith("field_"):
+                field_path = detection.location[6:]  # Remove "field_" prefix
+                
+                # Navigate to the field and redact
+                # Simplified implementation - would need more sophisticated path navigation
+                if '.' not in field_path and '[' not in field_path:
+                    if field_path in redacted_data:
+                        redacted_data[field_path] = detection.redacted_value
+        
+        return redacted_data
+
+class ComplianceReporter:
+    """Generate compliance reports and data governance summaries"""
+    
+    def __init__(self):
+        self.classification_history: List[ClassificationResult] = []
+    
+    def add_classification_result(self, result: ClassificationResult):
+        """Add classification result to history"""
+        self.classification_history.append(result)
+        
+        # Keep only recent results (last 10000)
+        if len(self.classification_history) > 10000:
+            self.classification_history = self.classification_history[-10000:]
+    
+    def generate_compliance_report(self, days: int = 30) -> Dict[str, Any]:
+        """Generate comprehensive compliance report"""
+        cutoff_time = datetime.now(timezone.utc) - timedelta(days=days)
+        
+        recent_results = [
+            result for result in self.classification_history
+            if result.classified_at >= cutoff_time
+        ]
+        
+        if not recent_results:
+            return {"error": "No classification data available for report period"}
+        
+        # Overall statistics
+        total_classified = len(recent_results)
+        pii_containing_items = len([r for r in recent_results if r.pii_count > 0])
+        
+        # Classification distribution
+        classification_counts = {}
+        for result in recent_results:
+            classification = result.classification.value
+            classification_counts[classification] = classification_counts.get(classification, 0) + 1
+        
+        # PII type distribution
+        pii_type_counts = {}
+        for result in recent_results:
+            for detection in result.pii_detected:
+                pii_type = detection.pii_type.value
+                pii_type_counts[pii_type] = pii_type_counts.get(pii_type, 0) + 1
+        
+        # Compliance framework requirements
+        gdpr_items = len([r for r in recent_results if r.requires_gdpr_protection])
+        hipaa_items = len([r for r in recent_results if r.requires_hipaa_protection])
+        pci_items = len([r for r in recent_results if r.requires_pci_protection])
+        
+        return {
+            "report_period_days": days,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "summary": {
+                "total_data_items_classified": total_classified,
+                "items_containing_pii": pii_containing_items,
+                "pii_detection_rate_percent": (pii_containing_items / total_classified) * 100,
+            },
+            "classification_distribution": classification_counts,
+            "pii_type_distribution": pii_type_counts,
+            "compliance_requirements": {
+                "gdpr_protected_items": gdpr_items,
+                "hipaa_protected_items": hipaa_items,
+                "pci_protected_items": pci_items
+            },
+            "risk_assessment": {
+                "high_risk_items": len([r for r in recent_results 
+                                       if r.classification in [DataClassification.RESTRICTED, DataClassification.TOP_SECRET]]),
+                "avg_pii_confidence": statistics.mean([r.highest_pii_confidence for r in recent_results if r.highest_pii_confidence > 0]) if any(r.highest_pii_confidence > 0 for r in recent_results) else 0.0,
+                "data_governance_score": self._calculate_governance_score(recent_results)
+            }
+        }
+    
+    def _calculate_governance_score(self, results: List[ClassificationResult]) -> float:
+        """Calculate data governance maturity score (0-100)"""
+        if not results:
+            return 0.0
+        
+        # Factors for governance score
+        classification_coverage = 100.0  # All data is classified
+        
+        pii_detection_accuracy = statistics.mean([
+            r.highest_pii_confidence for r in results if r.pii_count > 0
+        ]) * 100 if any(r.pii_count > 0 for r in results) else 100.0
+        
+        compliance_coverage = len([
+            r for r in results 
+            if r.requires_gdpr_protection or r.requires_hipaa_protection or r.requires_pci_protection
+        ]) / len(results) * 100
+        
+        processing_efficiency = 100 - min(50, statistics.mean([
+            r.processing_time_ms for r in results
+        ]) / 10)  # Penalty for slow processing
+        
+        # Weighted score
+        score = (
+            classification_coverage * 0.3 +
+            pii_detection_accuracy * 0.3 +
+            compliance_coverage * 0.2 +
+            processing_efficiency * 0.2
+        )
+        
+        return round(score, 1)
+
+# Global instances
+_global_classifier: Optional[DataClassifier] = None
+_global_compliance_reporter: Optional[ComplianceReporter] = None
+
+def get_data_classifier() -> DataClassifier:
+    """Get global data classifier instance"""
+    global _global_classifier
+    if _global_classifier is None:
+        _global_classifier = DataClassifier()
+    return _global_classifier
+
+def get_compliance_reporter() -> ComplianceReporter:
+    """Get global compliance reporter instance"""
+    global _global_compliance_reporter
+    if _global_compliance_reporter is None:
+        _global_compliance_reporter = ComplianceReporter()
+    return _global_compliance_reporter
+
+# Decorators for automatic classification
+def classify_input_data(data_param: str = "data"):
+    """Decorator to automatically classify input data"""
+    def decorator(func):
+        async def wrapper(*args, **kwargs):
+            classifier = get_data_classifier()
+            reporter = get_compliance_reporter()
+            
+            # Extract data parameter
+            data = kwargs.get(data_param)
+            if data is not None:
+                # Classify the data
+                result = classifier.classify_data(data)
+                
+                # Add to compliance reporting
+                reporter.add_classification_result(result)
+                
+                # Add classification context to kwargs
+                kwargs['_data_classification'] = result
+                
+                # Log if sensitive data detected
+                if result.pii_count > 0:
+                    logger.info(f"Processing {result.classification.value} data with {result.pii_count} PII items")
+            
+            return await func(*args, **kwargs)
+        
+        return wrapper if asyncio.iscoroutinefunction(func) else func
+    return decorator
