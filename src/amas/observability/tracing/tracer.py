@@ -11,7 +11,7 @@ import time
 import asyncio
 from typing import Dict, Any, Optional, List, Callable
 from contextlib import asynccontextmanager
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 # OpenTelemetry imports
 from opentelemetry import trace, metrics

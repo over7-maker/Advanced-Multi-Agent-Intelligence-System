@@ -132,6 +132,39 @@ async def verify_auth(credentials: HTTPAuthorizationCredentials = Depends(securi
 async def startup_event():
     try:
         logger.info("Initializing AMAS Intelligence System...")
+        
+        # Initialize observability
+        try:
+            from src.amas.observability import initialize_observability, initialize_slo_manager
+            
+            tracer = initialize_observability(
+                service_name="amas-orchestrator",
+                service_version="1.0.0",
+                otlp_endpoint=os.getenv("OTLP_ENDPOINT", "http://localhost:4317"),
+                environment=os.getenv("ENVIRONMENT", "development")
+            )
+            
+            # Instrument FastAPI app
+            tracer.instrument_fastapi(app)
+            
+            # Initialize SLO Manager
+            slo_manager = initialize_slo_manager(
+                prometheus_url=os.getenv("PROMETHEUS_URL", "http://localhost:9090"),
+                slo_config_path=os.getenv("SLO_CONFIG_PATH")
+            )
+            
+            # Start SLO evaluator background task
+            try:
+                from src.amas.observability.slo_evaluator import initialize_slo_evaluator
+                evaluator = initialize_slo_evaluator(evaluation_interval_seconds=60)
+                await evaluator.start()
+                logger.info("SLO evaluator started")
+            except Exception as e:
+                logger.warning(f"Failed to start SLO evaluator: {e}")
+            
+            logger.info("Observability system initialized")
+        except Exception as e:
+            logger.warning(f"Failed to initialize observability (continuing anyway): {e}")
 
         # Configuration
         config = {
@@ -176,6 +209,15 @@ async def startup_event():
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_event():
+    # Stop SLO evaluator
+    try:
+        from src.amas.observability.slo_evaluator import get_slo_evaluator
+        evaluator = get_slo_evaluator()
+        if evaluator:
+            await evaluator.stop()
+    except Exception as e:
+        logger.debug(f"Error stopping SLO evaluator: {e}")
+    
     if amas_app:
         await amas_app.shutdown()
         logger.info("AMAS Intelligence System shutdown complete")
@@ -186,11 +228,23 @@ async def shutdown_event():
 async def health_check():
     """Get comprehensive system health status"""
     try:
+        # Include observability health
+        observability_health = {}
+        try:
+            from src.amas.observability import get_observability_health
+            observability_health = await get_observability_health()
+        except Exception as e:
+            logger.debug(f"Observability health check failed: {e}")
+        
         # Use enhanced health check service if available
         try:
             from src.amas.services.health_check_service import check_health
 
             health_result = await check_health()
+            
+            # Merge observability health
+            if observability_health:
+                health_result.setdefault("checks", {})["observability"] = observability_health
 
             return HealthCheck(
                 status=health_result.get("status", "unknown"),
@@ -201,6 +255,10 @@ async def health_check():
             # Fallback to basic health check
             amas = await get_amas_system()
             service_health = await amas.service_manager.health_check_all_services()
+            
+            # Merge observability health
+            if observability_health:
+                service_health.setdefault("services", {})["observability"] = observability_health
 
             return HealthCheck(
                 status=service_health.get("overall_status", "unknown"),
@@ -318,31 +376,30 @@ async def submit_task(
 ):
     """Submit a new intelligence task"""
     try:
+        # Trace task submission
+        from src.amas.observability import get_tracer
+        tracer = get_tracer()
+        
         amas = await get_amas_system()
+        
+        async with tracer.trace_agent_execution(
+            agent_id="orchestrator",
+            operation="submit_task",
+            user_id=auth.get("user_id", "unknown"),
+            task_type=task_request.type
+        ):
+            # Submit task
+            task_id = await amas.submit_task(
+                {
+                    "type": task_request.type,
+                    "description": task_request.description,
+                    "parameters": task_request.parameters,
+                    "priority": task_request.priority,
+                }
+            )
 
-        # Submit task
-        task_id = await amas.submit_task(
-            {
-                "type": task_request.type,
-                "description": task_request.description,
-                "parameters": task_request.parameters,
-                "priority": task_request.priority,
-            }
-        )
-
-        # Log audit event
-        await amas.security_service.log_audit_event(
-            event_type="task_submission",
-            user_id=auth["user_id"],
-            action="submit_task",
-            details=f"Task submitted: {task_request.type}",
-            classification="system",
-        )
-
-        # Log audit event
-        security_service = amas.service_manager.get_security_service()
-        if security_service:
-            await security_service.log_audit_event(
+            # Log audit event
+            await amas.security_service.log_audit_event(
                 event_type="task_submission",
                 user_id=auth["user_id"],
                 action="submit_task",
@@ -350,9 +407,20 @@ async def submit_task(
                 classification="system",
             )
 
-        return TaskResponse(
-            task_id=task_id, status="submitted", message="Task submitted successfully"
-        )
+            # Log audit event via service manager
+            security_service = amas.service_manager.get_security_service()
+            if security_service:
+                await security_service.log_audit_event(
+                    event_type="task_submission",
+                    user_id=auth["user_id"],
+                    action="submit_task",
+                    details=f"Task submitted: {task_request.type}",
+                    classification="system",
+                )
+
+            return TaskResponse(
+                task_id=task_id, status="submitted", message="Task submitted successfully"
+            )
 
     except Exception as e:
         logger.error(f"Error submitting task: {e}")
@@ -510,6 +578,64 @@ async def metrics():
     except Exception as e:
         logger.error(f"Metrics endpoint failed: {e}")
         return {"error": str(e)}
+
+
+# SLO monitoring endpoint
+@app.get("/observability/slo/status")
+async def get_slo_status():
+    """Get current SLO status for all SLOs"""
+    try:
+        from src.amas.observability import get_slo_manager
+        
+        slo_manager = get_slo_manager()
+        statuses = slo_manager.get_all_slo_statuses()
+        
+        # Convert to JSON-serializable format
+        result = {}
+        for name, status in statuses.items():
+            result[name] = {
+                "slo_name": status.slo_name,
+                "current_value": status.current_value,
+                "target_value": status.target_value,
+                "compliance_percent": status.compliance_percent,
+                "error_budget_remaining_percent": status.error_budget_remaining_percent,
+                "burn_rate": status.burn_rate,
+                "status": status.status,
+                "last_evaluated": status.last_evaluated.isoformat(),
+                "violations_count": status.violations_count
+            }
+        
+        return result
+    except Exception as e:
+        logger.error(f"Failed to get SLO status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# SLO violations endpoint
+@app.get("/observability/slo/violations")
+async def get_slo_violations(severity: Optional[str] = None):
+    """Get current SLO violations"""
+    try:
+        from src.amas.observability import get_slo_manager
+        
+        slo_manager = get_slo_manager()
+        violations = slo_manager.get_violations(severity=severity)
+        
+        result = []
+        for violation in violations:
+            result.append({
+                "slo_name": violation.slo_name,
+                "current_value": violation.current_value,
+                "target_value": violation.target_value,
+                "error_budget_remaining_percent": violation.error_budget_remaining_percent,
+                "status": violation.status,
+                "last_evaluated": violation.last_evaluated.isoformat()
+            })
+        
+        return {"violations": result}
+    except Exception as e:
+        logger.error(f"Failed to get SLO violations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Root endpoint
