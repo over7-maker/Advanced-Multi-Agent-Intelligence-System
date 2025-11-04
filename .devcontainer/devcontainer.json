@@ -30,7 +30,7 @@
     }
   },
 
-  "postCreateCommand": "chmod +x .devcontainer/setup.sh && .devcontainer/setup.sh postCreate",
+  "postCreateCommand": ".devcontainer/setup.sh postCreate",
   
   "remoteUser": "vscode",
   
@@ -38,9 +38,9 @@
     "source=pip-cache,target=/home/vscode/.cache/pip,type=volume"
   ],
   
-  "onCreateCommand": "chmod +x .devcontainer/setup.sh && .devcontainer/setup.sh onCreate",
+  "onCreateCommand": ".devcontainer/setup.sh onCreate",
   
-  "updateContentCommand": "chmod +x .devcontainer/setup.sh && .devcontainer/setup.sh postCreate",
+  "updateContentCommand": ".devcontainer/setup.sh updateContent",
 
   "forwardPorts": [
     8000,

@@ -55,8 +55,25 @@ case "$ACTION" in
     echo "✅ Dependencies installed successfully"
     ;;
     
+  updateContent)
+    echo "🔄 Running updateContent (dependency refresh)..."
+    # Only update dependencies if requirements files changed
+    if [ -f requirements.txt ]; then
+      source /home/vscode/venv/bin/activate 2>/dev/null || python3 -m venv /home/vscode/venv && source /home/vscode/venv/bin/activate
+      pip install --upgrade pip --quiet
+      pip install --no-input --progress-bar off -r requirements.txt --upgrade
+      echo "✓ Updated requirements.txt"
+    fi
+    if [ -f requirements-dev.txt ]; then
+      source /home/vscode/venv/bin/activate
+      pip install --no-input --progress-bar off -r requirements-dev.txt --upgrade
+      echo "✓ Updated requirements-dev.txt"
+    fi
+    echo "✅ Update complete"
+    ;;
+    
   *)
-    echo "Usage: $0 [onCreate|postCreate]"
+    echo "Usage: $0 [onCreate|postCreate|updateContent]"
     exit 1
     ;;
 esac
