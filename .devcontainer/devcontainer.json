@@ -34,9 +34,11 @@
   
   "remoteUser": "vscode",
   
-  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "mounts": [
+    "source=pip-cache,target=/home/vscode/.cache/pip,type=volume"
+  ],
   
-  "onCreateCommand": "if [ -f .env.example ]; then cp .env.example .env && echo 'Created .env from example'; else echo 'Optional file .env.example not present'; fi",
+  "onCreateCommand": "if [ -f .env.example ]; then cp .env.example .env && echo '? Created .env from .env.example'; else echo '? Warning: .env.example not found. Create .env manually.'; fi",
 
   "forwardPorts": [
     8000,
