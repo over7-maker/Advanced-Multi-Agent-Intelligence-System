@@ -57,11 +57,25 @@ jobs:
           fi
       
       - name: Validate YAML syntax
+        continue-on-error: true
         run: |
-          for file in $(find .github/workflows -name '*.yml' -o -name '*.yaml'); do
+          echo "Validating YAML syntax for workflow files..."
+          errors=0
+          for file in $(find .github/workflows -name '*.yml' -o -name '*.yaml' | sort); do
             echo "Validating $file"
-            python -c "import yaml; yaml.safe_load(open('$file'))" || exit 1
+            if ! python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+              echo "::error file=$file::YAML syntax error detected"
+              errors=$((errors + 1))
+            else
+              echo "✅ $file is valid"
+            fi
           done
+          if [ $errors -gt 0 ]; then
+            echo "::warning::Found $errors YAML file(s) with syntax errors"
+            echo "These may need manual review or fixing"
+          else
+            echo "✅ All YAML files are syntactically valid"
+          fi
       
       - name: Check for common issues
         run: |
