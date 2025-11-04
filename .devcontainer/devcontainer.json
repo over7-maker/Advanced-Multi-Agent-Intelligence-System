@@ -18,7 +18,7 @@
         "github.vscode-pull-request-github"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/usr/bin/python3",
+        "python.defaultInterpreterPath": "/home/vscode/venv/bin/python",
         "python.formatting.provider": "black",
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
