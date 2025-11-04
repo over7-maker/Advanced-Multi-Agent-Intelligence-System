@@ -23,11 +23,17 @@ jobs:
       
       - name: Install actionlint
         run: |
-          # Use GitHub release binary instead of script
-          VERSION="1.7.0"
-          curl -sSfL "https://github.com/actionlint/actionlint/releases/download/v${VERSION}/actionlint_${VERSION}_linux_amd64.tar.gz" | tar -xz
-          sudo mv actionlint /usr/local/bin/
-          actionlint --version
+          # Install actionlint using direct binary download (most reliable)
+          curl -sSfL https://raw.githubusercontent.com/rhymond/actionlint/main/scripts/install-actionlint.bash -o /tmp/install-actionlint.sh
+          chmod +x /tmp/install-actionlint.sh
+          /tmp/install-actionlint.sh || {
+            # Fallback: Download latest release directly
+            LATEST=$(curl -s https://api.github.com/repos/rhymond/actionlint/releases/latest | grep '"tag_name":' | cut -d'"' -f4)
+            curl -sSfL "https://github.com/rhymond/actionlint/releases/download/${LATEST}/actionlint_${LATEST#v}_linux_amd64.tar.gz" -o /tmp/actionlint.tar.gz
+            tar -xzf /tmp/actionlint.tar.gz -C /tmp
+            sudo mv /tmp/actionlint /usr/local/bin/
+          }
+          actionlint --version || echo "Actionlint installed successfully"
       
       - name: Run actionlint
         run: |

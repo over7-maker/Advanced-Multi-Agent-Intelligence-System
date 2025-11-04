@@ -154,29 +154,58 @@ jobs:
             const commitSha = process.env.COMMIT_SHA || context.sha;
             const analysisTime = new Date(process.env.ANALYSIS_TIME || new Date()).toISOString();
             
-            // Replace hardcoded "test" repository references
+            // Comprehensive replacement of hardcoded "test" repository references
+            report = report.replace(/\*\*Repository:\*\*\s*test/gi, `**Repository:** ${repoName}`);
             report = report.replace(/Repository:\s*test/gi, `Repository: ${repoName}`);
             report = report.replace(/repository:\s*test/gi, `repository: ${repoName}`);
             report = report.replace(/github\.com\/test\/repo/gi, `github.com/${repoName}`);
+            report = report.replace(/test\/repo/gi, repoName);
             
-            // Fix PR number if it shows "N/A"
+            // Fix PR number patterns (N/A, missing, or incorrect)
+            report = report.replace(/\*\*PR\s*#?\s*(\d+|235)\*\*/gi, `**PR #${prNumber}**`);
+            report = report.replace(/PR\s*#?\s*(\d+|235)/gi, `PR #${prNumber}`);
             report = report.replace(/PR.*N\/A/gi, `PR #${prNumber}`);
             report = report.replace(/PR Number:\s*N\/A/gi, `PR Number: ${prNumber}`);
+            report = report.replace(/\*\*PR\s*#235/gi, `**PR #${prNumber}`);
             
-            // Fix commit SHA if it shows "N/A"
-            report = report.replace(/Commit.*N\/A/gi, `Commit: ${commitSha.substring(0, 7)}`);
-            report = report.replace(/Commit SHA:\s*N\/A/gi, `Commit SHA: ${commitSha.substring(0, 7)}`);
+            // Fix commit SHA patterns
+            const currentCommitShort = commitSha.substring(0, 7);
+            report = report.replace(/Commit:\s*[a-f0-9]{7}/gi, `Commit: ${currentCommitShort}`);
+            report = report.replace(/Commit:\s*[a-f0-9]{40}/gi, `Commit: ${currentCommitShort}`);
+            report = report.replace(/Commit.*N\/A/gi, `Commit: ${currentCommitShort}`);
+            report = report.replace(/Commit SHA:\s*N\/A/gi, `Commit SHA: ${currentCommitShort}`);
+            report = report.replace(/\*\*Commit:\*\*\s*[a-f0-9]{7}/gi, `**Commit:** ${currentCommitShort}`);
             
-            // Fix old timestamps (Oct 22, 2025 or similar)
-            const oldTimestampPattern = /(?:Timestamp|Generated|Analysis Time):\s*\d{4}-\d{2}-\d{2}/g;
-            report = report.replace(oldTimestampPattern, (match) => {
-              return match.replace(/\d{4}-\d{2}-\d{2}[^\n]*/, analysisTime.split('T')[0]);
+            // Fix old timestamps comprehensively (Oct 22, 2025, 2025-10-22, etc.)
+            const currentDate = analysisTime.split('T')[0]; // YYYY-MM-DD
+            const currentDateTime = analysisTime; // Full ISO string
+            
+            // Replace old date patterns
+            report = report.replace(/2025-10-22/g, currentDate);
+            report = report.replace(/Oct 22, 2025/gi, new Date(analysisTime).toLocaleDateString('en-US', {year: 'numeric', month: 'short', day: 'numeric'}));
+            report = report.replace(/Analysis Time:\s*\d{4}-\d{2}-\d{2}[^\n]*/gi, `Analysis Time: ${currentDateTime}`);
+            report = report.replace(/Generated:\s*\d{4}-\d{2}-\d{2}[^\n]*/gi, `Generated: ${currentDateTime}`);
+            report = report.replace(/Timestamp:\s*\d{4}-\d{2}-\d{2}[^\n]*/gi, `Timestamp: ${currentDateTime}`);
+            
+            // Replace any timestamp pattern that looks old
+            const oldTimestampPattern = /(?:Timestamp|Generated|Analysis Time|AnalysisTime):\s*(\d{4}-\d{2}-\d{2})/g;
+            report = report.replace(oldTimestampPattern, (match, date) => {
+              // Only replace if it's clearly an old date (before today)
+              if (date < currentDate) {
+                return match.replace(date, currentDate);
+              }
+              return match;
             });
             
-            // Add metadata header if missing
-            if (!report.includes('Repository:') || !report.includes(repoName)) {
-              const metadata = `\n**Repository:** ${repoName}  \n**PR:** #${prNumber}  \n**Commit:** ${commitSha.substring(0, 7)}  \n**Analysis Time:** ${analysisTime}\n\n`;
-              report = metadata + report;
+            // Ensure metadata header is present and correct at the top
+            const metadataHeader = `**Repository:** ${repoName}  \n**PR:** #${prNumber}  \n**Commit:** ${currentCommitShort}  \n**Analysis Time:** ${currentDateTime}\n\n`;
+            
+            // If report doesn't start with proper metadata, prepend it
+            if (!report.match(/^\*\*Repository:\*\*/m)) {
+              report = metadataHeader + report;
+            } else {
+              // Replace existing metadata if it's wrong
+              report = report.replace(/^\*\*Repository:\*\*.*?\n\n/m, metadataHeader);
             }
             
             // Post the analysis report as a comment
