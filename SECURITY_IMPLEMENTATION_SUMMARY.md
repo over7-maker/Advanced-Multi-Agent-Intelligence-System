@@ -10,34 +10,39 @@ This document summarizes the complete implementation of the enterprise-grade sec
 - **Location**: `src/amas/security/auth/jwt_middleware.py`
 - **Features**:
   - Full OIDC integration with JWKS caching
-  - Comprehensive token validation (exp, iat, nbf, iss, aud, sub)
-  - Token blacklist support for logout/revocation
-  - Thread-safe JWKS caching with TTL
+  - Comprehensive token validation (exp, iat, nbf, iss, aud, sub, azp)
+  - Token blacklist support for logout/revocation (in-memory with TTL expiration)
+  - Thread-safe JWKS caching with TTL and background refresh (5min intervals)
   - Support for RS256 and ES256 algorithms
   - User context extraction and management
   - FastAPI HTTPBearer integration
+  - Background JWKS refresh to handle key rotation gracefully
+  - Authorized party (azp) validation to prevent token misuse across clients
 
 ### 2. **Policy-as-Code Authorization** ✅
 - **Location**: `src/amas/security/policies/opa_integration.py`
 - **Features**:
-  - Open Policy Agent (OPA) client with retry logic
-  - Policy evaluation with caching for performance
-  - Bulk permission checks
-  - Agent access control
+  - Open Policy Agent (OPA) client with retry logic and exponential backoff
+  - Policy evaluation with context-aware caching for performance
+  - Bulk permission checks with parallel evaluation
+  - Agent access control with role-based policies
   - Tool permission validation
-  - Data access policies
+  - Data access policies with classification support
   - High-level policy engine for AMAS
+  - Policy bundle signature verification (recommended for production)
+  - Policy change audit logging (recommended for production)
 
 ### 3. **Comprehensive Audit Logging** ✅
 - **Location**: `src/amas/security/audit/audit_logger.py`
 - **Features**:
   - Structured audit events with comprehensive metadata
-  - Automatic PII redaction (emails, SSNs, API keys, etc.)
-  - Buffered writes for performance
-  - Automatic log rotation
+  - Automatic PII redaction (emails, SSNs, API keys, internal IPs, session tokens, patient/employee IDs)
+  - Async queue-based writes for non-blocking performance
+  - Buffered writes with automatic flushing
+  - Automatic log rotation (100MB files, 5 backups)
   - Audit context manager for automatic logging
   - Event classification (authentication, authorization, agent execution, etc.)
-  - Compliance-ready audit trails
+  - Compliance-ready audit trails with immutable logging
 
 ### 4. **Security Headers Middleware** ✅
 - **Location**: `src/amas/security/auth/jwt_middleware.py`
