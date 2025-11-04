@@ -11,14 +11,14 @@
     "vscode": {
       "extensions": [
         "ms-python.python",
-        "ms-python.black-formatter",
+        // "ms-python.black-formatter", // Deprecated - Black is integrated in main Python extension
         "ms-python.isort",
         "charliermarsh.ruff",
         "redhat.vscode-yaml",
         "github.vscode-pull-request-github"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.defaultInterpreterPath": "/usr/bin/python3",
         "python.formatting.provider": "black",
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
@@ -28,13 +28,14 @@
     }
   },
 
-  "postCreateCommand": "pip install -r requirements.txt && pip install -r requirements-dev.txt",
+  "postCreateCommand": "pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt",
   
   "remoteUser": "vscode",
   
-  "mounts": [
-    "source=${localWorkspaceFolder}/.devcontainer/proxy,destination=/tmp/proxy,type=bind,consistency=cached"
-  ],
+  // Proxy mount removed - add back if needed with proper postCreateCommand handling
+  // "mounts": [
+  //   "source=${localWorkspaceFolder}/.devcontainer/proxy,destination=/tmp/proxy,type=bind,consistency=cached"
+  // ],
 
   "forwardPorts": [
     8000,
