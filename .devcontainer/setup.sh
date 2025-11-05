@@ -1,15 +1,26 @@
-#!/bin/bash
-set -euxo pipefail
+#!/usr/bin/env bash
+set -euo pipefail
 
 # Log all output for debugging
 exec > >(tee -a /tmp/devcontainer-setup.log) 2>&1
 echo "=========================================="
-echo "Dev Container Setup: $1"
+echo "Dev Container Setup: ${1:-unknown}"
 echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%SZ")"
+echo "User: $(whoami)"
 echo "=========================================="
 
 # Dev Container Setup Script
 # Handles both onCreate and postCreate operations
+
+# Validate required tools
+if ! command -v python3 &> /dev/null; then
+  echo "❌ Error: python3 not found"
+  exit 1
+fi
+
+if ! command -v pip &> /dev/null && ! python3 -m pip --version &> /dev/null; then
+  echo "⚠️ Warning: pip not found, will use python3 -m pip"
+fi
 
 ACTION="${1:-postCreate}"
 

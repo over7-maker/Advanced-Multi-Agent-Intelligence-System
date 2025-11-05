@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
   
+  
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
+  
 
   "customizations": {
     "vscode": {
@@ -19,13 +21,21 @@
       ],
       "settings": {
         "python.defaultInterpreterPath": "/home/vscode/venv/bin/python",
-        "python.formatting.provider": "black",
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit",
+            "source.fixAll.ruff": "explicit"
+          }
+        },
         "editor.formatOnSave": true,
         "editor.codeActionsOnSave": {
-          "source.organizeImports": true,
-          "source.fixAll": true
+          "source.organizeImports": "explicit",
+          "source.fixAll.ruff": "explicit"
         },
-        "python.linting.enabled": true
+        "python.linting.enabled": true,
+        "ruff.enable": true
       }
     }
   },
@@ -44,7 +54,7 @@
   
   "updateContentCommand": ".devcontainer/setup.sh updateContent",
   
-  "initializeCommand": "python3 -c 'import sys; print(f\"Python {sys.version} ready\")'",
+  "initializeCommand": "python3 -c 'import sys; assert sys.version_info >= (3, 11), \"Python 3.11+ required\"; print(f\"Python {sys.version} ready\")'",
 
   "forwardPorts": [
     8000,
