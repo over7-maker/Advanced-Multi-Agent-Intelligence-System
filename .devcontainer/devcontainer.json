@@ -90,5 +90,5 @@
     "PYTHONUNBUFFERED": "1"
   },
   
-  "postStartCommand": "echo '? Dev container ready. Services on ports 8000 (FastAPI) and 8080 (Dashboard).'"
+  "postStartCommand": "echo 'Dev container ready. Services on ports 8000 (FastAPI) and 8080 (Dashboard).'"
 }
