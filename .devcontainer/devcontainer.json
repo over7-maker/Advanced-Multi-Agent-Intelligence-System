@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
   
-  
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
@@ -74,5 +73,7 @@
 
   "remoteEnv": {
     "AMAS_ENV": "development"
-  }
+  },
+  
+  "postStartCommand": "echo '? Dev container ready. Services on ports 8000 (FastAPI) and 8080 (Dashboard).'"
 }

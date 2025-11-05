@@ -37,18 +37,24 @@ case "$ACTION" in
     
   postCreate)
     echo "📦 Installing dependencies..."
-    
+
     # Create virtual environment if it doesn't exist
     if [ ! -d /home/vscode/venv ]; then
-      python3 -m venv /home/vscode/venv
+      python3 -m venv /home/vscode/venv || {
+        echo "❌ Failed to create virtual environment"
+        exit 1
+      }
       echo "✓ Created virtual environment"
     fi
-    
+
     # Activate virtual environment
-    source /home/vscode/venv/bin/activate
+    source /home/vscode/venv/bin/activate || {
+      echo "❌ Failed to activate virtual environment"
+      exit 1
+    }
     export VIRTUAL_ENV=/home/vscode/venv
     export PATH="$VIRTUAL_ENV/bin:$PATH"
-    
+
     # Install requirements.txt (required)
     if [ -f requirements.txt ]; then
       pip install --no-input --progress-bar off -r requirements.txt || {
@@ -57,19 +63,25 @@ case "$ACTION" in
       }
       echo "✓ Installed requirements.txt"
     else
-      echo "⚠ Warning: requirements.txt not found (treated as optional)"
+      echo "❌ Error: requirements.txt not found (required)"
+      exit 1
     fi
-    
+
     # Install requirements-dev.txt (optional)
     if [ -f requirements-dev.txt ]; then
-      pip install --no-input --progress-bar off -r requirements-dev.txt
+      pip install --no-input --progress-bar off -r requirements-dev.txt || {
+        echo "⚠️ Warning: Failed to install requirements-dev.txt (non-fatal)"
+      }
       echo "✓ Installed requirements-dev.txt"
     else
-      echo "⚠ requirements-dev.txt not found (optional)"
+      echo "ℹ️ requirements-dev.txt not found (optional)"
     fi
-    
-    # Verify Python installation
-    python -c "import sys; print(f'✅ Python {sys.version}')"
+
+    # Verify Python installation and dependencies
+    python -c "import sys; assert sys.version_info >= (3, 11), 'Python 3.11+ required'; print(f'✅ Python {sys.version}')" || {
+      echo "❌ Python version check failed"
+      exit 1
+    }
     echo "✅ Dependencies installed successfully"
     ;;
     
@@ -78,21 +90,39 @@ case "$ACTION" in
     # Activate venv if it exists, create if not
     if [ ! -d /home/vscode/venv ]; then
       echo "Creating virtual environment..."
-      python3 -m venv /home/vscode/venv
+      python3 -m venv /home/vscode/venv || {
+        echo "❌ Failed to create virtual environment"
+        exit 1
+      }
     fi
-    source /home/vscode/venv/bin/activate
+    source /home/vscode/venv/bin/activate || {
+      echo "❌ Failed to activate virtual environment"
+      exit 1
+    }
     export VIRTUAL_ENV=/home/vscode/venv
     export PATH="$VIRTUAL_ENV/bin:$PATH"
-    
+
     # Only update dependencies if requirements files exist
     if [ -f requirements.txt ]; then
-      pip install --upgrade pip --quiet
-      pip install --no-input --progress-bar off -r requirements.txt --upgrade
+      pip install --upgrade pip --quiet || {
+        echo "⚠️ Warning: pip upgrade failed (continuing)"
+      }
+      pip install --no-input --progress-bar off -r requirements.txt --upgrade || {
+        echo "❌ Failed to update requirements.txt"
+        exit 1
+      }
       echo "✓ Updated requirements.txt"
+    else
+      echo "❌ Error: requirements.txt not found"
+      exit 1
     fi
     if [ -f requirements-dev.txt ]; then
-      pip install --no-input --progress-bar off -r requirements-dev.txt --upgrade
+      pip install --no-input --progress-bar off -r requirements-dev.txt --upgrade || {
+        echo "⚠️ Warning: Failed to update requirements-dev.txt (non-fatal)"
+      }
       echo "✓ Updated requirements-dev.txt"
+    else
+      echo "ℹ️ requirements-dev.txt not found (optional)"
     fi
     echo "✅ Update complete"
     ;;
