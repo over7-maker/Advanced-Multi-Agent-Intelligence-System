@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
   
+  "runArgs": [
+    "--memory=4g",
+    "--cpus=2"
+  ],
+  
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
@@ -71,8 +76,18 @@
     }
   },
 
+  "args": {
+    "PYTHONUNBUFFERED": "1"
+  },
+  
   "remoteEnv": {
-    "AMAS_ENV": "development"
+    "AMAS_ENV": "development",
+    "PYTHONPATH": "/workspaces/${localWorkspaceFolderBasename}"
+  },
+  
+  "containerEnv": {
+    "DEVCONTAINER": "true",
+    "PYTHONUNBUFFERED": "1"
   },
   
   "postStartCommand": "echo '? Dev container ready. Services on ports 8000 (FastAPI) and 8080 (Dashboard).'"
