@@ -105,7 +105,7 @@ jobs:
         retention-days: 30
     
     - name: Post Bulletproof Analysis Comment
-      if: github.event_name == 'pull_request'
+      if: github.event_name == 'pull_request' && success()
       uses: actions/github-script@v7
       env:
         REPO_NAME: ${{ github.repository }}
@@ -147,6 +147,24 @@ jobs:
           
           if (reportPath && fs.existsSync(reportPath)) {
             let report = fs.readFileSync(reportPath, 'utf8');
+            
+            // Skip posting if report contains only failure messages
+            const failurePatterns = [
+              /Analysis Failed.*after \d+ retries/gi,
+              /Analysis failed after \d+ retries/gi,
+              /❌ Analysis Failed/gi,
+              /Bulletproof Validation: ❌ Validation Failed/gi
+            ];
+            
+            const hasFailures = failurePatterns.some(pattern => pattern.test(report));
+            const failureCount = (report.match(/Analysis Failed/gi) || []).length;
+            
+            // If more than 2 failures or validation failed, don't post (likely template)
+            if (hasFailures && failureCount > 2) {
+              console.log('Skipping comment: Analysis report contains multiple failures, likely template');
+              console.log('This prevents posting repetitive failure messages to PRs');
+              return;
+            }
             
             // Fix repository name if it shows "test"
             const repoName = process.env.REPO_NAME || context.repo.owner + '/' + context.repo.repo;
@@ -224,8 +242,9 @@ jobs:
               labels: ['ai-analyzed', 'bulletproof-validated', 'phase-2-review', 'automated']
             });
           } else {
-            console.log('No analysis report found at expected paths');
+            console.log('No analysis report found at expected paths - skipping comment');
             console.log('Searched paths:', possiblePaths);
+            console.log('This prevents posting empty or template comments to PRs');
           }
     
     - name: Generate Analysis Summary
