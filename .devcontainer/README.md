@@ -50,12 +50,22 @@ All lifecycle commands have a 300-second (5-minute) timeout to prevent indefinit
 4. **Non-root User**: Container runs as `vscode` user (not root) to limit privilege escalation risk
 5. **Image Updates**: Base images should be regularly updated to include security patches (see "Image Tagging" above)
 
+### Base Image
+
+- **Source**: `mcr.microsoft.com/devcontainers/python:1-3.11-bullseye`
+- **Description**: Official Microsoft Dev Container image for Python 3.11 on Debian Bullseye
+- **Repository**: https://github.com/microsoft/vscode-dev-containers
+
 ### Image Tagging
 
 The image tag `1-3.11-bullseye` is standard practice for Dev Containers:
 - Microsoft maintains backward compatibility
-- Tags are updated with security patches automatically
-- For stricter reproducibility, consider pinning to a specific digest in production
+- Tags are updated with security patches and tooling improvements automatically
+- For stricter reproducibility in production, consider pinning to a specific SHA256 digest:
+  ```json
+  "image": "mcr.microsoft.com/devcontainers/python@sha256:..."
+  ```
+- **Security Note**: Base images should be periodically reviewed. Consider using Dependabot or Renovate to monitor base image updates and security patches.
 
 ### Features
 
