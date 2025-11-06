@@ -35,14 +35,14 @@
     }
   },
 
-  "postCreateCommand": "test -f .devcontainer/setup.sh && .devcontainer/setup.sh postCreate || { echo 'Error: setup.sh not found or failed'; exit 1; }",
+  "postCreateCommand": "echo 'Running postCreate setup...' && (test -f .devcontainer/setup.sh && chmod +x .devcontainer/setup.sh || true) && timeout 300 .devcontainer/setup.sh postCreate || { echo 'Error: setup.sh not found or failed'; exit 1; }",
   "remoteUser": "vscode",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "mounts": [
     "source=amas-pip-cache,target=/home/vscode/.cache/pip,type=volume"
   ],
-  "onCreateCommand": "test -f .devcontainer/setup.sh && .devcontainer/setup.sh onCreate || { echo 'Warning: setup.sh not found, continuing...'; exit 0; }",
-  "updateContentCommand": "test -f .devcontainer/setup.sh && .devcontainer/setup.sh updateContent || { echo 'Error: setup.sh not found or failed'; exit 1; }",
+  "onCreateCommand": "echo 'Running onCreate setup...' && (test -f .devcontainer/setup.sh && chmod +x .devcontainer/setup.sh && timeout 300 .devcontainer/setup.sh onCreate || { echo 'Warning: setup.sh not found, continuing...'; exit 0; }) || exit 0",
+  "updateContentCommand": "echo 'Running updateContent setup...' && (test -f .devcontainer/setup.sh && chmod +x .devcontainer/setup.sh || true) && timeout 300 .devcontainer/setup.sh updateContent || { echo 'Error: setup.sh not found or failed'; exit 1; }",
   "initializeCommand": "python3 --version",
   "forwardPorts": [
     8000,
