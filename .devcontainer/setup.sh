@@ -24,6 +24,16 @@ fi
 
 ACTION="${1:-postCreate}"
 
+# Validate action argument
+case "$ACTION" in
+  onCreate|postCreate|updateContent) ;;
+  *)
+    echo "❌ Error: Invalid command: '$ACTION'" >&2
+    echo "Usage: $0 [onCreate|postCreate|updateContent]" >&2
+    exit 1
+    ;;
+esac
+
 case "$ACTION" in
   onCreate)
     echo "🔧 Running onCreate setup..."

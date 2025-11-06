@@ -33,11 +33,6 @@
             "source.fixAll.ruff": "explicit"
           }
         },
-        "editor.formatOnSave": true,
-        "editor.codeActionsOnSave": {
-          "source.organizeImports": "explicit",
-          "source.fixAll.ruff": "explicit"
-        },
         "python.linting.enabled": true,
         "ruff.enable": true
       }
@@ -58,7 +53,7 @@
   
   "updateContentCommand": ".devcontainer/setup.sh updateContent",
   
-  "initializeCommand": "python3 -c 'import sys; assert sys.version_info >= (3, 11), \"Python 3.11+ required\"; print(f\"Python {sys.version} ready\")'",
+  "initializeCommand": "python3 --version",
 
   "forwardPorts": [
     8000,
