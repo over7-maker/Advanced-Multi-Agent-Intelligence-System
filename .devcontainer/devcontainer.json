@@ -39,7 +39,7 @@
     }
   },
 
-  "postCreateCommand": ".devcontainer/setup.sh postCreate",
+  "postCreateCommand": "test -f .devcontainer/setup.sh && .devcontainer/setup.sh postCreate || { echo 'Error: setup.sh not found or failed'; exit 1; }",
   
   "remoteUser": "vscode",
   
@@ -49,9 +49,9 @@
     "source=amas-pip-cache,target=/home/vscode/.cache/pip,type=volume"
   ],
   
-  "onCreateCommand": ".devcontainer/setup.sh onCreate",
+  "onCreateCommand": "test -f .devcontainer/setup.sh && .devcontainer/setup.sh onCreate || { echo 'Warning: setup.sh not found, continuing...'; }",
   
-  "updateContentCommand": ".devcontainer/setup.sh updateContent",
+  "updateContentCommand": "test -f .devcontainer/setup.sh && .devcontainer/setup.sh updateContent || { echo 'Error: setup.sh not found or failed'; exit 1; }",
   
   "initializeCommand": "python3 --version",
 
@@ -71,10 +71,6 @@
     }
   },
 
-  "args": {
-    "PYTHONUNBUFFERED": "1"
-  },
-  
   "remoteEnv": {
     "AMAS_ENV": "development",
     "PYTHONPATH": "/workspaces/${localWorkspaceFolderBasename}"
