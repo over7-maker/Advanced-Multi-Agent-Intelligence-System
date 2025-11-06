@@ -32,17 +32,25 @@ The Dev Container provides a consistent, reproducible development environment wi
 
 All lifecycle commands have a 300-second (5-minute) timeout to prevent indefinite hangs.
 - **Default**: 300 seconds (5 minutes) is reasonable for most dependency installations
-- **For Large Projects**: If dependency installation takes longer, you can override the timeout in `devcontainer.json`:
+- **For Large Projects**: If dependency installation takes longer, you can override both the shell timeout and VS Code's lifecycle timeout:
   ```json
-  "postCreateCommand": "... timeout 600 .devcontainer/setup.sh postCreate ..."
+  {
+    "postCreateCommand": "timeout 600 .devcontainer/setup.sh postCreate",
+    "lifecycleTimeout": 600
+  }
   ```
+  Note: The shell `timeout` command limits script runtime, but VS Code's Dev Containers also enforce a `lifecycleTimeout`. Set both for complete control.
 - **Note**: Large Python projects with complex dependencies (numpy, pandas, torch) may require up to 10 minutes on cold starts with slow internet
 
 ### Security Considerations
 
 1. **Script Execution**: `setup.sh` is executed with explicit permissions (`chmod +x`)
    - **Important**: Review `setup.sh` in PRs before merging. The script runs with container user privileges.
-   - For high-security environments, consider adding checksum validation before execution
+   - **Trust**: Only use `setup.sh` from trusted sources. For high-security environments, consider adding checksum validation:
+     ```bash
+     echo "expected_sha256_checksum  .devcontainer/setup.sh" | sha256sum -c - || exit 1
+     ```
+   - **Principle of Least Privilege**: Script runs as `vscode` user (non-root) to limit privilege escalation risk
 2. **Timeout Protection**: All commands timeout after 5 minutes to prevent indefinite hangs
    - Note: Timeouts prevent hangs but don't protect against malicious payloads completing within the time window
    - Combine with minimal required privileges and input validation
@@ -70,6 +78,14 @@ The image tag `1-3.11-bullseye` is standard practice for Dev Containers:
 ### Features
 
 - **Docker-in-Docker**: Required for building container images inside the dev container
+  - **Security Note**: Docker-in-Docker (DinD) runs with elevated privileges and increases attack surface. Only use when strictly necessary (e.g., CI/CD simulation).
+  - **Alternative**: Consider Docker-outside-Docker (DooD) by mounting the host Docker socket for better security:
+    ```json
+    "mounts": [
+      "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+    ]
+    ```
+    Note: DooD still has security implications and should be used with trusted codebases only.
 - **GitHub CLI**: Useful for PR operations and repository management
 
 ## Usage
@@ -81,6 +97,12 @@ The image tag `1-3.11-bullseye` is standard practice for Dev Containers:
    - Set up the virtual environment
    - Configure VS Code settings
 
+### Platform Compatibility
+
+- **Linux/macOS/Windows (WSL2)**: Fully supported
+- **Apple Silicon (ARM64)**: Supported if base image supports `linux/arm64`. May need `--platform linux/arm64` in Docker settings
+- **Windows without WSL2**: Not supported; WSL2 is required for Docker and shell scripts
+
 ## Troubleshooting
 
 ### Setup Script Fails
@@ -89,6 +111,19 @@ If `setup.sh` fails:
 - Check logs: `/tmp/devcontainer-setup.log`
 - Verify `requirements.txt` exists
 - Ensure network connectivity for pip installs
+- **Recovery**: Open the container terminal manually and run:
+  ```bash
+  .devcontainer/setup.sh postCreate
+  ```
+  This will show detailed error output
+
+### Clear Cache and Retry
+
+Sometimes corrupted Docker layers cause failures:
+```bash
+docker system prune -a --volumes
+```
+Then reopen the container. **Warning**: This removes all unused Docker resources.
 
 ### Container Won't Start
 
@@ -102,6 +137,40 @@ If setup takes longer than 5 minutes:
 - Check network connectivity
 - Review dependency installation logs
 - Consider increasing timeout if needed (not recommended)
+
+## Configuration Example
+
+Minimal `devcontainer.json` structure:
+
+```json
+{
+  "name": "AMAS Development Environment",
+  "version": "0.1.0",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
+  "runArgs": ["--memory=4g", "--cpus=2"],
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "redhat.vscode-yaml",
+        "github.vscode-pull-request-github"
+      ]
+    }
+  },
+  "onCreateCommand": ".devcontainer/setup.sh onCreate",
+  "postCreateCommand": ".devcontainer/setup.sh postCreate",
+  "remoteUser": "vscode",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "mounts": [
+    "source=amas-pip-cache,target=/home/vscode/.cache/pip,type=volume"
+  ]
+}
+```
 
 ## Customization
 
@@ -146,3 +215,16 @@ You can override settings locally by modifying `.devcontainer/devcontainer.json`
 3. **Update dependencies**: Regularly update `requirements.txt` and `requirements-dev.txt`
 4. **Monitor resource usage**: Adjust `runArgs` if your system has limited resources
 5. **For large projects**: Consider increasing memory to 6-8GB and CPUs to 4 cores for better performance with type checking and parallel test execution
+
+### Environment Files
+
+- **`.env.example`**: Template file committed to version control. Should contain placeholder values (not real secrets).
+- **`.env`**: Created from `.env.example` during `onCreateCommand`. Contains actual secrets and should **never** be committed to version control.
+- **`.gitignore`**: Ensure `.env` is in `.gitignore` to prevent accidental commits of secrets.
+
+Example `.env.example`:
+```bash
+DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+API_KEY=your_api_key_here
+SECRET_KEY=your_secret_key_here
+```
