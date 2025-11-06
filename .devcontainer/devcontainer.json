@@ -2,18 +2,14 @@
   "name": "AMAS Development Environment",
   "version": "0.1.0",
   "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
-  
   "runArgs": [
     "--memory=4g",
     "--cpus=2"
   ],
-  
   "features": {
     "ghcr.io/devcontainers/features/docker-in-docker:2": {},
     "ghcr.io/devcontainers/features/github-cli:1": {}
   },
-  
-
   "customizations": {
     "vscode": {
       "extensions": [
@@ -40,21 +36,14 @@
   },
 
   "postCreateCommand": "test -f .devcontainer/setup.sh && .devcontainer/setup.sh postCreate || { echo 'Error: setup.sh not found or failed'; exit 1; }",
-  
   "remoteUser": "vscode",
-  
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-  
   "mounts": [
     "source=amas-pip-cache,target=/home/vscode/.cache/pip,type=volume"
   ],
-  
-  "onCreateCommand": "test -f .devcontainer/setup.sh && .devcontainer/setup.sh onCreate || { echo 'Warning: setup.sh not found, continuing...'; }",
-  
+  "onCreateCommand": "test -f .devcontainer/setup.sh && .devcontainer/setup.sh onCreate || { echo 'Warning: setup.sh not found, continuing...'; exit 0; }",
   "updateContentCommand": "test -f .devcontainer/setup.sh && .devcontainer/setup.sh updateContent || { echo 'Error: setup.sh not found or failed'; exit 1; }",
-  
   "initializeCommand": "python3 --version",
-
   "forwardPorts": [
     8000,
     8080
@@ -75,7 +64,6 @@
     "AMAS_ENV": "development",
     "PYTHONPATH": "/workspaces/${localWorkspaceFolderBasename}"
   },
-  
   "containerEnv": {
     "DEVCONTAINER": "true",
     "PYTHONUNBUFFERED": "1"
