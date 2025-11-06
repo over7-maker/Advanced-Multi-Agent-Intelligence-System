@@ -6,10 +6,31 @@ This directory contains the Dev Container configuration for the AMAS project.
 
 The Dev Container provides a consistent, reproducible development environment with:
 - Python 3.11 on Debian Bullseye
-- Pre-configured VS Code extensions (Python, Ruff, YAML, GitHub Pull Requests and Issues)
+- Pre-configured VS Code extensions (Python, Ruff, YAML, GitHub Pull Requests and Issues, Docker)
+  - These extensions are recommended in `.vscode/extensions.json` and will be suggested when opening the workspace
 - Docker-in-Docker support for containerized builds
 - GitHub CLI for repository operations
 - Automated dependency installation and setup
+
+## Required Files
+
+The Dev Container setup requires the following files:
+
+- **`.devcontainer/devcontainer.json`**: Main configuration file (see "Configuration Example" below)
+- **`.devcontainer/setup.sh`**: Setup script for lifecycle commands (must be executable)
+
+To create `setup.sh` if missing:
+```bash
+touch .devcontainer/setup.sh
+chmod +x .devcontainer/setup.sh
+```
+
+The script must handle these arguments:
+- `onCreate`: Optional setup (e.g., creating `.env` from `.env.example`)
+- `postCreate`: Required setup (e.g., installing dependencies)
+- `updateContent`: Updates when container content changes
+
+See `.devcontainer/setup.sh` in the repository for the full implementation.
 
 ## Configuration Overview
 
@@ -41,6 +62,30 @@ All lifecycle commands have a 300-second (5-minute) timeout to prevent indefinit
   ```
   Note: The shell `timeout` command limits script runtime, but VS Code's Dev Containers also enforce a `lifecycleTimeout`. Set both for complete control.
 - **Note**: Large Python projects with complex dependencies (numpy, pandas, torch) may require up to 10 minutes on cold starts with slow internet
+
+### Performance Optimization
+
+To reduce `postCreateCommand` execution time and improve container startup:
+
+1. **Pip Caching**: Use volume mounts for pip cache (already configured):
+   ```json
+   "mounts": [
+     "source=amas-pip-cache,target=/home/vscode/.cache/pip,type=volume"
+   ]
+   ```
+
+2. **Docker Layer Caching**: If using a Dockerfile, structure it for optimal caching:
+   ```dockerfile
+   COPY requirements.txt .
+   RUN --mount=type=cache,target=/root/.cache/pip pip install -r requirements.txt
+   COPY . .
+   ```
+
+3. **Pre-built Base Images**: Consider using base images with common dependencies pre-installed
+
+4. **Use `.dockerignore`**: Exclude unnecessary files (`node_modules`, `.git`, etc.) to reduce build context
+
+5. **Pip Configuration**: Use `--cache-dir` in `setup.sh` or configure `pip.conf` for consistent caching
 
 ### Security Considerations
 
