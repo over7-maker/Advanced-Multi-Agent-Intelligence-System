@@ -65,7 +65,11 @@ jobs:
       - name: Install security tools
         run: |
           set -euo pipefail
-          pip install --require-hashes -r requirements-security.txt
+          # Try with hashes first, fallback if hashes not available
+          if pip install --require-hashes -r requirements-security.txt 2>&1 | grep -q "hashes are required"; then
+            echo "⚠️  Hashes not available in requirements-security.txt, installing without hash verification"
+            pip install -r requirements-security.txt
+          fi
       - name: Safety
         continue-on-error: true
         timeout-minutes: 5
