@@ -70,10 +70,19 @@ jobs:
           pip_output=$(pip install --require-hashes -r requirements-security.txt 2>&1)
           pip_exit_code=$?
           set -euo pipefail
-          if [ $pip_exit_code -ne 0 ] && echo "$pip_output" | grep -qE "(Hashes are required|missing from some requirements)"; then
+          # Check if error is due to missing hashes (case-insensitive match)
+          if [ $pip_exit_code -ne 0 ] && echo "$pip_output" | grep -qiE "(hashes are required|missing from some requirements)"; then
             echo "⚠️  Hashes not available in requirements-security.txt, installing without hash verification"
             echo "⚠️  SECURITY NOTE: Consider adding hashes to requirements-security.txt using: pip-compile --generate-hashes"
+            echo "⚠️  SECURITY IMPACT: This increases the risk of supply chain attacks. Ensure you trust all dependencies."
+            set +e
             pip install -r requirements-security.txt
+            pip_fallback_exit=$?
+            set -euo pipefail
+            if [ $pip_fallback_exit -ne 0 ]; then
+              echo "❌ Fallback pip install also failed with exit code $pip_fallback_exit"
+              exit $pip_fallback_exit
+            fi
           elif [ $pip_exit_code -ne 0 ]; then
             echo "❌ pip install failed with exit code $pip_exit_code"
             echo "$pip_output"
