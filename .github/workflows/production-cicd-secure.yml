@@ -54,25 +54,29 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-security.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
       - run: mkdir -p ~/.cache/pip
       - name: Install security tools
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-security.txt
-      - name: Verify security tools
-        run: |
-          command -v safety && safety --version || echo "⚠️  Safety not found"
-          command -v bandit && bandit --version || echo "⚠️  Bandit not found"
-          command -v jq && jq --version || echo "⚠️  jq not found"
       - name: Safety
         continue-on-error: true
         run: |
+          set -o pipefail
           # Run safety and capture output and exit code properly
-          safety check --json > safety-report.json 2>&1 || true
-          exit_code=${PIPESTATUS[0]}
+          safety check --json > safety-report.json 2>&1
+          exit_code=$?
           # Validate JSON output
-          if ! jq empty safety-report.json 2>/dev/null; then
-            echo "⚠️  Safety output is not valid JSON, creating empty report"
+          if ! jq empty safety-report.json 2>jq-error.log; then
+            echo "⚠️  JSON validation failed: $(cat jq-error.log 2>/dev/null || echo 'invalid JSON')"
+            echo "⚠️  Creating empty Safety report"
             echo "[]" > safety-report.json
             exit_code=64
           fi
@@ -86,14 +90,18 @@ jobs:
           fi
       - name: Bandit
         continue-on-error: true
+        env:
+          SCAN_TARGET: src
         run: |
-          if [ -d "src" ]; then
+          set -o pipefail
+          if [ -d "$SCAN_TARGET" ]; then
             # Run bandit and capture exit code properly
-            bandit -r src -f json -o bandit-report.json 2>&1 || true
-            exit_code=${PIPESTATUS[0]}
+            bandit -r "$SCAN_TARGET" -f json -o bandit-report.json 2>&1
+            exit_code=$?
             # Validate JSON output
-            if ! jq empty bandit-report.json 2>/dev/null; then
-              echo "⚠️  Bandit output is not valid JSON, creating empty report"
+            if ! jq empty bandit-report.json 2>jq-error.log; then
+              echo "⚠️  JSON validation failed: $(cat jq-error.log 2>/dev/null || echo 'invalid JSON')"
+              echo "⚠️  Creating empty Bandit report"
               echo '{"results":[],"generated_at":"'"$(date -Iseconds)"'","metadata":{"bandit_version":"unknown"}}' > bandit-report.json
               exit_code=2
             fi
@@ -106,7 +114,7 @@ jobs:
               echo '{"results":[],"generated_at":"'"$(date -Iseconds)"'","metadata":{"bandit_version":"unknown"}}' > bandit-report.json
             fi
           else
-            echo "ℹ️  Directory 'src' not found — skipping Bandit scan"
+            echo "ℹ️  Directory '$SCAN_TARGET' not found — skipping Bandit scan"
             echo '{"results":[],"generated_at":"'"$(date -Iseconds)"'","metadata":{"bandit_version":"unknown"}}' > bandit-report.json
           fi
       - name: Semgrep Scan
@@ -149,6 +157,7 @@ jobs:
         with:
           sarif_file: semgrep.sarif
       - name: Upload security artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: security-reports-${{ github.sha }}
@@ -157,6 +166,7 @@ jobs:
             bandit-report.json
             semgrep.sarif
             semgrep-ci.sarif
+          retention-days: 30
       - name: Evaluate
         id: scan-results
         run: |
