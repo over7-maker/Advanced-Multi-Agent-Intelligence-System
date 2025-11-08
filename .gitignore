@@ -413,8 +413,10 @@ workflow_*.json
 *SIMPLE_*.txt
 *MIGRATION_*.py
 *demo_*.py
-# Allow test files in tests/ directory
+# Allow test files in tests/ directory and subdirectories
+!tests/**/test_*.py
 !tests/test_*.py
+# Exclude test files outside tests/ directory
 *test_*.py
 *standalone_*.py
 *run_tests.py
