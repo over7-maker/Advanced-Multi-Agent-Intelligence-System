@@ -1,5 +1,21 @@
 # KEDA ScaledObject Configuration for AMAS
 # Enables intelligent autoscaling based on metrics, queue depth, and SLO performance
+#
+# This configuration provides multi-metric autoscaling for the AMAS orchestrator:
+# - HTTP request rate monitoring
+# - Agent queue depth tracking
+# - Latency-based scaling
+# - Resource utilization (CPU/Memory) pressure detection
+#
+# Prerequisites:
+# - KEDA operator installed in cluster
+# - Prometheus available at http://prometheus.monitoring.svc.cluster.local:9090
+# - Metrics exported by AMAS application
+#
+# Usage:
+#   kubectl apply -f k8s/scaling/keda-scaler.yaml
+#   kubectl get scaledobjects -n amas-prod
+#   kubectl describe scaledobject amas-orchestrator-scaler -n amas-prod
 
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
@@ -9,6 +25,8 @@ metadata:
   labels:
     app: amas-orchestrator
     scaler-type: multi-metric
+    component: autoscaling
+    managed-by: keda
 spec:
   scaleTargetRef:
     name: amas-orchestrator
@@ -16,6 +34,11 @@ spec:
     apiVersion: argoproj.io/v1alpha1
   
   # Scaling behavior
+  # pollingInterval: How often KEDA checks metrics (15 seconds = responsive scaling)
+  # cooldownPeriod: Minimum time between scale-down events (180s = 3 minutes, prevents oscillation)
+  # idleReplicaCount: Replicas to maintain when no load detected (ensures availability)
+  # minReplicaCount: Absolute minimum replicas (safety limit)
+  # maxReplicaCount: Absolute maximum replicas (prevents runaway scaling)
   pollingInterval: 15    # Check metrics every 15 seconds
   cooldownPeriod: 180    # Wait 3 minutes before scaling down
   idleReplicaCount: 2    # Minimum replicas when no load
@@ -49,16 +72,19 @@ spec:
           selectPolicy: Max
   
   # Scaling triggers
-  triggers:
+  # Multiple triggers are evaluated with OR logic - any trigger can cause scaling
+  # The final replica count is the maximum of all trigger calculations
+  
   # Primary trigger: HTTP request rate
+  # Monitors the rate of incoming requests to determine scaling needs
   - type: prometheus
     metadata:
       serverAddress: http://prometheus.monitoring.svc.cluster.local:9090
       metricName: http_requests_per_second
       query: |
         rate(amas_agent_requests_total[2m])
-      threshold: '15'  # Scale up when >15 RPS
-      activationThreshold: '5'  # Start scaling at 5 RPS
+      threshold: '15'  # Scale up when >15 RPS per pod (target: ~15 RPS per pod)
+      activationThreshold: '5'  # Start scaling at 5 RPS (prevents premature scaling)
     
   # Secondary trigger: Agent queue depth
   - type: prometheus
