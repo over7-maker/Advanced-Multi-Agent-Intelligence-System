@@ -1,14 +1,17 @@
 # AMAS Agent Capabilities Configuration
 # Defines what tools each agent can access and their operational constraints
 
+# Schema version for agent capabilities configuration
+# $schema: https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/schemas/agent_capabilities_v1.json
 schema_version: "1.0"
 
 # Default agent policy (applied to all agents unless overridden)
+# Based on GPT-3.5-turbo pricing ($2/1M tokens input, $2/1M output)
 _defaults:
   constraints:
     max_iterations: 5
     timeout_seconds: 300
-    cost_budget_tokens: 10000
+    cost_budget_tokens: 10000  # ~$0.02 per execution at GPT-3.5-turbo rates
   rate_limits:
     requests_per_minute: 15
     tokens_per_hour: 8000
@@ -36,8 +39,8 @@ agents:
     quality_gates:
       require_human_approval: false
       output_validation_required: true
-      fact_checking_enabled: true
-    
+      fact_checking_enabled: true  # Requires cross-referencing facts with trusted sources before output
+  
   analysis_agent_v1:
     role: "analysis"
     description: "Data analysis and statistical processing specialist"
@@ -56,7 +59,7 @@ agents:
     quality_gates:
       require_human_approval: false
       output_validation_required: true
-      statistical_validation_required: true
+      statistical_validation_required: true  # Requires statistical validation of analysis results
   
   synthesis_agent_v1:
     role: "synthesis"
@@ -78,6 +81,10 @@ agents:
       require_human_approval: false
       output_validation_required: true
       plagiarism_check_enabled: true
+      # Output sanitization and content filtering
+      pii_detection_enabled: true
+      output_sanitization_required: true
+      content_moderation_required: true
   
   orchestrator_agent_v1:
     role: "orchestrator"
@@ -156,6 +163,12 @@ tool_configurations:
       - "hate_speech"
   
   file_read:
+    # Restricted to sandboxed directories only for security
+    allowed_paths:
+      - "data/input/"
+      - "data/shared/"
+      - "reports/"
+      - "documents/"
     allowed_extensions:
       - ".txt"
       - ".json"
@@ -170,6 +183,8 @@ tool_configurations:
       - "*.env"
       - "*secret*"
       - "*password*"
+      - "/root/*"
+      - "/home/*/.ssh/*"
   
   file_write:
     allowed_extensions:
@@ -202,13 +217,20 @@ tool_configurations:
       - "users"
       - "auth_tokens"
       - "system_config"
+    # Mask sensitive data in outputs
+    mask_sensitive_data: true
   
   api_call:
+    # API call whitelisting for security - restrict to allowed domains
+    allowed_domains: []  # Empty means all domains allowed (configure per environment)
+    allowed_endpoints: []  # Whitelist specific endpoints if needed
     allowed_methods: ["GET", "POST"]
     blocked_methods: ["DELETE", "PUT", "PATCH"]
     max_response_size_mb: 10
     timeout_seconds: 60
     rate_limit_per_endpoint: 100
+    # Audit logging required for all API calls
+    audit_logging_required: true
     allowed_headers:
       - "Content-Type"
       - "Authorization"
