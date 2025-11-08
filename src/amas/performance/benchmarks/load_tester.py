@@ -10,6 +10,7 @@ import httpx
 import json
 import time
 import statistics
+import random
 from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any, Callable
 from dataclasses import dataclass, asdict, field
@@ -19,7 +20,59 @@ import uuid
 import logging
 from enum import Enum
 
+try:
+    from prometheus_client import Counter, Histogram, Gauge
+    PROMETHEUS_AVAILABLE = True
+except ImportError:
+    PROMETHEUS_AVAILABLE = False
+    # Create dummy classes if prometheus_client is not available
+    class Counter:
+        def __init__(self, *args, **kwargs):
+            pass
+        def inc(self, *args, **kwargs):
+            pass
+        def labels(self, *args, **kwargs):
+            return self
+    class Histogram:
+        def __init__(self, *args, **kwargs):
+            pass
+        def observe(self, *args, **kwargs):
+            pass
+        def labels(self, *args, **kwargs):
+            return self
+    class Gauge:
+        def __init__(self, *args, **kwargs):
+            pass
+        def set(self, *args, **kwargs):
+            pass
+        def labels(self, *args, **kwargs):
+            return self
+
 logger = logging.getLogger(__name__)
+
+# Prometheus metrics for load testing
+if PROMETHEUS_AVAILABLE:
+    LOAD_TEST_REQUESTS = Counter(
+        "amas_load_test_requests_total",
+        "Total load test requests",
+        ["test_name", "status", "phase"]
+    )
+    LOAD_TEST_DURATION = Histogram(
+        "amas_load_test_request_duration_seconds",
+        "Load test request duration",
+        ["test_name", "phase"],
+        buckets=[0.1, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0]
+    )
+    LOAD_TEST_ACTIVE_USERS = Gauge(
+        "amas_load_test_active_users",
+        "Active concurrent users in load test",
+        ["test_name"]
+    )
+    LOAD_TEST_RPS = Gauge(
+        "amas_load_test_requests_per_second",
+        "Current requests per second",
+        ["test_name"]
+    )
 
 class TestPhase(str, Enum):
     RAMP_UP = "ramp_up"
@@ -245,7 +298,7 @@ class AmasLoadTester:
             http_success = 200 <= response.status_code < 400
             overall_success = http_success and validation_passed
             
-            return RequestResult(
+            result = RequestResult(
                 timestamp=start_time,
                 user_id=user_id,
                 request_id=request_id,
@@ -258,9 +311,24 @@ class AmasLoadTester:
                 validation_error=validation_error
             )
             
+            # Update Prometheus metrics
+            if PROMETHEUS_AVAILABLE:
+                status = "success" if overall_success else "failure"
+                LOAD_TEST_REQUESTS.labels(
+                    test_name=config.name,
+                    status=status,
+                    phase=phase.value
+                ).inc()
+                LOAD_TEST_DURATION.labels(
+                    test_name=config.name,
+                    phase=phase.value
+                ).observe(duration_ms / 1000.0)
+            
+            return result
+            
         except httpx.TimeoutException:
             duration_ms = config.timeout_seconds * 1000
-            return RequestResult(
+            result = RequestResult(
                 timestamp=start_time,
                 user_id=user_id,
                 request_id=request_id,
@@ -273,9 +341,23 @@ class AmasLoadTester:
                 error_type="TimeoutException"
             )
             
+            # Update Prometheus metrics
+            if PROMETHEUS_AVAILABLE:
+                LOAD_TEST_REQUESTS.labels(
+                    test_name=config.name,
+                    status="failure",
+                    phase=phase.value
+                ).inc()
+                LOAD_TEST_DURATION.labels(
+                    test_name=config.name,
+                    phase=phase.value
+                ).observe(duration_ms / 1000.0)
+            
+            return result
+            
         except httpx.ConnectError as e:
             duration_ms = (time.time() - start_time) * 1000
-            return RequestResult(
+            result = RequestResult(
                 timestamp=start_time,
                 user_id=user_id,
                 request_id=request_id,
@@ -288,9 +370,23 @@ class AmasLoadTester:
                 error_type="ConnectError"
             )
             
+            # Update Prometheus metrics
+            if PROMETHEUS_AVAILABLE:
+                LOAD_TEST_REQUESTS.labels(
+                    test_name=config.name,
+                    status="failure",
+                    phase=phase.value
+                ).inc()
+                LOAD_TEST_DURATION.labels(
+                    test_name=config.name,
+                    phase=phase.value
+                ).observe(duration_ms / 1000.0)
+            
+            return result
+            
         except Exception as e:
             duration_ms = (time.time() - start_time) * 1000
-            return RequestResult(
+            result = RequestResult(
                 timestamp=start_time,
                 user_id=user_id,
                 request_id=request_id,
@@ -302,6 +398,20 @@ class AmasLoadTester:
                 error_message=str(e),
                 error_type=type(e).__name__
             )
+            
+            # Update Prometheus metrics
+            if PROMETHEUS_AVAILABLE:
+                LOAD_TEST_REQUESTS.labels(
+                    test_name=config.name,
+                    status="failure",
+                    phase=phase.value
+                ).inc()
+                LOAD_TEST_DURATION.labels(
+                    test_name=config.name,
+                    phase=phase.value
+                ).observe(duration_ms / 1000.0)
+            
+            return result
     
     async def user_load_session(self, 
                               config: LoadTestConfig,
@@ -455,6 +565,10 @@ class AmasLoadTester:
                     
                 logger.info(f"Scaled up to {target_users} users (+{users_to_add})")
                 
+                # Update Prometheus metrics
+                if PROMETHEUS_AVAILABLE:
+                    LOAD_TEST_ACTIVE_USERS.labels(test_name=config.name).set(target_users)
+                
             elif target_users < current_users:
                 # Scale down - stop some users
                 users_to_remove = current_users - target_users
@@ -465,6 +579,10 @@ class AmasLoadTester:
                     active_tasks.discard(task)
                 
                 logger.info(f"Scaled down to {target_users} users (-{users_to_remove})")
+                
+                # Update Prometheus metrics
+                if PROMETHEUS_AVAILABLE:
+                    LOAD_TEST_ACTIVE_USERS.labels(test_name=config.name).set(target_users)
             
             last_curve_point = i
         
@@ -494,6 +612,10 @@ class AmasLoadTester:
         # Duration calculation
         actual_duration = (self.end_time - self.start_time).total_seconds()
         requests_per_second = total_requests / actual_duration if actual_duration > 0 else 0
+        
+        # Update Prometheus metrics
+        if PROMETHEUS_AVAILABLE:
+            LOAD_TEST_RPS.labels(test_name=config.name).set(requests_per_second)
         
         # Response time statistics (successful requests only)
         successful_durations = [r.duration_ms for r in self.results if r.success]
@@ -629,12 +751,12 @@ class AmasLoadTester:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
         # Save JSON report
-        json_file = output_path / f"{config.name}_{timestamp}_report.json"
+        json_file = output_path / f"{report.config.name}_{timestamp}_report.json"
         with open(json_file, 'w') as f:
             json.dump(asdict(report), f, indent=2, default=str)
         
         # Save CSV results
-        csv_file = output_path / f"{config.name}_{timestamp}_results.csv"
+        csv_file = output_path / f"{report.config.name}_{timestamp}_results.csv"
         with open(csv_file, 'w') as f:
             f.write("timestamp,user_id,phase,status_code,duration_ms,success,error_type\n")
             for result in self.results:
@@ -643,7 +765,7 @@ class AmasLoadTester:
                        f"{result.error_type or ''}\n")
         
         # Save summary report
-        summary_file = output_path / f"{config.name}_{timestamp}_summary.txt"
+        summary_file = output_path / f"{report.config.name}_{timestamp}_summary.txt"
         with open(summary_file, 'w') as f:
             f.write(self._generate_summary_text(report))
         
