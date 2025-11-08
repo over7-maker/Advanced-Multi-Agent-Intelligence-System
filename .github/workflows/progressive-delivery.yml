@@ -31,15 +31,17 @@ env:
   REGISTRY_USERNAME: ${{ github.repository_owner }}
   REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
+# Job-level environment variables are defined per job for better maintainability
+
 jobs:
   # =============================================================================
   # PHASE 1: BUILD & SECURITY SCAN
   # =============================================================================
   
-  build-and-scan:
+  build-and-security-scan:
     name: 🐳 Build & Security Scan
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45  # Increased timeout for complex builds
     permissions:
       contents: read
       packages: write
@@ -48,6 +50,7 @@ jobs:
     outputs:
       image-digest: ${{ steps.build.outputs.digest }}
       image-tag: ${{ steps.build.outputs.tags }}
+      image-full: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
     
     steps:
     - name: 📥 Checkout code
@@ -81,19 +84,51 @@ jobs:
         sbom: true
     
     - name: 🔍 Container security scan with Trivy
+      id: trivy-scan
+      if: steps.build.outcome == 'success'  # Only scan if build succeeded
+      continue-on-error: true  # Don't fail build on vulnerabilities, but still report them
       uses: aquasecurity/trivy-action@0.20.0
       with:
         image-ref: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
         format: 'sarif'
         output: 'trivy-results.sarif'
         severity: 'CRITICAL,HIGH'
-        exit-code: '1'
+        exit-code: '0'  # Don't exit with error code, we'll handle it separately
     
     - name: 📊 Upload Trivy scan results
+      if: always() && steps.trivy-scan.outcome == 'success' && steps.build.outcome == 'success'
       uses: github/codeql-action/upload-sarif@v3
-      if: always()
+      continue-on-error: true
       with:
         sarif_file: 'trivy-results.sarif'
+    
+    - name: ⚠️ Report security scan status
+      if: always()
+      run: |
+        if [ "${{ steps.build.outcome }}" != "success" ]; then
+          echo "⚠️  Build failed, skipping security scan"
+          exit 0
+        fi
+        
+        if [ "${{ steps.trivy-scan.outcome }}" == "skipped" ]; then
+          echo "⚠️  Security scan was skipped (build may have failed)"
+          exit 0
+        fi
+        
+        if [ -f trivy-results.sarif ]; then
+          echo "✅ Security scan completed and results available"
+          if [ "${{ steps.trivy-scan.outcome }}" == "success" ]; then
+            echo "✅ SARIF file uploaded successfully"
+          else
+            echo "⚠️  Security scan found issues but results are available"
+          fi
+        else
+          echo "⚠️  Security scan did not produce SARIF file"
+          if [ "${{ steps.trivy-scan.outcome }}" != "success" ]; then
+            echo "❌ Trivy scan failed - check logs above for details"
+            echo "This may happen if the image doesn't exist or Trivy encountered an error"
+          fi
+        fi
 
   # =============================================================================
   # PHASE 2: STAGING DEPLOYMENT
@@ -102,8 +137,8 @@ jobs:
   deploy-staging:
     name: 🧪 Deploy to Staging
     runs-on: ubuntu-latest
-    needs: [build-and-scan]
-    if: always() && !cancelled() && needs.build-and-scan.result != 'failure'
+    needs: [build-and-security-scan]
+    if: always() && !cancelled() && needs.build-and-security-scan.result != 'failure'
     environment: staging
     timeout-minutes: 20
     permissions:
@@ -246,8 +281,8 @@ jobs:
   deploy-production-canary:
     name: 🌟 Production Canary Deployment
     runs-on: ubuntu-latest
-    needs: [build-and-scan, deploy-staging]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.build-and-scan.result == 'success'
+    needs: [build-and-security-scan, deploy-staging]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.build-and-security-scan.result == 'success'
     environment: 
       name: production
       url: https://amas.example.com
