@@ -55,19 +55,28 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
           cache-dependency-path: requirements-security.txt
+      - name: Cache pip packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-security.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
       - name: Install security tools
         run: |
-          python -m pip install --upgrade pip
-          pip install --require-hashes -r requirements-security.txt || pip install -r requirements-security.txt
+          set -euo pipefail
+          pip install --require-hashes -r requirements-security.txt
       - name: Safety
         continue-on-error: true
         timeout-minutes: 5
         run: |
+          set +e
           set -o pipefail
           # Run safety with timeout and capture output and exit code properly
           timeout 300s safety check --json > safety-report.json 2>&1
           original_exit_code=$?
           exit_code=$original_exit_code
+          set -euo pipefail
           # Validate JSON output
           if ! jq empty safety-report.json 2>jq-error.log; then
             echo "⚠️  JSON validation failed: $(cat jq-error.log 2>/dev/null || echo 'invalid JSON')"
@@ -88,18 +97,22 @@ jobs:
               echo "[]" > safety-report.json
             fi
           fi
+          # Explicitly exit with captured exit code
+          exit $exit_code
       - name: Bandit
         continue-on-error: true
         timeout-minutes: 10
         env:
           SCAN_TARGET: src
         run: |
+          set +e
           set -o pipefail
           if [ -d "$SCAN_TARGET" ]; then
             # Run bandit with timeout and capture exit code properly
             timeout 600s bandit -r "$SCAN_TARGET" -f json -o bandit-report.json 2>&1
             original_exit_code=$?
             exit_code=$original_exit_code
+            set -euo pipefail
             # Validate JSON output
             if ! jq empty bandit-report.json 2>jq-error.log; then
               echo "⚠️  JSON validation failed: $(cat jq-error.log 2>/dev/null || echo 'invalid JSON')"
@@ -123,7 +136,10 @@ jobs:
           else
             echo "ℹ️  Directory '$SCAN_TARGET' not found — skipping Bandit scan"
             echo '{"results":[],"generated_at":"'"$(date -Iseconds)"'","metadata":{"bandit_version":"unknown"}}' > bandit-report.json
+            exit_code=0
           fi
+          # Explicitly exit with captured exit code
+          exit $exit_code
       - name: Semgrep Scan
         uses: returntocorp/semgrep-action@v1
         continue-on-error: true
