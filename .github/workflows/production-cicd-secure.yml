@@ -116,7 +116,13 @@ jobs:
         continue-on-error: true
       - name: Semgrep CI
         run: |
-          python -m semgrep ci --sarif --output=semgrep-ci.sarif || true
+          # Semgrep CI requires authentication, skip if not available
+          if [ -n "${{ secrets.SEMGREP_APP_TOKEN }}" ]; then
+            python -m semgrep ci --sarif --output=semgrep-ci.sarif || true
+          else
+            echo "⚠️  SEMGREP_APP_TOKEN not set, skipping Semgrep CI scan"
+            echo '{"version": "2.1.0", "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json", "runs": [{"results": []}]}' > semgrep-ci.sarif || true
+          fi
         continue-on-error: true
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
