@@ -75,12 +75,14 @@ jobs:
             echo "⚠️  Hashes not available in requirements-security.txt, installing without hash verification"
             echo "⚠️  SECURITY NOTE: Consider adding hashes to requirements-security.txt using: pip-compile --generate-hashes"
             echo "⚠️  SECURITY IMPACT: This increases the risk of supply chain attacks. Ensure you trust all dependencies."
+            echo "⚠️  SECURITY TRADE-OFF: Installing without hash verification. See SECURITY.md for details."
             set +e
-            pip install -r requirements-security.txt
+            pip_fallback_output=$(pip install -r requirements-security.txt 2>&1)
             pip_fallback_exit=$?
             set -euo pipefail
             if [ $pip_fallback_exit -ne 0 ]; then
-              echo "❌ Fallback pip install also failed with exit code $pip_fallback_exit"
+              echo "❌ Fallback pip install failed with exit code $pip_fallback_exit"
+              echo "Error details: $pip_fallback_output"
               exit $pip_fallback_exit
             fi
           elif [ $pip_exit_code -ne 0 ]; then
@@ -97,8 +99,8 @@ jobs:
           set +e
           set -o pipefail
           # Run safety with timeout and capture output and exit code properly
-          timeout 300s safety check --json > safety-report.json 2>&1
-          original_exit_code=$?
+          timeout 300s safety check --json > safety-report.json 2>&1 || true
+          original_exit_code=${PIPESTATUS[0]}
           exit_code=$original_exit_code
           set -euo pipefail
           # Validate JSON output
@@ -133,8 +135,8 @@ jobs:
           set -o pipefail
           if [ -d "$SCAN_TARGET" ]; then
             # Run bandit with timeout and capture exit code properly
-            timeout 600s bandit -r "$SCAN_TARGET" -f json -o bandit-report.json 2>&1
-            original_exit_code=$?
+            timeout 600s bandit -r "$SCAN_TARGET" -f json -o bandit-report.json 2>&1 || true
+            original_exit_code=${PIPESTATUS[0]}
             exit_code=$original_exit_code
             set -euo pipefail
             # Validate JSON output
