@@ -114,6 +114,10 @@ jobs:
             --config=p/secrets \
             --config=p/owasp-top-ten
         continue-on-error: true
+      - name: Semgrep CI
+        run: |
+          python -m semgrep ci --sarif --output=semgrep-ci.sarif || true
+        continue-on-error: true
       - name: Upload SARIF
         uses: github/codeql-action/upload-sarif@v3
         if: always() && hashFiles('semgrep.sarif') != ''
@@ -127,6 +131,7 @@ jobs:
             safety-report.json
             bandit-report.json
             semgrep.sarif
+            semgrep-ci.sarif
       - name: Evaluate
         id: scan-results
         run: |
