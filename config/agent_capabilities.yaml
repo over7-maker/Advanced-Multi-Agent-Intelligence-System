@@ -65,6 +65,7 @@ agents:
       - "file_read"
       - "file_write"
       - "document_generation"
+      - "template_rendering"
       - "vector_search"
     constraints:
       max_iterations: 3
