@@ -9,10 +9,13 @@ import re
 import json
 import logging
 import hashlib
+import time
+import statistics
+import asyncio
 from typing import Dict, List, Set, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import uuid
 
 logger = logging.getLogger(__name__)
@@ -47,6 +50,7 @@ class PIIDetection:
     location: str      # Where in the data
     value_hash: str    # Hashed value for tracking
     redacted_value: str
+    original_value: str  # Original detected value for redaction
     context: Optional[str] = None
 
 @dataclass
@@ -96,10 +100,14 @@ class PIIDetector:
             ],
             
             PIIType.CREDIT_CARD: [
-                re.compile(r'\b4\d{12}(?:\d{3})?\b'),                   # Visa
-                re.compile(r'\b5[1-5]\d{14}\b'),                        # MasterCard
-                re.compile(r'\b3[47]\d{13}\b'),                         # American Express
-                re.compile(r'\b6(?:011|5\d{2})\d{12}\b')                # Discover
+                re.compile(r'\b4\d{3}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}(?:\d{3})?\b'),  # Visa (with dashes/spaces)
+                re.compile(r'\b4\d{12}(?:\d{3})?\b'),                   # Visa (no dashes)
+                re.compile(r'\b5[1-5]\d{2}[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b'),  # MasterCard (with dashes/spaces)
+                re.compile(r'\b5[1-5]\d{14}\b'),                        # MasterCard (no dashes)
+                re.compile(r'\b3[47]\d{2}[- ]?\d{6}[- ]?\d{5}\b'),     # American Express (with dashes/spaces)
+                re.compile(r'\b3[47]\d{13}\b'),                         # American Express (no dashes)
+                re.compile(r'\b6(?:011|5\d{2})[- ]?\d{4}[- ]?\d{4}[- ]?\d{4}\b'),  # Discover (with dashes/spaces)
+                re.compile(r'\b6(?:011|5\d{2})\d{12}\b')                # Discover (no dashes)
             ],
             
             PIIType.IP_ADDRESS: [
@@ -175,6 +183,7 @@ class PIIDetector:
                         location=f"position_{match.start()}_{match.end()}",
                         value_hash=value_hash,
                         redacted_value=redacted_value,
+                        original_value=matched_value,
                         context=context
                     )
                     
@@ -475,15 +484,33 @@ class DataClassifier:
         
         if isinstance(data, str):
             redacted_text = data
+            # Sort detections by position (reverse order to maintain indices)
+            position_detections = []
+            for detection in classification_result.pii_detected:
+                if detection.location.startswith("position_") and detection.confidence >= 0.7:
+                    try:
+                        parts = detection.location.split('_')
+                        start_pos = int(parts[1])
+                        end_pos = int(parts[2])
+                        position_detections.append((start_pos, end_pos, detection))
+                    except (IndexError, ValueError):
+                        # Fallback: use string replacement
+                        if detection.original_value in redacted_text:
+                            redacted_text = redacted_text.replace(
+                                detection.original_value,
+                                detection.redacted_value,
+                                1  # Replace only first occurrence
+                            )
+            
             # Apply redactions in reverse order to maintain position accuracy
-            for detection in reversed(sorted(classification_result.pii_detected, 
-                                           key=lambda d: int(d.location.split('_')[1]) if '_' in d.location else 0)):
-                if detection.confidence >= 0.7:  # Only redact high-confidence PII
-                    # This is simplified - real implementation would use location info
-                    redacted_text = redacted_text.replace(
-                        "[VALUE_TO_REPLACE]",  # Would use actual value from detection
-                        detection.redacted_value
+            for start_pos, end_pos, detection in sorted(position_detections, reverse=True):
+                if start_pos < len(redacted_text) and end_pos <= len(redacted_text):
+                    redacted_text = (
+                        redacted_text[:start_pos] + 
+                        detection.redacted_value + 
+                        redacted_text[end_pos:]
                     )
+            
             return redacted_text
             
         elif isinstance(data, dict):
@@ -494,19 +521,66 @@ class DataClassifier:
     
     def _redact_dict(self, data: Dict[str, Any], pii_detections: List[PIIDetection]) -> Dict[str, Any]:
         """Redact PII from dictionary based on field locations"""
-        redacted_data = data.copy()
+        import copy
+        redacted_data = copy.deepcopy(data)
         
         for detection in pii_detections:
             if detection.confidence >= 0.7 and detection.location.startswith("field_"):
                 field_path = detection.location[6:]  # Remove "field_" prefix
                 
                 # Navigate to the field and redact
-                # Simplified implementation - would need more sophisticated path navigation
-                if '.' not in field_path and '[' not in field_path:
-                    if field_path in redacted_data:
-                        redacted_data[field_path] = detection.redacted_value
+                try:
+                    # Handle simple field paths
+                    if '.' not in field_path and '[' not in field_path:
+                        if field_path in redacted_data:
+                            if isinstance(redacted_data[field_path], str):
+                                # Replace original value with redacted value
+                                redacted_data[field_path] = redacted_data[field_path].replace(
+                                    detection.original_value,
+                                    detection.redacted_value
+                                )
+                            else:
+                                redacted_data[field_path] = detection.redacted_value
+                    else:
+                        # Handle nested paths (e.g., "user.email" or "items[0].name")
+                        self._redact_nested_field(redacted_data, field_path, detection)
+                except (KeyError, TypeError, IndexError):
+                    # Field path doesn't exist or is invalid, skip
+                    logger.debug(f"Could not redact field {field_path}: field not found")
         
         return redacted_data
+    
+    def _redact_nested_field(self, data: Dict[str, Any], field_path: str, detection: PIIDetection):
+        """Redact PII in nested dictionary structures"""
+        parts = field_path.replace('[', '.').replace(']', '').split('.')
+        current = data
+        
+        # Navigate to the parent of the target field
+        for part in parts[:-1]:
+            if part.isdigit():
+                current = current[int(part)]
+            else:
+                current = current[part]
+        
+        # Redact the final field
+        final_key = parts[-1]
+        if final_key.isdigit():
+            idx = int(final_key)
+            if isinstance(current[idx], str):
+                current[idx] = current[idx].replace(
+                    detection.original_value,
+                    detection.redacted_value
+                )
+            else:
+                current[idx] = detection.redacted_value
+        else:
+            if isinstance(current.get(final_key), str):
+                current[final_key] = current[final_key].replace(
+                    detection.original_value,
+                    detection.redacted_value
+                )
+            else:
+                current[final_key] = detection.redacted_value
 
 class ComplianceReporter:
     """Generate compliance reports and data governance summaries"""
@@ -632,27 +706,50 @@ def get_compliance_reporter() -> ComplianceReporter:
 def classify_input_data(data_param: str = "data"):
     """Decorator to automatically classify input data"""
     def decorator(func):
-        async def wrapper(*args, **kwargs):
-            classifier = get_data_classifier()
-            reporter = get_compliance_reporter()
-            
-            # Extract data parameter
-            data = kwargs.get(data_param)
-            if data is not None:
-                # Classify the data
-                result = classifier.classify_data(data)
+        if asyncio.iscoroutinefunction(func):
+            async def async_wrapper(*args, **kwargs):
+                classifier = get_data_classifier()
+                reporter = get_compliance_reporter()
                 
-                # Add to compliance reporting
-                reporter.add_classification_result(result)
+                # Extract data parameter
+                data = kwargs.get(data_param) or (args[0] if args else None)
+                if data is not None:
+                    # Classify the data
+                    result = classifier.classify_data(data)
+                    
+                    # Add to compliance reporting
+                    reporter.add_classification_result(result)
+                    
+                    # Add classification context to kwargs
+                    kwargs['_data_classification'] = result
+                    
+                    # Log if sensitive data detected
+                    if result.pii_count > 0:
+                        logger.info(f"Processing {result.classification.value} data with {result.pii_count} PII items")
                 
-                # Add classification context to kwargs
-                kwargs['_data_classification'] = result
+                return await func(*args, **kwargs)
+            return async_wrapper
+        else:
+            def sync_wrapper(*args, **kwargs):
+                classifier = get_data_classifier()
+                reporter = get_compliance_reporter()
                 
-                # Log if sensitive data detected
-                if result.pii_count > 0:
-                    logger.info(f"Processing {result.classification.value} data with {result.pii_count} PII items")
-            
-            return await func(*args, **kwargs)
-        
-        return wrapper if asyncio.iscoroutinefunction(func) else func
+                # Extract data parameter
+                data = kwargs.get(data_param) or (args[0] if args else None)
+                if data is not None:
+                    # Classify the data
+                    result = classifier.classify_data(data)
+                    
+                    # Add to compliance reporting
+                    reporter.add_classification_result(result)
+                    
+                    # Add classification context to kwargs
+                    kwargs['_data_classification'] = result
+                    
+                    # Log if sensitive data detected
+                    if result.pii_count > 0:
+                        logger.info(f"Processing {result.classification.value} data with {result.pii_count} PII items")
+                
+                return func(*args, **kwargs)
+            return sync_wrapper
     return decorator
