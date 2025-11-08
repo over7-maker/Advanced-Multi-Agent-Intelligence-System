@@ -9,9 +9,10 @@ import os
 import logging
 import time
 import asyncio
-from typing import Dict, Any, Optional, List, Callable
+from typing import Dict, Any, Optional, List, Callable, Union
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone, timedelta
+from urllib.parse import urlparse
 
 # OpenTelemetry imports
 from opentelemetry import trace, metrics
@@ -35,11 +36,35 @@ class AmasTracer:
     def __init__(self, 
                  service_name: str = "amas-orchestrator",
                  service_version: str = "1.0.0",
-                 otlp_endpoint: str = None,
-                 environment: str = None):
+                 otlp_endpoint: Optional[str] = None,
+                 environment: Optional[str] = None) -> None:
+        """
+        Initialize AMAS Tracer
+        
+        Args:
+            service_name: Name of the service being traced
+            service_version: Version of the service
+            otlp_endpoint: OTLP endpoint URL (defaults to OTLP_ENDPOINT env var or http://localhost:4317)
+            environment: Environment name (defaults to ENVIRONMENT env var or 'development')
+            
+        Raises:
+            ValueError: If otlp_endpoint is not a valid URL format
+        """
+        # Validate inputs
+        if not service_name or not isinstance(service_name, str):
+            raise ValueError("service_name must be a non-empty string")
+        if not service_version or not isinstance(service_version, str):
+            raise ValueError("service_version must be a non-empty string")
+        
         self.service_name = service_name
         self.service_version = service_version
-        self.otlp_endpoint = otlp_endpoint or os.getenv("OTLP_ENDPOINT", "http://localhost:4317")
+        
+        # Validate and set OTLP endpoint
+        endpoint = otlp_endpoint or os.getenv("OTLP_ENDPOINT", "http://localhost:4317")
+        if not self._validate_endpoint(endpoint):
+            raise ValueError(f"Invalid OTLP endpoint format: {endpoint}")
+        self.otlp_endpoint = endpoint
+        
         self.environment = environment or os.getenv("ENVIRONMENT", "development")
         
         # Setup resource information
@@ -60,7 +85,23 @@ class AmasTracer:
         
         logger.info(f"AMAS Tracer initialized for {service_name} v{service_version} in {self.environment}")
     
-    def _setup_tracing(self):
+    def _validate_endpoint(self, endpoint: str) -> bool:
+        """
+        Validate OTLP endpoint URL format
+        
+        Args:
+            endpoint: Endpoint URL to validate
+            
+        Returns:
+            True if valid, False otherwise
+        """
+        try:
+            parsed = urlparse(endpoint)
+            return parsed.scheme in ('http', 'https', 'grpc') and parsed.netloc
+        except Exception:
+            return False
+    
+    def _setup_tracing(self) -> None:
         """Configure OpenTelemetry tracing"""
         try:
             trace_exporter = OTLPSpanExporter(
@@ -81,12 +122,15 @@ class AmasTracer:
             
             logger.info(f"Tracing configured with endpoint: {self.otlp_endpoint}")
             
+        except (ValueError, TypeError) as e:
+            logger.error(f"Failed to setup tracing due to invalid configuration: {e}", exc_info=True)
+            trace.set_tracer_provider(TracerProvider(resource=self.resource))
         except Exception as e:
-            logger.error(f"Failed to setup tracing: {e}")
+            logger.error(f"Failed to setup tracing: {e}", exc_info=True)
             # Use no-op tracer as fallback
             trace.set_tracer_provider(TracerProvider(resource=self.resource))
     
-    def _setup_metrics(self):
+    def _setup_metrics(self) -> None:
         """Configure OpenTelemetry metrics"""
         try:
             metric_exporter = OTLPMetricExporter(
@@ -108,12 +152,15 @@ class AmasTracer:
             
             logger.info("Metrics configured with OTLP exporter")
             
+        except (ValueError, TypeError) as e:
+            logger.error(f"Failed to setup metrics due to invalid configuration: {e}", exc_info=True)
+            metrics.set_meter_provider(MeterProvider(resource=self.resource))
         except Exception as e:
-            logger.error(f"Failed to setup metrics: {e}")
+            logger.error(f"Failed to setup metrics: {e}", exc_info=True)
             # Use no-op meter as fallback
             metrics.set_meter_provider(MeterProvider(resource=self.resource))
     
-    def _setup_instrumentation(self):
+    def _setup_instrumentation(self) -> None:
         """Setup automatic instrumentation"""
         try:
             # Instrument HTTP clients
@@ -125,9 +172,9 @@ class AmasTracer:
             logger.info("Automatic instrumentation configured")
             
         except Exception as e:
-            logger.warning(f"Some instrumentation failed: {e}")
+            logger.warning(f"Some instrumentation failed: {e}", exc_info=True)
     
-    def _create_metrics(self):
+    def _create_metrics(self) -> None:
         """Create application-specific metrics"""
         # Counter metrics for requests and errors
         self.agent_requests_total = self.meter.create_counter(
@@ -303,14 +350,28 @@ class AmasTracer:
                 raise
     
     def _sanitize_parameters(self, parameters: Dict[str, Any]) -> Dict[str, Any]:
-        """Remove sensitive data from parameters for tracing"""
+        """
+        Remove sensitive data from parameters for tracing
+        
+        Args:
+            parameters: Dictionary of parameters to sanitize
+            
+        Returns:
+            Dictionary with sensitive values redacted
+        """
+        if not isinstance(parameters, dict):
+            logger.warning(f"Expected dict for parameters, got {type(parameters)}")
+            return {}
+        
         sensitive_keys = {
             "password", "token", "secret", "key", "credential", "auth", "authorization",
             "api_key", "access_token", "refresh_token", "private_key", "cert", "certificate"
         }
         
-        sanitized = {}
+        sanitized: Dict[str, Any] = {}
         for key, value in parameters.items():
+            if not isinstance(key, str):
+                continue
             key_lower = key.lower()
             if any(sensitive_key in key_lower for sensitive_key in sensitive_keys):
                 sanitized[key] = "[REDACTED]"
@@ -325,9 +386,27 @@ class AmasTracer:
                           agent_id: str,
                           tokens_used: int,
                           cost_usd: float = 0.0,
-                          model_name: Optional[str] = None):
-        """Record token usage and cost"""
-        labels = {"agent_id": agent_id}
+                          model_name: Optional[str] = None) -> None:
+        """
+        Record token usage and cost metrics
+        
+        Args:
+            agent_id: Identifier for the agent
+            tokens_used: Number of tokens consumed
+            cost_usd: Cost in USD (default: 0.0)
+            model_name: Optional model name for labeling
+            
+        Raises:
+            ValueError: If tokens_used is negative or cost_usd is negative
+        """
+        if not isinstance(agent_id, str) or not agent_id:
+            raise ValueError("agent_id must be a non-empty string")
+        if tokens_used < 0:
+            raise ValueError(f"tokens_used must be non-negative, got {tokens_used}")
+        if cost_usd < 0:
+            raise ValueError(f"cost_usd must be non-negative, got {cost_usd}")
+        
+        labels: Dict[str, str] = {"agent_id": agent_id}
         if model_name:
             labels["model_name"] = model_name
         
@@ -335,8 +414,22 @@ class AmasTracer:
         if cost_usd > 0:
             self.cost_usd_total.add(cost_usd, labels)
     
-    def record_queue_metrics(self, queue_name: str, depth: int):
-        """Record queue depth metrics"""
+    def record_queue_metrics(self, queue_name: str, depth: int) -> None:
+        """
+        Record queue depth metrics
+        
+        Args:
+            queue_name: Name of the queue
+            depth: Current queue depth
+            
+        Raises:
+            ValueError: If queue_name is empty or depth is negative
+        """
+        if not isinstance(queue_name, str) or not queue_name:
+            raise ValueError("queue_name must be a non-empty string")
+        if depth < 0:
+            raise ValueError(f"depth must be non-negative, got {depth}")
+        
         self.queue_depth.add(depth - self._get_current_queue_depth(queue_name), 
                             {"queue_name": queue_name})
     
@@ -364,8 +457,23 @@ class AmasTracer:
         if current_span:
             current_span.set_attribute(key, value)
     
-    def instrument_fastapi(self, app):
-        """Instrument FastAPI application"""
+    def instrument_fastapi(self, app: Any) -> None:
+        """
+        Instrument FastAPI application with OpenTelemetry
+        
+        Args:
+            app: FastAPI application instance
+            
+        Raises:
+            TypeError: If app is not a FastAPI application
+        """
+        if app is None:
+            raise TypeError("app parameter cannot be None")
+        
+        # Check if app has FastAPI-like attributes
+        if not hasattr(app, 'add_middleware') and not hasattr(app, 'router'):
+            logger.warning("App may not be a FastAPI application, instrumentation may fail")
+        
         try:
             FastAPIInstrumentor.instrument_app(
                 app, 
@@ -373,8 +481,11 @@ class AmasTracer:
                 excluded_urls="health,metrics"
             )
             logger.info("FastAPI instrumentation enabled")
+        except TypeError as e:
+            logger.error(f"Failed to instrument FastAPI - invalid app type: {e}", exc_info=True)
+            raise
         except Exception as e:
-            logger.error(f"Failed to instrument FastAPI: {e}")
+            logger.error(f"Failed to instrument FastAPI: {e}", exc_info=True)
 
 # Performance monitoring utilities
 class PerformanceMonitor:

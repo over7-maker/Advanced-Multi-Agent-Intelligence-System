@@ -6,7 +6,7 @@ Periodically evaluates SLOs and triggers alerts when violations occur.
 
 import asyncio
 import logging
-from typing import Optional
+from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 
 from .slo_manager import get_slo_manager, SLOManager
@@ -59,15 +59,29 @@ class SLOEvaluator:
         
         logger.info("SLO Evaluator stopped")
     
-    async def _evaluation_loop(self):
+    async def _evaluation_loop(self) -> None:
         """Main evaluation loop"""
+        if not isinstance(self.slo_manager, SLOManager):
+            logger.error("SLO Manager is not properly initialized")
+            return
+        
         while self._running:
             try:
                 # Evaluate all SLOs
                 results = self.slo_manager.evaluate_all_slos()
                 
+                if not isinstance(results, dict):
+                    logger.error(f"Invalid results from evaluate_all_slos: {type(results)}")
+                    await asyncio.sleep(self.evaluation_interval)
+                    continue
+                
                 # Check for violations
                 violations = self.slo_manager.get_violations()
+                
+                if not isinstance(violations, list):
+                    logger.error(f"Invalid violations from get_violations: {type(violations)}")
+                    await asyncio.sleep(self.evaluation_interval)
+                    continue
                 
                 if violations:
                     logger.warning(f"Detected {len(violations)} SLO violations")
@@ -110,10 +124,30 @@ class SLOEvaluator:
             # Wait for next evaluation
             await asyncio.sleep(self.evaluation_interval)
     
-    async def evaluate_once(self):
-        """Evaluate SLOs once (for manual triggering)"""
+    async def evaluate_once(self) -> Dict[str, Any]:
+        """
+        Evaluate SLOs once (for manual triggering)
+        
+        Returns:
+            Dictionary with evaluation results
+            
+        Raises:
+            RuntimeError: If SLO manager is not initialized
+        """
+        if not isinstance(self.slo_manager, SLOManager):
+            raise RuntimeError("SLO Manager is not properly initialized")
+        
         results = self.slo_manager.evaluate_all_slos()
         violations = self.slo_manager.get_violations()
+        
+        if not isinstance(results, dict):
+            logger.error(f"Invalid results from evaluate_all_slos: {type(results)}")
+            results = {}
+        
+        if not isinstance(violations, list):
+            logger.error(f"Invalid violations from get_violations: {type(violations)}")
+            violations = []
+        
         return {
             "evaluated_at": datetime.now(timezone.utc).isoformat(),
             "slo_count": len(results),
@@ -125,6 +159,7 @@ class SLOEvaluator:
                     "error_budget_remaining_percent": v.error_budget_remaining_percent
                 }
                 for v in violations
+                if hasattr(v, 'slo_name') and hasattr(v, 'status') and hasattr(v, 'error_budget_remaining_percent')
             ]
         }
 

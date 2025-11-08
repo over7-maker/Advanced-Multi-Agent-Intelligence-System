@@ -208,7 +208,17 @@ class SLOManager:
             
         Returns:
             Metric value as float, or None if query fails
+            
+        Raises:
+            ValueError: If query is empty or invalid
         """
+        if not isinstance(query, str) or not query.strip():
+            raise ValueError("query must be a non-empty string")
+        
+        if not isinstance(self.prometheus_url, str) or not self.prometheus_url:
+            logger.error("Prometheus URL is not configured")
+            return None
+        
         try:
             response = requests.get(
                 f"{self.prometheus_url}/api/v1/query",
@@ -219,20 +229,43 @@ class SLOManager:
             
             data = response.json()
             
-            if data['status'] == 'success' and data['data']['result']:
-                # Extract the first result value
-                result = data['data']['result'][0]
-                value = float(result['value'][1])
-                return value
-            else:
+            if not isinstance(data, dict):
+                logger.error(f"Invalid Prometheus response format: {type(data)}")
+                return None
+            
+            if data.get('status') != 'success':
+                logger.warning(f"Prometheus query returned non-success status: {data.get('status')}")
+                return None
+            
+            if 'data' not in data or 'result' not in data['data']:
                 logger.warning(f"Prometheus query returned no results: {query}")
                 return None
+            
+            results = data['data']['result']
+            if not results or not isinstance(results, list):
+                logger.warning(f"Prometheus query returned empty results: {query}")
+                return None
+            
+            # Extract the first result value
+            result = results[0]
+            if 'value' not in result or not isinstance(result['value'], list) or len(result['value']) < 2:
+                logger.error(f"Invalid result format from Prometheus: {result}")
+                return None
+            
+            value = float(result['value'][1])
+            return value
                 
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Failed to query Prometheus: {e}")
+        except requests.exceptions.Timeout as e:
+            logger.error(f"Prometheus query timed out: {query} - {e}")
             return None
-        except (KeyError, ValueError, IndexError) as e:
-            logger.error(f"Failed to parse Prometheus response: {e}")
+        except requests.exceptions.ConnectionError as e:
+            logger.error(f"Failed to connect to Prometheus at {self.prometheus_url}: {e}")
+            return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to query Prometheus: {e}", exc_info=True)
+            return None
+        except (KeyError, ValueError, IndexError, TypeError) as e:
+            logger.error(f"Failed to parse Prometheus response: {e}", exc_info=True)
             return None
     
     def evaluate_slo(self, slo_name: str) -> Optional[SLOStatus]:
@@ -244,12 +277,26 @@ class SLOManager:
             
         Returns:
             Updated SLOStatus, or None if evaluation failed
+            
+        Raises:
+            ValueError: If slo_name is empty or invalid
         """
+        if not isinstance(slo_name, str) or not slo_name.strip():
+            raise ValueError("slo_name must be a non-empty string")
+        
         if slo_name not in self.slo_definitions:
             logger.error(f"SLO not found: {slo_name}")
             return None
         
         slo_def = self.slo_definitions[slo_name]
+        if not isinstance(slo_def, SLODefinition):
+            logger.error(f"Invalid SLO definition for {slo_name}: {type(slo_def)}")
+            return None
+        
+        if slo_name not in self.slo_statuses:
+            logger.error(f"SLO status not initialized for {slo_name}")
+            return None
+        
         status = self.slo_statuses[slo_name]
         
         # Query current metric value
@@ -484,7 +531,15 @@ class SLOManager:
             
         Returns:
             Regression detection result or None
+            
+        Raises:
+            ValueError: If operation is empty or current_duration is negative
         """
+        if not isinstance(operation, str) or not operation.strip():
+            raise ValueError("operation must be a non-empty string")
+        if not isinstance(current_duration, (int, float)) or current_duration < 0:
+            raise ValueError(f"current_duration must be a non-negative number, got {current_duration}")
+        
         baseline_key = f"{operation}_p95_seconds"
         baseline = self.performance_baselines.get(baseline_key)
         
