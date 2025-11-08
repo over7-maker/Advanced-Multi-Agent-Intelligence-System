@@ -66,9 +66,21 @@ jobs:
         run: |
           set -euo pipefail
           # Try with hashes first, fallback if hashes not available
-          if pip install --require-hashes -r requirements-security.txt 2>&1 | grep -q "hashes are required"; then
+          # Note: This fallback is a known security trade-off until requirements-security.txt includes hashes
+          set +e
+          pip install --require-hashes -r requirements-security.txt 2>&1 | tee pip-install.log
+          pip_exit_code=${PIPESTATUS[0]}
+          set -euo pipefail
+          if [ $pip_exit_code -ne 0 ] && grep -q "hashes are required" pip-install.log; then
             echo "⚠️  Hashes not available in requirements-security.txt, installing without hash verification"
+            echo "⚠️  SECURITY NOTE: Consider adding hashes to requirements-security.txt using: pip-compile --generate-hashes"
             pip install -r requirements-security.txt
+          elif [ $pip_exit_code -ne 0 ]; then
+            echo "❌ pip install failed with exit code $pip_exit_code"
+            cat pip-install.log
+            exit $pip_exit_code
+          else
+            echo "✅ Installed with hash verification"
           fi
       - name: Safety
         continue-on-error: true
