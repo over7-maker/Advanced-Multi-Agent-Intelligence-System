@@ -1,6 +1,6 @@
 # Performance Scaling Infrastructure Guide
 
-> **Version:** 1.0.0 | **Last Updated:** 2025-11-08
+> **Version:** 1.0.0 | **Last Updated:** 2025-01-15
 
 This guide covers the comprehensive performance scaling infrastructure for AMAS, including KEDA-based autoscaling, load testing, and performance monitoring.
 
@@ -15,7 +15,7 @@ This guide covers the comprehensive performance scaling infrastructure for AMAS,
 
 ## Overview
 
-The AMAS performance scaling infrastructure provides intelligent, event-driven autoscaling and comprehensive performance optimization to handle traffic spikes gracefully with optimal cost efficiency.
+The AMAS performance scaling infrastructure provides intelligent, event-driven autoscaling and comprehensive performance optimization to handle traffic spikes gracefully with optimal cost efficiency when properly configured.
 
 ### Key Components
 
@@ -24,7 +24,7 @@ The AMAS performance scaling infrastructure provides intelligent, event-driven a
 - **Performance Monitoring**: Real-time metrics collection and analysis including request rates, latency distributions, and resource utilization
 - **Horizontal Pod Autoscaling (HPA)**: Kubernetes-native autoscaling as fallback when KEDA is unavailable
 - **Vertical Pod Autoscaling (VPA)**: Automatic right-sizing of container resources based on historical usage patterns
-- **Semantic Caching**: Redis-based intelligent caching with embedding similarity matching for 30%+ speed improvement
+- **Semantic Caching**: Redis-based intelligent caching with embedding similarity matching (see [benchmark results](./performance_benchmarks.md) for performance metrics)
 - **Circuit Breakers**: Fail-fast patterns to prevent cascade failures
 - **Rate Limiting**: User-based quotas with sliding window algorithm
 - **Cost Tracking**: Automatic token usage and API cost tracking with optimization recommendations
@@ -35,10 +35,35 @@ The scaling infrastructure uses a multi-layered approach:
 
 1. **Primary Layer**: KEDA ScaledObjects monitor Prometheus metrics and scale pods based on HTTP RPS, queue depth, latency, and resource pressure
 2. **Fallback Layer**: HPA provides CPU/memory-based scaling if KEDA fails
-3. **Optimization Layer**: VPA automatically adjusts resource requests/limits based on actual usage
+3. **Optimization Layer**: VPA provides recommendations for right-sizing (note: VPA and HPA should not be used simultaneously on the same pods - see [Kubernetes documentation](https://kubernetes.io/docs/tasks/run-application/vertical-pod-autoscaler/#known-limitations))
 4. **Protection Layer**: Pod Disruption Budgets ensure availability during scaling events
 
+> **⚠️ WARNING**: VPA and HPA/KEDA should not be used simultaneously on the same pods. VPA in "Off" mode provides only recommendations, not automatic scaling. For production workloads, use either HPA/KEDA for horizontal scaling OR VPA for vertical scaling, but not both.
+
 For detailed architecture diagrams and component interactions, see [PERFORMANCE_SCALING_INTEGRATION.md](./PERFORMANCE_SCALING_INTEGRATION.md).
+
+#### KEDA + HPA + VPA Interaction Flow
+
+```
+┌─────────────────┐
+│  Prometheus     │
+│  Metrics        │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐      ┌─────────────────┐
+│  KEDA           │──────▶│  HPA Controller │
+│  ScaledObject   │      │  (if KEDA fails)│
+└────────┬────────┘      └────────┬────────┘
+         │                        │
+         ▼                        ▼
+┌─────────────────┐      ┌─────────────────┐
+│  Kubernetes API │◀─────│  VPA Recommender │
+│  (Pod Scaling)   │      │  (recommendations)│
+└─────────────────┘      └─────────────────┘
+```
+
+**Note**: VPA provides recommendations only when in "Off" mode. Do not enable VPA "Auto" mode when using HPA/KEDA.
 
 ## KEDA Autoscaling
 
@@ -111,7 +136,9 @@ When configuring autoscaling, consider the following security best practices:
 - **Metric Validation**: Ensure Prometheus metrics are properly authenticated and validated
 - **Network Policies**: Use NetworkPolicies to restrict pod-to-pod communication during scaling
 - **RBAC**: Configure proper Role-Based Access Control for KEDA and HPA components
-- **Secrets Management**: Store sensitive configuration (Redis URLs, API keys) in Kubernetes Secrets
+- **Secrets Management**: Store sensitive configuration (Redis URLs, API keys, monitoring credentials) in Kubernetes Secrets. Never hardcode credentials or expose secret names/keys in documentation.
+
+> **🔒 SECURITY WARNING**: Always store monitoring credentials (Prometheus, Grafana, etc.) in Kubernetes Secrets. Use generic secret names and avoid documenting exact secret names or key names in public documentation. Reference secrets using environment variables or mounted volumes.
 
 The KEDA scaler configuration includes NetworkPolicy definitions (see `k8s/scaling/keda-scaler.yaml` lines 300-362) that restrict ingress and egress traffic appropriately.
 
@@ -220,24 +247,138 @@ The load tester exports Prometheus metrics:
    - Review scaling decisions regularly to optimize thresholds
 
 5. **Cost Optimization**
-   - Use VPA to right-size containers and reduce waste
+   - Use VPA recommendations (in "Off" mode) to right-size containers and reduce waste
    - Monitor cost per request using `cost_tracking_service`
-   - Implement semantic caching to reduce redundant API calls
+   - Implement semantic caching to reduce redundant API calls (see [benchmark results](./performance_benchmarks.md))
    - Use request deduplication for expensive operations
+   - Review scaling thresholds regularly to optimize resource usage
+
+> **⚠️ IMPORTANT**: When using VPA for cost optimization, set `updatePolicy` to "Off"` to receive recommendations only. Do not enable VPA "Auto" mode when using HPA/KEDA, as this can cause conflicts. See [Kubernetes VPA limitations](https://kubernetes.io/docs/tasks/run-application/vertical-pod-autoscaler/#known-limitations).
+
+## Prerequisites
+
+Before deploying the performance scaling infrastructure, ensure the following are installed and configured:
+
+### Required Components
+
+1. **Kubernetes Cluster**
+   - Kubernetes 1.20 or higher
+   - Metrics Server installed and running
+   - Cluster with sufficient resources for scaling
+
+2. **KEDA Operator**
+   - KEDA 2.0+ installed in cluster
+   - Verify installation: `kubectl get pods -n keda-system`
+   - See [KEDA Installation Guide](https://keda.sh/docs/latest/deploy/)
+
+3. **Prometheus**
+   - Prometheus installed and scraping AMAS metrics
+   - Accessible at configured endpoint (default: `http://prometheus.monitoring.svc.cluster.local:9090`)
+   - Metrics exported by AMAS application
+
+4. **Redis** (for caching and rate limiting)
+   - Redis cluster accessible from pods
+   - Connection URL configured in application
+   - Optional but recommended for optimal performance
+
+5. **VPA** (optional, for vertical scaling)
+   - VPA recommender installed
+   - Note: Do not use VPA "Auto" mode with HPA/KEDA
+
+### Configuration Requirements
+
+- Prometheus metrics endpoint accessible
+- Redis connection URL (if using semantic caching or distributed rate limiting)
+- Sufficient cluster resources for max replica count
+- Network policies configured (see `k8s/scaling/keda-scaler.yaml`)
 
 ## Troubleshooting
 
 ### Scaling Issues
 
 **Problem**: Pods not scaling up
-- Check KEDA installation: `kubectl get pods -n keda`
-- Verify metrics are available: `kubectl get metrics -n amas-prod`
-- Check ScaledObject status: `kubectl describe scaledobject -n amas-prod`
+
+**Diagnosis Steps:**
+1. Check KEDA installation: `kubectl get pods -n keda-system`
+2. Verify metrics are available: `kubectl get metrics -n amas-prod`
+3. Check ScaledObject status: `kubectl describe scaledobject amas-orchestrator-scaler -n amas-prod`
+4. Verify Prometheus connectivity: Check KEDA logs for connection errors
+5. Check metric queries: Verify Prometheus queries return data
+
+**Solutions:**
+- Ensure Prometheus is accessible from KEDA pods
+- Verify metric names match those exported by AMAS
+- Check network policies allow KEDA to access Prometheus
+- Review KEDA operator logs: `kubectl logs -n keda-system -l app=keda-operator`
 
 **Problem**: Too aggressive scaling
-- Increase cooldown period
-- Increase stabilization window
-- Adjust threshold values
+
+**Symptoms:**
+- Pods scaling up and down rapidly (thrashing)
+- High number of scaling events in short time
+- Unstable replica counts
+
+**Solutions:**
+- Increase cooldown period in KEDA ScaledObject
+- Increase stabilization window (especially scale-down)
+- Adjust threshold values to be less sensitive
+- Review scaling policies to be more conservative
+
+**Problem**: Pods not scaling down
+
+**Diagnosis:**
+- Check if metrics are below thresholds
+- Verify cooldown period hasn't expired
+- Review scale-down policies
+
+**Solutions:**
+- Reduce min replicas if appropriate
+- Adjust scale-down policies to be more aggressive
+- Check for stuck metrics or stale data
+
+### Performance Issues
+
+**Problem**: High latency despite scaling
+
+**Diagnosis:**
+- Check if pods are actually scaling
+- Verify resource limits aren't too restrictive
+- Review application performance metrics
+
+**Solutions:**
+- Increase resource limits per pod
+- Review scaling thresholds (may be too high)
+- Check for application bottlenecks
+- Consider VPA recommendations for right-sizing
+
+**Problem**: Cache hit rate too low
+
+**Diagnosis:**
+- Check semantic cache statistics
+- Verify Redis connectivity
+- Review cache TTL settings
+
+**Solutions:**
+- Increase cache TTL for stable data
+- Adjust similarity threshold
+- Verify Redis is properly configured
+- Review cache eviction policies
+
+### Cost Issues
+
+**Problem**: High infrastructure costs
+
+**Diagnosis:**
+- Review cost tracking service statistics
+- Check scaling events and replica counts
+- Analyze cost per request
+
+**Solutions:**
+- Optimize scaling thresholds to reduce unnecessary scaling
+- Use VPA recommendations to right-size containers
+- Implement semantic caching to reduce API calls
+- Review and adjust max replica limits
+- Monitor and optimize based on cost tracking recommendations
 
 ## Additional Resources
 
