@@ -87,18 +87,48 @@ class AmasTracer:
     
     def _validate_endpoint(self, endpoint: str) -> bool:
         """
-        Validate OTLP endpoint URL format
+        Validate OTLP endpoint URL format with security checks
         
         Args:
             endpoint: Endpoint URL to validate
             
         Returns:
             True if valid, False otherwise
+            
+        Security checks:
+        - Only http/https schemes allowed (grpc is handled via http/https)
+        - No credentials in URL (prevents credential leakage)
+        - Valid hostname/port format
         """
+        if not isinstance(endpoint, str) or not endpoint.strip():
+            return False
+        
         try:
             parsed = urlparse(endpoint)
-            return parsed.scheme in ('http', 'https', 'grpc') and parsed.netloc
-        except Exception:
+            
+            # Only allow http and https schemes (grpc uses http/https transport)
+            if parsed.scheme not in ('http', 'https'):
+                logger.warning(f"Invalid OTLP endpoint scheme: {parsed.scheme}. Only http/https allowed.")
+                return False
+            
+            # Require valid hostname/port
+            if not parsed.netloc:
+                logger.warning(f"OTLP endpoint missing hostname: {endpoint}")
+                return False
+            
+            # Security: Reject URLs with embedded credentials (SSRF prevention)
+            if parsed.username or parsed.password:
+                logger.error(f"OTLP endpoint URL must not contain credentials: {endpoint}")
+                return False
+            
+            # Additional security: Warn about localhost in production
+            if parsed.hostname in ('localhost', '127.0.0.1', '::1') and self.environment == 'production':
+                logger.warning(f"Using localhost OTLP endpoint in production: {endpoint}")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to parse OTLP endpoint URL: {endpoint} - {e}")
             return False
     
     def _setup_tracing(self) -> None:
@@ -357,27 +387,42 @@ class AmasTracer:
             parameters: Dictionary of parameters to sanitize
             
         Returns:
-            Dictionary with sensitive values redacted
+            Dictionary with sensitive values redacted (new dict, does not mutate input)
+            
+        Security: Redacts common sensitive keys to prevent credential/PII leakage in traces
         """
         if not isinstance(parameters, dict):
             logger.warning(f"Expected dict for parameters, got {type(parameters)}")
             return {}
         
-        sensitive_keys = {
-            "password", "token", "secret", "key", "credential", "auth", "authorization",
-            "api_key", "access_token", "refresh_token", "private_key", "cert", "certificate"
+        # Comprehensive list of sensitive key patterns
+        SENSITIVE_KEYS = {
+            "password", "passwd", "pwd", "pass",
+            "token", "api_key", "apikey", "access_token", "refresh_token",
+            "secret", "secret_key", "private_key", "privatekey",
+            "credential", "credentials", "auth", "authorization",
+            "cert", "certificate", "key", "ssh_key",
+            "credit_card", "cc_number", "cvv", "ssn", "social_security"
         }
         
+        # Return a new dictionary (don't mutate input)
         sanitized: Dict[str, Any] = {}
         for key, value in parameters.items():
             if not isinstance(key, str):
                 continue
+            
             key_lower = key.lower()
-            if any(sensitive_key in key_lower for sensitive_key in sensitive_keys):
-                sanitized[key] = "[REDACTED]"
-            elif isinstance(value, (str, int, float, bool)):
-                sanitized[key] = value
+            # Check if any sensitive pattern matches the key
+            if any(sensitive_key in key_lower for sensitive_key in SENSITIVE_KEYS):
+                sanitized[key] = "***REDACTED***"
+            elif isinstance(value, (str, int, float, bool, type(None))):
+                # Only include simple types, truncate long strings
+                if isinstance(value, str) and len(value) > 100:
+                    sanitized[key] = value[:100] + "...[truncated]"
+                else:
+                    sanitized[key] = value
             else:
+                # Complex types: just show type name
                 sanitized[key] = f"[{type(value).__name__}]"
         
         return sanitized
