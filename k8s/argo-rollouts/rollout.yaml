@@ -22,16 +22,17 @@ spec:
       maxUnavailable: 0
       
       # Canary steps with progressive traffic shifting
+      # Total deployment time: ~8-9 minutes (optimized for <10 minute requirement)
       steps:
-      # Initial canary - 10% traffic
+      # Initial canary - 10% traffic (1min pause + analysis runs in parallel)
       - setWeight: 10
       - pause:
-          duration: 2m
+          duration: 1m
       
-      # First expansion - 25% traffic with analysis
+      # First expansion - 25% traffic with analysis (1min pause + 1min analysis)
       - setWeight: 25
       - pause:
-          duration: 2m
+          duration: 1m
       - analysis:
           templates:
           - templateName: success-rate
@@ -45,10 +46,10 @@ spec:
               part-of: amas-orchestrator-rollout
               step: "25-percent"
       
-      # Major expansion - 50% traffic with comprehensive analysis
+      # Major expansion - 50% traffic with comprehensive analysis (2min pause + 2min analysis)
       - setWeight: 50
       - pause:
-          duration: 5m
+          duration: 2m
       - analysis:
           templates:
           - templateName: success-rate
@@ -64,10 +65,10 @@ spec:
               part-of: amas-orchestrator-rollout
               step: "50-percent"
       
-      # Near full deployment - 75% traffic
+      # Near full deployment - 75% traffic (2min pause + 2min analysis)
       - setWeight: 75
       - pause:
-          duration: 5m
+          duration: 2m
       - analysis:
           templates:
           - templateName: success-rate
@@ -84,9 +85,9 @@ spec:
               part-of: amas-orchestrator-rollout
               step: "75-percent"
       
-      # Final validation before full deployment
+      # Final validation before full deployment (1min pause + 1min analysis)
       - pause:
-          duration: 2m
+          duration: 1m
       - analysis:
           templates:
           - templateName: success-rate

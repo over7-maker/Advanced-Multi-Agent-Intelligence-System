@@ -8,8 +8,8 @@ set -euo pipefail
 NAMESPACE="${NAMESPACE:-amas-prod}"
 ROLLOUT_NAME="${ROLLOUT_NAME:-amas-orchestrator}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
-PROMOTION_WAIT_TIME="${PROMOTION_WAIT_TIME:-120}"  # 2 minutes between steps
-MAX_ROLLBACK_TIME="${MAX_ROLLBACK_TIME:-120}"  # 2 minutes for rollback
+PROMOTION_WAIT_TIME="${PROMOTION_WAIT_TIME:-60}"  # 1 minute between steps (optimized for <10min deployment)
+MAX_ROLLBACK_TIME="${MAX_ROLLBACK_TIME:-120}"  # 2 minutes for rollback (meets requirement)
 HEALTH_CHECK_INTERVAL="${HEALTH_CHECK_INTERVAL:-10}"  # 10 seconds
 
 # Colors for output

@@ -12,11 +12,11 @@ metadata:
 spec:
   metrics:
   - name: success-rate
-    interval: 30s
+    interval: 15s  # Faster checks for quicker rollback detection
     successCondition: result[0] >= 0.95  # 95% success rate threshold
     failureCondition: result[0] < 0.95
-    failureLimit: 2  # Allow 2 failures before triggering rollback
-    count: 4  # Check 4 times (2 minutes at 30s intervals)
+    failureLimit: 1  # Immediate rollback on failure (within 15-30s)
+    count: 4  # Check 4 times (1 minute at 15s intervals)
     provider:
       prometheus:
         address: http://prometheus.monitoring.svc.cluster.local:9090
@@ -43,11 +43,11 @@ metadata:
 spec:
   metrics:
   - name: latency-p95
-    interval: 30s
+    interval: 15s  # Faster checks for quicker rollback detection
     successCondition: result[0] <= 3.0  # P95 latency must be <= 3.0 seconds
     failureCondition: result[0] > 3.0
-    failureLimit: 2
-    count: 4
+    failureLimit: 1  # Immediate rollback on failure
+    count: 4  # Check 4 times (1 minute at 15s intervals)
     provider:
       prometheus:
         address: http://prometheus.monitoring.svc.cluster.local:9090
@@ -70,11 +70,11 @@ metadata:
 spec:
   metrics:
   - name: error-budget
-    interval: 30s
+    interval: 15s  # Faster checks for quicker rollback detection
     successCondition: result[0] >= 0.05  # At least 5% error budget remaining
     failureCondition: result[0] < 0.05
-    failureLimit: 1  # Immediate rollback if error budget depleted
-    count: 4
+    failureLimit: 1  # Immediate rollback if error budget depleted (within 15-30s)
+    count: 4  # Check 4 times (1 minute at 15s intervals)
     provider:
       prometheus:
         address: http://prometheus.monitoring.svc.cluster.local:9090
@@ -106,8 +106,8 @@ spec:
     interval: 10s
     successCondition: result[0] == 1  # Health check must return 1 (healthy)
     failureCondition: result[0] != 1
-    failureLimit: 3  # Allow 3 failures (30 seconds) before rollback
-    count: 12  # Check for 2 minutes
+    failureLimit: 6  # Allow 6 failures (60 seconds = 1 minute) before rollback
+    count: 12  # Check for 2 minutes (ensures >2min failure window triggers rollback)
     provider:
       prometheus:
         address: http://prometheus.monitoring.svc.cluster.local:9090
