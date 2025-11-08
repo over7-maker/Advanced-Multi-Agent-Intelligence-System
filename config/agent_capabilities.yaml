@@ -19,7 +19,11 @@ _defaults:
     require_human_approval: true
     output_validation_required: true
 
+# Agent Definitions
+# Each agent has role-specific tools, constraints, rate limits, and quality gates
 agents:
+  # Research Agent: Specializes in web research and information gathering
+  # Uses web_search, api_call, file_read, vector_search, and document_generation
   research_agent_v1:
     role: "research"
     description: "Web research and information gathering specialist"
@@ -41,6 +45,8 @@ agents:
       output_validation_required: true
       fact_checking_enabled: true  # Requires cross-referencing facts with trusted sources before output
   
+  # Analysis Agent: Specializes in data analysis and statistical processing
+  # Uses file_read, database_query, data_analysis, and document_generation
   analysis_agent_v1:
     role: "analysis"
     description: "Data analysis and statistical processing specialist"
@@ -61,31 +67,36 @@ agents:
       output_validation_required: true
       statistical_validation_required: true  # Requires statistical validation of analysis results
   
+  # Synthesis Agent: Specializes in content synthesis and document generation
+  # Uses file_read, file_write, document_generation, template_rendering, and vector_search
+  # Note: file_write access is restricted to allowed_directories in tool_configurations
   synthesis_agent_v1:
     role: "synthesis"
     description: "Content synthesis and document generation specialist"
     allowed_tools:
-      - "file_read"
-      - "file_write"
-      - "document_generation"
-      - "template_rendering"
-      - "vector_search"
+      - "file_read"  # Restricted to allowed_paths in tool_configurations
+      - "file_write"  # Restricted to allowed_directories in tool_configurations
+      - "document_generation"  # Generates structured documents with validation
+      - "template_rendering"  # Renders templates with sandboxing enabled
+      - "vector_search"  # Searches vector database for content references
     constraints:
-      max_iterations: 3
-      timeout_seconds: 300
-      cost_budget_tokens: 10000
+      max_iterations: 3  # Limited iterations to prevent runaway synthesis
+      timeout_seconds: 300  # 5 minute timeout for document generation
+      cost_budget_tokens: 10000  # Token budget for synthesis operations
     rate_limits:
-      requests_per_minute: 15
-      tokens_per_hour: 8000
+      requests_per_minute: 15  # Prevents overwhelming document generation service
+      tokens_per_hour: 8000  # Prevents excessive token consumption
     quality_gates:
-      require_human_approval: false
-      output_validation_required: true
-      plagiarism_check_enabled: true
+      require_human_approval: false  # Auto-approved for non-critical content synthesis
+      output_validation_required: true  # Validates output against schema
+      plagiarism_check_enabled: true  # Checks for plagiarism before output
       # Output sanitization and content filtering
-      pii_detection_enabled: true
-      output_sanitization_required: true
-      content_moderation_required: true
+      pii_detection_enabled: true  # Detects and redacts PII in outputs
+      output_sanitization_required: true  # Sanitizes output to prevent injection
+      content_moderation_required: true  # Moderates content for safety
   
+  # Orchestrator Agent: Coordinates multi-agent workflows
+  # Has access to all tools for coordination purposes
   orchestrator_agent_v1:
     role: "orchestrator"
     description: "Multi-agent coordination and workflow management"
@@ -109,6 +120,8 @@ agents:
       output_validation_required: true
       workflow_validation_required: true
   
+  # Communication Agent: Handles external communication and notifications
+  # Requires human approval for all communications (security requirement)
   communication_agent_v1:
     role: "communication"
     description: "External communication and notification specialist"
@@ -129,6 +142,8 @@ agents:
       output_validation_required: true
       content_safety_check: true
   
+  # Validation Agent: Validates outputs and ensures quality
+  # Does not require validation of its own outputs (validator doesn't validate itself)
   validation_agent_v1:
     role: "validation"
     description: "Output validation and quality assurance specialist"
@@ -314,4 +329,5 @@ environments:
       audit_logging:
         retention_days: 365
         backup_enabled: true
+
 
