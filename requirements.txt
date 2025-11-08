@@ -45,6 +45,8 @@ opentelemetry-exporter-otlp-proto-grpc==1.27.0
 opentelemetry-instrumentation-fastapi==0.49b0
 opentelemetry-instrumentation-httpx==0.49b0
 opentelemetry-instrumentation-logging==0.49b0
+opentelemetry-instrumentation-sqlalchemy==0.49b0
+opentelemetry-instrumentation-psycopg2==0.49b0
 
 # Security and Authentication
 bcrypt==4.2.1
