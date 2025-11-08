@@ -59,23 +59,27 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-security.txt
+      - name: Verify security tools
+        run: |
+          command -v safety && safety --version || echo "⚠️  Safety not found"
+          command -v bandit && bandit --version || echo "⚠️  Bandit not found"
+          command -v jq && jq --version || echo "⚠️  jq not found"
       - name: Safety
         continue-on-error: true
         run: |
-          set +e
-          output=$(safety check --json 2>&1)
-          exit_code=$?
-          set -e
-          echo "$output" > safety-report.json
+          # Run safety and capture output and exit code properly
+          safety check --json > safety-report.json 2>&1 || true
+          exit_code=${PIPESTATUS[0]}
+          # Validate JSON output
+          if ! jq empty safety-report.json 2>/dev/null; then
+            echo "⚠️  Safety output is not valid JSON, creating empty report"
+            echo "[]" > safety-report.json
+            exit_code=64
+          fi
           if [ $exit_code -eq 0 ]; then
             echo "✅ Safety scan completed, no vulnerabilities"
           elif [ $exit_code -eq 1 ]; then
-            if jq empty safety-report.json 2>/dev/null; then
-              echo "⚠️  Safety found vulnerabilities (see safety-report.json)"
-            else
-              echo "❌ Safety output invalid JSON after failure"
-              echo "[]" > safety-report.json
-            fi
+            echo "⚠️  Safety found vulnerabilities (see safety-report.json)"
           else
             echo "⚠️  Safety check failed with exit code $exit_code (database/API issue - continuing)"
             echo "[]" > safety-report.json
@@ -84,26 +88,26 @@ jobs:
         continue-on-error: true
         run: |
           if [ -d "src" ]; then
-            set +e
-            output=$(bandit -r src -f json -o bandit-report.json 2>&1)
-            exit_code=$?
-            set -e
+            # Run bandit and capture exit code properly
+            bandit -r src -f json -o bandit-report.json 2>&1 || true
+            exit_code=${PIPESTATUS[0]}
+            # Validate JSON output
+            if ! jq empty bandit-report.json 2>/dev/null; then
+              echo "⚠️  Bandit output is not valid JSON, creating empty report"
+              echo '{"results":[],"generated_at":"'"$(date -Iseconds)"'","metadata":{"bandit_version":"unknown"}}' > bandit-report.json
+              exit_code=2
+            fi
             if [ $exit_code -eq 0 ]; then
               echo "✅ Bandit scan completed, no issues found"
             elif [ $exit_code -eq 1 ]; then
-              if jq empty bandit-report.json 2>/dev/null; then
-                echo "⚠️  Bandit found issues (see bandit-report.json)"
-              else
-                echo "❌ Bandit output invalid JSON after finding issues"
-                echo '{"results":[],"generated_at":"'"$(date -Iseconds)"'","metadata":{"bandit_version":"unknown"}}' > bandit-report.json
-              fi
+              echo "⚠️  Bandit found issues (see bandit-report.json)"
             else
               echo "⚠️  Bandit check failed with exit code $exit_code (execution error - continuing)"
               echo '{"results":[],"generated_at":"'"$(date -Iseconds)"'","metadata":{"bandit_version":"unknown"}}' > bandit-report.json
             fi
           else
+            echo "ℹ️  Directory 'src' not found — skipping Bandit scan"
             echo '{"results":[],"generated_at":"'"$(date -Iseconds)"'","metadata":{"bandit_version":"unknown"}}' > bandit-report.json
-            echo "⚠️  No src directory found, skipping Bandit scan"
           fi
       - name: Semgrep Scan
         uses: returntocorp/semgrep-action@v1
@@ -184,6 +188,16 @@ jobs:
             exit 1
           elif [ "$vuln" -gt 10 ]; then
             echo "⚠️  Security scan WARNING: Found $vuln total vulnerabilities (threshold: 10)"
+            echo "⚠️  Consider reviewing and fixing vulnerabilities before merging"
           else
             echo "✅ Security scan PASSED: $vuln total vulnerabilities, $crit critical"
+          fi
+          
+          # Additional enforcement: Check Safety for critical vulnerabilities
+          if [ -s safety-report.json ]; then
+            safety_critical=$(jq '[.[] | select(.severity == "CRITICAL" or .severity == "HIGH")] | length' safety-report.json 2>/dev/null || echo 0)
+            if [ "$safety_critical" -gt 0 ]; then
+              echo "❌ Safety found $safety_critical critical/high severity vulnerabilities"
+              exit 1
+            fi
           fi
