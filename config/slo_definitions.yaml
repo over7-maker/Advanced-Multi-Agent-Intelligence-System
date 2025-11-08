@@ -1,0 +1,97 @@
+# Service Level Objectives (SLOs) for AMAS
+# Defines reliability targets and error budgets
+
+services:
+  orchestrator:
+    name: "Master Orchestrator"
+    slos:
+      - name: "end_to_end_latency_p95"
+        target: 1500ms  # p95 latency ≤ 1.5s
+        window: 15m
+        alert_threshold: 2000ms
+      - name: "error_rate"
+        target: "<1%"  # Error rate < 1%
+        window: 15m
+        alert_threshold: "2%"
+      - name: "availability"
+        target: "99.9%"  # Uptime target
+        window: 30d
+        alert_threshold: "99.5%"
+    error_budget: 0.1%  # Max 0.1% error budget consumption per day
+
+  ai_router:
+    name: "Universal AI Router"
+    slos:
+      - name: "request_latency_p95"
+        target: 2000ms
+        window: 15m
+        alert_threshold: 3000ms
+      - name: "provider_failover_time"
+        target: "<1s"
+        window: 15m
+        alert_threshold: "2s"
+      - name: "success_rate"
+        target: ">99%"
+        window: 15m
+        alert_threshold: "95%"
+
+  security_service:
+    name: "Security & Authentication"
+    slos:
+      - name: "auth_latency_p95"
+        target: 500ms
+        window: 15m
+        alert_threshold: 1000ms
+      - name: "token_verification_success_rate"
+        target: ">99.9%"
+        window: 15m
+        alert_threshold: "99%"
+
+  agent_execution:
+    name: "Agent Execution"
+    slos:
+      - name: "agent_response_time_p95"
+        target: 5000ms
+        window: 15m
+        alert_threshold: 10000ms
+      - name: "agent_success_rate"
+        target: ">95%"
+        window: 15m
+        alert_threshold: "90%"
+
+# Golden Signals (RED method: Rate, Errors, Duration)
+golden_signals:
+  - name: "request_rate"
+    metric: "http_requests_total"
+    aggregation: "rate(5m)"
+    
+  - name: "error_rate"
+    metric: "http_requests_total{status=~\"5..\"}"
+    aggregation: "rate(5m)"
+    
+  - name: "request_duration"
+    metric: "http_request_duration_seconds"
+    aggregation: "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))"
+
+# Alerting rules based on SLOs
+alerts:
+  - name: "orchestrator_latency_high"
+    condition: "histogram_quantile(0.95, rate(orchestrator_duration_seconds_bucket[15m])) > 2"
+    severity: "warning"
+    runbook: "docs/runbooks/orchestrator_latency.md"
+    
+  - name: "orchestrator_error_budget_burn"
+    condition: "slo_error_budget_consumption{service=\"orchestrator\"} > 0.1"
+    severity: "critical"
+    runbook: "docs/runbooks/error_budget.md"
+    
+  - name: "ai_router_provider_failover_failing"
+    condition: "rate(ai_router_failover_seconds[15m]) > 2"
+    severity: "warning"
+    runbook: "docs/runbooks/provider_failover.md"
+
+# Error budget consumption thresholds
+error_budget_thresholds:
+  warning: 0.05  # 5% consumed
+  critical: 0.1  # 10% consumed
+  emergency: 0.2  # 20% consumed (may trigger rollback)

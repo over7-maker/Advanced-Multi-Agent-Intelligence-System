@@ -64,14 +64,18 @@ jobs:
       - name: Bandit
         run: |
           if [ -d src ]; then bandit -r src -f json -o bandit-report.json || true; fi
-      - name: Semgrep
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: >-
-            p/security-audit
-            p/secrets
-            p/owasp-top-ten
-          generateSarif: "1"
+      - name: Semgrep Scan
+        run: |
+          pip install semgrep
+          semgrep scan --config=auto \
+            --config=p/security-audit \
+            --config=p/secrets \
+            --config=p/owasp-top-ten \
+            --sarif --output=semgrep.sarif || true
+      
+      - name: Semgrep CI
+        run: |
+          semgrep ci --sarif --output=semgrep-ci.sarif || true
       - name: Upload security artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -80,6 +84,7 @@ jobs:
             safety-report.json
             bandit-report.json
             semgrep.sarif
+            semgrep-ci.sarif
       - name: Evaluate
         id: scan-results
         run: |
