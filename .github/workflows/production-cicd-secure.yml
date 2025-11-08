@@ -55,29 +55,28 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
           cache-dependency-path: requirements-security.txt
-      - name: Cache pip packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-security.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
       - name: Install security tools
+        shell: bash
         run: |
           set -euo pipefail
+          # Check if requirements file exists
+          if [ ! -f requirements-security.txt ]; then
+            echo "❌ requirements-security.txt not found"
+            exit 1
+          fi
           # Try with hashes first, fallback if hashes not available
           # Note: This fallback is a known security trade-off until requirements-security.txt includes hashes
           set +e
-          pip install --require-hashes -r requirements-security.txt 2>&1 | tee pip-install.log
-          pip_exit_code=${PIPESTATUS[0]}
+          pip_output=$(pip install --require-hashes -r requirements-security.txt 2>&1)
+          pip_exit_code=$?
           set -euo pipefail
-          if [ $pip_exit_code -ne 0 ] && grep -q "hashes are required" pip-install.log; then
+          if [ $pip_exit_code -ne 0 ] && echo "$pip_output" | grep -qE "(Hashes are required|missing from some requirements)"; then
             echo "⚠️  Hashes not available in requirements-security.txt, installing without hash verification"
             echo "⚠️  SECURITY NOTE: Consider adding hashes to requirements-security.txt using: pip-compile --generate-hashes"
             pip install -r requirements-security.txt
           elif [ $pip_exit_code -ne 0 ]; then
             echo "❌ pip install failed with exit code $pip_exit_code"
-            cat pip-install.log
+            echo "$pip_output"
             exit $pip_exit_code
           else
             echo "✅ Installed with hash verification"
