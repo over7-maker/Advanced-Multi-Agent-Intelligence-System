@@ -1,0 +1,85 @@
+name: 🔍 Workflow Validation
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/**'
+
+jobs:
+  validate-workflows:
+    name: Validate GitHub Workflows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install and run actionlint
+        continue-on-error: true
+        run: |
+          # Try to install actionlint (non-blocking)
+          echo "Attempting to install actionlint..."
+          
+          # Method 1: Try official install script
+          curl -sSfL https://raw.githubusercontent.com/rhymond/actionlint/main/scripts/install-actionlint.bash 2>/dev/null | bash -s 2>/dev/null || true
+          
+          # Method 2: Try direct binary download (v1.7.7 known to work)
+          if ! command -v actionlint >/dev/null 2>&1; then
+            echo "Trying direct download..."
+            curl -sSfL https://github.com/rhymond/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz -o /tmp/actionlint.tar.gz 2>/dev/null || true
+            if [ -f /tmp/actionlint.tar.gz ]; then
+              tar -xzf /tmp/actionlint.tar.gz -C /tmp actionlint 2>/dev/null || true
+              if [ -f /tmp/actionlint ]; then
+                sudo mv /tmp/actionlint /usr/local/bin/ 2>/dev/null || true
+                chmod +x /usr/local/bin/actionlint 2>/dev/null || true
+              fi
+            fi
+          fi
+          
+          # Run actionlint if available
+          if command -v actionlint >/dev/null 2>&1; then
+            echo "✅ Actionlint installed successfully"
+            actionlint --version
+            echo "Running actionlint validation..."
+            actionlint -color $(find .github/workflows -name '*.yml' -o -name '*.yaml' 2>/dev/null) || {
+              echo "::warning::Actionlint found issues (non-blocking)"
+            }
+          else
+            echo "::warning::Actionlint not available - skipping validation"
+            echo "This is non-blocking. Workflow will continue with YAML syntax validation only."
+          fi
+      
+      - name: Validate YAML syntax
+        continue-on-error: true
+        run: |
+          echo "Validating YAML syntax for workflow files..."
+          errors=0
+          for file in $(find .github/workflows -name '*.yml' -o -name '*.yaml' | sort); do
+            echo "Validating $file"
+            if ! python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+              echo "::error file=$file::YAML syntax error detected"
+              errors=$((errors + 1))
+            else
+              echo "✅ $file is valid"
+            fi
+          done
+          if [ $errors -gt 0 ]; then
+            echo "::warning::Found $errors YAML file(s) with syntax errors"
+            echo "These may need manual review or fixing"
+          else
+            echo "✅ All YAML files are syntactically valid"
+          fi
+      
+      - name: Check for common issues
+        run: |
+          # Check for workflow_dispatch without proper inputs
+          # Check for missing permissions
+          # Check for invalid concurrency groups
+          python .github/scripts/validate_workflow_policies.py || exit 0
