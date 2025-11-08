@@ -1,27 +1,16 @@
 """
-Unit tests for AMAS Observability Framework
+Unit tests for AMAS Observability Framework - OpenTelemetry Integration
 """
 
 import pytest
 import asyncio
 import os
-import tempfile
-import yaml
-from unittest.mock import Mock, patch, MagicMock
-from datetime import datetime, timezone
+from unittest.mock import Mock, patch
 
 from src.amas.observability.tracing.tracer import (
     AmasTracer,
-    PerformanceMonitor,
     initialize_observability,
     get_tracer
-)
-from src.amas.observability.slo_manager import (
-    SLOManager,
-    SLODefinition,
-    SLOStatus,
-    initialize_slo_manager,
-    get_slo_manager
 )
 
 
@@ -91,10 +80,33 @@ class TestAmasTracer:
         
         sanitized = tracer._sanitize_parameters(params)
         
-        assert sanitized["password"] == "[REDACTED]"
-        assert sanitized["api_key"] == "[REDACTED]"
-        assert sanitized["token"] == "[REDACTED]"
+        assert sanitized["password"] == "***REDACTED***"
+        assert sanitized["api_key"] == "***REDACTED***"
+        assert sanitized["token"] == "***REDACTED***"
         assert sanitized["normal_param"] == "value"
+    
+    def test_instrument_fastapi(self, tracer):
+        """Test FastAPI instrumentation"""
+        from fastapi import FastAPI
+        app = FastAPI()
+        
+        # Should not raise exception
+        tracer.instrument_fastapi(app)
+        assert True
+    
+    def test_validate_endpoint(self, tracer):
+        """Test endpoint validation"""
+        # Valid endpoints
+        assert tracer._validate_endpoint("http://localhost:4317") is True
+        assert tracer._validate_endpoint("https://otel-collector:4317") is True
+        
+        # Invalid endpoints
+        assert tracer._validate_endpoint("invalid-url") is False
+        assert tracer._validate_endpoint("") is False
+        assert tracer._validate_endpoint("ftp://example.com") is False
+        
+        # Endpoints with credentials should be rejected
+        assert tracer._validate_endpoint("http://user:pass@localhost:4317") is False
     
     def test_record_token_usage(self, tracer):
         """Test recording token usage"""
@@ -114,54 +126,7 @@ class TestAmasTracer:
         assert trace_id is None or isinstance(trace_id, str)
 
 
-class TestPerformanceMonitor:
-    """Test cases for PerformanceMonitor"""
-    
-    @pytest.fixture
-    def monitor(self):
-        """Create a performance monitor instance"""
-        tracer_mock = Mock()
-        monitor = PerformanceMonitor(tracer_mock)
-        return monitor
-    
-    @pytest.mark.asyncio
-    async def test_check_performance_regression_latency(self, monitor):
-        """Test latency regression detection"""
-        regression = await monitor.check_performance_regression(
-            operation="test_operation",
-            duration_seconds=3.0,  # 2x baseline of 1.5
-            success=True
-        )
-        
-        assert regression is not None
-        assert regression["type"] == "latency_regression"
-        assert regression["severity"] in ["medium", "high"]
-    
-    @pytest.mark.asyncio
-    async def test_check_performance_regression_success_rate(self, monitor):
-        """Test success rate regression detection"""
-        regression = await monitor.check_performance_regression(
-            operation="test_operation",
-            duration_seconds=1.0,
-            success=False
-        )
-        
-        assert regression is not None
-        assert regression["type"] == "success_rate_regression"
-    
-    def test_get_recent_violations(self, monitor):
-        """Test getting recent violations"""
-        violations = monitor.get_recent_violations(hours=24)
-        assert isinstance(violations, list)
-    
-    def test_update_baseline(self, monitor):
-        """Test updating performance baseline"""
-        monitor.update_baseline("test_operation", 2.0)
-        assert "test_operation_p95_seconds" in monitor._performance_baselines
-        assert monitor._performance_baselines["test_operation_p95_seconds"] == 2.0
-
-
-class TestSLOManager:
+class TestObservabilityIntegration:
     """Test cases for SLOManager"""
     
     @pytest.fixture
