@@ -6,6 +6,37 @@
     "refresh": "30s",
     "schemaVersion": 38,
     "version": 1,
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "enable": true,
+          "expr": "changes(amas_slo_violations_total[5m]) > 0",
+          "iconColor": "red",
+          "name": "SLO Violations",
+          "showIn": 0,
+          "step": "5m",
+          "titleFormat": "SLO Violation",
+          "type": "tags",
+          "useValueForTime": false
+        }
+      ]
+    },
     "panels": [
       {
         "id": 1,
@@ -146,6 +177,36 @@
     "refresh": "1m",
     "schemaVersion": 38,
     "version": 1,
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "enable": true,
+          "expr": "amas_slo_error_budget_remaining_percent < 10",
+          "iconColor": "red",
+          "name": "Error Budget Critical",
+          "showIn": 0,
+          "step": "1m",
+          "titleFormat": "Error Budget < 10%",
+          "type": "tags"
+        }
+      ]
+    },
     "panels": [
       {
         "id": 1,
@@ -244,6 +305,36 @@
     "refresh": "30s",
     "schemaVersion": 38,
     "version": 1,
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "enable": true,
+          "expr": "(process_resident_memory_bytes / process_virtual_memory_max_bytes) * 100 > 80",
+          "iconColor": "orange",
+          "name": "High Memory Usage",
+          "showIn": 0,
+          "step": "1m",
+          "titleFormat": "Memory > 80%",
+          "type": "tags"
+        }
+      ]
+    },
     "panels": [
       {
         "id": 1,
