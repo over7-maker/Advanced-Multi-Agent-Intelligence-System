@@ -24,6 +24,19 @@ from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
+
+# Database instrumentation (optional, only if packages are available)
+try:
+    from opentelemetry.instrumentation.sqlalchemy import SQLAlchemyInstrumentor
+    SQLALCHEMY_INSTRUMENTATION_AVAILABLE = True
+except ImportError:
+    SQLALCHEMY_INSTRUMENTATION_AVAILABLE = False
+
+try:
+    from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
+    PSYCOPG2_INSTRUMENTATION_AVAILABLE = True
+except ImportError:
+    PSYCOPG2_INSTRUMENTATION_AVAILABLE = False
 from opentelemetry.trace import Status, StatusCode
 from opentelemetry.semconv.trace import SpanAttributes
 
@@ -121,6 +134,21 @@ class AmasTracer:
             
             # Instrument logging
             LoggingInstrumentor().instrument(set_logging_format=True)
+            
+            # Instrument database (if available)
+            if SQLALCHEMY_INSTRUMENTATION_AVAILABLE:
+                try:
+                    SQLAlchemyInstrumentor().instrument()
+                    logger.info("SQLAlchemy instrumentation enabled")
+                except Exception as e:
+                    logger.debug(f"SQLAlchemy instrumentation not available: {e}")
+            
+            if PSYCOPG2_INSTRUMENTATION_AVAILABLE:
+                try:
+                    Psycopg2Instrumentor().instrument()
+                    logger.info("Psycopg2 instrumentation enabled")
+                except Exception as e:
+                    logger.debug(f"Psycopg2 instrumentation not available: {e}")
             
             logger.info("Automatic instrumentation configured")
             
