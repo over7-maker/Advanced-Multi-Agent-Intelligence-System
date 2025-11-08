@@ -21,6 +21,18 @@ from .research_agent_schema import (
     NEWS_RESEARCH_AGENT,
 )
 
+from .analysis_agent_schema import (
+    AnalysisAgentContract,
+    DATA_ANALYSIS_AGENT,
+    STATISTICAL_ANALYSIS_AGENT,
+)
+
+from .synthesis_agent_schema import (
+    SynthesisAgentContract,
+    CONTENT_SYNTHESIS_AGENT,
+    DOCUMENT_GENERATION_AGENT,
+)
+
 __all__ = [
     "AgentContract",
     "AgentRole",
@@ -33,4 +45,10 @@ __all__ = [
     "WEB_RESEARCH_AGENT",
     "ACADEMIC_RESEARCH_AGENT",
     "NEWS_RESEARCH_AGENT",
+    "AnalysisAgentContract",
+    "DATA_ANALYSIS_AGENT",
+    "STATISTICAL_ANALYSIS_AGENT",
+    "SynthesisAgentContract",
+    "CONTENT_SYNTHESIS_AGENT",
+    "DOCUMENT_GENERATION_AGENT",
 ]
