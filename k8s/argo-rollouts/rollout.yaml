@@ -1,6 +1,9 @@
 # Argo Rollouts Configuration for AMAS Progressive Deployment
 # Enables canary deployments with automatic analysis and rollback
-
+#
+# NOTE: Requires AnalysisTemplate resources 'success-rate', 'latency-p95', and 'error-budget'
+# Ensure they are applied before this Rollout (see analysis-templates.yaml)
+#
 apiVersion: argoproj.io/v1alpha1
 kind: Rollout
 metadata:
@@ -17,18 +20,6 @@ spec:
     canary:
       maxSurge: "25%"
       maxUnavailable: 0
-      
-      # Analysis configuration
-      analysis:
-        templates:
-        - templateName: success-rate
-        - templateName: latency-p95
-        - templateName: error-budget
-        args:
-        - name: service-name
-          value: amas-orchestrator
-        - name: namespace
-          value: amas-prod
       
       # Canary steps with progressive traffic shifting
       steps:
@@ -49,6 +40,10 @@ spec:
             value: amas-orchestrator
           - name: namespace
             value: amas-prod
+          analysisRunMetadata:
+            labels:
+              part-of: amas-orchestrator-rollout
+              step: "25-percent"
       
       # Major expansion - 50% traffic with comprehensive analysis
       - setWeight: 50
@@ -64,6 +59,10 @@ spec:
             value: amas-orchestrator
           - name: namespace
             value: amas-prod
+          analysisRunMetadata:
+            labels:
+              part-of: amas-orchestrator-rollout
+              step: "50-percent"
       
       # Near full deployment - 75% traffic
       - setWeight: 75
@@ -73,13 +72,37 @@ spec:
           templates:
           - templateName: success-rate
           - templateName: latency-p95
+          - templateName: error-budget
           args:
           - name: service-name
             value: amas-orchestrator
           - name: namespace
             value: amas-prod
+          # Rollback on analysis failure
+          analysisRunMetadata:
+            labels:
+              part-of: amas-orchestrator-rollout
+              step: "75-percent"
       
-      # Full deployment
+      # Final validation before full deployment
+      - pause:
+          duration: 2m
+      - analysis:
+          templates:
+          - templateName: success-rate
+          - templateName: latency-p95
+          - templateName: error-budget
+          args:
+          - name: service-name
+            value: amas-orchestrator
+          - name: namespace
+            value: amas-prod
+          analysisRunMetadata:
+            labels:
+              part-of: amas-orchestrator-rollout
+              step: "final-validation"
+      
+      # Full deployment to 100%
       - setWeight: 100
       
       # Traffic routing configuration
