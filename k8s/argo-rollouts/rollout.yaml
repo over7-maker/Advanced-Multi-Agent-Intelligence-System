@@ -76,6 +76,8 @@ spec:
           args:
           - name: service-name
             value: amas-orchestrator
+          - name: namespace
+            value: amas-prod
       
       # Full deployment
       - setWeight: 100
@@ -83,7 +85,7 @@ spec:
       # Traffic routing configuration
       trafficRouting:
         nginx:
-          stableIngress: amas-orchestrator-stable
+          stableIngress: amas-orchestrator-ingress
           annotationPrefix: nginx.ingress.kubernetes.io
           additionalIngressAnnotations:
             canary-by-header: X-Canary
