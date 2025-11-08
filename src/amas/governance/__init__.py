@@ -20,6 +20,7 @@ from .data_classifier import (
     get_data_classifier,
     get_compliance_reporter,
     classify_input_data,
+    safe_log_pii,
 )
 
 from .agent_contracts import (
@@ -43,6 +44,7 @@ __all__ = [
     "get_data_classifier",
     "get_compliance_reporter",
     "classify_input_data",
+    "safe_log_pii",
     # Agent Contracts
     "AgentRoleContract",
     "ToolSchema",

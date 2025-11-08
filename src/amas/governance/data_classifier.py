@@ -3,6 +3,22 @@ Data Classification and PII Detection for AMAS
 
 Provides automatic data classification, PII detection,
 and compliance-ready data governance capabilities.
+
+SECURITY WARNING:
+================
+This module handles sensitive PII data. When logging or serializing:
+- NEVER log original_value fields from PIIDetection objects
+- NEVER include raw PII in log messages
+- ALWAYS use redacted_value or value_hash for tracking
+- ALWAYS use safe_log_pii() helper for any PII-related logging
+
+Example:
+    # ❌ WRONG - Never do this:
+    logger.info(f"Found email: {detection.original_value}")
+    
+    # ✅ CORRECT - Use redacted value:
+    logger.info(f"Found email: {detection.redacted_value}")
+    logger.info(f"PII hash: {detection.value_hash}")
 """
 
 import re
@@ -12,6 +28,7 @@ import hashlib
 import time
 import statistics
 import asyncio
+import secrets
 from typing import Dict, List, Set, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -19,6 +36,26 @@ from datetime import datetime, timezone, timedelta
 import uuid
 
 logger = logging.getLogger(__name__)
+
+def safe_log_pii(detection: 'PIIDetection', message: str = "") -> str:
+    """
+    Create a safe log message that never includes raw PII.
+    
+    Args:
+        detection: PIIDetection object
+        message: Optional message prefix
+        
+    Returns:
+        Safe log string with only redacted_value and hash
+    """
+    safe_info = f"PII type: {detection.pii_type.value}, "
+    safe_info += f"redacted: {detection.redacted_value}, "
+    safe_info += f"hash: {detection.value_hash}, "
+    safe_info += f"confidence: {detection.confidence:.2f}"
+    
+    if message:
+        return f"{message} - {safe_info}"
+    return safe_info
 
 class DataClassification(str, Enum):
     PUBLIC = "public"
@@ -44,18 +81,35 @@ class PIIType(str, Enum):
 
 @dataclass
 class PIIDetection:
-    """Result of PII detection in data"""
+    """Result of PII detection in data
+    
+    Security Note: Never log original_value or include it in reports.
+    Always use redacted_value or value_hash for tracking purposes.
+    """
     pii_type: PIIType
     confidence: float  # 0.0 to 1.0
     location: str      # Where in the data
-    value_hash: str    # Hashed value for tracking
+    value_hash: str    # Hashed value for tracking (SHA-256, truncated)
     redacted_value: str
     original_value: str  # Original detected value for redaction
     context: Optional[str] = None
+    
+    def __post_init__(self):
+        """Validate dataclass fields"""
+        if not 0.0 <= self.confidence <= 1.0:
+            raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
+        if not self.value_hash or len(self.value_hash) < 8:
+            raise ValueError("value_hash must be at least 8 characters")
+        if not self.redacted_value:
+            raise ValueError("redacted_value cannot be empty")
 
 @dataclass
 class ClassificationResult:
-    """Result of data classification analysis"""
+    """Result of data classification analysis
+    
+    Security Note: pii_detected contains PIIDetection objects with original_value.
+    Never serialize or log original_value fields. Use redacted_value or value_hash.
+    """
     data_id: str
     classification: DataClassification
     confidence: float
@@ -74,6 +128,17 @@ class ClassificationResult:
     classified_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     classifier_version: str = "1.0.0"
     processing_time_ms: float = 0.0
+    
+    def __post_init__(self):
+        """Validate dataclass fields"""
+        if not 0.0 <= self.confidence <= 1.0:
+            raise ValueError(f"Confidence must be between 0.0 and 1.0, got {self.confidence}")
+        if self.pii_count < 0:
+            raise ValueError(f"pii_count cannot be negative, got {self.pii_count}")
+        if not 0.0 <= self.highest_pii_confidence <= 1.0:
+            raise ValueError(f"highest_pii_confidence must be between 0.0 and 1.0, got {self.highest_pii_confidence}")
+        if self.processing_time_ms < 0:
+            raise ValueError(f"processing_time_ms cannot be negative, got {self.processing_time_ms}")
 
 class PIIDetector:
     """Advanced PII detection with configurable patterns and ML-ready"""
@@ -174,7 +239,9 @@ class PIIDetector:
                     # Create redacted value
                     redacted_value = self._create_redacted_value(pii_type, matched_value)
                     
-                    # Generate hash for tracking
+                    # Generate secure hash for tracking (SHA-256, truncated for storage efficiency)
+                    # Note: This is a truncated hash for tracking only, not for cryptographic purposes
+                    # For production use with salt, consider: hashlib.sha256((salt + matched_value).encode()).hexdigest()
                     value_hash = hashlib.sha256(matched_value.encode()).hexdigest()[:16]
                     
                     detection = PIIDetection(
@@ -373,6 +440,7 @@ class DataClassifier:
             **compliance_flags
         )
         
+        # Safe logging - never log raw PII, only counts and classifications
         logger.debug(f"Data classified as {final_classification.value} "
                     f"(confidence: {overall_confidence:.2f}, PII items: {len(pii_detections)})")
         
