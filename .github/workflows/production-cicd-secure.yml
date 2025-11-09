@@ -7,16 +7,38 @@ name: 🚀 AMAS Secure Production CI/CD Pipeline
 #   if critical vulnerabilities are found.
 #
 # Key Features:
-#   - Dependency vulnerability scanning (Safety)
-#   - Static code analysis (Bandit)
-#   - SAST scanning (Semgrep)
-#   - Hash-verified package installation
-#   - Comprehensive audit trail and reporting
+#   - Dependency vulnerability scanning (Safety): Scans Python dependencies against known CVE database
+#   - Static code analysis (Bandit): Identifies common security issues in Python source code
+#   - SAST scanning (Semgrep): Advanced pattern matching for security vulnerabilities
+#   - Hash-verified package installation: Ensures package integrity using cryptographic hashes
+#   - Comprehensive audit trail and reporting: Detailed reports with artifact uploads
+#
+# Hash Verification Implementation:
+#   The workflow attempts to install packages with hash verification using pip's --require-hashes flag.
+#   Hash format: Packages in requirements-security.txt should include hashes in the format:
+#     package==version --hash=sha256:hash_value
+#   Process:
+#     1. First attempts: pip install --require-hashes -r requirements-security.txt
+#     2. If hashes missing: Falls back to installation without hashes (with security warning)
+#     3. Hash storage: Hashes are stored in requirements-security.txt file
+#     4. Hash generation: Use 'pip-compile --generate-hashes requirements-security.in' to generate
+#   Security benefits:
+#     - Prevents package tampering during download (MITM attacks)
+#     - Ensures correct package is installed (dependency confusion prevention)
+#     - Validates package integrity (detects corruption or modification)
+#
+# Performance Optimizations:
+#   - Pip dependency caching: Uses GitHub Actions cache for pip packages (cache: 'pip')
+#   - Parallel scanning: Safety, Bandit, and Semgrep run independently
+#   - Timeout limits: Each scan has timeout to prevent hanging (Safety: 5min, Bandit: 10min)
+#   - Artifact retention: Security reports retained for 30 days for audit purposes
+#   - Concurrency control: Prevents duplicate scans from running simultaneously
 #
 # Expected Outcomes:
-#   - Security reports uploaded as artifacts
-#   - Job fails if critical vulnerabilities are detected
-#   - Detailed GitHub job summary with scan results
+#   - Security reports uploaded as artifacts (safety-report.json, bandit-report.json, semgrep.sarif)
+#   - Job fails if critical vulnerabilities are detected (enforces security gates)
+#   - Detailed GitHub job summary with scan results (visible in Actions UI)
+#   - SARIF uploads for GitHub Security tab integration (Semgrep results)
 
 # Least-privilege defaults; elevate per job only when needed
 permissions:
