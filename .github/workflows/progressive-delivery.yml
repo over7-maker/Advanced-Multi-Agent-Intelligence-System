@@ -4,8 +4,8 @@ name: Progressive Delivery Pipeline
 # WORKFLOW TRIGGERS
 # =============================================================================
 # This workflow runs on:
-# - Pushes to main and feature/progressive-delivery-pipeline branches
-# - Pull requests targeting main or feature/progressive-delivery-pipeline
+# - Pushes to main branch only (production safety - no feature branch pushes)
+# - Pull requests targeting main or feature/progressive-delivery-pipeline (for testing)
 # - Manual workflow dispatch with environment and strategy selection
 # =============================================================================
 on:
@@ -32,12 +32,12 @@ on:
           - canary
           - blue-green
       image_name:
-        description: 'Container image name (optional)'
+        description: 'Container image name (optional, 1-255 chars, alphanumeric with hyphens/dots/underscores)'
         required: false
         default: 'amas-orchestrator'
         type: string
       docker_registry:
-        description: 'Docker registry (optional)'
+        description: 'Docker registry hostname (optional, e.g., ghcr.io or registry.example.com:5000)'
         required: false
         default: 'ghcr.io'
         type: string
@@ -63,9 +63,13 @@ permissions:
 # =============================================================================
 env:
   PYTHON_VERSION: '3.11'
+  # Use inputs if provided, otherwise defaults (can be overridden per job if needed)
   DOCKER_REGISTRY: ${{ github.event.inputs.docker_registry || 'ghcr.io' }}
   IMAGE_NAME: ${{ github.event.inputs.image_name || 'amas-orchestrator' }}
   REGISTRY_USERNAME: ${{ github.repository_owner }}
+  # Performance: Enable Docker BuildKit for faster builds
+  DOCKER_BUILDKIT: 1
+  BUILDKIT_INLINE_CACHE: 1
 
 jobs:
   # =============================================================================
@@ -112,21 +116,28 @@ jobs:
     
     - name: ✅ Validate optional inputs
       run: |
-        # Validate image name if provided
+        # Validate image name if provided (security: prevent injection attacks)
         IMAGE_NAME="${{ github.event.inputs.image_name }}"
         if [[ -n "$IMAGE_NAME" ]]; then
-          if [[ ! "$IMAGE_NAME" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$ ]]; then
-            echo "⚠️  Image name '$IMAGE_NAME' may not be valid for container registry"
-            echo "Using provided value anyway"
+          # Allow only alphanumeric, hyphens, dots, underscores, and slashes (for namespaces)
+          if [[ ! "$IMAGE_NAME" =~ ^[a-z0-9]([-._/a-z0-9]*[a-z0-9])?$ ]] || [[ ${#IMAGE_NAME} -gt 255 ]] || [[ ${#IMAGE_NAME} -lt 1 ]]; then
+            echo "❌ Invalid image name: $IMAGE_NAME"
+            echo "Image name must be 1-255 characters, alphanumeric with hyphens, dots, underscores, or slashes"
+            exit 1
           fi
+          echo "✅ Image name format valid: $IMAGE_NAME"
         fi
         
-        # Validate registry if provided
+        # Validate registry if provided (security: prevent injection attacks)
         REGISTRY="${{ github.event.inputs.docker_registry }}"
         if [[ -n "$REGISTRY" ]]; then
-          if [[ ! "$REGISTRY" =~ ^https?:// ]]; then
-            echo "✅ Registry format valid: $REGISTRY"
+          # Allow registry format: hostname or hostname:port (no protocol needed)
+          if [[ ! "$REGISTRY" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*(:[0-9]+)?$ ]] || [[ ${#REGISTRY} -gt 253 ]] || [[ ${#REGISTRY} -lt 1 ]]; then
+            echo "❌ Invalid registry format: $REGISTRY"
+            echo "Registry must be 1-253 characters, valid hostname format (e.g., ghcr.io, registry.example.com:5000)"
+            exit 1
           fi
+          echo "✅ Registry format valid: $REGISTRY"
         fi
     
     - name: ✅ All inputs validated
@@ -204,20 +215,10 @@ jobs:
         fi
     
     # ========================================================================
-    # STEP 1B: Cache Docker build layers (performance optimization)
-    # ========================================================================
-    # Uses GitHub Actions cache to speed up Docker builds
-    # ========================================================================
-    - name: 📦 Cache Docker build layers
-      uses: actions/cache@v4
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-buildx-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-buildx-
-    
-    # ========================================================================
     # STEP 2: Set up Docker Buildx for multi-platform builds
+    # ========================================================================
+    # Note: Docker layer caching is handled by build-push-action using GHA cache
+    # Local cache removed to avoid large cache downloads (4.9GB+ issue)
     # ========================================================================
     - name: 🐳 Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -263,13 +264,9 @@ jobs:
           ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
         # Use GitHub Actions cache for faster builds
-        # Also use local cache if available
-        cache-from: |
-          type=gha
-          type=local,src=/tmp/.buildx-cache
-        cache-to: |
-          type=gha,mode=max
-          type=local,dest=/tmp/.buildx-cache,mode=max
+        # Note: Only using GHA cache to avoid large local cache downloads
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
         # Security: Include provenance and SBOM
         provenance: true
         sbom: true
@@ -430,9 +427,16 @@ jobs:
         export NAMESPACE=amas-staging
         export ROLLOUT_NAME=amas-orchestrator
         export IMAGE_TAG=${{ github.sha }}
-        export DOCKER_REGISTRY=${{ env.DOCKER_REGISTRY }}
-        export IMAGE_NAME=${{ env.IMAGE_NAME }}
+        # Security: Use sanitized values from job env (validated in validate-inputs job)
+        export DOCKER_REGISTRY="${SANITIZED_REGISTRY}"
+        export IMAGE_NAME="${SANITIZED_IMAGE_NAME}"
         export FULL_IMAGE="${DOCKER_REGISTRY}/${{ github.repository_owner }}/${IMAGE_NAME}:${IMAGE_TAG}"
+        
+        # Security: Validate image name format before use (defense in depth)
+        if [[ ! "$IMAGE_NAME" =~ ^[a-z0-9]([-._/a-z0-9]*[a-z0-9])?$ ]]; then
+          echo "❌ Invalid image name format detected: $IMAGE_NAME"
+          exit 1
+        fi
         
         # Security: Only log image name, never credentials
         echo "Deploying image: $FULL_IMAGE"
@@ -612,7 +616,9 @@ jobs:
       name: production
       url: https://amas.example.com
       # Production environment requires approval (configure in GitHub Settings)
-      # This ensures manual production deployments need explicit approval
+      # Add required reviewers in: Settings > Environments > production
+      # Example configuration:
+      #   required-reviewers: [devops-team, security-team]
     timeout-minutes: 20  # Blue-green is faster (instant switch)
     permissions:
       contents: read
