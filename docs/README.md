@@ -45,6 +45,7 @@ Welcome to the **Advanced Multi-Agent Intelligence System (AMAS)** documentation
 | **[🔌 AI Providers](#-ai-providers)** | 15+ providers with bulletproof validation | **20KB** | Developers | ✅ **Complete** |
 | **[🔒 Security & Compliance](#-security--compliance)** | Enterprise-grade security (Phase 2) | **34KB** | Security Teams | ✅ **Complete** |
 | **[📊 Observability](#-observability)** | Professional monitoring stack | **25KB** | DevOps Teams | ✅ **Complete** |
+| **[⚡ Performance & Scaling](#-performance--scaling)** | Intelligent autoscaling & optimization | **30KB** | DevOps Teams | ✅ **Complete** |
 | **[👤 User Documentation](#-user-documentation)** | Complete user guides | **30KB** | End Users | ✅ **Complete** |
 | **[👨‍💻 Developer Documentation](#-developer-documentation)** | Technical implementation | **35KB** | Developers | ✅ **Complete** |
 | **[🔌 API Reference](#-api-reference)** | Complete API documentation | **30KB** | Developers | ✅ **Complete** |
@@ -287,11 +288,12 @@ Complete guides for production deployment and operations:
 | **🔌 AI Providers** | 1 document | **20KB** | 30+ | 15+ |
 | **🔒 Security** | 3 documents | **34KB** | 20+ | 15+ |
 | **📊 Observability** | 1 document | **25KB** | 25+ | 10+ |
+| **⚡ Performance & Scaling** | 3 documents | **30KB** | 20+ | 15+ |
 | **👤 User Guides** | 5 documents | **30KB** | 15+ | 5+ |
 | **👨‍💻 Developer** | 5 documents | **35KB** | 40+ | 20+ |
 | **🔌 API Reference** | 4 documents | **30KB** | 35+ | 10+ |
 | **🚀 Deployment** | 4 documents | **25KB** | 20+ | 15+ |
-| **📚 Total** | **35 documents** | **262KB** | **260+** | **120+** |
+| **📚 Total** | **38 documents** | **292KB** | **280+** | **135+** |
 
 </div>
 
