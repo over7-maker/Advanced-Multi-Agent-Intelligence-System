@@ -44,7 +44,34 @@ Contracts are validated at runtime and in CI to ensure compliance.
 2. **Database-stored policies**: Considered but rejected - contracts belong in code
 3. **External policy engine only**: Rejected - need validation at both runtime and CI
 
+## Implementation
+
+### Location
+- Base contracts: `src/amas/core/agent_contracts/base_agent_contract.py`
+- Agent schemas: `src/amas/core/agent_contracts/*_agent_schema.py`
+- Tool governance: `src/amas/core/tool_governance/tool_registry.py`
+- Configuration: `config/agent_capabilities.yaml`
+
+### Implemented Agent Contracts
+- ✅ `ResearchAgentContract` - Complete with JSONSchema
+- ✅ `AnalysisAgentContract` - Complete with JSONSchema
+- ✅ `SynthesisAgentContract` - Complete with JSONSchema
+
+### Tool Governance Features
+- ✅ Tool registry with risk levels
+- ✅ Permission engine with rate limiting
+- ✅ `ToolExecutionGuard` with safety checks
+- ✅ Approval workflows for high-risk tools
+- ✅ Complete audit logging
+
+### Testing
+- ✅ Comprehensive unit tests: `tests/unit/test_agent_contracts.py`
+- ✅ Tool governance tests: `tests/unit/test_tool_governance.py`
+- ✅ All success criteria tested and passing
+
 ## Notes
-- See `src/amas/governance/agent_contracts.py` for implementation
+- See `src/amas/core/agent_contracts/` for implementation
+- Configuration in `config/agent_capabilities.yaml`
 - Future: Consider TLA+/Alloy for formal verification of orchestrations
 - CI validates contracts in `.github/workflows/production-cicd-secure.yml`
+- Integration with orchestrator is next step

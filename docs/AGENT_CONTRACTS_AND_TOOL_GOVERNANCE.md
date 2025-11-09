@@ -23,13 +23,24 @@ Key classes:
 - `AgentExecution`: Record of agent execution with metrics
 - `ContractViolationError`: Exception for contract violations
 
-#### Research Agent Schema (`research_agent_schema.py`)
+#### Agent Schemas
 
-Concrete implementation for research agents with:
+Concrete implementations for all agent roles with complete JSONSchema validation:
 
+**Research Agent Schema** (`research_agent_schema.py`):
 - **Input Schema**: Validates research queries, scope, filters, time ranges
 - **Output Schema**: Validates research summaries, findings, sources, confidence assessments
 - **Pre-configured Instances**: `WEB_RESEARCH_AGENT`, `ACADEMIC_RESEARCH_AGENT`, `NEWS_RESEARCH_AGENT`
+
+**Analysis Agent Schema** (`analysis_agent_schema.py`):
+- **Input Schema**: Validates data sources, analysis types, statistical tests, confidence levels
+- **Output Schema**: Validates analysis summaries, insights, statistical results, data quality assessments
+- **Pre-configured Instances**: `DATA_ANALYSIS_AGENT`, `STATISTICAL_ANALYSIS_AGENT`
+
+**Synthesis Agent Schema** (`synthesis_agent_schema.py`):
+- **Input Schema**: Validates content sources, synthesis objectives, output types, citation styles
+- **Output Schema**: Validates synthesized content, structure, sources, citations, quality metrics
+- **Pre-configured Instances**: `CONTENT_SYNTHESIS_AGENT`, `DOCUMENT_GENERATION_AGENT`
 
 ### 2. Tool Governance (`src/amas/core/tool_governance/`)
 
@@ -85,8 +96,9 @@ agents:
 
 ## Usage
 
-### Creating an Agent Contract
+### Creating Agent Contracts
 
+**Research Agent:**
 ```python
 from amas.core.agent_contracts import ResearchAgentContract, AgentRole, ToolCapability
 
@@ -107,6 +119,41 @@ is_valid, error = contract.validate_output({
     "research_summary": "...",
     "key_findings": [...],
     "sources": [...]
+})
+```
+
+**Analysis Agent:**
+```python
+from amas.core.agent_contracts import AnalysisAgentContract, AgentRole, ToolCapability
+
+contract = AnalysisAgentContract(
+    agent_id="my_analysis_agent",
+    role=AgentRole.ANALYSIS,
+    allowed_tools=[ToolCapability.FILE_READ, ToolCapability.DATA_ANALYSIS]
+)
+
+# Validate input
+is_valid, error = contract.validate_input({
+    "data_source": "data/results.csv",
+    "analysis_type": "descriptive",
+    "variables": ["column1", "column2"]
+})
+```
+
+**Synthesis Agent:**
+```python
+from amas.core.agent_contracts import SynthesisAgentContract, AgentRole, ToolCapability
+
+contract = SynthesisAgentContract(
+    agent_id="my_synthesis_agent",
+    role=AgentRole.SYNTHESIS,
+    allowed_tools=[ToolCapability.FILE_READ, ToolCapability.DOCUMENT_GENERATION]
+)
+
+# Validate input
+is_valid, error = contract.validate_input({
+    "content_sources": [{"source_type": "file", "source_path": "data/sources.txt"}],
+    "synthesis_objective": "Create comprehensive report"
 })
 ```
 
@@ -223,13 +270,24 @@ Defines per-agent policies:
 
 Tool definitions are created automatically with defaults, or can be loaded from `config/tool_definitions.yaml`.
 
-## Next Steps
+## Implementation Status
 
+✅ **Completed:**
+- Base agent contract system with JSONSchema validation
+- Research agent schema with complete input/output schemas
+- Analysis agent schema with complete input/output schemas
+- Synthesis agent schema with complete input/output schemas
+- Tool governance system with permissions, rate limiting, and approval workflows
+- Comprehensive YAML configuration for all agents
+- Complete test suite covering all success criteria
+- Security features (path restrictions, audit logging, PII detection)
+
+📋 **Next Steps:**
 1. **Integrate with Orchestrator**: Wire contracts into orchestrator validation path
-2. **Add More Agent Types**: Create schemas for analysis and synthesis agents
-3. **Approval UI**: Build UI for human approval of high-risk tool usage
-4. **Analytics Dashboard**: Build dashboard for usage statistics and monitoring
-5. **Integration Tests**: Add end-to-end integration tests with real agents
+2. **Approval UI**: Build UI for human approval of high-risk tool usage
+3. **Analytics Dashboard**: Build dashboard for usage statistics and monitoring
+4. **Integration Tests**: Add end-to-end integration tests with real agents
+5. **Additional Agent Schemas**: Create schemas for orchestrator, communication, and validation agents
 
 ## Architecture
 
@@ -247,6 +305,7 @@ Tool definitions are created automatically with defaults, or can be loaded from 
 │  │  ResearchAgentContract        │  │
 │  │  AnalysisAgentContract        │  │
 │  │  SynthesisAgentContract       │  │
+│  │  (All with JSONSchema)        │  │
 │  └───────────────────────────────┘  │
 └─────────────────────────────────────┘
                   ↓
