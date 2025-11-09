@@ -1,10 +1,36 @@
 name: Progressive Delivery Pipeline
 
 # =============================================================================
+# PROGRESSIVE DELIVERY PIPELINE WORKFLOW
+# =============================================================================
+# Purpose: Implements safe, automated deployments with canary releases,
+#          SLO-based deployment gates, automatic rollback, and zero-downtime
+#          delivery capabilities.
+#
+# Features:
+#   - Canary Deployments: Progressive traffic shifting (10%→25%→50%→75%→100%)
+#   - Automatic Rollback: SLO violations trigger immediate rollback within 2 minutes
+#   - Deployment Gates: Health checks and SLO validation prevent bad deployments
+#   - Blue-Green Capability: Instant traffic switching for emergency scenarios
+#   - Zero Downtime: No service interruption during deployments
+#
+# Security:
+#   - Workflow-level permissions follow principle of least privilege
+#   - Secrets defined at job-level (not globally)
+#   - Input validation prevents injection attacks
+#   - Production deployments require environment approval
+#
+# Performance:
+#   - Docker layer caching via GitHub Actions cache
+#   - Conditional job execution (only selected strategy runs)
+#   - BuildKit optimizations enabled
+#
+# =============================================================================
 # WORKFLOW TRIGGERS
 # =============================================================================
 # This workflow runs on:
 # - Pushes to main branch only (production safety - no feature branch pushes)
+#   Note: Ensure main branch has branch protection rules enabled
 # - Pull requests targeting main or feature/progressive-delivery-pipeline (for testing)
 # - Manual workflow dispatch with environment and strategy selection
 # =============================================================================
@@ -47,12 +73,13 @@ on:
 # =============================================================================
 # Minimal permissions following principle of least privilege
 # Individual jobs can override if needed
+# Security: Explicitly set permissions to minimum required
 # =============================================================================
 permissions:
-  contents: read      # Read repository contents
+  contents: read      # Read repository contents (for checkout)
   packages: write     # Push container images to GHCR
-  security-events: write  # Upload security scan results
-  actions: read       # Read workflow status
+  security-events: write  # Upload security scan results (SARIF)
+  actions: read       # Read workflow status (for job dependencies)
 
 # =============================================================================
 # GLOBAL ENVIRONMENT VARIABLES (Non-sensitive)
@@ -71,11 +98,26 @@ env:
   DOCKER_BUILDKIT: 1
   BUILDKIT_INLINE_CACHE: 1
 
+# =============================================================================
+# JOBS DEFINITION
+# =============================================================================
+# The workflow is organized into phases:
+#   Phase 0: Input Validation (workflow_dispatch only)
+#   Phase 1: Build & Security Scan
+#   Phase 2: Staging Deployment
+#   Phase 3: Production Canary Deployment
+#   Phase 3B: Production Blue-Green Deployment
+#   Phase 4: Emergency Rollback
+#   Phase 5: Failure Notifications
+# =============================================================================
+
 jobs:
   # =============================================================================
   # PHASE 0: INPUT VALIDATION (for workflow_dispatch)
   # =============================================================================
-  # Validates workflow inputs before proceeding with any deployment
+  # Purpose: Validates workflow inputs before proceeding with any deployment
+  #          Prevents invalid configurations from causing deployment failures
+  # Security: Validates format and length to prevent injection attacks
   # =============================================================================
   
   validate-inputs:
@@ -150,6 +192,11 @@ jobs:
 
   # =============================================================================
   # PHASE 1: BUILD & SECURITY SCAN
+  # =============================================================================
+  # Purpose: Builds Docker container image and performs security scanning
+  #          This phase must succeed before any deployment can proceed
+  # Dependencies: validate-inputs (if workflow_dispatch)
+  # Outputs: image-digest, image-tag, image-full (used by deployment jobs)
   # =============================================================================
   
   build-and-security-scan:
@@ -339,9 +386,12 @@ jobs:
   # =============================================================================
   # PHASE 2: STAGING DEPLOYMENT
   # =============================================================================
-  # Deploys to staging environment for testing before production
-  # Uses canary or blue-green strategy based on configuration
-  # Gracefully handles missing resources (staging may not be fully configured)
+  # Purpose: Deploys to staging environment for testing before production
+  #          Validates deployment process and catches issues early
+  # Strategy: Uses canary or blue-green strategy based on configuration
+  # Safety: Gracefully handles missing resources (staging may not be fully configured)
+  #         Uses continue-on-error to not block production deployment
+  # Dependencies: build-and-security-scan
   # =============================================================================
   
   deploy-staging:
@@ -510,6 +560,13 @@ jobs:
   # =============================================================================
   # PHASE 3: PRODUCTION CANARY DEPLOYMENT
   # =============================================================================
+  # Purpose: Deploys to production using canary strategy with progressive traffic shifting
+  #          Progressive steps: 10% → 25% → 50% → 75% → 100% (total ~8-9 minutes)
+  # Security: Requires production environment approval (configure in GitHub Settings)
+  #          Only runs on main branch pushes or manual dispatch with production environment
+  # Dependencies: build-and-security-scan, deploy-staging
+  # Rollback: Automatic rollback on SLO violations (success rate <95%, latency >3s, etc.)
+  # =============================================================================
   
   deploy-production-canary:
     name: 🌟 Production Canary Deployment
@@ -607,7 +664,12 @@ jobs:
   # =============================================================================
   # PHASE 3B: PRODUCTION BLUE-GREEN DEPLOYMENT
   # =============================================================================
-  # Alternative deployment strategy for emergency scenarios
+  # Purpose: Alternative deployment strategy for emergency scenarios
+  #          Provides instant traffic switching (faster than canary)
+  # Security: Requires production environment approval (configure in GitHub Settings)
+  #          Only runs on manual dispatch with blue-green strategy and production environment
+  # Dependencies: build-and-security-scan, deploy-staging
+  # Use Case: Emergency deployments, hotfixes, or when instant switch is needed
   # =============================================================================
   
   deploy-production-blue-green:
@@ -670,6 +732,12 @@ jobs:
   # =============================================================================
   # PHASE 4: EMERGENCY ROLLBACK
   # =============================================================================
+  # Purpose: Automatically rolls back production deployment on failure
+  #          Executes within 2 minutes of deployment failure detection
+  # Trigger: Automatically triggered when production deployment fails
+  # Dependencies: deploy-production-canary or deploy-production-blue-green (on failure)
+  # Security: Requires production environment access
+  # =============================================================================
   
   emergency-rollback:
     name: 🔄 Emergency Rollback
@@ -722,7 +790,12 @@ jobs:
   # =============================================================================
   # PHASE 5: FAILURE NOTIFICATIONS
   # =============================================================================
-  # Sends notifications on workflow failures for observability
+  # Purpose: Sends notifications on workflow failures for observability
+  #          Provides clear failure reports with next steps
+  # Trigger: Runs on any workflow failure (not cancelled)
+  # Dependencies: All deployment jobs (monitors their status)
+  # Output: Generates GitHub Actions summary with failure details
+  # TODO: Integrate with external notification systems (Slack, email, PagerDuty)
   # =============================================================================
   
   notify-failure:
