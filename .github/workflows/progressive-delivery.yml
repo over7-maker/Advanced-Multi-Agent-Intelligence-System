@@ -530,6 +530,11 @@ jobs:
       name: production
       url: https://amas.example.com
       # Production environment requires approval (configure in GitHub Settings)
+      # Configuration: Settings > Environments > production
+      # Required settings:
+      #   - Required reviewers: [devops-team, security-team] (or specific users)
+      #   - Wait timer: 0 (no delay, but requires approval)
+      #   - Deployment branches: main (restrict to main branch only)
       # This ensures manual production deployments need explicit approval
     timeout-minutes: 30
     permissions:
