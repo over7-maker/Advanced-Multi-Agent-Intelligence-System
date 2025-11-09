@@ -14,6 +14,7 @@ The Data Governance & Compliance module provides enterprise-grade data governanc
 
 - [Complete Guide](DATA_GOVERNANCE_GUIDE.md) - Comprehensive usage guide
 - [API Reference](API_REFERENCE.md) - Complete API documentation
+- [CI/CD Workflow Guide](CI_WORKFLOW_GUIDE.md) - Workflow configuration and details
 - [Examples](../../examples/governance_example.py) - Usage examples
 
 ---
