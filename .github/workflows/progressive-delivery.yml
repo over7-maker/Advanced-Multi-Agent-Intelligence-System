@@ -36,19 +36,57 @@ on:
 # GLOBAL ENVIRONMENT VARIABLES
 # =============================================================================
 # These variables are used across all jobs in the workflow
-# Note: REGISTRY_PASSWORD uses GITHUB_TOKEN for GHCR (GitHub Container Registry)
-# For production, consider using a dedicated token with limited permissions
+# Security Note: REGISTRY_PASSWORD uses GITHUB_TOKEN for GHCR (GitHub Container Registry)
+# For production, consider using secrets.PROD_GHCR_TOKEN with limited permissions
 # =============================================================================
 env:
   PYTHON_VERSION: '3.11'
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: amas-orchestrator
   REGISTRY_USERNAME: ${{ github.repository_owner }}
-  # Use GITHUB_TOKEN for GHCR (GitHub Container Registry)
-  # For production, consider: secrets.DOCKER_REGISTRY_TOKEN
+  # Use GITHUB_TOKEN for GHCR (automatically scoped to repository)
+  # For production deployments, uncomment and use dedicated token:
+  # REGISTRY_PASSWORD: ${{ github.event.inputs.environment == 'production' && secrets.PROD_GHCR_TOKEN || secrets.GITHUB_TOKEN }}
   REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
+  # =============================================================================
+  # PHASE 0: INPUT VALIDATION (for workflow_dispatch)
+  # =============================================================================
+  # Validates workflow inputs before proceeding with any deployment
+  # =============================================================================
+  
+  validate-inputs:
+    name: ✅ Validate Workflow Inputs
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+    - name: ✅ Validate environment input
+      run: |
+        ENV="${{ github.event.inputs.environment }}"
+        if [[ "$ENV" != "staging" && "$ENV" != "production" ]]; then
+          echo "❌ Invalid environment input: $ENV"
+          echo "Must be 'staging' or 'production'"
+          exit 1
+        fi
+        echo "✅ Environment input valid: $ENV"
+    
+    - name: ✅ Validate deployment strategy input
+      run: |
+        STRATEGY="${{ github.event.inputs.deployment_strategy }}"
+        if [[ "$STRATEGY" != "canary" && "$STRATEGY" != "blue-green" ]]; then
+          echo "❌ Invalid deployment strategy: $STRATEGY"
+          echo "Must be 'canary' or 'blue-green'"
+          exit 1
+        fi
+        echo "✅ Deployment strategy input valid: $STRATEGY"
+    
+    - name: ✅ All inputs validated
+      run: |
+        echo "✅ All workflow inputs are valid"
+        echo "Environment: ${{ github.event.inputs.environment }}"
+        echo "Strategy: ${{ github.event.inputs.deployment_strategy }}"
+
   # =============================================================================
   # PHASE 1: BUILD & SECURITY SCAN
   # =============================================================================
@@ -56,11 +94,15 @@ jobs:
   build-and-security-scan:
     name: 🐳 Build & Security Scan
     runs-on: ubuntu-latest
+    # Run validation first if workflow_dispatch, otherwise skip it
+    needs: [validate-inputs]
+    if: always() && (needs.validate-inputs.result == 'success' || needs.validate-inputs.result == 'skipped' || github.event_name != 'workflow_dispatch')
     timeout-minutes: 45  # Increased timeout for complex builds
+    # Minimal permissions following principle of least privilege
     permissions:
-      contents: read
-      packages: write
-      security-events: write
+      contents: read      # Read repository contents
+      packages: write     # Push container images to GHCR
+      security-events: write  # Upload security scan results
     
     outputs:
       image-digest: ${{ steps.build.outputs.digest }}
@@ -69,26 +111,7 @@ jobs:
     
     steps:
     # ========================================================================
-    # STEP 1: Validate workflow inputs (if manual dispatch)
-    # ========================================================================
-    - name: ✅ Validate workflow inputs
-      if: github.event_name == 'workflow_dispatch'
-      run: |
-        echo "Validating workflow inputs..."
-        if [ "${{ github.event.inputs.environment }}" != "staging" ] && [ "${{ github.event.inputs.environment }}" != "production" ]; then
-          echo "❌ Invalid environment input: ${{ github.event.inputs.environment }}"
-          echo "Must be 'staging' or 'production'"
-          exit 1
-        fi
-        if [ "${{ github.event.inputs.deployment_strategy }}" != "canary" ] && [ "${{ github.event.inputs.deployment_strategy }}" != "blue-green" ]; then
-          echo "❌ Invalid deployment strategy: ${{ github.event.inputs.deployment_strategy }}"
-          echo "Must be 'canary' or 'blue-green'"
-          exit 1
-        fi
-        echo "✅ Input validation passed"
-    
-    # ========================================================================
-    # STEP 2: Checkout source code
+    # STEP 1: Checkout source code
     # ========================================================================
     - name: 📥 Checkout code
       uses: actions/checkout@v4
@@ -96,7 +119,7 @@ jobs:
         fetch-depth: 0  # Fetch full history for better caching
     
     # ========================================================================
-    # STEP 3: Set up Docker Buildx for multi-platform builds
+    # STEP 2: Set up Docker Buildx for multi-platform builds
     # ========================================================================
     - name: 🐳 Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
@@ -106,10 +129,11 @@ jobs:
           network=host
     
     # ========================================================================
-    # STEP 4: Authenticate with container registry
+    # STEP 3: Authenticate with container registry
     # ========================================================================
     # Only login for non-PR events (PRs don't push images)
     # Uses HTTPS by default for GHCR (GitHub Container Registry)
+    # Security: Never log credentials - GitHub Actions masks secrets automatically
     # ========================================================================
     - name: 🔑 Login to Container Registry
       if: github.event_name != 'pull_request'
@@ -118,13 +142,15 @@ jobs:
         registry: ${{ env.DOCKER_REGISTRY }}
         username: ${{ env.REGISTRY_USERNAME }}
         password: ${{ env.REGISTRY_PASSWORD }}
+      # Note: docker/login-action handles secrets securely
+      # Never echo or log REGISTRY_PASSWORD - GitHub masks secrets automatically
     
     # ========================================================================
-    # STEP 5: Build and push Docker image
+    # STEP 4: Build and push Docker image
     # ========================================================================
     # Uses GitHub Actions cache for faster builds
     # Includes provenance and SBOM for security
-    # Retries up to 3 times on failure
+    # Note: Docker build-push-action handles retries internally
     # ========================================================================
     - name: 🏗️ Build Docker image
       id: build
@@ -146,7 +172,7 @@ jobs:
         sbom: true
     
     # ========================================================================
-    # STEP 6: Security scan with Trivy
+    # STEP 5: Security scan with Trivy
     # ========================================================================
     # Scans container image for vulnerabilities
     # Only runs if build succeeded
@@ -165,7 +191,7 @@ jobs:
         exit-code: '0'  # Don't exit with error code, we'll handle it separately
     
     # ========================================================================
-    # STEP 7: Upload security scan results to GitHub Security
+    # STEP 6: Upload security scan results to GitHub Security
     # ========================================================================
     # Uploads SARIF file for security analysis in GitHub
     # Only uploads if scan succeeded and file exists
@@ -178,7 +204,7 @@ jobs:
         sarif_file: 'trivy-results.sarif'
     
     # ========================================================================
-    # STEP 8: Report security scan status
+    # STEP 7: Report security scan status
     # ========================================================================
     # Provides clear status about security scan results
     # ========================================================================
@@ -305,7 +331,8 @@ jobs:
         export IMAGE_NAME=${{ env.IMAGE_NAME }}
         export FULL_IMAGE="${DOCKER_REGISTRY}/${{ github.repository_owner }}/${IMAGE_NAME}:${IMAGE_TAG}"
         
-        echo "Image: $FULL_IMAGE"
+        # Security: Only log image name, never credentials
+        echo "Deploying image: $FULL_IMAGE"
         
         # Check if rollout exists
         if kubectl get rollout amas-orchestrator -n amas-staging &> /dev/null; then
