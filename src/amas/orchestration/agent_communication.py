@@ -1,14 +1,59 @@
 """
 Inter-Agent Communication System
 
-Enables sophisticated communication and collaboration between agents
-across all hierarchy layers with message routing, context sharing,
-and coordination protocols.
+This module provides a comprehensive communication infrastructure for the hierarchical
+agent orchestration system. It enables sophisticated communication and collaboration
+between agents across all hierarchy layers (Executive, Management, Specialist, Execution)
+with reliable message routing, context sharing, and coordination protocols.
+
+Key Features:
+- Message Bus: Centralized message routing with guaranteed delivery
+- Broadcast System: Topic-based pub/sub for group communication
+- Context Sharing: Agents can share working data and intermediate results
+- Help Requests: Agents can request assistance from other specialists
+- Escalation: Automatic escalation to management for critical issues
+- Quality Coordination: Specialized coordinators for research and QA workflows
+- Message Expiration: Time-based message expiration for stale data
+- Retry Logic: Automatic retry with exponential backoff for failed deliveries
+
+Dependencies:
+- asyncio: For asynchronous message processing
+- datetime: For message timestamps and expiration
+- collections: For efficient queue and dictionary operations
+
+Usage Example:
+    >>> from amas.orchestration.agent_communication import get_communication_bus
+    >>> bus = get_communication_bus()
+    >>> 
+    >>> # Send a message
+    >>> message_id = await bus.send_message(
+    ...     sender_id="agent_1",
+    ...     recipient_id="agent_2",
+    ...     message_type=MessageType.SHARE_FINDINGS,
+    ...     payload={"data": "research results"}
+    ... )
+    >>> 
+    >>> # Request help from specialist
+    >>> help_id = await bus.request_specialist_help(
+    ...     requesting_agent_id="agent_1",
+    ...     required_specialty="data_analyst",
+    ...     help_context={"task": "analyze data"}
+    ... )
+
+Performance Considerations:
+- Message queues use deque for O(1) append/pop operations
+- Broadcast subscriptions use sets for O(1) membership checks
+- Message cleanup runs in background to prevent memory leaks
+- Failed deliveries are tracked for monitoring and debugging
+
+Security Considerations:
+- All message types are validated through the MessageType enum
+- Message payloads should be validated by the receiving agent
+- Sensitive data should be encrypted before transmission
 """
 
 import asyncio
 import logging
-import time
 from typing import Dict, List, Optional, Any, Set, Union
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
@@ -20,44 +65,230 @@ from collections import deque, defaultdict
 logger = logging.getLogger(__name__)
 
 class MessageType(str, Enum):
-    # Coordination messages
-    REQUEST_HELP = "request_help"                    # Agent requests assistance
-    OFFER_HELP = "offer_help"                       # Agent offers to help
-    ACCEPT_HELP = "accept_help"                     # Help offer accepted
+    """
+    Message types for inter-agent communication.
     
-    # Information sharing
-    SHARE_CONTEXT = "share_context"                 # Share working context
-    SHARE_FINDINGS = "share_findings"               # Share intermediate results
-    SHARE_RESOURCES = "share_resources"             # Share useful resources/data
+    This enum defines all valid message types that can be exchanged between agents
+    in the orchestration system. Message types are organized by category:
     
-    # Task coordination
-    TASK_STARTED = "task_started"                   # Notify task beginning
-    TASK_COMPLETED = "task_completed"               # Notify task completion
-    TASK_BLOCKED = "task_blocked"                   # Task cannot proceed
-    HANDOFF_REQUEST = "handoff_request"             # Request task handoff
+    - Task Coordination: Messages related to task lifecycle
+    - Information Sharing: Messages for sharing data and context
+    - Help & Assistance: Messages for requesting and providing help
+    - Quality Assurance: Messages for quality checks and approvals
+    - Management: Messages for escalation and coordination
+    - System: Messages for system-level operations
+    - Error Handling: Messages for error reporting and recovery
+    - Acknowledgment: Messages for confirming receipt and processing
+    """
     
-    # Quality assurance
-    QUALITY_CHECK_REQUEST = "quality_check_request" # Request quality review
-    QUALITY_FEEDBACK = "quality_feedback"           # Provide quality feedback
-    APPROVAL_REQUEST = "approval_request"           # Request approval
-    APPROVAL_RESPONSE = "approval_response"         # Provide approval/rejection
+    # ========== Task Coordination Messages ==========
+    TASK_STARTED = "task_started"
+    """Notify that a task has begun execution. Sent by workflow executor to assigned agent."""
     
-    # Coordination and management
-    STATUS_UPDATE = "status_update"                 # General status update
-    ESCALATION = "escalation"                       # Escalate to higher layer
-    COORDINATION_SYNC = "coordination_sync"         # Synchronization point
+    TASK_COMPLETED = "task_completed"
+    """Notify that a task has completed successfully. Sent by agent to workflow executor."""
     
-    # System messages
-    HEARTBEAT = "heartbeat"                         # Health check
-    SHUTDOWN_NOTICE = "shutdown_notice"             # Agent going offline
-    RECOVERY_NOTICE = "recovery_notice"             # Agent back online
+    TASK_BLOCKED = "task_blocked"
+    """Notify that a task cannot proceed due to dependencies or errors. Requires escalation."""
+    
+    TASK_FAILED = "task_failed"
+    """Notify that a task has failed. Includes error details for recovery attempts."""
+    
+    HANDOFF_REQUEST = "handoff_request"
+    """Request to transfer task ownership to another agent. Used for load balancing."""
+    
+    # ========== Information Sharing Messages ==========
+    SHARE_CONTEXT = "share_context"
+    """Share working context with other agents. Used for collaborative work."""
+    
+    SHARE_FINDINGS = "share_findings"
+    """Share intermediate results or findings. Used in research and analysis workflows."""
+    
+    SHARE_RESOURCES = "share_resources"
+    """Share useful resources, data, or tools. Used for resource optimization."""
+    
+    # ========== Help & Assistance Messages ==========
+    REQUEST_HELP = "request_help"
+    """Request assistance from a specialist agent. Includes context about what help is needed."""
+    
+    OFFER_HELP = "offer_help"
+    """Offer to help another agent. Used when agent has available capacity."""
+    
+    ACCEPT_HELP = "accept_help"
+    """Accept an offer of help. Confirms the help relationship."""
+    
+    HELP_RESPONSE = "help_response"
+    """Response to a help request. Contains the assistance provided."""
+    
+    # ========== Quality Assurance Messages ==========
+    QUALITY_CHECK_REQUEST = "quality_check_request"
+    """Request a quality review of work. Sent to QA specialists."""
+    
+    QUALITY_FEEDBACK = "quality_feedback"
+    """Provide quality feedback on reviewed work. Includes scores and recommendations."""
+    
+    APPROVAL_REQUEST = "approval_request"
+    """Request approval for work or decision. Sent to management or executive layer."""
+    
+    APPROVAL_RESPONSE = "approval_response"
+    """Response to approval request. Contains approval decision and conditions."""
+    
+    # ========== Management & Coordination Messages ==========
+    STATUS_UPDATE = "status_update"
+    """General status update. Used for progress reporting and monitoring."""
+    
+    ESCALATION = "escalation"
+    """Escalate issue to higher layer. Used when agent cannot resolve issue independently."""
+    
+    COORDINATION_SYNC = "coordination_sync"
+    """Synchronization point for parallel tasks. Ensures coordination between agents."""
+    
+    LOAD_BALANCE_REQUEST = "load_balance_request"
+    """Request load balancing assistance. Used when agent is overloaded."""
+    
+    # ========== System Messages ==========
+    HEARTBEAT = "heartbeat"
+    """Health check message. Sent periodically to confirm agent is alive."""
+    
+    SHUTDOWN_NOTICE = "shutdown_notice"
+    """Notify that agent is going offline. Allows graceful shutdown coordination."""
+    
+    RECOVERY_NOTICE = "recovery_notice"
+    """Notify that agent has recovered and is back online."""
+    
+    # ========== Error Handling Messages ==========
+    ERROR_REPORT = "error_report"
+    """Report an error that occurred during execution. Includes error details and context."""
+    
+    ERROR_RECOVERY = "error_recovery"
+    """Notify that error recovery has been attempted. Includes recovery status."""
+    
+    # ========== Acknowledgment Messages ==========
+    ACKNOWLEDGMENT = "acknowledgment"
+    """Acknowledge receipt of a message. Used for reliable message delivery."""
+    
+    MESSAGE_RECEIVED = "message_received"
+    """Confirm that message was received and is being processed."""
+    
+    MESSAGE_PROCESSED = "message_processed"
+    """Confirm that message has been fully processed. Used for request-response patterns."""
+    
+    @classmethod
+    def is_valid(cls, value: str) -> bool:
+        """
+        Validate if a string value is a valid message type.
+        
+        Args:
+            value: String value to validate
+            
+        Returns:
+            True if value is a valid message type, False otherwise
+        """
+        try:
+            cls(value)
+            return True
+        except ValueError:
+            return False
+    
+    @classmethod
+    def get_category(cls, message_type: "MessageType") -> str:
+        """
+        Get the category of a message type.
+        
+        Args:
+            message_type: MessageType enum value
+            
+        Returns:
+            Category name (e.g., "task_coordination", "error_handling")
+        """
+        categories = {
+            # Task Coordination
+            cls.TASK_STARTED: "task_coordination",
+            cls.TASK_COMPLETED: "task_coordination",
+            cls.TASK_BLOCKED: "task_coordination",
+            cls.TASK_FAILED: "task_coordination",
+            cls.HANDOFF_REQUEST: "task_coordination",
+            
+            # Information Sharing
+            cls.SHARE_CONTEXT: "information_sharing",
+            cls.SHARE_FINDINGS: "information_sharing",
+            cls.SHARE_RESOURCES: "information_sharing",
+            
+            # Help & Assistance
+            cls.REQUEST_HELP: "help_assistance",
+            cls.OFFER_HELP: "help_assistance",
+            cls.ACCEPT_HELP: "help_assistance",
+            cls.HELP_RESPONSE: "help_assistance",
+            
+            # Quality Assurance
+            cls.QUALITY_CHECK_REQUEST: "quality_assurance",
+            cls.QUALITY_FEEDBACK: "quality_assurance",
+            cls.APPROVAL_REQUEST: "quality_assurance",
+            cls.APPROVAL_RESPONSE: "quality_assurance",
+            
+            # Management
+            cls.STATUS_UPDATE: "management",
+            cls.ESCALATION: "management",
+            cls.COORDINATION_SYNC: "management",
+            cls.LOAD_BALANCE_REQUEST: "management",
+            
+            # System
+            cls.HEARTBEAT: "system",
+            cls.SHUTDOWN_NOTICE: "system",
+            cls.RECOVERY_NOTICE: "system",
+            
+            # Error Handling
+            cls.ERROR_REPORT: "error_handling",
+            cls.ERROR_RECOVERY: "error_handling",
+            
+            # Acknowledgment
+            cls.ACKNOWLEDGMENT: "acknowledgment",
+            cls.MESSAGE_RECEIVED: "acknowledgment",
+            cls.MESSAGE_PROCESSED: "acknowledgment",
+        }
+        return categories.get(message_type, "unknown")
 
 class Priority(str, Enum):
+    """
+    Message priority levels for inter-agent communication.
+    
+    Priorities determine message delivery order and timeout behavior.
+    Higher priority messages are processed first and have shorter timeouts.
+    """
     LOW = "low"
+    """Low priority: Non-urgent messages, can be delayed if system is busy."""
+    
     NORMAL = "normal"
+    """Normal priority: Standard messages, processed in order of arrival."""
+    
     HIGH = "high"
+    """High priority: Important messages, processed before normal priority."""
+    
     URGENT = "urgent"
+    """Urgent priority: Time-sensitive messages, processed immediately."""
+    
     CRITICAL = "critical"
+    """Critical priority: System-critical messages, highest priority, shortest timeout."""
+    
+    @classmethod
+    def get_timeout_seconds(cls, priority: "Priority") -> int:
+        """
+        Get timeout in seconds for a priority level.
+        
+        Args:
+            priority: Priority enum value
+            
+        Returns:
+            Timeout in seconds
+        """
+        timeouts = {
+            cls.LOW: 600,      # 10 minutes
+            cls.NORMAL: 300,   # 5 minutes
+            cls.HIGH: 180,     # 3 minutes
+            cls.URGENT: 60,    # 1 minute
+            cls.CRITICAL: 30,  # 30 seconds
+        }
+        return timeouts.get(priority, 300)
 
 @dataclass
 class AgentMessage:
@@ -172,7 +403,32 @@ class AgentCommunicationBus:
                           priority: Priority = Priority.NORMAL,
                           requires_response: bool = False,
                           response_timeout: int = 300) -> str:
-        """Send message from one agent to another"""
+        """
+        Send message from one agent to another.
+        
+        Args:
+            sender_id: ID of the sending agent
+            recipient_id: ID of the receiving agent
+            message_type: Type of message (validated against MessageType enum)
+            payload: Message payload data
+            priority: Message priority level (default: NORMAL)
+            requires_response: Whether message requires a response
+            response_timeout: Timeout in seconds for response (default: 300)
+            
+        Returns:
+            Message ID for tracking
+            
+        Raises:
+            ValueError: If message_type is not a valid MessageType
+            ValueError: If sender_id or recipient_id is empty
+        """
+        # Validate inputs
+        if not sender_id or not sender_id.strip():
+            raise ValueError("sender_id cannot be empty")
+        if not recipient_id or not recipient_id.strip():
+            raise ValueError("recipient_id cannot be empty")
+        if not isinstance(message_type, MessageType):
+            raise ValueError(f"message_type must be a MessageType enum value, got {type(message_type)}")
         
         message = AgentMessage(
             id=f"msg_{uuid.uuid4().hex[:8]}",
