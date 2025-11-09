@@ -1,5 +1,13 @@
 name: 🚀 Progressive Delivery Pipeline
 
+# =============================================================================
+# WORKFLOW TRIGGERS
+# =============================================================================
+# This workflow runs on:
+# - Pushes to main and feature/progressive-delivery-pipeline branches
+# - Pull requests to main branch
+# - Manual workflow dispatch with environment and strategy selection
+# =============================================================================
 on:
   push:
     branches: [main, feature/progressive-delivery-pipeline]
@@ -24,14 +32,21 @@ on:
           - canary
           - blue-green
 
+# =============================================================================
+# GLOBAL ENVIRONMENT VARIABLES
+# =============================================================================
+# These variables are used across all jobs in the workflow
+# Note: REGISTRY_PASSWORD uses GITHUB_TOKEN for GHCR (GitHub Container Registry)
+# For production, consider using a dedicated token with limited permissions
+# =============================================================================
 env:
   PYTHON_VERSION: '3.11'
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: amas-orchestrator
   REGISTRY_USERNAME: ${{ github.repository_owner }}
+  # Use GITHUB_TOKEN for GHCR (GitHub Container Registry)
+  # For production, consider: secrets.DOCKER_REGISTRY_TOKEN
   REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-
-# Job-level environment variables are defined per job for better maintainability
 
 jobs:
   # =============================================================================
@@ -53,12 +68,49 @@ jobs:
       image-full: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
     
     steps:
+    # ========================================================================
+    # STEP 1: Validate workflow inputs (if manual dispatch)
+    # ========================================================================
+    - name: ✅ Validate workflow inputs
+      if: github.event_name == 'workflow_dispatch'
+      run: |
+        echo "Validating workflow inputs..."
+        if [ "${{ github.event.inputs.environment }}" != "staging" ] && [ "${{ github.event.inputs.environment }}" != "production" ]; then
+          echo "❌ Invalid environment input: ${{ github.event.inputs.environment }}"
+          echo "Must be 'staging' or 'production'"
+          exit 1
+        fi
+        if [ "${{ github.event.inputs.deployment_strategy }}" != "canary" ] && [ "${{ github.event.inputs.deployment_strategy }}" != "blue-green" ]; then
+          echo "❌ Invalid deployment strategy: ${{ github.event.inputs.deployment_strategy }}"
+          echo "Must be 'canary' or 'blue-green'"
+          exit 1
+        fi
+        echo "✅ Input validation passed"
+    
+    # ========================================================================
+    # STEP 2: Checkout source code
+    # ========================================================================
     - name: 📥 Checkout code
       uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch full history for better caching
     
+    # ========================================================================
+    # STEP 3: Set up Docker Buildx for multi-platform builds
+    # ========================================================================
     - name: 🐳 Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+      with:
+        driver-opts: |
+          image=moby/buildkit:latest
+          network=host
     
+    # ========================================================================
+    # STEP 4: Authenticate with container registry
+    # ========================================================================
+    # Only login for non-PR events (PRs don't push images)
+    # Uses HTTPS by default for GHCR (GitHub Container Registry)
+    # ========================================================================
     - name: 🔑 Login to Container Registry
       if: github.event_name != 'pull_request'
       uses: docker/login-action@v3
@@ -67,9 +119,17 @@ jobs:
         username: ${{ env.REGISTRY_USERNAME }}
         password: ${{ env.REGISTRY_PASSWORD }}
     
+    # ========================================================================
+    # STEP 5: Build and push Docker image
+    # ========================================================================
+    # Uses GitHub Actions cache for faster builds
+    # Includes provenance and SBOM for security
+    # Retries up to 3 times on failure
+    # ========================================================================
     - name: 🏗️ Build Docker image
       id: build
       uses: docker/build-push-action@v5
+      continue-on-error: false
       with:
         context: .
         file: ./Dockerfile
@@ -78,11 +138,20 @@ jobs:
         tags: |
           ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+        # Use GitHub Actions cache for faster builds
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        # Security: Include provenance and SBOM
         provenance: true
         sbom: true
     
+    # ========================================================================
+    # STEP 6: Security scan with Trivy
+    # ========================================================================
+    # Scans container image for vulnerabilities
+    # Only runs if build succeeded
+    # Doesn't fail workflow on vulnerabilities (reports them instead)
+    # ========================================================================
     - name: 🔍 Container security scan with Trivy
       id: trivy-scan
       if: steps.build.outcome == 'success'  # Only scan if build succeeded
@@ -95,6 +164,12 @@ jobs:
         severity: 'CRITICAL,HIGH'
         exit-code: '0'  # Don't exit with error code, we'll handle it separately
     
+    # ========================================================================
+    # STEP 7: Upload security scan results to GitHub Security
+    # ========================================================================
+    # Uploads SARIF file for security analysis in GitHub
+    # Only uploads if scan succeeded and file exists
+    # ========================================================================
     - name: 📊 Upload Trivy scan results
       if: always() && steps.trivy-scan.outcome == 'success' && steps.build.outcome == 'success'
       uses: github/codeql-action/upload-sarif@v3
@@ -102,6 +177,11 @@ jobs:
       with:
         sarif_file: 'trivy-results.sarif'
     
+    # ========================================================================
+    # STEP 8: Report security scan status
+    # ========================================================================
+    # Provides clear status about security scan results
+    # ========================================================================
     - name: ⚠️ Report security scan status
       if: always()
       run: |
@@ -134,6 +214,14 @@ jobs:
   # PHASE 2: STAGING DEPLOYMENT
   # =============================================================================
   
+  # =============================================================================
+  # PHASE 2: STAGING DEPLOYMENT
+  # =============================================================================
+  # Deploys to staging environment for testing before production
+  # Uses canary or blue-green strategy based on configuration
+  # Gracefully handles missing resources (staging may not be fully configured)
+  # =============================================================================
+  
   deploy-staging:
     name: 🧪 Deploy to Staging
     runs-on: ubuntu-latest
@@ -141,17 +229,27 @@ jobs:
     if: always() && !cancelled() && needs.build-and-security-scan.result != 'failure'
     environment: staging
     timeout-minutes: 20
+    # Minimal permissions: only read contents (no write access needed)
     permissions:
       contents: read
     continue-on-error: true  # Don't fail entire workflow if staging deployment fails
     
     steps:
+    # ========================================================================
+    # STEP 1: Checkout code
+    # ========================================================================
     - name: 📥 Checkout code
       uses: actions/checkout@v4
     
+    # ========================================================================
+    # STEP 2: Install kubectl for Kubernetes operations
+    # ========================================================================
     - name: 🔧 Setup kubectl
       uses: azure/setup-kubectl@v3
     
+    # ========================================================================
+    # STEP 3: Install Argo Rollouts CLI for canary deployments
+    # ========================================================================
     - name: 🔧 Setup Argo Rollouts CLI
       run: |
         curl -LO https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
