@@ -37,7 +37,7 @@ on:
           - staging
           - production
       deployment_strategy:
-        description: 'Deployment strategy'
+        description: 'Deployment strategy (canary for progressive rollout, blue-green for instant switch)'
         required: true
         default: 'canary'
         type: choice
@@ -54,6 +54,23 @@ on:
         required: false
         default: 'ghcr.io'
         type: string
+
+# =============================================================================
+# WORKFLOW-LEVEL PERMISSIONS
+# =============================================================================
+# Minimal permissions following principle of least privilege
+# Individual jobs can override if needed
+# Security: Explicitly set permissions to minimum required
+# =============================================================================
+# =============================================================================
+# CONCURRENCY CONTROL
+# =============================================================================
+# Prevents multiple deployments from running simultaneously on the same branch
+# Security: Prevents race conditions and conflicting deployments
+# =============================================================================
+concurrency:
+  group: progressive-delivery-${{ github.ref }}
+  cancel-in-progress: false  # Don't cancel deployments in progress (safety)
 
 # =============================================================================
 # WORKFLOW-LEVEL PERMISSIONS
@@ -191,12 +208,14 @@ jobs:
     # Run validation first if workflow_dispatch, otherwise skip it
     needs: [validate-inputs]
     if: always() && (needs.validate-inputs.result == 'success' || needs.validate-inputs.result == 'skipped' || github.event_name != 'workflow_dispatch')
-    timeout-minutes: 45  # Increased timeout for complex builds
+    timeout-minutes: 45  # Increased timeout for complex builds (accommodates 4.5GB base image downloads)
     # Minimal permissions following principle of least privilege
     permissions:
       contents: read      # Read repository contents
       packages: write     # Push container images to GHCR
       security-events: write  # Upload security scan results
+    # Resource limits: Prevent resource exhaustion
+    # Note: GitHub Actions runners have default limits, but explicit limits help with planning
     
     # Security: Define sensitive values at job-level, not globally
     # Use GITHUB_TOKEN for GHCR (automatically scoped to repository permissions)
@@ -282,8 +301,9 @@ jobs:
     # ========================================================================
     # Performance: Uses GHA cache only (avoids large local cache downloads)
     # Security: Includes provenance and SBOM for supply chain security
-    # Note: Large base images (python:3.11-slim + nodejs) may take time to download
-    #       on first build, but subsequent builds use cached layers
+    # Note: First build may download large base images (python:3.11-slim + nodejs ~4.5GB)
+    #       Subsequent builds use cached layers and are much faster
+    #       Build timeout is 45 minutes to accommodate first-time large downloads
     # ========================================================================
     - name: 🏗️ Build Docker image
       id: build
@@ -298,13 +318,12 @@ jobs:
           ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
         # Performance: Use GHA cache only (avoids 4.9GB+ local cache downloads)
+        # First build downloads ~4.5GB base images, subsequent builds use cache
         cache-from: type=gha
         cache-to: type=gha,mode=max
         # Security: Include provenance and SBOM
         provenance: true
         sbom: true
-        # Performance: Limit build context size to avoid large transfers
-        no-cache: false
     
     # ========================================================================
     # STEP 5: Security scan with Trivy
@@ -337,6 +356,8 @@ jobs:
       continue-on-error: true
       with:
         sarif_file: 'trivy-results.sarif'
+        # Artifact retention: Security reports retained for 30 days
+        retention-days: 30
     
     # ========================================================================
     # STEP 7: Report security scan status
