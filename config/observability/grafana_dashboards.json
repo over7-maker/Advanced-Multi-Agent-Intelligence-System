@@ -8,13 +8,14 @@
     "refresh": "1m",
     "schemaVersion": 39,
     "version": 1,
-    "editable": true,
-    "hideControls": false,
+    "editable": false,
+    "hideControls": true,
     "links": [],
     "time": {
       "from": "now-6h",
       "to": "now"
     },
+    "timezone": "UTC",
     "timepicker": {
       "refresh_intervals": ["10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
     },
@@ -197,13 +198,14 @@
     "refresh": "1m",
     "schemaVersion": 39,
     "version": 1,
-    "editable": true,
-    "hideControls": false,
+    "editable": false,
+    "hideControls": true,
     "links": [],
     "time": {
       "from": "now-6h",
       "to": "now"
     },
+    "timezone": "UTC",
     "timepicker": {
       "refresh_intervals": ["10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
     },
@@ -341,13 +343,14 @@
     "refresh": "1m",
     "schemaVersion": 39,
     "version": 1,
-    "editable": true,
-    "hideControls": false,
+    "editable": false,
+    "hideControls": true,
     "links": [],
     "time": {
       "from": "now-6h",
       "to": "now"
     },
+    "timezone": "UTC",
     "timepicker": {
       "refresh_intervals": ["10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
     },
