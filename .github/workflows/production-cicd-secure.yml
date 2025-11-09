@@ -63,6 +63,9 @@ jobs:
         run: |
           set -euo pipefail
           
+          # Upgrade pip for better dependency resolution and performance
+          python -m pip install --upgrade pip
+          
           # Validate requirements file exists
           if [ ! -f "$REQUIREMENTS_FILE" ]; then
             echo "❌ Requirements file not found: $REQUIREMENTS_FILE"
@@ -72,23 +75,34 @@ jobs:
           
           # Attempt installation with hash verification first (most secure)
           # SECURITY: Hash verification prevents supply chain attacks by ensuring package integrity
-          set +e
-          pip_output=$(pip install --require-hashes -r "$REQUIREMENTS_FILE" 2>&1)
-          pip_exit_code=$?
-          set -euo pipefail
+          # Use subshell to minimize scope of error handling changes
+          pip_output=$(pip install --require-hashes -r "$REQUIREMENTS_FILE" 2>&1) || pip_exit_code=$?
+          pip_exit_code=${pip_exit_code:-0}
           
-          # Check if failure is due to missing hashes (case-insensitive match)
-          if [ $pip_exit_code -ne 0 ] && echo "$pip_output" | grep -qiE "(hashes are required|missing from some requirements)"; then
+          # Check if failure is due to missing hashes (case-insensitive match with fixed-string safety)
+          # Use fixed-string matching where possible to avoid regex injection
+          hash_error_pattern="hashes are required"
+          missing_hash_pattern="missing from some requirements"
+          is_hash_error=false
+          
+          if [ $pip_exit_code -ne 0 ]; then
+            # Use fixed-string matching to avoid regex injection risks
+            if echo "$pip_output" | grep -qiF "$hash_error_pattern" || \
+               echo "$pip_output" | grep -qiF "$missing_hash_pattern"; then
+              is_hash_error=true
+            fi
+          fi
+          
+          if [ "$is_hash_error" = true ]; then
             echo "⚠️  SECURITY TRADE-OFF: Hashes not available in $REQUIREMENTS_FILE"
             echo "⚠️  Installing without hash verification increases supply chain attack risk"
             echo "⚠️  RECOMMENDATION: Generate hashes using: pip-compile --generate-hashes $REQUIREMENTS_FILE"
-            echo "⚠️  See SECURITY.md for details on securing dependencies"
+            echo "⚠️  See SECURITY.md for details on secure dependency management"
             
             # Fallback: Install without hash verification (less secure but functional)
-            set +e
-            pip_fallback_output=$(pip install -r "$REQUIREMENTS_FILE" 2>&1)
-            pip_fallback_exit=$?
-            set -euo pipefail
+            # SECURITY WARNING: This defeats hash verification - only acceptable for development/staging
+            pip_fallback_output=$(pip install -r "$REQUIREMENTS_FILE" 2>&1) || pip_fallback_exit=$?
+            pip_fallback_exit=${pip_fallback_exit:-0}
             
             if [ $pip_fallback_exit -ne 0 ]; then
               echo "❌ Fallback pip install failed with exit code $pip_fallback_exit"
@@ -109,6 +123,12 @@ jobs:
           else
             echo "✅ Installed with hash verification (secure)"
           fi
+          
+          # Verify security tools are installed and accessible
+          echo "🔍 Verifying security tool installations..."
+          command -v safety >/dev/null 2>&1 || { echo "❌ safety not found"; exit 1; }
+          command -v bandit >/dev/null 2>&1 || { echo "❌ bandit not found"; exit 1; }
+          echo "✅ Security tools verified"
       - name: Safety
         continue-on-error: true
         timeout-minutes: 5
