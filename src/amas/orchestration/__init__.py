@@ -300,11 +300,33 @@ For detailed API documentation, see individual module docstrings.
 See Also
 --------
 
-- Individual module docstrings for detailed API documentation
-- Configuration options: OrchestrationConfig
-- Error handling: utils.retry_with_backoff, utils.with_circuit_breaker
-- Health monitoring: health.HealthChecker
-- API integration: api.OrchestrationAPI
+- Individual module docstrings: Each submodule contains comprehensive API
+  documentation with function signatures, parameters, return types, and examples
+- Configuration: OrchestrationConfig class for all configuration options
+- Error Handling: retry_with_backoff, with_circuit_breaker decorators
+- Health Monitoring: HealthChecker class for system health checks
+- API Integration: OrchestrationAPI class for REST API wrapper
+
+Notes
+-----
+
+This is a package initialization file (__init__.py) that:
+- Imports and re-exports the public API from submodules
+- Provides package-level documentation
+- Organizes module exports via __all__
+
+Standard library imports (asyncio, typing, etc.) are used within submodules,
+not in this file. This is the correct Python package structure.
+
+The actual implementation is in separate modules:
+- task_decomposer.py: Task decomposition logic
+- agent_hierarchy.py: Agent management logic
+- agent_communication.py: Communication system logic
+- workflow_executor.py: Workflow execution logic
+- config.py: Configuration management
+- utils.py: Utility functions and decorators
+- health.py: Health checking logic
+- api.py: API wrapper implementation
 """
 
 from .task_decomposer import (
