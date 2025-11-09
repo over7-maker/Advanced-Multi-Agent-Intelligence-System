@@ -35,9 +35,9 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Background scheduling, event monitoring, and notification workflows
 - Self-healing, persistent, and learning architecture
 - Professional React interface and team visual builder
-- 100+ service/tool integrations with bulletproof security
+- 100+ service/tool integrations with enterprise security (JWT/OIDC, encryption, audit logging)
 - OpenTelemetry observability and SLO-driven reliability
-- **Intelligent Performance Scaling**: KEDA-based autoscaling, semantic caching (30%+ speed improvement), circuit breakers, rate limiting, and cost optimization (see [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md))
+- Intelligent Performance Scaling: KEDA-based autoscaling, semantic caching (see [benchmarks](docs/performance_benchmarks.md) for performance metrics), circuit breakers, rate limiting, and cost optimization
 
 ---
 
@@ -56,15 +56,45 @@ Refer to the architectural diagram and deep dive in [FEATURES.md](FEATURES.md#sy
 ## Deployment Guide
 Production cluster, scaling, and infrastructure instructions are fully documented in [DEPLOYMENT.md](DEPLOYMENT.md).
 
-### Performance & Scaling Infrastructure
-AMAS includes comprehensive performance scaling infrastructure:
-- **Intelligent Autoscaling**: KEDA-based multi-metric scaling (HTTP RPS, queue depth, latency, resource usage)
-- **Load Testing Framework**: Comprehensive performance testing with SLO validation and regression detection
-- **Semantic Caching**: Redis-based intelligent caching with 30%+ speed improvement for repeated queries
-- **Resilience Patterns**: Circuit breakers, rate limiting, request deduplication
-- **Cost Optimization**: Automatic cost tracking and optimization recommendations
+---
 
-See [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md) for complete documentation.
+## ⚡ Performance & Scaling Infrastructure
+
+AMAS includes comprehensive performance scaling infrastructure for production workloads. All features are fully implemented and documented.
+
+### Key Features
+
+- **Intelligent Autoscaling**: KEDA-based multi-metric scaling (HTTP RPS, queue depth, latency, resource usage)
+  - See [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md#keda-autoscaling) for configuration
+- **Load Testing Framework**: Comprehensive performance testing with SLO validation and regression detection
+  - See [Load Testing Framework](docs/PERFORMANCE_SCALING_GUIDE.md#load-testing-framework) for usage
+- **Semantic Caching**: Redis-based intelligent caching with embedding similarity matching
+  - Performance metrics: See [Performance Benchmarks](docs/performance_benchmarks.md)
+  - See [Semantic Caching](docs/PERFORMANCE_SCALING_GUIDE.md#key-components) for implementation
+- **Resilience Patterns**: Circuit breakers, rate limiting, request deduplication
+  - See [Resilience Patterns](docs/PERFORMANCE_SCALING_INTEGRATION.md) for integration examples
+- **Cost Optimization**: Automatic cost tracking and optimization recommendations
+  - See [Cost Tracking](docs/PERFORMANCE_SCALING_GUIDE.md#best-practices) for setup
+
+### Quick Start
+
+```bash
+# Deploy KEDA autoscaling
+kubectl apply -f k8s/scaling/keda-scaler.yaml
+
+# Run load tests
+python scripts/run_load_test.py list
+python scripts/run_load_test.py run research_agent_baseline
+```
+
+### Documentation
+
+- **[Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md)** - Complete infrastructure guide (30KB)
+- **[Performance Scaling Integration](docs/PERFORMANCE_SCALING_INTEGRATION.md)** - Integration examples and best practices
+- **[Performance Scaling README](docs/PERFORMANCE_SCALING_README.md)** - Quick reference and entry point
+- **[Performance Benchmarks](docs/performance_benchmarks.md)** - Performance metrics and benchmarks
+
+All features are production-ready and fully documented.
 
 ---
 
