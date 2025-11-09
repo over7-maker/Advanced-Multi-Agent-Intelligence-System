@@ -46,7 +46,11 @@
 1. Foundation Layer: `kubectl apply -f k8s/foundation/` (deploys Postgres, Redis, OPA, Prometheus)
 2. Intelligence Layer: `kubectl apply -f k8s/intelligence/` (deploys agent orchestrator, specialists, frontend)
    - Ensure foundation pods are healthy before moving to intelligence layer.
-3. Cloud Load Balancer Setup:
+3. **Orchestration System**: Deploy the Hierarchical Agent Orchestration System
+   - See [Orchestration Deployment Guide](docs/deployment/ORCHESTRATION_DEPLOYMENT.md) for detailed instructions
+   - Quick deploy: `kubectl apply -f k8s/orchestration-deployment.yaml -f k8s/orchestration-configmap.yaml -f k8s/orchestration-hpa.yaml`
+   - Verify: `kubectl get pods -l component=orchestration -n amas`
+4. Cloud Load Balancer Setup:
    - Use GKE/EKS/AKS; external DNS and TLS (see `docs/infra/load_balancer_setup.md`)
    - SSL: Use cert-manager for Let's Encrypt or upload managed certificate
    - Allow ingress from trusted IPs only
@@ -85,11 +89,16 @@
 
 ## Validation Steps
 - After each deployment phase:
-   - Run `kubectl get pods` and check readiness
-   - Validate UI at http://loadbalancer-ip:3000
-   - Check logs in Grafana and Prometheus for errors or unhealthy metrics
-   - Confirm agent orchestrator queue is draining as expected
-   - Run a test workflow from the UI and verify expected results with end-to-end traces
+  - Run `kubectl get pods` and check readiness
+  - Validate UI at http://loadbalancer-ip:3000
+  - Check logs in Grafana and Prometheus for errors or unhealthy metrics
+  - Confirm agent orchestrator queue is draining as expected
+  - **Orchestration System**: Validate orchestration deployment:
+    - Check orchestration pods: `kubectl get pods -l component=orchestration -n amas`
+    - Verify health: `kubectl exec -n amas deployment/amas-orchestration -- curl http://localhost:8000/health/orchestration`
+    - Check metrics: `kubectl port-forward svc/amas-orchestration 9090:9090 -n amas`
+    - Test task decomposition: See [Orchestration Deployment Guide](docs/deployment/ORCHESTRATION_DEPLOYMENT.md#validation--testing)
+  - Run a test workflow from the UI and verify expected results with end-to-end traces
 
 ## Contact & Support
 - Issues: [GitHub Issues](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues)

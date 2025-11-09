@@ -18,3 +18,5 @@ data:
   # Gunicorn/UVicorn workers for K8s
   UVICORN_WORKERS: "4"
   UVICORN_GRACEFUL_TIMEOUT: "30"
+  # Orchestration system enabled
+  ORCHESTRATION_ENABLED: "true"
