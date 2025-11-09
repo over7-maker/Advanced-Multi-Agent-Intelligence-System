@@ -54,7 +54,7 @@ Security Considerations:
 
 import asyncio
 import logging
-from typing import Dict, List, Optional, Any, Set, Union
+from typing import Dict, List, Optional, Any, Set
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from enum import Enum
