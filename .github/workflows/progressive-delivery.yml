@@ -300,6 +300,10 @@ jobs:
       id: build
       uses: docker/build-push-action@v5
       continue-on-error: false
+      # Enable verbose output to see actual build errors
+      env:
+        DOCKER_BUILDKIT: 1
+        BUILDKIT_PROGRESS: plain
       with:
         context: .
         file: ./Dockerfile
