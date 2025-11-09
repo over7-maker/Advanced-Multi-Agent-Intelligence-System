@@ -71,14 +71,12 @@ The **Hierarchical Agent Orchestration System** is the keystone component that e
 
 - **AI-Powered Task Decomposition**: Automatically breaks down complex requests into specialist workflows
 - **4-Layer Agent Hierarchy**: Executive → Management → Specialist → Execution layers
-- **Inter-Agent Communication**: Message bus for reliable agent coordination
+- **Inter-Agent Communication**: Message bus for reliable agent coordination (see [Security Guide](SECURITY.md) for encryption standards)
 - **Multi-Agent Workflow Execution**: Parallel task execution with dependency management
 - **Self-Healing**: Automatic agent replacement and task redistribution
 - **Quality Gates**: Multi-stage verification ensures business-ready outputs
 
-**Performance**: Handles 100+ concurrent workflows, 500+ specialist agents, 10,000+ messages/minute
-
-For detailed documentation, see [Orchestration System Guide](docs/ORCHESTRATION_SYSTEM.md).
+**Performance**: Handles `100+` concurrent workflows, `500+` specialist agents, `10,000+` messages/minute (see [Orchestration System Guide](docs/ORCHESTRATION_SYSTEM.md) for benchmark details)
 
 ## More Documentation
 For deployments, security, use cases, and support:
@@ -86,7 +84,7 @@ For deployments, security, use cases, and support:
 - [USE_CASES.md](USE_CASES.md)
 - [SECURITY.md](SECURITY.md)
 - [CHANGELOG.md](CHANGELOG.md)
-- [Orchestration System](docs/ORCHESTRATION_SYSTEM.md)
+- [Orchestration System Guide](docs/ORCHESTRATION_SYSTEM.md)
 
 ## Contact
 - Issues: [GitHub Issues](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues)

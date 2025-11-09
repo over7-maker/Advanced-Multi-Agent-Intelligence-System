@@ -450,6 +450,11 @@ export ORCHESTRATION_RETRY_ATTEMPTS=3
 # Resource Limits
 export ORCHESTRATION_MAX_WORKFLOWS=100
 export ORCHESTRATION_MAX_TOTAL_AGENTS=500
+
+# Concurrency Limits
+export ORCHESTRATION_MAX_AGENT_SPAWN_RATE=10
+export ORCHESTRATION_MESSAGE_BACKLOG_WARNING=1000
+export ORCHESTRATION_MESSAGE_BACKLOG_CRITICAL=5000
 ```
 
 ### Programmatic Configuration
@@ -622,6 +627,29 @@ help_id = await bus.request_specialist_help(
 **Quality Gates**: 1,000+ quality checks per hour
 
 **Memory Usage**: <2GB for 100 concurrent workflows
+
+### Concurrency Limits
+
+**Maximum Agent Spawn Rate**: 
+- Default: 10 agents per second per specialty
+- Configurable via `ORCHESTRATION_MAX_AGENT_SPAWN_RATE` environment variable
+- Prevents resource exhaustion during high-demand periods
+
+**Message Backlog Thresholds**:
+- Warning threshold: 1,000 pending messages per agent
+- Critical threshold: 5,000 pending messages per agent
+- Automatic backpressure: System throttles new messages when backlog exceeds thresholds
+- Configurable via `ORCHESTRATION_MESSAGE_BACKLOG_WARNING` and `ORCHESTRATION_MESSAGE_BACKLOG_CRITICAL` environment variables
+
+**Workflow Concurrency Limits**:
+- Maximum concurrent workflows: 100 (configurable via `ORCHESTRATION_MAX_WORKFLOWS`)
+- Maximum agents per workflow: 50 specialists
+- Maximum total agents: 500 (configurable via `ORCHESTRATION_MAX_TOTAL_AGENTS`)
+
+**Resource Protection**:
+- Circuit breaker activates when message backlog exceeds critical threshold
+- Automatic agent creation throttling when spawn rate limit reached
+- Graceful degradation: System prioritizes existing workflows over new requests when at capacity
 
 ### Performance Optimizations
 
