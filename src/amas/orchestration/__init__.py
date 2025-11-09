@@ -51,6 +51,34 @@ from .workflow_executor import (
     get_workflow_executor,
 )
 
+from .config import (
+    OrchestrationConfig,
+    get_config,
+    set_config,
+)
+
+from .utils import (
+    retry_with_backoff,
+    track_metrics,
+    with_circuit_breaker,
+    MetricsCollector,
+    CircuitBreaker,
+    RetryStrategy,
+    ErrorSeverity,
+    get_metrics_collector,
+)
+
+from .health import (
+    HealthChecker,
+    HealthStatus,
+    get_health_checker,
+)
+
+from .api import (
+    OrchestrationAPI,
+    get_api,
+)
+
 __all__ = [
     # Task Decomposition
     "TaskDecomposer",
@@ -86,6 +114,30 @@ __all__ = [
     "TaskStatus",
     "ExecutionContext",
     "get_workflow_executor",
+    
+    # Configuration
+    "OrchestrationConfig",
+    "get_config",
+    "set_config",
+    
+    # Utilities
+    "retry_with_backoff",
+    "track_metrics",
+    "with_circuit_breaker",
+    "MetricsCollector",
+    "CircuitBreaker",
+    "RetryStrategy",
+    "ErrorSeverity",
+    "get_metrics_collector",
+    
+    # Health & Monitoring
+    "HealthChecker",
+    "HealthStatus",
+    "get_health_checker",
+    
+    # API Integration
+    "OrchestrationAPI",
+    "get_api",
 ]
 
 __version__ = "1.0.0"

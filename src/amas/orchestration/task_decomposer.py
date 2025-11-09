@@ -742,54 +742,111 @@ class TaskDecomposer:
         return total_hours, total_cost
     
     async def decompose_task(self, user_request: str) -> WorkflowPlan:
-        """Main entry point: decompose user request into executable workflow plan"""
+        """
+        Main entry point: decompose user request into executable workflow plan.
+        
+        This method orchestrates the complete task decomposition process:
+        1. Analyzes task complexity and requirements
+        2. Identifies required specialist agents
+        3. Creates execution phases with dependencies
+        4. Generates detailed sub-tasks
+        5. Calculates resource estimates
+        6. Creates comprehensive workflow plan
+        
+        Args:
+            user_request: Natural language description of the task to be executed
+            
+        Returns:
+            WorkflowPlan: Complete execution plan with all sub-tasks, phases, and estimates
+            
+        Raises:
+            ValueError: If user_request is empty or invalid
+            TimeoutError: If decomposition exceeds timeout threshold
+            
+        Example:
+            >>> decomposer = TaskDecomposer()
+            >>> workflow = await decomposer.decompose_task(
+            ...     "Research AI market trends and create executive presentation"
+            ... )
+            >>> print(f"Created workflow with {len(workflow.sub_tasks)} tasks")
+        """
+        if not user_request or not user_request.strip():
+            raise ValueError("User request cannot be empty")
+        
         logger.info(f"Decomposing task: {user_request[:100]}...")
         
-        # Step 1: Analyze complexity
-        complexity, confidence = await self.analyze_task_complexity(user_request)
-        logger.info(f"Task complexity: {complexity.value} (confidence: {confidence:.2f})")
-        
-        # Step 2: Identify required specialists
-        requirements = await self.identify_required_specialists(user_request, complexity)
-        logger.info(f"Required specialists: {len(requirements)}")
-        
-        # Step 3: Create execution phases
-        phases = await self.create_execution_phases(requirements)
-        logger.info(f"Execution phases: {len(phases)}")
-        
-        # Step 4: Generate sub-tasks
-        sub_tasks = await self.generate_sub_tasks(user_request, requirements, phases)
-        logger.info(f"Generated sub-tasks: {len(sub_tasks)}")
-        
-        # Step 5: Calculate estimates
-        total_hours, total_cost = await self.calculate_resource_estimates(sub_tasks)
-        
-        # Step 6: Create workflow plan
-        workflow_plan = WorkflowPlan(
-            id=f"workflow_{uuid.uuid4().hex[:8]}",
-            user_request=user_request,
-            complexity=complexity,
-            sub_tasks=sub_tasks,
-            execution_phases=phases,
-            estimated_total_hours=total_hours,
-            estimated_cost_usd=total_cost,
-            required_specialists={req.skill_type for req in requirements},
-            estimated_completion=datetime.now(timezone.utc) + timedelta(hours=total_hours)
-        )
-        
-        # Add quality gates
-        workflow_plan.quality_gates = await self._generate_quality_gates(complexity, requirements)
-        
-        # Risk assessment
-        workflow_plan.risk_assessment = await self._assess_workflow_risk(workflow_plan)
-        
-        # Approval requirements
-        workflow_plan.user_approval_required = await self._requires_user_approval(workflow_plan)
-        
-        logger.info(f"Workflow plan created: {len(sub_tasks)} tasks, "
-                   f"{total_hours:.1f}h estimated, ${total_cost:.2f} cost")
-        
-        return workflow_plan
+        try:
+            # Step 1: Analyze complexity
+            complexity, confidence = await self.analyze_task_complexity(user_request)
+            logger.info(f"Task complexity: {complexity.value} (confidence: {confidence:.2f})")
+            
+            # Step 2: Identify required specialists
+            requirements = await self.identify_required_specialists(user_request, complexity)
+            logger.info(f"Required specialists: {len(requirements)}")
+            
+            # Validate we have requirements
+            if not requirements:
+                logger.warning("No specialists identified for task, using default analysis specialist")
+                from .config import get_config
+                config = get_config()
+                # Add default specialist if none found
+                requirements = [TaskRequirement(
+                    skill_type=AgentSpecialty.DATA_ANALYST,
+                    priority=config.default_task_priority,
+                    estimated_hours=1.0
+                )]
+            
+            # Step 3: Create execution phases
+            phases = await self.create_execution_phases(requirements)
+            logger.info(f"Execution phases: {len(phases)}")
+            
+            # Step 4: Generate sub-tasks
+            sub_tasks = await self.generate_sub_tasks(user_request, requirements, phases)
+            logger.info(f"Generated sub-tasks: {len(sub_tasks)}")
+            
+            # Validate sub-task count
+            from .config import get_config
+            config = get_config()
+            if len(sub_tasks) > config.max_sub_tasks_per_workflow:
+                logger.warning(
+                    f"Generated {len(sub_tasks)} sub-tasks, exceeding limit of "
+                    f"{config.max_sub_tasks_per_workflow}. Truncating..."
+                )
+                sub_tasks = sub_tasks[:config.max_sub_tasks_per_workflow]
+            
+            # Step 5: Calculate estimates
+            total_hours, total_cost = await self.calculate_resource_estimates(sub_tasks)
+            
+            # Step 6: Create workflow plan
+            workflow_plan = WorkflowPlan(
+                id=f"workflow_{uuid.uuid4().hex[:8]}",
+                user_request=user_request,
+                complexity=complexity,
+                sub_tasks=sub_tasks,
+                execution_phases=phases,
+                estimated_total_hours=total_hours,
+                estimated_cost_usd=total_cost,
+                required_specialists={req.skill_type for req in requirements},
+                estimated_completion=datetime.now(timezone.utc) + timedelta(hours=total_hours)
+            )
+            
+            # Add quality gates
+            workflow_plan.quality_gates = await self._generate_quality_gates(complexity, requirements)
+            
+            # Risk assessment
+            workflow_plan.risk_assessment = await self._assess_workflow_risk(workflow_plan)
+            
+            # Approval requirements
+            workflow_plan.user_approval_required = await self._requires_user_approval(workflow_plan)
+            
+            logger.info(f"Workflow plan created: {len(sub_tasks)} tasks, "
+                       f"{total_hours:.1f}h estimated, ${total_cost:.2f} cost")
+            
+            return workflow_plan
+            
+        except Exception as e:
+            logger.error(f"Error decomposing task: {e}", exc_info=True)
+            raise
     
     async def _generate_quality_gates(self, 
                                     complexity: TaskComplexity, 
