@@ -9,6 +9,7 @@
 - [Architecture Diagram](#architecture-diagram)
 - [Logging & Monitoring](#logging--monitoring)
 - [Example Scenarios](#example-scenarios)
+- [Documentation Versioning](#documentation-versioning)
 - [More Documentation](#more-documentation)
 - [Contact](#contact)
 
@@ -16,7 +17,7 @@
 
 ## Multi-Agent Layers
 - **Executive Layer** (1 agent): Decomposes all user requests, orchestrates workflows, and signs off on every result.
-- **Management Layer** (6-8 leads): Coordinates specialist teams for research, analysis, creative, QA, investigation, and systems.
+- **Management Layer** (6 specialist leads): Coordinates specialist teams for research, analysis, creative direction, QA, technical oversight, and investigation management.
 - **Specialist Layer** (50+ agents): Autonomous AIs (e.g. Academic Researcher, Data Analyst, Graphics Designer) handle domain-specific tasks in parallel.
 - **Execution Layer**: Executes backend tooling—file manager, code sandbox, API gateway, N8N agent, and media engine.
 
@@ -27,31 +28,32 @@
 - **User interface** — Visual team configuration with drag-and-drop, workflow template library, live debug console.
 
 ## Security in the Architecture
-- Inter-agent communication is encrypted (TLS within cluster).
-- Access control is orchestrated via OPA, with each agent role limited by capabilities.
-- Secrets and tokens are never stored in config; always loaded at runtime via `secrets` k8s.
-- All logs and actions are audit-trailed and searchable.
+- All agent interprocess comms encrypted (TLS2)
+- OPA-based RBAC at agent and team boundaries
+- All secrets only present in runtime memory, not configs or repos, injected by Kubernetes Secrets or Vault
+- Access tokens rotate at least every 15 minutes with refresh-mode in OIDC
+- All system logs/events are centrally captured with immutable audit trails.
 
 ## Performance Practices
-- HTN/DAG processing is parallelized by default.
-- Task pool with priority and job limit tunables per agent type.
-- Kubernetes scaling: each agent family is a k8s deployment; horizontal scaling via CPU/memory, custom metrics (`agents.active_tasks`).
-- Persistent cache for inter-task result sharing.
+- All task scheduling and agent pools are designed for horizontal scaling in Kubernetes, with autoscale triggers on CPU/memory/work queue.
+- Key metric for scaling: `agents.active_tasks` per pod; tuneable thresholds for cost and peak load.
+- Real-time metrics, backlog monitoring, and built-in queue overflow recovery.
 
 ## Continuous Self-Improvement
-- Post-run analytics stored for each team/strategy (success rate, duration, failures).
-- Agents A/B tested—winners promoted in the team pool.
-- Patterns learned (e.g. which workflow templates work best per task) drive future team formation.
+- On every orchestrated run, analytics for agent composition, timing, and error rate are stored in Postgres for meta-learning.
+- System uses past task outcomes to recommend team/assignment pattern for next similar workflow (reinforced, not static rules).
+- A/B tested agents and templates — stats inform rolling updates to agent selection.
+- All runs, feedback, and template iterations are versioned for audit and improvement.
 
 ## Logging & Monitoring
-- All layers emit OpenTelemetry logs, traces, and custom metrics.
-- Logging policies: error, warn, info tracked for 30 days (retention adjustable).
-- Live monitoring dashboards (see infra doc) for orchestrator health, failed agents, and task queue depth.
+- All layers emit OpenTelemetry logs, traces, and custom metrics to Grafana Cloud and Loki.
+- Retention policy: min 30 days for metrics/logs with auto-rotation/compaction at max 90 days.
+- Live dashboards in `/infra/grafana_dashboards/` for orchestrator health, failed agents, and task queue depth.
 
 ## Example Scenarios
-- **Market Research:** Executive divides research/analysis/creative/reporting, dozens of agents coordinate, results arrive in an hour.
-- **Continuous Compliance:** Investigation and QA agents monitor data pipelines and enforce audit policy.
-- **Custom Template Execution:** Users drag workflow templates and configure agent chain for bespoke automation.
+- **Market Research:** Executive divides research, analysis, creative, reporting. 50+ agents coordinate, parallel effort yields results in under one hour.
+- **Continuous Compliance:** Investigation/QA agents monitor data pipelines, enforce policy, auto-remediate violations with approval.
+- **Custom Team Workflow:** Users drag workflow templates, configure agents, and visually track outcome and improvements.
 
 ## Architecture Diagram
 
@@ -59,13 +61,19 @@
 
 ---
 
+## Documentation Versioning
+- Docs follow the `vX.Y.Z` release cycle (see top of README for current system version)
+- Major updates, breaking changes, and roadmap pivots tracked in CHANGELOG.md
+
 ## More Documentation
-For in-depth deployment, use cases, and security:
+For deployments, security, use cases, and support:
 - [DEPLOYMENT.md](DEPLOYMENT.md)
 - [USE_CASES.md](USE_CASES.md)
 - [SECURITY.md](SECURITY.md)
+- [CHANGELOG.md](CHANGELOG.md)
 
 ## Contact
-Open discussions or create issues on [GitHub](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System) for technical help.
+- Issues: [GitHub Issues](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues)
+- Email: support@amas-team.org
 
 ---
