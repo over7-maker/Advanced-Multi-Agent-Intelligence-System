@@ -264,11 +264,27 @@ deploy-production:
   environment: production
 ```
 
-**Blue-Green Deployment**:
-- Zero-downtime deployment
-- Load balancer switching
-- Rollback capability
-- Health validation
+**Progressive Delivery with Argo Rollouts**:
+- **Canary Deployments**: Progressive traffic shifting (10%→25%→50%→75%→100%)
+- **Automatic Rollback**: SLO violations trigger immediate rollback within 2 minutes
+- **Zero-downtime**: No service interruption during deployments
+- **SLO-based Gates**: Health checks and metrics validation prevent bad deployments
+- **Analysis Integration**: Success rate, latency P95, and error budget validation
+- **Blue-Green Capability**: Instant traffic switching for emergency scenarios
+
+**Deployment Workflow**:
+1. Build and scan container image
+2. Deploy to staging with smoke tests
+3. Trigger canary deployment in production
+4. Monitor metrics at each traffic level (10%, 25%, 50%, 75%)
+5. Automatic promotion or rollback based on SLO validation
+6. Post-deployment validation and monitoring
+
+**Workflow File**: `.github/workflows/progressive-delivery.yml`
+
+For detailed Progressive Delivery documentation, see:
+- [Progressive Delivery Quick Start](../PROGRESSIVE_DELIVERY_QUICK_START.md)
+- [Progressive Delivery Implementation](../PROGRESSIVE_DELIVERY_IMPLEMENTATION.md)
 
 ### 5. Post-deployment Validation
 

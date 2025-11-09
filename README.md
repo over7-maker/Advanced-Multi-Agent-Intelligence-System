@@ -100,6 +100,7 @@ AMAS is a **production-grade, bulletproof multi-agent AI system** featuring **4-
 - **📊 Full Observability** - Prometheus metrics, Grafana dashboards, alerting
 - **🎯 Intelligent Failover** - Automated provider switching with health monitoring
 - **🔄 Self-Healing Workflows** - Continuous learning and system adaptation
+- **🚀 Progressive Delivery Pipeline** - Canary deployments, automatic rollback, zero-downtime releases with SLO-based gates
 
 ---
 
@@ -310,6 +311,15 @@ python -m amas.cli test-security --comprehensive
 **📚 [Complete Security Guide →](docs/PHASE_2_FEATURES.md)**
 
 > Note (Phase‑06): Some enterprise security items are staged for incremental rollout. Refer to `IMPLEMENTATION_STATUS.md` for accurate, current status and timelines.
+
+### Progressive Delivery
+AMAS includes a comprehensive Progressive Delivery Pipeline with Argo Rollouts for safe, automated deployments:
+- **Canary Deployments**: Progressive traffic shifting (10%→25%→50%→75%→100%)
+- **Automatic Rollback**: SLO violations trigger immediate rollback within 2 minutes
+- **Zero Downtime**: No service interruption during deployments
+- **SLO-based Gates**: Health checks and metrics validation prevent bad deployments
+
+See [Progressive Delivery Quick Start](docs/PROGRESSIVE_DELIVERY_QUICK_START.md) and [Implementation Guide](docs/PROGRESSIVE_DELIVERY_IMPLEMENTATION.md) for details.
 
 ---
 

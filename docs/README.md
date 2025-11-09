@@ -256,10 +256,25 @@ Comprehensive API documentation for all integration needs:
 ### **🏢 Production Deployment**
 Complete guides for production deployment and operations:
 
-- **[🚀 Deployment Guide](deployment/DEPLOYMENT.md)** - Production deployment
+- **[🚀 Deployment Guide](DEPLOYMENT.md)** - Production deployment
 - **[📋 Deployment Checklist](deployment/DEPLOYMENT_CHECKLIST.md)** - Pre-deployment checklist
 - **[🏭 Production Deployment](deployment/PRODUCTION_DEPLOYMENT.md)** - Enterprise deployment
 - **[✅ Production Readiness](deployment/PRODUCTION_READINESS_CHECKLIST.md)** - Readiness checklist
+
+### **🔄 Progressive Delivery Pipeline**
+Safe, automated deployments with canary releases and automatic rollback:
+
+- **[🚀 Progressive Delivery Guide](deployment/PROGRESSIVE_DELIVERY.md)** - Comprehensive progressive delivery guide
+- **[⚡ Progressive Delivery Quick Start](PROGRESSIVE_DELIVERY_QUICK_START.md)** - Quick start guide
+- **[📋 Progressive Delivery Implementation](PROGRESSIVE_DELIVERY_IMPLEMENTATION.md)** - Implementation details
+- **[✅ Progressive Delivery Success Criteria](PROGRESSIVE_DELIVERY_SUCCESS_CRITERIA.md)** - Success criteria validation
+- **[🔄 CI/CD Pipeline Documentation](deployment/CI_CD_PIPELINE_DOCUMENTATION.md)** - CI/CD integration
+
+**Key Features**:
+- **Canary Deployments**: Progressive traffic shifting (10%→25%→50%→75%→100%)
+- **Automatic Rollback**: SLO violations trigger immediate rollback within 2 minutes
+- **Zero-Downtime**: No service interruption during deployments
+- **SLO-based Gates**: Health checks and metrics validation prevent bad deployments
  - Phase‑06: For local development, prefer `docker-compose.dev.yml` and `scripts/validate_env.py` to verify configuration.
 
 ### **🛡️ Bulletproof AI Analysis Examples**
@@ -290,17 +305,18 @@ Complete guides for production deployment and operations:
 | **👤 User Guides** | 5 documents | **30KB** | 15+ | 5+ |
 | **👨‍💻 Developer** | 5 documents | **35KB** | 40+ | 20+ |
 | **🔌 API Reference** | 4 documents | **30KB** | 35+ | 10+ |
-| **🚀 Deployment** | 4 documents | **25KB** | 20+ | 15+ |
-| **📚 Total** | **35 documents** | **262KB** | **260+** | **120+** |
+| **🚀 Deployment** | 9 documents | **45KB** | 35+ | 25+ |
+| **📚 Total** | **40 documents** | **282KB** | **295+** | **145+** |
 
 </div>
 
 ### **🌟 Documentation Highlights**
 
-- **📊 Total Documentation**: **262KB+** (262,000+ words)
-- **💻 Code Examples**: **260+** real-world samples
-- **⚙️ Configuration Examples**: **120+** production configs
+- **📊 Total Documentation**: **282KB+** (282,000+ words)
+- **💻 Code Examples**: **295+** real-world samples
+- **⚙️ Configuration Examples**: **145+** production configs
 - **🎯 Use Case Scenarios**: **50+** complete workflows
+- **🔄 Progressive Delivery**: Complete canary deployment system documented
 - **🛠️ Troubleshooting Guides**: **50+** solutions
 - **📊 Visual Elements**: **200+** tables, diagrams, badges
 - **🔗 Cross-References**: **1000+** internal links
