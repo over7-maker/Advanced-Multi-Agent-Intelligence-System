@@ -24,7 +24,7 @@ The AMAS performance scaling infrastructure provides intelligent, event-driven a
 - **Performance Monitoring**: Real-time metrics collection and analysis including request rates, latency distributions, and resource utilization
 - **Horizontal Pod Autoscaling (HPA)**: Kubernetes-native autoscaling as fallback when KEDA is unavailable
 - **Vertical Pod Autoscaling (VPA)**: Automatic right-sizing of container resources based on historical usage patterns
-- **Semantic Caching**: Redis-based intelligent caching with embedding similarity matching (see [benchmark results](./performance_benchmarks.md) for performance metrics)
+- **Semantic Caching**: Redis-based intelligent caching with embedding similarity matching. Requires Redis with TLS encryption and authentication enabled. See [performance benchmarks](./performance_benchmarks.md) for performance metrics.
 - **Circuit Breakers**: Fail-fast patterns to prevent cascade failures
 - **Rate Limiting**: User-based quotas with sliding window algorithm
 - **Cost Tracking**: Automatic token usage and API cost tracking with optimization recommendations
@@ -249,7 +249,7 @@ The load tester exports Prometheus metrics:
 5. **Cost Optimization**
    - Use VPA recommendations (in "Off" mode) to right-size containers and reduce waste
    - Monitor cost per request using `cost_tracking_service`
-   - Implement semantic caching to reduce redundant API calls (see [benchmark results](./performance_benchmarks.md))
+   - Implement semantic caching to reduce redundant API calls (see [performance benchmarks](./performance_benchmarks.md) for benchmark results)
    - Use request deduplication for expensive operations
    - Review scaling thresholds regularly to optimize resource usage
 
@@ -278,7 +278,12 @@ Before deploying the performance scaling infrastructure, ensure the following ar
 
 4. **Redis** (for caching and rate limiting)
    - Redis cluster accessible from pods
-   - Connection URL configured in application
+   - **Security Requirements**:
+     - TLS encryption enabled for all connections
+     - Authentication configured (AUTH command or ACL)
+     - Network policies restricting access
+     - Secrets stored in Kubernetes Secrets (never hardcode)
+   - Connection URL configured in application via environment variables
    - Optional but recommended for optimal performance
 
 5. **VPA** (optional, for vertical scaling)
@@ -287,10 +292,13 @@ Before deploying the performance scaling infrastructure, ensure the following ar
 
 ### Configuration Requirements
 
-- Prometheus metrics endpoint accessible
+- Prometheus metrics endpoint accessible (with authentication if exposed externally)
 - Redis connection URL (if using semantic caching or distributed rate limiting)
+  - Use TLS-encrypted connections
+  - Store connection credentials in Kubernetes Secrets
 - Sufficient cluster resources for max replica count
 - Network policies configured (see `k8s/scaling/keda-scaler.yaml`)
+- Pod Disruption Budgets configured for critical components (see example below)
 
 ## Troubleshooting
 
@@ -379,6 +387,74 @@ Before deploying the performance scaling infrastructure, ensure the following ar
 - Implement semantic caching to reduce API calls
 - Review and adjust max replica limits
 - Monitor and optimize based on cost tracking recommendations
+
+### Pod Disruption Budgets
+
+For stateful components and critical services, configure Pod Disruption Budgets to maintain availability during scaling events:
+
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: amas-orchestrator-pdb
+  namespace: amas-prod
+spec:
+  selector:
+    matchLabels:
+      app: amas-orchestrator
+  minAvailable: 2  # Or use maxUnavailable: 25%
+```
+
+**Best Practices:**
+- Set `minAvailable` to ensure at least N pods are always running
+- For stateless services, use `maxUnavailable` percentage
+- For stateful services, use `minAvailable` count
+- Consider cluster node maintenance windows when setting values
+
+### Cold Start Mitigation
+
+When using scale-from-zero configurations (KEDA with `minReplicaCount: 0`):
+
+- **Warm-up Strategy**: Use `idleReplicaCount` to maintain minimum pods
+- **Pre-warming**: Implement health check endpoints that initialize dependencies
+- **Connection Pooling**: Pre-initialize connection pools in startup code
+- **Cache Warming**: Pre-populate frequently accessed cache entries
+- **Monitoring**: Track cold start latency separately from warm request latency
+
+### Custom Metrics Pipeline
+
+For advanced scaling beyond CPU/memory, set up a custom metrics pipeline:
+
+1. **Export Custom Metrics**: Expose application metrics via Prometheus format
+2. **Prometheus Scraping**: Configure Prometheus to scrape custom metrics
+3. **KEDA Integration**: Reference custom metrics in KEDA ScaledObject triggers
+4. **Validation**: Verify metrics are available before enabling scaling
+
+Example custom metric in KEDA:
+```yaml
+triggers:
+- type: prometheus
+  metadata:
+    serverAddress: http://prometheus.monitoring.svc.cluster.local:9090
+    metricName: custom_request_rate
+    query: rate(amas_custom_metric_total[2m])
+    threshold: '100'
+```
+
+### GitOps Best Practices
+
+For production deployments, use GitOps principles:
+
+- **Version Control**: Store all scaling configurations in Git
+- **Automated Deployment**: Use CI/CD pipelines to apply configurations
+- **Configuration Drift Prevention**: Use tools like ArgoCD or Flux to sync configurations
+- **Review Process**: Require PR reviews for scaling configuration changes
+- **Rollback Strategy**: Maintain previous configurations for quick rollback
+
+**Avoid Manual Scaling:**
+- Do not manually scale pods in production (`kubectl scale`)
+- Use configuration changes in Git to trigger scaling adjustments
+- Monitor scaling events through observability tools, not manual inspection
 
 ## Additional Resources
 
