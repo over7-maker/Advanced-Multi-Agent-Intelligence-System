@@ -1,18 +1,18 @@
-name: 🚀 Progressive Delivery Pipeline
+name: Progressive Delivery Pipeline
 
 # =============================================================================
 # WORKFLOW TRIGGERS
 # =============================================================================
 # This workflow runs on:
 # - Pushes to main and feature/progressive-delivery-pipeline branches
-# - Pull requests to main branch
+# - Pull requests targeting main or feature/progressive-delivery-pipeline
 # - Manual workflow dispatch with environment and strategy selection
 # =============================================================================
 on:
   push:
     branches: [main, feature/progressive-delivery-pipeline]
   pull_request:
-    branches: [main]
+    branches: [main, feature/progressive-delivery-pipeline]
   workflow_dispatch:
     inputs:
       environment:
@@ -33,21 +33,16 @@ on:
           - blue-green
 
 # =============================================================================
-# GLOBAL ENVIRONMENT VARIABLES
+# GLOBAL ENVIRONMENT VARIABLES (Non-sensitive)
 # =============================================================================
-# These variables are used across all jobs in the workflow
-# Security Note: REGISTRY_PASSWORD uses GITHUB_TOKEN for GHCR (GitHub Container Registry)
-# For production, consider using secrets.PROD_GHCR_TOKEN with limited permissions
+# These non-sensitive variables are used across all jobs in the workflow
+# Security: Sensitive values (REGISTRY_PASSWORD) are defined at job-level to limit exposure
 # =============================================================================
 env:
   PYTHON_VERSION: '3.11'
   DOCKER_REGISTRY: ghcr.io
   IMAGE_NAME: amas-orchestrator
   REGISTRY_USERNAME: ${{ github.repository_owner }}
-  # Use GITHUB_TOKEN for GHCR (automatically scoped to repository)
-  # For production deployments, uncomment and use dedicated token:
-  # REGISTRY_PASSWORD: ${{ github.event.inputs.environment == 'production' && secrets.PROD_GHCR_TOKEN || secrets.GITHUB_TOKEN }}
-  REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
 
 jobs:
   # =============================================================================
@@ -59,6 +54,7 @@ jobs:
   validate-inputs:
     name: ✅ Validate Workflow Inputs
     runs-on: ubuntu-latest
+    timeout-minutes: 5  # Quick validation job
     if: github.event_name == 'workflow_dispatch'
     steps:
     - name: ✅ Validate environment input
@@ -104,6 +100,12 @@ jobs:
       packages: write     # Push container images to GHCR
       security-events: write  # Upload security scan results
     
+    # Security: Define sensitive values at job-level, not globally
+    # Use GITHUB_TOKEN for GHCR (automatically scoped to repository)
+    # For production, consider using secrets.PROD_GHCR_TOKEN with limited permissions
+    env:
+      REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+    
     outputs:
       image-digest: ${{ steps.build.outputs.digest }}
       image-tag: ${{ steps.build.outputs.tags }}
@@ -119,6 +121,19 @@ jobs:
         fetch-depth: 0  # Fetch full history for better caching
     
     # ========================================================================
+    # STEP 1B: Cache Docker build layers (performance optimization)
+    # ========================================================================
+    # Uses GitHub Actions cache to speed up Docker builds
+    # ========================================================================
+    - name: 📦 Cache Docker build layers
+      uses: actions/cache@v4
+      with:
+        path: /tmp/.buildx-cache
+        key: ${{ runner.os }}-buildx-${{ github.sha }}
+        restore-keys: |
+          ${{ runner.os }}-buildx-
+    
+    # ========================================================================
     # STEP 2: Set up Docker Buildx for multi-platform builds
     # ========================================================================
     - name: 🐳 Set up Docker Buildx
@@ -127,6 +142,9 @@ jobs:
         driver-opts: |
           image=moby/buildkit:latest
           network=host
+        # Cache configuration for faster builds
+        cache-from: type=local,src=/tmp/.buildx-cache
+        cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
     
     # ========================================================================
     # STEP 3: Authenticate with container registry
@@ -165,8 +183,13 @@ jobs:
           ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
         # Use GitHub Actions cache for faster builds
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        # Also use local cache if available
+        cache-from: |
+          type=gha
+          type=local,src=/tmp/.buildx-cache
+        cache-to: |
+          type=gha,mode=max
+          type=local,dest=/tmp/.buildx-cache,mode=max
         # Security: Include provenance and SBOM
         provenance: true
         sbom: true
@@ -403,7 +426,14 @@ jobs:
     name: 🌟 Production Canary Deployment
     runs-on: ubuntu-latest
     needs: [build-and-security-scan, deploy-staging]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push' && needs.build-and-security-scan.result == 'success'
+    # Only run canary deployment if:
+    # - On main branch push, OR
+    # - Manual dispatch with canary strategy selected
+    if: |
+      needs.build-and-security-scan.result == 'success' && (
+        (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+        (github.event_name == 'workflow_dispatch' && github.event.inputs.deployment_strategy == 'canary')
+      )
     environment: 
       name: production
       url: https://amas.example.com
@@ -476,13 +506,75 @@ jobs:
         kubectl get rollout amas-orchestrator -n amas-prod -o wide
 
   # =============================================================================
+  # PHASE 3B: PRODUCTION BLUE-GREEN DEPLOYMENT
+  # =============================================================================
+  # Alternative deployment strategy for emergency scenarios
+  # =============================================================================
+  
+  deploy-production-blue-green:
+    name: 🔵 Production Blue-Green Deployment
+    runs-on: ubuntu-latest
+    needs: [build-and-security-scan, deploy-staging]
+    # Only run blue-green deployment if manually selected
+    if: |
+      needs.build-and-security-scan.result == 'success' && (
+        github.event_name == 'workflow_dispatch' && 
+        github.event.inputs.deployment_strategy == 'blue-green'
+      )
+    environment: 
+      name: production
+      url: https://amas.example.com
+    timeout-minutes: 20  # Blue-green is faster (instant switch)
+    permissions:
+      contents: read
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Setup kubectl
+      uses: azure/setup-kubectl@v3
+    
+    - name: 🔑 Configure Kubernetes
+      run: |
+        echo "${{ secrets.KUBECONFIG_PRODUCTION }}" | base64 -d > $HOME/.kube/config
+        kubectl config set-context --current --namespace=amas-prod
+    
+    - name: 🚀 Execute Blue-Green Deployment
+      run: |
+        echo "🚀 Starting blue-green deployment to production..."
+        export NAMESPACE=amas-prod
+        export SERVICE_NAME=amas-orchestrator
+        export IMAGE_TAG=${{ github.sha }}
+        export DOCKER_REGISTRY=${{ env.DOCKER_REGISTRY }}
+        export IMAGE_NAME=${{ env.IMAGE_NAME }}
+        
+        if [ -f scripts/deployment/blue_green_deploy.sh ]; then
+          chmod +x scripts/deployment/blue_green_deploy.sh
+          ./scripts/deployment/blue_green_deploy.sh deploy
+        else
+          echo "⚠️  Blue-green deployment script not found"
+          exit 1
+        fi
+    
+    - name: 🧪 Production Smoke Tests
+      run: |
+        echo "🧪 Running production smoke tests..."
+        kubectl get deployments -n amas-prod -l "app=amas-orchestrator" -o wide
+
+  # =============================================================================
   # PHASE 4: EMERGENCY ROLLBACK
   # =============================================================================
   
   emergency-rollback:
     name: 🔄 Emergency Rollback
     runs-on: ubuntu-latest
-    if: failure() && (needs.deploy-production-canary.result == 'failure')
+    # Trigger rollback if either deployment strategy fails
+    if: |
+      failure() && (
+        (needs.deploy-production-canary.result == 'failure') ||
+        (needs.deploy-production-blue-green.result == 'failure')
+      )
     environment: production
     timeout-minutes: 10
     permissions:
