@@ -38,9 +38,9 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Self-healing, persistent, and learning architecture
 - Professional React interface and team visual builder
 - 100+ service/tool integrations with bulletproof security
-- **🔍 Comprehensive Observability**: OpenTelemetry distributed tracing, SLO monitoring, error budget tracking, and automated alerting
-- **📊 Operational Dashboards**: Real-time Grafana dashboards for performance, SLO status, and resource utilization
-- **🚨 Intelligent Alerting**: Multi-channel alerts (Slack, PagerDuty, Email) with burn rate detection
+- **🔍 Comprehensive Observability**: OpenTelemetry tracing, SLO monitoring, and automated alerting
+- **📊 Operational Dashboards**: Real-time Grafana dashboards for performance and SLO status
+- **🚨 Intelligent Alerting**: Multi-channel alerts with burn rate detection
 
 ---
 
