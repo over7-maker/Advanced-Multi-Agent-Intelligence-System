@@ -1,13 +1,16 @@
 {
   "dashboard": {
+    "uid": "amas-agent-performance",
     "title": "AMAS Agent Performance Dashboard",
     "description": "Real-time monitoring of agent performance metrics including request rates, success rates, latency distributions, tool call performance, token usage, and cost tracking",
     "tags": ["amas", "agents", "performance", "observability"],
     "timezone": "UTC",
-    "refresh": "30s",
+    "refresh": "1m",
     "schemaVersion": 39,
     "version": 1,
+    "editable": true,
     "hideControls": false,
+    "links": [],
     "annotations": {
       "list": [
         {
@@ -28,11 +31,11 @@
             "uid": "-- Grafana --"
           },
           "enable": true,
-          "expr": "increase(amas_slo_violations_total[$__rate_interval]) > 0",
+          "expr": "changes(amas_slo_violations_total[1m]) > 0",
           "iconColor": "red",
           "name": "SLO Violations",
           "showIn": 0,
-          "step": "$__rate_interval",
+          "step": "1m",
           "titleFormat": "SLO Violation",
           "type": "tags",
           "useValueForTime": false
@@ -179,6 +182,7 @@
     ]
   },
   "slo_dashboard": {
+    "uid": "amas-slo-monitoring",
     "title": "AMAS SLO Monitoring Dashboard",
     "description": "Service Level Objective monitoring with error budget tracking, burn rate analysis, and compliance status visualization",
     "tags": ["amas", "slo", "reliability", "observability"],
@@ -186,7 +190,9 @@
     "refresh": "1m",
     "schemaVersion": 39,
     "version": 1,
+    "editable": true,
     "hideControls": false,
+    "links": [],
     "annotations": {
       "list": [
         {
@@ -313,14 +319,17 @@
     ]
   },
   "resource_dashboard": {
+    "uid": "amas-resource-utilization",
     "title": "AMAS Resource Utilization",
     "description": "System resource monitoring including active agents, queue depth, memory usage, and CPU utilization",
     "tags": ["amas", "resources", "system", "observability"],
     "timezone": "UTC",
-    "refresh": "30s",
+    "refresh": "1m",
     "schemaVersion": 39,
     "version": 1,
+    "editable": true,
     "hideControls": false,
+    "links": [],
     "annotations": {
       "list": [
         {
