@@ -130,7 +130,75 @@ grep -n "requires_pci_protection" src/amas/governance/data_classifier.py
 
 ---
 
-### 2. Security - PII Hashing
+### 2. Security - Input Sanitization and DoS Protection
+
+**Status**: FIXED
+
+**Issue**: 
+- No input size limits (risk of DoS via memory exhaustion)
+- No protection against null bytes
+- No dictionary depth limits (risk of stack overflow)
+- No validation of adversarial inputs
+
+**Fix Applied**:
+
+1. **Input Size Limits** (Lines 347-349):
+   ```python
+   MAX_INPUT_LENGTH = 1_000_000  # 1MB limit
+   MAX_DICT_DEPTH = 100  # Maximum nesting depth
+   ```
+
+2. **Input Sanitization** (Lines 418-456):
+   - String length validation
+   - Null byte detection and rejection
+   - Dictionary depth validation
+   - Type validation with clear error messages
+
+3. **Error Handling**:
+   - Raises `ValueError` for size violations
+   - Raises `TypeError` for invalid types
+   - Clear error messages for debugging
+
+**Security Review**:
+- ✓ Prevents DoS via memory exhaustion
+- ✓ Prevents stack overflow from deep nesting
+- ✓ Rejects null bytes and control characters
+- ✓ All edge cases handled
+
+### 3. Security - Compliance Flag Validation
+
+**Status**: FIXED
+
+**Issue**: 
+- Default `requires_pci_protection=False` could lead to false negatives
+- If detection logic fails silently, sensitive data might not be protected
+- No validation that flags match detected PII
+
+**Fix Applied**:
+
+1. **Post-Classification Validation** (Lines 516-555):
+   ```python
+   def _validate_compliance_flags(self, result: ClassificationResult, pii_detections: List[PIIDetection]):
+       """Validate that compliance flags are correctly set based on detected PII"""
+       # Auto-corrects false negatives
+       # Logs warnings when corrections are made
+   ```
+
+2. **Auto-Correction Logic**:
+   - Credit card detected → Ensures `requires_pci_protection=True`
+   - GDPR-triggering PII detected → Ensures `requires_gdpr_protection=True`
+   - HIPAA-triggering PII detected → Ensures `requires_hipaa_protection=True`
+
+3. **Logging**:
+   - Warnings logged when auto-corrections occur
+   - Helps identify detection logic issues
+
+**Security Review**:
+- ✓ Prevents false negatives
+- ✓ Ensures compliance flags match detected PII
+- ✓ Auto-correction with logging for audit trail
+
+### 4. Security - PII Hashing
 
 **Status**: FIXED
 
