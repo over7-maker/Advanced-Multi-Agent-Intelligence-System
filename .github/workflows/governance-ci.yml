@@ -5,27 +5,41 @@
 
 name: Data Governance & Compliance CI
 
-# Workflow triggers - only run when relevant files change
+# Workflow triggers - run when relevant files change
 on:
   push:
     branches: [ main, feature/data-governance-compliance ]
     paths:
-      # Only trigger on Python files in governance module
+      # Python files in governance module
       - 'src/amas/governance/**.py'
-      # Only trigger on test files for this module
+      # Test files for this module
       - 'tests/test_data_classifier*.py'
-      # Trigger on workflow changes
+      # Verification scripts
+      - 'verify_data_classifier.py'
+      # Configuration files that affect the module
+      - 'requirements-ci.txt'
+      - 'mypy.ini'
+      # Workflow changes
       - '.github/workflows/governance-ci.yml'
+      # Documentation that might affect usage
+      - '**/governance*.md'
+      - 'AI_ANALYSIS*.md'
   pull_request:
     branches: [ main ]
     paths:
       - 'src/amas/governance/**.py'
       - 'tests/test_data_classifier*.py'
+      - 'verify_data_classifier.py'
+      - 'requirements-ci.txt'
+      - 'mypy.ini'
+      - '.github/workflows/governance-ci.yml'
 
 # Environment variables for configuration
+# These can be overridden via repository secrets or workflow inputs if needed
 env:
-  PYTHON_VERSION: '3.12.12'  # Pinned Python version for reproducibility
-  TIMEOUT_MINUTES: 15  # Maximum time for jobs to run
+  PYTHON_VERSION: '3.12.12'  # Pinned Python version for reproducibility and security
+  TIMEOUT_MINUTES: 20  # Maximum time for jobs to run (increased for complex operations)
+  MIN_PYTHON_VERSION: '3.12'  # Minimum supported Python version
 
 jobs:
   # Job 1: Type checking with mypy and pyright
@@ -56,15 +70,35 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # Step 4: Install type checking dependencies with error handling
+      # Step 4: Verify Python version meets requirements
+      - name: Verify Python version
+        run: |
+          python_version=$(python --version | cut -d' ' -f2)
+          echo "Python version: $python_version"
+          # Verify version is 3.12.x
+          if ! python -c "import sys; assert sys.version_info >= (3, 12), 'Python 3.12+ required'"; then
+            echo "Error: Python version must be 3.12 or higher"
+            exit 1
+          fi
+
+      # Step 5: Install type checking dependencies with error handling and verification
       - name: Install type checking dependencies
         run: |
           python -m pip install --upgrade pip
           # Try to install from requirements file, fallback to direct install
           if [ -f requirements-ci.txt ]; then
+            # Verify requirements file is valid
+            if ! pip install --dry-run -r requirements-ci.txt > /dev/null 2>&1; then
+              echo "Error: requirements-ci.txt contains invalid entries"
+              exit 1
+            fi
             pip install -r requirements-ci.txt || {
               echo "Error: Failed to install from requirements-ci.txt"
               exit 1
+            }
+            # Verify installed packages
+            pip check || {
+              echo "Warning: Dependency conflicts detected"
             }
           else
             echo "Warning: requirements-ci.txt not found, using fallback"
@@ -73,14 +107,20 @@ jobs:
               exit 1
             }
           fi
+          # Verify tools are installed and accessible
+          mypy --version || { echo "Error: mypy not installed correctly"; exit 1; }
+          pyright --version || { echo "Error: pyright not installed correctly"; exit 1; }
 
-      # Step 5: Run mypy with strict type checking
+      # Step 6: Run mypy with strict type checking
       - name: Run mypy
         continue-on-error: false
         run: |
           # Use mypy.ini if available, otherwise use command-line flags
           if [ -f mypy.ini ]; then
-            mypy src/amas/governance/data_classifier.py --config-file=mypy.ini
+            mypy src/amas/governance/data_classifier.py --config-file=mypy.ini || {
+              echo "Error: mypy type checking failed"
+              exit 1
+            }
           else
             mypy src/amas/governance/data_classifier.py \
               --check-untyped-defs \
@@ -88,10 +128,13 @@ jobs:
               --disallow-incomplete-defs \
               --disallow-any-generics \
               --show-error-codes \
-              --strict-optional
+              --strict-optional || {
+              echo "Error: mypy type checking failed"
+              exit 1
+            }
           fi
 
-      # Step 6: Run pyright for additional type checking
+      # Step 7: Run pyright for additional type checking
       - name: Run pyright
         continue-on-error: false
         run: |
@@ -128,7 +171,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # Step 4: Install linting tools with error handling
+      # Step 4: Install linting tools with error handling and verification
       - name: Install linting tools
         run: |
           python -m pip install --upgrade pip
@@ -137,6 +180,10 @@ jobs:
               echo "Error: Failed to install from requirements-ci.txt"
               exit 1
             }
+            # Verify installed packages
+            pip check || {
+              echo "Warning: Dependency conflicts detected"
+            }
           else
             echo "Warning: requirements-ci.txt not found, using fallback"
             pip install flake8>=6.1.0 pylint>=3.0.0 || {
@@ -144,6 +191,9 @@ jobs:
               exit 1
             }
           fi
+          # Verify tools are installed
+          flake8 --version || { echo "Error: flake8 not installed correctly"; exit 1; }
+          pylint --version || { echo "Error: pylint not installed correctly"; exit 1; }
 
       # Step 5: Run flake8 for code style checking
       - name: Run flake8
@@ -195,7 +245,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # Step 4: Install test dependencies with error handling
+      # Step 4: Install test dependencies with error handling and verification
       - name: Install test dependencies
         run: |
           python -m pip install --upgrade pip
@@ -204,6 +254,10 @@ jobs:
               echo "Error: Failed to install from requirements-ci.txt"
               exit 1
             }
+            # Verify installed packages and check for conflicts
+            pip check || {
+              echo "Warning: Dependency conflicts detected - tests may be affected"
+            }
           else
             echo "Warning: requirements-ci.txt not found, using fallback"
             pip install pytest>=7.4.0 pytest-cov>=4.1.0 || {
@@ -211,6 +265,8 @@ jobs:
               exit 1
             }
           fi
+          # Verify pytest is installed correctly
+          pytest --version || { echo "Error: pytest not installed correctly"; exit 1; }
 
       # Step 5: Run unit tests with coverage
       - name: Run tests
@@ -267,7 +323,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # Step 4: Install performance test dependencies
+      # Step 4: Install performance test dependencies with verification
       - name: Install performance test dependencies
         run: |
           python -m pip install --upgrade pip
@@ -276,6 +332,7 @@ jobs:
               echo "Error: Failed to install from requirements-ci.txt"
               exit 1
             }
+            pip check || echo "Warning: Dependency conflicts detected"
           else
             echo "Warning: requirements-ci.txt not found, using fallback"
             pip install pytest>=7.4.0 pytest-benchmark>=4.0.0 || {
@@ -332,7 +389,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # Step 4: Install security scanning tools
+      # Step 4: Install security scanning tools with verification
       - name: Install security tools
         run: |
           python -m pip install --upgrade pip
@@ -341,6 +398,10 @@ jobs:
               echo "Error: Failed to install from requirements-ci.txt"
               exit 1
             }
+            # Verify no dependency conflicts that could affect security scanning
+            pip check || {
+              echo "Warning: Dependency conflicts detected - security scan may be affected"
+            }
           else
             echo "Warning: requirements-ci.txt not found, using fallback"
             pip install bandit>=1.7.5 safety>=2.3.5 || {
@@ -348,6 +409,9 @@ jobs:
               exit 1
             }
           fi
+          # Verify security tools are installed
+          bandit --version || { echo "Error: bandit not installed correctly"; exit 1; }
+          safety --version || { echo "Error: safety not installed correctly"; exit 1; }
 
       # Step 5: Run bandit security scan
       - name: Run bandit security scan
