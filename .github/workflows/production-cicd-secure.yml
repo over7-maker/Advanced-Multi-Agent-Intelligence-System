@@ -1,5 +1,23 @@
 name: 🚀 AMAS Secure Production CI/CD Pipeline
 
+# Workflow Purpose:
+#   This workflow performs comprehensive security vulnerability scanning for the AMAS project.
+#   It uses multiple security tools (Safety, Bandit, Semgrep) to detect vulnerabilities in
+#   dependencies and source code. The workflow enforces security gates that prevent merging
+#   if critical vulnerabilities are found.
+#
+# Key Features:
+#   - Dependency vulnerability scanning (Safety)
+#   - Static code analysis (Bandit)
+#   - SAST scanning (Semgrep)
+#   - Hash-verified package installation
+#   - Comprehensive audit trail and reporting
+#
+# Expected Outcomes:
+#   - Security reports uploaded as artifacts
+#   - Job fails if critical vulnerabilities are detected
+#   - Detailed GitHub job summary with scan results
+
 # Least-privilege defaults; elevate per job only when needed
 permissions:
   contents: read
@@ -47,9 +65,11 @@ jobs:
       passed: ${{ steps.scan-results.outputs.passed }}
     # Environment variables for this job
     #   REQUIREMENTS_FILE: Path to the security tools requirements file
-    #     This file contains pinned versions of security scanning tools (safety, bandit, etc.)
-    #     Using an environment variable makes it easy to change the file path if needed
-    #     This allows for easier updates and maintenance of the security tools
+    #     - Purpose: Contains pinned versions of security scanning tools (safety, bandit, semgrep, etc.)
+    #     - Expected value: Relative path from repository root (e.g., "requirements-security.txt")
+    #     - Constraints: File must exist, be readable, non-empty, and contain at least one package specification
+    #     - Security: File should contain pinned versions (e.g., "safety==2.3.5") to prevent supply chain attacks
+    #     - Maintenance: Using an environment variable makes it easy to change the file path if needed
     env:
       REQUIREMENTS_FILE: requirements-security.txt
 
