@@ -46,9 +46,10 @@ jobs:
       critical-vulnerabilities: ${{ steps.scan-results.outputs.critical-vulnerabilities }}
       passed: ${{ steps.scan-results.outputs.passed }}
     # Environment variables for this job
-    # REQUIREMENTS_FILE: Path to the security tools requirements file
-    #   This file contains pinned versions of security scanning tools (safety, bandit, etc.)
-    #   Using an environment variable makes it easy to change the file path if needed
+    #   REQUIREMENTS_FILE: Path to the security tools requirements file
+    #     This file contains pinned versions of security scanning tools (safety, bandit, etc.)
+    #     Using an environment variable makes it easy to change the file path if needed
+    #     This allows for easier updates and maintenance of the security tools
     env:
       REQUIREMENTS_FILE: requirements-security.txt
 
