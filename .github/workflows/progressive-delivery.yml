@@ -3,36 +3,23 @@ name: Progressive Delivery Pipeline
 # =============================================================================
 # PROGRESSIVE DELIVERY PIPELINE WORKFLOW
 # =============================================================================
-# Purpose: Implements safe, automated deployments with canary releases,
-#          SLO-based deployment gates, automatic rollback, and zero-downtime
-#          delivery capabilities.
+# Purpose: Safe, automated deployments with canary releases, SLO-based gates,
+#          automatic rollback, and zero-downtime delivery.
 #
-# Features:
-#   - Canary Deployments: Progressive traffic shifting (10%→25%→50%→75%→100%)
-#   - Automatic Rollback: SLO violations trigger immediate rollback within 2 minutes
-#   - Deployment Gates: Health checks and SLO validation prevent bad deployments
-#   - Blue-Green Capability: Instant traffic switching for emergency scenarios
-#   - Zero Downtime: No service interruption during deployments
+# Features: Canary (10%→25%→50%→75%→100%), auto-rollback (<2min), 
+#           deployment gates, blue-green capability, zero downtime.
 #
-# Security:
-#   - Workflow-level permissions follow principle of least privilege
-#   - Secrets defined at job-level (not globally)
-#   - Input validation prevents injection attacks
-#   - Production deployments require environment approval
+# Security: Least privilege permissions, job-level secrets, input validation,
+#           production approval required. Branch protection rules must be enabled.
 #
-# Performance:
-#   - Docker layer caching via GitHub Actions cache
-#   - Conditional job execution (only selected strategy runs)
-#   - BuildKit optimizations enabled
-#
+# Performance: GHA Docker cache, conditional execution, BuildKit optimizations.
 # =============================================================================
 # WORKFLOW TRIGGERS
 # =============================================================================
-# This workflow runs on:
-# - Pushes to main branch only (production safety - no feature branch pushes)
-#   Note: Ensure main branch has branch protection rules enabled
-# - Pull requests targeting main or feature/progressive-delivery-pipeline (for testing)
-# - Manual workflow dispatch with environment and strategy selection
+# - Push to main: Auto-deploy (requires branch protection rules)
+# - PR to main/feature: Test deployment
+# - Manual dispatch: Deploy with environment/strategy selection
+#   Input validation prevents injection attacks (validate-inputs job)
 # =============================================================================
 on:
   push:
@@ -101,14 +88,9 @@ env:
 # =============================================================================
 # JOBS DEFINITION
 # =============================================================================
-# The workflow is organized into phases:
-#   Phase 0: Input Validation (workflow_dispatch only)
-#   Phase 1: Build & Security Scan
-#   Phase 2: Staging Deployment
-#   Phase 3: Production Canary Deployment
-#   Phase 3B: Production Blue-Green Deployment
-#   Phase 4: Emergency Rollback
-#   Phase 5: Failure Notifications
+# Phases: 0=Input Validation, 1=Build & Scan, 2=Staging, 
+#         3=Production Canary, 3B=Production Blue-Green, 
+#         4=Emergency Rollback, 5=Failure Notifications
 # =============================================================================
 
 jobs:
@@ -116,8 +98,11 @@ jobs:
   # PHASE 0: INPUT VALIDATION (for workflow_dispatch)
   # =============================================================================
   # Purpose: Validates workflow inputs before proceeding with any deployment
-  #          Prevents invalid configurations from causing deployment failures
   # Security: Validates format and length to prevent injection attacks
+  #          - Environment: staging or production only
+  #          - Strategy: canary or blue-green only
+  #          - Image name: 1-255 chars, alphanumeric with hyphens/dots/underscores
+  #          - Registry: 1-253 chars, valid hostname format
   # =============================================================================
   
   validate-inputs:
@@ -194,9 +179,10 @@ jobs:
   # PHASE 1: BUILD & SECURITY SCAN
   # =============================================================================
   # Purpose: Builds Docker container image and performs security scanning
-  #          This phase must succeed before any deployment can proceed
   # Dependencies: validate-inputs (if workflow_dispatch)
   # Outputs: image-digest, image-tag, image-full (used by deployment jobs)
+  # Performance: Uses GitHub Actions cache for Docker layers (avoids large downloads)
+  # Security: Trivy scans for CRITICAL/HIGH vulnerabilities
   # =============================================================================
   
   build-and-security-scan:
@@ -294,9 +280,10 @@ jobs:
     # ========================================================================
     # STEP 4: Build and push Docker image
     # ========================================================================
-    # Uses GitHub Actions cache for faster builds
-    # Includes provenance and SBOM for security
-    # Note: Docker build-push-action handles retries internally
+    # Performance: Uses GHA cache only (avoids large local cache downloads)
+    # Security: Includes provenance and SBOM for supply chain security
+    # Note: Large base images (python:3.11-slim + nodejs) may take time to download
+    #       on first build, but subsequent builds use cached layers
     # ========================================================================
     - name: 🏗️ Build Docker image
       id: build
@@ -310,13 +297,14 @@ jobs:
         tags: |
           ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
-        # Use GitHub Actions cache for faster builds
-        # Note: Only using GHA cache to avoid large local cache downloads
+        # Performance: Use GHA cache only (avoids 4.9GB+ local cache downloads)
         cache-from: type=gha
         cache-to: type=gha,mode=max
         # Security: Include provenance and SBOM
         provenance: true
         sbom: true
+        # Performance: Limit build context size to avoid large transfers
+        no-cache: false
     
     # ========================================================================
     # STEP 5: Security scan with Trivy
@@ -386,11 +374,9 @@ jobs:
   # =============================================================================
   # PHASE 2: STAGING DEPLOYMENT
   # =============================================================================
-  # Purpose: Deploys to staging environment for testing before production
-  #          Validates deployment process and catches issues early
-  # Strategy: Uses canary or blue-green strategy based on configuration
-  # Safety: Gracefully handles missing resources (staging may not be fully configured)
-  #         Uses continue-on-error to not block production deployment
+  # Purpose: Deploy to staging for testing before production
+  # Strategy: Canary or blue-green based on configuration
+  # Safety: Handles missing resources gracefully, continue-on-error enabled
   # Dependencies: build-and-security-scan
   # =============================================================================
   
@@ -560,12 +546,11 @@ jobs:
   # =============================================================================
   # PHASE 3: PRODUCTION CANARY DEPLOYMENT
   # =============================================================================
-  # Purpose: Deploys to production using canary strategy with progressive traffic shifting
-  #          Progressive steps: 10% → 25% → 50% → 75% → 100% (total ~8-9 minutes)
-  # Security: Requires production environment approval (configure in GitHub Settings)
-  #          Only runs on main branch pushes or manual dispatch with production environment
+  # Purpose: Production canary deployment (10%→25%→50%→75%→100%, ~8-9min)
+  # Security: Requires production environment approval (GitHub Settings)
+  #          Only on main branch pushes or manual dispatch with production env
   # Dependencies: build-and-security-scan, deploy-staging
-  # Rollback: Automatic rollback on SLO violations (success rate <95%, latency >3s, etc.)
+  # Rollback: Auto-rollback on SLO violations (<95% success, >3s latency, etc.)
   # =============================================================================
   
   deploy-production-canary:
@@ -664,12 +649,11 @@ jobs:
   # =============================================================================
   # PHASE 3B: PRODUCTION BLUE-GREEN DEPLOYMENT
   # =============================================================================
-  # Purpose: Alternative deployment strategy for emergency scenarios
-  #          Provides instant traffic switching (faster than canary)
-  # Security: Requires production environment approval (configure in GitHub Settings)
-  #          Only runs on manual dispatch with blue-green strategy and production environment
+  # Purpose: Emergency deployment with instant traffic switching
+  # Security: Requires production environment approval (GitHub Settings)
+  #          Only on manual dispatch with blue-green + production
   # Dependencies: build-and-security-scan, deploy-staging
-  # Use Case: Emergency deployments, hotfixes, or when instant switch is needed
+  # Use Case: Emergency deployments, hotfixes, instant switch needed
   # =============================================================================
   
   deploy-production-blue-green:
@@ -732,9 +716,8 @@ jobs:
   # =============================================================================
   # PHASE 4: EMERGENCY ROLLBACK
   # =============================================================================
-  # Purpose: Automatically rolls back production deployment on failure
-  #          Executes within 2 minutes of deployment failure detection
-  # Trigger: Automatically triggered when production deployment fails
+  # Purpose: Auto-rollback production deployment on failure (<2min)
+  # Trigger: Production deployment failure
   # Dependencies: deploy-production-canary or deploy-production-blue-green (on failure)
   # Security: Requires production environment access
   # =============================================================================
@@ -790,12 +773,11 @@ jobs:
   # =============================================================================
   # PHASE 5: FAILURE NOTIFICATIONS
   # =============================================================================
-  # Purpose: Sends notifications on workflow failures for observability
-  #          Provides clear failure reports with next steps
-  # Trigger: Runs on any workflow failure (not cancelled)
-  # Dependencies: All deployment jobs (monitors their status)
-  # Output: Generates GitHub Actions summary with failure details
-  # TODO: Integrate with external notification systems (Slack, email, PagerDuty)
+  # Purpose: Notify on workflow failures for observability
+  # Trigger: Any workflow failure (not cancelled)
+  # Dependencies: All deployment jobs (monitors status)
+  # Output: GitHub Actions summary with failure details
+  # TODO: External notifications (Slack, email, PagerDuty)
   # =============================================================================
   
   notify-failure:
