@@ -1,21 +1,22 @@
 # CI/CD Dependencies for Data Governance & Compliance Module
 # These are the exact versions used in CI/CD pipeline for reproducible builds
+# All versions are pinned for security and reproducibility
 
 # Type Checking
-mypy>=1.7.0
-pyright>=1.1.330
+mypy==1.18.2
+pyright==1.1.407
 # Note: types-all removed to avoid conflicts with project-specific type stubs
 # Install specific type stubs as needed: types-requests, types-python-dateutil, etc.
 
 # Linting
-flake8>=6.1.0
-pylint>=3.0.0
+flake8==7.3.0
+pylint==4.0.2
 
 # Testing
-pytest>=7.4.0
-pytest-cov>=4.1.0
-pytest-benchmark>=4.0.0
+pytest==9.0.0
+pytest-cov==7.0.0
+pytest-benchmark==4.0.0
 
 # Security
-bandit>=1.7.5
-safety>=2.3.5
+bandit==1.7.10
+safety==3.2.7
