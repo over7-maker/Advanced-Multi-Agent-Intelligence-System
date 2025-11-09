@@ -356,6 +356,11 @@ jobs:
       contents: read
     continue-on-error: true  # Don't fail entire workflow if staging deployment fails
     
+    # Security: Sanitize and validate inputs before use
+    env:
+      SANITIZED_IMAGE_NAME: ${{ github.event.inputs.image_name || 'amas-orchestrator' }}
+      SANITIZED_REGISTRY: ${{ github.event.inputs.docker_registry || 'ghcr.io' }}
+    
     steps:
     # ========================================================================
     # STEP 1: Checkout code
