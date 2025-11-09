@@ -53,9 +53,11 @@ COPY config/ ./config/
 # Copy required files
 COPY main.py ./
 COPY main_simple.py ./
-# Copy optional files - use a script to handle missing files gracefully
+# Copy optional files - ensure they exist first, then copy
+# If files don't exist in build context, empty files will be used
 RUN touch ./pytest.ini ./.env.example
-COPY --chown=root:root pytest.ini ./.env.example ./ || true
+COPY pytest.ini ./
+COPY .env.example ./
 
 # Copy web files for React dashboard
 # Note: If web/ directory doesn't exist, this will fail - we'll handle it gracefully in the build step
