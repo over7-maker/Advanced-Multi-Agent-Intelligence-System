@@ -764,6 +764,7 @@ class DataClassifier:
             else:
                 current[final_key] = detection.redacted_value
 
+
 class ComplianceReporter:
     """Generate compliance reports and data governance summaries"""
 

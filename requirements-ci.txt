@@ -4,7 +4,8 @@
 # Type Checking
 mypy>=1.7.0
 pyright>=1.1.330
-types-all>=0.1.0
+# Note: types-all removed to avoid conflicts with project-specific type stubs
+# Install specific type stubs as needed: types-requests, types-python-dateutil, etc.
 
 # Linting
 flake8>=6.1.0
