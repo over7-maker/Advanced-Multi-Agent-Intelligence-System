@@ -263,8 +263,25 @@ resource_limits:
 ```
 
 ##### **Scaling Configuration**
+
+> **⚡ Intelligent Autoscaling**: AMAS includes comprehensive KEDA-based autoscaling. See [Performance Scaling Guide](../PERFORMANCE_SCALING_GUIDE.md) for complete setup instructions.
+
+**Quick Setup:**
+```bash
+# Apply KEDA autoscaling configuration
+kubectl apply -f k8s/scaling/keda-scaler.yaml
+```
+
+**Features:**
+- Multi-metric scaling (HTTP RPS, queue depth, latency, resource usage)
+- HPA backup for CPU/memory-based scaling
+- VPA for automatic right-sizing
+- Semantic caching for 30%+ speed improvement
+- Circuit breakers and rate limiting
+
+**Legacy HPA Configuration:**
 ```yaml
-# Auto-scaling Configuration
+# Auto-scaling Configuration (use KEDA instead for production)
 autoscaling:
   enabled: true
   min_replicas: 2
