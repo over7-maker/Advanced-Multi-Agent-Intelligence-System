@@ -1,146 +1,92 @@
 # AMAS Development Container
 
-This directory contains the Dev Container configuration for the AMAS project.
-
----
+This directory provides a robust, reproducible development environment for the Advanced Multi-Agent Intelligence System (AMAS) project.
 
 ## Purpose
 
-The Dev Container provides a consistent, reproducible development environment with:
-- Python 3.11 on Debian Bullseye
-- Pre-configured VS Code extensions (Python, Ruff, YAML, GitHub Pull Requests and Issues, Docker)
-- Docker-in-Docker support for containerized builds
-- GitHub CLI for repository operations
-- Automated dependency installation and setup
+- Ensures every developer, contributor, and CI pipeline runs in an identical Python 3.11/Linux environment
+- Pre-configures core VS Code extensions for Python/AI workflows (see below)
+- Supports Docker-in-Docker for containerized build/test (dev/test only)
+- Automates dependency installation, secrets handling, and workspace setup
 
+## VS Code Extensions (.vscode/extensions.json)
 
----
+This file lists recommended extensions for the repo. VS Code will suggest them automatically when you open the workspace.
+- **Python:** Language support/formatting/testing
+- **Ruff:** Fast Python linting/fixing
+- **YAML:** Structured config/validation
+- **GitHub PRs & Issues:** In-editor PR code review & GitHub integration
+- **Docker:** Container workflow management
 
 ## Required Files
 
-The Dev Container setup requires the following files:
+- **`.devcontainer/devcontainer.json`:** Main devcontainer configuration (image, mounts, features, lifecycle commands)
+- **`.devcontainer/setup.sh`:** Setup script for lifecycle commands, must be executable (`chmod +x .devcontainer/setup.sh`)
 
-- **`.devcontainer/devcontainer.json`**: Main configuration file (see "Configuration Example" below)
-- **`.devcontainer/setup.sh`**: Setup script for lifecycle commands (must be executable)
-
-Create `setup.sh` if missing:
+### Template for `setup.sh`:
 ```bash
-touch .devcontainer/setup.sh
-chmod +x .devcontainer/setup.sh
+#!/bin/bash
+set -e
+
+case "$1" in
+  onCreate)
+    # Optional: create .env from template if not present
+    [ -f .env ] || cp .env.example .env || echo "No .env.example found; skipping"
+    ;;
+  postCreate)
+    # Install dependencies
+    pip install --upgrade pip setuptools wheel
+    pip install -r requirements.txt -r requirements-dev.txt
+    ;;
+  updateContent)
+    pip install -r requirements.txt -r requirements-dev.txt
+    ;;
+esac
 ```
 
-The script must handle these arguments:
-- `onCreate`: Optional setup (e.g., creating `.env` from `.env.example`)
-- `postCreate`: Required setup (e.g., installing dependencies)
-- `updateContent`: Updates when container content changes
+## Lifecycle Commands
 
-See `.devcontainer/setup.sh` for a typical implementation.
+Your devcontainer.json should contain these to guarantee smooth startup:
+- **`onCreateCommand`:** Optional one-time setup after container build`
+- **`postCreateCommand`:** Required step; installs all dependencies, sets up linting/test tools
+- **`updateContentCommand`:** Reapplies dependency install if files/branches change
+- **`lifecycleTimeout`:** Optional. Set to 600 (seconds) if installs are slow for you
 
----
+Each command ensures:
+- **Reproducibility:** One-click dev env for all
+- **Security:** No root-level setup, no global Python pollution
+- **Efficiency:** Uses pip caching and Docker layer optimizations
 
-## Configuration Overview
+## Security Best Practices
 
-### Lifecycle Commands
+- Only use Docker-in-Docker for local CI simulation and development
+- Never run this devcontainer config in untrusted environments or production
+- All `setup.sh` changes should be code reviewed
+- Use `.env.example` for placeholders, real secrets only in `.env` (never committed)
+- Mounts only what the workspace/project requires, never sensitive user dirs
 
-- **`initializeCommand`**: Validates Python version (3.11+)
-- **`onCreateCommand`**: Performs optional setup (creates `.env` from `.env.example` if available); warns safely if setup.sh missing
-- **`postCreateCommand`**: Required setup (installs dependencies); fails if setup.sh missing or execution fails
-- **`updateContentCommand`**: Updates dependencies when container content changes; fails if setup.sh missing or execution fails
+## Performance Considerations
 
-### Resource Limits
-
-- **Memory**: 4GB (sufficient for Python dev)
-- **CPUs**: 2 cores (for parallel installs/builds)
-
-### Timeouts
-
-All lifecycle commands have a 300-second (5-minute) timeout by default to protect against hangs.
-
-Override with:
-```json
-{
-  "postCreateCommand": "timeout 600 .devcontainer/setup.sh postCreate",
-  "lifecycleTimeout": 600
-}
-```
-
----
-
-## Performance Optimization
-
-1. **Pip Caching**: Volume mount for pip cache:
-```json
-"mounts": ["source=amas-pip-cache,target=/home/vscode/.cache/pip,type=volume"]
-```
-2. **Docker Layer Caching**: Use a Dockerfile-based setup with cached requirements.
-3. **Pre-built Base Images:** Consider using cached dependency images for large dependency graphs.
-4. **Use `.dockerignore`** to exclude unnecessary files from build context.
-5. **Pip Configuration**: Add `--cache-dir` or configure `pip.conf` for consistency.
-
-
----
-
-## Security Considerations
-
-1. **Script Execution**: All setup scripts must be trusted, reviewed in PRs, and explicitly executable (`chmod +x`).
-2. **Timeout Protection**: Prevent indefinite hangs by enforcing timeouts on lifecycle commands.
-3. **Non-root User**: Runs as `vscode` user, not root, to reduce privilege escalation risks.
-4. **Image Updates**: Update base images regularly to ensure security patches are present. Dependabot/Renovate is recommended.
-5. **No Hardcoded Secrets**: Use `.env.example` for templates, never commit real secrets; `.env` is gitignored.
-
-
----
-
-## Base Image
-
-- **Source**: `mcr.microsoft.com/devcontainers/python:1-3.11-bullseye`
-- **Description**: Official Microsoft Dev Container for Python 3.11
-
-To ensure strict reproducibility, pin to a specific SHA digest:
-```json
-"image": "mcr.microsoft.com/devcontainers/python@sha256:..."
-```
-
-
----
-
-## Features
-
-- **Docker-in-Docker**: Supports local/test container builds (not for production)
-- **GitHub CLI**: Used for PR and repository operations
-- **Pre-configured Extensions**: Install Python, Ruff, YAML, GitHub PRs, Docker
-
----
-
-## Usage
-
-1. Open the project with VS Code
-2. When prompted, "Reopen in Container"
-3. Dependencies will auto-install, workspace is ready for development
-
-### Platform Compatibility
-
-- Linux/macOS/Windows (WSL2): Supported
-- Apple Silicon: Supported if base image supports arm64
-- Windows without WSL2: Not supported
-
----
+- **Resource Management:** The default is 4GB RAM, 2 CPUs, can be tuned with `runArgs` in devcontainer.json
+- **Timeouts:** pip installs and scripts usually finish within 5 minutes; if not, review setup logs or adjust `lifecycleTimeout` to 600 (max recommended for onboarding)
+- **Pip Caching:** By default leverages volume mounts for faster repeat installs:
+  ```json
+  "mounts": ["source=amas-pip-cache,target=/home/vscode/.cache/pip,type=volume"]
+  ```
+- **Image updates:** Use Dependabot, Renovate, or other tools to monitor for Python/OS security updates
 
 ## Troubleshooting
 
-**Setup Script Fails**: Check logs, verify `requirements.txt` exists, rerun setup script manually.
-**Clear Caches**: `docker system prune -a --volumes`
-**Container Won't Start**: Check that `devcontainer.json` and `setup.sh` have correct syntax and are present.
-**Timeout Issues**: Validate network connectivity, increase `lifecycleTimeout` if absolutely necessary.
+- **VS Code doesn't prompt/reopen in container:** Use "Dev Containers: Reopen in Container" from command palette
+- **Setup script fails:** Check `.devcontainer/setup.sh` is executable and not missing steps
+- **Dependencies stall:** Try `docker system prune -a --volumes`, or check for network/firewall issues
+- **Slow builds:** Increase resource allocation, use pre-built Dockerfile base, minimize context
+- **Secret errors:** Confirm `.env` present and not empty (and not committed!)
 
----
-
-## Configuration Example
-
+## Minimal `devcontainer.json` Example
 ```json
 {
   "name": "AMAS Development Environment",
-  "version": "0.1.0",
   "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
   "runArgs": ["--memory=4g", "--cpus=2"],
   "features": {
@@ -159,79 +105,31 @@ To ensure strict reproducibility, pin to a specific SHA digest:
   },
   "onCreateCommand": ".devcontainer/setup.sh onCreate",
   "postCreateCommand": ".devcontainer/setup.sh postCreate",
+  "lifecycleTimeout": 600,
   "remoteUser": "vscode",
-  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
   "mounts": ["source=amas-pip-cache,target=/home/vscode/.cache/pip,type=volume"]
 }
 ```
 
----
+## 🛡️ Security notes on Docker-in-Docker
 
-## Customization Examples
+Docker-in-Docker (DinD) makes it possible to run docker containers _inside_ the devcontainer for CI simulation or microservice composition. This is powerful but also increases the risk of privilege escalation, so:
+- Never expose the dind socket or docker group to untrusted code
+- Only use DinD for development/testing; never deploy containers built in DinD direct to production
+- If you want safer multi-container workflows, consider Docker-from-Docker (mounting the host socket) in trusted, locked-down environments only
 
-**Increase Memory/CPU:**
-```json
-{
-  "runArgs": ["--memory=8g", "--cpus=4"]
-}
-```
+## Environment file workflow
 
-**Add Ports:**
-```json
-{
-  "forwardPorts": [8000, 8080, 5432],
-  "portsAttributes": {
-    "5432": {"label": "PostgreSQL", "onAutoForward": "notify"}
-  }
-}
-```
+- Use `.env.example` for templates, `.env` for actual local values (never committed)
+- Always ensure `.env` is in `.gitignore`
+- Validate with `python scripts/validate_env.py --mode basic --verbose`
 
-**Add Environment Variables:**
-```json
-{
-  "remoteEnv": {
-    "CUSTOM_VAR": "value"
-  }
-}
-```
+## Appendix: PR #235 (Production Readiness) Improvements
 
----
+- All dependencies now installed in a single pip command for speed and consistency
+- Extension recommendations cleaned of deprecated/unused extras
+- Lifecycle commands in `devcontainer.json` and `setup.sh` now enforce timeouts and robust error handling
+- `.env.example` and security checks fully documented and tested
+- This onboarding doc refined and clarified for all contributors
 
-## Best Practices
-
-1. Keep `setup.sh` simple and idempotent.
-2. Always review setup scripts and PRs that modify devcontainer files, for security.
-3. Update dependencies regularly, keep `requirements-dev.txt` up to date.
-4. Monitor the base image for vulnerabilities using Dependabot or equivalent.
-5. Ensure `.env` and any secrets files are present in `.gitignore`.
-
-
----
-
-## Environment Files
-
-- **`.env.example`**: Template file (placeholders only)
-- **`.env`**: Actual secrets (never committed, gitignored)
-- **`.gitignore`**: Confirms `.env` is ignored
-
-Example `.env.example`:
-```bash
-DATABASE_URL=postgresql://user:password@localhost:5432/dbname
-API_KEY=your_api_key_here
-SECRET_KEY=your_secret_key_here
-```
-
----
-
-## ⚡ PR #235: Production Readiness Changes
-
-This section details improvements made in [PR #235](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/pull/235):
-- **Single-pass pip install**: Requirements and dev requirements installed together for faster spins/fewer conflicts
-- **No deprecated VS Code extensions**: Extension list cleaned for modern Python/AI workflows
-- **Improved error handling**: Setup scripts and devcontainer config now use timeouts, robust fallbacks, and defensive programming
-- **Security best practices**: No hardcoded secrets, forced non-root, strict `.env` management
-- **Onboarding docs improved**: This file and quick start are now clearer and match the actual setup
-
-These improvements are now baseline for all contributors and future feature PRs.
-
----
+All contributors MUST update their forks/workspaces to match these standards for guaranteed compatibility.
