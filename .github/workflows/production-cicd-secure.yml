@@ -22,6 +22,7 @@ name: 🚀 AMAS Secure Production CI/CD Pipeline
 #     2. If hashes missing: Falls back to installation without hashes (with security warning)
 #     3. Hash storage: Hashes are stored in requirements-security.txt file
 #     4. Hash generation: Use 'pip-compile --generate-hashes requirements-security.in' to generate
+#       hashes for all dependencies. This creates a requirements-security.txt file with hash pins.
 #   Security benefits:
 #     - Prevents package tampering during download (MITM attacks)
 #     - Ensures correct package is installed (dependency confusion prevention)
