@@ -1,3 +1,10 @@
+---
+title: Performance Scaling Infrastructure Guide
+version: 1.0.0
+last_updated: 2025-01-15
+tags: [performance, autoscaling, keda, monitoring, scaling, infrastructure]
+---
+
 # Performance Scaling Infrastructure Guide
 
 > **Version:** 1.0.0 | **Last Updated:** 2025-01-15
@@ -6,27 +13,36 @@ This guide covers the comprehensive performance scaling infrastructure for AMAS,
 
 ## Table of Contents
 
+<!-- TOC -->
 - [Overview](#overview)
 - [KEDA Autoscaling](#keda-autoscaling)
 - [Load Testing Framework](#load-testing-framework)
 - [Performance Monitoring](#performance-monitoring)
 - [Best Practices](#best-practices)
+- [Prerequisites](#prerequisites)
 - [Troubleshooting](#troubleshooting)
+- [Additional Resources](#additional-resources)
+<!-- /TOC -->
+
+> ⚠️ **Note**: This TOC is auto-generated. If using markdown-toc, run `npx markdown-toc -i docs/PERFORMANCE_SCALING_GUIDE.md` to update.
 
 ## Overview
 
-The AMAS performance scaling infrastructure provides intelligent, event-driven autoscaling and comprehensive performance optimization to handle traffic spikes gracefully with optimal cost efficiency when properly configured.
+The AMAS performance scaling infrastructure provides intelligent, event-driven autoscaling and comprehensive performance optimization. Based on internal benchmarks, it reduces over-provisioning by up to 60% during low-traffic periods while maintaining <100ms P95 latency during traffic spikes (see [performance benchmarks](./performance_benchmarks.md) for detailed metrics).
 
 ### Key Components
 
 - **KEDA-based Autoscaling**: Intelligent pod scaling based on multiple metrics (CPU, memory, queue depth, latency) with event-driven triggers
 - **Load Testing Framework**: Comprehensive performance testing with realistic traffic patterns, SLO validation, and regression detection
 - **Performance Monitoring**: Real-time metrics collection and analysis including request rates, latency distributions, and resource utilization
-- **Horizontal Pod Autoscaling (HPA)**: Kubernetes-native autoscaling as fallback when KEDA is unavailable
-- **Vertical Pod Autoscaling (VPA)**: Automatic right-sizing of container resources based on historical usage patterns
-- **Semantic Caching**: Redis-based intelligent caching with embedding similarity matching. Requires Redis with TLS encryption and authentication enabled. See [performance benchmarks](./performance_benchmarks.md) for performance metrics.
+- **Horizontal Pod Autoscaling (HPA)**: Kubernetes-native autoscaling used in conjunction with KEDA for CPU/memory-based scaling. HPA is automatically disabled when KEDA is active on the same deployment to prevent conflicting scaling triggers. See [KEDA Autoscaling](#keda-autoscaling) for coordination details.
+- **Vertical Pod Autoscaling (VPA)**: Automatic right-sizing of container resources based on historical usage patterns (recommendations only in "Off" mode when using HPA/KEDA)
+- **Semantic Caching**: Redis-based caching enhanced with embedding similarity matching via external vector search modules (e.g., RedisVL) or integrated AI proxies. Requires dedicated inference resources for embedding computation. See [performance benchmarks](./performance_benchmarks.md) for performance metrics.
+  
+  > **Performance Note**: Semantic similarity lookups should be performed asynchronously or via pre-indexed vectors to avoid blocking request threads. Use RedisVL with HNSW indexes for sub-second performance at scale. Monitor P99 latency of cache lookup operations and set SLOs (e.g., <50ms for cached results).
+
 - **Circuit Breakers**: Fail-fast patterns to prevent cascade failures
-- **Rate Limiting**: User-based quotas with sliding window algorithm
+- **Rate Limiting**: User-based rate limiting with sliding window algorithm to prevent abuse and ensure fair usage across tenants
 - **Cost Tracking**: Automatic token usage and API cost tracking with optimization recommendations
 
 ### Architecture Overview
@@ -35,7 +51,7 @@ The scaling infrastructure uses a multi-layered approach:
 
 1. **Primary Layer**: KEDA ScaledObjects monitor Prometheus metrics and scale pods based on HTTP RPS, queue depth, latency, and resource pressure
 2. **Fallback Layer**: HPA provides CPU/memory-based scaling if KEDA fails
-3. **Optimization Layer**: VPA provides recommendations for right-sizing (note: VPA and HPA should not be used simultaneously on the same pods - see [Kubernetes documentation](https://kubernetes.io/docs/tasks/run-application/vertical-pod-autoscaler/#known-limitations))
+3. **Optimization Layer**: VPA provides recommendations for right-sizing (note: VPA and HPA/KEDA should not be used simultaneously on the same pods - see [Kubernetes documentation](https://kubernetes.io/docs/tasks/run-application/vertical-pod-autoscaler/#known-limitations)). VPA is configured in "Off" mode to provide recommendations only when HPA/KEDA is active.
 4. **Protection Layer**: Pod Disruption Budgets ensure availability during scaling events
 
 > **⚠️ WARNING**: VPA and HPA/KEDA should not be used simultaneously on the same pods. VPA in "Off" mode provides only recommendations, not automatic scaling. For production workloads, use either HPA/KEDA for horizontal scaling OR VPA for vertical scaling, but not both.
@@ -70,6 +86,8 @@ For detailed architecture diagrams and component interactions, see [PERFORMANCE_
 ### Architecture
 
 KEDA (Kubernetes Event-Driven Autoscaling) provides event-driven autoscaling for Kubernetes workloads. AMAS uses KEDA to scale based on multiple metrics simultaneously, with the final replica count being the maximum of all trigger calculations.
+
+**HPA/KEDA Coordination**: KEDA creates and manages HPA objects internally. The HPA backup configuration in `k8s/scaling/keda-scaler.yaml` is only used if KEDA fails completely. In normal operation, KEDA's internal HPA handles scaling, preventing conflicts. Both should not be manually configured to target the same deployment simultaneously.
 
 #### Scaling Triggers
 
@@ -249,7 +267,11 @@ The load tester exports Prometheus metrics:
 5. **Cost Optimization**
    - Use VPA recommendations (in "Off" mode) to right-size containers and reduce waste
    - Monitor cost per request using `cost_tracking_service`
-   - Implement semantic caching to reduce redundant API calls (see [performance benchmarks](./performance_benchmarks.md) for benchmark results)
+   - Implement semantic caching to reduce redundant API calls:
+     - Use asynchronous similarity computation or dedicated microservices
+     - Leverage approximate nearest neighbor (ANN) indexing (e.g., HNSW in RedisVL) with precomputed vectors
+     - Cache similarity query results with TTLs to avoid repeated computation
+     - See [performance benchmarks](./performance_benchmarks.md) for benchmark results
    - Use request deduplication for expensive operations
    - Review scaling thresholds regularly to optimize resource usage
 
@@ -278,12 +300,14 @@ Before deploying the performance scaling infrastructure, ensure the following ar
 
 4. **Redis** (for caching and rate limiting)
    - Redis cluster accessible from pods
-   - **Security Requirements**:
-     - TLS encryption enabled for all connections
-     - Authentication configured (AUTH command or ACL)
-     - Network policies restricting access
-     - Secrets stored in Kubernetes Secrets (never hardcode)
-   - Connection URL configured in application via environment variables
+   - **Security Requirements** (enforced at runtime):
+     - **TLS 1.3+ encryption** enabled for all connections (validated via startup probe)
+     - **Authentication required** (AUTH with strong passwords or client certificate authentication)
+     - **Network policies** restricting Redis access to application pods only
+     - **Secrets management**: Use SealedSecrets or external secret stores (e.g., HashiCorp Vault) for Redis credentials
+     - **Runtime validation**: Health check or init container verifies AUTH and TLS are enabled before application startup
+     - **Admission controllers**: Consider using OPA/Gatekeeper policies to reject deployments without proper Redis security configuration
+   - Connection URL configured in application via environment variables (never hardcode)
    - Optional but recommended for optimal performance
 
 5. **VPA** (optional, for vertical scaling)
