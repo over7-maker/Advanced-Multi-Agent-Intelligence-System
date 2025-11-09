@@ -274,6 +274,20 @@ jobs:
       # Never echo or log REGISTRY_PASSWORD - GitHub masks secrets automatically
     
     # ========================================================================
+    # STEP 3B: Validate build context (for debugging)
+    # ========================================================================
+    - name: 🔍 Validate build context
+      run: |
+        echo "📋 Checking build context..."
+        echo "Dockerfile exists: $(test -f Dockerfile && echo 'yes' || echo 'no')"
+        echo "requirements.txt exists: $(test -f requirements.txt && echo 'yes' || echo 'no')"
+        echo "src/ directory exists: $(test -d src && echo 'yes' || echo 'no')"
+        echo "web/ directory exists: $(test -d web && echo 'yes' || echo 'no')"
+        echo "main.py exists: $(test -f main.py && echo 'yes' || echo 'no')"
+        echo "main_simple.py exists: $(test -f main_simple.py && echo 'yes' || echo 'no')"
+        echo "✅ Build context validation complete"
+    
+    # ========================================================================
     # STEP 4: Build and push Docker image
     # ========================================================================
     # Performance: Uses GHA cache only (avoids large local cache downloads)
