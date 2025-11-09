@@ -1,19 +1,21 @@
 # AMAS Development Container
 
-Provides a consistent, isolated Python 3.11 development environment for the AMAS project, automating setup, dependencies, and workflows via VS Code Dev Containers for all contributors.
+Provides a reproducible, secure Python 3.11 development environment for the Advanced Multi-Agent Intelligence System (AMAS), with automated CI-compliant workflows, best-practice onboarding, lifecycle automation, and explicit security guidance.
 
 ---
 
-## Quick Start
+## Prerequisites
+- Docker Desktop (latest, Linux/Mac/Windows w/ WSL2)
+- VS Code w/ "Dev Containers" extension ([install here](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers))
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System.git
-   cd Advanced-Multi-Agent-Intelligence-System
-   ```
-2. **Open in VS Code:** `code .` (then click "Reopen in Container" when prompted)
-3. **Wait for setup to finish** (dependencies are automatically installed)
-4. **Run validation/tests:**
+---
+
+## Quick Start Checklist
+- [ ] Run: `git clone https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System.git`
+- [ ] Run: `chmod +x .devcontainer/setup.sh`
+- [ ] Open folder in VS Code → Click "Reopen in Container" (prompted automatically)
+- [ ] Wait for full install (pip, linters, tools)
+- [ ] Validate environment and run:
    ```bash
    python --version
    pip list
@@ -22,22 +24,23 @@ Provides a consistent, isolated Python 3.11 development environment for the AMAS
    bandit -r src/
    ```
 
-For a full overview, see [VS Code Dev Containers Documentation](https://code.visualstudio.com/docs/devcontainers/containers).
-
 ---
 
-## Required Files
+## Required Files & Lifecycle Contracts
+| File | Purpose |
+|------|---------|
+| `.devcontainer/devcontainer.json` | Main configuration (image, features, resources, lifecycle) |
+| `.devcontainer/setup.sh` | Lifecycle script: must accept `onCreate`, `postCreate`, `updateContent`, be executable |
+| `.env.example` | Safe environment variable template |
+| `.env` | (local only!) Developer/CI secrets – must never be committed |
 
-| File                                   | Purpose                                                      |
-|----------------------------------------|--------------------------------------------------------------|
-| `.devcontainer/devcontainer.json`      | Main Dev Container config (image, extensions, commands, etc.) |
-| `.devcontainer/setup.sh`               | Lifecycle setup/install script (must be executable)           |
-| `.env.example`                         | Environment variable template for secrets/config              |
-
-### `setup.sh` script contract
-- Must be executable (`chmod +x`)
-- Accepts: `onCreate`, `postCreate`, `updateContent` as arguments
-- Example template:
+### `setup.sh` Script Contract
+- Must be executable: `chmod +x .devcontainer/setup.sh`
+- Must support idempotent repeated calls with these args:
+  - `onCreate`: Setup or copy `.env` from `.env.example` if missing
+  - `postCreate`: Full dependency install (`pip install -r requirements.txt -r requirements-dev.txt`)
+  - `updateContent`: Handles workspace changes (optional)
+- Example implementation:
 ```bash
 #!/bin/bash
 set -e
@@ -54,19 +57,18 @@ case "$1" in
     ;;
 esac
 ```
-- Idempotency: Must not error on repeated execution
+- If script fails, **devcontainer build fails** (see error output for troubleshooting).
 
 ---
 
-## Lifecycle Commands (as configured in devcontainer.json)
+## Lifecycle and Expected Behavior
+- `initializeCommand` (optional): Validates Docker, Python; should fail fast if prerequisites are broken
+- `onCreateCommand`: One-time setup after build (`./setup.sh onCreate`); ok to skip if `.env` exists
+- `postCreateCommand`: Required post-build setup; always installs full dependencies, lints, and fails container build if not successful
+- `updateContentCommand`: Triggers on workspace or file change, e.g. branch switch (optional)
+- `lifecycleTimeout`: Recommended `600` (10min) for slow installs; defaults to 300s otherwise
 
-- **`initializeCommand`** (optional): Validate toolchain or pre-install dependencies before build
-- **`onCreateCommand`**: Run once after container is created; e.g., `.devcontainer/setup.sh onCreate`. Skips safely if missing.
-- **`postCreateCommand`**: _Required_; installs project dependencies; fails container build if fails
-- **`updateContentCommand`**: Reruns install if core files change
-- **`lifecycleTimeout`**: (default 300, recommended 600 if slow network)
-
-Example:
+#### Example devcontainer.json lifecycle block:
 ```json
 {
   "onCreateCommand": ".devcontainer/setup.sh onCreate",
@@ -78,61 +80,44 @@ Example:
 
 ---
 
-## VS Code Extensions (.vscode/extensions.json)
-- Lists recommended extensions for optimal workflows; VS Code will suggest install on open.
-  - Python (ms-python.python) — language/lint/test support
-  - Ruff/python-ruff — fast linting/fixing
-  - YAML — config validation
-  - GitHub PRs — integrated review
-  - Docker — manage/test containers
+## Security Guidance
+> ⚠️ **Sensitive Data:** `.env` must **ONLY** exist locally, never committed; always in `.gitignore`.
+> ⚠️ **Docker-in-Docker (DinD):** Powerful but dangerous. Use **only** for local dev/CI simulation and trusted code. _Never enable on prod/privileged hosts._ See [official Docker security docs](https://docs.docker.com/engine/security/#docker-daemon-attack-surface).
+
 
 ---
 
-## Security Notes
-- **Never commit real `.env` files.** ALWAYS use `.env.example` templates. Secrets must be loaded only via local, git-ignored `.env`.
-- **Docker-in-Docker (DinD) WARNING:**
-  > ⚠️ Docker-in-Docker enables advanced multi-container CI simulation, but _dramatically increases attack surface and privilege risk_. Enable only on trusted, local development machines. For more, see [Security Best Practices – Docker](https://docs.docker.com/engine/security/#docker-daemon-attack-surface).
+## Performance and Optimization
+- Use pip cache mounts for speed (`"mounts": ["source=amas-pip-cache,target=/home/vscode/.cache/pip,type=volume"]`)
+- For large projects: split requirements files to optimize change detection/caching
+- Setup commands must be idempotent — never error or duplicate work if run again
+- Rebuild container from VS Code when requirements or dependencies change
 
 ---
 
-## Performance & Idempotency
-
-- **Use pip cache mounts** for faster builds:
-  ```json
-  "mounts": ["source=amas-pip-cache,target=/home/vscode/.cache/pip,type=volume"]
-  ```
-- **Layered dependency files:** Optional. For heavy dev/test requirements, split `requirements.txt`, `requirements-dev.txt` so pip only reinstalls changes.
-- **setup.sh idempotency:** Must not fail or repeat work unnecessarily on rerun/rebuild.
-- **Conditional install:** Advanced: Check for file hash or `.pip-installed` marker before running pip in `postCreate`.
+## Troubleshooting & Error Handling
+- If **devcontainer fails to build**: check logs in VS Code terminal, inspect output/errors from `setup.sh`
+- Common issues: Docker not running, missing/misnamed `setup.sh`, network issues (pip)
+- Use `docker system prune -a --volumes` for persistent cache/install errors (warns: will delete all unused Docker resources)
+- Verify `.env` present but **never committed**
 
 ---
 
-## Troubleshooting / FAQ
+## Extension Recommendations (via `.vscode/extensions.json`)
+- Python (ms-python.python)
+- Ruff (charliermarsh.ruff)
+- YAML (redhat.vscode-yaml)
+- GitHub PRs (github.vscode-pull-request-github)
+- Docker (ms-azuretools.vscode-docker)
 
-- **Container fails to start:**
-  - Check Docker Desktop is running
-  - Validate `devcontainer.json` and `setup.sh` presence and permissions
-- **setup.sh errors:**
-  - Confirm executable bit: `chmod +x .devcontainer/setup.sh`
-  - Re-pull main if missing
-- **Slowness on build:**
-  - Increase RAM/CPU allocation
-  - Use existing cache or pre-built base image
-- **Secrets warning:**
-  - Validate that `.env` is present, never committed, and not empty
-- **General Dev Container/hints:**
-  - See the [Dev Container docs](https://code.visualstudio.com/docs/devcontainers/containers)
-  - Open an issue in this repo
+VS Code will automatically suggest these on open for fast bootstrapping.
 
 ---
 
-## Appendix: PR #235 (Production Readiness) Improvements
-
-- All dependencies installed in a single unified pip command
-- Modern and safe extension recommendations
-- Automated, robust error-checked setup and onboarding scripts
-- Lifecycle and resource usage best practices codified above
-- Docker-in-Docker security clarified and emphasized
-- All onboarding and doc content reviewed and improved for absolute clarity
+## Appendix: PR #235 Production Readiness Impact
+- Unified single-step dependency install
+- Explicit, auditable lifecycle setup contract with error-handling
+- Docker-in-Docker security warnings reinforced
+- All onboarding, troubleshooting, and best practices above now reflect post-PR #235 state
 
 ---
