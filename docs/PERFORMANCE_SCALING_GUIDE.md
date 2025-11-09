@@ -1,7 +1,7 @@
 ---
 title: Performance Scaling Infrastructure Guide
 version: 1.0.0
-last_updated: 2025-11-08
+last_updated: 2025-11-09
 description: Comprehensive guide for AMAS performance scaling infrastructure including KEDA autoscaling, load testing, semantic caching, and resilience patterns
 summary: This guide covers intelligent autoscaling with KEDA, comprehensive load testing framework, semantic caching for 30%+ speed improvement, circuit breakers, rate limiting, and cost optimization. Includes deployment instructions, best practices, and troubleshooting.
 author: AMAS Development Team
@@ -11,24 +11,45 @@ tags: [performance, autoscaling, keda, monitoring, scaling, infrastructure]
 
 # Performance Scaling Infrastructure Guide
 
-> **Version:** 1.0.0 | **Last Updated:** 2025-11-08
-
 This guide covers the comprehensive performance scaling infrastructure for AMAS, including KEDA-based autoscaling, load testing, and performance monitoring.
 
 ## Table of Contents
 
 <!-- TOC -->
 - [Overview](#overview)
+  - [Key Components](#key-components)
+  - [Architecture Overview](#architecture-overview)
+    - [KEDA + HPA + VPA Interaction Flow](#keda--hpa--vpa-interaction-flow)
 - [KEDA Autoscaling](#keda-autoscaling)
+  - [Architecture](#architecture)
+    - [Scaling Triggers](#scaling-triggers)
+    - [Architecture Flow](#architecture-flow)
+  - [Configuration](#configuration)
+    - [Orchestrator Scaling](#orchestrator-scaling)
+    - [Security Considerations](#security-considerations)
+  - [Deployment](#deployment)
 - [Load Testing Framework](#load-testing-framework)
-- [Performance Monitoring](#performance-monitoring)
+  - [Overview](#overview-1)
+  - [Usage](#usage)
+    - [Basic Load Test](#basic-load-test)
+  - [Prometheus Metrics](#prometheus-metrics)
 - [Best Practices](#best-practices)
+  - [Autoscaling Configuration](#autoscaling-configuration)
 - [Prerequisites](#prerequisites)
+  - [Required Components](#required-components)
+  - [Configuration Requirements](#configuration-requirements)
 - [Troubleshooting](#troubleshooting)
+  - [Scaling Issues](#scaling-issues)
+  - [Performance Issues](#performance-issues)
+  - [Cost Issues](#cost-issues)
+  - [Pod Disruption Budgets](#pod-disruption-budgets)
+  - [Cold Start Mitigation](#cold-start-mitigation)
+  - [Custom Metrics Pipeline](#custom-metrics-pipeline)
+  - [GitOps Best Practices](#gitops-best-practices)
 - [Additional Resources](#additional-resources)
 <!-- /TOC -->
 
-> ⚠️ **Note**: This TOC is manually maintained. To auto-generate using markdown-toc, run: `npx markdown-toc -i docs/PERFORMANCE_SCALING_GUIDE.md --bullets="-"`. Remember to update the TOC when adding or renaming sections.
+> ⚠️ **Note**: This TOC is auto-generated. To update, run: `npx markdown-toc -i docs/PERFORMANCE_SCALING_GUIDE.md --bullets="-"`. A pre-commit hook is recommended to automate TOC generation.
 
 ## Overview
 
