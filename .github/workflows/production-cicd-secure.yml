@@ -45,6 +45,10 @@ jobs:
       vulnerabilities-found: ${{ steps.scan-results.outputs.vulnerabilities }}
       critical-vulnerabilities: ${{ steps.scan-results.outputs.critical-vulnerabilities }}
       passed: ${{ steps.scan-results.outputs.passed }}
+    # Environment variables for this job
+    # REQUIREMENTS_FILE: Path to the security tools requirements file
+    #   This file contains pinned versions of security scanning tools (safety, bandit, etc.)
+    #   Using an environment variable makes it easy to change the file path if needed
     env:
       REQUIREMENTS_FILE: requirements-security.txt
 
@@ -59,29 +63,58 @@ jobs:
           cache-dependency-path: ${{ env.REQUIREMENTS_FILE }}
       - name: Install security tools
         run: |
+          # Enable strict error handling for bash script
+          # -e: Exit immediately if a command exits with a non-zero status
+          # -u: Treat unset variables as an error and exit immediately
+          # -o pipefail: Return value of a pipeline is the status of the last command to exit
+          #   with a non-zero status, or zero if no command exited with a non-zero status
+          # This ensures the script fails fast on any error, preventing silent failures
           set -euo pipefail
           
           # Upgrade pip before installing packages to ensure latest version
-          # This improves dependency resolution speed and security vulnerability fixes
+          # BENEFITS:
+          # - Faster dependency resolution (newer pip versions are more efficient)
+          # - Security vulnerability fixes (pip updates include security patches)
+          # - Better error messages (improved diagnostics in newer versions)
           python -m pip install --upgrade pip
           
-          # Validate requirements file exists and is readable
-          # Check file existence, non-empty, and basic readability
+          # Validate requirements file before attempting installation
+          # VALIDATION CHECKS:
+          # 1. File existence: Ensure the file exists in the repository
+          # 2. Readability: Ensure the file can be read (permissions check)
+          # 3. Non-empty: Ensure the file is not empty
+          # 4. Contains packages: Ensure the file contains at least one package specification
+          #    (not just comments or whitespace)
+          
+          # Check 1: File existence
           if [ ! -f "$REQUIREMENTS_FILE" ]; then
             echo "❌ Requirements file not found: $REQUIREMENTS_FILE"
             echo "💡 Expected location: repository root ($REQUIREMENTS_FILE)"
+            echo "💡 Create the file or update REQUIREMENTS_FILE environment variable"
             exit 1
           fi
           
+          # Check 2: File readability
           if [ ! -r "$REQUIREMENTS_FILE" ]; then
             echo "❌ Requirements file is not readable: $REQUIREMENTS_FILE"
-            echo "💡 Check file permissions"
+            echo "💡 Check file permissions (should be readable by the CI user)"
             exit 1
           fi
           
+          # Check 3: File is non-empty
           if [ ! -s "$REQUIREMENTS_FILE" ]; then
             echo "❌ Requirements file is empty: $REQUIREMENTS_FILE"
             echo "💡 File must contain at least one package specification"
+            exit 1
+          fi
+          
+          # Check 4: File contains at least one package specification
+          # Remove comments and blank lines, then check if anything remains
+          # This ensures the file has actual package specifications, not just comments
+          if ! grep -vE '^\s*#|^\s*$' "$REQUIREMENTS_FILE" | grep -qE '^[a-zA-Z0-9_-]+'; then
+            echo "❌ Requirements file contains no package specifications: $REQUIREMENTS_FILE"
+            echo "💡 File must contain at least one package specification (e.g., 'safety>=1.0.0')"
+            echo "💡 Comments and blank lines are ignored"
             exit 1
           fi
           
