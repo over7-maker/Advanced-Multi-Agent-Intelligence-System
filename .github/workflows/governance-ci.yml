@@ -4,36 +4,8 @@
 # This workflow performs comprehensive quality checks for the Data Governance
 # and Compliance module (PR #242 - feature/data-governance-compliance).
 #
-# Checks Performed:
-# 1. Type Checking: Validates type annotations with mypy and pyright
-#    - Ensures all functions have proper type hints
-#    - Detects type mismatches and untyped code
-#    - Validates compliance with strict type checking rules
-#
-# 2. Linting: Enforces code style and quality standards
-#    - flake8: PEP 8 style checking with custom rules
-#    - pylint: Code quality and complexity analysis
-#    - Ensures consistent code formatting and best practices
-#
-# 3. Unit Testing: Validates functionality and measures coverage
-#    - Runs comprehensive test suite (test_data_classifier.py)
-#    - Measures code coverage for the governance module
-#    - Ensures all success criteria are met
-#
-# 4. Performance Testing: Validates performance characteristics
-#    - Runs performance benchmarks
-#    - Tests large payload handling (< 1s for 1MB)
-#    - Validates ReDoS prevention and DoS protection
-#
-# 5. Security Scanning: Identifies security vulnerabilities
-#    - bandit: Static security analysis for Python code
-#    - safety: Checks dependencies for known vulnerabilities
-#    - Ensures no sensitive data leakage in code
-#
-# The workflow runs automatically on:
-# - Push to main or feature/data-governance-compliance branches
-# - Pull requests to main branch
-# - Changes to governance module files, tests, or configuration
+# Jobs: type-check, lint, test, performance, security (run in parallel)
+# Configuration: See docs/governance/CI_WORKFLOW_GUIDE.md for details
 # =============================================================================
 
 name: Data Governance & Compliance CI/CD Pipeline
