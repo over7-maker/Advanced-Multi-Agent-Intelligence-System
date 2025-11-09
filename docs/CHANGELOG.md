@@ -1,3 +1,43 @@
+## 3.1.0 - 2025-11-09
+
+### 🛡️ Data Governance & Compliance (PR #242)
+
+#### Added
+- **Enterprise Data Governance Module** (`src/amas/governance/data_classifier.py`):
+  - Automatic PII detection with confidence scoring (13 PII types: emails, SSNs, credit cards, API keys, tokens, etc.)
+  - 5-tier data classification system (Public → Internal → Confidential → Restricted → Top Secret)
+  - Compliance framework mapping (GDPR, HIPAA, PCI-DSS)
+  - Redaction helpers for safe logging and storage
+  - Compliance reporting with audit trails
+  - Input sanitization (DoS protection, size limits, depth validation)
+  - Compliance flag validation (auto-correction for false negatives)
+- **Comprehensive Test Suite**:
+  - Unit tests (`tests/test_data_classifier.py`) - 19 tests
+  - Performance tests (`tests/test_data_classifier_performance.py`) - 6 tests
+  - Standalone verification (`verify_data_classifier.py`)
+- **CI/CD Pipeline** (`.github/workflows/governance-ci.yml`):
+  - Type checking (mypy, pyright)
+  - Linting (flake8, pylint)
+  - Testing with coverage
+  - Performance benchmarks
+  - Security scanning (bandit, safety)
+- **Documentation**:
+  - Complete guide (`docs/governance/DATA_GOVERNANCE_GUIDE.md`)
+  - API reference (`docs/governance/API_REFERENCE.md`)
+  - Usage examples (`examples/governance_example.py`)
+
+#### Security
+- Input sanitization prevents DoS attacks (1MB limit, depth limits)
+- Safe logging helpers prevent PII leakage
+- Compliance flag validation prevents false negatives
+- All dependencies pinned to exact versions
+
+#### Performance
+- Regex patterns pre-compiled for efficiency
+- Caching enabled in CI/CD
+- Performance benchmarks included
+- ReDoS prevention validated
+
 ## 3.0.0 - 2025-10-13
 
 ### 📚 Phase 5 – Documentation & Developer Integration
