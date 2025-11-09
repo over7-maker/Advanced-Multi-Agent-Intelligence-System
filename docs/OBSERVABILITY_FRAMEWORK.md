@@ -17,10 +17,12 @@ The AMAS Observability Framework provides comprehensive system visibility with d
 ### Components
 
 1. **AmasTracer** (`src/amas/observability/tracing/tracer.py`)
-   - OpenTelemetry integration with OTLP export
-   - Automatic instrumentation for FastAPI, HTTPX, and logging
-   - Agent operation and tool call tracing
+   - OpenTelemetry integration with OTLP export to Jaeger/DataDog
+   - Automatic instrumentation for FastAPI, HTTPX, Logging, SQLAlchemy, and Psycopg2
+   - Agent operation and tool call tracing with parameter sanitization
    - Metrics collection (request rates, latencies, errors, token usage, costs)
+   - Input validation and secure endpoint configuration
+   - Performance regression detection via PerformanceMonitor
 
 2. **SLOManager** (`src/amas/observability/slo_manager.py`)
    - Prometheus-based SLO evaluation
@@ -64,6 +66,8 @@ The observability framework requires:
 - `opentelemetry-exporter-otlp-proto-grpc==1.27.0`
 - `opentelemetry-instrumentation-fastapi==0.49b0`
 - `opentelemetry-instrumentation-httpx==0.49b0`
+- `opentelemetry-instrumentation-sqlalchemy==0.49b0` (optional, for database tracing)
+- `opentelemetry-instrumentation-psycopg2==0.49b0` (optional, for PostgreSQL tracing)
 - `prometheus-client==0.21.0`
 
 ### 2. Configure Environment Variables
@@ -217,7 +221,14 @@ The framework exposes the following API endpoints:
 Run the observability tests:
 
 ```bash
-pytest tests/test_observability.py -v
+# Unit tests for OpenTelemetry integration
+pytest tests/unit/test_observability.py -v
+
+# Unit tests for performance monitoring
+pytest tests/unit/test_performance_monitor.py -v
+
+# Integration tests for SLO monitoring
+pytest tests/integration/test_slo_monitoring.py -v
 ```
 
 ## Alert Configuration

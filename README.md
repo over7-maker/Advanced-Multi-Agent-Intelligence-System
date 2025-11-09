@@ -16,6 +16,7 @@
 - [Key PRs](#key-prs)
 - [Quick Start](#quick-start)
 - [Deployment Guide](DEPLOYMENT.md)
+- [Observability & Monitoring](#observability--monitoring)
 - [Use Cases](USE_CASES.md)
 - [Security](SECURITY.md)
 - [Contributing](CONTRIBUTING.md)
@@ -37,7 +38,9 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Self-healing, persistent, and learning architecture
 - Professional React interface and team visual builder
 - 100+ service/tool integrations with bulletproof security
-- OpenTelemetry observability and SLO-driven reliability
+- **🔍 Comprehensive Observability**: OpenTelemetry distributed tracing, SLO monitoring, error budget tracking, and automated alerting
+- **📊 Operational Dashboards**: Real-time Grafana dashboards for performance, SLO status, and resource utilization
+- **🚨 Intelligent Alerting**: Multi-channel alerts (Slack, PagerDuty, Email) with burn rate detection
 
 ---
 
@@ -111,6 +114,45 @@ pytest tests/unit/test_tool_governance.py -v
 
 ## Deployment Guide
 Production cluster, scaling, and infrastructure instructions are fully documented in [DEPLOYMENT.md](DEPLOYMENT.md).
+
+---
+
+## Observability & Monitoring
+
+AMAS includes a comprehensive observability framework that transforms the system from a "black box" into a fully observable, proactively monitored platform.
+
+### Key Capabilities
+
+- **📡 Distributed Tracing**: End-to-end request tracing with OpenTelemetry, exported to Jaeger/DataDog
+- **📊 SLO Monitoring**: Service Level Objectives with automatic error budget tracking
+- **📈 Real-time Dashboards**: Three operational Grafana dashboards (Agent Performance, SLO Monitoring, Resource Utilization)
+- **🚨 Automated Alerting**: Smart alerts when SLOs are violated or error budgets depleted
+- **🔍 Performance Regression Detection**: Automatic detection of performance degradations
+
+### Quick Links
+
+- **[Observability Framework Guide](docs/OBSERVABILITY_FRAMEWORK.md)**: Complete framework documentation
+- **[Observability Setup Guide](docs/OBSERVABILITY_SETUP_GUIDE.md)**: Step-by-step setup instructions
+- **[Monitoring Guide](docs/MONITORING_GUIDE.md)**: Monitoring best practices and troubleshooting
+
+### SLO Targets
+
+| SLO | Target | Error Budget |
+|-----|--------|--------------|
+| Agent Availability | ≥99.5% | 0.5% |
+| Latency P95 | ≤1.5s | 10% |
+| Tool Call Success | ≥99.0% | 1% |
+| Memory Usage | ≤80% | 15% |
+| Cost Efficiency | ≤$0.05/req | 20% |
+
+### Getting Started
+
+1. **Setup Monitoring Stack**: Follow [Observability Setup Guide](docs/OBSERVABILITY_SETUP_GUIDE.md)
+2. **Configure Environment**: Set `OTLP_ENDPOINT` and `PROMETHEUS_URL` environment variables
+3. **Import Dashboards**: Load Grafana dashboards from `config/observability/grafana_dashboards.json`
+4. **Verify**: Check traces in Jaeger, metrics in Prometheus, and dashboards in Grafana
+
+For detailed setup instructions, see [docs/OBSERVABILITY_SETUP_GUIDE.md](docs/OBSERVABILITY_SETUP_GUIDE.md).
 
 ---
 
