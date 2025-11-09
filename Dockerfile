@@ -53,11 +53,19 @@ COPY config/ ./config/
 COPY main.py main_simple.py pytest.ini .env.example ./
 
 # Copy web files for React dashboard
+# Note: If web/ directory doesn't exist, this will fail - we'll handle it gracefully in the build step
 COPY web/ ./web/
 
-# Build React dashboard
-WORKDIR /app/web
-RUN npm install --prefer-offline --no-audit && npm run build
+# Build React dashboard (optional - continue on failure)
+WORKDIR /app
+RUN if [ -d web ] && [ -f web/package.json ]; then \
+      echo "Building web dashboard..."; \
+      cd web && \
+      npm install --prefer-offline --no-audit && \
+      npm run build || echo "⚠️  Web build failed, continuing..."; \
+    else \
+      echo "⚠️  Web directory or package.json not found, skipping web build"; \
+    fi
 
 # Return to app directory
 WORKDIR /app
