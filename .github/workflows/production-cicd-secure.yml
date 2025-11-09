@@ -57,40 +57,57 @@ jobs:
           cache-dependency-path: requirements-security.txt
       - name: Install security tools
         shell: bash
+        env:
+          REQUIREMENTS_FILE: requirements-security.txt
+          PYTHON_VERSION: ${{ env.PYTHON_VERSION }}
         run: |
           set -euo pipefail
-          # Check if requirements file exists
-          if [ ! -f requirements-security.txt ]; then
-            echo "❌ requirements-security.txt not found"
+          
+          # Validate requirements file exists
+          if [ ! -f "$REQUIREMENTS_FILE" ]; then
+            echo "❌ Requirements file not found: $REQUIREMENTS_FILE"
+            echo "💡 Ensure $REQUIREMENTS_FILE exists in the repository root"
             exit 1
           fi
-          # Try with hashes first, fallback if hashes not available
-          # Note: This fallback is a known security trade-off until requirements-security.txt includes hashes
+          
+          # Attempt installation with hash verification first (most secure)
+          # SECURITY: Hash verification prevents supply chain attacks by ensuring package integrity
           set +e
-          pip_output=$(pip install --require-hashes -r requirements-security.txt 2>&1)
+          pip_output=$(pip install --require-hashes -r "$REQUIREMENTS_FILE" 2>&1)
           pip_exit_code=$?
           set -euo pipefail
-          # Check if error is due to missing hashes (case-insensitive match)
+          
+          # Check if failure is due to missing hashes (case-insensitive match)
           if [ $pip_exit_code -ne 0 ] && echo "$pip_output" | grep -qiE "(hashes are required|missing from some requirements)"; then
-            echo "⚠️  Hashes not available in requirements-security.txt, installing without hash verification"
-            echo "⚠️  SECURITY NOTE: Consider adding hashes to requirements-security.txt using: pip-compile --generate-hashes"
-            echo "⚠️  SECURITY IMPACT: This increases the risk of supply chain attacks. Ensure you trust all dependencies."
-            echo "⚠️  SECURITY TRADE-OFF: Installing without hash verification. See SECURITY.md for details."
+            echo "⚠️  SECURITY TRADE-OFF: Hashes not available in $REQUIREMENTS_FILE"
+            echo "⚠️  Installing without hash verification increases supply chain attack risk"
+            echo "⚠️  RECOMMENDATION: Generate hashes using: pip-compile --generate-hashes $REQUIREMENTS_FILE"
+            echo "⚠️  See SECURITY.md for details on securing dependencies"
+            
+            # Fallback: Install without hash verification (less secure but functional)
             set +e
-            pip_fallback_output=$(pip install -r requirements-security.txt 2>&1)
+            pip_fallback_output=$(pip install -r "$REQUIREMENTS_FILE" 2>&1)
             pip_fallback_exit=$?
             set -euo pipefail
+            
             if [ $pip_fallback_exit -ne 0 ]; then
               echo "❌ Fallback pip install failed with exit code $pip_fallback_exit"
-              echo "Error details: $pip_fallback_output"
+              echo "📋 Error details:"
+              echo "$pip_fallback_output"
+              echo "💡 Check $REQUIREMENTS_FILE for syntax errors or missing dependencies"
               exit $pip_fallback_exit
+            else
+              echo "⚠️  Installed without hash verification (security risk accepted)"
             fi
           elif [ $pip_exit_code -ne 0 ]; then
+            # Other installation errors (network, syntax, etc.)
             echo "❌ pip install failed with exit code $pip_exit_code"
+            echo "📋 Error output:"
             echo "$pip_output"
+            echo "💡 Check $REQUIREMENTS_FILE and network connectivity"
             exit $pip_exit_code
           else
-            echo "✅ Installed with hash verification"
+            echo "✅ Installed with hash verification (secure)"
           fi
       - name: Safety
         continue-on-error: true
@@ -98,14 +115,18 @@ jobs:
         run: |
           set +e
           set -o pipefail
-          # Run safety with timeout and capture output and exit code properly
+          
+          # Run Safety vulnerability scanner with timeout (5 minutes max)
+          # Safety checks Python dependencies against known vulnerability database
           timeout 300s safety check --json > safety-report.json 2>&1 || true
           original_exit_code=${PIPESTATUS[0]}
           exit_code=$original_exit_code
           set -euo pipefail
-          # Validate JSON output
+          
+          # Validate JSON output format
           if ! jq empty safety-report.json 2>jq-error.log; then
-            echo "⚠️  JSON validation failed: $(cat jq-error.log 2>/dev/null || echo 'invalid JSON')"
+            error_msg=$(cat jq-error.log 2>/dev/null || echo 'invalid JSON format')
+            echo "⚠️  JSON validation failed: $error_msg"
             echo "⚠️  Creating empty Safety report"
             echo "[]" > safety-report.json
             # Preserve original exit code, but note JSON issue
@@ -113,8 +134,13 @@ jobs:
               exit_code=64
             fi
           fi
+          
+          # Interpret exit codes:
+          # 0 = No vulnerabilities found
+          # 1 = Vulnerabilities found
+          # 64+ = Tool error (database/API/network issue)
           if [ $exit_code -eq 0 ]; then
-            echo "✅ Safety scan completed, no vulnerabilities"
+            echo "✅ Safety scan completed, no vulnerabilities found"
           elif [ $exit_code -eq 1 ]; then
             echo "⚠️  Safety found vulnerabilities (see safety-report.json)"
           else
@@ -123,7 +149,8 @@ jobs:
               echo "[]" > safety-report.json
             fi
           fi
-          # Explicitly exit with captured exit code
+          
+          # Explicitly exit with captured exit code for proper workflow status
           exit $exit_code
       - name: Bandit
         continue-on-error: true
@@ -133,15 +160,20 @@ jobs:
         run: |
           set +e
           set -o pipefail
+          
+          # Check if source directory exists
           if [ -d "$SCAN_TARGET" ]; then
-            # Run bandit with timeout and capture exit code properly
+            # Run Bandit static security analysis with timeout (10 minutes max)
+            # Bandit scans Python code for common security issues
             timeout 600s bandit -r "$SCAN_TARGET" -f json -o bandit-report.json 2>&1 || true
             original_exit_code=${PIPESTATUS[0]}
             exit_code=$original_exit_code
             set -euo pipefail
-            # Validate JSON output
+            
+            # Validate JSON output format
             if ! jq empty bandit-report.json 2>jq-error.log; then
-              echo "⚠️  JSON validation failed: $(cat jq-error.log 2>/dev/null || echo 'invalid JSON')"
+              error_msg=$(cat jq-error.log 2>/dev/null || echo 'invalid JSON format')
+              echo "⚠️  JSON validation failed: $error_msg"
               echo "⚠️  Creating empty Bandit report"
               echo '{"results":[],"generated_at":"'"$(date -Iseconds)"'","metadata":{"bandit_version":"unknown"}}' > bandit-report.json
               # Preserve original exit code, but note JSON issue
@@ -149,10 +181,15 @@ jobs:
                 exit_code=2
               fi
             fi
+            
+            # Interpret exit codes:
+            # 0 = No issues found
+            # 1 = Security issues found
+            # 2+ = Execution error
             if [ $exit_code -eq 0 ]; then
-              echo "✅ Bandit scan completed, no issues found"
+              echo "✅ Bandit scan completed, no security issues found"
             elif [ $exit_code -eq 1 ]; then
-              echo "⚠️  Bandit found issues (see bandit-report.json)"
+              echo "⚠️  Bandit found security issues (see bandit-report.json)"
             else
               echo "⚠️  Bandit check failed with exit code $exit_code (execution error - continuing)"
               if [ $exit_code -ne 2 ]; then
@@ -164,7 +201,8 @@ jobs:
             echo '{"results":[],"generated_at":"'"$(date -Iseconds)"'","metadata":{"bandit_version":"unknown"}}' > bandit-report.json
             exit_code=0
           fi
-          # Explicitly exit with captured exit code
+          
+          # Explicitly exit with captured exit code for proper workflow status
           exit $exit_code
       - name: Semgrep Scan
         uses: returntocorp/semgrep-action@v1
@@ -219,31 +257,43 @@ jobs:
       - name: Evaluate
         id: scan-results
         run: |
+          # Initialize vulnerability counters
           vuln=0
           crit=0
-          # Initialize empty JSON files if they don't exist
+          
+          # Ensure report files exist (create empty if missing)
           [ ! -f safety-report.json ] && echo "[]" > safety-report.json || true
           [ ! -f bandit-report.json ] && echo '{"results":[]}' > bandit-report.json || true
-          # Count vulnerabilities from Safety
+          
+          # Count vulnerabilities from Safety scan
+          # Safety reports vulnerabilities as a JSON array
           if [ -s safety-report.json ]; then
-            v=$(jq 'if type=="array" then length else 0 end' safety-report.json 2>/dev/null || echo 0)
-            vuln=$((vuln+v))
+            safety_count=$(jq 'if type=="array" then length else 0 end' safety-report.json 2>/dev/null || echo 0)
+            vuln=$((vuln + safety_count))
+            echo "📊 Safety: Found $safety_count vulnerabilities"
           fi
-          # Count vulnerabilities from Bandit
+          
+          # Count vulnerabilities from Bandit scan
+          # Bandit reports issues in .results array with severity levels
           if [ -s bandit-report.json ]; then
-            b=$(jq '.results|length' bandit-report.json 2>/dev/null || echo 0)
-            vuln=$((vuln+b))
-            # Count critical/high severity issues
+            bandit_count=$(jq '.results|length' bandit-report.json 2>/dev/null || echo 0)
+            vuln=$((vuln + bandit_count))
+            
+            # Count critical/high severity issues (these will fail the build)
             crit=$(jq '[.results[] | select(.issue_severity=="HIGH" or .issue_severity=="CRITICAL")] | length' bandit-report.json 2>/dev/null || echo 0)
+            echo "📊 Bandit: Found $bandit_count issues ($crit critical/high severity)"
           fi
+          
+          # Set workflow outputs for downstream jobs
           echo "vulnerabilities=$vuln" >> $GITHUB_OUTPUT
           echo "critical-vulnerabilities=$crit" >> $GITHUB_OUTPUT
           echo "passed=$([ "$crit" -eq 0 ] && echo true || echo false)" >> $GITHUB_OUTPUT
-          echo "📊 Found $vuln total vulnerabilities, $crit critical"
+          echo "📊 Security Scan Summary: $vuln total vulnerabilities, $crit critical"
           
-          # Fail the job if critical vulnerabilities are found
+          # Fail the job if critical vulnerabilities are found (security gate)
           if [ "$crit" -gt 0 ]; then
             echo "❌ Security scan FAILED: Found $crit critical vulnerabilities"
+            echo "🔒 Security gate: Critical vulnerabilities must be resolved before merge"
             exit 1
           elif [ "$vuln" -gt 10 ]; then
             echo "⚠️  Security scan WARNING: Found $vuln total vulnerabilities (threshold: 10)"
@@ -252,16 +302,17 @@ jobs:
             echo "✅ Security scan PASSED: $vuln total vulnerabilities, $crit critical"
           fi
           
-          # Additional enforcement: Check Safety for critical vulnerabilities
+          # Additional enforcement: Check Safety for critical/high severity vulnerabilities
           if [ -s safety-report.json ]; then
             safety_critical=$(jq '[.[] | select(.severity == "CRITICAL" or .severity == "HIGH")] | length' safety-report.json 2>/dev/null || echo 0)
             if [ "$safety_critical" -gt 0 ]; then
               echo "❌ Safety found $safety_critical critical/high severity vulnerabilities"
+              echo "🔒 Security gate: Critical dependency vulnerabilities must be resolved"
               exit 1
             fi
           fi
           
-          # Create GitHub job summary
+          # Create GitHub job summary for visibility in Actions UI
           echo "## 🔒 Security Scan Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Tool | Status | Vulnerabilities | Critical |" >> $GITHUB_STEP_SUMMARY
