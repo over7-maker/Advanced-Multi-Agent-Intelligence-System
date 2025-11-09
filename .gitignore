@@ -414,7 +414,7 @@ workflow_*.json
 *MIGRATION_*.py
 *demo_*.py
 
-# Test files: exclude test_*.py files outside tests/ directory
+# Exclude test_*.py files outside tests/ directory
 # Allow test files in tests/ directory and subdirectories
 test_*.py
 !tests/test_*.py
