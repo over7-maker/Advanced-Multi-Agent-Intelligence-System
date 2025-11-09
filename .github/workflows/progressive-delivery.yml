@@ -142,9 +142,6 @@ jobs:
         driver-opts: |
           image=moby/buildkit:latest
           network=host
-        # Cache configuration for faster builds
-        cache-from: type=local,src=/tmp/.buildx-cache
-        cache-to: type=local,dest=/tmp/.buildx-cache,mode=max
     
     # ========================================================================
     # STEP 3: Authenticate with container registry
