@@ -67,30 +67,30 @@ AMAS includes comprehensive performance scaling infrastructure for production wo
 
 - **Intelligent Autoscaling**: KEDA-based multi-metric scaling (HTTP RPS, queue depth, latency, resource usage)
   - Implementation: `k8s/scaling/keda-scaler.yaml`
-  - Documentation: [KEDA Autoscaling](docs/PERFORMANCE_SCALING_GUIDE.md#keda-autoscaling)
+  - Documentation: [Performance Scaling Guide - KEDA Autoscaling](docs/PERFORMANCE_SCALING_GUIDE.md)
   - Status: ✅ Production Ready
 
 - **Load Testing Framework**: Comprehensive performance testing with SLO validation and regression detection
   - Implementation: `src/amas/performance/benchmarks/load_tester.py`
   - CLI Tool: `scripts/run_load_test.py`
-  - Documentation: [Load Testing Framework](docs/PERFORMANCE_SCALING_GUIDE.md#load-testing-framework)
+  - Documentation: [Performance Scaling Guide - Load Testing](docs/PERFORMANCE_SCALING_GUIDE.md)
   - Status: ✅ Production Ready
 
 - **Semantic Caching**: Redis-based intelligent caching with embedding similarity matching
   - Implementation: `src/amas/services/semantic_cache_service.py`
   - Performance Metrics: [Performance Benchmarks](docs/performance_benchmarks.md)
-  - Documentation: [Semantic Caching](docs/PERFORMANCE_SCALING_GUIDE.md#overview)
+  - Documentation: [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md)
   - Status: ✅ Production Ready
 
 - **Resilience Patterns**: Circuit breakers, rate limiting, request deduplication
   - Implementation: `src/amas/services/circuit_breaker_service.py`, `rate_limiting_service.py`, `request_deduplication_service.py`
   - Tests: `tests/performance/test_resilience_patterns.py`
-  - Documentation: [Integration Examples](docs/PERFORMANCE_SCALING_INTEGRATION.md)
+  - Documentation: [Performance Scaling Integration](docs/PERFORMANCE_SCALING_INTEGRATION.md)
   - Status: ✅ Production Ready
 
 - **Cost Optimization**: Automatic cost tracking and optimization recommendations
   - Implementation: `src/amas/services/cost_tracking_service.py`
-  - Documentation: [Cost Optimization](docs/PERFORMANCE_SCALING_GUIDE.md#best-practices)
+  - Documentation: [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md)
   - Status: ✅ Production Ready
 
 ### Quick Start
