@@ -1,66 +1,82 @@
 # AMAS - Advanced Multi-Agent Intelligence System
-# Production-ready Docker configuration
+# Production-ready Docker configuration with layer caching optimization
 
-FROM python:3.11-slim
+# Stage 1: Python dependencies cache layer
+# This large layer is built once and cached for faster subsequent builds
+FROM python:3.11-slim as python-builder
+
+WORKDIR /app
 
 # Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONPATH=/app
+
+# Install system dependencies for building
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc g++ git ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy and install Python dependencies (this layer gets cached)
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Stage 2: Application with minimal dependencies
+FROM python:3.11-slim
+
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV AMAS_ENV=production
 ENV PYTHONPATH=/app
 
-# Set work directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    curl \
-    git \
+# Install minimal runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js for React dashboard
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs
+# Install Node.js for React dashboard (cached separately)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy requirements first for better caching
-COPY requirements.txt .
+# Copy pre-built Python packages from builder stage (much faster than rebuilding)
+COPY --from=python-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=python-builder /usr/local/bin /usr/local/bin
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Copy source code
+# Copy source code (these layers change frequently, so they come last)
 COPY src/ ./src/
 COPY scripts/ ./scripts/
 COPY config/ ./config/
-COPY web/ ./web/
-COPY main.py .
-COPY main_simple.py .
-COPY pytest.ini .
-COPY .env.example .
+COPY main.py main_simple.py pytest.ini .env.example ./
 
-# Create necessary directories
-RUN mkdir -p logs data/collective_knowledge data/personalities data/models
+# Copy web files for React dashboard
+COPY web/ ./web/
 
 # Build React dashboard
 WORKDIR /app/web
-RUN npm install && npm run build
+RUN npm install --prefer-offline --no-audit && npm run build
 
 # Return to app directory
 WORKDIR /app
 
-# Create non-root user
-RUN useradd --create-home --shell /bin/bash amas
-RUN chown -R amas:amas /app
+# Create necessary directories
+RUN mkdir -p logs data/collective_knowledge data/personalities data/models
+
+# Create non-root user for security
+RUN useradd --create-home --shell /bin/bash amas && \
+    chown -R amas:amas /app
+
 USER amas
 
 # Expose ports
-EXPOSE 8000 3000
+EXPOSE 8000 3000 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
+    CMD curl -f http://localhost:8000/health/ready || exit 1
 
 # Default command
 CMD ["python", "main_simple.py"]
