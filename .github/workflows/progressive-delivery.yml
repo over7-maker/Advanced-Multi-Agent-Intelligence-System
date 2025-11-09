@@ -298,9 +298,10 @@ jobs:
         # First build downloads ~4.5GB base images, subsequent builds use cache
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        # Security: Include provenance and SBOM
-        provenance: true
-        sbom: true
+        # Security: Include provenance and SBOM (only for pushes, not PRs)
+        # Note: Provenance/SBOM require pushing to registry, skip for PR builds
+        provenance: ${{ github.event_name != 'pull_request' }}
+        sbom: ${{ github.event_name != 'pull_request' }}
     
     # ========================================================================
     # STEP 5: Security scan with Trivy
@@ -311,7 +312,9 @@ jobs:
     # ========================================================================
     - name: 🔍 Container security scan with Trivy
       id: trivy-scan
-      if: steps.build.outcome == 'success'  # Only scan if build succeeded
+      # Only scan for non-PR builds (PRs don't push images, so can't scan from registry)
+      # For PRs, security scanning happens after merge when image is pushed
+      if: steps.build.outcome == 'success' && github.event_name != 'pull_request'
       continue-on-error: true  # Don't fail build on vulnerabilities, but still report them
       uses: aquasecurity/trivy-action@0.20.0
       with:
