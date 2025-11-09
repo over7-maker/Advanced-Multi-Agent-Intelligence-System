@@ -1,13 +1,17 @@
 ---
 title: Performance Scaling Infrastructure Guide
 version: 1.0.0
-last_updated: 2025-01-15
+last_updated: 2025-11-08
+description: Comprehensive guide for AMAS performance scaling infrastructure including KEDA autoscaling, load testing, semantic caching, and resilience patterns
+summary: This guide covers intelligent autoscaling with KEDA, comprehensive load testing framework, semantic caching for 30%+ speed improvement, circuit breakers, rate limiting, and cost optimization. Includes deployment instructions, best practices, and troubleshooting.
+author: AMAS Development Team
+status: active
 tags: [performance, autoscaling, keda, monitoring, scaling, infrastructure]
 ---
 
 # Performance Scaling Infrastructure Guide
 
-> **Version:** 1.0.0 | **Last Updated:** 2025-01-15
+> **Version:** 1.0.0 | **Last Updated:** 2025-11-08
 
 This guide covers the comprehensive performance scaling infrastructure for AMAS, including KEDA-based autoscaling, load testing, and performance monitoring.
 
@@ -24,11 +28,11 @@ This guide covers the comprehensive performance scaling infrastructure for AMAS,
 - [Additional Resources](#additional-resources)
 <!-- /TOC -->
 
-> ⚠️ **Note**: This TOC is auto-generated. If using markdown-toc, run `npx markdown-toc -i docs/PERFORMANCE_SCALING_GUIDE.md` to update.
+> ⚠️ **Note**: This TOC is manually maintained. To auto-generate using markdown-toc, run: `npx markdown-toc -i docs/PERFORMANCE_SCALING_GUIDE.md --bullets="-"`. Remember to update the TOC when adding or renaming sections.
 
 ## Overview
 
-The AMAS performance scaling infrastructure provides intelligent, event-driven autoscaling and comprehensive performance optimization. Based on internal benchmarks, it reduces over-provisioning by up to 60% during low-traffic periods while maintaining <100ms P95 latency during traffic spikes (see [performance benchmarks](./performance_benchmarks.md) for detailed metrics).
+The AMAS performance scaling infrastructure provides intelligent, event-driven autoscaling and comprehensive performance optimization. Based on internal benchmarks, it reduces over-provisioning by up to 60% during low-traffic periods while maintaining <100ms P95 latency during traffic spikes (see [Performance Benchmarks](./performance_benchmarks.md) for detailed metrics).
 
 ### Key Components
 
@@ -37,7 +41,7 @@ The AMAS performance scaling infrastructure provides intelligent, event-driven a
 - **Performance Monitoring**: Real-time metrics collection and analysis including request rates, latency distributions, and resource utilization
 - **Horizontal Pod Autoscaling (HPA)**: Kubernetes-native autoscaling used in conjunction with KEDA for CPU/memory-based scaling. HPA is automatically disabled when KEDA is active on the same deployment to prevent conflicting scaling triggers. See [KEDA Autoscaling](#keda-autoscaling) for coordination details.
 - **Vertical Pod Autoscaling (VPA)**: Automatic right-sizing of container resources based on historical usage patterns (recommendations only in "Off" mode when using HPA/KEDA)
-- **Semantic Caching**: Redis-based caching enhanced with embedding similarity matching via external vector search modules (e.g., RedisVL) or integrated AI proxies. Requires dedicated inference resources for embedding computation. See [performance benchmarks](./performance_benchmarks.md) for performance metrics.
+- **Semantic Caching**: Redis-based caching enhanced with embedding similarity matching via external vector search modules (e.g., RedisVL) or integrated AI proxies. Requires dedicated inference resources for embedding computation. See [Performance Benchmarks](./performance_benchmarks.md) for detailed performance metrics and benchmark results.
   
   > **Performance Note**: Semantic similarity lookups should be performed asynchronously or via pre-indexed vectors to avoid blocking request threads. Use RedisVL with HNSW indexes for sub-second performance at scale. Monitor P99 latency of cache lookup operations and set SLOs (e.g., <50ms for cached results).
 
@@ -271,7 +275,7 @@ The load tester exports Prometheus metrics:
      - Use asynchronous similarity computation or dedicated microservices
      - Leverage approximate nearest neighbor (ANN) indexing (e.g., HNSW in RedisVL) with precomputed vectors
      - Cache similarity query results with TTLs to avoid repeated computation
-     - See [performance benchmarks](./performance_benchmarks.md) for benchmark results
+     - See [Performance Benchmarks](./performance_benchmarks.md) for detailed benchmark results and performance metrics
    - Use request deduplication for expensive operations
    - Review scaling thresholds regularly to optimize resource usage
 
