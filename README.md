@@ -38,6 +38,7 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Professional React interface and team visual builder
 - 100+ service/tool integrations with bulletproof security
 - OpenTelemetry observability and SLO-driven reliability
+- **🛡️ Data Governance & Compliance**: Enterprise-grade PII detection, 5-tier classification, GDPR/HIPAA/PCI compliance mapping ([Guide](docs/governance/DATA_GOVERNANCE_GUIDE.md))
 
 ---
 
