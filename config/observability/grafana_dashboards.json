@@ -1,11 +1,13 @@
 {
   "dashboard": {
     "title": "AMAS Agent Performance Dashboard",
-    "tags": ["amas", "agents", "performance"],
-    "timezone": "browser",
+    "description": "Real-time monitoring of agent performance metrics including request rates, success rates, latency distributions, tool call performance, token usage, and cost tracking",
+    "tags": ["amas", "agents", "performance", "observability"],
+    "timezone": "UTC",
     "refresh": "30s",
-    "schemaVersion": 38,
+    "schemaVersion": 39,
     "version": 1,
+    "hideControls": false,
     "annotations": {
       "list": [
         {
@@ -23,14 +25,14 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "-- Grafana --"
           },
           "enable": true,
-          "expr": "changes(amas_slo_violations_total[5m]) > 0",
+          "expr": "increase(amas_slo_violations_total[$__rate_interval]) > 0",
           "iconColor": "red",
           "name": "SLO Violations",
           "showIn": 0,
-          "step": "5m",
+          "step": "$__rate_interval",
           "titleFormat": "SLO Violation",
           "type": "tags",
           "useValueForTime": false
@@ -41,11 +43,12 @@
       {
         "id": 1,
         "title": "Agent Request Rate",
+        "description": "Rate of agent requests per second, broken down by agent ID and status (success/error)",
         "type": "timeseries",
         "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
         "targets": [
           {
-            "expr": "rate(amas_agent_requests_total[5m])",
+            "expr": "rate(amas_agent_requests_total[$__rate_interval])",
             "legendFormat": "{{agent_id}} - {{status}}",
             "refId": "A"
           }
@@ -60,11 +63,12 @@
       {
         "id": 2,
         "title": "Agent Success Rate",
+        "description": "Percentage of successful agent requests. Thresholds: <95% (red), 95-99% (yellow), ≥99% (green)",
         "type": "stat",
         "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
         "targets": [
           {
-            "expr": "(rate(amas_agent_requests_total{status=\"success\"}[5m]) / rate(amas_agent_requests_total[5m])) * 100",
+            "expr": "(rate(amas_agent_requests_total{status=\"success\"}[$__rate_interval]) / rate(amas_agent_requests_total[$__rate_interval])) * 100",
             "refId": "A"
           }
         ],
@@ -85,21 +89,22 @@
       {
         "id": 3,
         "title": "Agent Latency Distribution",
+        "description": "Latency percentiles (P50, P95, P99) for agent operations. SLO target: P95 ≤ 1.5s",
         "type": "timeseries",
         "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
         "targets": [
           {
-            "expr": "histogram_quantile(0.50, rate(amas_agent_duration_seconds_bucket[5m]))",
+            "expr": "histogram_quantile(0.50, rate(amas_agent_duration_seconds_bucket[$__rate_interval]))",
             "legendFormat": "p50",
             "refId": "A"
           },
           {
-            "expr": "histogram_quantile(0.95, rate(amas_agent_duration_seconds_bucket[5m]))",
+            "expr": "histogram_quantile(0.95, rate(amas_agent_duration_seconds_bucket[$__rate_interval]))",
             "legendFormat": "p95",
             "refId": "B"
           },
           {
-            "expr": "histogram_quantile(0.99, rate(amas_agent_duration_seconds_bucket[5m]))",
+            "expr": "histogram_quantile(0.99, rate(amas_agent_duration_seconds_bucket[$__rate_interval]))",
             "legendFormat": "p99",
             "refId": "C"
           }
@@ -114,11 +119,12 @@
       {
         "id": 4,
         "title": "Tool Call Performance",
+        "description": "Tool call rates by tool name and status. SLO target: ≥99.0% success rate",
         "type": "table",
         "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
         "targets": [
           {
-            "expr": "sum by (tool_name, status) (rate(amas_tool_call_duration_seconds_count[5m]))",
+            "expr": "sum by (tool_name, status) (rate(amas_tool_call_duration_seconds_count[$__rate_interval]))",
             "format": "table",
             "refId": "A"
           }
@@ -127,11 +133,12 @@
       {
         "id": 5,
         "title": "Token Usage by Agent",
+        "description": "Token consumption rate per second, broken down by agent ID and model name",
         "type": "timeseries",
         "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
         "targets": [
           {
-            "expr": "rate(amas_tokens_used_total[5m])",
+            "expr": "rate(amas_tokens_used_total[$__rate_interval])",
             "legendFormat": "{{agent_id}} - {{model_name}}",
             "refId": "A"
           }
@@ -146,6 +153,7 @@
       {
         "id": 6,
         "title": "Cost Tracking",
+        "description": "Total cost in USD over the last hour. SLO target: ≤$0.05 per request",
         "type": "stat",
         "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
         "targets": [
@@ -172,11 +180,13 @@
   },
   "slo_dashboard": {
     "title": "AMAS SLO Monitoring Dashboard",
-    "tags": ["amas", "slo", "reliability"],
-    "timezone": "browser",
+    "description": "Service Level Objective monitoring with error budget tracking, burn rate analysis, and compliance status visualization",
+    "tags": ["amas", "slo", "reliability", "observability"],
+    "timezone": "UTC",
     "refresh": "1m",
-    "schemaVersion": 38,
+    "schemaVersion": 39,
     "version": 1,
+    "hideControls": false,
     "annotations": {
       "list": [
         {
@@ -194,7 +204,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "-- Grafana --"
           },
           "enable": true,
           "expr": "amas_slo_error_budget_remaining_percent < 10",
@@ -211,6 +221,7 @@
       {
         "id": 1,
         "title": "Error Budget Status",
+        "description": "Remaining error budget percentage for each SLO. Critical: <5%, Warning: <25%",
         "type": "stat",
         "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
         "targets": [
@@ -238,6 +249,7 @@
       {
         "id": 2,
         "title": "Error Budget Burn Rate",
+        "description": "Rate at which error budget is being consumed. Alerts trigger at 14.4x (fast) or 6.0x (slow) normal rate",
         "type": "timeseries",
         "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
         "targets": [
@@ -257,6 +269,7 @@
       {
         "id": 3,
         "title": "SLO Compliance Status",
+        "description": "Current SLO compliance status, current values, and remaining error budget for all defined SLOs",
         "type": "table",
         "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
         "targets": [
@@ -280,11 +293,12 @@
       {
         "id": 4,
         "title": "SLO Violations Over Time",
+        "description": "Rate of SLO violations over time, broken down by SLO name and severity level",
         "type": "timeseries",
         "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
         "targets": [
           {
-            "expr": "rate(amas_slo_violations_total[5m])",
+            "expr": "rate(amas_slo_violations_total[$__rate_interval])",
             "legendFormat": "{{slo_name}} - {{severity}}",
             "refId": "A"
           }
@@ -300,11 +314,13 @@
   },
   "resource_dashboard": {
     "title": "AMAS Resource Utilization",
-    "tags": ["amas", "resources", "system"],
-    "timezone": "browser",
+    "description": "System resource monitoring including active agents, queue depth, memory usage, and CPU utilization",
+    "tags": ["amas", "resources", "system", "observability"],
+    "timezone": "UTC",
     "refresh": "30s",
-    "schemaVersion": 38,
+    "schemaVersion": 39,
     "version": 1,
+    "hideControls": false,
     "annotations": {
       "list": [
         {
@@ -322,7 +338,7 @@
         {
           "datasource": {
             "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
+            "uid": "-- Grafana --"
           },
           "enable": true,
           "expr": "(process_resident_memory_bytes / process_virtual_memory_max_bytes) * 100 > 80",
@@ -339,6 +355,7 @@
       {
         "id": 1,
         "title": "Active Agents",
+        "description": "Current number of active agent instances processing requests",
         "type": "stat",
         "gridPos": {"h": 6, "w": 8, "x": 0, "y": 0},
         "targets": [
@@ -357,6 +374,7 @@
       {
         "id": 2,
         "title": "Queue Depth",
+        "description": "Current number of pending requests in processing queue. SLO target: ≤50",
         "type": "stat",
         "gridPos": {"h": 6, "w": 8, "x": 8, "y": 0},
         "targets": [
@@ -382,6 +400,7 @@
       {
         "id": 3,
         "title": "Memory Usage",
+        "description": "Process memory usage percentage. SLO target: ≤80%. Thresholds: <75% (green), 75-85% (yellow), >85% (orange), >95% (red)",
         "type": "timeseries",
         "gridPos": {"h": 8, "w": 16, "x": 0, "y": 6},
         "targets": [
@@ -409,11 +428,12 @@
       {
         "id": 4,
         "title": "CPU Usage",
+        "description": "Process CPU utilization percentage over time",
         "type": "timeseries",
         "gridPos": {"h": 8, "w": 16, "x": 16, "y": 6},
         "targets": [
           {
-            "expr": "rate(process_cpu_seconds_total[5m]) * 100",
+            "expr": "rate(process_cpu_seconds_total[$__rate_interval]) * 100",
             "legendFormat": "CPU Usage %",
             "refId": "A"
           }

@@ -416,7 +416,7 @@ workflow_*.json
 
 # Test files: exclude all *test_*.py except those in tests/ directory tree
 *test_*.py
-!tests/**/test_*.py
+!**/tests/**/test_*.py
 *standalone_*.py
 *run_tests.py
 *bandit-report.json
