@@ -552,85 +552,11 @@ jobs:
           retention-days: 90
           if-no-files-found: ignore
 
+#
 # =============================================================================
-# Workflow Summary and Best Practices
+# Workflow Summary
 # =============================================================================
-# This workflow runs 5 jobs in parallel for comprehensive quality assurance:
-#
-# Concurrency Strategy:
-# - Only one workflow run per branch at a time (prevents resource waste)
-# - New commits cancel in-progress runs (ensures latest code is tested)
-#
-# Fallback Strategies:
-# - Dependency installation: Falls back to direct install if requirements file fails
-# - Tool verification: All tools verified after installation
-# - File existence: All file operations check for existence first
-#
-# Flaky Test Handling:
-# - Tests retry up to 2 times with 1 second delay
-# - Helps handle transient failures (network, timing, etc.)
-#
-# Security:
-# - Python version pinned (3.12.12) - update for security patches
-# - All tool versions pinned in requirements-ci.txt
-# - Secrets stored in GitHub Secrets (not hardcoded)
-# - Security reports stored as artifacts (90 day retention)
-#
-# Artifact Management:
-# - Test coverage reports: 30 day retention
-# - Security scan reports: 90 day retention
-# - Artifacts stored securely in GitHub Actions
-#
-# Log Management:
-# - All logs stored in GitHub Actions (secure, searchable)
-# - Sensitive data redacted before logging
-# - Error messages are clear and actionable
-#
-# Resource Management:
-# - Jobs run in parallel (maximizes resource utilization)
-# - Caching enabled for dependencies (reduces build time)
-# - Timeouts prevent runaway jobs (20 minutes per job)
-# - Concurrency limits prevent resource exhaustion
-#
-# This workflow runs 5 jobs in parallel for comprehensive quality assurance:
-#
-# 1. type-check: Validates type annotations with mypy and pyright
-#    - Ensures all functions have proper type hints
-#    - Detects type mismatches and untyped code
-#    - Validates compliance with strict type checking rules
-#
-# 2. lint: Checks code style with flake8 and pylint
-#    - Enforces PEP 8 style guidelines
-#    - Analyzes code quality and complexity
-#    - Ensures consistent code formatting
-#
-# 3. test: Runs unit tests with pytest and coverage reporting
-#    - Validates all functionality works correctly
-#    - Measures code coverage for the governance module
-#    - Ensures all success criteria are met
-#
-# 4. performance: Runs performance benchmarks and verification
-#    - Validates performance requirements (e.g., < 1s for 1MB)
-#    - Tests ReDoS prevention and DoS protection
-#    - Identifies performance regressions
-#
-# 5. security: Scans for security vulnerabilities with bandit and safety
-#    - Identifies common security issues in code
-#    - Checks dependencies for known CVEs
-#    - Ensures no sensitive data leakage
-#
-# All jobs include:
-# - Python version verification (ensures compatibility)
-# - Dependency installation with conflict checking (prevents issues)
-# - Tool verification after installation (ensures tools work)
-# - Comprehensive error handling (clear failure messages)
-# - Proper caching for performance (faster builds)
-#
-# Security Considerations:
-# - Python version is pinned for reproducibility but should be updated for security patches
-# - Dependencies are pinned to exact versions in requirements-ci.txt
-# - No secrets are hardcoded (use GitHub Secrets if needed)
-# - All tools are verified after installation
-#
-# The workflow is complete, production-ready, and follows GitHub Actions best practices.
+# Jobs: 5 parallel jobs (type-check, lint, test, performance, security)
+# Configuration: See docs/governance/CI_WORKFLOW_GUIDE.md for complete details
+# Status: Production-ready, follows GitHub Actions best practices
 # =============================================================================
