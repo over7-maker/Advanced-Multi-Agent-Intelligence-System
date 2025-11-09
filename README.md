@@ -36,9 +36,9 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Background scheduling, event monitoring, and notification workflows
 - Self-healing, persistent, and learning architecture
 - Professional React interface and team visual builder
-- 100+ service/tool integrations with enterprise security (JWT/OIDC authentication, encryption at rest and in transit, comprehensive audit logging - see [Security Guide](docs/security/SECURITY.md))
+- 100+ service/tool integrations with enterprise security (JWT/OIDC authentication, encryption at rest and in transit, comprehensive audit logging) - see [Security Guide](docs/security/SECURITY.md) for details
 - OpenTelemetry observability and SLO-driven reliability
-- Intelligent Performance Scaling: KEDA-based autoscaling, semantic caching (see [Performance Benchmarks](docs/performance_benchmarks.md) for metrics), circuit breakers, rate limiting, and cost optimization (see [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md))
+- Intelligent Performance Scaling: KEDA-based autoscaling, semantic caching, circuit breakers, rate limiting, and cost optimization - see [Performance Benchmarks](docs/performance_benchmarks.md) for metrics and [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md) for complete documentation
 
 ---
 
@@ -59,7 +59,7 @@ Production cluster, scaling, and infrastructure instructions are fully documente
 
 ---
 
-## ⚡ Performance & Scaling Infrastructure
+## Performance & Scaling Infrastructure
 
 AMAS includes comprehensive performance scaling infrastructure for production workloads. This infrastructure enables intelligent autoscaling, performance optimization, and cost efficiency. All features are fully implemented, tested, and documented.
 
