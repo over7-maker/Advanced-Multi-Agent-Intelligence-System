@@ -1,0 +1,91 @@
+# Verification Report (Machine-Readable Format)
+# Schema: verification-report/v1
+# Generated: 2025-11-04T10:00:00Z
+# Commit: e9ec8d903e86efa220576d9ea517b7e6832aeb5f
+
+schema: "verification-report/v1"
+file: "config/agent_capabilities.yaml"
+status: "valid"
+lines: 333
+size_bytes: 10187
+ends_with_newline: true
+sha256: "18f2fd9fc59390f1768c64ae29e05c9a3eb61b5706fa4c952a45ac9ce63a6798"
+commit_sha: "e9ec8d903e86efa220576d9ea517b7e6832aeb5f"
+verified_at: "2025-11-04T10:00:00Z"
+branch: "feature/agent-contracts-and-governance"
+pr: 237
+
+agents:
+  - name: "research_agent_v1"
+    status: "complete"
+    quality_gates_complete: true
+    fields_count: 3
+    fields_present:
+      - "require_human_approval"
+      - "output_validation_required"
+      - "fact_checking_enabled"
+
+  - name: "analysis_agent_v1"
+    status: "complete"
+    quality_gates_complete: true
+    fields_count: 3
+    fields_present:
+      - "require_human_approval"
+      - "output_validation_required"
+      - "statistical_validation_required"
+
+  - name: "synthesis_agent_v1"
+    status: "complete"
+    quality_gates_complete: true
+    fields_count: 6
+    fields_present:
+      - "require_human_approval"
+      - "output_validation_required"
+      - "plagiarism_check_enabled"
+      - "pii_detection_enabled"
+      - "output_sanitization_required"
+      - "content_moderation_required"
+
+  - name: "orchestrator_agent_v1"
+    status: "complete"
+    quality_gates_complete: true
+    fields_count: 3
+    fields_present:
+      - "require_human_approval"
+      - "output_validation_required"
+      - "workflow_validation_required"
+
+  - name: "communication_agent_v1"
+    status: "complete"
+    quality_gates_complete: true
+    fields_count: 3
+    fields_present:
+      - "require_human_approval"
+      - "output_validation_required"
+      - "content_safety_check"
+
+  - name: "validation_agent_v1"
+    status: "complete"
+    quality_gates_complete: true
+    fields_count: 3
+    fields_present:
+      - "require_human_approval"
+      - "output_validation_required"
+      - "bias_detection_enabled"
+
+verification_metadata:
+  author: "Auto-Verification System"
+  tool_version: "1.0"
+  schema_version: "verification-report/v1"
+  source_control: "git@github.com:over7-maker/Advanced-Multi-Agent-Intelligence-System.git"
+
+integrity_checks:
+  yaml_valid: true
+  all_agents_present: true
+  all_quality_gates_complete: true
+  file_ends_with_newline: true
+  no_truncation_detected: true
+
+# --- END OF VERIFICATION REPORT ---
+# This marker confirms the report is complete and not truncated.
+# If this line is missing, the report generation may have failed.
