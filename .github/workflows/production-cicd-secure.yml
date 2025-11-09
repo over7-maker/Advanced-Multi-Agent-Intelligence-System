@@ -58,8 +58,6 @@ jobs:
           cache: 'pip'
           cache-dependency-path: ${{ env.REQUIREMENTS_FILE }}
       - name: Install security tools
-        env:
-          PYTHON_VERSION: ${{ env.PYTHON_VERSION }}
         run: |
           set -euo pipefail
           
