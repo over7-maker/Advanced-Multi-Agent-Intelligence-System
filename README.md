@@ -50,49 +50,25 @@ Complete enterprise foundation with security, observability, and scaling infrast
 Full autonomous multi-agent coordination, learning, and automation capabilities.
 
 ### PR #237: Agent Contracts & Tool Governance Foundation ✅
-**Status:** ✅ **100% Implemented**
-
 Establishes strict type contracts for all agents and implements tool access control with allowlists, ensuring every agent interaction is predictable, safe, and auditable.
 
 **Key Components:**
-- ✅ Typed Agent Contracts (JSONSchema) for all agent roles
-  - Research, Analysis, and Synthesis agent schemas with complete input/output validation
-- ✅ Tool Permission System with rate limiting and approval workflow
-- ✅ Runtime Validation of inputs/outputs against schemas
-- ✅ Capability Configuration via YAML for per-agent policies
-- ✅ Complete unit/integration test coverage
+- Typed Agent Contracts (JSONSchema) for all agent roles
+- Tool Permission System with rate limiting and approval workflow
+- Runtime Validation of inputs/outputs against schemas
+- Capability Configuration via YAML for per-agent policies
+- Complete unit/integration test coverage
 
 **Documentation:**
-- [Agent Contracts & Tool Governance Guide](docs/AGENT_CONTRACTS_AND_TOOL_GOVERNANCE.md) - Complete system overview
-- [Usage Guide](docs/AGENT_CONTRACTS_USAGE_GUIDE.md) - Practical examples and API reference
-- [Configuration Guide](docs/CONFIGURATION_AGENT_CAPABILITIES.md) - YAML configuration reference
-- [Developer Guide](docs/developer/AGENT_CONTRACTS_DEVELOPER_GUIDE.md) - Integration guide
-- [ADR-0003](docs/adr/0003-agent-contracts.md) - Architecture decision record
+- [Agent Contracts & Tool Governance Guide](docs/AGENT_CONTRACTS_AND_TOOL_GOVERNANCE.md)
+- [Usage Guide](docs/AGENT_CONTRACTS_USAGE_GUIDE.md)
+- [Configuration Guide](docs/CONFIGURATION_AGENT_CAPABILITIES.md)
+- [ADR-0003](docs/adr/0003-agent-contracts.md)
 
 ---
 
 ## System Architecture
 Refer to the architectural diagram and deep dive in [FEATURES.md](FEATURES.md#system-architecture), and see the illustrations in `/docs/img/`.
-
-### Project Structure
-
-```
-src/amas/core/
-├── agent_contracts/          # Agent contract system
-│   ├── base_agent_contract.py
-│   ├── research_agent_schema.py
-│   ├── analysis_agent_schema.py
-│   └── synthesis_agent_schema.py
-└── tool_governance/          # Tool governance system
-    └── tool_registry.py
-
-config/
-└── agent_capabilities.yaml   # Agent configuration
-
-tests/unit/
-├── test_agent_contracts.py
-└── test_tool_governance.py
-```
 
 ---
 
@@ -152,32 +128,13 @@ See [USE_CASES.md](USE_CASES.md) for:
 All security practices, vulnerability reporting, dependency audits, and compliance standards are fully explained in [SECURITY.md](SECURITY.md).
 
 **Key Security Features:**
-- **Tool Allowlists** - Agents can only use permitted tools
-- **Parameter Validation** - Tool parameters validated against schemas
-- **Rate Limiting** - Per-agent, per-tool rate limits
-- **Approval Workflows** - High-risk tools require human approval
-- **Audit Logging** - Complete execution records with IDs and timestamps
-- **Path Restrictions** - File operations restricted to sandboxed directories
-- **PII Detection** - Automatic detection and redaction of sensitive data
-
----
-
-## Documentation
-
-### Core Documentation
-- **[Agent Contracts & Tool Governance](docs/AGENT_CONTRACTS_AND_TOOL_GOVERNANCE.md)** - System architecture and features
-- **[Usage Guide](docs/AGENT_CONTRACTS_USAGE_GUIDE.md)** - Practical examples and troubleshooting
-- **[Configuration Guide](docs/CONFIGURATION_AGENT_CAPABILITIES.md)** - YAML configuration reference
-- **[Documentation Index](docs/AGENT_CONTRACTS_DOCUMENTATION_INDEX.md)** - Complete documentation guide
-
-### Architecture
-- **[Architecture Decision Records](docs/adr/)** - Design decisions and rationale
-- **[System Architecture](docs/architecture.md)** - Overall system design
-
-### Development
-- **[Developer Guide](docs/developer/README.md)** - Development setup and guidelines
-- **[Agent Contracts Developer Guide](docs/developer/AGENT_CONTRACTS_DEVELOPER_GUIDE.md)** - Integration guide
-- **[API Documentation](docs/api/README.md)** - API reference
+- Tool Allowlists - Agents can only use permitted tools
+- Parameter Validation - Tool parameters validated against schemas
+- Rate Limiting - Per-agent, per-tool rate limits
+- Approval Workflows - High-risk tools require human approval
+- Audit Logging - Complete execution records with IDs and timestamps
+- Path Restrictions - File operations restricted to sandboxed directories
+- PII Detection - Automatic detection and redaction of sensitive data
 
 ---
 
