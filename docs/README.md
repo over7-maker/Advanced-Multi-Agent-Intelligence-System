@@ -43,7 +43,7 @@ Welcome to the **Advanced Multi-Agent Intelligence System (AMAS)** documentation
 | **[🔄 Universal AI Router](#-universal-ai-router)** | Phase 3: Zero-fail AI provider system | **15KB** | Developers | ✅ **Complete** |
 | **[🤖 AI Agentic Workflows](#-ai-agentic-workflows)** | Revolutionary AI workflow system | **44KB** | All Users | ✅ **Complete** |
 | **[🔌 AI Providers](#-ai-providers)** | 15+ providers with bulletproof validation | **20KB** | Developers | ✅ **Complete** |
-| **[🔒 Security & Compliance](#-security--compliance)** | Enterprise-grade security (Phase 2) | **34KB** | Security Teams | ✅ **Complete** |
+| **[🔒 Security & Compliance](#-security--compliance)** | Enterprise-grade security + Data Governance | **40KB** | Security Teams | ✅ **Complete** |
 | **[📊 Observability](#-observability)** | Professional monitoring stack | **25KB** | DevOps Teams | ✅ **Complete** |
 | **[👤 User Documentation](#-user-documentation)** | Complete user guides | **30KB** | End Users | ✅ **Complete** |
 | **[👨‍💻 Developer Documentation](#-developer-documentation)** | Technical implementation | **35KB** | Developers | ✅ **Complete** |
@@ -152,12 +152,28 @@ Military-grade security implementation with comprehensive compliance:
 Updated in Phase 4 (PR #189): enterprise auth/session modules and data protection layers:
 - `src/amas/security/enterprise_auth.py`, `session_management.py`, `user_management.py`, `advanced_security.py`, `data_management.py`
 
+### **🛡️ Data Governance & Compliance** (PR #242 - NEW!)
+Enterprise-grade data governance with automatic PII detection and compliance mapping:
+
+- **[🛡️ Data Governance Guide](governance/DATA_GOVERNANCE_GUIDE.md)** - **Complete guide** - PII detection, classification, compliance
+- **[📚 API Reference](governance/API_REFERENCE.md)** - **Full API docs** - Complete API documentation
+- **[📖 Module README](governance/README.md)** - Quick start and overview
+- **[💻 Usage Examples](../examples/governance_example.py)** - Code examples
+
+**Features**:
+- ✅ Automatic PII detection (13 types) with confidence scoring
+- ✅ 5-tier data classification (Public → Top Secret)
+- ✅ GDPR/HIPAA/PCI compliance mapping
+- ✅ Redaction helpers for safe logging
+- ✅ Compliance reporting with audit trails
+
 ### **🎯 Security Features**
 - **🔐 JWT/OIDC Integration** - Enterprise authentication
 - **🛡️ Multi-tier Rate Limiting** - DDoS protection
 - **🔒 Military-Grade Encryption** - TLS 1.3, AES-256
 - **📊 Comprehensive Audit Logging** - 7-year retention
 - **🛡️ Bulletproof Input Validation** - Injection prevention
+- **🛡️ Data Governance** - PII detection, classification, compliance (PR #242)
 
 ---
 
@@ -297,9 +313,9 @@ Complete guides for production deployment and operations:
 
 ### **🌟 Documentation Highlights**
 
-- **📊 Total Documentation**: **262KB+** (262,000+ words)
-- **💻 Code Examples**: **260+** real-world samples
-- **⚙️ Configuration Examples**: **120+** production configs
+- **📊 Total Documentation**: **270KB+** (270,000+ words)
+- **💻 Code Examples**: **270+** real-world samples
+- **⚙️ Configuration Examples**: **125+** production configs
 - **🎯 Use Case Scenarios**: **50+** complete workflows
 - **🛠️ Troubleshooting Guides**: **50+** solutions
 - **📊 Visual Elements**: **200+** tables, diagrams, badges
