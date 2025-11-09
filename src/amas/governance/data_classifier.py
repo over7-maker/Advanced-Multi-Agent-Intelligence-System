@@ -344,6 +344,10 @@ class PIIDetector:
 class DataClassifier:
     """Intelligent data classifier with compliance mapping"""
     
+    # Input size limits to prevent DoS attacks
+    MAX_INPUT_LENGTH = 1_000_000  # 1MB limit
+    MAX_DICT_DEPTH = 100  # Maximum nesting depth for dictionaries
+    
     def __init__(self):
         self.pii_detector = PIIDetector()
         
@@ -394,19 +398,61 @@ class DataClassifier:
                      data: Any, 
                      data_id: Optional[str] = None,
                      context: Optional[Dict[str, Any]] = None) -> ClassificationResult:
-        """Classify data and detect compliance requirements"""
+        """Classify data and detect compliance requirements
+        
+        Args:
+            data: Input data to classify (str, dict, or other)
+            data_id: Optional identifier for the data
+            context: Optional context dictionary
+            
+        Returns:
+            ClassificationResult with classification and compliance flags
+            
+        Raises:
+            ValueError: If input exceeds size limits or is invalid
+            TypeError: If input type is not supported
+        """
         start_time = time.time()
         data_id = data_id or str(uuid.uuid4())
         
-        # Convert data to analyzable format
-        if isinstance(data, dict):
-            text_content = json.dumps(data, default=str)
-            pii_detections = self.pii_detector.detect_pii_in_dict(data)
-        elif isinstance(data, str):
+        # Input sanitization and validation
+        if isinstance(data, str):
+            # Validate string input
+            if len(data) > self.MAX_INPUT_LENGTH:
+                raise ValueError(
+                    f"Input string exceeds maximum length of {self.MAX_INPUT_LENGTH} characters. "
+                    f"Received {len(data)} characters."
+                )
+            # Check for null bytes and other control characters that could cause issues
+            if '\x00' in data:
+                raise ValueError("Input contains null bytes which are not allowed")
             text_content = data
             pii_detections = self.pii_detector.detect_pii_in_text(data)
+        elif isinstance(data, dict):
+            # Validate dictionary input
+            text_content = json.dumps(data, default=str)
+            if len(text_content) > self.MAX_INPUT_LENGTH:
+                raise ValueError(
+                    f"Input dictionary serialized size exceeds maximum length of "
+                    f"{self.MAX_INPUT_LENGTH} characters. Serialized size: {len(text_content)} characters."
+                )
+            # Check nesting depth to prevent stack overflow
+            if self._get_dict_depth(data) > self.MAX_DICT_DEPTH:
+                raise ValueError(
+                    f"Input dictionary exceeds maximum nesting depth of {self.MAX_DICT_DEPTH}. "
+                    f"Found depth: {self._get_dict_depth(data)}"
+                )
+            pii_detections = self.pii_detector.detect_pii_in_dict(data)
+        elif data is None:
+            raise TypeError("Input data cannot be None")
         else:
+            # Convert other types to string with validation
             text_content = str(data)
+            if len(text_content) > self.MAX_INPUT_LENGTH:
+                raise ValueError(
+                    f"Input serialized size exceeds maximum length of {self.MAX_INPUT_LENGTH} characters. "
+                    f"Serialized size: {len(text_content)} characters."
+                )
             pii_detections = self.pii_detector.detect_pii_in_text(text_content)
         
         # Determine base classification
@@ -440,11 +486,73 @@ class DataClassifier:
             **compliance_flags
         )
         
+        # Post-classification validation: Ensure compliance flags match detected PII
+        self._validate_compliance_flags(result, pii_detections)
+        
         # Safe logging - never log raw PII, only counts and classifications
         logger.debug(f"Data classified as {final_classification.value} "
                     f"(confidence: {overall_confidence:.2f}, PII items: {len(pii_detections)})")
         
         return result
+    
+    def _get_dict_depth(self, data: Dict[str, Any], current_depth: int = 0) -> int:
+        """Calculate the maximum nesting depth of a dictionary"""
+        if not isinstance(data, dict) or current_depth >= self.MAX_DICT_DEPTH:
+            return current_depth
+        
+        max_depth = current_depth
+        for value in data.values():
+            if isinstance(value, dict):
+                depth = self._get_dict_depth(value, current_depth + 1)
+                max_depth = max(max_depth, depth)
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        depth = self._get_dict_depth(item, current_depth + 1)
+                        max_depth = max(max_depth, depth)
+        
+        return max_depth
+    
+    def _validate_compliance_flags(self, result: ClassificationResult, pii_detections: List[PIIDetection]):
+        """Validate that compliance flags are correctly set based on detected PII
+        
+        This ensures that if sensitive PII is detected, the appropriate compliance
+        flags are set, preventing false negatives.
+        """
+        # Check for credit card detection - must have PCI flag
+        credit_card_detections = [d for d in pii_detections 
+                                 if d.pii_type == PIIType.CREDIT_CARD and d.confidence >= 0.7]
+        if credit_card_detections and not result.requires_pci_protection:
+            logger.warning(
+                f"Credit card detected but PCI flag not set. "
+                f"Detections: {len(credit_card_detections)}. "
+                f"Auto-correcting compliance flag."
+            )
+            result.requires_pci_protection = True
+        
+        # Check for GDPR-triggering PII
+        gdpr_types = {PIIType.EMAIL, PIIType.NAME, PIIType.ADDRESS, PIIType.PHONE}
+        gdpr_detections = [d for d in pii_detections 
+                         if d.pii_type in gdpr_types and d.confidence >= 0.7]
+        if gdpr_detections and not result.requires_gdpr_protection:
+            logger.warning(
+                f"GDPR-triggering PII detected but GDPR flag not set. "
+                f"Detections: {len(gdpr_detections)}. "
+                f"Auto-correcting compliance flag."
+            )
+            result.requires_gdpr_protection = True
+        
+        # Check for HIPAA-triggering PII
+        hipaa_types = {PIIType.SSN, PIIType.DATE_OF_BIRTH}
+        hipaa_detections = [d for d in pii_detections 
+                          if d.pii_type in hipaa_types and d.confidence >= 0.7]
+        if hipaa_detections and not result.requires_hipaa_protection:
+            logger.warning(
+                f"HIPAA-triggering PII detected but HIPAA flag not set. "
+                f"Detections: {len(hipaa_detections)}. "
+                f"Auto-correcting compliance flag."
+            )
+            result.requires_hipaa_protection = True
     
     def _classify_by_content(self, text_lower: str) -> DataClassification:
         """Classify data based on content keywords"""
