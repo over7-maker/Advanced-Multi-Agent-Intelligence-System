@@ -67,6 +67,7 @@ click==8.1.7
 rich==13.9.4
 tqdm==4.67.1
 colorama==0.4.6
+jsonschema==4.23.0
 
 # Retry/backoff utilities
 tenacity==8.5.0
