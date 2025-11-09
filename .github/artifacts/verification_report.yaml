@@ -87,3 +87,5 @@ integrity_checks:
   no_truncation_detected: true
 
 # --- END OF VERIFICATION REPORT ---
+# This marker confirms the report is complete and not truncated.
+# If this line is missing, the report generation may have failed.
