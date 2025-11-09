@@ -5,6 +5,10 @@ The keystone component for autonomous multi-agent intelligence coordination.
 Implements a sophisticated 4-layer agent hierarchy enabling coordinated
 specialist teams to work together autonomously on complex tasks.
 
+This package provides a complete orchestration framework for managing
+multi-agent workflows with automatic task decomposition, agent coordination,
+quality assurance, and self-healing capabilities.
+
 Architecture
 ------------
 
@@ -38,121 +42,269 @@ Key Features
 Dependencies
 ------------
 
-This package requires:
-- Python 3.8+
-- asyncio (standard library)
-- typing (standard library)
-- dataclasses (standard library)
-- enum (standard library)
-- datetime (standard library)
-- collections (standard library)
-- uuid (standard library)
-- json (standard library)
-- logging (standard library)
+Required:
+    Python 3.8+
+    asyncio, typing, dataclasses, enum, datetime, collections, uuid, json,
+    logging (all standard library)
 
-Optional dependencies:
-- psutil: For system resource monitoring in health checks
+Optional:
+    psutil: For system resource monitoring in health checks
 
-Usage Example
--------------
+Usage Examples
+---------------
 
-    >>> from amas.orchestration import (
-    ...     get_task_decomposer,
-    ...     get_workflow_executor,
-    ...     get_api
-    ... )
-    >>>
-    >>> # Decompose and execute a task
+Basic workflow execution:
+
+    >>> from amas.orchestration import get_task_decomposer, get_workflow_executor
+    >>> 
+    >>> # Decompose a complex task
     >>> decomposer = get_task_decomposer()
     >>> workflow = await decomposer.decompose_task(
     ...     "Research AI market trends and create executive presentation"
     ... )
-    >>>
+    >>> 
+    >>> # Execute the workflow
     >>> executor = get_workflow_executor()
     >>> execution_id = await executor.execute_workflow(
     ...     "Research AI market trends and create executive presentation"
     ... )
-    >>>
+    >>> 
     >>> # Monitor progress
     >>> status = executor.get_execution_status(execution_id)
     >>> print(f"Progress: {status['progress_percentage']}%")
 
+Using the API layer:
+
+    >>> from amas.orchestration import get_api
+    >>> 
+    >>> api = get_api()
+    >>> 
+    >>> # Create workflow via API
+    >>> result = await api.create_workflow(
+    ...     "Analyze competitor pricing and create report"
+    ... )
+    >>> 
+    >>> # Check health status
+    >>> health = await api.get_health_status()
+    >>> print(f"System health: {health['health']['overall_status']}")
+
+Configuration:
+
+    >>> from amas.orchestration import get_config, set_config, OrchestrationConfig
+    >>> 
+    >>> # Get current configuration
+    >>> config = get_config()
+    >>> print(f"Max workflows: {config.max_active_workflows}")
+    >>> 
+    >>> # Update configuration
+    >>> new_config = OrchestrationConfig.from_dict({
+    ...     "max_active_workflows": 150,
+    ...     "quality_gate_threshold": 0.90
+    ... })
+    >>> set_config(new_config)
+
 Error Handling
 --------------
 
-All public functions raise standard exceptions:
-- ValueError: For invalid input parameters
-- RuntimeError: For system-level errors (agent failures, resource limits)
-- TimeoutError: For operations exceeding configured timeouts
+Exceptions:
+    ValueError
+        Raised for invalid input parameters (empty strings, None values,
+        invalid enum values). Check input validation before calling.
 
-Error handling is built into the system:
-- Automatic retries with exponential backoff (configurable)
-- Circuit breaker pattern for failure prevention
-- Graceful degradation when agents are unavailable
-- Comprehensive error logging for debugging
+    RuntimeError
+        Raised for system-level errors:
+        - Agent pool exhaustion
+        - Resource limit exceeded
+        - Agent creation failures
+        - Workflow assignment failures
+
+    TimeoutError
+        Raised when operations exceed configured timeouts:
+        - Task decomposition timeout (default: 120s)
+        - Message delivery timeout (default: 300s)
+        - Workflow execution timeout (default: 24h)
+
+Error Recovery:
+    - Automatic retries with exponential backoff (3 attempts by default)
+    - Circuit breaker pattern prevents cascading failures
+    - Graceful degradation when agents unavailable
+    - Task reassignment on agent failure
+    - Comprehensive error logging for debugging
+
+Initialization
+--------------
+
+The orchestration system initializes automatically on first import.
+No explicit initialization required. Global singletons are created lazily:
+
+    - TaskDecomposer: Created on first get_task_decomposer() call
+    - AgentHierarchyManager: Created on first get_hierarchy_manager() call
+    - AgentCommunicationBus: Created on first get_communication_bus() call
+    - WorkflowExecutor: Created on first get_workflow_executor() call
+
+Configuration is loaded from environment variables on first access.
+See OrchestrationConfig for all available configuration options.
+
+Shutdown
+--------
+
+The system runs background tasks for:
+    - Message queue processing
+    - Agent health monitoring
+    - Execution monitoring
+    - Message cleanup
+
+To properly shutdown, ensure all workflows complete or cancel them:
+
+    >>> executor = get_workflow_executor()
+    >>> # Wait for active executions to complete
+    >>> # Background tasks will stop when main process exits
 
 Logging
 -------
 
-The orchestration system uses Python's logging module with the logger name
-'amas.orchestration'. Configure logging levels via:
+Logger Name: 'amas.orchestration'
+
+Configure logging:
 
     >>> import logging
     >>> logging.getLogger('amas.orchestration').setLevel(logging.INFO)
 
-All operations log at appropriate levels:
-- DEBUG: Detailed operation traces
-- INFO: Normal operations and state changes
-- WARNING: Recoverable issues (retries, agent failures)
-- ERROR: Critical failures requiring attention
+Log Levels:
+    DEBUG: Detailed operation traces, message routing, agent state changes
+    INFO: Normal operations, workflow progress, agent assignments
+    WARNING: Recoverable issues, retries, agent failures, timeouts
+    ERROR: Critical failures, unhandled exceptions, system errors
+
+All operations include structured logging with context (workflow_id, task_id,
+agent_id) for traceability.
+
+Configuration Management
+------------------------
+
+Configuration is managed through OrchestrationConfig class:
+
+    - Environment-based: Loads from ORCHESTRATION_* environment variables
+    - Runtime updates: Use set_config() to update at runtime
+    - Validation: All configuration values are validated on set
+
+Key configuration parameters:
+    - max_active_workflows: Maximum concurrent workflows (default: 100)
+    - max_specialist_agents_per_pool: Agent pool size (default: 5)
+    - quality_gate_threshold: Quality gate passing threshold (default: 0.85)
+    - workflow_execution_timeout_hours: Max workflow duration (default: 24.0)
+    - enable_circuit_breaker: Enable circuit breaker (default: True)
+    - enable_metrics_collection: Enable metrics (default: True)
+
+Observability
+-------------
+
+Metrics Collection:
+    - Operation counts and success rates
+    - Duration statistics (avg, min, max, p95)
+    - Error counts by type
+    - Access via get_metrics_collector().get_metrics()
+
+Health Monitoring:
+    - Component health checks (hierarchy, communication, executor, resources)
+    - Health history tracking
+    - Access via get_health_checker().check_all()
+
+Performance Characteristics
+----------------------------
+
+Time Complexity:
+    - Task decomposition: O(n*m) where n=tasks, m=patterns
+    - Agent assignment: O(n*a) where n=tasks, a=agents
+    - Message routing: O(1) average case (hash-based routing)
+    - Workflow execution: O(n) where n=sub-tasks (parallel where possible)
+
+Space Complexity:
+    - Active workflows: O(n) where n=concurrent workflows
+    - Agent registry: O(a) where a=total agents
+    - Message queues: O(m) where m=pending messages
+    - Typical memory: <2GB for 100 concurrent workflows
+
+Performance Optimizations:
+    - Asynchronous I/O throughout (no blocking operations)
+    - Efficient data structures (deque O(1), defaultdict O(1), sets O(1))
+    - Connection pooling for external services
+    - Caching of task patterns and specialist capabilities
+    - Parallel task execution (asyncio.gather, asyncio.wait)
+    - Background cleanup prevents memory leaks
+
+Known Bottlenecks:
+    - Large workflow decomposition (>50 sub-tasks): Consider splitting
+    - High message volume (>10k/min): May need message queue scaling
+    - Many concurrent workflows (>100): Monitor memory usage
 
 Security
 --------
 
-Security measures implemented:
-- Input validation on all public APIs
-- Message type validation through enums
-- Agent authentication and authorization (via security layer)
-- Secure message routing with encryption support
-- Resource limits to prevent DoS attacks
-- Audit trails for all agent actions
+Authentication & Authorization:
+    - Agent authentication via security layer (JWT/OIDC)
+    - Role-based access control through agent hierarchy
+    - Message authentication for inter-agent communication
 
-Input validation is performed on:
-- Task decomposition requests
-- Agent assignments
-- Message routing
-- Configuration updates
+Data Validation & Sanitization:
+    - Input validation on all public APIs
+    - Message type validation through enums (prevents injection)
+    - Task description sanitization
+    - Configuration validation
 
-Performance
------------
+Encryption & Hashing:
+    - Message encryption support (via security layer)
+    - Secure message routing
+    - Audit trail with cryptographic hashing
 
-Performance optimizations:
-- Asynchronous operations throughout
-- Efficient data structures (deque, defaultdict, sets)
-- Connection pooling for external services
-- Caching of task patterns and specialist capabilities
-- Parallel task execution where dependencies allow
-- Background cleanup of expired messages
+Secure Coding Practices:
+    - No hardcoded credentials
+    - Input validation at boundaries
+    - Principle of least privilege
+    - Comprehensive error handling (no information leakage)
+    - Resource limits to prevent DoS
 
-Scalability considerations:
-- Configurable agent pool sizes
-- Resource limits per workflow
-- Load balancing across agents
-- Horizontal scaling support
+Security Testing:
+    - Input validation testing
+    - Message type injection testing
+    - Resource exhaustion testing
+    - Authentication bypass testing
+
+Versioning & Compatibility
+---------------------------
+
+Version: 1.0.0
+
+Compatibility:
+    - Python 3.8+ required
+    - Backward compatible API (no breaking changes planned)
+    - Configuration changes are additive only
 
 Module Organization
 -------------------
 
-- task_decomposer: Task breakdown and workflow planning
-- agent_hierarchy: Agent management and coordination
-- agent_communication: Inter-agent messaging
-- workflow_executor: Workflow execution engine
-- config: Configuration management
-- utils: Error handling, retries, metrics
-- health: Health checks and monitoring
-- api: REST API integration
+Core Modules:
+    - task_decomposer: AI-powered task breakdown and workflow planning
+    - agent_hierarchy: Multi-layer agent management and coordination
+    - agent_communication: Inter-agent messaging and collaboration
+    - workflow_executor: Multi-agent workflow execution engine
+
+Support Modules:
+    - config: Configuration management and environment settings
+    - utils: Error handling, retries, metrics, circuit breakers
+    - health: Health checks and monitoring utilities
+    - api: REST API integration layer
 
 For detailed API documentation, see individual module docstrings.
+
+See Also
+--------
+
+- Individual module docstrings for detailed API documentation
+- Configuration options: OrchestrationConfig
+- Error handling: utils.retry_with_backoff, utils.with_circuit_breaker
+- Health monitoring: health.HealthChecker
+- API integration: api.OrchestrationAPI
 """
 
 from .task_decomposer import (
