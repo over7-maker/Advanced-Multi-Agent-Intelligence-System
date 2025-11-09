@@ -213,10 +213,6 @@ jobs:
   # =============================================================================
   # PHASE 2: STAGING DEPLOYMENT
   # =============================================================================
-  
-  # =============================================================================
-  # PHASE 2: STAGING DEPLOYMENT
-  # =============================================================================
   # Deploys to staging environment for testing before production
   # Uses canary or blue-green strategy based on configuration
   # Gracefully handles missing resources (staging may not be fully configured)
