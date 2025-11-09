@@ -50,7 +50,12 @@ COPY --from=python-builder /usr/local/bin /usr/local/bin
 COPY src/ ./src/
 COPY scripts/ ./scripts/
 COPY config/ ./config/
-COPY main.py main_simple.py pytest.ini .env.example ./
+# Copy required files
+COPY main.py ./
+COPY main_simple.py ./
+# Copy optional files (create empty if missing)
+COPY pytest.ini* ./
+COPY .env.example* ./
 
 # Copy web files for React dashboard
 # Note: If web/ directory doesn't exist, this will fail - we'll handle it gracefully in the build step
