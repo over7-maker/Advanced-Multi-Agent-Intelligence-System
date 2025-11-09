@@ -238,6 +238,35 @@ class AgentHierarchyManager:
                     "team_coordination": 0.90,
                     "compliance_expertise": 0.95
                 }
+            },
+            {
+                "id": "mgmt_technical_lead_001",
+                "role": AgentRole.TECHNICAL_LEAD,
+                "specialties_managed": [
+                    AgentSpecialty.CODE_REVIEWER, AgentSpecialty.SYSTEM_ARCHITECT,
+                    AgentSpecialty.SECURITY_ANALYST, AgentSpecialty.PERFORMANCE_ENGINEER, AgentSpecialty.DEVOPS_SPECIALIST
+                ],
+                "capabilities": {
+                    "technical_architecture": 0.94,
+                    "code_review": 0.92,
+                    "security_analysis": 0.93,
+                    "performance_optimization": 0.91,
+                    "team_coordination": 0.88
+                }
+            },
+            {
+                "id": "mgmt_integration_lead_001",
+                "role": AgentRole.INTEGRATION_LEAD,
+                "specialties_managed": [
+                    AgentSpecialty.SYSTEM_ARCHITECT, AgentSpecialty.DEVOPS_SPECIALIST
+                ],
+                "capabilities": {
+                    "api_integration": 0.95,
+                    "service_coordination": 0.92,
+                    "workflow_automation": 0.90,
+                    "team_coordination": 0.87,
+                    "system_integration": 0.93
+                }
             }
         ]
         
@@ -442,55 +471,100 @@ class AgentHierarchyManager:
         return agent_id
     
     async def _find_appropriate_team_lead(self, specialty: AgentSpecialty) -> Optional[str]:
-        """Find the appropriate team lead for a specialty"""
+        """
+        Find the appropriate team lead for a specialty.
+        
+        Maps specialist agents to their corresponding management layer team leads
+        based on domain expertise and organizational structure.
+        
+        Args:
+            specialty: The specialist agent type
+            
+        Returns:
+            Team lead agent ID if found, None otherwise
+        """
         specialty_to_lead = {
-            # Research specialists
+            # Research specialists -> Research Lead
             AgentSpecialty.ACADEMIC_RESEARCHER: AgentRole.RESEARCH_LEAD,
             AgentSpecialty.WEB_INTELLIGENCE: AgentRole.RESEARCH_LEAD,
             AgentSpecialty.NEWS_ANALYST: AgentRole.RESEARCH_LEAD,
             AgentSpecialty.COMPETITIVE_INTEL: AgentRole.RESEARCH_LEAD,
             AgentSpecialty.SOCIAL_MONITOR: AgentRole.RESEARCH_LEAD,
             
-            # Analysis specialists
+            # Analysis specialists -> Analysis Lead
             AgentSpecialty.DATA_ANALYST: AgentRole.ANALYSIS_LEAD,
             AgentSpecialty.STATISTICAL_MODELER: AgentRole.ANALYSIS_LEAD,
             AgentSpecialty.PATTERN_RECOGNIZER: AgentRole.ANALYSIS_LEAD,
             AgentSpecialty.RISK_ASSESSOR: AgentRole.ANALYSIS_LEAD,
             AgentSpecialty.FINANCIAL_ANALYZER: AgentRole.ANALYSIS_LEAD,
             
-            # Creative specialists
+            # Creative specialists -> Creative Lead
             AgentSpecialty.GRAPHICS_DESIGNER: AgentRole.CREATIVE_LEAD,
             AgentSpecialty.CONTENT_WRITER: AgentRole.CREATIVE_LEAD,
             AgentSpecialty.PRESENTATION_FORMATTER: AgentRole.CREATIVE_LEAD,
             AgentSpecialty.MEDIA_PRODUCER: AgentRole.CREATIVE_LEAD,
             AgentSpecialty.INFOGRAPHIC_CREATOR: AgentRole.CREATIVE_LEAD,
             
-            # QA specialists
+            # QA specialists -> QA Lead
             AgentSpecialty.FACT_CHECKER: AgentRole.QA_LEAD,
             AgentSpecialty.QUALITY_CONTROLLER: AgentRole.QA_LEAD,
             AgentSpecialty.COMPLIANCE_REVIEWER: AgentRole.QA_LEAD,
             AgentSpecialty.ERROR_DETECTOR: AgentRole.QA_LEAD,
-            AgentSpecialty.DELIVERY_APPROVER: AgentRole.QA_LEAD
+            AgentSpecialty.DELIVERY_APPROVER: AgentRole.QA_LEAD,
+            
+            # Technical specialists -> Technical Lead
+            AgentSpecialty.CODE_REVIEWER: AgentRole.TECHNICAL_LEAD,
+            AgentSpecialty.SYSTEM_ARCHITECT: AgentRole.TECHNICAL_LEAD,
+            AgentSpecialty.SECURITY_ANALYST: AgentRole.TECHNICAL_LEAD,
+            AgentSpecialty.PERFORMANCE_ENGINEER: AgentRole.TECHNICAL_LEAD,
+            AgentSpecialty.DEVOPS_SPECIALIST: AgentRole.TECHNICAL_LEAD,
+            
+            # Investigation specialists -> Technical Lead (security/investigation focus)
+            AgentSpecialty.DIGITAL_FORENSICS: AgentRole.TECHNICAL_LEAD,
+            AgentSpecialty.NETWORK_ANALYZER: AgentRole.TECHNICAL_LEAD,
+            AgentSpecialty.REVERSE_ENGINEER: AgentRole.TECHNICAL_LEAD,
+            AgentSpecialty.CASE_INVESTIGATOR: AgentRole.TECHNICAL_LEAD,
+            AgentSpecialty.EVIDENCE_COMPILER: AgentRole.TECHNICAL_LEAD
         }
         
         target_role = specialty_to_lead.get(specialty)
         if not target_role:
-            return None
+            # Default to Integration Lead for unmapped specialties
+            target_role = AgentRole.INTEGRATION_LEAD
         
         # Find team lead with this role
         for agent in self.agents.values():
             if agent.role == target_role and agent.layer == AgentLayer.MANAGEMENT:
                 return agent.id
         
+        # If no team lead found, return None (will be handled by caller)
         return None
     
     async def assign_workflow_to_agents(self, workflow: WorkflowPlan) -> Dict[str, str]:
-        """Assign workflow sub-tasks to appropriate agents"""
+        """
+        Assign workflow sub-tasks to appropriate agents with load balancing.
+        
+        This method performs intelligent agent assignment by:
+        1. Ensuring all required specialists are available (creating if needed)
+        2. Selecting optimal agents based on load, performance, and availability
+        3. Distributing tasks to balance workload across agent pool
+        4. Handling agent capacity constraints
+        
+        Args:
+            workflow: The workflow plan with sub-tasks to assign
+            
+        Returns:
+            Dictionary mapping task_id -> agent_id
+            
+        Raises:
+            RuntimeError: If unable to assign agents for required specialties
+        """
         assignments = {}
         
         logger.info(f"Assigning workflow {workflow.id} with {len(workflow.sub_tasks)} sub-tasks")
         
-        # Ensure required specialists are available
+        # Pre-allocate agents for all required specialties
+        specialty_agent_pools = {}
         for specialty in workflow.required_specialists:
             available_agents = await self._get_available_specialists(specialty)
             
@@ -499,30 +573,77 @@ class AgentHierarchyManager:
                 agent_id = await self.create_specialist_agent(specialty)
                 if agent_id:
                     available_agents = [agent_id]
+                    logger.info(f"Created new {specialty.value} agent: {agent_id}")
             
             if not available_agents:
-                raise RuntimeError(f"Unable to assign agent for specialty: {specialty}")
+                # Try one more time with high urgency
+                agent_id = await self.create_specialist_agent(specialty, urgency="critical")
+                if agent_id:
+                    available_agents = [agent_id]
+            
+            if not available_agents:
+                raise RuntimeError(
+                    f"Unable to assign agent for specialty: {specialty.value}. "
+                    f"Pool may be exhausted or agents are unhealthy."
+                )
+            
+            specialty_agent_pools[specialty] = available_agents
         
-        # Assign each sub-task to appropriate agent
+        # Assign each sub-task to appropriate agent with load balancing
         for sub_task in workflow.sub_tasks:
-            available_agents = await self._get_available_specialists(sub_task.assigned_agent)
+            # Get available agents for this task's specialty
+            available_agents = specialty_agent_pools.get(sub_task.assigned_agent, [])
+            
+            if not available_agents:
+                # Fallback: try to get or create agents
+                available_agents = await self._get_available_specialists(sub_task.assigned_agent)
+                if not available_agents:
+                    agent_id = await self.create_specialist_agent(sub_task.assigned_agent)
+                    if agent_id:
+                        available_agents = [agent_id]
             
             if available_agents:
                 # Choose best available agent based on load and performance
                 best_agent_id = await self._select_optimal_agent(available_agents, sub_task)
                 
-                # Assign task to agent
-                assignments[sub_task.id] = best_agent_id
-                self.agents[best_agent_id].current_tasks.append(sub_task.id)
-                
-                logger.debug(f"Assigned {sub_task.id} to {best_agent_id}")
+                # Verify agent can accept the task
+                agent = self.agents.get(best_agent_id)
+                if agent and agent.is_available():
+                    # Assign task to agent
+                    assignments[sub_task.id] = best_agent_id
+                    agent.current_tasks.append(sub_task.id)
+                    
+                    # Update agent status if needed
+                    if len(agent.current_tasks) >= agent.max_concurrent_tasks:
+                        agent.status = AgentStatus.BUSY
+                    
+                    logger.debug(f"Assigned {sub_task.id} to {best_agent_id} "
+                              f"(load: {agent.get_load_percentage():.1f}%)")
+                else:
+                    logger.warning(f"Selected agent {best_agent_id} is no longer available, "
+                                 f"selecting alternative...")
+                    # Remove unavailable agent and retry
+                    available_agents.remove(best_agent_id)
+                    if available_agents:
+                        best_agent_id = await self._select_optimal_agent(available_agents, sub_task)
+                        assignments[sub_task.id] = best_agent_id
+                        self.agents[best_agent_id].current_tasks.append(sub_task.id)
+                    else:
+                        logger.error(f"No available agents for sub-task: {sub_task.id}")
             else:
-                logger.error(f"No available agents for sub-task: {sub_task.id}")
+                logger.error(f"No available agents for sub-task: {sub_task.id} "
+                           f"(specialty: {sub_task.assigned_agent.value})")
         
-        # Store workflow
+        # Store workflow for tracking
         self.active_workflows[workflow.id] = workflow
         
-        logger.info(f"Workflow assignment complete: {len(assignments)} tasks assigned")
+        # Log assignment summary
+        unique_agents = len(set(assignments.values()))
+        logger.info(
+            f"Workflow assignment complete: {len(assignments)}/{len(workflow.sub_tasks)} tasks assigned "
+            f"to {unique_agents} agents"
+        )
+        
         return assignments
     
     async def _get_available_specialists(self, specialty: AgentSpecialty) -> List[str]:

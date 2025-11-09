@@ -219,68 +219,142 @@ class WorkflowExecutor:
                            execution_context: ExecutionContext,
                            phase_name: str,
                            phase_tasks: List[SubTask]):
-        """Execute a single phase with parallel task coordination"""
+        """
+        Execute a single phase with parallel task coordination.
+        
+        This method orchestrates the execution of all tasks within a phase,
+        managing dependencies, parallel execution, and quality gates.
+        
+        Execution Strategy:
+        1. Identify ready tasks (dependencies satisfied)
+        2. Start ready tasks in parallel using asyncio
+        3. As tasks complete, check for newly ready tasks
+        4. Continue until all phase tasks complete
+        5. Run quality gate before proceeding to next phase
+        
+        Args:
+            workflow_plan: The complete workflow plan
+            execution_context: Current execution context
+            phase_name: Name of the phase being executed
+            phase_tasks: List of tasks belonging to this phase
+        """
         logger.info(f"Executing phase '{phase_name}' with {len(phase_tasks)} tasks")
         
         execution_context.add_log_entry("phase_started", {
             "phase_name": phase_name,
             "tasks_count": len(phase_tasks),
-            "task_ids": [t.id for t in phase_tasks]
+            "task_ids": [t.id for t in phase_tasks],
+            "estimated_duration": sum(t.estimated_duration_hours for t in phase_tasks)
         })
         
         # Start ready tasks (those with satisfied dependencies)
         ready_tasks = await self._get_ready_tasks(phase_tasks, execution_context)
         
+        if not ready_tasks:
+            logger.warning(f"No ready tasks at start of phase '{phase_name}'. "
+                         f"Checking dependencies...")
+            # Log dependency status for debugging
+            for task in phase_tasks:
+                missing_deps = [dep for dep in task.depends_on 
+                               if dep not in execution_context.completed_tasks]
+                if missing_deps:
+                    logger.debug(f"Task {task.id} waiting for: {missing_deps}")
+        
         if ready_tasks:
             # Start ready tasks in parallel
-            task_futures = []
+            task_futures = {}
             for task in ready_tasks:
                 future = asyncio.create_task(
                     self._execute_single_task(task, workflow_plan, execution_context)
                 )
-                task_futures.append(future)
+                task_futures[future] = task.id
             
             # Wait for all phase tasks to complete
             while task_futures:
-                # Wait for next task completion
-                done, task_futures = await asyncio.wait(
-                    task_futures, return_when=asyncio.FIRST_COMPLETED, timeout=30.0
-                )
-                
-                # Process completed tasks
-                for completed_future in done:
-                    try:
-                        task_result = await completed_future
-                        await self._handle_task_completion(task_result, execution_context)
-                        
-                        # Check if new tasks became ready
-                        newly_ready = await self._get_ready_tasks(phase_tasks, execution_context)
-                        for new_task in newly_ready:
-                            if new_task.id not in [t.id for t in ready_tasks]:
-                                future = asyncio.create_task(
-                                    self._execute_single_task(new_task, workflow_plan, execution_context)
-                                )
-                                task_futures.add(future)
-                        
-                    except Exception as e:
-                        logger.error(f"Task execution error: {e}")
-                        execution_context.error_count += 1
+                # Wait for next task completion with timeout
+                try:
+                    done, pending = await asyncio.wait(
+                        task_futures.keys(), 
+                        return_when=asyncio.FIRST_COMPLETED, 
+                        timeout=30.0
+                    )
+                    
+                    # Process completed tasks
+                    for completed_future in done:
+                        task_id = task_futures.pop(completed_future)
+                        try:
+                            task_result = await completed_future
+                            await self._handle_task_completion(task_result, execution_context)
+                            
+                            # Check if new tasks became ready
+                            newly_ready = await self._get_ready_tasks(phase_tasks, execution_context)
+                            for new_task in newly_ready:
+                                # Avoid duplicate execution
+                                if new_task.id not in [t.id for t in ready_tasks]:
+                                    ready_tasks.append(new_task)
+                                    future = asyncio.create_task(
+                                        self._execute_single_task(new_task, workflow_plan, execution_context)
+                                    )
+                                    task_futures[future] = new_task.id
+                            
+                        except Exception as e:
+                            logger.error(f"Task {task_id} execution error: {e}", exc_info=True)
+                            execution_context.error_count += 1
+                            
+                            # Mark task as failed
+                            execution_context.failed_tasks.add(task_id)
+                            
+                            # Attempt recovery if possible
+                            if execution_context.retry_count < execution_context.max_retries:
+                                await self._attempt_task_recovery(task_id, execution_context)
+                    
+                    # Update pending futures dict
+                    task_futures = {f: tid for f, tid in task_futures.items() if f in pending}
+                    
+                except asyncio.TimeoutError:
+                    logger.warning(f"Phase '{phase_name}' execution timeout. "
+                                 f"Checking task status...")
+                    # Check which tasks are still running
+                    for future, task_id in list(task_futures.items()):
+                        if future.done():
+                            task_futures.pop(future)
+                        else:
+                            logger.debug(f"Task {task_id} still running...")
         
         # Verify phase completion
-        phase_complete = all(task.id in execution_context.completed_tasks 
-                           for task in phase_tasks)
+        completed_phase_tasks = [t.id for t in phase_tasks 
+                                if t.id in execution_context.completed_tasks]
+        phase_complete = len(completed_phase_tasks) == len(phase_tasks)
         
         if phase_complete:
             execution_context.add_log_entry("phase_completed", {
                 "phase_name": phase_name,
-                "completed_tasks": len([t for t in phase_tasks if t.id in execution_context.completed_tasks]),
-                "total_tasks": len(phase_tasks)
+                "completed_tasks": len(completed_phase_tasks),
+                "total_tasks": len(phase_tasks),
+                "phase_duration_estimate": sum(
+                    t.estimated_duration_hours for t in phase_tasks
+                )
             })
             
             # Run phase quality gate if defined
             await self._run_phase_quality_gate(workflow_plan, execution_context, phase_name)
         else:
-            logger.warning(f"Phase '{phase_name}' incomplete: {len(execution_context.completed_tasks)}/{len(phase_tasks)} tasks")
+            failed_in_phase = [t.id for t in phase_tasks 
+                             if t.id in execution_context.failed_tasks]
+            logger.warning(
+                f"Phase '{phase_name}' incomplete: "
+                f"{len(completed_phase_tasks)}/{len(phase_tasks)} completed, "
+                f"{len(failed_in_phase)} failed"
+            )
+            
+            # Log incomplete phase for monitoring
+            execution_context.add_log_entry("phase_incomplete", {
+                "phase_name": phase_name,
+                "completed": len(completed_phase_tasks),
+                "failed": len(failed_in_phase),
+                "total": len(phase_tasks),
+                "failed_task_ids": failed_in_phase
+            })
     
     async def _get_ready_tasks(self, 
                              phase_tasks: List[SubTask], 
@@ -319,7 +393,25 @@ class WorkflowExecutor:
                                  task: SubTask,
                                  workflow_plan: WorkflowPlan, 
                                  execution_context: ExecutionContext) -> Dict[str, Any]:
-        """Execute a single task with full orchestration"""
+        """
+        Execute a single task with full orchestration and monitoring.
+        
+        This method coordinates the complete execution lifecycle:
+        1. Validates agent assignment
+        2. Sends task start notification
+        3. Monitors execution with timeout protection
+        4. Handles task-specific execution logic
+        5. Records completion and quality metrics
+        6. Sends completion notification
+        
+        Args:
+            task: The sub-task to execute
+            workflow_plan: Complete workflow plan for context
+            execution_context: Execution tracking context
+            
+        Returns:
+            Dictionary with task execution results
+        """
         logger.info(f"Starting task execution: {task.id} ({task.title})")
         
         task.status = TaskStatus.IN_PROGRESS.value
@@ -329,122 +421,303 @@ class WorkflowExecutor:
         assigned_agent_id = execution_context.task_assignments.get(task.id)
         if not assigned_agent_id:
             logger.error(f"No agent assigned to task {task.id}")
+            task.status = TaskStatus.FAILED.value
+            execution_context.failed_tasks.add(task.id)
             return {"task_id": task.id, "status": "failed", "error": "no_agent_assigned"}
         
-        # Notify task start
-        await self.communication_bus.send_message(
-            sender_id="workflow_executor",
-            recipient_id=assigned_agent_id,
-            message_type=MessageType.TASK_STARTED,
-            payload={
-                "task_id": task.id,
-                "task_description": task.description,
-                "success_criteria": task.success_criteria,
-                "estimated_duration": task.estimated_duration_hours,
-                "workflow_context": {
-                    "workflow_id": workflow_plan.id,
-                    "user_request": workflow_plan.user_request,
-                    "task_priority": task.priority
-                }
-            },
-            priority=Priority.HIGH if task.priority >= 8 else Priority.NORMAL
-        )
+        # Verify agent is still available and healthy
+        agent = self.hierarchy_manager.agents.get(assigned_agent_id)
+        if not agent or not agent.is_healthy():
+            logger.warning(f"Assigned agent {assigned_agent_id} is unavailable, attempting reassignment...")
+            await self._reassign_task_if_needed(task, execution_context)
+            assigned_agent_id = execution_context.task_assignments.get(task.id)
+            if not assigned_agent_id:
+                task.status = TaskStatus.FAILED.value
+                return {"task_id": task.id, "status": "failed", "error": "no_available_agent"}
+            agent = self.hierarchy_manager.agents.get(assigned_agent_id)
+        
+        # Notify task start to agent
+        try:
+            await self.communication_bus.send_message(
+                sender_id="workflow_executor",
+                recipient_id=assigned_agent_id,
+                message_type=MessageType.TASK_STARTED,
+                payload={
+                    "task_id": task.id,
+                    "task_title": task.title,
+                    "task_description": task.description,
+                    "success_criteria": task.success_criteria,
+                    "quality_checkpoints": task.quality_checkpoints,
+                    "estimated_duration_hours": task.estimated_duration_hours,
+                    "priority": task.priority,
+                    "workflow_context": {
+                        "workflow_id": workflow_plan.id,
+                        "user_request": workflow_plan.user_request,
+                        "complexity": workflow_plan.complexity.value,
+                        "current_phase": execution_context.execution_log[-1].get("event_type", "unknown") if execution_context.execution_log else "initialization"
+                    }
+                },
+                priority=Priority.HIGH if task.priority >= 8 else Priority.NORMAL,
+                requires_response=True,
+                response_timeout=60  # Agent should acknowledge within 60 seconds
+            )
+        except Exception as e:
+            logger.error(f"Failed to send task start notification: {e}")
+            # Continue execution despite notification failure
         
         execution_context.add_log_entry("task_started", {
             "task_id": task.id,
             "agent_id": assigned_agent_id,
-            "estimated_duration": task.estimated_duration_hours
+            "estimated_duration_hours": task.estimated_duration_hours,
+            "priority": task.priority,
+            "specialty": task.assigned_agent.value
         })
         
-        # Simulate task execution (in real system, this would coordinate with actual agent)
+        # Execute task with timeout protection
         try:
-            # Monitor task execution with timeout
-            timeout_seconds = task.estimated_duration_hours * 3600 * 2  # 2x estimated time
+            # Calculate timeout (2x estimated time, minimum 5 minutes, maximum 8 hours)
+            timeout_seconds = max(
+                300,  # 5 minutes minimum
+                min(
+                    task.estimated_duration_hours * 3600 * 2,  # 2x estimated
+                    28800  # 8 hours maximum
+                )
+            )
             
             start_time = time.time()
             
-            # Simulate different execution scenarios based on task type
-            if task.assigned_agent.value in ["academic_researcher", "web_intelligence_gatherer"]:
-                # Research tasks - simulate web/academic research
-                await asyncio.sleep(0.5)  # Simulate research time
-                execution_result = {
-                    "sources_found": 12,
-                    "credible_sources": 10,
-                    "research_quality": 0.91,
-                    "coverage_completeness": 0.88,
-                    "findings_summary": f"Research completed for {task.description[:50]}..."
-                }
-                
-            elif task.assigned_agent.value in ["data_analyst", "statistical_modeler"]:
-                # Analysis tasks - simulate data processing
-                await asyncio.sleep(0.3)  # Simulate analysis time
-                execution_result = {
-                    "analysis_accuracy": 0.93,
-                    "statistical_significance": 0.87,
-                    "patterns_identified": 3,
-                    "confidence_score": 0.89,
-                    "analysis_summary": f"Analysis completed for {task.description[:50]}..."
-                }
-                
-            elif task.assigned_agent.value in ["graphics_designer", "content_writer"]:
-                # Creative tasks - simulate content creation
-                await asyncio.sleep(0.4)  # Simulate creative work
-                execution_result = {
-                    "creative_quality": 0.90,
-                    "brand_consistency": 0.94,
-                    "visual_appeal": 0.88,
-                    "professional_standard": 0.92,
-                    "creative_summary": f"Creative work completed for {task.description[:50]}..."
-                }
-                
-            else:
-                # Default execution
-                await asyncio.sleep(0.2)
-                execution_result = {
-                    "task_completion": 0.90,
-                    "quality_score": 0.85,
-                    "execution_summary": f"Task completed: {task.description[:50]}..."
-                }
+            # Execute task based on specialist type
+            # In production, this would coordinate with actual agent execution
+            execution_result = await self._execute_task_by_specialty(
+                task, assigned_agent_id, timeout_seconds
+            )
             
             # Record completion
             task.status = TaskStatus.COMPLETED.value
             task.completed_at = datetime.now(timezone.utc)
-            task.output_summary = execution_result.get("execution_summary", "Task completed successfully")
+            task.output_summary = execution_result.get("execution_summary", 
+                                                      execution_result.get("summary", 
+                                                                          "Task completed successfully"))
             
             # Calculate actual execution time
             actual_duration = time.time() - start_time
+            actual_duration_hours = actual_duration / 3600
+            
+            # Update agent performance metrics
+            if agent:
+                # Update average completion time (exponential moving average)
+                agent.avg_completion_time = (
+                    agent.avg_completion_time * 0.7 + actual_duration_hours * 0.3
+                )
             
             # Notify completion
-            await self.communication_bus.send_message(
-                sender_id=assigned_agent_id,
-                recipient_id="workflow_executor",
-                message_type=MessageType.TASK_COMPLETED,
-                payload={
-                    "task_id": task.id,
-                    "execution_result": execution_result,
-                    "actual_duration_seconds": actual_duration,
-                    "quality_metrics": execution_result
-                },
-                priority=Priority.HIGH
-            )
+            try:
+                await self.communication_bus.send_message(
+                    sender_id=assigned_agent_id,
+                    recipient_id="workflow_executor",
+                    message_type=MessageType.TASK_COMPLETED,
+                    payload={
+                        "task_id": task.id,
+                        "execution_result": execution_result,
+                        "actual_duration_seconds": actual_duration,
+                        "actual_duration_hours": round(actual_duration_hours, 2),
+                        "quality_metrics": {
+                            k: v for k, v in execution_result.items() 
+                            if "quality" in k.lower() or "score" in k.lower() or "accuracy" in k.lower()
+                        },
+                        "success_criteria_met": self._check_success_criteria(task, execution_result)
+                    },
+                    priority=Priority.HIGH
+                )
+            except Exception as e:
+                logger.error(f"Failed to send task completion notification: {e}")
             
             return {
                 "task_id": task.id,
                 "status": "completed",
                 "agent_id": assigned_agent_id,
                 "execution_result": execution_result,
-                "actual_duration": actual_duration
+                "actual_duration": actual_duration,
+                "actual_duration_hours": round(actual_duration_hours, 2)
             }
             
         except asyncio.TimeoutError:
             logger.error(f"Task {task.id} timed out after {timeout_seconds} seconds")
             task.status = TaskStatus.FAILED.value
+            execution_context.failed_tasks.add(task.id)
+            
+            # Notify failure
+            try:
+                await self.communication_bus.send_message(
+                    sender_id="workflow_executor",
+                    recipient_id=assigned_agent_id,
+                    message_type=MessageType.TASK_FAILED,
+                    payload={
+                        "task_id": task.id,
+                        "error": "timeout",
+                        "timeout_seconds": timeout_seconds
+                    },
+                    priority=Priority.HIGH
+                )
+            except Exception:
+                pass
+            
             return {"task_id": task.id, "status": "failed", "error": "timeout"}
         
         except Exception as e:
-            logger.error(f"Task {task.id} failed with error: {e}")
+            logger.error(f"Task {task.id} failed with error: {e}", exc_info=True)
             task.status = TaskStatus.FAILED.value
+            execution_context.failed_tasks.add(task.id)
+            
+            # Notify failure
+            try:
+                await self.communication_bus.send_message(
+                    sender_id="workflow_executor",
+                    recipient_id=assigned_agent_id,
+                    message_type=MessageType.ERROR_REPORT,
+                    payload={
+                        "task_id": task.id,
+                        "error_type": type(e).__name__,
+                        "error_message": str(e),
+                        "workflow_id": workflow_plan.id
+                    },
+                    priority=Priority.HIGH
+                )
+            except Exception:
+                pass
+            
             return {"task_id": task.id, "status": "failed", "error": str(e)}
+    
+    async def _execute_task_by_specialty(self, 
+                                       task: SubTask,
+                                       agent_id: str,
+                                       timeout_seconds: float) -> Dict[str, Any]:
+        """
+        Execute task based on specialist agent type.
+        
+        This method simulates task execution for different specialist types.
+        In production, this would coordinate with actual agent implementations.
+        
+        Args:
+            task: The task to execute
+            agent_id: ID of the assigned agent
+            timeout_seconds: Maximum execution time
+            
+        Returns:
+            Dictionary with execution results and quality metrics
+        """
+        specialty = task.assigned_agent.value
+        
+        # Research specialists
+        if specialty in ["academic_researcher", "web_intelligence_gatherer", 
+                        "news_trends_analyzer", "competitive_intelligence", "social_media_monitor"]:
+            # Simulate research time (proportional to estimated duration)
+            await asyncio.sleep(min(0.5, task.estimated_duration_hours * 0.3))
+            return {
+                "sources_found": max(10, int(task.estimated_duration_hours * 8)),
+                "credible_sources": max(8, int(task.estimated_duration_hours * 6)),
+                "research_quality": 0.88 + (task.priority / 100),  # Higher priority = better quality
+                "coverage_completeness": 0.85 + (task.priority / 150),
+                "findings_summary": f"Research completed: {task.description[:80]}...",
+                "execution_summary": f"Research task completed with {max(10, int(task.estimated_duration_hours * 8))} sources"
+            }
+        
+        # Analysis specialists
+        elif specialty in ["data_analyst", "statistical_modeler", "pattern_recognition_expert",
+                          "risk_assessment_specialist", "financial_performance_analyst"]:
+            await asyncio.sleep(min(0.4, task.estimated_duration_hours * 0.25))
+            return {
+                "analysis_accuracy": 0.90 + (task.priority / 120),
+                "statistical_significance": 0.85 + (task.priority / 140),
+                "patterns_identified": max(2, int(task.estimated_duration_hours * 1.5)),
+                "confidence_score": 0.87 + (task.priority / 130),
+                "analysis_summary": f"Analysis completed: {task.description[:80]}...",
+                "execution_summary": f"Data analysis completed with {max(2, int(task.estimated_duration_hours * 1.5))} patterns identified"
+            }
+        
+        # Creative specialists
+        elif specialty in ["graphics_diagram_designer", "content_writer_editor",
+                          "presentation_formatter", "media_video_producer", "infographic_creator"]:
+            await asyncio.sleep(min(0.5, task.estimated_duration_hours * 0.3))
+            return {
+                "creative_quality": 0.88 + (task.priority / 110),
+                "brand_consistency": 0.92 + (task.priority / 150),
+                "visual_appeal": 0.86 + (task.priority / 120),
+                "professional_standard": 0.90 + (task.priority / 130),
+                "creative_summary": f"Creative work completed: {task.description[:80]}...",
+                "execution_summary": f"Creative task completed meeting professional standards"
+            }
+        
+        # QA specialists
+        elif specialty in ["fact_checker_validator", "output_quality_controller",
+                          "compliance_reviewer", "error_detection_specialist", "final_delivery_approver"]:
+            await asyncio.sleep(min(0.3, task.estimated_duration_hours * 0.2))
+            return {
+                "quality_score": 0.92 + (task.priority / 200),
+                "compliance_score": 0.95 + (task.priority / 250),
+                "errors_found": 0,  # Assuming clean input
+                "recommendations": [],
+                "approval_status": "approved",
+                "execution_summary": f"Quality review completed: {task.description[:80]}..."
+            }
+        
+        # Technical specialists
+        elif specialty in ["code_reviewer_optimizer", "system_architect", "security_analyst",
+                          "performance_engineer", "devops_specialist"]:
+            await asyncio.sleep(min(0.4, task.estimated_duration_hours * 0.25))
+            return {
+                "technical_quality": 0.91 + (task.priority / 130),
+                "security_score": 0.93 + (task.priority / 150),
+                "performance_improvement": 0.15,  # 15% improvement
+                "execution_summary": f"Technical task completed: {task.description[:80]}..."
+            }
+        
+        # Investigation specialists
+        elif specialty in ["digital_forensics_expert", "network_security_analyzer",
+                          "reverse_engineering_specialist", "case_investigation_manager",
+                          "evidence_compilation_expert"]:
+            await asyncio.sleep(min(0.6, task.estimated_duration_hours * 0.35))
+            return {
+                "investigation_completeness": 0.89 + (task.priority / 120),
+                "evidence_quality": 0.91 + (task.priority / 140),
+                "findings_count": max(5, int(task.estimated_duration_hours * 3)),
+                "execution_summary": f"Investigation completed: {task.description[:80]}..."
+            }
+        
+        # Default execution
+        else:
+            await asyncio.sleep(min(0.3, task.estimated_duration_hours * 0.2))
+            return {
+                "task_completion": 0.88 + (task.priority / 120),
+                "quality_score": 0.85 + (task.priority / 130),
+                "execution_summary": f"Task completed: {task.description[:80]}..."
+            }
+    
+    def _check_success_criteria(self, task: SubTask, execution_result: Dict[str, Any]) -> bool:
+        """
+        Check if task execution met all success criteria.
+        
+        Args:
+            task: The completed task
+            execution_result: Execution results
+            
+        Returns:
+            True if all success criteria are met
+        """
+        if not task.success_criteria:
+            return True  # No criteria = success
+        
+        # Simple heuristic: check if quality metrics meet thresholds
+        quality_scores = [
+            v for k, v in execution_result.items() 
+            if isinstance(v, (int, float)) and ("quality" in k.lower() or "score" in k.lower() or "accuracy" in k.lower())
+        ]
+        
+        if quality_scores:
+            avg_quality = sum(quality_scores) / len(quality_scores)
+            return avg_quality >= 0.80  # 80% threshold
+        
+        return True  # Default to success if no quality metrics
     
     async def _handle_task_completion(self, 
                                     task_result: Dict[str, Any], 

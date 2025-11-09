@@ -509,7 +509,24 @@ class TaskDecomposer:
                                user_request: str,
                                requirements: List[TaskRequirement],
                                phases: List[str]) -> List[SubTask]:
-        """Generate specific sub-tasks for each specialist"""
+        """
+        Generate specific sub-tasks for each specialist agent.
+        
+        This method creates detailed, executable sub-tasks by:
+        1. Grouping requirements by execution phase
+        2. Generating task descriptions tailored to each specialist
+        3. Setting up dependencies between related tasks
+        4. Defining success criteria and quality checkpoints
+        5. Assigning priorities based on task importance
+        
+        Args:
+            user_request: Original user request for context
+            requirements: List of specialist requirements
+            phases: Execution phases for the workflow
+            
+        Returns:
+            List of SubTask objects ready for execution
+        """
         sub_tasks = []
         task_counter = 1
         
@@ -712,34 +729,124 @@ class TaskDecomposer:
                     task.depends_on.extend(prereq_tasks)
     
     async def calculate_resource_estimates(self, sub_tasks: List[SubTask]) -> Tuple[float, float]:
-        """Calculate total time and cost estimates"""
+        """
+        Calculate total time and cost estimates using critical path analysis.
+        
+        This method performs sophisticated resource estimation by:
+        1. Identifying parallel execution groups
+        2. Calculating critical path (longest dependency chain)
+        3. Estimating costs based on specialist rates
+        4. Accounting for coordination overhead
+        
+        Args:
+            sub_tasks: List of sub-tasks to estimate
+            
+        Returns:
+            Tuple of (total_hours, total_cost_usd)
+        """
+        if not sub_tasks:
+            return 0.0, 0.0
+        
         # Calculate critical path for time estimate
         total_hours = 0.0
         total_cost = 0.0
         
+        # Build dependency graph for critical path analysis
+        task_dependencies = {}
+        for task in sub_tasks:
+            task_dependencies[task.id] = {
+                "duration": task.estimated_duration_hours,
+                "dependencies": task.depends_on,
+                "parallel_group": task.parallel_group
+            }
+        
         # Group by parallel execution
         parallel_groups = {}
+        sequential_tasks = []
+        
         for task in sub_tasks:
             if task.parallel_group:
                 if task.parallel_group not in parallel_groups:
                     parallel_groups[task.parallel_group] = []
                 parallel_groups[task.parallel_group].append(task)
             else:
-                # Sequential tasks
-                total_hours += task.estimated_duration_hours
+                # Sequential tasks (no parallel group)
+                sequential_tasks.append(task)
         
-        # Add parallel group durations (max within each group)
+        # Calculate critical path for sequential tasks
+        # Find longest dependency chain
+        def get_critical_path_length(task_id: str, visited: Set[str] = None) -> float:
+            """Recursively calculate critical path length"""
+            if visited is None:
+                visited = set()
+            
+            if task_id in visited:
+                return 0.0  # Circular dependency
+            
+            visited.add(task_id)
+            task_info = task_dependencies.get(task_id, {})
+            duration = task_info.get("duration", 0.0)
+            deps = task_info.get("dependencies", [])
+            
+            if not deps:
+                return duration
+            
+            # Max of all dependency paths
+            max_dep_length = max(
+                (get_critical_path_length(dep_id, visited.copy()) for dep_id in deps),
+                default=0.0
+            )
+            
+            return duration + max_dep_length
+        
+        # Calculate sequential task time (critical path)
+        for task in sequential_tasks:
+            path_length = get_critical_path_length(task.id)
+            if path_length > total_hours:
+                total_hours = path_length
+        
+        # Add parallel group durations (max within each group, accounting for dependencies)
         for group_name, group_tasks in parallel_groups.items():
-            max_duration = max(task.estimated_duration_hours for task in group_tasks)
-            total_hours += max_duration
+            # Find tasks in this group with no dependencies or dependencies satisfied
+            group_durations = []
+            for task in group_tasks:
+                # Check if dependencies are in previous groups or sequential
+                has_external_deps = any(
+                    dep_id not in [t.id for t in group_tasks] 
+                    for dep_id in task.depends_on
+                )
+                
+                if has_external_deps:
+                    # This task depends on work outside the group
+                    # Add its duration to the critical path
+                    path_length = get_critical_path_length(task.id)
+                    group_durations.append(path_length)
+                else:
+                    # Pure parallel task within group
+                    group_durations.append(task.estimated_duration_hours)
+            
+            if group_durations:
+                # Max duration in group (critical path through parallel group)
+                max_duration = max(group_durations)
+                total_hours += max_duration
         
-        # Calculate cost
+        # Add coordination overhead (5% for complex workflows)
+        if len(sub_tasks) > 5:
+            coordination_overhead = total_hours * 0.05
+            total_hours += coordination_overhead
+        
+        # Calculate cost (sum of all task costs, not critical path)
         for task in sub_tasks:
             capabilities = self.specialist_capabilities.get(task.assigned_agent, {})
             cost_per_hour = capabilities.get("cost_per_hour", 0.10)
             total_cost += task.estimated_duration_hours * cost_per_hour
         
-        return total_hours, total_cost
+        # Add coordination cost overhead
+        if len(sub_tasks) > 5:
+            coordination_cost = total_cost * 0.03  # 3% overhead
+            total_cost += coordination_cost
+        
+        return round(total_hours, 2), round(total_cost, 2)
     
     async def decompose_task(self, user_request: str) -> WorkflowPlan:
         """
