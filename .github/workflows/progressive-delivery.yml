@@ -231,33 +231,17 @@ jobs:
         fetch-depth: 0  # Fetch full history for better caching
     
     # ========================================================================
-    # STEP 1A: Set up Python and cache dependencies (if needed)
+    # STEP 1A: Set up Python (if needed for build scripts)
     # ========================================================================
-    # Cache Python dependencies for faster builds if Python is used
+    # Note: Python dependencies are installed inside Docker container during build
+    # This step is only needed if build scripts require Python runtime
     # ========================================================================
-    - name: 🐍 Set up Python and cache dependencies
-      if: hashFiles('requirements*.txt') != ''
+    - name: 🐍 Set up Python (for build scripts if needed)
+      if: hashFiles('scripts/**/*.py') != '' || hashFiles('*.py') != ''
       uses: actions/setup-python@v5
       with:
         python-version: ${{ env.PYTHON_VERSION }}
-        cache: 'pip'  # Automatically cache pip dependencies
-    
-    - name: 📦 Cache pip dependencies
-      if: hashFiles('requirements*.txt') != ''
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    
-    - name: 📦 Install Python dependencies (if needed)
-      if: hashFiles('requirements*.txt') != ''
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then
-          pip install -r requirements.txt
-        fi
+        # Don't cache pip - dependencies installed in Docker, not here
     
     # ========================================================================
     # STEP 2: Set up Docker Buildx for multi-platform builds
