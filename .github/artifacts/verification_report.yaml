@@ -24,7 +24,7 @@ agents:
       - "require_human_approval"
       - "output_validation_required"
       - "fact_checking_enabled"
-  
+
   - name: "analysis_agent_v1"
     status: "complete"
     quality_gates_complete: true
@@ -33,7 +33,7 @@ agents:
       - "require_human_approval"
       - "output_validation_required"
       - "statistical_validation_required"
-  
+
   - name: "synthesis_agent_v1"
     status: "complete"
     quality_gates_complete: true
@@ -45,7 +45,7 @@ agents:
       - "pii_detection_enabled"
       - "output_sanitization_required"
       - "content_moderation_required"
-  
+
   - name: "orchestrator_agent_v1"
     status: "complete"
     quality_gates_complete: true
@@ -54,7 +54,7 @@ agents:
       - "require_human_approval"
       - "output_validation_required"
       - "workflow_validation_required"
-  
+
   - name: "communication_agent_v1"
     status: "complete"
     quality_gates_complete: true
@@ -63,7 +63,7 @@ agents:
       - "require_human_approval"
       - "output_validation_required"
       - "content_safety_check"
-  
+
   - name: "validation_agent_v1"
     status: "complete"
     quality_gates_complete: true
@@ -78,7 +78,7 @@ verification_metadata:
   tool_version: "1.0"
   schema_version: "verification-report/v1"
   source_control: "git@github.com:over7-maker/Advanced-Multi-Agent-Intelligence-System.git"
-  
+
 integrity_checks:
   yaml_valid: true
   all_agents_present: true
