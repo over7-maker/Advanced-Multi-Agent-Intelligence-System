@@ -1,4 +1,4 @@
-name: 🚀 AMAS Secure Production CI/CD Pipeline
+name: 🔒 AMAS Secure Production CI/CD Pipeline
 
 # Workflow Purpose:
 #   This workflow performs comprehensive security vulnerability scanning for the AMAS project.
@@ -8,8 +8,20 @@ name: 🚀 AMAS Secure Production CI/CD Pipeline
 #
 # Key Features:
 #   - Dependency vulnerability scanning (Safety): Scans Python dependencies against known CVE database
+#     * Tool version: Managed via requirements-security.txt (pinned versions)
+#     * Configuration: Default Safety database (safety-db)
+#     * Severity levels: CRITICAL, HIGH, MEDIUM, LOW
+#     * Critical threshold: CRITICAL and HIGH severity vulnerabilities fail the build
 #   - Static code analysis (Bandit): Identifies common security issues in Python source code
+#     * Tool version: Managed via requirements-security.txt (pinned versions)
+#     * Configuration: Default Bandit profiles (no custom config file)
+#     * Severity levels: CRITICAL, HIGH, MEDIUM, LOW
+#     * Critical threshold: CRITICAL and HIGH severity issues fail the build
 #   - SAST scanning (Semgrep): Advanced pattern matching for security vulnerabilities
+#     * Tool version: Managed via semgrep-action@v1 (latest compatible)
+#     * Configuration: p/security-audit, p/secrets, p/owasp-top-ten rule sets
+#     * Severity levels: ERROR, WARNING, INFO
+#     * Critical threshold: ERROR severity findings are reported (no build failure by default)
 #   - Hash-verified package installation: Ensures package integrity using cryptographic hashes
 #   - Comprehensive audit trail and reporting: Detailed reports with artifact uploads
 #
@@ -20,9 +32,17 @@ name: 🚀 AMAS Secure Production CI/CD Pipeline
 #   Process:
 #     1. First attempts: pip install --require-hashes -r requirements-security.txt
 #     2. If hashes missing: Falls back to installation without hashes (with security warning)
+#       ⚠️  SECURITY WARNING: Fallback installation without hash verification increases supply chain
+#       attack risk. This should only be used temporarily until hashes are generated and added to
+#       requirements-security.txt. In production, this fallback should be disabled.
 #     3. Hash storage: Hashes are stored in requirements-security.txt file
 #     4. Hash generation: Use 'pip-compile --generate-hashes requirements-security.in' to generate
 #       hashes for all dependencies. This creates a requirements-security.txt file with hash pins.
+#       Command: pip-compile --generate-hashes requirements-security.in -o requirements-security.txt
+#     5. Hash maintenance: Regularly update hashes when dependencies are updated:
+#       - Run pip-compile --generate-hashes after any dependency changes
+#       - Review and commit the updated requirements-security.txt file
+#       - Verify hashes match expected values from package maintainers
 #   Security benefits:
 #     - Prevents package tampering during download (MITM attacks)
 #     - Ensures correct package is installed (dependency confusion prevention)
@@ -30,16 +50,38 @@ name: 🚀 AMAS Secure Production CI/CD Pipeline
 #
 # Performance Optimizations:
 #   - Pip dependency caching: Uses GitHub Actions cache for pip packages (cache: 'pip')
-#   - Parallel scanning: Safety, Bandit, and Semgrep run independently
-#   - Timeout limits: Each scan has timeout to prevent hanging (Safety: 5min, Bandit: 10min)
+#     * Cache key includes Python version and requirements file hash
+#     * Automatic cache restoration on workflow runs
+#   - Parallel scanning: Safety, Bandit, and Semgrep run independently (not sequential)
+#     * Safety: Runs in parallel with Bandit and Semgrep
+#     * Bandit: Runs in parallel with Safety and Semgrep
+#     * Semgrep: Runs in parallel with Safety and Bandit
+#     * Total workflow time: ~max(Safety, Bandit, Semgrep) instead of sum
+#   - Timeout limits: Each scan has timeout to prevent hanging
+#     * Safety: 5 minutes (300 seconds)
+#     * Bandit: 10 minutes (600 seconds)
+#     * Semgrep: 5 minutes (300 seconds)
 #   - Artifact retention: Security reports retained for 30 days for audit purposes
 #   - Concurrency control: Prevents duplicate scans from running simultaneously
+#     * Uses workflow concurrency groups to cancel in-progress runs
 #
 # Expected Outcomes:
 #   - Security reports uploaded as artifacts (safety-report.json, bandit-report.json, semgrep.sarif)
 #   - Job fails if critical vulnerabilities are detected (enforces security gates)
+#     * Critical vulnerabilities: CRITICAL and HIGH severity from Safety and Bandit
+#     * Warning threshold: More than 10 total vulnerabilities triggers a warning
+#     * Build failure: Any CRITICAL or HIGH severity vulnerability causes build failure
 #   - Detailed GitHub job summary with scan results (visible in Actions UI)
 #   - SARIF uploads for GitHub Security tab integration (Semgrep results)
+
+# Best Practices for Maintaining Workflow Security:
+#   1. Regularly update security tools: Review and update versions in requirements-security.txt
+#   2. Review configuration files: Periodically audit Semgrep rules and Bandit profiles
+#   3. Monitor security reports: Review artifact reports for new vulnerability patterns
+#   4. Maintain hash pins: Keep requirements-security.txt hashes up-to-date
+#   5. Review security gates: Ensure severity thresholds remain appropriate
+#   6. Test workflow changes: Verify security scans still work after workflow updates
+#   7. Document exceptions: If vulnerabilities must be accepted, document with justification
 
 # Least-privilege defaults; elevate per job only when needed
 permissions:
