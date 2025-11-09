@@ -342,7 +342,7 @@ jobs:
           
           # Fallback strategy
           if [ "$INSTALL_SUCCESS" = false ]; then
-            pip install pytest==9.0.0 pytest-cov==7.0.0 || {
+            pip install pytest==9.0.0 pytest-cov==7.0.0 pytest-rerunfailures==14.0 || {
               echo "Error: Fallback installation failed"
               exit 1
             }

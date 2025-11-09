@@ -16,6 +16,7 @@ pylint==4.0.2
 pytest==9.0.0
 pytest-cov==7.0.0
 pytest-benchmark==4.0.0
+pytest-rerunfailures==14.0  # Required for --reruns flag (flaky test handling)
 
 # Security
 bandit==1.7.10
