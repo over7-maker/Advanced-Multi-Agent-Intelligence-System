@@ -56,13 +56,6 @@ on:
         type: string
 
 # =============================================================================
-# WORKFLOW-LEVEL PERMISSIONS
-# =============================================================================
-# Minimal permissions following principle of least privilege
-# Individual jobs can override if needed
-# Security: Explicitly set permissions to minimum required
-# =============================================================================
-# =============================================================================
 # CONCURRENCY CONTROL
 # =============================================================================
 # Prevents multiple deployments from running simultaneously on the same branch
