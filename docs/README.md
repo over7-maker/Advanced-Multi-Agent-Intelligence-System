@@ -269,6 +269,7 @@ Safe, automated deployments with canary releases and automatic rollback:
 - **[📋 Progressive Delivery Implementation](PROGRESSIVE_DELIVERY_IMPLEMENTATION.md)** - Implementation details
 - **[✅ Progressive Delivery Success Criteria](PROGRESSIVE_DELIVERY_SUCCESS_CRITERIA.md)** - Success criteria validation
 - **[🔄 CI/CD Pipeline Documentation](deployment/CI_CD_PIPELINE_DOCUMENTATION.md)** - CI/CD integration
+- **[🔒 Workflow Security](WORKFLOW_SECURITY.md)** - **NEW** - Comprehensive security guide for Progressive Delivery Pipeline
 
 **Key Features**:
 - **Canary Deployments**: Progressive traffic shifting (10%→25%→50%→75%→100%)
