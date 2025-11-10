@@ -454,7 +454,7 @@ jobs:
   # Tools: bandit (code scanning) + safety (dependency scanning) + dependency-review
   # Timeout: 20 minutes (security scans can be thorough and time-consuming)
   security:
-    name: Security Scanning (bandit + safety)
+    name: Security Scanning (bandit + safety + dependency-review)
     runs-on: ubuntu-latest
     timeout-minutes: ${{ env.TIMEOUT_MINUTES }}
     strategy:
@@ -463,6 +463,15 @@ jobs:
       # Step 1: Checkout repository code
       - name: Checkout code
         uses: actions/checkout@v4
+
+      # Step 1.5: Dependency Review (GitHub native dependency scanning)
+      # Scans for known vulnerabilities in dependencies before installation
+      - name: Dependency Review
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate  # Fail on moderate or higher severity issues
+          deny-licenses: GPL-2.0, GPL-3.0  # Deny specific licenses if needed (optional)
 
       # Step 2: Set up Python with automatic pip caching
       - name: Set up Python
