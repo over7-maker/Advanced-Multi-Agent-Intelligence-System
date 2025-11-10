@@ -47,17 +47,37 @@
 2. Intelligence Layer: `kubectl apply -f k8s/intelligence/` (deploys agent orchestrator, specialists, frontend)
    - Ensure foundation pods are healthy before moving to intelligence layer.
 3. **Orchestration System**: Deploy the Hierarchical Agent Orchestration System
-   - See [Orchestration Deployment Guide](docs/deployment/ORCHESTRATION_DEPLOYMENT.md) for detailed instructions
-   - **Prerequisites**: Ensure namespace exists: `kubectl get namespace amas || kubectl create namespace amas`
-   - **Deploy configuration**: `kubectl apply -f k8s/orchestration-configmap.yaml`
-   - **Deploy service**: `kubectl apply -f k8s/orchestration-deployment.yaml`
-   - **Deploy autoscaling**: `kubectl apply -f k8s/orchestration-hpa.yaml`
-   - **Verify**: `kubectl get pods -l component=orchestration -n amas`
-   - **Alternative**: Use deployment script: `./scripts/deploy-orchestration.sh`
+   - **Recommended**: Use deployment script for automated deployment:
+     ```bash
+     ./scripts/deploy-orchestration.sh
+     ```
+   - **Manual Alternative**: Step-by-step deployment:
+     - See [Orchestration Deployment Guide](docs/deployment/ORCHESTRATION_DEPLOYMENT.md) for detailed instructions
+     - **Prerequisites**: 
+       - Ensure namespace exists: `kubectl get namespace amas || kubectl create namespace amas`
+       - **Security**: For production, apply ResourceQuota and NetworkPolicy:
+         ```bash
+         kubectl apply -f k8s/amas-namespace-quota.yaml -n amas
+         kubectl apply -f k8s/amas-network-policy.yaml -n amas
+         ```
+     - **Deploy configuration**: `kubectl apply -f k8s/orchestration-configmap.yaml -n amas`
+     - **Deploy service**: `kubectl apply -f k8s/orchestration-deployment.yaml -n amas`
+     - **Deploy autoscaling**: `kubectl apply -f k8s/orchestration-hpa.yaml -n amas`
+     - **Verify deployment**: 
+       ```bash
+       kubectl get pods -l component=orchestration -n amas
+       kubectl describe deployment amas-orchestration -n amas | grep -A5 Resources
+       ```
+       **Note**: Ensure the deployment defines CPU/memory requests for HPA to work effectively.
 4. Cloud Load Balancer Setup:
    - Use GKE/EKS/AKS; external DNS and TLS (see `docs/infra/load_balancer_setup.md`)
    - SSL: Use cert-manager for Let's Encrypt or upload managed certificate
-   - Allow ingress from trusted IPs only
+   - **IP Whitelisting**: Restrict ingress to trusted IPs only:
+     ```yaml
+     annotations:
+       nginx.ingress.kubernetes.io/whitelist-source-range: 192.168.1.0/24,203.0.113.0/24
+     ```
+     Or see `k8s/ingress-restrictions.yaml` for IP whitelisting example.
 
 ## Kubernetes & Scaling
 - **Minimum:** CPUs/memory in each deployment YAML (see `k8s/foundation/`).
@@ -95,8 +115,11 @@
 - After each deployment phase:
   - Run `kubectl get pods` and check readiness
   - **Validate UI**: Access via HTTPS at your configured domain (e.g., `https://your-domain.com`)
-    - **Note**: For internal testing only, port 3000 may be used via port-forward: `kubectl port-forward svc/amas 3000:3000 -n amas`
-    - **Security**: Never expose port 3000 publicly without TLS
+    - **Note**: For internal testing only, port 3000 may be exposed via NodePort or port-forwarding:
+      ```bash
+      kubectl port-forward svc/amas 3000:3000 -n amas
+      ```
+      **Security**: Never expose port 3000 publicly without TLS. Do not expose publicly.
   - Check logs in Grafana and Prometheus for errors or unhealthy metrics
   - Confirm agent orchestrator queue is draining as expected
   - **Orchestration System**: Validate orchestration deployment:
@@ -110,7 +133,10 @@
     - Verify HPA scales pods: `kubectl get hpa amas-orchestration-hpa -n amas`
     - Check average response time < 500ms under load
     - Monitor message queue depth: `kubectl exec -n amas deployment/amas-orchestration -- curl -s http://localhost:9090/metrics | grep orchestration_message_queue_depth`
-  - Run a test workflow from the UI and verify expected results with end-to-end traces
+  - **End-to-End Testing**:
+    - **Prerequisite**: Ensure OpenTelemetry instrumentation is enabled and trace context headers (e.g., `traceparent`) are propagated across services
+    - Run a test workflow from the UI and verify expected results with end-to-end traces
+    - Verify trace correlation across orchestration components in Grafana or your tracing backend
 
 ## Contact & Support
 - Issues: [GitHub Issues](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues)
