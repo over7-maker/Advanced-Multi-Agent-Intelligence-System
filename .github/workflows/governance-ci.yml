@@ -47,6 +47,9 @@ on:
       - 'requirements-ci.txt'
       - 'mypy.ini'
       - '.github/workflows/governance-ci.yml'
+      # Documentation - trigger only on governance-specific docs
+      - '**/governance*.md'
+      - 'AI_ANALYSIS*.md'
 
 # Concurrency strategy: Cancel in-progress runs when a new commit is pushed
 # This prevents multiple workflow runs from consuming resources unnecessarily
