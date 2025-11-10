@@ -6,46 +6,27 @@ name: Progressive Delivery Pipeline
 # Purpose: Safe, automated deployments with canary releases, SLO-based gates,
 #          automatic rollback, and zero-downtime delivery.
 #
-# Features: Canary (10%→25%→50%→75%→100%), auto-rollback (<2min), 
-#           deployment gates, blue-green capability, zero downtime.
+# Security: Only merged PRs trigger production deployment (not direct pushes).
+#           Branch protection validation ensures code review and status checks.
+#           Production environment requires manual approval.
 #
-# Security: Least privilege permissions, job-level secrets, input validation,
-#           production approval required. Branch protection rules must be enabled.
+# Triggers:
+#   - PR merged to main: Production deployment (validated merge + branch protection)
+#   - PR opened/updated: Build and test only (no deployment)
+#   - Manual dispatch: Deploy with environment/strategy selection
 #
-# Performance: GHA Docker cache, conditional execution, BuildKit optimizations.
-# =============================================================================
-# WORKFLOW TRIGGERS
-# =============================================================================
-# - Push to main: Auto-deploy (REQUIRES branch protection rules enabled)
-#   Branch protection must be configured in: Settings > Branches > main
-#   Required settings:
-#     - Require pull request reviews before merging
-#     - Require status checks to pass before merging
-#     - Require branches to be up to date before merging
-#     - Do not allow bypassing the above settings
-# - PR to main/feature: Test deployment (builds but doesn't push)
-#   Triggers on: opened, synchronize, reopened, ready_for_review
-# - Manual dispatch: Deploy with environment/strategy selection
-#   Input validation prevents injection attacks (validate-inputs job)
+# See docs/deployment/PROGRESSIVE_DELIVERY.md for detailed documentation.
 # =============================================================================
 on:
-  push:
-    branches: [main]  # Only main branch for production safety
-    # Ignore documentation-only changes to avoid unnecessary deployments
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - '.github/**'
-      - '!**.yml'  # But still trigger on workflow file changes
-      - '!**.yaml'
+  # Production deployment: Only trigger on merged PRs to main (not direct pushes)
+  # Security: Ensures code review and branch protection are enforced
+  # PR testing: Build and test on PR updates (doesn't deploy)
   pull_request:
-    # PR triggers: Only specific branches to prevent unnecessary builds
-    # Note: Direct pushes to main should be blocked by branch protection
     branches:
       - main
       - feature/progressive-delivery-pipeline
-    # Explicitly define PR event types for clarity
-    types: [opened, synchronize, reopened, ready_for_review]
+    # Trigger on PR updates for testing, and on PR close for deployment validation
+    types: [opened, synchronize, reopened, ready_for_review, closed]
   workflow_dispatch:
     inputs:
       environment:
@@ -152,16 +133,31 @@ jobs:
   # Note: This job only runs on push to main (not on PRs)
   # =============================================================================
   
-  validate-branch-protection:
-    name: 🛡️ Validate Branch Protection
+  validate-pr-merge:
+    name: 🛡️ Validate PR Merge
     runs-on: ubuntu-latest
-    # Only validate on push to main (PRs are already protected by branch protection)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Only validate on closed PRs to main (check if merged)
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.base_ref == 'main'
     timeout-minutes: 5
     permissions:
       contents: read
       pull-requests: read
     steps:
+    - name: 🔍 Verify PR Was Merged
+      run: |
+        echo "🔍 Validating PR merge status..."
+        
+        # Check if PR was actually merged (not just closed)
+        if [ "${{ github.event.pull_request.merged }}" != "true" ]; then
+          echo "⚠️  PR was closed but not merged, skipping deployment"
+          echo "PR #${{ github.event.pull_request.number }} was closed without merge"
+          exit 0  # Not an error, just skip deployment
+        fi
+        
+        echo "✅ PR #${{ github.event.pull_request.number }} was successfully merged"
+        echo "✅ Merge commit: ${{ github.event.pull_request.merge_commit_sha }}"
+        echo "✅ Merged by: ${{ github.event.pull_request.merged_by.login }}"
+    
     - name: 🔍 Check Branch Protection Rules
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -211,9 +207,10 @@ jobs:
         echo "✅ Required PR reviews: Enabled"
         echo "✅ Enforce admins: $enforce_admins"
     
-    - name: ✅ Branch Protection Validated
+    - name: ✅ PR Merge Validated
       run: |
-        echo "✅ All branch protection requirements met"
+        echo "✅ PR merge validated successfully"
+        echo "✅ Branch protection rules verified"
         echo "✅ Safe to proceed with deployment"
 
   # =============================================================================
@@ -335,14 +332,14 @@ jobs:
     name: 🐳 Build & Security Scan
     runs-on: ubuntu-latest
     # Run validation first if workflow_dispatch, otherwise skip it
-    # Also validate branch protection on push to main
+    # Also validate PR merge on pull_request.closed events
     needs: 
       - validate-inputs
-      - validate-branch-protection
+      - validate-pr-merge
     if: |
       always() && 
       (needs.validate-inputs.result == 'success' || needs.validate-inputs.result == 'skipped' || github.event_name != 'workflow_dispatch') &&
-      (needs.validate-branch-protection.result == 'success' || needs.validate-branch-protection.result == 'skipped' || github.event_name != 'push' || github.ref != 'refs/heads/main')
+      (needs.validate-pr-merge.result == 'success' || needs.validate-pr-merge.result == 'skipped' || github.event_name != 'pull_request' || github.event.action != 'closed')
     timeout-minutes: 45  # Increased timeout for complex builds (accommodates 4.5GB base image downloads)
     # Minimal permissions following principle of least privilege
     permissions:
@@ -730,12 +727,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-and-security-scan, deploy-staging]
     # Only run canary deployment if:
-    # - On main branch push, OR
+    # - PR merged to main (pull_request.closed with merged=true), OR
     # - Manual dispatch with canary strategy selected AND production environment
     # Security: Production environment requires approval (configured in GitHub Settings)
     if: |
       needs.build-and-security-scan.result == 'success' && (
-        (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+        (github.event_name == 'pull_request' && 
+         github.event.action == 'closed' && 
+         github.event.pull_request.merged == true &&
+         github.base_ref == 'main') ||
         (github.event_name == 'workflow_dispatch' && 
          github.event.inputs.deployment_strategy == 'canary' &&
          github.event.inputs.environment == 'production')
