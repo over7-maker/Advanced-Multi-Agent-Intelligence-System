@@ -40,6 +40,7 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Self-healing, persistent, and learning architecture
 - Professional React interface and team visual builder
 - 100+ service/tool integrations with bulletproof security
+- **Enterprise Security:** OIDC/JWT authentication, OPA policy-as-code authorization, comprehensive audit logging with PII redaction
 - OpenTelemetry observability and SLO-driven reliability
 
 ---
@@ -128,7 +129,16 @@ See [USE_CASES.md](USE_CASES.md) for:
 ---
 
 ## Security
-All security practices, vulnerability reporting, dependency audits, and compliance standards are fully explained in [SECURITY.md](SECURITY.md).
+AMAS implements enterprise-grade security with:
+- **OIDC/JWT Authentication:** Token-based authentication with JWKS caching and validation
+- **Policy-as-Code Authorization:** Open Policy Agent (OPA) for role-based access control
+- **Comprehensive Audit Logging:** Automatic PII redaction and structured JSON logging
+- **Security Headers:** HSTS, CSP, X-Frame-Options, and more applied to all responses
+- **Agent Contract Validation:** Enforced authorization before task execution
+
+See [SECURITY.md](SECURITY.md) for security practices, vulnerability reporting, and compliance standards.  
+See [docs/security/AUTHENTICATION_AUTHORIZATION.md](docs/security/AUTHENTICATION_AUTHORIZATION.md) for authentication and authorization details.  
+See [docs/security/AUDIT_LOGGING.md](docs/security/AUDIT_LOGGING.md) for audit logging documentation.
 
 **Key Security Features:**
 - Tool Allowlists - Agents can only use permitted tools
