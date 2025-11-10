@@ -21,11 +21,13 @@ on:
   # Production deployment: Only trigger on merged PRs to main (not direct pushes)
   # Security: Ensures code review and branch protection are enforced
   # PR testing: Build and test on PR updates (doesn't deploy)
+  # Note: We use pull_request.closed with merge validation instead of push to main
+  # because it allows us to validate PR merge status explicitly before deployment
   pull_request:
     branches:
-      - main
-      - feature/progressive-delivery-pipeline
+      - main  # Only main branch for production safety
     # Trigger on PR updates for testing, and on PR close for deployment validation
+    # CRITICAL: Closed PRs are validated for merge status in validate-pr-merge job
     types: [opened, synchronize, reopened, ready_for_review, closed]
   workflow_dispatch:
     inputs:
