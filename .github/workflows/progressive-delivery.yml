@@ -16,17 +16,18 @@ name: Progressive Delivery Pipeline
 # =============================================================================
 # WORKFLOW TRIGGERS
 # =============================================================================
-  # - Push to main: Auto-deploy (REQUIRES branch protection rules enabled)
-  #   Branch protection must be configured in: Settings > Branches > main
-  #   Required settings:
-  #     - Require pull request reviews before merging
-  #     - Require status checks to pass before merging
-  #     - Require branches to be up to date before merging
-  #     - Do not allow bypassing the above settings
-  # - PR to main/feature: Test deployment (builds but doesn't push)
-  # - Manual dispatch: Deploy with environment/strategy selection
-  #   Input validation prevents injection attacks (validate-inputs job)
-  # =============================================================================
+# - Push to main: Auto-deploy (REQUIRES branch protection rules enabled)
+#   Branch protection must be configured in: Settings > Branches > main
+#   Required settings:
+#     - Require pull request reviews before merging
+#     - Require status checks to pass before merging
+#     - Require branches to be up to date before merging
+#     - Do not allow bypassing the above settings
+# - PR to main/feature: Test deployment (builds but doesn't push)
+#   Triggers on: opened, synchronize, reopened, ready_for_review
+# - Manual dispatch: Deploy with environment/strategy selection
+#   Input validation prevents injection attacks (validate-inputs job)
+# =============================================================================
 on:
   push:
     branches: [main]  # Only main branch for production safety
