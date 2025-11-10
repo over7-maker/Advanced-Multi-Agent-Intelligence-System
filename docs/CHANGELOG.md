@@ -34,6 +34,28 @@
 - Enhanced CI/CD pipeline documentation with Progressive Delivery integration
 - Updated main README with Progressive Delivery feature highlights
 
+#### Security Enhancements
+- **Multi-layer PR Merge Validation**: Implemented comprehensive validation to ensure only merged PRs trigger production deployments
+  - Event-level validation: `github.event.pull_request.merged == true` check
+  - Job-level validation: `validate-pr-merge` job validates merge status via GitHub API
+  - Dependency enforcement: Production deployment jobs require `validate-pr-merge` to succeed
+  - Explicit failure: Non-merged PR closures fail the validation job (exit 1) to prevent downstream jobs
+- **Enhanced Permissions**: Added explicit permissions following principle of least privilege
+  - `deployments: write` - For deployment status tracking
+  - `checks: write` - For deployment gates and status checks
+  - `contents: read` - Repository read access
+  - `packages: write` - Container image publishing
+  - `security-events: write` - Security scan results
+  - `actions: read` - Workflow status dependencies
+- **Branch Protection Enforcement**: 
+  - Restricted `pull_request` triggers to `main` branch only (removed feature branches)
+  - Runtime validation of branch protection rules via GitHub API
+  - Production environment requires manual approval (GitHub Environments)
+- **Workflow Security**:
+  - Concurrency control prevents race conditions
+  - Input validation for `workflow_dispatch` prevents injection attacks
+  - All jobs have explicit timeouts to prevent resource exhaustion
+
 #### Technical Details
 - **Deployment Timeline**: ~8-9 minutes for complete canary rollout (meets <10 minute requirement)
 - **Rollback Time**: <2 minutes for automatic rollback on SLO violations

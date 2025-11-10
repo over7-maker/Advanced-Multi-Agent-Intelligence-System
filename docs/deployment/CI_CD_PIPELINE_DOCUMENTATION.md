@@ -273,18 +273,31 @@ deploy-production:
 - **Blue-Green Capability**: Instant traffic switching for emergency scenarios
 
 **Deployment Workflow**:
-1. Build and scan container image
-2. Deploy to staging with smoke tests
-3. Trigger canary deployment in production
-4. Monitor metrics at each traffic level (10%, 25%, 50%, 75%)
-5. Automatic promotion or rollback based on SLO validation
-6. Post-deployment validation and monitoring
+1. **PR Merge Validation**: Multi-layer validation ensures only merged PRs trigger production
+   - Event-level: `github.event.pull_request.merged == true`
+   - Job-level: `validate-pr-merge` job validates via GitHub API
+   - Dependency: Production jobs require validation to succeed
+2. Build and scan container image
+3. Deploy to staging with smoke tests
+4. Trigger canary deployment in production (requires manual approval for production environment)
+5. Monitor metrics at each traffic level (10%, 25%, 50%, 75%)
+6. Automatic promotion or rollback based on SLO validation
+7. Post-deployment validation and monitoring
+
+**Security Features**:
+- **Multi-layer PR merge validation**: Prevents non-merged PRs from deploying
+- **Branch protection enforcement**: Only `main` branch PRs trigger production
+- **Minimal permissions**: Explicit permissions following principle of least privilege
+- **Input validation**: All workflow_dispatch inputs are validated and sanitized
+- **Concurrency control**: Prevents race conditions
+- **Timeout protection**: All jobs have explicit timeouts
 
 **Workflow File**: `.github/workflows/progressive-delivery.yml`
 
 For detailed Progressive Delivery documentation, see:
 - [Progressive Delivery Quick Start](../PROGRESSIVE_DELIVERY_QUICK_START.md)
 - [Progressive Delivery Implementation](../PROGRESSIVE_DELIVERY_IMPLEMENTATION.md)
+- [Progressive Delivery Security](PROGRESSIVE_DELIVERY.md#security--compliance)
 
 ### 5. Post-deployment Validation
 
@@ -364,6 +377,67 @@ NEO4J_PASSWORD=production_neo4j_password
 
 ## Security and Compliance
 
+### Workflow Security
+
+#### Multi-Layer PR Merge Validation
+
+The Progressive Delivery Pipeline implements comprehensive validation to ensure only merged PRs trigger production deployments:
+
+1. **Event-Level Validation**: 
+   - Checks `github.event.pull_request.merged == true` in job conditions
+   - Prevents workflow execution on non-merged PR closures
+
+2. **Job-Level Validation**:
+   - `validate-pr-merge` job explicitly validates merge status via GitHub API
+   - Fails with exit code 1 if PR was closed without merge
+   - Prevents any downstream deployment jobs from running
+
+3. **Dependency Enforcement**:
+   - Production deployment jobs require `validate-pr-merge` to succeed
+   - Job dependency: `needs: [build-and-security-scan, deploy-staging, validate-pr-merge]`
+   - Condition check: `needs.validate-pr-merge.result == 'success'`
+
+#### Branch Protection
+
+- **Restricted Triggers**: Only `main` branch PRs can trigger production deployments
+- **Runtime Validation**: Branch protection rules are validated via GitHub API
+- **Enforcement**: Production environment requires manual approval (GitHub Environments)
+
+#### Permissions (Principle of Least Privilege)
+
+The workflow uses explicit, minimal permissions:
+
+```yaml
+permissions:
+  contents: read           # Repository read access
+  packages: write         # Container image publishing
+  security-events: write  # Security scan results
+  actions: read           # Workflow status dependencies
+  deployments: write     # Deployment status tracking
+  checks: write           # Deployment gates and status checks
+```
+
+#### Input Validation
+
+- **Workflow Dispatch Inputs**: All manual inputs are validated
+- **Environment Validation**: Only `staging` and `production` are allowed
+- **Strategy Validation**: Only `canary` and `blue-green` are allowed
+- **Injection Prevention**: Inputs are sanitized before use in commands
+
+#### Concurrency Control
+
+- Prevents race conditions with concurrent deployments
+- Only one deployment per branch at a time
+- Configurable cancellation of outdated runs
+
+#### Timeout Protection
+
+All jobs have explicit timeouts to prevent resource exhaustion:
+- Validation jobs: 5 minutes
+- Build jobs: 45 minutes
+- Deployment jobs: 20-30 minutes
+- Emergency rollback: 10 minutes
+
 ### Security Scanning
 
 #### Dependency Scanning
@@ -392,6 +466,19 @@ NEO4J_PASSWORD=production_neo4j_password
 - CVE vulnerability scanning
 - Security header validation
 - SSL/TLS configuration validation
+
+#### Security Best Practices
+
+1. **Never bypass branch protection**: Always require PR reviews
+2. **Use GitHub Environments**: Configure production environment with required reviewers
+3. **Monitor workflow runs**: Review all production deployments
+4. **Rotate secrets regularly**: Update registry tokens and API keys
+5. **Audit logs**: Review GitHub Actions audit logs regularly
+6. **Limit workflow permissions**: Use minimal required permissions
+7. **Validate all inputs**: Sanitize user-provided inputs
+8. **Enable security scanning**: Use Trivy, Snyk, or similar tools
+9. **Review dependencies**: Keep actions and dependencies up to date
+10. **Test security changes**: Validate security updates in staging first
 
 #### Data Protection
 
