@@ -10,13 +10,21 @@
 
 name: Data Governance & Compliance CI/CD Pipeline
 
+# Security: Explicit permissions to follow principle of least privilege
+# Only grant read access to contents and pull requests - no write access
+permissions:
+  contents: read  # Read repository contents
+  pull-requests: read  # Read pull request metadata
+  checks: write  # Write check results (required for status checks)
+  # No write access to contents, issues, or other sensitive areas
+
 # Workflow triggers - optimized to run only when relevant files change
 on:
   push:
     branches: [ main, feature/data-governance-compliance ]
     paths:
       # Core module files - trigger on any Python file changes
-      - 'src/amas/governance/**.py'
+      - 'src/amas/governance/**/*.py'
       # Test files - trigger on test file changes
       - 'tests/test_data_classifier*.py'
       # Verification scripts - trigger on verification script changes
@@ -33,7 +41,7 @@ on:
     branches: [ main ]
     paths:
       # Same paths as push triggers for consistency
-      - 'src/amas/governance/**.py'
+      - 'src/amas/governance/**/*.py'
       - 'tests/test_data_classifier*.py'
       - 'verify_data_classifier.py'
       - 'requirements-ci.txt'
@@ -443,7 +451,7 @@ jobs:
 
   # Job 5: Security Scanning
   # Purpose: Identifies security vulnerabilities and dependency issues
-  # Tools: bandit (code scanning) + safety (dependency scanning)
+  # Tools: bandit (code scanning) + safety (dependency scanning) + dependency-review
   # Timeout: 20 minutes (security scans can be thorough and time-consuming)
   security:
     name: Security Scanning (bandit + safety)
