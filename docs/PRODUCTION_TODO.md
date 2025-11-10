@@ -93,8 +93,12 @@
 
 #### **Day 3-4: Infrastructure Setup**
 - [ ] Deploy Kubernetes Stack (Prometheus, Grafana, Jaeger, OPA, OpenTelemetry Collector)
-- [ ] Configure Security (OIDC, JWT, policies)
-<<<<<<< HEAD
+- [ ] Configure Security (OIDC, JWT, policies):
+  - ✅ OIDC Provider: Configure issuer, audience, JWKS URI
+  - ✅ OPA Server: Deploy and load policies from `policies/agent_access.rego`
+  - ✅ Environment Variables: Set OIDC_ISSUER, OIDC_AUDIENCE, OIDC_JWKS_URI, OPA_URL
+  - ✅ Security Config: Review `config/security_config.yaml` settings
+  - ✅ Audit Logging: Configure audit log file path and PII redaction
 - [ ] Deploy Observability Stack:
   - [ ] OpenTelemetry Collector with OTLP receiver
   - [ ] Prometheus with SLO alert rules from `config/observability/prometheus_alerts.yaml`
@@ -111,14 +115,6 @@
   - [ ] All 3 Grafana dashboards displaying data
   - [ ] SLO evaluations running (check `/observability/slo/status`)
   - [ ] Alert rules loaded in Prometheus
-=======
-  - ✅ OIDC Provider: Configure issuer, audience, JWKS URI
-  - ✅ OPA Server: Deploy and load policies from `policies/agent_access.rego`
-  - ✅ Environment Variables: Set OIDC_ISSUER, OIDC_AUDIENCE, OIDC_JWKS_URI, OPA_URL
-  - ✅ Security Config: Review `config/security_config.yaml` settings
-  - ✅ Audit Logging: Configure audit log file path and PII redaction
-- [ ] Validate Monitoring (dashboards, alerts)
->>>>>>> origin/main
 
 #### **Day 5: Foundation Validation**
 - [ ] All APIs secured with authentication ✅
@@ -387,11 +383,8 @@ A fully autonomous, self-healing, multi-specialist AI ecosystem that operates li
 ---
 
 **Last Updated**: January 15, 2025
-<<<<<<< HEAD
 **PR #239 Completion**: January 15, 2025 - Observability & SLO Framework complete with OpenTelemetry integration, SLO monitoring, Grafana dashboards, automated alerting, comprehensive testing, and complete documentation
-=======
->>>>>>> origin/main
-**PR #237 Completion**: November 4, 2025 - Agent Contracts & Tool Governance complete with all components, tests, and documentation
 **PR #238 Completion**: January 15, 2025 - Security & Authentication Layer complete with full integration, CI/CD workflow, and comprehensive documentation
+**PR #237 Completion**: November 4, 2025 - Agent Contracts & Tool Governance complete with all components, tests, and documentation
 **Status**: 🎆 **ALL 11 PRS COMPLETE - READY FOR SEQUENTIAL DEPLOYMENT**
 **Next Step**: Execute Week 1 deployment plan starting with PR-A merge

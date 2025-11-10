@@ -335,18 +335,17 @@ async def startup_event():
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_event():
-<<<<<<< HEAD
+    global auth_manager
+    
     # Stop SLO evaluator
     try:
         from src.amas.observability.slo_evaluator import get_slo_evaluator
         evaluator = get_slo_evaluator()
         if evaluator:
             await evaluator.stop()
+            logger.info("✅ SLO evaluator stopped")
     except Exception as e:
         logger.debug(f"Error stopping SLO evaluator: {e}")
-    
-=======
-    global auth_manager
     
     # Shutdown audit logger
     try:
@@ -358,7 +357,6 @@ async def shutdown_event():
         logger.warning(f"Audit logger shutdown error: {e}")
     
     # Shutdown AMAS system
->>>>>>> origin/main
     if amas_app:
         await amas_app.shutdown()
         logger.info("✅ AMAS Intelligence System shutdown complete")

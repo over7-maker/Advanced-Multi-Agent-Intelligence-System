@@ -38,14 +38,10 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Self-healing, persistent, and learning architecture
 - Professional React interface and team visual builder
 - 100+ service/tool integrations with bulletproof security
-<<<<<<< HEAD
+- **Enterprise Security:** OIDC/JWT authentication, OPA policy-as-code authorization, comprehensive audit logging with PII redaction
 - **🔍 Comprehensive Observability**: OpenTelemetry tracing, SLO monitoring, and automated alerting
 - **📊 Operational Dashboards**: Real-time Grafana dashboards for performance and SLO status
 - **🚨 Intelligent Alerting**: Multi-channel alerts with burn rate detection
-=======
-- **Enterprise Security:** OIDC/JWT authentication, OPA policy-as-code authorization, comprehensive audit logging with PII redaction
-- OpenTelemetry observability and SLO-driven reliability
->>>>>>> origin/main
 
 ---
 
