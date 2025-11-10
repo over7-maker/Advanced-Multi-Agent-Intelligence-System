@@ -37,9 +37,7 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Background scheduling, event monitoring, and notification workflows
 - Self-healing, persistent, and learning architecture
 - Professional React interface and team visual builder
-- 100+ service/tool integrations with enterprise security (JWT/OIDC authentication, encryption at rest and in transit, comprehensive audit logging) - see [Security Guide](docs/security/SECURITY.md) for details
-- 100+ service/tool integrations with bulletproof security
-- **Enterprise Security:** OIDC/JWT authentication, OPA policy-as-code authorization, comprehensive audit logging with PII redaction
+- 100+ service/tool integrations with enterprise-grade security controls (JWT/OIDC authentication, encryption at rest and in transit, comprehensive audit logging) - see [Security Guide](docs/security/SECURITY.md) for per-integration security details
 - OpenTelemetry observability and SLO-driven reliability
 - Intelligent Performance Scaling: KEDA-based autoscaling, semantic caching, circuit breakers, rate limiting, and cost optimization - see [Performance Benchmarks](docs/performance_benchmarks.md) for metrics and [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md) for complete documentation
 
@@ -122,7 +120,7 @@ Production cluster, scaling, and infrastructure instructions are fully documente
 
 AMAS includes comprehensive performance scaling infrastructure for production workloads. This infrastructure enables intelligent autoscaling, performance optimization, and cost efficiency. All features are fully implemented, tested, and documented.
 
-> **📚 Complete Documentation**: See [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md) (30KB) for comprehensive documentation including configuration, deployment, troubleshooting, and best practices.
+> **📚 Complete Documentation**: See [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md) for comprehensive documentation including configuration, deployment, troubleshooting, and best practices.
 
 ### Key Features
 
@@ -173,7 +171,7 @@ pytest tests/performance/test_resilience_patterns.py -v
 
 ### Complete Documentation
 
-- **[Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md)** (30KB) - Complete infrastructure guide with configuration, deployment, and troubleshooting
+- **[Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md)** - Complete infrastructure guide with configuration, deployment, and troubleshooting
 - **[Performance Scaling Integration](docs/PERFORMANCE_SCALING_INTEGRATION.md)** - Integration examples, code samples, and best practices
 - **[Performance Scaling README](docs/PERFORMANCE_SCALING_README.md)** - Quick reference and entry point
 - **[Performance Benchmarks](docs/performance_benchmarks.md)** - AI provider performance metrics and latency benchmarks
@@ -198,7 +196,7 @@ pytest tests/performance/test_resilience_patterns.py -v
 All features are:
 - ✅ **Fully Implemented**: Production-ready code with error handling and fallbacks
 - ✅ **Comprehensively Tested**: See `tests/performance/test_resilience_patterns.py` for test coverage
-- ✅ **Fully Documented**: Complete guides, integration examples, and best practices (30KB+ documentation)
+- ✅ **Fully Documented**: Complete guides, integration examples, and best practices
 - ✅ **Verified Working**: Tested in development and staging environments
 - ✅ **Production Ready**: All components ready for production deployment
 
