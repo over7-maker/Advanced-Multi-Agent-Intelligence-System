@@ -87,6 +87,8 @@ permissions:
   packages: write     # Push container images to GHCR
   security-events: write  # Upload security scan results (SARIF)
   actions: read       # Read workflow status (for job dependencies)
+  deployments: write  # Create deployment status (for progressive delivery tracking)
+  checks: write       # Update check status (for deployment gates)
 
 # =============================================================================
 # WORKFLOW DEFAULTS
@@ -158,11 +160,12 @@ jobs:
         
         # CRITICAL: Check if PR was actually merged (not just closed)
         # This prevents deployment on PRs that were closed without merge
+        # Security: Fail the job if PR was closed without merge to prevent any downstream jobs
         if [ "${{ github.event.pull_request.merged }}" != "true" ]; then
-          echo "⚠️  PR was closed but not merged, skipping deployment"
+          echo "❌ ERROR: PR was closed but not merged"
           echo "PR #${{ github.event.pull_request.number }} was closed without merge"
-          echo "This is expected for PRs that are closed without merging"
-          exit 0  # Not an error, just skip deployment
+          echo "Deployment workflows require PR merge. Skipping all deployment jobs."
+          exit 1  # Fail job to prevent downstream deployment jobs from running
         fi
         
         echo "✅ PR #${{ github.event.pull_request.number }} was successfully merged"
@@ -743,6 +746,10 @@ jobs:
     # - Manual dispatch with canary strategy selected AND production environment
     # Security: Production environment requires approval (configured in GitHub Settings)
     # CRITICAL: Multiple validation layers ensure only merged PRs deploy
+    # Validation layers:
+    # 1. Event condition: github.event.pull_request.merged == true
+    # 2. Job dependency: needs.validate-pr-merge.result == 'success' (validates merge via API)
+    # 3. Base branch: github.base_ref == 'main' (only main branch PRs)
     if: |
       needs.build-and-security-scan.result == 'success' && (
         (github.event_name == 'pull_request' && 
