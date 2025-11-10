@@ -13,9 +13,9 @@ name: Progressive Delivery Pipeline
 #           production approval required. Branch protection rules must be enabled.
 #
 # Performance: GHA Docker cache, conditional execution, BuildKit optimizations.
-  # =============================================================================
-  # WORKFLOW TRIGGERS
-  # =============================================================================
+# =============================================================================
+# WORKFLOW TRIGGERS
+# =============================================================================
   # - Push to main: Auto-deploy (REQUIRES branch protection rules enabled)
   #   Branch protection must be configured in: Settings > Branches > main
   #   Required settings:
@@ -31,7 +31,13 @@ on:
   push:
     branches: [main]  # Only main branch for production safety
   pull_request:
-    branches: [main, feature/progressive-delivery-pipeline]  # PRs for testing
+    # PR triggers: Only specific branches to prevent unnecessary builds
+    # Note: Direct pushes to main should be blocked by branch protection
+    branches:
+      - main
+      - feature/progressive-delivery-pipeline
+    # Explicitly define PR event types for clarity
+    types: [opened, synchronize, reopened, ready_for_review]
   workflow_dispatch:
     inputs:
       environment:
@@ -90,6 +96,19 @@ permissions:
   packages: write     # Push container images to GHCR
   security-events: write  # Upload security scan results (SARIF)
   actions: read       # Read workflow status (for job dependencies)
+
+# =============================================================================
+# WORKFLOW DEFAULTS
+# =============================================================================
+# Set default shell and timeout for all jobs
+# Security: Use bash explicitly to avoid shell injection risks
+# Performance: Set reasonable timeouts to prevent resource exhaustion
+# =============================================================================
+defaults:
+  run:
+    shell: bash
+    # Default timeout for all run steps (can be overridden per job)
+    timeout-minutes: 10
 
 # =============================================================================
 # GLOBAL ENVIRONMENT VARIABLES (Non-sensitive)
