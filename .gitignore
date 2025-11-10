@@ -418,8 +418,9 @@ workflow_*.json
 # This pattern matches test_*.py at root level
 /test_*.py
 
-# Re-include test files under tests/ directory and all subdirectories
+# Explicitly include all Python test files in tests/ directory and subdirectories
 !tests/
+!tests/**/*.py
 *standalone_*.py
 *run_tests.py
 *bandit-report.json
