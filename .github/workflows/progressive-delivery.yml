@@ -13,14 +13,20 @@ name: Progressive Delivery Pipeline
 #           production approval required. Branch protection rules must be enabled.
 #
 # Performance: GHA Docker cache, conditional execution, BuildKit optimizations.
-# =============================================================================
-# WORKFLOW TRIGGERS
-# =============================================================================
-# - Push to main: Auto-deploy (requires branch protection rules)
-# - PR to main/feature: Test deployment
-# - Manual dispatch: Deploy with environment/strategy selection
-#   Input validation prevents injection attacks (validate-inputs job)
-# =============================================================================
+  # =============================================================================
+  # WORKFLOW TRIGGERS
+  # =============================================================================
+  # - Push to main: Auto-deploy (REQUIRES branch protection rules enabled)
+  #   Branch protection must be configured in: Settings > Branches > main
+  #   Required settings:
+  #     - Require pull request reviews before merging
+  #     - Require status checks to pass before merging
+  #     - Require branches to be up to date before merging
+  #     - Do not allow bypassing the above settings
+  # - PR to main/feature: Test deployment (builds but doesn't push)
+  # - Manual dispatch: Deploy with environment/strategy selection
+  #   Input validation prevents injection attacks (validate-inputs job)
+  # =============================================================================
 on:
   push:
     branches: [main]  # Only main branch for production safety
@@ -37,7 +43,10 @@ on:
           - staging
           - production
       deployment_strategy:
-        description: 'Deployment strategy (canary for progressive rollout, blue-green for instant switch)'
+        description: |
+          Deployment strategy selection:
+          - canary: Progressive rollout (10%→25%→50%→75%→100%)
+          - blue-green: Instant traffic switch for emergencies
         required: true
         default: 'canary'
         type: choice
@@ -45,12 +54,16 @@ on:
           - canary
           - blue-green
       image_name:
-        description: 'Container image name (optional, 1-255 chars, alphanumeric with hyphens/dots/underscores)'
+        description: |
+          Container image name (optional).
+          Must be 1-255 chars, alphanumeric with hyphens/dots/underscores.
         required: false
         default: 'amas-orchestrator'
         type: string
       docker_registry:
-        description: 'Docker registry hostname (optional, e.g., ghcr.io or registry.example.com:5000)'
+        description: |
+          Docker registry hostname (optional).
+          Examples: ghcr.io, registry.example.com:5000
         required: false
         default: 'ghcr.io'
         type: string
@@ -153,27 +166,51 @@ jobs:
     
     - name: ✅ Validate optional inputs
       run: |
-        # Validate image name if provided (security: prevent injection attacks)
+        # ===================================================================
+        # Validate image name if provided
+        # Security: Prevent injection attacks by strict format validation
+        # ===================================================================
         IMAGE_NAME="${{ github.event.inputs.image_name }}"
         if [[ -n "$IMAGE_NAME" ]]; then
-          # Allow only alphanumeric, hyphens, dots, underscores, and slashes (for namespaces)
-          if [[ ! "$IMAGE_NAME" =~ ^[a-z0-9]([-._/a-z0-9]*[a-z0-9])?$ ]] || [[ ${#IMAGE_NAME} -gt 255 ]] || [[ ${#IMAGE_NAME} -lt 1 ]]; then
-            echo "❌ Invalid image name: $IMAGE_NAME"
-            echo "Image name must be 1-255 characters, alphanumeric with hyphens, dots, underscores, or slashes"
+          # Validate length (1-255 characters)
+          if [[ ${#IMAGE_NAME} -lt 1 ]] || [[ ${#IMAGE_NAME} -gt 255 ]]; then
+            echo "❌ Invalid image name length: $IMAGE_NAME"
+            echo "Image name must be 1-255 characters"
             exit 1
           fi
+          
+          # Validate format: alphanumeric, hyphens, dots, underscores, slashes
+          # Must start and end with alphanumeric
+          if [[ ! "$IMAGE_NAME" =~ ^[a-z0-9]([-._/a-z0-9]*[a-z0-9])?$ ]]; then
+            echo "❌ Invalid image name format: $IMAGE_NAME"
+            echo "Image name must be alphanumeric with hyphens, dots, underscores, or slashes"
+            exit 1
+          fi
+          
           echo "✅ Image name format valid: $IMAGE_NAME"
         fi
         
-        # Validate registry if provided (security: prevent injection attacks)
+        # ===================================================================
+        # Validate registry if provided
+        # Security: Prevent injection attacks by strict hostname validation
+        # ===================================================================
         REGISTRY="${{ github.event.inputs.docker_registry }}"
         if [[ -n "$REGISTRY" ]]; then
-          # Allow registry format: hostname or hostname:port (no protocol needed)
-          if [[ ! "$REGISTRY" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*(:[0-9]+)?$ ]] || [[ ${#REGISTRY} -gt 253 ]] || [[ ${#REGISTRY} -lt 1 ]]; then
-            echo "❌ Invalid registry format: $REGISTRY"
-            echo "Registry must be 1-253 characters, valid hostname format (e.g., ghcr.io, registry.example.com:5000)"
+          # Validate length (1-253 characters per RFC 1123)
+          if [[ ${#REGISTRY} -lt 1 ]] || [[ ${#REGISTRY} -gt 253 ]]; then
+            echo "❌ Invalid registry length: $REGISTRY"
+            echo "Registry must be 1-253 characters"
             exit 1
           fi
+          
+          # Validate format: hostname or hostname:port (no protocol)
+          # Pattern: alphanumeric with hyphens, dots, optional port
+          if [[ ! "$REGISTRY" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*(:[0-9]+)?$ ]]; then
+            echo "❌ Invalid registry format: $REGISTRY"
+            echo "Registry must be valid hostname format (e.g., ghcr.io, registry.example.com:5000)"
+            exit 1
+          fi
+          
           echo "✅ Registry format valid: $REGISTRY"
         fi
     
@@ -622,11 +659,35 @@ jobs:
     
     - name: 📋 Apply Analysis Templates
       run: |
-        kubectl apply -f k8s/argo-rollouts/analysis-templates.yaml
+        # Check if analysis templates file exists
+        if [ ! -f k8s/argo-rollouts/analysis-templates.yaml ]; then
+          echo "❌ Analysis templates file not found"
+          exit 1
+        fi
+        
+        # Apply analysis templates with error handling
+        if ! kubectl apply -f k8s/argo-rollouts/analysis-templates.yaml; then
+          echo "❌ Failed to apply analysis templates"
+          exit 1
+        fi
+        
+        echo "✅ Analysis templates applied successfully"
     
     - name: 📋 Apply Rollout Configuration
       run: |
-        kubectl apply -f k8s/argo-rollouts/rollout.yaml
+        # Check if rollout configuration file exists
+        if [ ! -f k8s/argo-rollouts/rollout.yaml ]; then
+          echo "❌ Rollout configuration file not found"
+          exit 1
+        fi
+        
+        # Apply rollout configuration with error handling
+        if ! kubectl apply -f k8s/argo-rollouts/rollout.yaml; then
+          echo "❌ Failed to apply rollout configuration"
+          exit 1
+        fi
+        
+        echo "✅ Rollout configuration applied successfully"
     
     - name: 🚀 Execute Canary Deployment
       run: |
@@ -637,28 +698,61 @@ jobs:
         export DOCKER_REGISTRY=${{ env.DOCKER_REGISTRY }}
         export IMAGE_NAME=${{ env.IMAGE_NAME }}
         
+        # Error handling: Check if deployment script exists
+        if [ ! -f scripts/deployment/canary_deploy.sh ]; then
+          echo "❌ Canary deployment script not found"
+          exit 1
+        fi
+        
         chmod +x scripts/deployment/canary_deploy.sh
-        ./scripts/deployment/canary_deploy.sh
+        
+        # Execute deployment with error handling
+        if ! ./scripts/deployment/canary_deploy.sh; then
+          echo "❌ Canary deployment failed"
+          exit 1
+        fi
+        
+        echo "✅ Canary deployment initiated successfully"
     
     - name: 📊 Monitor Deployment
       run: |
         echo "📊 Monitoring deployment progress..."
-        for i in {1..30}; do
-          status=$(kubectl get rollout amas-orchestrator -n amas-prod -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
-          echo "Deployment status: $status"
+        MAX_ITERATIONS=30
+        ITERATION=0
+        
+        while [ $ITERATION -lt $MAX_ITERATIONS ]; do
+          ITERATION=$((ITERATION + 1))
           
+          # Get rollout status with error handling
+          status=$(
+            kubectl get rollout amas-orchestrator \
+              -n amas-prod \
+              -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown"
+          )
+          
+          echo "[$ITERATION/$MAX_ITERATIONS] Deployment status: $status"
+          
+          # Check for failure states
           if [ "$status" = "Degraded" ] || [ "$status" = "Failed" ]; then
-            echo "❌ Deployment failed, checking rollback status..."
+            echo "❌ Deployment failed, triggering rollback..."
+            echo "Status: $status"
             exit 1
           fi
           
+          # Check for success state
           if [ "$status" = "Healthy" ]; then
             echo "✅ Deployment completed successfully"
-            break
+            exit 0
           fi
           
+          # Wait before next check
           sleep 20
         done
+        
+        # Timeout reached
+        echo "⚠️  Deployment monitoring timeout reached"
+        echo "Final status: $status"
+        exit 1
     
     - name: 🧪 Production Smoke Tests
       run: |
@@ -771,8 +865,39 @@ jobs:
     - name: 🔄 Execute Rollback
       run: |
         echo "🔄 Executing emergency rollback..."
-        kubectl rollout undo rollout/amas-orchestrator -n amas-prod
-        kubectl rollout status rollout/amas-orchestrator -n amas-prod --timeout=5m
+        
+        # Check if rollout exists before attempting rollback
+        if ! kubectl get rollout amas-orchestrator -n amas-prod &> /dev/null; then
+          echo "⚠️  Rollout not found, cannot rollback"
+          exit 1
+        fi
+        
+        # Get current revision for logging
+        CURRENT_REV=$(kubectl get rollout amas-orchestrator \
+          -n amas-prod \
+          -o jsonpath='{.status.currentRevision}' 2>/dev/null || echo "unknown")
+        echo "Current revision: $CURRENT_REV"
+        
+        # Execute rollback with error handling
+        if ! kubectl rollout undo rollout/amas-orchestrator -n amas-prod; then
+          echo "❌ Rollback command failed"
+          exit 1
+        fi
+        
+        # Wait for rollback to complete
+        if ! kubectl rollout status rollout/amas-orchestrator \
+          -n amas-prod \
+          --timeout=5m; then
+          echo "❌ Rollback did not complete within timeout"
+          exit 1
+        fi
+        
+        # Verify rollback success
+        NEW_REV=$(kubectl get rollout amas-orchestrator \
+          -n amas-prod \
+          -o jsonpath='{.status.currentRevision}' 2>/dev/null || echo "unknown")
+        echo "✅ Rollback completed successfully"
+        echo "New revision: $NEW_REV"
     
     - name: 📢 Notify Rollback
       if: always()
