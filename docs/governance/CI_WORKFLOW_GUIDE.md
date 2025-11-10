@@ -6,6 +6,16 @@ The Data Governance & Compliance CI/CD workflow (`.github/workflows/governance-c
 
 ## Workflow Configuration
 
+### Permissions
+
+The workflow uses explicit permissions following the principle of least privilege:
+- **contents: read** - Read repository contents
+- **pull-requests: read** - Read pull request metadata
+- **checks: write** - Write check results (required for status checks)
+- **No write access** to contents, issues, or other sensitive areas
+
+This prevents accidental or malicious writes even if malicious code is introduced.
+
 ### Triggers
 
 The workflow runs automatically on:
@@ -170,20 +180,22 @@ The workflow runs automatically on:
 
 **Steps**:
 1. Checkout code
-2. Set up Python (3.12.12)
-3. Cache pip packages
-4. Install dependencies from `requirements-ci.txt`
-5. Run bandit security scan
-6. Run safety dependency check
-7. Upload security reports (90 day retention)
+2. **Dependency Review** (GitHub native scanning) - Scans for vulnerabilities before installation
+3. Set up Python (3.12.12)
+4. Cache pip packages
+5. Install dependencies from `requirements-ci.txt`
+6. Run bandit security scan
+7. Run safety dependency check
+8. Upload security reports (90 day retention)
 
 **Timeout**: 20 minutes
 
 **Security Checks**:
-- Code vulnerabilities (SQL injection, XSS, etc.)
-- Hardcoded secrets detection
-- Dependency CVEs
-- PII leakage in code
+- **Dependency Review** (GitHub native) - Automated vulnerability scanning before install
+- Code vulnerabilities (SQL injection, XSS, etc.) - via bandit
+- Hardcoded secrets detection - via bandit
+- Dependency CVEs - via safety
+- PII leakage in code - via bandit
 
 ---
 
