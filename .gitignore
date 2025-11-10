@@ -417,8 +417,9 @@ workflow_*.json
 # Ignore all test_*.py files globally, except those in tests/ directory
 test_*.py
 
-# Re-include test files in tests/ directory and all subdirectories
+# Re-include tests/ directory and all test files within it
 !tests/
+!tests/**/test_*.py
 *standalone_*.py
 *run_tests.py
 *bandit-report.json
