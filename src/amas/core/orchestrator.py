@@ -633,6 +633,33 @@ class IntelligenceOrchestrator:
             task = self.tasks[task_id]
             agent = self.agents[agent_id]
 
+            # Validate agent contract before execution
+            try:
+                from ...governance.agent_contracts import validate_agent_action
+                
+                # Get agent role (default to agent type if role not available)
+                agent_role = getattr(agent, 'role', None) or getattr(agent, 'agent_type', 'default')
+                
+                # Validate agent action
+                allowed, error = validate_agent_action(
+                    role_name=agent_role,
+                    tool_name=task.type,
+                    action_data=task.parameters or {}
+                )
+                
+                if not allowed:
+                    error_msg = error or f"Agent {agent_role} not authorized for task {task.type}"
+                    self.logger.warning(f"Agent contract validation failed: {error_msg}")
+                    task.status = TaskStatus.FAILED
+                    task.error = f"Authorization failed: {error_msg}"
+                    return
+                    
+            except ImportError:
+                # Agent contracts not available, skip validation
+                self.logger.debug("Agent contracts not available, skipping validation")
+            except Exception as e:
+                self.logger.warning(f"Agent contract validation error (continuing): {e}")
+
             # Update task status
             task.status = TaskStatus.IN_PROGRESS
 
