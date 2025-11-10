@@ -37,9 +37,9 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Background scheduling, event monitoring, and notification workflows
 - Self-healing, persistent, and learning architecture
 - Professional React interface and team visual builder
-- 100+ service/tool integrations with enterprise-grade security controls (JWT/OIDC authentication, encryption at rest and in transit, comprehensive audit logging) - see [Security Guide](docs/security/SECURITY.md) for per-integration security details
+- 100+ service/tool integrations with security controls (JWT/OIDC authentication, AES-256 encryption at rest, TLS 1.3 in transit, comprehensive audit logging with PII redaction) - see [Security Guide](docs/security/SECURITY.md) for per-integration security details and compliance information
 - OpenTelemetry observability and SLO-driven reliability
-- Intelligent Performance Scaling: KEDA-based autoscaling, semantic caching, circuit breakers, rate limiting, and cost optimization - see [Performance Benchmarks](docs/performance_benchmarks.md) for metrics and [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md) for complete documentation
+- Performance Scaling: KEDA-based autoscaling (multi-metric: HTTP RPS, queue depth, latency), semantic caching (30%+ speed improvement via embedding similarity), circuit breakers, rate limiting, and cost optimization - see [Performance Benchmarks](docs/performance_benchmarks.md) for detailed metrics and [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md) for complete documentation
 
 ---
 
@@ -118,7 +118,7 @@ Production cluster, scaling, and infrastructure instructions are fully documente
 
 ## Performance & Scaling Infrastructure
 
-AMAS includes comprehensive performance scaling infrastructure for production workloads. This infrastructure enables intelligent autoscaling, performance optimization, and cost efficiency. All features are fully implemented, tested, and documented.
+AMAS includes performance scaling infrastructure for production workloads. This infrastructure enables multi-metric autoscaling, performance optimization, and cost efficiency. Features are implemented, tested, and documented.
 
 > **📚 Complete Documentation**: See [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md) for comprehensive documentation including configuration, deployment, troubleshooting, and best practices.
 
