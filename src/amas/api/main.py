@@ -10,13 +10,28 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 import uvicorn
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # Import AMAS system
 from ..main import AMASApplication
+
+# Import security components
+from ...security import (
+    JWTMiddleware,
+    SecurityHeadersMiddleware,
+    AMASHTTPBearer,
+    SecureAuthenticationManager,
+    get_policy_engine,
+    initialize_audit_logger,
+    get_audit_logger,
+)
+from ...security.middleware import AuditLoggingMiddleware, AuthenticationMiddleware
+from ...observability.opentelemetry_setup import setup_opentelemetry
+from ...governance.agent_contracts import validate_agent_action
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -29,6 +44,10 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Global security components
+auth_manager: Optional[SecureAuthenticationManager] = None
+security_headers_middleware: Optional[SecurityHeadersMiddleware] = None
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
@@ -38,6 +57,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Security headers middleware wrapper (will be initialized in startup)
+class SecurityHeadersMiddlewareWrapper(BaseHTTPMiddleware):
+    """Wrapper to add security headers to all responses"""
+    
+    async def dispatch(self, request: Request, call_next):
+        response = await call_next(request)
+        global security_headers_middleware
+        if security_headers_middleware:
+            await security_headers_middleware.add_security_headers(request, response)
+        return response
+
+app.add_middleware(SecurityHeadersMiddlewareWrapper)
+
+# Add audit logging middleware
+app.add_middleware(AuditLoggingMiddleware)
+
+# Add authentication middleware (protects /api/v1 routes)
+app.add_middleware(
+    AuthenticationMiddleware,
+    exclude_paths=[
+        "/",
+        "/health",
+        "/health/ready",
+        "/health/live",
+        "/health/detailed",
+        "/docs",
+        "/redoc",
+        "/openapi.json",
+        "/metrics",
+    ]
+)
 
 # Add metrics middleware
 @app.middleware("http")
@@ -118,18 +168,32 @@ async def get_amas_system():
 
 
 # Dependency to verify authentication
-async def verify_auth(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    # Mock authentication - in production, this would verify JWT tokens
-    if credentials.credentials != "valid_token":
-        raise HTTPException(
-            status_code=401, detail="Invalid authentication credentials"
-        )
-    return {"user_id": "admin", "role": "admin"}
+async def verify_auth(request: Request):
+    """Verify authentication using JWT middleware"""
+    if auth_manager:
+        try:
+            user_context = await auth_manager.authenticate_request(request)
+            return user_context
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Authentication error: {e}")
+            raise HTTPException(
+                status_code=401,
+                detail="Authentication failed",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+    else:
+        # Fallback if auth manager not initialized
+        logger.warning("Auth manager not initialized, using mock authentication")
+        return {"user_id": "admin", "role": "admin"}
 
 
 # Startup event
 @app.on_event("startup")
 async def startup_event():
+    global auth_manager, security_headers_middleware, amas_app
+    
     try:
         logger.info("Initializing AMAS Intelligence System...")
         
@@ -166,7 +230,70 @@ async def startup_event():
         except Exception as e:
             logger.warning(f"Failed to initialize observability (continuing anyway): {e}")
 
-        # Configuration
+        # 1. Initialize OpenTelemetry for observability
+        try:
+            otlp_endpoint = os.getenv("OTLP_ENDPOINT", "http://localhost:4317")
+            setup_opentelemetry(
+                service_name="amas",
+                otlp_endpoint=otlp_endpoint if otlp_endpoint != "http://localhost:4317" else None,
+                enable_console=os.getenv("OTLP_ENABLE_CONSOLE", "false").lower() == "true"
+            )
+            logger.info("✅ OpenTelemetry initialized")
+        except Exception as e:
+            logger.warning(f"OpenTelemetry initialization failed (continuing): {e}")
+
+        # 2. Initialize Audit Logger
+        try:
+            audit_log_file = os.getenv("AUDIT_LOG_FILE", "logs/audit.log")
+            os.makedirs(os.path.dirname(audit_log_file) if os.path.dirname(audit_log_file) else ".", exist_ok=True)
+            initialize_audit_logger(
+                log_file=audit_log_file,
+                buffer_size=int(os.getenv("AUDIT_BUFFER_SIZE", "100")),
+                enable_redaction=os.getenv("AUDIT_REDACT_PII", "true").lower() == "true"
+            )
+            logger.info("✅ Audit logger initialized")
+        except Exception as e:
+            logger.warning(f"Audit logger initialization failed (continuing): {e}")
+
+        # 3. Initialize Security Components
+        try:
+            # Load security configuration
+            import yaml
+            security_config_path = os.getenv("SECURITY_CONFIG", "config/security_config.yaml")
+            if os.path.exists(security_config_path):
+                with open(security_config_path, 'r') as f:
+                    security_config = yaml.safe_load(f)
+            else:
+                # Use environment variables with defaults
+                security_config = {
+                    "authentication": {
+                        "oidc": {
+                            "issuer": os.getenv("OIDC_ISSUER", "https://your-oidc-provider.com"),
+                            "audience": os.getenv("OIDC_AUDIENCE", "amas-api"),
+                            "jwks_uri": os.getenv("OIDC_JWKS_URI", ""),
+                            "cache_ttl": int(os.getenv("OIDC_CACHE_TTL", "3600")),
+                        }
+                    }
+                }
+            
+            # Initialize authentication manager
+            auth_manager = SecureAuthenticationManager(security_config)
+            security_headers_middleware = auth_manager.security_headers
+            
+            logger.info("✅ Security components initialized")
+        except Exception as e:
+            logger.warning(f"Security components initialization failed (continuing): {e}")
+
+        # 4. Initialize OPA Policy Engine
+        try:
+            opa_url = os.getenv("OPA_URL", "http://localhost:8181")
+            from ...security.policies.opa_integration import configure_policy_engine
+            configure_policy_engine(opa_url=opa_url)
+            logger.info(f"✅ OPA Policy Engine initialized: {opa_url}")
+        except Exception as e:
+            logger.warning(f"OPA Policy Engine initialization failed (continuing): {e}")
+
+        # 5. Initialize AMAS system
         config = {
             "llm_service_url": "http://localhost:11434",
             "vector_service_url": "http://localhost:8001",
@@ -195,11 +322,10 @@ async def startup_event():
             "n8n_api_key": os.environ.get("N8N_API_KEY"),
         }
 
-        # Initialize AMAS system
-        amas_system = AMASApplication(config)
-        await amas_system.initialize()
+        amas_app = AMASApplication(config)
+        await amas_app.initialize()
 
-        logger.info("AMAS Intelligence System initialized successfully")
+        logger.info("✅ AMAS Intelligence System initialized successfully")
 
     except Exception as e:
         logger.error(f"Failed to initialize AMAS system: {e}")
@@ -209,6 +335,7 @@ async def startup_event():
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_event():
+<<<<<<< HEAD
     # Stop SLO evaluator
     try:
         from src.amas.observability.slo_evaluator import get_slo_evaluator
@@ -218,9 +345,23 @@ async def shutdown_event():
     except Exception as e:
         logger.debug(f"Error stopping SLO evaluator: {e}")
     
+=======
+    global auth_manager
+    
+    # Shutdown audit logger
+    try:
+        audit_logger = get_audit_logger()
+        if audit_logger:
+            await audit_logger.shutdown()
+            logger.info("✅ Audit logger shutdown complete")
+    except Exception as e:
+        logger.warning(f"Audit logger shutdown error: {e}")
+    
+    # Shutdown AMAS system
+>>>>>>> origin/main
     if amas_app:
         await amas_app.shutdown()
-        logger.info("AMAS Intelligence System shutdown complete")
+        logger.info("✅ AMAS Intelligence System shutdown complete")
 
 
 # Enhanced health check endpoint
@@ -372,6 +513,7 @@ async def get_system_status():
 async def submit_task(
     task_request: TaskRequest,
     background_tasks: BackgroundTasks,
+    request: Request,
     auth: dict = Depends(verify_auth),
 ):
     """Submit a new intelligence task"""
@@ -429,7 +571,7 @@ async def submit_task(
 
 # Get task status endpoint
 @app.get("/tasks/{task_id}")
-async def get_task_status(task_id: str, auth: dict = Depends(verify_auth)):
+async def get_task_status(task_id: str, request: Request, auth: dict = Depends(verify_auth)):
     """Get task status"""
     try:
         amas = await get_amas_system()
@@ -450,7 +592,7 @@ async def get_task_status(task_id: str, auth: dict = Depends(verify_auth)):
 
 # Get agents endpoint
 @app.get("/agents")
-async def get_agents(auth: dict = Depends(verify_auth)):
+async def get_agents(request: Request, auth: dict = Depends(verify_auth)):
     """Get list of agents"""
     try:
         amas = await get_amas_system()
@@ -479,7 +621,7 @@ async def get_agents(auth: dict = Depends(verify_auth)):
 
 # Get agent status endpoint
 @app.get("/agents/{agent_id}")
-async def get_agent_status(agent_id: str, auth: dict = Depends(verify_auth)):
+async def get_agent_status(agent_id: str, request: Request, auth: dict = Depends(verify_auth)):
     """Get specific agent status"""
     try:
         amas = await get_amas_system()
@@ -508,6 +650,7 @@ async def execute_workflow(
     workflow_id: str,
     parameters: Dict[str, Any],
     background_tasks: BackgroundTasks,
+    request: Request,
     auth: dict = Depends(verify_auth),
 ):
     """Execute a workflow"""
@@ -539,6 +682,7 @@ async def get_audit_log(
     user_id: Optional[str] = None,
     event_type: Optional[str] = None,
     limit: int = 100,
+    request: Request = None,
     auth: dict = Depends(verify_auth),
 ):
     """Get audit log"""
