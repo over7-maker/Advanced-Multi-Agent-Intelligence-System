@@ -127,7 +127,7 @@ AMAS includes a comprehensive observability framework that transforms the system
 - **📡 Distributed Tracing**: End-to-end request tracing with OpenTelemetry, exported to Jaeger/DataDog
 - **📊 SLO Monitoring**: Service Level Objectives with automatic error budget tracking
 - **📈 Real-time Dashboards**: Three operational Grafana dashboards (Agent Performance, SLO Monitoring, Resource Utilization)
-- **🚨 Automated Alerting**: Smart alerts when SLOs are violated or error budgets depleted
+- **🚨 Automated Alerting**: Multi-channel alerts (Slack, PagerDuty, Email) with burn rate detection when SLOs are violated or error budgets depleted
 - **🔍 Performance Regression Detection**: Automatic detection of performance degradations
 
 ### Quick Links
