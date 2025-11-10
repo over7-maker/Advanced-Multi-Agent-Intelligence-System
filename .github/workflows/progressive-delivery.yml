@@ -31,6 +31,13 @@ name: Progressive Delivery Pipeline
 on:
   push:
     branches: [main]  # Only main branch for production safety
+    # Ignore documentation-only changes to avoid unnecessary deployments
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/**'
+      - '!**.yml'  # But still trigger on workflow file changes
+      - '!**.yaml'
   pull_request:
     # PR triggers: Only specific branches to prevent unnecessary builds
     # Note: Direct pushes to main should be blocked by branch protection
@@ -137,6 +144,78 @@ env:
 # =============================================================================
 
 jobs:
+  # =============================================================================
+  # PHASE -1: BRANCH PROTECTION VALIDATION
+  # =============================================================================
+  # Purpose: Validates that branch protection rules are enabled for main branch
+  # Security: Prevents deployment of unreviewed/untested code
+  # Note: This job only runs on push to main (not on PRs)
+  # =============================================================================
+  
+  validate-branch-protection:
+    name: 🛡️ Validate Branch Protection
+    runs-on: ubuntu-latest
+    # Only validate on push to main (PRs are already protected by branch protection)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+    - name: 🔍 Check Branch Protection Rules
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "🔍 Validating branch protection rules for main branch..."
+        
+        # Get branch protection status
+        response=$(curl -s -w "\n%{http_code}" \
+          -H "Authorization: Bearer $GITHUB_TOKEN" \
+          -H "Accept: application/vnd.github.v3+json" \
+          "https://api.github.com/repos/${{ github.repository }}/branches/main/protection")
+        
+        http_code=$(echo "$response" | tail -n1)
+        body=$(echo "$response" | sed '$d')
+        
+        if [ "$http_code" != "200" ]; then
+          echo "❌ Branch protection not configured or not accessible"
+          echo "HTTP Status: $http_code"
+          echo "Response: $body"
+          echo ""
+          echo "⚠️  CRITICAL: Branch protection rules must be enabled!"
+          echo "Configure in: Settings > Branches > main"
+          exit 1
+        fi
+        
+        # Validate required status checks
+        if ! echo "$body" | jq -e '.required_status_checks != null' &> /dev/null; then
+          echo "❌ Required status checks not configured"
+          exit 1
+        fi
+        
+        # Validate required pull request reviews
+        if ! echo "$body" | jq -e '.required_pull_request_reviews != null' &> /dev/null; then
+          echo "❌ Required pull request reviews not configured"
+          exit 1
+        fi
+        
+        # Validate enforce admins (optional but recommended)
+        enforce_admins=$(echo "$body" | jq -r '.enforce_admins.enabled // false')
+        if [ "$enforce_admins" != "true" ]; then
+          echo "⚠️  Warning: Enforce admins is not enabled"
+          echo "   Recommended: Enable 'Do not allow bypassing the above settings'"
+        fi
+        
+        echo "✅ Branch protection rules validated successfully"
+        echo "✅ Required status checks: Enabled"
+        echo "✅ Required PR reviews: Enabled"
+        echo "✅ Enforce admins: $enforce_admins"
+    
+    - name: ✅ Branch Protection Validated
+      run: |
+        echo "✅ All branch protection requirements met"
+        echo "✅ Safe to proceed with deployment"
+
   # =============================================================================
   # PHASE 0: INPUT VALIDATION (for workflow_dispatch)
   # =============================================================================
@@ -256,8 +335,14 @@ jobs:
     name: 🐳 Build & Security Scan
     runs-on: ubuntu-latest
     # Run validation first if workflow_dispatch, otherwise skip it
-    needs: [validate-inputs]
-    if: always() && (needs.validate-inputs.result == 'success' || needs.validate-inputs.result == 'skipped' || github.event_name != 'workflow_dispatch')
+    # Also validate branch protection on push to main
+    needs: 
+      - validate-inputs
+      - validate-branch-protection
+    if: |
+      always() && 
+      (needs.validate-inputs.result == 'success' || needs.validate-inputs.result == 'skipped' || github.event_name != 'workflow_dispatch') &&
+      (needs.validate-branch-protection.result == 'success' || needs.validate-branch-protection.result == 'skipped' || github.event_name != 'push' || github.ref != 'refs/heads/main')
     timeout-minutes: 45  # Increased timeout for complex builds (accommodates 4.5GB base image downloads)
     # Minimal permissions following principle of least privilege
     permissions:
@@ -464,6 +549,10 @@ jobs:
     if: always() && !cancelled() && needs.build-and-security-scan.result != 'failure'
     environment: staging
     timeout-minutes: 20
+    # Add retry strategy for transient failures
+    strategy:
+      fail-fast: false
+      max-parallel: 1
     # Minimal permissions: only read contents (no write access needed)
     permissions:
       contents: read
@@ -597,6 +686,12 @@ jobs:
           exit 0
         fi
     
+    - name: 📊 Log Staging Deployment Event
+      if: always()
+      run: |
+        echo "📊 Logging staging deployment event for audit trail..."
+        echo "::notice::Deployment Event: environment=staging, commit=${{ github.sha }}, actor=${{ github.actor }}"
+    
     - name: 🧪 Run staging smoke tests
       run: |
         echo "🧪 Running staging smoke tests..."
@@ -726,13 +821,24 @@ jobs:
         
         chmod +x scripts/deployment/canary_deploy.sh
         
-        # Execute deployment with error handling
-        if ! ./scripts/deployment/canary_deploy.sh; then
-          echo "❌ Canary deployment failed"
-          exit 1
-        fi
-        
-        echo "✅ Canary deployment initiated successfully"
+        # Execute deployment with retry logic for transient failures
+        MAX_RETRIES=3
+        RETRY=0
+        while [ $RETRY -lt $MAX_RETRIES ]; do
+          if ./scripts/deployment/canary_deploy.sh; then
+            echo "✅ Canary deployment initiated successfully"
+            exit 0
+          fi
+          
+          RETRY=$((RETRY + 1))
+          if [ $RETRY -lt $MAX_RETRIES ]; then
+            echo "⚠️  Deployment attempt $RETRY failed, retrying in 10 seconds..."
+            sleep 10
+          else
+            echo "❌ Canary deployment failed after $MAX_RETRIES attempts"
+            exit 1
+          fi
+        done
     
     - name: 📊 Monitor Deployment
       run: |
@@ -773,6 +879,26 @@ jobs:
         echo "⚠️  Deployment monitoring timeout reached"
         echo "Final status: $status"
         exit 1
+    
+    - name: 📊 Log Deployment Event
+      if: always()
+      run: |
+        echo "📊 Logging deployment event for audit trail..."
+        # Log deployment event (can be extended to send to external audit system)
+        echo "::notice::Deployment Event: environment=production, strategy=canary, commit=${{ github.sha }}, actor=${{ github.actor }}"
+        
+        # TODO: Add external audit logging integration
+        # Example:
+        # curl -X POST "${{ secrets.AUDIT_WEBHOOK }}" \
+        #   -H "Content-Type: application/json" \
+        #   -d "{
+        #     \"event\": \"deployment_start\",
+        #     \"repo\": \"${{ github.repository }}\",
+        #     \"sha\": \"${{ github.sha }}\",
+        #     \"actor\": \"${{ github.actor }}\",
+        #     \"environment\": \"production\",
+        #     \"strategy\": \"canary\"
+        #   }"
     
     - name: 🧪 Production Smoke Tests
       run: |
@@ -834,13 +960,37 @@ jobs:
         export DOCKER_REGISTRY=${{ env.DOCKER_REGISTRY }}
         export IMAGE_NAME=${{ env.IMAGE_NAME }}
         
-        if [ -f scripts/deployment/blue_green_deploy.sh ]; then
-          chmod +x scripts/deployment/blue_green_deploy.sh
-          ./scripts/deployment/blue_green_deploy.sh deploy
-        else
-          echo "⚠️  Blue-green deployment script not found"
+        if [ ! -f scripts/deployment/blue_green_deploy.sh ]; then
+          echo "❌ Blue-green deployment script not found"
           exit 1
         fi
+        
+        chmod +x scripts/deployment/blue_green_deploy.sh
+        
+        # Execute deployment with retry logic for transient failures
+        MAX_RETRIES=3
+        RETRY=0
+        while [ $RETRY -lt $MAX_RETRIES ]; do
+          if ./scripts/deployment/blue_green_deploy.sh deploy; then
+            echo "✅ Blue-green deployment initiated successfully"
+            exit 0
+          fi
+          
+          RETRY=$((RETRY + 1))
+          if [ $RETRY -lt $MAX_RETRIES ]; then
+            echo "⚠️  Deployment attempt $RETRY failed, retrying in 10 seconds..."
+            sleep 10
+          else
+            echo "❌ Blue-green deployment failed after $MAX_RETRIES attempts"
+            exit 1
+          fi
+        done
+    
+    - name: 📊 Log Deployment Event
+      if: always()
+      run: |
+        echo "📊 Logging deployment event for audit trail..."
+        echo "::notice::Deployment Event: environment=production, strategy=blue-green, commit=${{ github.sha }}, actor=${{ github.actor }}"
     
     - name: 🧪 Production Smoke Tests
       run: |
