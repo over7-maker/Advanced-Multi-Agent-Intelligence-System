@@ -414,13 +414,11 @@ workflow_*.json
 *MIGRATION_*.py
 *demo_*.py
 
-# Ignore test_*.py files only in root and non-tests directories
-# This pattern matches test_*.py at root level
-/test_*.py
+# Ignore all test_*.py files globally, except those in tests/ directory
+test_*.py
 
-# Explicitly include all Python test files in tests/ directory and subdirectories
+# Re-include test files in tests/ directory and all subdirectories
 !tests/
-!tests/**/*.py
 *standalone_*.py
 *run_tests.py
 *bandit-report.json
