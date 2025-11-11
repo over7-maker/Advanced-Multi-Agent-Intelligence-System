@@ -41,7 +41,6 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - **Enterprise Security:** OIDC/JWT authentication, OPA policy-as-code authorization, comprehensive audit logging with PII redaction
 - **🔍 Comprehensive Observability**: Distributed tracing, SLO monitoring, and intelligent alerting
 - **📊 Operational Dashboards**: Real-time Grafana dashboards for performance and SLO status
-- **🚨 Intelligent Alerting**: Multi-channel alerts with burn rate detection
 
 ---
 
@@ -127,7 +126,7 @@ AMAS includes a comprehensive observability framework that transforms the system
 - **📡 Distributed Tracing**: End-to-end request tracing with OpenTelemetry, exported to Jaeger/DataDog
 - **📊 SLO Monitoring**: Service Level Objectives with automatic error budget tracking
 - **📈 Real-time Dashboards**: Three operational Grafana dashboards (Agent Performance, SLO Monitoring, Resource Utilization)
-- **🚨 Automated Alerting**: Multi-channel alerts with burn rate detection when SLOs are violated or error budgets depleted
+- **🚨 Intelligent Alerting**: Unified multi-channel alerting system with burn rate detection for SLO violations and error budget depletion
 - **🔍 Performance Regression Detection**: Automatic detection of performance degradations
 
 ### Quick Links
