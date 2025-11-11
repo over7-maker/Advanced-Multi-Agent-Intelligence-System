@@ -1,0 +1,313 @@
+# AMAS Service Level Objectives (SLO) Definitions
+# Defines measurable targets for system reliability and performance
+
+slos:
+  # Availability SLO - System should be available 99.5% of the time
+  - name: "agent_availability"
+    description: "Agent request success rate should be >= 99.5%"
+    metric_query: |
+      (
+        rate(amas_agent_requests_total{status="success"}[5m]) /
+        rate(amas_agent_requests_total[5m])
+      ) * 100
+    threshold: 99.5
+    comparison: ">="
+    window_minutes: 5
+    error_budget_percent: 0.5
+    severity: "critical"
+    
+  # Latency SLO - 95th percentile response time should be <= 1.5 seconds
+  - name: "agent_latency_p95"
+    description: "95th percentile agent response time should be <= 1.5 seconds"
+    metric_query: |
+      histogram_quantile(0.95, 
+        rate(amas_agent_duration_seconds_bucket[5m])
+      )
+    threshold: 1.5
+    comparison: "<="
+    window_minutes: 5
+    error_budget_percent: 10.0
+    severity: "high"
+    
+  # Tool Call Success Rate SLO
+  - name: "tool_call_success_rate"
+    description: "Tool call success rate should be >= 99.0%"
+    metric_query: |
+      (
+        rate(amas_tool_call_duration_seconds_count{status="success"}[5m]) /
+        rate(amas_tool_call_duration_seconds_count[5m])
+      ) * 100
+    threshold: 99.0
+    comparison: ">="
+    window_minutes: 5
+    error_budget_percent: 1.0
+    severity: "high"
+    
+  # System Resource SLO - Memory usage should be <= 80%
+  - name: "memory_usage"
+    description: "Memory usage should be <= 80%"
+    metric_query: |
+      (
+        process_resident_memory_bytes / 
+        process_virtual_memory_max_bytes
+      ) * 100
+    threshold: 80.0
+    comparison: "<="
+    window_minutes: 1
+    error_budget_percent: 15.0
+    severity: "medium"
+    
+  # Token Cost SLO - Cost per request should be reasonable
+  - name: "cost_efficiency"
+    description: "Average cost per successful request should be <= $0.05"
+    metric_query: |
+      rate(amas_cost_usd_total[10m]) / 
+      rate(amas_agent_requests_total{status="success"}[10m])
+    threshold: 0.05
+    comparison: "<="
+    window_minutes: 10
+    error_budget_percent: 20.0
+    severity: "medium"
+    
+  # Queue Depth SLO - Processing queue shouldn't back up
+  - name: "queue_depth"
+    description: "Agent queue depth should be <= 50 pending requests"
+    metric_query: "amas_queue_depth_current"
+    threshold: 50.0
+    comparison: "<="
+    window_minutes: 1
+    error_budget_percent: 25.0
+    severity: "medium"
+
+# Alert rules based on SLO violations
+alert_rules:
+  # Critical alerts - immediate response required
+  - name: "SLO_Critical_Violation"
+    description: "Critical SLO violation - error budget nearly exhausted"
+    condition: "slo_error_budget_remaining_percent < 5"
+    severity: "critical"
+    notification_channels: ["pagerduty", "slack-critical", "email-oncall"]
+    runbook_url: "https://docs.amas.com/runbooks/slo-critical"
+    
+  - name: "Agent_Availability_Critical"
+    description: "Agent availability dropped below 95%"
+    condition: "amas_agent_requests_total{status='success'} / amas_agent_requests_total < 0.95"
+    severity: "critical"
+    notification_channels: ["pagerduty", "slack-critical"]
+    
+  # High priority alerts
+  - name: "SLO_High_Violation"
+    description: "High priority SLO violation - error budget low"
+    condition: "slo_error_budget_remaining_percent < 15"
+    severity: "high"
+    notification_channels: ["slack-alerts", "email-team"]
+    
+  - name: "Latency_Degradation"
+    description: "Response latency significantly increased"
+    condition: "histogram_quantile(0.95, rate(amas_agent_duration_seconds_bucket[5m])) > 2.0"
+    severity: "high"
+    notification_channels: ["slack-alerts"]
+    
+  # Warning alerts  
+  - name: "SLO_Warning_Violation"
+    description: "Warning: SLO violation detected - error budget declining"
+    condition: "slo_error_budget_remaining_percent < 25"
+    severity: "warning"
+    notification_channels: ["slack-warnings"]
+    
+  - name: "High_Error_Rate"
+    description: "Agent error rate higher than normal"
+    condition: "rate(amas_agent_errors_total[10m]) > 0.05"
+    severity: "warning"
+    notification_channels: ["slack-warnings"]
+    
+  - name: "Resource_Usage_High"
+    description: "System resource usage approaching limits"
+    condition: "process_resident_memory_bytes / process_virtual_memory_max_bytes > 0.75"
+    severity: "warning"
+    notification_channels: ["slack-warnings"]
+
+# SLO burn rate alerts (multi-window, multi-burn-rate)
+burn_rate_alerts:
+  # Fast burn - 2% of error budget in 1 hour
+  - name: "ErrorBudget_FastBurn"
+    description: "Error budget burning too fast"
+    short_window: "5m"
+    long_window: "1h" 
+    burn_rate_threshold: 14.4  # 2% of monthly budget in 1 hour
+    severity: "critical"
+    notification_channels: ["pagerduty"]
+    
+  # Slow burn - 5% of error budget in 6 hours
+  - name: "ErrorBudget_SlowBurn"
+    description: "Sustained error budget consumption"
+    short_window: "30m"
+    long_window: "6h"
+    burn_rate_threshold: 6.0   # 5% of monthly budget in 6 hours
+    severity: "high"
+    notification_channels: ["slack-alerts"]
+
+# Dashboard configurations
+dashboards:
+  agent_performance:
+    title: "AMAS Agent Performance"
+    refresh_interval: "30s"
+    tags: ["amas", "agents", "performance"]
+    panels:
+      - title: "Agent Request Rate"
+        type: "timeseries"
+        query: "rate(amas_agent_requests_total[5m])"
+        legend: "{{agent_id}} - {{status}}"
+        
+      - title: "Agent Success Rate"
+        type: "stat"
+        query: |
+          (
+            rate(amas_agent_requests_total{status="success"}[5m]) / 
+            rate(amas_agent_requests_total[5m])
+          ) * 100
+        unit: "percent"
+        thresholds:
+          - color: "red"
+            value: 0
+          - color: "yellow" 
+            value: 95
+          - color: "green"
+            value: 99
+            
+      - title: "Agent Latency Distribution"
+        type: "timeseries"
+        queries:
+          - query: "histogram_quantile(0.50, rate(amas_agent_duration_seconds_bucket[5m]))"
+            legend: "p50"
+          - query: "histogram_quantile(0.95, rate(amas_agent_duration_seconds_bucket[5m]))"
+            legend: "p95"
+          - query: "histogram_quantile(0.99, rate(amas_agent_duration_seconds_bucket[5m]))"
+            legend: "p99"
+        unit: "seconds"
+        
+      - title: "Tool Call Performance"
+        type: "table"
+        query: |
+          sum by (tool_name, status) (
+            rate(amas_tool_call_duration_seconds_count[5m])
+          )
+        
+      - title: "Token Usage by Agent"
+        type: "timeseries"
+        query: "rate(amas_tokens_used_total[5m])"
+        legend: "{{agent_id}} - {{model_name}}"
+        
+      - title: "Cost Tracking"
+        type: "stat"
+        query: "increase(amas_cost_usd_total[1h])"
+        unit: "USD"
+        
+  slo_monitoring:
+    title: "AMAS SLO Monitoring"
+    refresh_interval: "1m"
+    tags: ["amas", "slo", "reliability"]
+    panels:
+      - title: "Error Budget Status"
+        type: "stat"
+        query: "slo_error_budget_remaining_percent"
+        legend: "{{slo_name}}"
+        unit: "percent"
+        thresholds:
+          - color: "red"
+            value: 0
+          - color: "orange"
+            value: 10
+          - color: "yellow"
+            value: 25
+          - color: "green"
+            value: 50
+            
+      - title: "Error Budget Burn Rate"
+        type: "timeseries"
+        query: "rate(slo_error_budget_consumed_total[5m])"
+        legend: "{{slo_name}}"
+        
+      - title: "SLO Compliance Status"
+        type: "table"
+        query: "slo_current_status"
+        
+      - title: "Recent SLO Violations"
+        type: "logs"
+        query: '{job="amas-orchestrator"} |= "SLO_VIOLATION"'
+        
+# Notification channels configuration
+notification_channels:
+  slack-critical:
+    type: "slack"
+    webhook_url: "${SLACK_CRITICAL_WEBHOOK}"
+    channel: "#amas-critical-alerts"
+    username: "AMAS-Monitor"
+    icon_emoji: ":rotating_light:"
+    
+  slack-alerts:
+    type: "slack"
+    webhook_url: "${SLACK_ALERTS_WEBHOOK}"
+    channel: "#amas-alerts"
+    username: "AMAS-Monitor"
+    icon_emoji: ":warning:"
+    
+  slack-warnings:
+    type: "slack"
+    webhook_url: "${SLACK_WARNINGS_WEBHOOK}"
+    channel: "#amas-warnings"
+    username: "AMAS-Monitor"
+    icon_emoji: ":information_source:"
+    
+  email-oncall:
+    type: "email"
+    smtp_server: "${SMTP_SERVER}"
+    to_addresses: ["oncall@amas.com"]
+    from_address: "alerts@amas.com"
+    subject_prefix: "[AMAS CRITICAL]"
+    
+  email-team:
+    type: "email"
+    smtp_server: "${SMTP_SERVER}"
+    to_addresses: ["team@amas.com"]
+    from_address: "alerts@amas.com"
+    subject_prefix: "[AMAS ALERT]"
+    
+  pagerduty:
+    type: "pagerduty"
+    integration_key: "${PAGERDUTY_INTEGRATION_KEY}"
+    service_key: "${PAGERDUTY_SERVICE_KEY}"
+
+# Data retention policies
+retention:
+  traces:
+    short_term_days: 7    # High-detail traces
+    long_term_days: 90    # Sampled traces
+    sampling_rate: 0.1    # 10% sampling for long-term
+    
+  metrics:
+    raw_data_days: 30     # Raw metric points
+    downsampled_days: 365 # Downsampled aggregates
+    
+  logs:
+    debug_days: 3
+    info_days: 30
+    warning_days: 90
+    error_days: 365
+
+# Export configuration
+export:
+  prometheus:
+    enabled: true
+    port: 8080
+    path: "/metrics"
+    
+  jaeger:
+    enabled: true
+    endpoint: "http://jaeger:14268/api/traces"
+    
+  otlp:
+    enabled: true
+    endpoint: "http://otel-collector:4317"
+    headers:
+      "api-key": "${OTLP_API_KEY}"
