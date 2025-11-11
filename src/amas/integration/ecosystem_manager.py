@@ -881,7 +881,7 @@ class EcosystemManager:
         final_score = (tool_score * 0.5 + integration_score * 0.3 + performance_score * 0.2)
         return min(1.0, final_score)
     
-    def get_ecosystem_metrics(self) -> Dict[str, Any]:
+    async def get_ecosystem_metrics(self) -> Dict[str, Any]:
         """Get comprehensive ecosystem metrics"""
         
         active_integrations = sum(1 for config in self.integrations.values() 
