@@ -30,6 +30,13 @@ on:
     # CRITICAL: Closed PRs are validated for merge status in validate-pr-merge job
     # Note: ready_for_review removed to avoid unnecessary runs (draft PRs don't need testing)
     types: [opened, synchronize, reopened, closed]
+    # Security: Ignore documentation-only changes to avoid unnecessary runs
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/**'
+      - '!**.yml'  # But still trigger on workflow file changes
+      - '!**.yaml'
   workflow_dispatch:
     inputs:
       environment:
@@ -143,10 +150,12 @@ jobs:
     runs-on: ubuntu-latest
     # Only validate on closed PRs to main (check if merged)
     # CRITICAL: This job validates that PR was actually merged, not just closed
+    # Security: Only process PRs from the same repository (block external forks)
     if: |
       github.event_name == 'pull_request' && 
       github.event.action == 'closed' && 
-      github.base_ref == 'main'
+      github.base_ref == 'main' &&
+      github.event.pull_request.head.repo.full_name == github.repository
     timeout-minutes: 5
     permissions:
       contents: read
@@ -347,6 +356,16 @@ jobs:
   build-and-security-scan:
     name: 🐳 Build & Security Scan
     runs-on: ubuntu-latest
+    # Security: Only process PRs from the same repository (block external forks)
+    # This prevents untrusted code from triggering builds with secrets
+    if: |
+      (github.event_name == 'pull_request' && 
+       github.event.pull_request.head.repo.full_name == github.repository) ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && 
+       github.event.action == 'closed' && 
+       github.event.pull_request.merged == true &&
+       github.event.pull_request.head.repo.full_name == github.repository)
     # Run validation first if workflow_dispatch, otherwise skip it
     # Also validate PR merge on pull_request.closed events
     needs: 
