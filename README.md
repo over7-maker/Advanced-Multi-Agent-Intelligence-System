@@ -38,7 +38,9 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Professional React interface and team visual builder
 - 100+ service/tool integrations with bulletproof security
 - **Enterprise Security:** OIDC/JWT authentication, OPA policy-as-code authorization, comprehensive audit logging with PII redaction
-- OpenTelemetry observability and SLO-driven reliability
+- **🔍 Comprehensive Observability**: OpenTelemetry tracing, SLO monitoring, and automated alerting
+- **📊 Operational Dashboards**: Real-time Grafana dashboards for performance and SLO status
+- **🚨 Intelligent Alerting**: Multi-channel alerts with burn rate detection
 - **🛡️ Data Governance & Compliance**: Enterprise-grade PII detection, 5-tier classification, GDPR/HIPAA/PCI compliance mapping ([Guide](docs/governance/DATA_GOVERNANCE_GUIDE.md))
 
 ---
