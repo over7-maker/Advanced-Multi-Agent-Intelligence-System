@@ -5,20 +5,39 @@ Manages integration with external platforms, APIs, and services
 to create a unified AI automation ecosystem.
 """
 
+# Standard library imports
 import asyncio
+import json
 import logging
-from typing import Dict, List, Optional, Any, Set, Type, Union
+import uuid
+from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from enum import Enum
-import uuid
-import json
-import aiohttp
-import httpx
-from urllib.parse import urljoin
 from pathlib import Path
+from typing import Dict, List, Optional, Any, Set, Type, Union
+from urllib.parse import urljoin, urlparse
+
+# Third-party imports
+import aiohttp
 
 logger = logging.getLogger(__name__)
+
+
+def _validate_url(url: str) -> bool:
+    """Validate URL to prevent SSRF and open redirect vulnerabilities.
+    
+    Args:
+        url: URL string to validate
+        
+    Returns:
+        True if URL is safe (http/https with valid netloc), False otherwise
+    """
+    try:
+        parsed = urlparse(url)
+        return parsed.scheme in ("http", "https") and bool(parsed.netloc)
+    except Exception:
+        return False
 
 class IntegrationType(str, Enum):
     # Workflow & Automation Platforms
@@ -72,17 +91,22 @@ class IntegrationStatus(str, Enum):
 
 @dataclass
 class IntegrationConfig:
-    """Configuration for external service integration"""
+    """Configuration for external service integration
+    
+    Security Note: Sensitive fields (api_key, password, oauth_token) are
+    excluded from __repr__ to prevent credential leakage in logs.
+    """
     integration_id: str
     integration_type: IntegrationType
     name: str
     
     # Connection configuration
+    # Security: Sensitive fields use repr=False to prevent logging leaks
     base_url: Optional[str] = None
-    api_key: Optional[str] = None
+    api_key: Optional[str] = field(default=None, repr=False)
     username: Optional[str] = None
-    password: Optional[str] = None
-    oauth_token: Optional[str] = None
+    password: Optional[str] = field(default=None, repr=False)
+    oauth_token: Optional[str] = field(default=None, repr=False)
     custom_headers: Dict[str, str] = field(default_factory=dict)
     
     # Integration settings
@@ -110,6 +134,32 @@ class IntegrationConfig:
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: str = "system"
     tags: Set[str] = field(default_factory=set)
+    
+    def __post_init__(self):
+        """Validate configuration after initialization"""
+        # Validate required fields
+        if not self.integration_id:
+            raise ValueError("integration_id is required")
+        if not isinstance(self.integration_type, IntegrationType):
+            raise TypeError(f"integration_type must be IntegrationType, got {type(self.integration_type)}")
+        if not self.name:
+            raise ValueError("name is required")
+        
+        # Validate URL if provided
+        if self.base_url and not _validate_url(self.base_url):
+            raise ValueError(f"Invalid base_url format: {self.base_url}. Must be http:// or https:// with valid domain")
+        
+        # Validate numeric fields
+        if self.rate_limit_per_minute < 1:
+            raise ValueError("rate_limit_per_minute must be >= 1")
+        if self.timeout_seconds < 1:
+            raise ValueError("timeout_seconds must be >= 1")
+        if self.retry_count < 0:
+            raise ValueError("retry_count must be >= 0")
+        
+        # Validate uptime percentage
+        if not 0.0 <= self.uptime_percentage <= 100.0:
+            raise ValueError("uptime_percentage must be between 0.0 and 100.0")
 
 @dataclass
 class IntegrationExecution:
@@ -978,13 +1028,20 @@ class GenericAPIIntegration(BaseIntegration):
         
         try:
             # Try to access base URL or health endpoint
+            # Security: Validate URL before use to prevent SSRF
             health_url = urljoin(self.config.base_url, '/health')
+            if not _validate_url(health_url):
+                logger.warning(f"Invalid health URL constructed: {health_url}")
+                return False
             
             async with self.session.get(health_url) as response:
                 return response.status < 500  # Accept any non-server-error status
                 
         except Exception:
             # If health endpoint fails, try base URL
+            # base_url is already validated in __post_init__, but double-check for safety
+            if not _validate_url(self.config.base_url):
+                return False
             try:
                 async with self.session.get(self.config.base_url) as response:
                     return response.status < 500
@@ -1012,9 +1069,20 @@ class GenericAPIIntegration(BaseIntegration):
                           endpoint: str, 
                           params: Dict[str, Any] = None,
                           data: Dict[str, Any] = None) -> Dict[str, Any]:
-        """Make HTTP request to external API"""
+        """Make HTTP request to external API
         
-        url = urljoin(self.config.base_url, endpoint) if self.config.base_url else endpoint
+        Security: Validates URL before making request to prevent SSRF attacks.
+        """
+        if self.config.base_url:
+            url = urljoin(self.config.base_url, endpoint)
+            # Security: Validate constructed URL to prevent SSRF
+            if not _validate_url(url):
+                raise ValueError(f"Invalid URL constructed from base_url and endpoint: {url}")
+        else:
+            # If no base_url, endpoint must be a full URL
+            url = endpoint
+            if not _validate_url(url):
+                raise ValueError(f"Invalid endpoint URL: {url}")
         
         async with self.session.request(
             method=method,
