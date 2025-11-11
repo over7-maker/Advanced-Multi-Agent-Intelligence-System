@@ -38,8 +38,8 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Background scheduling, event monitoring, and notification workflows
 - Self-healing, persistent, and learning architecture
 - Professional React interface and team visual builder
-- 100+ service/tool integrations with centrally enforced security controls where technically feasible (JWT/OIDC authentication, AES-256 encryption at rest, TLS 1.3 in transit, comprehensive audit logging with automated PII redaction via regex and ML-based detection). Fallback mechanisms (e.g., client-side encryption, proxy-based redaction) used for third-party services with limited control. See [Security Guide](docs/security/SECURITY.md) for per-integration security details, compliance information, and secrets management (KMS-backed storage, short-lived tokens, automated rotation).
-- OpenTelemetry observability and SLO-driven reliability
+- 100+ service/tool integrations with centrally enforced security controls where technically feasible (JWT/OIDC authentication, AES-256 encryption at rest, TLS 1.3 in transit, comprehensive audit logging with automated PII redaction via regex and ML-based detection). Fallback mechanisms (e.g., client-side encryption, proxy-based redaction) used for third-party services with limited control. ⚠️ For integrations lacking native audit or encryption, client-side redaction and encryption are applied, but residual risk remains. Always validate PII handling in staging. All secrets mounted via runtime secret injection (HashiCorp Vault, AWS Secrets Manager), not env vars. Tokens rotated every 6 hours. See [Security Guide](docs/security/SECURITY.md) for per-integration security details, compliance information, high-risk third-party integrations list, and automated policy checks (OPA) at deployment time.
+- OpenTelemetry observability and SLO-driven reliability: Exports traces (agent task flow), metrics (RPS, latency), and logs to OTLP endpoint. SLOs defined in Prometheus via SLI: `success_rate = (requests - error_rate) / requests`, alerting via Alertmanager
 - Performance Scaling: KEDA-based autoscaling (multi-metric: HTTP RPS, queue depth, p99 latency) with cooldown windows (300s), max replica limits, and cost-aware scaling triggers. Semantic caching improves response latency by 30-60% for highly similar queries (e.g., repeated research requests) with configurable staleness tolerance. Circuit breakers use exponential backoff (initial 1s, max 30s) with jitter; retry budget limited to 3 attempts per 5-minute window. Rate limiting and cost optimization included. See [Performance Benchmarks](docs/performance_benchmarks.md) for detailed metrics and [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md) for complete documentation.
 
 ---
@@ -127,7 +127,8 @@ AMAS includes performance scaling infrastructure for production workloads. This 
 
 - **Autoscaling**: KEDA-based multi-metric scaling (HTTP RPS, queue depth, p99 latency, resource usage)
   - Implementation: `k8s/scaling/keda-scaler.yaml`
-  - Configuration: Cooldown windows (300s), max replica limits per workload, cost-aware scaling triggers
+  - Scaling Triggers: HTTP RPS >100 sustained over 2m, queue depth >500 messages, p99 latency >1.5s over 5m
+  - Configuration: Cooldown windows (300s), min replicas: 3, max replicas: 50 per workload, cost-aware scaling triggers
   - Documentation: [Performance Scaling Guide - KEDA Autoscaling](docs/PERFORMANCE_SCALING_GUIDE.md)
   - Status: ✅ Production Ready
 
@@ -139,8 +140,9 @@ AMAS includes performance scaling infrastructure for production workloads. This 
 
 - **Semantic Caching**: Redis-based caching with embedding similarity matching
   - Implementation: `src/amas/services/semantic_cache_service.py`
-  - Performance: 30-60% latency improvement for highly similar queries (e.g., repeated research requests)
-  - Configuration: Configurable TTL and similarity threshold (default 0.85)
+  - Performance: 30-60% latency improvement for highly similar queries (similarity threshold >0.85) in internal benchmarks with repeated or near-duplicate queries
+  - Configuration: Configurable TTL (default 24h), similarity threshold (default 0.85), LRU eviction, max size 10GB
+  - Cache Invalidation: Invalidated on agent configuration changes via pub/sub; automated cache health monitoring (hit rate <70% triggers alert)
   - Performance Metrics: [Performance Benchmarks](docs/performance_benchmarks.md)
   - Documentation: [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md)
   - Status: ✅ Production Ready
