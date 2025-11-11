@@ -16,8 +16,22 @@ import uuid
 import json
 import hashlib
 import aiohttp
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler, FileSystemEvent
+
+# Optional dependencies with graceful fallback
+try:
+    from watchdog.observers import Observer
+    from watchdog.events import FileSystemEventHandler, FileSystemEvent
+    HAS_WATCHDOG = True
+except ImportError:
+    Observer = None
+    FileSystemEventHandler = None
+    FileSystemEvent = None
+    HAS_WATCHDOG = False
+    logger.warning(
+        "watchdog not installed. File system monitoring will be unavailable. "
+        "Install with: pip install watchdog"
+    )
+
 import sqlite3
 import re
 from urllib.parse import urlparse
@@ -25,9 +39,9 @@ from urllib.parse import urlparse
 logger = logging.getLogger(__name__)
 
 # Ensure logger has at least a NullHandler to prevent "No handlers" warnings
+# Note: We don't set the level here to allow application-level configuration
 if not logger.handlers:
     logger.addHandler(logging.NullHandler())
-    logger.setLevel(logging.INFO)
 
 class EventType(str, Enum):
     FILE_CREATED = "file_created"
@@ -130,6 +144,46 @@ class DetectedEvent:
         
         return url
     
+    @staticmethod
+    def _is_safe_url(url: str) -> bool:
+        """
+        Validate URL to prevent SSRF attacks.
+        Blocks localhost, internal IPs, and private network ranges.
+        """
+        try:
+            parsed = urlparse(url)
+            hostname = parsed.hostname
+            
+            if not hostname:
+                return False
+            
+            # Block localhost variants
+            if hostname.lower() in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
+                return False
+            
+            # Block private IP ranges (RFC 1918)
+            # 10.0.0.0/8
+            if re.match(r"^10\.", hostname):
+                return False
+            
+            # 192.168.0.0/16
+            if re.match(r"^192\.168\.", hostname):
+                return False
+            
+            # 172.16.0.0/12
+            if re.match(r"^172\.(1[6-9]|2[0-9]|3[0-1])\.", hostname):
+                return False
+            
+            # Block link-local addresses
+            if hostname.startswith("169.254."):
+                return False
+            
+            return True
+            
+        except Exception as e:
+            logger.warning(f"Error validating URL {url}: {e}")
+            return False
+    
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
@@ -229,6 +283,11 @@ class FileSystemMonitor(FileSystemEventHandler):
     """File system event handler for watchdog"""
     
     def __init__(self, event_callback: Callable[[DetectedEvent], None]):
+        if not HAS_WATCHDOG:
+            raise ImportError(
+                "watchdog is required for file system monitoring. "
+                "Install with: pip install watchdog"
+            )
         self.event_callback = event_callback
         self.ignored_patterns = {
             r'\.(tmp|swp|lock)$',           # Temporary files
@@ -510,6 +569,13 @@ class EventMonitor:
                              file_patterns: List[str] = None) -> bool:
         """Add file system monitoring for a directory"""
         
+        if not HAS_WATCHDOG:
+            logger.error(
+                "File system monitoring requires watchdog. "
+                "Install with: pip install watchdog"
+            )
+            return False
+        
         directory = Path(directory_path)
         if not directory.exists() or not directory.is_dir():
             logger.error(f"Directory does not exist: {directory_path}")
@@ -552,6 +618,14 @@ class EventMonitor:
                             change_threshold: float = 0.05,
                             headers: Dict[str, str] = None) -> str:
         """Add web content monitoring"""
+        
+        # Validate URL for SSRF protection
+        if not self._is_safe_url(url):
+            raise ValueError(
+                f"Unsafe URL detected: {url}. "
+                "URLs must not point to localhost or private network ranges. "
+                "This is a security measure to prevent SSRF attacks."
+            )
         
         monitor_id = f"web_{uuid.uuid4().hex[:8]}"
         
