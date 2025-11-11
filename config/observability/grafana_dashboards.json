@@ -279,7 +279,6 @@
     },
     "timepicker": {
       "refresh_intervals": [
-        "10s",
         "30s",
         "1m",
         "5m",
@@ -474,7 +473,6 @@
     },
     "timepicker": {
       "refresh_intervals": [
-        "10s",
         "30s",
         "1m",
         "5m",
