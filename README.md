@@ -38,18 +38,15 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Background scheduling, event monitoring, and notification workflows
 - Self-healing, persistent, and learning architecture
 - Professional React interface and team visual builder
-- 100+ service/tool integrations with centrally enforced security controls where technically feasible:
-  - JWT/OIDC authentication
-  - AES-256 encryption at rest
-  - TLS 1.3 in transit
-  - Comprehensive audit logging with automated PII redaction (regex patterns + ML-based detection for rare formats; >95% recall on standard test datasets)
-  - PII redaction performed asynchronously with cached models to minimize latency impact
-- Fallback mechanisms for third-party services with limited control:
-  - Client-side encryption
-  - Proxy-based PII redaction
+- 100+ service/tool integrations with security controls:
+  - **Security controls applied centrally where third-party services support them**: JWT/OIDC authentication, AES-256 encryption at rest, TLS 1.3 in transit (protects against eavesdropping and MITM attacks on external API calls)
+  - **For services with limited capabilities, fallback protections are implemented**: Client-side encryption (mitigates data exposure when third-party services lack encryption), proxy-based PII redaction
+  - **Comprehensive audit logging with automated PII redaction**: Regex patterns + ML-based detection for rare formats (>95% recall on benchmark datasets such as PAR; real-world performance varies). Note: PII detection accuracy depends on data format novelty and model training scope. False negatives may occur; sensitive workflows should include manual review or layered controls.
+  - **PII redaction performance**: Asynchronous processing using lightweight, cached models (regex-first pass, ML fallback) with queue depth monitoring and overflow logging to prevent data loss. Includes bounded task queues, timeout handling, and metrics on redaction latency and backlog.
 - All integrations undergo mandatory security review and automated OPA policy checks at deployment. Data exposure risks are minimized through client-side redaction and encryption where native controls are unavailable.
+- **Note on Security Scope**: The listed controls apply to core platform services and supported integrations. Legacy or community-contributed tools may have reduced coverage. See [Security Guide](docs/security/SECURITY.md) for control mapping, exceptions, and threat model.
 - Secrets management:
-  - Runtime secret injection via HashiCorp Vault or AWS Secrets Manager (authenticated via IAM roles/approle)
+  - Runtime secret injection via HashiCorp Vault (using AppRole or Kubernetes Service Account) or AWS Secrets Manager (using IAM roles), avoiding static credentials
   - Secrets injected at startup and periodically refreshed (every 5 minutes)
   - Failures trigger alerts but do not halt startup to avoid denial-of-service
   - Never stored in environment variables
