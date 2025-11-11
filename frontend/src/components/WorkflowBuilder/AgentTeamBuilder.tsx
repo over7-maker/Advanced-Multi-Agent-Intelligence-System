@@ -17,6 +17,8 @@ import {
   Tooltip,
   IconButton,
   Badge,
+  useTheme,
+  alpha,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -25,6 +27,7 @@ import {
   TrendingUp as TrendingUpIcon,
   Schedule as ScheduleIcon,
   AttachMoney as CostIcon,
+  Group as GroupIcon,
 } from '@mui/icons-material';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -148,6 +151,7 @@ export const AgentTeamBuilder: React.FC<AgentTeamBuilderProps> = ({
   onTeamCompositionChange,
   suggestedComplexity
 }) => {
+  const theme = useTheme();
   const [selectedAgents, setSelectedAgents] = useState<AgentSpecialty[]>([]);
   const [teamComposition, setTeamComposition] = useState<TeamComposition | null>(null);
   const [autoMode, setAutoMode] = useState(true);
