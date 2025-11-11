@@ -42,9 +42,9 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Professional React interface and team visual builder
 - 100+ service/tool integrations with bulletproof security
 - **Enterprise Security:** OIDC/JWT authentication, OPA policy-as-code authorization, comprehensive audit logging with PII redaction
-- **🔍 Comprehensive Observability**: OpenTelemetry tracing, SLO monitoring, and automated alerting
+- **🔍 Observability**: Distributed tracing (OpenTelemetry), SLO monitoring with error budget tracking, automatic performance regression detection
 - **📊 Operational Dashboards**: Real-time Grafana dashboards for performance and SLO status
-- **🚨 Intelligent Alerting**: Multi-channel alerts with burn rate detection
+- **🚨 Proactive Alerting**: Real-time SLO burn rate monitoring with automated multi-channel notifications
 
 ---
 
@@ -130,7 +130,7 @@ AMAS includes a comprehensive observability framework that transforms the system
 - **📡 Distributed Tracing**: End-to-end request tracing with OpenTelemetry, exported to Jaeger/DataDog
 - **📊 SLO Monitoring**: Service Level Objectives with automatic error budget tracking
 - **📈 Real-time Dashboards**: Three operational Grafana dashboards (Agent Performance, SLO Monitoring, Resource Utilization)
-- **🚨 Automated Alerting**: Multi-channel alerts (Slack, PagerDuty, Email) with burn rate detection when SLOs are violated or error budgets depleted
+- **🚨 Proactive Alerting**: Real-time SLO burn rate monitoring with automated multi-channel notifications for violations and error budget depletion
 - **🔍 Performance Regression Detection**: Automatic detection of performance degradations
 
 ### Quick Links
