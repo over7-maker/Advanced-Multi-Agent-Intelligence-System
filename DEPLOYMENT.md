@@ -43,41 +43,108 @@
 - For Kubernetes, use `kubectl create secret` (see `k8s/foundation/` docs)
 
 ## Production/Staging Deployment
-1. Foundation Layer: `kubectl apply -f k8s/foundation/` (deploys Postgres, Redis, OPA, Prometheus)
-2. Intelligence Layer: `kubectl apply -f k8s/intelligence/` (deploys agent orchestrator, specialists, frontend)
-   - Ensure foundation pods are healthy before moving to intelligence layer.
-3. **Orchestration System**: Deploy the Hierarchical Agent Orchestration System
-   - **Recommended**: Use deployment script for automated deployment:
-     ```bash
-     ./scripts/deploy-orchestration.sh
-     ```
-   - **Manual Alternative**: Step-by-step deployment:
-     - See [Orchestration Deployment Guide](docs/deployment/ORCHESTRATION_DEPLOYMENT.md) for detailed instructions
-     - **Prerequisites**: 
-       - Ensure namespace exists: `kubectl get namespace amas || kubectl create namespace amas`
-       - **Security**: For production, apply ResourceQuota and NetworkPolicy:
-         ```bash
-         kubectl apply -f k8s/amas-namespace-quota.yaml -n amas
-         kubectl apply -f k8s/amas-network-policy.yaml -n amas
-         ```
-     - **Deploy configuration**: `kubectl apply -f k8s/orchestration-configmap.yaml -n amas`
-     - **Deploy service**: `kubectl apply -f k8s/orchestration-deployment.yaml -n amas`
-     - **Deploy autoscaling**: `kubectl apply -f k8s/orchestration-hpa.yaml -n amas`
-     - **Verify deployment**: 
-       ```bash
-       kubectl get pods -l component=orchestration -n amas
-       kubectl describe deployment amas-orchestration -n amas | grep -A5 Resources
-       ```
-       **Note**: Ensure the deployment defines CPU/memory requests for HPA to work effectively.
-4. Cloud Load Balancer Setup:
-   - Use GKE/EKS/AKS; external DNS and TLS (see `docs/infra/load_balancer_setup.md`)
-   - SSL: Use cert-manager for Let's Encrypt or upload managed certificate
-   - **IP Whitelisting**: Restrict ingress to trusted IPs only:
-     ```yaml
-     annotations:
-       nginx.ingress.kubernetes.io/whitelist-source-range: 192.168.1.0/24,203.0.113.0/24
-     ```
-     Or see `k8s/ingress-restrictions.yaml` for IP whitelisting example.
+
+### Deployment Steps
+
+#### 1. Foundation Layer
+Deploy foundation services: `kubectl apply -f k8s/foundation/` (deploys Postgres, Redis, OPA, Prometheus)
+
+#### 2. Intelligence Layer
+Deploy intelligence components: `kubectl apply -f k8s/intelligence/` (deploys agent orchestrator, specialists, frontend)
+- Ensure foundation pods are healthy before moving to intelligence layer.
+
+#### 3. Orchestration System
+Deploy the Hierarchical Agent Orchestration System
+
+**Recommended**: Use deployment script for automated deployment:
+```bash
+./scripts/deploy-orchestration.sh
+```
+
+**Manual Alternative**: Step-by-step deployment:
+- See [Orchestration Deployment Guide](docs/deployment/ORCHESTRATION_DEPLOYMENT.md) for detailed instructions
+- **Prerequisites**: 
+  - **Namespace Setup**: Create namespace using idempotent manifest:
+    ```bash
+    # Use namespace manifest for idempotent creation
+    kubectl apply -f k8s/amas-namespace.yaml
+    ```
+    **Warning**: Use unique, environment-specific namespace names in multi-tenant clusters. Always pair namespace creation with RBAC policies limiting access to authorized users.
+  - **Security Hardening**: For production, apply ResourceQuota and NetworkPolicy:
+    ```bash
+    # Apply resource quota to limit resource consumption in the amas namespace
+    kubectl apply -f k8s/amas-namespace-quota.yaml -n amas
+    # Verify quota applied
+    kubectl get resourcequota -n amas
+    
+    # Enforce network isolation to restrict pod-to-pod communication
+    kubectl apply -f k8s/amas-network-policy.yaml -n amas
+    # Verify network policy applied
+    kubectl get networkpolicy -n amas
+    ```
+  - **Best Practice**: Preview changes before applying:
+    ```bash
+    kubectl diff -f k8s/orchestration-configmap.yaml -n amas
+    kubectl diff -f k8s/orchestration-deployment.yaml -n amas
+    kubectl diff -f k8s/orchestration-hpa.yaml -n amas
+    ```
+- **Deploy configuration**: `kubectl apply -f k8s/orchestration-configmap.yaml -n amas`
+- **Deploy service**: `kubectl apply -f k8s/orchestration-deployment.yaml -n amas`
+- **Deploy autoscaling**: `kubectl apply -f k8s/orchestration-hpa.yaml -n amas`
+- **Verify deployment**: 
+  ```bash
+  # Check pod readiness (wait for ready condition)
+  kubectl wait --for=condition=ready pod -l component=orchestration -n amas --timeout=120s
+  
+  # Verify pods are running
+  kubectl get pods -l component=orchestration -n amas
+  
+  # Verify resource requests/limits for HPA
+  kubectl describe deployment amas-orchestration -n amas | grep -A5 Resources
+  ```
+  **Note**: Ensure the deployment defines CPU/memory requests for HPA to work effectively.
+  
+  **Performance Tip**: For better scaling, consider using custom metrics (e.g., agent task queue length via Prometheus) in orchestration-hpa.yaml. Example:
+  ```yaml
+  metrics:
+  - type: Pods
+    pods:
+      metric:
+        name: task_queue_length
+      target:
+        type: AverageValue
+        averageValue: 100
+  ```
+
+- **Rollback** (if needed):
+  ```bash
+  kubectl rollout undo deployment/amas-orchestration -n amas
+  ```
+
+#### 4. Cloud Load Balancer Setup
+- Use GKE/EKS/AKS; external DNS and TLS (see `docs/infra/load_balancer_setup.md`)
+- SSL: Use cert-manager for Let's Encrypt or upload managed certificate
+- **IP Whitelisting**: Restrict ingress to trusted CIDR ranges (e.g., corporate network or API gateways) using firewall rules or Ingress annotations:
+  ```yaml
+  annotations:
+    nginx.ingress.kubernetes.io/whitelist-source-range: 192.168.1.0/24,203.0.113.0/24
+  ```
+  Or see `k8s/ingress-restrictions.yaml` for IP whitelisting example.
+- **Best Practice**: Enable mTLS between orchestrator and agent pods using service mesh (e.g., Istio, Linkerd) in production environments for encrypted internal communication.
+
+### Environment-Specific Deployment
+
+**Best Practice**: Use Kustomize or Helm with overlays for environment-specific settings:
+```bash
+# Production
+kustomize build environments/prod | kubectl apply -f -
+
+# Staging
+kustomize build environments/staging | kubectl apply -f -
+
+# Development
+kustomize build environments/dev | kubectl apply -f -
+```
 
 ## Kubernetes & Scaling
 - **Minimum:** CPUs/memory in each deployment YAML (see `k8s/foundation/`).
