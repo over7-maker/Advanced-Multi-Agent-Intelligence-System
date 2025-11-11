@@ -561,6 +561,53 @@ events = scaling_metrics.get_recent_events(component="orchestrator", limit=10)
 
 ## 📊 Monitoring & Alerting
 
+> **📌 New Observability Framework**: AMAS now includes comprehensive OpenTelemetry observability with SLO monitoring, error budget tracking, and automated alerting. See [OBSERVABILITY_FRAMEWORK.md](../OBSERVABILITY_FRAMEWORK.md) and [OBSERVABILITY_SETUP_GUIDE.md](../OBSERVABILITY_SETUP_GUIDE.md) for complete setup instructions.
+
+### Observability Stack Setup
+
+#### 1. OpenTelemetry Collector
+
+Deploy OpenTelemetry Collector for centralized telemetry collection:
+
+```yaml
+# docker-compose.observability.yml
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./config/observability/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"  # OTLP gRPC
+      - "4318:4318"  # OTLP HTTP
+    environment:
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:14250
+    networks:
+      - observability
+```
+
+#### 2. Configure AMAS Observability
+
+Set environment variables in production:
+
+```bash
+# Production observability configuration
+export OTLP_ENDPOINT="https://otel-collector.production.internal:4317"
+export PROMETHEUS_URL="https://prometheus.production.internal:9090"
+export ENVIRONMENT="production"
+export SLO_CONFIG_PATH="config/observability/slo_definitions.yaml"
+```
+
+#### 3. Import Grafana Dashboards
+
+The observability framework includes three pre-configured dashboards:
+
+- **Agent Performance Dashboard**: Request rates, latencies, error rates
+- **SLO Monitoring Dashboard**: SLO compliance, error budgets, violations
+- **Resource Utilization Dashboard**: Memory, CPU, queue depth, costs
+
+Import from `config/observability/grafana_dashboards.json` or use Grafana provisioning.
+
 ### Prometheus Configuration
 
 ```yaml
@@ -579,15 +626,20 @@ alerting:
 
 rule_files:
   - 'alerts/*.yml'
+  - '/etc/prometheus/alerts.yaml'  # SLO-based alerts from observability framework
 
 scrape_configs:
   - job_name: 'amas-api'
     static_configs:
-      - targets: ['api1:9090', 'api2:9090', 'api3:9090']
+      - targets: ['api1:8000', 'api2:8000', 'api3:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
     
   - job_name: 'amas-workers'
     static_configs:
-      - targets: ['worker1:9090', 'worker2:9090', 'worker3:9090']
+      - targets: ['worker1:8000', 'worker2:8000', 'worker3:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
     
   - job_name: 'postgres'
     static_configs:
@@ -600,6 +652,18 @@ scrape_configs:
 
 ### Alert Rules
 
+#### SLO-Based Alerts (from Observability Framework)
+
+The observability framework automatically generates SLO-based alerts. These are configured in `config/observability/prometheus_alerts.yaml`:
+
+- **Critical**: Error budget < 5% remaining
+- **High**: Error budget < 15% remaining  
+- **Warning**: Error budget < 25% remaining
+- **Fast Burn Rate**: 2% of error budget consumed in 1 hour
+- **Slow Burn Rate**: 5% of error budget consumed in 6 hours
+
+#### Custom Application Alerts
+
 ```yaml
 # alerts/amas.yml
 groups:
@@ -607,67 +671,139 @@ groups:
     interval: 30s
     rules:
       - alert: HighErrorRate
-        expr: rate(amas_api_errors_total[5m]) > 0.05
+        expr: rate(amas_agent_errors_total[5m]) > 0.05
         for: 5m
         labels:
           severity: critical
+          component: api
         annotations:
           summary: "High error rate detected"
           description: "Error rate is {{ $value }} errors per second"
+          runbook_url: "https://runbooks.amas.com/high-error-rate"
       
       - alert: HighResponseTime
-        expr: histogram_quantile(0.95, amas_api_latency_seconds) > 2
+        expr: histogram_quantile(0.95, rate(amas_agent_duration_seconds_bucket[5m])) > 2
         for: 10m
         labels:
           severity: warning
+          component: api
         annotations:
           summary: "High API response time"
           description: "95th percentile response time is {{ $value }} seconds"
+          runbook_url: "https://runbooks.amas.com/high-response-time"
       
       - alert: DatabaseConnectionPoolExhausted
         expr: amas_db_connections_active / amas_db_connections_max > 0.9
         for: 5m
         labels:
           severity: critical
+          component: database
         annotations:
           summary: "Database connection pool nearly exhausted"
           description: "{{ $value }}% of connections in use"
+          runbook_url: "https://runbooks.amas.com/db-pool-exhausted"
+      
+      - alert: SLOViolationCritical
+        expr: amas_slo_violations_total{severity="critical"} > 0
+        for: 1m
+        labels:
+          severity: critical
+          component: observability
+        annotations:
+          summary: "Critical SLO violation detected"
+          description: "One or more critical SLOs are violated"
+          runbook_url: "https://runbooks.amas.com/slo-violation"
 ```
 
 ### Grafana Dashboards
 
+#### Observability Framework Dashboards
+
+The observability framework provides three production-ready dashboards (import from `config/observability/grafana_dashboards.json`):
+
+1. **Agent Performance Dashboard** (`uid: amas-agent-performance`)
+   - Request rates, latencies (P50, P95, P99), error rates
+   - Agent-specific metrics and breakdowns
+
+2. **SLO Monitoring Dashboard** (`uid: amas-slo-monitoring`)
+   - SLO compliance status for all 5 SLOs
+   - Error budget tracking and burn rates
+   - Violation history and trends
+
+3. **Resource Utilization Dashboard** (`uid: amas-resource-utilization`)
+   - Memory and CPU usage
+   - Queue depth and active agents
+   - Token usage and cost tracking
+
+#### Custom Production Dashboards
+
 ```json
 {
   "dashboard": {
-    "title": "AMAS Production Dashboard",
+    "title": "AMAS Production Overview",
     "panels": [
       {
         "title": "API Request Rate",
         "targets": [{
-          "expr": "rate(amas_api_requests_total[5m])"
+          "expr": "rate(amas_agent_requests_total[5m])"
         }]
       },
       {
         "title": "Response Time (p95)",
         "targets": [{
-          "expr": "histogram_quantile(0.95, amas_api_latency_seconds)"
+          "expr": "histogram_quantile(0.95, rate(amas_agent_duration_seconds_bucket[5m]))"
         }]
       },
       {
-        "title": "Active Tasks",
+        "title": "Active Agents",
         "targets": [{
-          "expr": "amas_tasks_active"
+          "expr": "amas_active_agents_current"
         }]
       },
       {
         "title": "AI Provider Health",
         "targets": [{
-          "expr": "amas_ai_provider_health"
+          "expr": "amas_provider_health"
+        }]
+      },
+      {
+        "title": "SLO Compliance",
+        "targets": [{
+          "expr": "amas_slo_compliance"
         }]
       }
     ]
   }
 }
+```
+
+### Alert Notification Channels
+
+Configure notification channels in `config/observability/slo_definitions.yaml`:
+
+```yaml
+notification_channels:
+  slack:
+    webhook_url: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+    channels:
+      critical: "#amas-alerts-critical"
+      high: "#amas-alerts"
+      warning: "#amas-alerts-warning"
+  
+  pagerduty:
+    integration_key: "YOUR_PAGERDUTY_INTEGRATION_KEY"
+    severity_mapping:
+      critical: "critical"
+      high: "error"
+      warning: "warning"
+  
+  email:
+    smtp_server: "smtp.company.com"
+    from_address: "amas-alerts@company.com"
+    recipients:
+      critical: ["oncall@company.com", "team-leads@company.com"]
+      high: ["team@company.com"]
+      warning: ["team@company.com"]
 ```
 
 ---

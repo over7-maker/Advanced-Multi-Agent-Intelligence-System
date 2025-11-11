@@ -413,7 +413,13 @@ workflow_*.json
 *SIMPLE_*.txt
 *MIGRATION_*.py
 *demo_*.py
-*test_*.py
+
+# Ignore all test_*.py files globally, except those in tests/ directory
+test_*.py
+
+# Re-include tests/ directory and all test files within it
+!tests/
+!tests/**/test_*.py
 *standalone_*.py
 *run_tests.py
 *bandit-report.json
