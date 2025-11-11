@@ -1,0 +1,131 @@
+# AMAS Security Configuration
+# Enterprise-grade security settings for OIDC/JWT authentication,
+# policy-as-code authorization, and comprehensive audit logging
+
+authentication:
+  # OIDC/JWT Configuration
+  oidc:
+    # OIDC Provider Settings
+    issuer: "${OIDC_ISSUER:-https://your-oidc-provider.com}"
+    audience: "${OIDC_AUDIENCE:-amas-api}"
+    jwks_uri: "${OIDC_JWKS_URI:-https://your-oidc-provider.com/.well-known/jwks.json}"
+    expected_azp: "${OIDC_EXPECTED_AZP:-}"  # Optional: Expected authorized party (client ID)
+    
+    # JWT Validation Settings
+    algorithms: ["RS256", "ES256"]
+    cache_ttl: 3600  # JWKS cache TTL in seconds
+    refresh_interval: 300  # Background JWKS refresh interval in seconds (5 minutes)
+    
+    # Token Validation
+    require_exp: true
+    require_iat: true
+    require_nbf: true
+    require_sub: true
+    max_token_age_days: 30
+    
+  # Token Management
+  token_blacklist:
+    enabled: true
+    cleanup_interval: 3600  # seconds
+    
+  # Security Headers
+  security_headers:
+    enabled: true
+    hsts_max_age: 31536000  # 1 year
+    csp_enabled: true
+
+# Open Policy Agent (OPA) Configuration
+authorization:
+  opa:
+    # OPA Server Connection
+    url: "${OPA_URL:-http://localhost:8181}"
+    timeout_seconds: 5.0
+    retry_attempts: 3
+    
+    # Policy Caching
+    cache_enabled: true
+    cache_ttl: 300  # 5 minutes
+    cache_max_size: 1000
+    
+    # Policy Paths
+    policies:
+      agent_access: "agent.access"
+      tool_permission: "tool.permission"
+      data_access: "data.access"
+      user_permissions: "user.permissions"
+
+# Audit Logging Configuration
+audit:
+  # Log File Settings
+  log_file: "${AUDIT_LOG_FILE:-logs/audit.jsonl}"
+  buffer_size: 100  # Events to buffer before flushing
+  flush_interval: 30  # Seconds between automatic flushes
+  backup_count: 5  # Number of rotated log files to keep
+  
+  # PII Protection
+  redact_sensitive: true
+  redaction_patterns:
+    - email
+    - ssn
+    - phone
+    - credit_card
+    - api_key
+    - ip_address
+  
+  # Event Types to Log
+  log_event_types:
+    - authentication
+    - authorization
+    - agent_execution
+    - tool_usage
+    - data_access
+    - configuration_change
+    - security_violation
+    - system_event
+  
+  # Retention
+  retention_days: 90  # Days to retain audit logs
+
+# Security Policies
+security:
+  # Rate Limiting
+  rate_limiting:
+    enabled: true
+    requests_per_minute: 100
+    requests_per_hour: 1000
+    
+  # Input Validation
+  input_validation:
+    enabled: true
+    max_request_size_mb: 10
+    sanitize_html: true
+    block_sql_injection: true
+    block_xss: true
+    
+  # Session Management
+  session:
+    timeout_minutes: 30
+    require_https: true
+    cookie_secure: true
+    cookie_httponly: true
+    cookie_samesite: "strict"
+
+# Compliance Settings
+compliance:
+  # GDPR / Privacy
+  gdpr_enabled: true
+  data_retention_days: 365
+  
+  # Audit Requirements
+  require_audit_trail: true
+  audit_immutable: true  # Audit logs cannot be modified
+  
+  # Data Classification
+  data_classification:
+    enabled: true
+    default_classification: "internal"
+    classifications:
+      - public
+      - internal
+      - confidential
+      - restricted

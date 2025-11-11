@@ -20,6 +20,9 @@ from src.middleware.logging import LoggingMiddleware
 from src.middleware.monitoring import MonitoringMiddleware
 from src.middleware.security import SecurityMiddleware
 from src.middleware.rate_limiting import RateLimitingMiddleware, RequestSizeLimitingMiddleware
+from src.amas.security.security_manager import initialize_security
+from src.amas.security.middleware import AuditLoggingMiddleware, AuthenticationMiddleware
+from src.amas.security.auth.jwt_middleware import SecurityHeadersMiddleware
 from src.amas.errors.error_handling import (
     handle_amas_exception,
     handle_http_exception,
@@ -46,6 +49,14 @@ async def lifespan(app: FastAPI):
 
     # Initialize services
     try:
+        # Initialize security layer first (before other services)
+        try:
+            security_manager = await initialize_security()
+            logger.info("Security layer initialized")
+        except Exception as e:
+            logger.warning(f"Security initialization failed (may be expected in dev): {e}")
+            # Don't fail startup if security config is missing (for development)
+
         # Initialize database
         from src.database.connection import init_database
 
@@ -83,6 +94,15 @@ async def lifespan(app: FastAPI):
 
     # Cleanup services
     try:
+        # Shutdown audit logger
+        try:
+            from src.amas.security.audit.audit_logger import get_audit_logger
+            audit_logger = get_audit_logger()
+            await audit_logger.shutdown()
+            logger.info("Audit logger shutdown complete")
+        except Exception as e:
+            logger.warning(f"Error shutting down audit logger: {e}")
+
         from src.database.connection import close_database
 
         await close_database()
@@ -115,10 +135,22 @@ app = FastAPI(
 )
 
 # Add middleware (order matters - first added is outermost)
+# Security headers middleware (innermost - applied last)
+try:
+    from src.amas.security.auth.jwt_middleware import SecurityHeadersMiddleware
+    security_headers_mw = SecurityHeadersMiddleware()
+    # Note: SecurityHeadersMiddleware is not a FastAPI middleware, 
+    # it's applied via dependency injection in routes
+except Exception as e:
+    logger.warning(f"Could not initialize security headers: {e}")
+
+# Standard middleware stack
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
-app.add_middleware(SecurityMiddleware)
+app.add_middleware(SecurityMiddleware)  # Existing security middleware
 app.add_middleware(RateLimitingMiddleware)
 app.add_middleware(RequestSizeLimitingMiddleware, max_size=10 * 1024 * 1024)  # 10MB
+app.add_middleware(AuthenticationMiddleware)  # JWT authentication check
+app.add_middleware(AuditLoggingMiddleware)  # Audit trail logging
 app.add_middleware(LoggingMiddleware)
 app.add_middleware(MonitoringMiddleware)
 
