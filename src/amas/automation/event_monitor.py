@@ -7,7 +7,7 @@ automated AI workflows based on intelligent event detection.
 
 import asyncio
 import logging
-from typing import Dict, List, Optional, Any, Set, Callable, Union
+from typing import Dict, List, Optional, Any, Set, Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from enum import Enum
@@ -16,7 +16,6 @@ import uuid
 import json
 import hashlib
 import aiohttp
-import aiofiles
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler, FileSystemEvent
 import sqlite3
@@ -52,8 +51,23 @@ class EventSeverity(str, Enum):
 
 @dataclass
 class DetectedEvent:
-    """Represents an event detected by the monitoring system"""
-    id: str
+    """
+    Represents an event detected by the monitoring system.
+    
+    Attributes:
+        id: Globally unique identifier for the event (auto-generated UUID if not provided)
+        event_type: Category of the event (e.g., file_created, web_content_changed)
+        severity: Impact level of the event (info, low, medium, high, critical)
+        source: Origin of event (file path, URL, service name, etc.)
+        description: Human-readable summary of the event
+        event_data: Additional structured data associated with the event
+        detected_at: Timestamp when the event was detected (UTC)
+        correlation_id: Optional correlation ID for grouping related events
+        tags: Set of tags for categorizing and filtering events
+        processed: Whether the event has been processed by triggers
+        triggered_workflows: List of workflow IDs triggered by this event
+    """
+    id: str = field(default_factory=lambda: f"evt_{uuid.uuid4().hex[:12]}")
     event_type: EventType
     severity: EventSeverity
     
@@ -70,6 +84,46 @@ class DetectedEvent:
     # Processing
     processed: bool = False
     triggered_workflows: List[str] = field(default_factory=list)
+    
+    def __post_init__(self):
+        """Validate and normalize enum fields after initialization"""
+        # Ensure event_type is an EventType enum
+        if not isinstance(self.event_type, EventType):
+            try:
+                self.event_type = EventType(self.event_type)
+            except ValueError:
+                raise ValueError(f"Invalid event_type: {self.event_type}. Must be one of {[e.value for e in EventType]}")
+        
+        # Ensure severity is an EventSeverity enum
+        if not isinstance(self.severity, EventSeverity):
+            try:
+                self.severity = EventSeverity(self.severity)
+            except ValueError:
+                raise ValueError(f"Invalid severity: {self.severity}. Must be one of {[e.value for e in EventSeverity]}")
+        
+        # Validate and sanitize source if it's a URL
+        if self.source.startswith(('http://', 'https://')):
+            self.source = self._sanitize_url(self.source)
+    
+    def _sanitize_url(self, url: str) -> str:
+        """Sanitize URL to remove credentials and validate scheme"""
+        parsed = urlparse(url)
+        
+        # Only allow http and https schemes
+        if parsed.scheme not in ("http", "https"):
+            raise ValueError(f"Unsupported URL scheme: {parsed.scheme}. Only http and https are allowed.")
+        
+        # Remove credentials from URL if present (security)
+        if parsed.username or parsed.password:
+            # Reconstruct URL without credentials
+            netloc = parsed.hostname
+            if parsed.port:
+                netloc = f"{netloc}:{parsed.port}"
+            sanitized = parsed._replace(netloc=netloc, username=None, password=None)
+            logger.warning(f"Credentials removed from URL: {url[:50]}...")
+            return sanitized.geturl()
+        
+        return url
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization"""
@@ -314,6 +368,23 @@ class EventMonitor:
         
         logger.info(f"Event Monitor initialized with database: {self.db_path}")
     
+    def _sanitize_log_source(self, source: str) -> str:
+        """Sanitize source string for safe logging (removes credentials from URLs)"""
+        if source.startswith(('http://', 'https://')):
+            try:
+                parsed = urlparse(source)
+                if parsed.username or parsed.password:
+                    # Reconstruct URL without credentials
+                    netloc = parsed.hostname
+                    if parsed.port:
+                        netloc = f"{netloc}:{parsed.port}"
+                    sanitized = parsed._replace(netloc=netloc, username=None, password=None)
+                    return sanitized.geturl()
+            except Exception:
+                # If parsing fails, return truncated version
+                return source[:100] + "..." if len(source) > 100 else source
+        return source
+    
     def _init_database(self):
         """Initialize SQLite database for event storage"""
         with sqlite3.connect(self.db_path) as conn:
@@ -453,7 +524,9 @@ class EventMonitor:
         # Check triggers
         await self._process_event_triggers(event)
         
-        logger.debug(f"File event processed: {event.event_type.value} - {event.source}")
+        # Sanitize source before logging to prevent credential exposure
+        sanitized_source = self._sanitize_log_source(event.source)
+        logger.debug(f"File event processed: {event.event_type.value} - {sanitized_source}")
     
     async def add_web_monitor(self,
                             name: str,
@@ -605,7 +678,9 @@ class EventMonitor:
         # Process triggers
         await self._process_event_triggers(event)
         
-        logger.info(f"Web event detected: {event.event_type.value} - {event.source}")
+        # Sanitize source before logging to prevent credential exposure
+        sanitized_source = self._sanitize_log_source(event.source)
+        logger.info(f"Web event detected: {event.event_type.value} - {sanitized_source}")
     
     async def _network_monitoring_loop(self):
         """Background loop for network service monitoring"""
