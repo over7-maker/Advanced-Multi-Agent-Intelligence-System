@@ -414,7 +414,7 @@ workflow_*.json
 *MIGRATION_*.py
 *demo_*.py
 
-# Ignore test_*.py files globally, except those in tests/ directory
+# Ignore all test_*.py files globally, except those in tests/ directory
 test_*.py
 
 # Re-include tests/ directory and all test files within it
