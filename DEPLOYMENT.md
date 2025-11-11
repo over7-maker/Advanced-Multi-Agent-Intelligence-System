@@ -93,9 +93,17 @@
 ## Security Practices
 - Token rotation for OIDC/JWT (expires in 15min, refresh tokens enabled by default)
 - All .env and k8s secrets encrypted at rest, loaded via secret manager/injected at pod runtime
+- **Pod Security**: Orchestration pods run with:
+  - `runAsNonRoot: true` and `runAsUser: 1001`
+  - `allowPrivilegeEscalation: false`
+  - Dropped capabilities (ALL)
+  - Read-only root filesystem where possible
+- **Secret Management**: All secrets referenced via Kubernetes Secret objects, never in ConfigMap
+- **Internal Communication**: Enable mTLS via service mesh (Istio/Linkerd) for encrypted pod-to-pod communication
 - Retention Policy: All logs and traces kept for at least 30 days and auto-rotated no later than 90 days.
 - Alert tokens/URLs for Slack/email only set via k8s Secret or Vault
 - All endpoints subject to OPA policy (deny by default)
+- **RBAC**: Ensure namespace creation is paired with RBAC policies limiting access to authorized users
 
 ## Monitoring, Alerts, and Troubleshooting
 - Prometheus + Grafana dashboards for `agent-latency`, `task-throughput`, `error-rates`
