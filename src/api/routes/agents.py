@@ -2,12 +2,18 @@
 Agent management API routes
 """
 
+import logging
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel
 
 from src.config.settings import get_settings
+from src.amas.security.policies.opa_integration import get_policy_engine, PolicyDecision
+from src.amas.security.auth.jwt_middleware import auth_context
+from src.amas.security.audit.audit_logger import get_audit_logger, AuditEventType, AuditStatus
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -42,8 +48,25 @@ class AgentResponse(BaseModel):
     updated_at: str
 
 
+async def check_agent_permission(user_id: str, agent_id: str, action: str) -> bool:
+    """Check if user has permission to perform action on agent"""
+    try:
+        policy_engine = get_policy_engine()
+        result = await policy_engine.opa_client.check_agent_access(
+            user_id=user_id,
+            agent_id=agent_id,
+            action=action
+        )
+        return result.allowed
+    except Exception as e:
+        logger.error(f"Authorization check failed: {e}")
+        # Fail open in case of OPA errors (can be configured to fail closed)
+        return False
+
+
 @router.get("/agents", response_model=List[AgentResponse])
 async def list_agents(
+    request: Request,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
     status: Optional[str] = Query(None),
@@ -51,6 +74,38 @@ async def list_agents(
 ) -> List[AgentResponse]:
     """List all agents with optional filtering"""
     try:
+        # Check authentication
+        user_context = auth_context.get_user()
+        if not user_context:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        
+        user_id = user_context.get("user_id")
+        
+        # Check authorization - user needs 'read' permission
+        # For listing, we check general agent access
+        has_permission = await check_agent_permission(user_id, "*", "read")
+        if not has_permission:
+            audit_logger = get_audit_logger()
+            await audit_logger.log_security_violation(
+                user_id=user_id,
+                violation_type="unauthorized_access",
+                severity="medium",
+                description=f"User attempted to list agents without permission",
+                ip_address=request.client.host if request.client else None,
+                details={"action": "list_agents"}
+            )
+            raise HTTPException(status_code=403, detail="Insufficient permissions to list agents")
+        
+        # Log successful access
+        audit_logger = get_audit_logger()
+        await audit_logger.log_data_access(
+            user_id=user_id,
+            resource_type="agent",
+            resource_id="*",
+            operation="list",
+            status=AuditStatus.SUCCESS,
+            trace_id=request.headers.get("X-Trace-ID")
+        )
         # This would query the actual database
         # For now, return mock data
         agents = [
@@ -92,9 +147,29 @@ async def list_agents(
 
 
 @router.get("/agents/{agent_id}", response_model=AgentResponse)
-async def get_agent(agent_id: str) -> AgentResponse:
+async def get_agent(agent_id: str, request: Request) -> AgentResponse:
     """Get a specific agent by ID"""
     try:
+        # Check authentication
+        user_context = auth_context.get_user()
+        if not user_context:
+            raise HTTPException(status_code=401, detail="Authentication required")
+        
+        user_id = user_context.get("user_id")
+        
+        # Check authorization
+        has_permission = await check_agent_permission(user_id, agent_id, "read")
+        if not has_permission:
+            audit_logger = get_audit_logger()
+            await audit_logger.log_security_violation(
+                user_id=user_id,
+                violation_type="unauthorized_access",
+                severity="medium",
+                description=f"User attempted to access agent {agent_id} without permission",
+                ip_address=request.client.host if request.client else None,
+                details={"agent_id": agent_id, "action": "read"}
+            )
+            raise HTTPException(status_code=403, detail=f"Insufficient permissions to access agent {agent_id}")
         # This would query the actual database
         # For now, return mock data
         agent = {
