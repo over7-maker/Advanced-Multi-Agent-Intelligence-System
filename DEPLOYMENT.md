@@ -49,9 +49,22 @@
 #### 1. Foundation Layer
 Deploy foundation services: `kubectl apply -f k8s/foundation/` (deploys Postgres, Redis, OPA, Prometheus)
 
+**Verify foundation services are ready**:
+```bash
+# Wait for PostgreSQL to be ready
+kubectl wait --for=condition=Ready pod -l app=postgres --namespace=amas --timeout=300s
+
+# Wait for Redis to be ready
+kubectl wait --for=condition=Ready pod -l app=redis --namespace=amas --timeout=300s
+
+# Wait for Neo4j to be ready (if deployed)
+kubectl wait --for=condition=Ready pod -l app=neo4j --namespace=amas --timeout=300s || echo "Neo4j not deployed"
+```
+
 #### 2. Intelligence Layer
 Deploy intelligence components: `kubectl apply -f k8s/intelligence/` (deploys agent orchestrator, specialists, frontend)
-- Ensure foundation pods are healthy before moving to intelligence layer.
+
+**Prerequisite**: Ensure foundation pods are healthy before moving to intelligence layer (use verification commands above).
 
 #### 3. Orchestration System
 Deploy the Hierarchical Agent Orchestration System
@@ -59,6 +72,18 @@ Deploy the Hierarchical Agent Orchestration System
 **Recommended**: Use deployment script for automated deployment:
 ```bash
 ./scripts/deploy-orchestration.sh
+```
+
+**Note**: The deployment script is idempotent and includes error handling with rollback on failure. Verify script logs and exit codes before proceeding. If the script fails midway, check logs and manually rollback if needed:
+```bash
+# Check script exit code
+echo $?
+
+# View script logs
+./scripts/deploy-orchestration.sh 2>&1 | tee deployment.log
+
+# Manual rollback if needed
+kubectl rollout undo deployment/amas-orchestration -n amas
 ```
 
 **Manual Alternative**: Step-by-step deployment:
@@ -70,18 +95,107 @@ Deploy the Hierarchical Agent Orchestration System
     kubectl apply -f k8s/amas-namespace.yaml
     ```
     **Warning**: Use unique, environment-specific namespace names in multi-tenant clusters. Always pair namespace creation with RBAC policies limiting access to authorized users.
-  - **Security Hardening**: For production, apply ResourceQuota and NetworkPolicy:
+    
+    **RBAC Example**: Apply RBAC policies to restrict namespace access:
+    ```yaml
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: amas-admin
+      namespace: amas-prod
+    roleRef:
+      kind: Role
+      name: amas-admin-role
+      apiGroup: rbac.authorization.k8s.io
+    subjects:
+    - kind: User
+      name: ops-team
+      apiGroup: rbac.authorization.k8s.io
+    ```
+    See: `k8s/rbac/amas-rbac.yaml` for complete RBAC configuration.
+  - **Security Hardening**: For production, apply ResourceQuota and NetworkPolicy to enforce resource limits and restrict pod-to-pod communication:
     ```bash
     # Apply resource quota to limit resource consumption in the amas namespace
     kubectl apply -f k8s/amas-namespace-quota.yaml -n amas
     # Verify quota applied
     kubectl get resourcequota -n amas
+    ```
+    **ResourceQuota Example**:
+    ```yaml
+    apiVersion: v1
+    kind: ResourceQuota
+    metadata:
+      name: amas-quota
+      namespace: amas-prod
+    spec:
+      hard:
+        requests.cpu: "4"
+        requests.memory: 8Gi
+        limits.cpu: "8"
+        limits.memory: 16Gi
+        persistentvolumeclaims: "10"
+        pods: "50"
+    ```
+    **Note**: Calibrate quotas based on load testing and expected workload.
     
+    ```bash
     # Enforce network isolation to restrict pod-to-pod communication
     kubectl apply -f k8s/amas-network-policy.yaml -n amas
     # Verify network policy applied
     kubectl get networkpolicy -n amas
     ```
+    **NetworkPolicy Example** - Default deny-all with allow-list:
+    ```yaml
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      name: deny-all
+      namespace: amas-prod
+    spec:
+      podSelector: {}
+      policyTypes:
+      - Ingress
+      - Egress
+    ```
+    Then apply allow-list policies for required traffic:
+    ```yaml
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      name: allow-orchestration-internal
+      namespace: amas-prod
+    spec:
+      podSelector:
+        matchLabels:
+          component: orchestration
+      policyTypes:
+      - Ingress
+      - Egress
+      ingress:
+      - from:
+        - podSelector:
+            matchLabels:
+              app: amas
+        ports:
+        - protocol: TCP
+          port: 8000
+      egress:
+      - to:
+        - podSelector:
+            matchLabels:
+              app: amas
+        ports:
+        - protocol: TCP
+          port: 8000
+      - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+        ports:
+        - protocol: TCP
+          port: 53
+    ```
+    See: `k8s/production/security/hardening-example.yaml` for complete security hardening manifests.
   - **Best Practice**: Preview changes before applying:
     ```bash
     kubectl diff -f k8s/orchestration-configmap.yaml -n amas
@@ -144,6 +258,52 @@ kustomize build environments/staging | kubectl apply -f -
 
 # Development
 kustomize build environments/dev | kubectl apply -f -
+```
+
+### Environment Matrix
+
+| Step               | Staging       | Production     |
+|--------------------|---------------|----------------|
+| Namespace          | `amas-staging`| `amas-prod`    |
+| TLS Certs          | Self-signed   | Let's Encrypt  |
+| NetworkPolicy      | Optional      | Enforced       |
+| ResourceQuota      | Optional      | Required       |
+| RBAC               | Basic         | Strict         |
+| mTLS               | Optional      | Required       |
+| Monitoring         | Basic         | Full (SLOs)    |
+
+**Compatibility**: Tested with Kubernetes 1.25–1.28. For Kubernetes 1.29+, verify API compatibility.
+
+### Rollback & Drift Detection
+
+**Rollback Procedure**:
+```bash
+# Rollback to previous deployment revision
+kubectl rollout undo deployment/amas-orchestration -n amas
+
+# Rollback to specific revision
+kubectl rollout undo deployment/amas-orchestration -n amas --to-revision=2
+
+# View rollout history
+kubectl rollout history deployment/amas-orchestration -n amas
+```
+
+**Drift Detection** (GitOps):
+```bash
+# Preview changes before applying
+kubectl diff -f k8s/orchestration-deployment.yaml -n amas
+
+# If using GitOps (ArgoCD/Flux):
+# Revert the commit in your k8s-config repo and allow ArgoCD to sync
+git revert <commit-hash>
+git push origin main
+# ArgoCD will automatically reconcile
+```
+
+**Manual Rollback**:
+```bash
+# Apply previous working version
+kubectl apply -f k8s/previous-working-version/orchestration-deployment.yaml -n amas
 ```
 
 ## Kubernetes & Scaling
