@@ -35,6 +35,7 @@ on:
       # Workflow changes - trigger on workflow modifications
       - '.github/workflows/governance-ci.yml'
       # Documentation - trigger only on governance-specific docs
+      - 'docs/governance/**'
       - '**/governance*.md'
       - 'AI_ANALYSIS*.md'
   pull_request:
@@ -48,6 +49,7 @@ on:
       - 'mypy.ini'
       - '.github/workflows/governance-ci.yml'
       # Documentation - trigger only on governance-specific docs
+      - 'docs/governance/**'
       - '**/governance*.md'
       - 'AI_ANALYSIS*.md'
 
