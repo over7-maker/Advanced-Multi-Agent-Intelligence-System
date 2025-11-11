@@ -38,10 +38,9 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Background scheduling, event monitoring, and notification workflows
 - Self-healing, persistent, and learning architecture
 - Professional React interface and team visual builder
-- 100+ service/tool integrations with security controls (JWT/OIDC authentication, AES-256 encryption at rest, TLS 1.3 in transit, comprehensive audit logging with PII redaction) - see [Security Guide](docs/security/SECURITY.md) for per-integration security details and compliance information
+- 100+ service/tool integrations with security centrally-enforced security controls (where applicable for third-party services)controls (JWT/OIDC authentication, AES-256 encryption at rest, TLS 1.3 in transit, comprehensive audit logging with PII redaction) - see [Security Guide](docs/security/SECURITY.md) for per-integration security details and compliance information
 - OpenTelemetry observability and SLO-driven reliability
 - Performance Scaling: KEDA-based autoscaling (multi-metric: HTTP RPS, queue depth, latency), semantic caching (30%+ speed improvement via embedding similarity), circuit breakers, rate limiting, and cost optimization - see [Performance Benchmarks](docs/performance_benchmarks.md) for detailed metrics and [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md) for complete documentation
-- 100+ service/tool integrations with bulletproof security
 - **Enterprise Security:** OIDC/JWT authentication, OPA policy-as-code authorization, comprehensive audit logging with PII redaction
 - **🔍 Comprehensive Observability**: OpenTelemetry tracing, SLO monitoring, and automated alerting
 - **📊 Operational Dashboards**: Real-time Grafana dashboards for performance and SLO status
