@@ -8,10 +8,14 @@
 
 This guide provides comprehensive information about monitoring the AMAS (Advanced Multi-Agent Intelligence System) in production environments. The monitoring system includes **bulletproof AI provider health tracking**, metrics collection, structured logging, alerting, and enterprise dashboards.
 
+> **📌 New in PR #239**: AMAS now includes a comprehensive **Observability & SLO Framework** with OpenTelemetry distributed tracing, SLO monitoring, error budget tracking, and automated alerting. See [OBSERVABILITY_FRAMEWORK.md](./OBSERVABILITY_FRAMEWORK.md) for complete documentation and [OBSERVABILITY_SETUP_GUIDE.md](./OBSERVABILITY_SETUP_GUIDE.md) for setup instructions.
+
 ### **✨ Key Features**
+- **🔍 OpenTelemetry Observability** - Distributed tracing, metrics, and SLO monitoring (NEW)
+- **📊 SLO-Based Monitoring** - Service Level Objectives with error budget tracking (NEW)
+- **📈 Operational Dashboards** - Three Grafana dashboards for performance, SLO status, and resources (NEW)
 - **🛡️ Bulletproof AI Provider Monitoring** - Real-time health checks for 15+ providers
 - **📊 Enterprise Metrics** - Prometheus-based collection with custom AMAS metrics
-- **📈 Advanced Dashboards** - Grafana visualization with AI-specific panels
 - **🚨 Intelligent Alerting** - Multi-channel notifications with escalation policies
 - **📝 Structured Logging** - JSON logs with correlation IDs and audit trails
 - **🎯 Health Checks** - Kubernetes-ready endpoints with dependency validation

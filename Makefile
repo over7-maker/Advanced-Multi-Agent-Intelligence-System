@@ -89,3 +89,43 @@ dev: fix test
 # CI simulation
 ci: install fix check test
 	@echo "🏗️ CI workflow completed!"
+
+# Production enhancement commands
+.PHONY: dev-up lock-deps generate-sbom validate-contracts load-test
+
+# Start local development environment
+dev-up:
+	@echo "🚀 Starting local development environment..."
+	docker compose -f docker-compose.local.yml up -d
+	@echo "✅ Services started. Access:"
+	@echo "  - FastAPI: http://localhost:8000"
+	@echo "  - Grafana: http://localhost:3001"
+	@echo "  - Prometheus: http://localhost:9090"
+	@echo "  - OPA: http://localhost:8181"
+
+# Generate dependency lockfile
+lock-deps:
+	@echo "📦 Generating dependency lockfiles..."
+	pip install pip-tools
+	pip-compile requirements-lock.in -o requirements-lock.txt
+	@echo "✅ Lockfile generated: requirements-lock.txt"
+
+# Generate SBOM
+generate-sbom:
+	@echo "📋 Generating SBOM..."
+	pip install syft || echo "syft not installed, installing..."
+	pip install syft || true
+	syft packages dir:. -o cyclonedx-json > sbom-cyclonedx.json || true
+	syft packages dir:. -o spdx-json > sbom-spdx.json || true
+	@echo "✅ SBOM generated: sbom-cyclonedx.json, sbom-spdx.json"
+
+# Validate agent contracts
+validate-contracts:
+	@echo "✅ Validating agent contracts..."
+	python -c "from src.amas.governance.agent_contracts import AGENT_CONTRACTS, list_all_roles; print(f'Valid contracts: {list_all_roles()}')"
+	@echo "✅ Contracts validated"
+
+# Run load tests
+load-test:
+	@echo "⚡ Running k6 load tests..."
+	k6 run tests/load/k6_scenarios.js
