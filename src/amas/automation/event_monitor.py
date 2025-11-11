@@ -16,6 +16,11 @@ import uuid
 import json
 import hashlib
 import aiohttp
+import sqlite3
+import re
+from urllib.parse import urlparse
+
+logger = logging.getLogger(__name__)
 
 # Optional dependencies with graceful fallback
 try:
@@ -23,20 +28,15 @@ try:
     from watchdog.events import FileSystemEventHandler, FileSystemEvent
     HAS_WATCHDOG = True
 except ImportError:
-    Observer = None
-    FileSystemEventHandler = None
-    FileSystemEvent = None
+    # Set sentinel values instead of None to avoid type issues
+    Observer = None  # type: ignore
+    FileSystemEventHandler = None  # type: ignore
+    FileSystemEvent = None  # type: ignore
     HAS_WATCHDOG = False
     logger.warning(
         "watchdog not installed. File system monitoring will be unavailable. "
         "Install with: pip install watchdog"
     )
-
-import sqlite3
-import re
-from urllib.parse import urlparse
-
-logger = logging.getLogger(__name__)
 
 # Ensure logger has at least a NullHandler to prevent "No handlers" warnings
 # Note: We don't set the level here to allow application-level configuration
