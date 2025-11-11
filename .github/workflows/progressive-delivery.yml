@@ -28,7 +28,8 @@ on:
       - main  # Only main branch for production safety
     # Trigger on PR updates for testing, and on PR close for deployment validation
     # CRITICAL: Closed PRs are validated for merge status in validate-pr-merge job
-    types: [opened, synchronize, reopened, ready_for_review, closed]
+    # Note: ready_for_review removed to avoid unnecessary runs (draft PRs don't need testing)
+    types: [opened, synchronize, reopened, closed]
   workflow_dispatch:
     inputs:
       environment:
