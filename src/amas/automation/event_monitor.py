@@ -502,6 +502,7 @@ class EventMonitor:
     
     async def _check_web_target(self, monitor: WebMonitorTarget):
         """Check a single web monitoring target"""
+        current_time = datetime.now(timezone.utc)
         try:
             start_time = asyncio.get_event_loop().time()
             
@@ -680,7 +681,7 @@ class EventMonitor:
             workflow_request = self._build_workflow_request(trigger, event)
             
             # Execute using task scheduler for immediate execution
-            from .task_scheduler import get_task_scheduler
+            from .task_scheduler import get_task_scheduler, ScheduleType, TaskPriority
             scheduler = get_task_scheduler()
             
             # Create one-time scheduled task for immediate execution

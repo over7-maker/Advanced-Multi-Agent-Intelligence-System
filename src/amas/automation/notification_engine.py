@@ -95,7 +95,7 @@ class NotificationTemplate:
             }
 
 @dataclass
-class NotificationChannel:
+class NotificationChannelConfig:
     """Configuration for a notification delivery channel"""
     id: str
     channel_type: NotificationChannel
@@ -142,7 +142,7 @@ class NotificationMessage:
     priority: NotificationPriority
     
     # Recipient and channel
-    channels: List[NotificationChannel]
+    channels: List[str]  # List of channel IDs
     recipient_data: Dict[str, Any] = field(default_factory=dict)
     
     # Content
@@ -196,7 +196,7 @@ class NotificationEngine:
         
         # Notification storage
         self.pending_notifications: Dict[str, NotificationMessage] = {}
-        self.notification_channels: Dict[str, NotificationChannel] = {}
+        self.notification_channels: Dict[str, NotificationChannelConfig] = {}
         self.templates: Dict[str, NotificationTemplate] = {}
         
         # Batching system
@@ -369,7 +369,7 @@ Timestamp: {{ alert_time }}
         
         channel_id = f"{channel_type.value}_{uuid.uuid4().hex[:8]}"
         
-        channel = NotificationChannel(
+        channel = NotificationChannelConfig(
             id=channel_id,
             channel_type=channel_type,
             name=name,
@@ -562,7 +562,7 @@ Timestamp: {{ alert_time }}
                    f"({success_count}/{len(delivery_results)} channels successful)")
     
     async def _deliver_through_channel(self,
-                                     channel: NotificationChannel,
+                                     channel: NotificationChannelConfig,
                                      content: Dict[str, str],
                                      recipient_data: Dict[str, Any]) -> Dict[str, Any]:
         """Deliver notification through specific channel"""
@@ -602,7 +602,7 @@ Timestamp: {{ alert_time }}
             }
     
     async def _deliver_email(self, 
-                           channel: NotificationChannel,
+                           channel: NotificationChannelConfig,
                            content: Dict[str, str],
                            recipient_data: Dict[str, Any]) -> Dict[str, Any]:
         """Deliver notification via email"""
@@ -641,7 +641,7 @@ Timestamp: {{ alert_time }}
             return {"status": "failed", "error": str(e)}
     
     async def _deliver_slack(self,
-                           channel: NotificationChannel,
+                           channel: NotificationChannelConfig,
                            content: Dict[str, str],
                            recipient_data: Dict[str, Any]) -> Dict[str, Any]:
         """Deliver notification via Slack"""
@@ -678,7 +678,7 @@ Timestamp: {{ alert_time }}
             return {"status": "failed", "error": str(e)}
     
     async def _deliver_discord(self,
-                             channel: NotificationChannel,
+                             channel: NotificationChannelConfig,
                              content: Dict[str, str],
                              recipient_data: Dict[str, Any]) -> Dict[str, Any]:
         """Deliver notification via Discord webhook"""
@@ -713,7 +713,7 @@ Timestamp: {{ alert_time }}
             return {"status": "failed", "error": str(e)}
     
     async def _deliver_webhook(self,
-                             channel: NotificationChannel,
+                             channel: NotificationChannelConfig,
                              content: Dict[str, str],
                              recipient_data: Dict[str, Any]) -> Dict[str, Any]:
         """Deliver notification via generic webhook"""
@@ -887,7 +887,7 @@ Timestamp: {{ alert_time }}
             ))
             conn.commit()
     
-    async def _persist_channel(self, channel: NotificationChannel):
+    async def _persist_channel(self, channel: NotificationChannelConfig):
         """Persist channel configuration to database"""
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""

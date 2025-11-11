@@ -592,9 +592,9 @@ class TaskScheduler:
         workflow_executor = get_workflow_executor()
         
         max_wait_time = scheduled_task.max_duration_hours * 3600  # Convert to seconds
-        start_time = time.time()
+        start_time = datetime.now(timezone.utc)
         
-        while time.time() - start_time < max_wait_time:
+        while (datetime.now(timezone.utc) - start_time).total_seconds() < max_wait_time:
             # Get execution status
             status = workflow_executor.get_execution_status(workflow_execution_id)
             
@@ -666,7 +666,7 @@ class TaskScheduler:
         
         # Import notification system (will be implemented in PR-H continuation)
         try:
-            from ..automation.notification_engine import get_notification_engine
+            from ..automation.notification_engine import get_notification_engine, NotificationPriority
             notification_engine = get_notification_engine()
             
             notification_data = {
@@ -678,10 +678,11 @@ class TaskScheduler:
                 "error_details": result.get("error") if not success else None
             }
             
-            await notification_engine.send_notifications(
-                channels=scheduled_task.notification_channels,
+            await notification_engine.send_notification(
                 notification_type="scheduled_task_result",
-                data=notification_data
+                data=notification_data,
+                channels=scheduled_task.notification_channels,
+                priority=NotificationPriority.HIGH if not success else NotificationPriority.NORMAL
             )
             
         except ImportError:
