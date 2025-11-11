@@ -24,6 +24,11 @@ from urllib.parse import urlparse
 
 logger = logging.getLogger(__name__)
 
+# Ensure logger has at least a NullHandler to prevent "No handlers" warnings
+if not logger.handlers:
+    logger.addHandler(logging.NullHandler())
+    logger.setLevel(logging.INFO)
+
 class EventType(str, Enum):
     FILE_CREATED = "file_created"
     FILE_MODIFIED = "file_modified"
@@ -387,6 +392,17 @@ class EventMonitor:
     
     def _init_database(self):
         """Initialize SQLite database for event storage"""
+        # Run in executor to avoid blocking event loop
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # If loop is running, schedule in executor
+            loop.run_in_executor(None, self._init_database_sync)
+        else:
+            # If no loop running, execute directly
+            self._init_database_sync()
+    
+    def _init_database_sync(self):
+        """Synchronous database initialization (runs in executor)"""
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS events (
@@ -579,67 +595,91 @@ class EventMonitor:
         try:
             start_time = asyncio.get_event_loop().time()
             
-            # Fetch web content
-            async with aiohttp.ClientSession() as session:
-                async with session.get(
-                    monitor.url, 
-                    headers=monitor.headers,
-                    timeout=aiohttp.ClientTimeout(total=30)
-                ) as response:
-                    
-                    content = await response.text()
-                    response_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
-                    
-                    # Calculate content hash
-                    content_hash = hashlib.sha256(content.encode()).hexdigest()
-                    
-                    # Check for content changes
-                    if monitor.last_content_hash and monitor.last_content_hash != content_hash:
-                        # Content changed - create event
-                        event = DetectedEvent(
-                            id=f"web_{uuid.uuid4().hex[:8]}",
-                            event_type=EventType.WEB_CONTENT_CHANGED,
-                            severity=EventSeverity.MEDIUM,
-                            source=monitor.url,
-                            description=f"Content changed on {monitor.name}",
-                            event_data={
-                                "url": monitor.url,
-                                "response_time_ms": response_time_ms,
-                                "content_length": len(content),
-                                "previous_hash": monitor.last_content_hash,
-                                "new_hash": content_hash
-                            },
-                            tags={"web_change", "content_update"}
-                        )
+            # Create secure HTTP client with SSL verification and proper timeout
+            timeout = aiohttp.ClientTimeout(total=30, connect=10)
+            connector = aiohttp.TCPConnector(
+                ssl=True,  # Enable SSL verification
+                limit=20,  # Connection pool limit
+                limit_per_host=5  # Per-host connection limit
+            )
+            
+            # Fetch web content with proper error handling
+            async with aiohttp.ClientSession(
+                connector=connector,
+                timeout=timeout
+            ) as session:
+                try:
+                    async with session.get(
+                        monitor.url, 
+                        headers=monitor.headers,
+                        allow_redirects=True,
+                        ssl=True  # Explicit SSL verification
+                    ) as response:
+                        # Raise for status to catch HTTP errors
+                        response.raise_for_status()
+                        content = await response.text()
+                        response_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
                         
-                        await self._handle_web_event(event)
-                    
-                    # Check response time
-                    if (monitor.track_performance and 
-                        response_time_ms > monitor.response_time_threshold_ms):
+                        # Calculate content hash
+                        content_hash = hashlib.sha256(content.encode()).hexdigest()
                         
-                        event = DetectedEvent(
-                            id=f"web_{uuid.uuid4().hex[:8]}",
-                            event_type=EventType.NETWORK_THRESHOLD_EXCEEDED,
-                            severity=EventSeverity.HIGH,
-                            source=monitor.url,
-                            description=f"Slow response from {monitor.name}: {response_time_ms:.0f}ms",
-                            event_data={
-                                "url": monitor.url,
-                                "response_time_ms": response_time_ms,
-                                "threshold_ms": monitor.response_time_threshold_ms
-                            },
-                            tags={"performance", "slow_response"}
-                        )
+                        # Check for content changes
+                        if monitor.last_content_hash and monitor.last_content_hash != content_hash:
+                            # Content changed - create event
+                            event = DetectedEvent(
+                                id=f"web_{uuid.uuid4().hex[:8]}",
+                                event_type=EventType.WEB_CONTENT_CHANGED,
+                                severity=EventSeverity.MEDIUM,
+                                source=monitor.url,
+                                description=f"Content changed on {monitor.name}",
+                                event_data={
+                                    "url": monitor.url,
+                                    "response_time_ms": response_time_ms,
+                                    "content_length": len(content),
+                                    "previous_hash": monitor.last_content_hash,
+                                    "new_hash": content_hash
+                                },
+                                tags={"web_change", "content_update"}
+                            )
+                            
+                            await self._handle_web_event(event)
                         
-                        await self._handle_web_event(event)
-                    
-                    # Update monitor state
-                    monitor.last_content_hash = content_hash
-                    monitor.last_check = current_time
-                    monitor.consecutive_failures = 0
-                    
-                    await self._persist_web_monitor(monitor)
+                        # Check response time
+                        if (monitor.track_performance and 
+                            response_time_ms > monitor.response_time_threshold_ms):
+                            
+                            event = DetectedEvent(
+                                id=f"web_{uuid.uuid4().hex[:8]}",
+                                event_type=EventType.NETWORK_THRESHOLD_EXCEEDED,
+                                severity=EventSeverity.HIGH,
+                                source=monitor.url,
+                                description=f"Slow response from {monitor.name}: {response_time_ms:.0f}ms",
+                                event_data={
+                                    "url": monitor.url,
+                                    "response_time_ms": response_time_ms,
+                                    "threshold_ms": monitor.response_time_threshold_ms
+                                },
+                                tags={"performance", "slow_response"}
+                            )
+                            
+                            await self._handle_web_event(event)
+                        
+                        # Update monitor state
+                        monitor.last_content_hash = content_hash
+                        monitor.last_check = current_time
+                        monitor.consecutive_failures = 0
+                        
+                        await self._persist_web_monitor(monitor)
+                        
+                except aiohttp.ClientResponseError as e:
+                    logger.warning(f"HTTP error checking {monitor.name}: {e.status} - {e.message}")
+                    raise
+                except aiohttp.ClientError as e:
+                    logger.warning(f"Client error checking {monitor.name}: {e}")
+                    raise
+                except asyncio.TimeoutError:
+                    logger.warning(f"Timeout checking {monitor.name}")
+                    raise
                     
         except Exception as e:
             monitor.consecutive_failures += 1
@@ -836,7 +876,12 @@ class EventMonitor:
         return trigger_id
     
     async def _persist_event(self, event: DetectedEvent):
-        """Persist event to database"""
+        """Persist event to database (runs in executor to avoid blocking)"""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self._persist_event_sync, event)
+    
+    def _persist_event_sync(self, event: DetectedEvent):
+        """Synchronous event persistence (runs in executor)"""
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
                 INSERT OR REPLACE INTO events (
@@ -853,7 +898,12 @@ class EventMonitor:
             conn.commit()
     
     async def _persist_trigger(self, trigger: EventTrigger):
-        """Persist trigger configuration to database"""
+        """Persist trigger configuration to database (runs in executor to avoid blocking)"""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self._persist_trigger_sync, trigger)
+    
+    def _persist_trigger_sync(self, trigger: EventTrigger):
+        """Synchronous trigger persistence (runs in executor)"""
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
                 INSERT OR REPLACE INTO event_triggers (
@@ -877,7 +927,12 @@ class EventMonitor:
             conn.commit()
     
     async def _persist_web_monitor(self, monitor: WebMonitorTarget):
-        """Persist web monitor configuration to database"""
+        """Persist web monitor configuration to database (runs in executor to avoid blocking)"""
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, self._persist_web_monitor_sync, monitor)
+    
+    def _persist_web_monitor_sync(self, monitor: WebMonitorTarget):
+        """Synchronous web monitor persistence (runs in executor)"""
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
                 INSERT OR REPLACE INTO web_monitors (
