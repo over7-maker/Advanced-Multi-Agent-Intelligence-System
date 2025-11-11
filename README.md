@@ -38,7 +38,23 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - Background scheduling, event monitoring, and notification workflows
 - Self-healing, persistent, and learning architecture
 - Professional React interface and team visual builder
-- 100+ service/tool integrations with centrally enforced security controls where technically feasible (JWT/OIDC authentication, AES-256 encryption at rest, TLS 1.3 in transit, comprehensive audit logging with automated PII redaction via regex and ML-based detection). Fallback mechanisms (e.g., client-side encryption, proxy-based redaction) used for third-party services with limited control. ⚠️ For integrations lacking native audit or encryption, client-side redaction and encryption are applied, but residual risk remains. Always validate PII handling in staging. All secrets mounted via runtime secret injection (HashiCorp Vault, AWS Secrets Manager), not env vars. Tokens rotated every 6 hours. See [Security Guide](docs/security/SECURITY.md) for per-integration security details, compliance information, high-risk third-party integrations list, and automated policy checks (OPA) at deployment time.
+- 100+ service/tool integrations with centrally enforced security controls where technically feasible:
+  - JWT/OIDC authentication
+  - AES-256 encryption at rest
+  - TLS 1.3 in transit
+  - Comprehensive audit logging with automated PII redaction (regex patterns + ML-based detection for rare formats; >95% recall on standard test datasets)
+  - PII redaction performed asynchronously with cached models to minimize latency impact
+- Fallback mechanisms for third-party services with limited control:
+  - Client-side encryption
+  - Proxy-based PII redaction
+- All integrations undergo mandatory security review and automated OPA policy checks at deployment. Data exposure risks are minimized through client-side redaction and encryption where native controls are unavailable.
+- Secrets management:
+  - Runtime secret injection via HashiCorp Vault or AWS Secrets Manager (authenticated via IAM roles/approle)
+  - Secrets injected at startup and periodically refreshed (every 5 minutes)
+  - Failures trigger alerts but do not halt startup to avoid denial-of-service
+  - Never stored in environment variables
+- Token rotation: Every 6 hours (standard) or every 1 hour (elevated privileges). High-privilege tokens use short-lived secrets via Vault dynamic secrets or AWS IAM Roles for Service Accounts (IRSA).
+- See [Security Guide](docs/security/SECURITY.md) for per-integration security details, compliance information, audit log retention (365 days in immutable storage), and detailed risk analysis.
 - OpenTelemetry observability and SLO-driven reliability: Exports traces (agent task flow), metrics (RPS, latency), and logs to OTLP endpoint. SLOs defined in Prometheus via SLI: `success_rate = (requests - error_rate) / requests`, alerting via Alertmanager
 - Performance Scaling: KEDA-based autoscaling (multi-metric: HTTP RPS, queue depth, p99 latency) with cooldown windows (300s), max replica limits, and cost-aware scaling triggers. Semantic caching improves response latency by 30-60% for highly similar queries (e.g., repeated research requests) with configurable staleness tolerance. Circuit breakers use exponential backoff (initial 1s, max 30s) with jitter; retry budget limited to 3 attempts per 5-minute window. Rate limiting and cost optimization included. See [Performance Benchmarks](docs/performance_benchmarks.md) for detailed metrics and [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md) for complete documentation.
 
