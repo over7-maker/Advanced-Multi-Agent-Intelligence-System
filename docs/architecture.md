@@ -723,6 +723,37 @@ spec:
 
 ## ⚡ Performance Architecture
 
+### Performance & Scaling Infrastructure
+
+AMAS includes comprehensive performance scaling infrastructure:
+
+**Intelligent Autoscaling:**
+- KEDA-based multi-metric scaling (HTTP RPS, queue depth, latency, resource usage)
+- HPA backup for CPU/memory-based scaling
+- VPA for automatic right-sizing
+- Configuration: `k8s/scaling/keda-scaler.yaml`
+
+**Performance Optimizations:**
+- Semantic Caching: Redis-based intelligent caching with 30%+ speed improvement
+- Request Deduplication: Eliminates duplicate concurrent requests
+- Connection Pooling: Optimized HTTP client configurations
+- Circuit Breakers: Fail-fast patterns to prevent cascade failures
+- Rate Limiting: User-based quotas with sliding window algorithm
+
+**Cost Optimization:**
+- Automatic cost tracking per request
+- Token usage and API cost calculation
+- Daily budget monitoring
+- Optimization recommendations
+
+**Load Testing:**
+- Comprehensive load testing framework with SLO validation
+- Multiple load patterns (constant, ramp, spike, stress)
+- Performance regression detection
+- CLI tool: `scripts/run_load_test.py`
+
+See [Performance Scaling Guide](PERFORMANCE_SCALING_GUIDE.md) for complete documentation.
+
 ### Performance Optimization Strategies
 
 #### 1. Caching Strategy
@@ -816,7 +847,32 @@ class AsyncProcessor:
 
 ## 📈 Scalability Design
 
-### Horizontal Scaling
+### Horizontal Scaling with KEDA
+
+AMAS implements intelligent horizontal scaling using KEDA (Kubernetes Event-Driven Autoscaling) for multi-metric autoscaling:
+
+**Scaling Triggers:**
+- HTTP Request Rate: Scale when >15 RPS per pod
+- Queue Depth: Scale when >25 queued items
+- Latency: Scale when P95 latency >1.0 seconds
+- Resource Pressure: Scale when CPU >70% OR memory >80%
+
+**Configuration:**
+- File: `k8s/scaling/keda-scaler.yaml`
+- Min Replicas: 2 (high availability)
+- Max Replicas: 50 (safety limit)
+- Scale Up: Fast (up to 100% increase per minute, max 5 pods)
+- Scale Down: Conservative (max 10% decrease per minute, max 2 pods)
+
+**Components:**
+- KEDA ScaledObjects for orchestrator, workers, and research agents
+- HPA backup for CPU/memory-based scaling
+- VPA for automatic right-sizing recommendations
+- Pod Disruption Budgets for availability during scaling
+
+See [Performance Scaling Guide](PERFORMANCE_SCALING_GUIDE.md) for complete documentation.
+
+### Legacy Horizontal Scaling
 
 ```python
 class AutoScaler:

@@ -45,6 +45,7 @@ Welcome to the **Advanced Multi-Agent Intelligence System (AMAS)** documentation
 | **[🔌 AI Providers](#-ai-providers)** | 15+ providers with bulletproof validation | **20KB** | Developers | ✅ **Complete** |
 | **[🔒 Security & Compliance](#-security--compliance)** | Enterprise-grade security (Phase 2) | **34KB** | Security Teams | ✅ **Complete** |
 | **[📊 Observability](#-observability)** | Professional monitoring stack | **25KB** | DevOps Teams | ✅ **Complete** |
+| **[⚡ Performance & Scaling](#-performance--scaling)** | Intelligent autoscaling & optimization | **35KB** | DevOps Teams | ✅ **Complete** |
 | **[👤 User Documentation](#-user-documentation)** | Complete user guides | **30KB** | End Users | ✅ **Complete** |
 | **[👨‍💻 Developer Documentation](#-developer-documentation)** | Technical implementation | **35KB** | Developers | ✅ **Complete** |
 | **[🔌 API Reference](#-api-reference)** | Complete API documentation | **30KB** | Developers | ✅ **Complete** |
@@ -180,6 +181,39 @@ Enterprise-grade observability with 50+ metrics and professional dashboards:
 
 ---
 
+## ⚡ **Performance & Scaling**
+
+### **🚀 Intelligent Autoscaling & Optimization**
+Comprehensive performance scaling infrastructure with intelligent autoscaling, caching, and resilience patterns:
+
+- **[⚡ Performance Scaling Guide](PERFORMANCE_SCALING_GUIDE.md)** - **30KB** - Complete infrastructure guide
+- **[🔧 Performance Services](services/PERFORMANCE_SERVICES.md)** - **NEW!** - Complete API reference for all performance services
+- **[🔗 Performance Scaling Integration](PERFORMANCE_SCALING_INTEGRATION.md)** - Integration patterns and examples
+- **[📊 Performance Benchmarks](performance_benchmarks.md)** - Performance metrics and benchmarks
+
+### **🎯 Key Features**
+- **📈 KEDA Autoscaling** - Multi-metric scaling (HTTP RPS, queue depth, latency, resources)
+- **🗄️ Semantic Caching** - Redis-based intelligent caching with 30%+ speed improvement
+- **🔌 Circuit Breakers** - Fail-fast patterns to prevent cascade failures
+- **🚦 Rate Limiting** - User-based quotas with sliding window algorithm
+- **🔄 Request Deduplication** - Eliminates duplicate concurrent requests
+- **💰 Cost Tracking** - Automatic cost tracking and optimization recommendations
+- **🔗 Connection Pooling** - Optimized HTTP client configurations
+- **📊 Scaling Metrics** - Tracks autoscaling decisions and effectiveness
+
+### **📚 Service Documentation**
+- **SemanticCacheService** - Intelligent caching with semantic similarity
+- **CircuitBreakerService** - Prevents cascade failures
+- **RateLimitingService** - User-based rate limiting
+- **RequestDeduplicationService** - Eliminates duplicate requests
+- **CostTrackingService** - Token usage and cost tracking
+- **ConnectionPoolService** - Optimized connection pooling
+- **ScalingMetricsService** - Autoscaling metrics tracking
+
+See [Performance Services Documentation](services/PERFORMANCE_SERVICES.md) for complete API reference.
+
+---
+
 ## 👤 **User Documentation**
 
 ### **📖 Complete User Guides**
@@ -303,11 +337,14 @@ Safe, automated deployments with canary releases and automatic rollback:
 | **🔌 AI Providers** | 1 document | **20KB** | 30+ | 15+ |
 | **🔒 Security** | 3 documents | **34KB** | 20+ | 15+ |
 | **📊 Observability** | 1 document | **25KB** | 25+ | 10+ |
+| **⚡ Performance & Scaling** | 4 documents | **35KB** | 25+ | 20+ |
 | **👤 User Guides** | 5 documents | **30KB** | 15+ | 5+ |
 | **👨‍💻 Developer** | 5 documents | **35KB** | 40+ | 20+ |
 | **🔌 API Reference** | 4 documents | **30KB** | 35+ | 10+ |
 | **🚀 Deployment** | 9 documents | **45KB** | 35+ | 25+ |
 | **📚 Total** | **40 documents** | **282KB** | **295+** | **145+** |
+| **🚀 Deployment** | 4 documents | **25KB** | 20+ | 15+ |
+| **📚 Total** | **38 documents** | **292KB** | **280+** | **135+** |
 
 </div>
 

@@ -11,11 +11,12 @@ This guide provides comprehensive instructions for deploying AMAS in a productio
 3. [Security Configuration](#security-configuration)
 4. [High Availability Setup](#high-availability-setup)
 5. [Performance Optimization](#performance-optimization)
-6. [Monitoring & Alerting](#monitoring--alerting)
-7. [Backup & Recovery](#backup--recovery)
-8. [Operational Procedures](#operational-procedures)
-9. [Troubleshooting](#troubleshooting)
-10. [Maintenance](#maintenance)
+6. [Intelligent Autoscaling](#intelligent-autoscaling)
+7. [Monitoring & Alerting](#monitoring--alerting)
+8. [Backup & Recovery](#backup--recovery)
+9. [Operational Procedures](#operational-procedures)
+10. [Troubleshooting](#troubleshooting)
+11. [Maintenance](#maintenance)
 
 ---
 
@@ -358,6 +359,203 @@ max_client_conn = 1000
 default_pool_size = 25
 reserve_pool_size = 5
 ```
+
+---
+
+## ⚡ Intelligent Autoscaling
+
+AMAS includes comprehensive intelligent autoscaling infrastructure for production workloads. This section covers KEDA-based autoscaling, semantic caching, and resilience patterns.
+
+> **📚 Complete Guide**: See [Performance Scaling Guide](../PERFORMANCE_SCALING_GUIDE.md) for comprehensive documentation.
+
+### KEDA Autoscaling Setup
+
+**Prerequisites:**
+- Kubernetes 1.20+
+- KEDA 2.0+ operator installed
+- Prometheus available for metrics
+- Redis cluster (for caching and rate limiting)
+
+**Deployment:**
+```bash
+# Apply KEDA autoscaling configuration
+kubectl apply -f k8s/scaling/keda-scaler.yaml
+
+# Verify installation
+kubectl get scaledobjects -n amas-prod
+kubectl describe scaledobject amas-orchestrator-scaler -n amas-prod
+```
+
+**Scaling Triggers:**
+- HTTP Request Rate: >15 RPS per pod (activation at 5 RPS)
+- Queue Depth: >25 queued items (activation at 10 items)
+- High Latency: P95 latency >1.0 seconds
+- Resource Pressure: CPU >70% OR memory >80%
+
+**Scaling Behavior:**
+- Min Replicas: 2 (high availability)
+- Max Replicas: 50 (safety limit)
+- Scale Up: Fast (up to 100% increase per minute, max 5 pods)
+- Scale Down: Conservative (max 10% decrease per minute, max 2 pods)
+
+### Semantic Caching
+
+Enable semantic caching for 30%+ speed improvement on repeated queries:
+
+```python
+from src.amas.services.semantic_cache_service import get_semantic_cache
+
+# Initialize semantic cache
+cache = await get_semantic_cache(
+    redis_url="redis://redis-cluster:6379/0",
+    similarity_threshold=0.85
+)
+
+# Use in agent calls
+cached = await cache.get(query, agent_id="research_agent", use_semantic=True)
+if cached:
+    return cached  # 30%+ faster than API call
+```
+
+**Requirements:**
+- Redis with TLS 1.3+ encryption
+- Authentication enabled
+- RedisVL or external vector search for similarity matching
+- Network policies restricting access
+
+### Resilience Patterns
+
+**Circuit Breakers:**
+```python
+from src.amas.services.circuit_breaker_service import get_circuit_breaker_service
+
+breaker_service = get_circuit_breaker_service()
+breaker = breaker_service.get_breaker("external_api")
+
+# Protected API call
+result = await breaker.call(external_api_function, arg1, arg2)
+```
+
+**Rate Limiting:**
+```python
+from src.amas.services.rate_limiting_service import get_rate_limiting_service
+
+rate_limiter = await get_rate_limiting_service()
+
+# Check before processing
+result = await rate_limiter.check_rate_limit(user_id="user123")
+if not result.allowed:
+    return {"error": "rate_limit_exceeded", "retry_after": result.retry_after}
+```
+
+**Request Deduplication:**
+```python
+from src.amas.services.request_deduplication_service import get_deduplication_service
+
+dedup = get_deduplication_service()
+
+# Eliminate duplicate concurrent requests
+result = await dedup.deduplicate(
+    {"query": query, "user": user_id},
+    expensive_llm_call
+)
+```
+
+### Cost Optimization
+
+Track and optimize costs automatically:
+
+```python
+from src.amas.services.cost_tracking_service import get_cost_tracking_service
+
+cost_tracker = await get_cost_tracking_service(daily_budget_usd=100.0)
+
+# Track request costs
+await cost_tracker.record_request(
+    request_id="req_123",
+    provider="openai",
+    model="gpt-4",
+    tokens_input=1000,
+    tokens_output=500,
+    latency_ms=2000,
+    success=True
+)
+
+# Get optimization recommendations
+recommendations = await cost_tracker.get_optimization_recommendations()
+```
+
+### Load Testing
+
+Run comprehensive load tests to validate scaling:
+
+```bash
+# List available scenarios
+python scripts/run_load_test.py list
+
+# Run specific test
+python scripts/run_load_test.py run research_agent_baseline
+
+# Run all scenarios
+python scripts/run_load_test.py run-all
+```
+
+**Test Scenarios:**
+- Baseline: 8 concurrent users, 120s duration
+- Stress: 15 concurrent users, linear ramp-up
+- Spike: Traffic bursts 4x normal load
+- Peak: 25 concurrent users, multi-agent workflows
+
+### Monitoring Scaling
+
+Track scaling events and effectiveness:
+
+```python
+from src.amas.services.scaling_metrics_service import get_scaling_metrics_service
+
+scaling_metrics = get_scaling_metrics_service()
+
+# Get scaling statistics
+stats = scaling_metrics.get_scaling_stats(component="orchestrator", hours=24)
+print(f"Scale ups: {stats['scale_ups']}")
+print(f"Scale downs: {stats['scale_downs']}")
+
+# Get recent events
+events = scaling_metrics.get_recent_events(component="orchestrator", limit=10)
+```
+
+**Prometheus Metrics:**
+- `amas_scaling_events_total` - Total scaling events
+- `amas_current_replicas` - Current replica count
+- `amas_scaling_duration_seconds` - Scaling operation duration
+- `amas_scaling_effectiveness` - Requests per replica
+
+### Best Practices
+
+1. **Configure Appropriate Thresholds**
+   - CPU: 60-70% for most workloads
+   - Memory: 70-80% for memory-intensive workloads
+   - Queue Depth: Based on average processing time
+
+2. **Enable Semantic Caching**
+   - Use for repeated or similar queries
+   - Configure appropriate similarity threshold (0.85 recommended)
+   - Monitor cache hit rates
+
+3. **Implement Circuit Breakers**
+   - Protect all external API calls
+   - Configure appropriate failure thresholds
+   - Monitor circuit breaker states
+
+4. **Set Up Rate Limiting**
+   - Configure per-user quotas
+   - Use sliding window algorithm
+   - Monitor rate limit violations
+
+5. **Track Costs**
+   - Monitor token usage and API costs
+   - Set daily budgets
+   - Review optimization recommendations
 
 ---
 
