@@ -1,3 +1,4 @@
+30
 name: Progressive Delivery Pipeline
 
 # =============================================================================
@@ -5,7 +6,8 @@ name: Progressive Delivery Pipeline
 # =============================================================================
 # Purpose: Safe, automated deployments with canary releases, SLO-based gates,
 #          automatic rollback, and zero-downtime delivery.
-#
+#33
+
 # Security: Only merged PRs trigger production deployment (not direct pushes).
 #           Branch protection validation ensures code review and status checks.
 #           Production environment requires manual approval.
@@ -29,7 +31,8 @@ on:
     # Trigger on PR updates for testing, and on PR close for deployment validation
     # CRITICAL: Closed PRs are validated for merge status in validate-pr-merge job
     # Note: ready_for_review removed to avoid unnecessary runs (draft PRs don't need testing)
-    types: [opened, synchronize, reopened, closed]
+85
+[opened, synchronize, reopened, closed]
     # Security: Ignore documentation-only changes to avoid unnecessary runs
     paths-ignore:
       - '**.md'
