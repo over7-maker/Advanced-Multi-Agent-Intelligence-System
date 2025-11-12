@@ -3,7 +3,12 @@
     "uid": "amas-agent-performance",
     "title": "AMAS Agent Performance Dashboard",
     "description": "Real-time monitoring of agent performance metrics including request rates, success rates, latency distributions, tool call performance, token usage, and cost tracking",
-    "tags": ["amas", "agents", "performance", "observability"],
+    "tags": [
+      "amas",
+      "agents",
+      "performance",
+      "observability"
+    ],
     "timezone": "UTC",
     "refresh": "1m",
     "schemaVersion": 39,
@@ -15,9 +20,17 @@
       "from": "now-6h",
       "to": "now"
     },
-    "timezone": "UTC",
     "timepicker": {
-      "refresh_intervals": ["10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+      "refresh_intervals": [
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
     },
     "annotations": {
       "list": [
@@ -56,7 +69,12 @@
         "title": "Agent Request Rate",
         "description": "Rate of agent requests per second, broken down by agent ID and status (success/error)",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
         "targets": [
           {
             "expr": "rate(amas_agent_requests_total[$__rate_interval])",
@@ -67,16 +85,23 @@
         "fieldConfig": {
           "defaults": {
             "unit": "reqps",
-            "color": {"mode": "palette-classic"}
+            "color": {
+              "mode": "palette-classic"
+            }
           }
         }
       },
       {
         "id": 2,
         "title": "Agent Success Rate",
-        "description": "Percentage of successful agent requests. Thresholds: <95% (red), 95-99% (yellow), ≥99% (green)",
+        "description": "Percentage of successful agent requests. Thresholds: <95% (red), 95-99% (yellow), \u226599% (green)",
         "type": "stat",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
         "targets": [
           {
             "expr": "(rate(amas_agent_requests_total{status=\"success\"}[$__rate_interval]) / rate(amas_agent_requests_total[$__rate_interval])) * 100",
@@ -89,9 +114,18 @@
             "thresholds": {
               "mode": "absolute",
               "steps": [
-                {"value": 0, "color": "red"},
-                {"value": 95, "color": "yellow"},
-                {"value": 99, "color": "green"}
+                {
+                  "value": 0,
+                  "color": "red"
+                },
+                {
+                  "value": 95,
+                  "color": "yellow"
+                },
+                {
+                  "value": 99,
+                  "color": "green"
+                }
               ]
             }
           }
@@ -100,9 +134,14 @@
       {
         "id": 3,
         "title": "Agent Latency Distribution",
-        "description": "Latency percentiles (P50, P95, P99) for agent operations. SLO target: P95 ≤ 1.5s",
+        "description": "Latency percentiles (P50, P95, P99) for agent operations. SLO target: P95 \u2264 1.5s",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        },
         "targets": [
           {
             "expr": "histogram_quantile(0.50, rate(amas_agent_duration_seconds_bucket[$__rate_interval]))",
@@ -123,16 +162,23 @@
         "fieldConfig": {
           "defaults": {
             "unit": "s",
-            "color": {"mode": "palette-classic"}
+            "color": {
+              "mode": "palette-classic"
+            }
           }
         }
       },
       {
         "id": 4,
         "title": "Tool Call Performance",
-        "description": "Tool call rates by tool name and status. SLO target: ≥99.0% success rate",
+        "description": "Tool call rates by tool name and status. SLO target: \u226599.0% success rate",
         "type": "table",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        },
         "targets": [
           {
             "expr": "sum by (tool_name, status) (rate(amas_tool_call_duration_seconds_count[$__rate_interval]))",
@@ -146,7 +192,12 @@
         "title": "Token Usage by Agent",
         "description": "Token consumption rate per second, broken down by agent ID and model name",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        },
         "targets": [
           {
             "expr": "rate(amas_tokens_used_total[$__rate_interval])",
@@ -157,16 +208,23 @@
         "fieldConfig": {
           "defaults": {
             "unit": "tokens/sec",
-            "color": {"mode": "palette-classic"}
+            "color": {
+              "mode": "palette-classic"
+            }
           }
         }
       },
       {
         "id": 6,
         "title": "Cost Tracking",
-        "description": "Total cost in USD over the last hour. SLO target: ≤$0.05 per request",
+        "description": "Total cost in USD over the last hour. SLO target: \u2264$0.05 per request",
         "type": "stat",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 24
+        },
         "targets": [
           {
             "expr": "increase(amas_cost_usd_total[1h])",
@@ -179,9 +237,18 @@
             "thresholds": {
               "mode": "absolute",
               "steps": [
-                {"value": 0, "color": "green"},
-                {"value": 10, "color": "yellow"},
-                {"value": 50, "color": "red"}
+                {
+                  "value": 0,
+                  "color": "green"
+                },
+                {
+                  "value": 10,
+                  "color": "yellow"
+                },
+                {
+                  "value": 50,
+                  "color": "red"
+                }
               ]
             }
           }
@@ -193,7 +260,12 @@
     "uid": "amas-slo-monitoring",
     "title": "AMAS SLO Monitoring Dashboard",
     "description": "Service Level Objective monitoring with error budget tracking, burn rate analysis, and compliance status visualization",
-    "tags": ["amas", "slo", "reliability", "observability"],
+    "tags": [
+      "amas",
+      "slo",
+      "reliability",
+      "observability"
+    ],
     "timezone": "UTC",
     "refresh": "1m",
     "schemaVersion": 39,
@@ -205,9 +277,17 @@
       "from": "now-6h",
       "to": "now"
     },
-    "timezone": "UTC",
     "timepicker": {
-      "refresh_intervals": ["10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+      "refresh_intervals": [
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
     },
     "annotations": {
       "list": [
@@ -245,7 +325,12 @@
         "title": "Error Budget Status",
         "description": "Remaining error budget percentage for each SLO. Critical: <5%, Warning: <25%",
         "type": "stat",
-        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
         "targets": [
           {
             "expr": "amas_slo_error_budget_remaining_percent",
@@ -259,10 +344,22 @@
             "thresholds": {
               "mode": "absolute",
               "steps": [
-                {"value": 0, "color": "red"},
-                {"value": 10, "color": "orange"},
-                {"value": 25, "color": "yellow"},
-                {"value": 50, "color": "green"}
+                {
+                  "value": 0,
+                  "color": "red"
+                },
+                {
+                  "value": 10,
+                  "color": "orange"
+                },
+                {
+                  "value": 25,
+                  "color": "yellow"
+                },
+                {
+                  "value": 50,
+                  "color": "green"
+                }
               ]
             }
           }
@@ -273,7 +370,12 @@
         "title": "Error Budget Burn Rate",
         "description": "Rate at which error budget is being consumed. Alerts trigger at 14.4x (fast) or 6.0x (slow) normal rate",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
         "targets": [
           {
             "expr": "amas_slo_error_budget_burn_rate",
@@ -284,7 +386,9 @@
         "fieldConfig": {
           "defaults": {
             "unit": "short",
-            "color": {"mode": "palette-classic"}
+            "color": {
+              "mode": "palette-classic"
+            }
           }
         }
       },
@@ -293,7 +397,12 @@
         "title": "SLO Compliance Status",
         "description": "Current SLO compliance status, current values, and remaining error budget for all defined SLOs",
         "type": "table",
-        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 8
+        },
         "targets": [
           {
             "expr": "amas_slo_compliance",
@@ -317,7 +426,12 @@
         "title": "SLO Violations Over Time",
         "description": "Rate of SLO violations over time, broken down by SLO name and severity level",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 16},
+        "gridPos": {
+          "h": 8,
+          "w": 24,
+          "x": 0,
+          "y": 16
+        },
         "targets": [
           {
             "expr": "rate(amas_slo_violations_total[$__rate_interval])",
@@ -328,7 +442,9 @@
         "fieldConfig": {
           "defaults": {
             "unit": "short",
-            "color": {"mode": "palette-classic"}
+            "color": {
+              "mode": "palette-classic"
+            }
           }
         }
       }
@@ -338,7 +454,12 @@
     "uid": "amas-resource-utilization",
     "title": "AMAS Resource Utilization",
     "description": "System resource monitoring including active agents, queue depth, memory usage, and CPU utilization",
-    "tags": ["amas", "resources", "system", "observability"],
+    "tags": [
+      "amas",
+      "resources",
+      "system",
+      "observability"
+    ],
     "timezone": "UTC",
     "refresh": "1m",
     "schemaVersion": 39,
@@ -350,9 +471,17 @@
       "from": "now-6h",
       "to": "now"
     },
-    "timezone": "UTC",
     "timepicker": {
-      "refresh_intervals": ["10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+      "refresh_intervals": [
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ]
     },
     "annotations": {
       "list": [
@@ -390,7 +519,12 @@
         "title": "Active Agents",
         "description": "Current number of active agent instances processing requests",
         "type": "stat",
-        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 0},
+        "gridPos": {
+          "h": 6,
+          "w": 8,
+          "x": 0,
+          "y": 0
+        },
         "targets": [
           {
             "expr": "amas_active_agents_current",
@@ -400,16 +534,23 @@
         "fieldConfig": {
           "defaults": {
             "unit": "short",
-            "color": {"mode": "thresholds"}
+            "color": {
+              "mode": "thresholds"
+            }
           }
         }
       },
       {
         "id": 2,
         "title": "Queue Depth",
-        "description": "Current number of pending requests in processing queue. SLO target: ≤50",
+        "description": "Current number of pending requests in processing queue. SLO target: \u226450",
         "type": "stat",
-        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 0},
+        "gridPos": {
+          "h": 6,
+          "w": 8,
+          "x": 8,
+          "y": 0
+        },
         "targets": [
           {
             "expr": "amas_queue_depth_current",
@@ -422,9 +563,18 @@
             "thresholds": {
               "mode": "absolute",
               "steps": [
-                {"value": 0, "color": "green"},
-                {"value": 25, "color": "yellow"},
-                {"value": 50, "color": "red"}
+                {
+                  "value": 0,
+                  "color": "green"
+                },
+                {
+                  "value": 25,
+                  "color": "yellow"
+                },
+                {
+                  "value": 50,
+                  "color": "red"
+                }
               ]
             }
           }
@@ -433,9 +583,14 @@
       {
         "id": 3,
         "title": "Memory Usage",
-        "description": "Process memory usage percentage. SLO target: ≤80%. Thresholds: <75% (green), 75-85% (yellow), >85% (orange), >95% (red)",
+        "description": "Process memory usage percentage. SLO target: \u226480%. Thresholds: <75% (green), 75-85% (yellow), >85% (orange), >95% (red)",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 16, "x": 0, "y": 6},
+        "gridPos": {
+          "h": 8,
+          "w": 16,
+          "x": 0,
+          "y": 6
+        },
         "targets": [
           {
             "expr": "(process_resident_memory_bytes / process_virtual_memory_max_bytes) * 100",
@@ -449,10 +604,22 @@
             "thresholds": {
               "mode": "absolute",
               "steps": [
-                {"value": 0, "color": "green"},
-                {"value": 75, "color": "yellow"},
-                {"value": 85, "color": "orange"},
-                {"value": 95, "color": "red"}
+                {
+                  "value": 0,
+                  "color": "green"
+                },
+                {
+                  "value": 75,
+                  "color": "yellow"
+                },
+                {
+                  "value": 85,
+                  "color": "orange"
+                },
+                {
+                  "value": 95,
+                  "color": "red"
+                }
               ]
             }
           }
@@ -463,7 +630,12 @@
         "title": "CPU Usage",
         "description": "Process CPU utilization percentage over time",
         "type": "timeseries",
-        "gridPos": {"h": 8, "w": 16, "x": 16, "y": 6},
+        "gridPos": {
+          "h": 8,
+          "w": 16,
+          "x": 16,
+          "y": 6
+        },
         "targets": [
           {
             "expr": "rate(process_cpu_seconds_total[$__rate_interval]) * 100",
@@ -474,7 +646,9 @@
         "fieldConfig": {
           "defaults": {
             "unit": "percent",
-            "color": {"mode": "palette-classic"}
+            "color": {
+              "mode": "palette-classic"
+            }
           }
         }
       }

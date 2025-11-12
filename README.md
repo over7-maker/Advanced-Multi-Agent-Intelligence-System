@@ -54,6 +54,11 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - See [Security Guide](docs/security/SECURITY.md) for per-integration security details, compliance information, audit log retention (365 days in immutable storage), and detailed risk analysis.
 - OpenTelemetry observability and SLO-driven reliability: Exports traces (agent task flow), metrics (RPS, latency), and logs to OTLP endpoint. SLOs defined in Prometheus via SLI: `success_rate = (requests - error_rate) / requests`, alerting via Alertmanager
 - Performance Scaling: KEDA-based autoscaling (multi-metric: HTTP RPS, queue depth, p99 latency) with cooldown windows (300s), max replica limits, and cost-aware scaling triggers. Semantic caching improves response latency by 30-60% for highly similar queries (e.g., repeated research requests) with configurable staleness tolerance. Circuit breakers use exponential backoff (initial 1s, max 30s) with jitter; retry budget limited to 3 attempts per 5-minute window. Rate limiting and cost optimization included. See [Performance Benchmarks](docs/performance_benchmarks.md) for detailed metrics and [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md) for complete documentation.
+- 100+ service/tool integrations with bulletproof security
+- **Enterprise Security:** OIDC/JWT authentication, OPA policy-as-code authorization, comprehensive audit logging with PII redaction
+- **🔍 Observability**: Distributed tracing (OpenTelemetry), SLO monitoring with error budget tracking, automatic performance regression detection
+- **📊 Operational Dashboards**: Real-time Grafana dashboards for performance and SLO status
+- **🚨 Proactive Alerting**: Real-time SLO burn rate monitoring with automated multi-channel notifications
 
 ---
 
@@ -229,7 +234,7 @@ AMAS includes a comprehensive observability framework that transforms the system
 - **📡 Distributed Tracing**: End-to-end request tracing with OpenTelemetry, exported to Jaeger/DataDog
 - **📊 SLO Monitoring**: Service Level Objectives with automatic error budget tracking
 - **📈 Real-time Dashboards**: Three operational Grafana dashboards (Agent Performance, SLO Monitoring, Resource Utilization)
-- **🚨 Automated Alerting**: Multi-channel alerts (Slack, PagerDuty, Email) with burn rate detection when SLOs are violated or error budgets depleted
+- **🚨 Proactive Alerting**: Real-time SLO burn rate monitoring with automated multi-channel notifications for violations and error budget depletion
 - **🔍 Performance Regression Detection**: Automatic detection of performance degradations
 
 ### Quick Links
