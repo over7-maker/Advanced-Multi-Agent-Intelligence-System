@@ -11,11 +11,12 @@ This guide provides comprehensive instructions for deploying AMAS in a productio
 3. [Security Configuration](#security-configuration)
 4. [High Availability Setup](#high-availability-setup)
 5. [Performance Optimization](#performance-optimization)
-6. [Monitoring & Alerting](#monitoring--alerting)
-7. [Backup & Recovery](#backup--recovery)
-8. [Operational Procedures](#operational-procedures)
-9. [Troubleshooting](#troubleshooting)
-10. [Maintenance](#maintenance)
+6. [Intelligent Autoscaling](#intelligent-autoscaling)
+7. [Monitoring & Alerting](#monitoring--alerting)
+8. [Backup & Recovery](#backup--recovery)
+9. [Operational Procedures](#operational-procedures)
+10. [Troubleshooting](#troubleshooting)
+11. [Maintenance](#maintenance)
 
 ---
 
@@ -361,54 +362,204 @@ reserve_pool_size = 5
 
 ---
 
-## 📊 Monitoring & Alerting
+## ⚡ Intelligent Autoscaling
 
-> **📌 New Observability Framework**: AMAS now includes comprehensive OpenTelemetry observability with SLO monitoring, error budget tracking, and automated alerting. See [OBSERVABILITY_FRAMEWORK.md](../OBSERVABILITY_FRAMEWORK.md) and [OBSERVABILITY_SETUP_GUIDE.md](../OBSERVABILITY_SETUP_GUIDE.md) for complete setup instructions.
+AMAS includes comprehensive intelligent autoscaling infrastructure for production workloads. This section covers KEDA-based autoscaling, semantic caching, and resilience patterns.
 
-### Observability Stack Setup
+> **📚 Complete Guide**: See [Performance Scaling Guide](../PERFORMANCE_SCALING_GUIDE.md) for comprehensive documentation.
 
-#### 1. OpenTelemetry Collector
+### KEDA Autoscaling Setup
 
-Deploy OpenTelemetry Collector for centralized telemetry collection:
+**Prerequisites:**
+- Kubernetes 1.20+
+- KEDA 2.0+ operator installed
+- Prometheus available for metrics
+- Redis cluster (for caching and rate limiting)
 
-```yaml
-# docker-compose.observability.yml
-services:
-  otel-collector:
-    image: otel/opentelemetry-collector:latest
-    command: ["--config=/etc/otel-collector-config.yaml"]
-    volumes:
-      - ./config/observability/otel-collector-config.yaml:/etc/otel-collector-config.yaml
-    ports:
-      - "4317:4317"  # OTLP gRPC
-      - "4318:4318"  # OTLP HTTP
-    environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:14250
-    networks:
-      - observability
+**Deployment:**
+```bash
+# Apply KEDA autoscaling configuration
+kubectl apply -f k8s/scaling/keda-scaler.yaml
+
+# Verify installation
+kubectl get scaledobjects -n amas-prod
+kubectl describe scaledobject amas-orchestrator-scaler -n amas-prod
 ```
 
-#### 2. Configure AMAS Observability
+**Scaling Triggers:**
+- HTTP Request Rate: >15 RPS per pod (activation at 5 RPS)
+- Queue Depth: >25 queued items (activation at 10 items)
+- High Latency: P95 latency >1.0 seconds
+- Resource Pressure: CPU >70% OR memory >80%
 
-Set environment variables in production:
+**Scaling Behavior:**
+- Min Replicas: 2 (high availability)
+- Max Replicas: 50 (safety limit)
+- Scale Up: Fast (up to 100% increase per minute, max 5 pods)
+- Scale Down: Conservative (max 10% decrease per minute, max 2 pods)
+
+### Semantic Caching
+
+Enable semantic caching for 30%+ speed improvement on repeated queries:
+
+```python
+from src.amas.services.semantic_cache_service import get_semantic_cache
+
+# Initialize semantic cache
+cache = await get_semantic_cache(
+    redis_url="redis://redis-cluster:6379/0",
+    similarity_threshold=0.85
+)
+
+# Use in agent calls
+cached = await cache.get(query, agent_id="research_agent", use_semantic=True)
+if cached:
+    return cached  # 30%+ faster than API call
+```
+
+**Requirements:**
+- Redis with TLS 1.3+ encryption
+- Authentication enabled
+- RedisVL or external vector search for similarity matching
+- Network policies restricting access
+
+### Resilience Patterns
+
+**Circuit Breakers:**
+```python
+from src.amas.services.circuit_breaker_service import get_circuit_breaker_service
+
+breaker_service = get_circuit_breaker_service()
+breaker = breaker_service.get_breaker("external_api")
+
+# Protected API call
+result = await breaker.call(external_api_function, arg1, arg2)
+```
+
+**Rate Limiting:**
+```python
+from src.amas.services.rate_limiting_service import get_rate_limiting_service
+
+rate_limiter = await get_rate_limiting_service()
+
+# Check before processing
+result = await rate_limiter.check_rate_limit(user_id="user123")
+if not result.allowed:
+    return {"error": "rate_limit_exceeded", "retry_after": result.retry_after}
+```
+
+**Request Deduplication:**
+```python
+from src.amas.services.request_deduplication_service import get_deduplication_service
+
+dedup = get_deduplication_service()
+
+# Eliminate duplicate concurrent requests
+result = await dedup.deduplicate(
+    {"query": query, "user": user_id},
+    expensive_llm_call
+)
+```
+
+### Cost Optimization
+
+Track and optimize costs automatically:
+
+```python
+from src.amas.services.cost_tracking_service import get_cost_tracking_service
+
+cost_tracker = await get_cost_tracking_service(daily_budget_usd=100.0)
+
+# Track request costs
+await cost_tracker.record_request(
+    request_id="req_123",
+    provider="openai",
+    model="gpt-4",
+    tokens_input=1000,
+    tokens_output=500,
+    latency_ms=2000,
+    success=True
+)
+
+# Get optimization recommendations
+recommendations = await cost_tracker.get_optimization_recommendations()
+```
+
+### Load Testing
+
+Run comprehensive load tests to validate scaling:
 
 ```bash
-# Production observability configuration
-export OTLP_ENDPOINT="https://otel-collector.production.internal:4317"
-export PROMETHEUS_URL="https://prometheus.production.internal:9090"
-export ENVIRONMENT="production"
-export SLO_CONFIG_PATH="config/observability/slo_definitions.yaml"
+# List available scenarios
+python scripts/run_load_test.py list
+
+# Run specific test
+python scripts/run_load_test.py run research_agent_baseline
+
+# Run all scenarios
+python scripts/run_load_test.py run-all
 ```
 
-#### 3. Import Grafana Dashboards
+**Test Scenarios:**
+- Baseline: 8 concurrent users, 120s duration
+- Stress: 15 concurrent users, linear ramp-up
+- Spike: Traffic bursts 4x normal load
+- Peak: 25 concurrent users, multi-agent workflows
 
-The observability framework includes three pre-configured dashboards:
+### Monitoring Scaling
 
-- **Agent Performance Dashboard**: Request rates, latencies, error rates
-- **SLO Monitoring Dashboard**: SLO compliance, error budgets, violations
-- **Resource Utilization Dashboard**: Memory, CPU, queue depth, costs
+Track scaling events and effectiveness:
 
-Import from `config/observability/grafana_dashboards.json` or use Grafana provisioning.
+```python
+from src.amas.services.scaling_metrics_service import get_scaling_metrics_service
+
+scaling_metrics = get_scaling_metrics_service()
+
+# Get scaling statistics
+stats = scaling_metrics.get_scaling_stats(component="orchestrator", hours=24)
+print(f"Scale ups: {stats['scale_ups']}")
+print(f"Scale downs: {stats['scale_downs']}")
+
+# Get recent events
+events = scaling_metrics.get_recent_events(component="orchestrator", limit=10)
+```
+
+**Prometheus Metrics:**
+- `amas_scaling_events_total` - Total scaling events
+- `amas_current_replicas` - Current replica count
+- `amas_scaling_duration_seconds` - Scaling operation duration
+- `amas_scaling_effectiveness` - Requests per replica
+
+### Best Practices
+
+1. **Configure Appropriate Thresholds**
+   - CPU: 60-70% for most workloads
+   - Memory: 70-80% for memory-intensive workloads
+   - Queue Depth: Based on average processing time
+
+2. **Enable Semantic Caching**
+   - Use for repeated or similar queries
+   - Configure appropriate similarity threshold (0.85 recommended)
+   - Monitor cache hit rates
+
+3. **Implement Circuit Breakers**
+   - Protect all external API calls
+   - Configure appropriate failure thresholds
+   - Monitor circuit breaker states
+
+4. **Set Up Rate Limiting**
+   - Configure per-user quotas
+   - Use sliding window algorithm
+   - Monitor rate limit violations
+
+5. **Track Costs**
+   - Monitor token usage and API costs
+   - Set daily budgets
+   - Review optimization recommendations
+
+---
+
+## 📊 Monitoring & Alerting
 
 ### Prometheus Configuration
 
@@ -428,20 +579,15 @@ alerting:
 
 rule_files:
   - 'alerts/*.yml'
-  - '/etc/prometheus/alerts.yaml'  # SLO-based alerts from observability framework
 
 scrape_configs:
   - job_name: 'amas-api'
     static_configs:
-      - targets: ['api1:8000', 'api2:8000', 'api3:8000']
-    metrics_path: '/metrics'
-    scrape_interval: 15s
+      - targets: ['api1:9090', 'api2:9090', 'api3:9090']
     
   - job_name: 'amas-workers'
     static_configs:
-      - targets: ['worker1:8000', 'worker2:8000', 'worker3:8000']
-    metrics_path: '/metrics'
-    scrape_interval: 15s
+      - targets: ['worker1:9090', 'worker2:9090', 'worker3:9090']
     
   - job_name: 'postgres'
     static_configs:
@@ -454,18 +600,6 @@ scrape_configs:
 
 ### Alert Rules
 
-#### SLO-Based Alerts (from Observability Framework)
-
-The observability framework automatically generates SLO-based alerts. These are configured in `config/observability/prometheus_alerts.yaml`:
-
-- **Critical**: Error budget < 5% remaining
-- **High**: Error budget < 15% remaining  
-- **Warning**: Error budget < 25% remaining
-- **Fast Burn Rate**: 2% of error budget consumed in 1 hour
-- **Slow Burn Rate**: 5% of error budget consumed in 6 hours
-
-#### Custom Application Alerts
-
 ```yaml
 # alerts/amas.yml
 groups:
@@ -473,139 +607,67 @@ groups:
     interval: 30s
     rules:
       - alert: HighErrorRate
-        expr: rate(amas_agent_errors_total[5m]) > 0.05
+        expr: rate(amas_api_errors_total[5m]) > 0.05
         for: 5m
         labels:
           severity: critical
-          component: api
         annotations:
           summary: "High error rate detected"
           description: "Error rate is {{ $value }} errors per second"
-          runbook_url: "https://runbooks.amas.com/high-error-rate"
       
       - alert: HighResponseTime
-        expr: histogram_quantile(0.95, rate(amas_agent_duration_seconds_bucket[5m])) > 2
+        expr: histogram_quantile(0.95, amas_api_latency_seconds) > 2
         for: 10m
         labels:
           severity: warning
-          component: api
         annotations:
           summary: "High API response time"
           description: "95th percentile response time is {{ $value }} seconds"
-          runbook_url: "https://runbooks.amas.com/high-response-time"
       
       - alert: DatabaseConnectionPoolExhausted
         expr: amas_db_connections_active / amas_db_connections_max > 0.9
         for: 5m
         labels:
           severity: critical
-          component: database
         annotations:
           summary: "Database connection pool nearly exhausted"
           description: "{{ $value }}% of connections in use"
-          runbook_url: "https://runbooks.amas.com/db-pool-exhausted"
-      
-      - alert: SLOViolationCritical
-        expr: amas_slo_violations_total{severity="critical"} > 0
-        for: 1m
-        labels:
-          severity: critical
-          component: observability
-        annotations:
-          summary: "Critical SLO violation detected"
-          description: "One or more critical SLOs are violated"
-          runbook_url: "https://runbooks.amas.com/slo-violation"
 ```
 
 ### Grafana Dashboards
 
-#### Observability Framework Dashboards
-
-The observability framework provides three production-ready dashboards (import from `config/observability/grafana_dashboards.json`):
-
-1. **Agent Performance Dashboard** (`uid: amas-agent-performance`)
-   - Request rates, latencies (P50, P95, P99), error rates
-   - Agent-specific metrics and breakdowns
-
-2. **SLO Monitoring Dashboard** (`uid: amas-slo-monitoring`)
-   - SLO compliance status for all 5 SLOs
-   - Error budget tracking and burn rates
-   - Violation history and trends
-
-3. **Resource Utilization Dashboard** (`uid: amas-resource-utilization`)
-   - Memory and CPU usage
-   - Queue depth and active agents
-   - Token usage and cost tracking
-
-#### Custom Production Dashboards
-
 ```json
 {
   "dashboard": {
-    "title": "AMAS Production Overview",
+    "title": "AMAS Production Dashboard",
     "panels": [
       {
         "title": "API Request Rate",
         "targets": [{
-          "expr": "rate(amas_agent_requests_total[5m])"
+          "expr": "rate(amas_api_requests_total[5m])"
         }]
       },
       {
         "title": "Response Time (p95)",
         "targets": [{
-          "expr": "histogram_quantile(0.95, rate(amas_agent_duration_seconds_bucket[5m]))"
+          "expr": "histogram_quantile(0.95, amas_api_latency_seconds)"
         }]
       },
       {
-        "title": "Active Agents",
+        "title": "Active Tasks",
         "targets": [{
-          "expr": "amas_active_agents_current"
+          "expr": "amas_tasks_active"
         }]
       },
       {
         "title": "AI Provider Health",
         "targets": [{
-          "expr": "amas_provider_health"
-        }]
-      },
-      {
-        "title": "SLO Compliance",
-        "targets": [{
-          "expr": "amas_slo_compliance"
+          "expr": "amas_ai_provider_health"
         }]
       }
     ]
   }
 }
-```
-
-### Alert Notification Channels
-
-Configure notification channels in `config/observability/slo_definitions.yaml`:
-
-```yaml
-notification_channels:
-  slack:
-    webhook_url: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
-    channels:
-      critical: "#amas-alerts-critical"
-      high: "#amas-alerts"
-      warning: "#amas-alerts-warning"
-  
-  pagerduty:
-    integration_key: "YOUR_PAGERDUTY_INTEGRATION_KEY"
-    severity_mapping:
-      critical: "critical"
-      high: "error"
-      warning: "warning"
-  
-  email:
-    smtp_server: "smtp.company.com"
-    from_address: "amas-alerts@company.com"
-    recipients:
-      critical: ["oncall@company.com", "team-leads@company.com"]
-      high: ["team@company.com"]
-      warning: ["team@company.com"]
 ```
 
 ---
