@@ -43,13 +43,268 @@
 - For Kubernetes, use `kubectl create secret` (see `k8s/foundation/` docs)
 
 ## Production/Staging Deployment
-1. Foundation Layer: `kubectl apply -f k8s/foundation/` (deploys Postgres, Redis, OPA, Prometheus)
-2. Intelligence Layer: `kubectl apply -f k8s/intelligence/` (deploys agent orchestrator, specialists, frontend)
-   - Ensure foundation pods are healthy before moving to intelligence layer.
-3. Cloud Load Balancer Setup:
-   - Use GKE/EKS/AKS; external DNS and TLS (see `docs/infra/load_balancer_setup.md`)
-   - SSL: Use cert-manager for Let's Encrypt or upload managed certificate
-   - Allow ingress from trusted IPs only
+
+### Deployment Steps
+
+#### 1. Foundation Layer
+Deploy foundation services: `kubectl apply -f k8s/foundation/` (deploys Postgres, Redis, OPA, Prometheus)
+
+**Verify foundation services are ready**:
+```bash
+# Wait for PostgreSQL to be ready
+kubectl wait --for=condition=Ready pod -l app=postgres --namespace=amas --timeout=300s
+
+# Wait for Redis to be ready
+kubectl wait --for=condition=Ready pod -l app=redis --namespace=amas --timeout=300s
+
+# Wait for Neo4j to be ready (if deployed)
+kubectl wait --for=condition=Ready pod -l app=neo4j --namespace=amas --timeout=300s || echo "Neo4j not deployed"
+```
+
+#### 2. Intelligence Layer
+Deploy intelligence components: `kubectl apply -f k8s/intelligence/` (deploys agent orchestrator, specialists, frontend)
+
+**Prerequisite**: Ensure foundation pods are healthy before moving to intelligence layer (use verification commands above).
+
+#### 3. Orchestration System
+Deploy the Hierarchical Agent Orchestration System
+
+**Recommended**: Use deployment script for automated deployment:
+```bash
+./scripts/deploy-orchestration.sh
+```
+
+**Note**: The deployment script is idempotent and includes error handling with rollback on failure. Verify script logs and exit codes before proceeding. If the script fails midway, check logs and manually rollback if needed:
+```bash
+# Check script exit code
+echo $?
+
+# View script logs
+./scripts/deploy-orchestration.sh 2>&1 | tee deployment.log
+
+# Manual rollback if needed
+kubectl rollout undo deployment/amas-orchestration -n amas
+```
+
+**Manual Alternative**: Step-by-step deployment:
+- See [Orchestration Deployment Guide](docs/deployment/ORCHESTRATION_DEPLOYMENT.md) for detailed instructions
+- **Prerequisites**: 
+  - **Namespace Setup**: Create namespace using idempotent manifest:
+    ```bash
+    # Use namespace manifest for idempotent creation
+    kubectl apply -f k8s/amas-namespace.yaml
+    ```
+    **Warning**: Use unique, environment-specific namespace names in multi-tenant clusters. Always pair namespace creation with RBAC policies limiting access to authorized users.
+    
+    **RBAC Example**: Apply RBAC policies to restrict namespace access:
+    ```yaml
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: amas-admin
+      namespace: amas-prod
+    roleRef:
+      kind: Role
+      name: amas-admin-role
+      apiGroup: rbac.authorization.k8s.io
+    subjects:
+    - kind: User
+      name: ops-team
+      apiGroup: rbac.authorization.k8s.io
+    ```
+    See: `k8s/rbac/amas-rbac.yaml` for complete RBAC configuration.
+  - **Security Hardening**: For production, apply ResourceQuota and NetworkPolicy to enforce resource limits and restrict pod-to-pod communication:
+    ```bash
+    # Apply resource quota to limit resource consumption in the amas namespace
+    kubectl apply -f k8s/amas-namespace-quota.yaml -n amas
+    # Verify quota applied
+    kubectl get resourcequota -n amas
+    ```
+    **ResourceQuota Example**:
+    ```yaml
+    apiVersion: v1
+    kind: ResourceQuota
+    metadata:
+      name: amas-quota
+      namespace: amas-prod
+    spec:
+      hard:
+        requests.cpu: "4"
+        requests.memory: 8Gi
+        limits.cpu: "8"
+        limits.memory: 16Gi
+        persistentvolumeclaims: "10"
+        pods: "50"
+    ```
+    **Note**: Calibrate quotas based on load testing and expected workload.
+    
+    ```bash
+    # Enforce network isolation to restrict pod-to-pod communication
+    kubectl apply -f k8s/amas-network-policy.yaml -n amas
+    # Verify network policy applied
+    kubectl get networkpolicy -n amas
+    ```
+    **NetworkPolicy Example** - Default deny-all with allow-list:
+    ```yaml
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      name: deny-all
+      namespace: amas-prod
+    spec:
+      podSelector: {}
+      policyTypes:
+      - Ingress
+      - Egress
+    ```
+    Then apply allow-list policies for required traffic:
+    ```yaml
+    apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    metadata:
+      name: allow-orchestration-internal
+      namespace: amas-prod
+    spec:
+      podSelector:
+        matchLabels:
+          component: orchestration
+      policyTypes:
+      - Ingress
+      - Egress
+      ingress:
+      - from:
+        - podSelector:
+            matchLabels:
+              app: amas
+        ports:
+        - protocol: TCP
+          port: 8000
+      egress:
+      - to:
+        - podSelector:
+            matchLabels:
+              app: amas
+        ports:
+        - protocol: TCP
+          port: 8000
+      - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+        ports:
+        - protocol: TCP
+          port: 53
+    ```
+    See: `k8s/production/security/hardening-example.yaml` for complete security hardening manifests.
+  - **Best Practice**: Preview changes before applying:
+    ```bash
+    kubectl diff -f k8s/orchestration-configmap.yaml -n amas
+    kubectl diff -f k8s/orchestration-deployment.yaml -n amas
+    kubectl diff -f k8s/orchestration-hpa.yaml -n amas
+    ```
+- **Deploy configuration**: `kubectl apply -f k8s/orchestration-configmap.yaml -n amas`
+- **Deploy service**: `kubectl apply -f k8s/orchestration-deployment.yaml -n amas`
+- **Deploy autoscaling**: `kubectl apply -f k8s/orchestration-hpa.yaml -n amas`
+- **Verify deployment**: 
+  ```bash
+  # Check pod readiness (wait for ready condition)
+  kubectl wait --for=condition=ready pod -l component=orchestration -n amas --timeout=120s
+  
+  # Verify pods are running
+  kubectl get pods -l component=orchestration -n amas
+  
+  # Verify resource requests/limits for HPA
+  kubectl describe deployment amas-orchestration -n amas | grep -A5 Resources
+  ```
+  **Note**: Ensure the deployment defines CPU/memory requests for HPA to work effectively.
+  
+  **Performance Tip**: For better scaling, consider using custom metrics (e.g., agent task queue length via Prometheus) in orchestration-hpa.yaml. Example:
+  ```yaml
+  metrics:
+  - type: Pods
+    pods:
+      metric:
+        name: task_queue_length
+      target:
+        type: AverageValue
+        averageValue: 100
+  ```
+
+- **Rollback** (if needed):
+  ```bash
+  kubectl rollout undo deployment/amas-orchestration -n amas
+  ```
+
+#### 4. Cloud Load Balancer Setup
+- Use GKE/EKS/AKS; external DNS and TLS (see `docs/infra/load_balancer_setup.md`)
+- SSL: Use cert-manager for Let's Encrypt or upload managed certificate
+- **IP Whitelisting**: Restrict ingress to trusted CIDR ranges (e.g., corporate network or API gateways) using firewall rules or Ingress annotations:
+  ```yaml
+  annotations:
+    nginx.ingress.kubernetes.io/whitelist-source-range: 192.168.1.0/24,203.0.113.0/24
+  ```
+  Or see `k8s/ingress-restrictions.yaml` for IP whitelisting example.
+- **Best Practice**: Enable mTLS between orchestrator and agent pods using service mesh (e.g., Istio, Linkerd) in production environments for encrypted internal communication.
+
+### Environment-Specific Deployment
+
+**Best Practice**: Use Kustomize or Helm with overlays for environment-specific settings:
+```bash
+# Production
+kustomize build environments/prod | kubectl apply -f -
+
+# Staging
+kustomize build environments/staging | kubectl apply -f -
+
+# Development
+kustomize build environments/dev | kubectl apply -f -
+```
+
+### Environment Matrix
+
+| Step               | Staging       | Production     |
+|--------------------|---------------|----------------|
+| Namespace          | `amas-staging`| `amas-prod`    |
+| TLS Certs          | Self-signed   | Let's Encrypt  |
+| NetworkPolicy      | Optional      | Enforced       |
+| ResourceQuota      | Optional      | Required       |
+| RBAC               | Basic         | Strict         |
+| mTLS               | Optional      | Required       |
+| Monitoring         | Basic         | Full (SLOs)    |
+
+**Compatibility**: Tested with Kubernetes 1.25–1.28. For Kubernetes 1.29+, verify API compatibility.
+
+### Rollback & Drift Detection
+
+**Rollback Procedure**:
+```bash
+# Rollback to previous deployment revision
+kubectl rollout undo deployment/amas-orchestration -n amas
+
+# Rollback to specific revision
+kubectl rollout undo deployment/amas-orchestration -n amas --to-revision=2
+
+# View rollout history
+kubectl rollout history deployment/amas-orchestration -n amas
+```
+
+**Drift Detection** (GitOps):
+```bash
+# Preview changes before applying
+kubectl diff -f k8s/orchestration-deployment.yaml -n amas
+
+# If using GitOps (ArgoCD/Flux):
+# Revert the commit in your k8s-config repo and allow ArgoCD to sync
+git revert <commit-hash>
+git push origin main
+# ArgoCD will automatically reconcile
+```
+
+**Manual Rollback**:
+```bash
+# Apply previous working version
+kubectl apply -f k8s/previous-working-version/orchestration-deployment.yaml -n amas
+```
 
 ## Kubernetes & Scaling
 - **Minimum:** CPUs/memory in each deployment YAML (see `k8s/foundation/`).
@@ -65,9 +320,17 @@
 ## Security Practices
 - Token rotation for OIDC/JWT (expires in 15min, refresh tokens enabled by default)
 - All .env and k8s secrets encrypted at rest, loaded via secret manager/injected at pod runtime
+- **Pod Security**: Orchestration pods run with:
+  - `runAsNonRoot: true` and `runAsUser: 1001`
+  - `allowPrivilegeEscalation: false`
+  - Dropped capabilities (ALL)
+  - Read-only root filesystem where possible
+- **Secret Management**: All secrets referenced via Kubernetes Secret objects, never in ConfigMap
+- **Internal Communication**: Enable mTLS via service mesh (Istio/Linkerd) for encrypted pod-to-pod communication
 - Retention Policy: All logs and traces kept for at least 30 days and auto-rotated no later than 90 days.
 - Alert tokens/URLs for Slack/email only set via k8s Secret or Vault
 - All endpoints subject to OPA policy (deny by default)
+- **RBAC**: Ensure namespace creation is paired with RBAC policies limiting access to authorized users
 
 ## Monitoring, Alerts, and Troubleshooting
 - Prometheus + Grafana dashboards for `agent-latency`, `task-throughput`, `error-rates`
@@ -85,11 +348,30 @@
 
 ## Validation Steps
 - After each deployment phase:
-   - Run `kubectl get pods` and check readiness
-   - Validate UI at http://loadbalancer-ip:3000
-   - Check logs in Grafana and Prometheus for errors or unhealthy metrics
-   - Confirm agent orchestrator queue is draining as expected
-   - Run a test workflow from the UI and verify expected results with end-to-end traces
+  - Run `kubectl get pods` and check readiness
+  - **Validate UI**: Access via HTTPS at your configured domain (e.g., `https://your-domain.com`)
+    - **Note**: For internal testing only, port 3000 may be exposed via NodePort or port-forwarding:
+      ```bash
+      kubectl port-forward svc/amas 3000:3000 -n amas
+      ```
+      **Security**: Never expose port 3000 publicly without TLS. Do not expose publicly.
+  - Check logs in Grafana and Prometheus for errors or unhealthy metrics
+  - Confirm agent orchestrator queue is draining as expected
+  - **Orchestration System**: Validate orchestration deployment:
+    - Check orchestration pods: `kubectl get pods -l component=orchestration -n amas`
+    - Verify health: `kubectl exec -n amas deployment/amas-orchestration -- curl -s http://localhost:8000/health/orchestration`
+      - **Note**: Health endpoints are for internal cluster validation only and should not be exposed externally without authentication
+    - Check metrics: `kubectl port-forward svc/amas-orchestration 9090:9090 -n amas`
+    - Test task decomposition: See [Orchestration Deployment Guide](docs/deployment/ORCHESTRATION_DEPLOYMENT.md#validation--testing)
+  - **Performance Validation**:
+    - Submit 50 test workflows and monitor queue latency in Prometheus
+    - Verify HPA scales pods: `kubectl get hpa amas-orchestration-hpa -n amas`
+    - Check average response time < 500ms under load
+    - Monitor message queue depth: `kubectl exec -n amas deployment/amas-orchestration -- curl -s http://localhost:9090/metrics | grep orchestration_message_queue_depth`
+  - **End-to-End Testing**:
+    - **Prerequisite**: Ensure OpenTelemetry instrumentation is enabled and trace context headers (e.g., `traceparent`) are propagated across services
+    - Run a test workflow from the UI and verify expected results with end-to-end traces
+    - Verify trace correlation across orchestration components in Grafana or your tracing backend
 
 ## Contact & Support
 - Issues: [GitHub Issues](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues)
