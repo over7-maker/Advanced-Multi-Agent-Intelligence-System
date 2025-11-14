@@ -19,14 +19,15 @@ Welcome to the AMAS Developer Guide! This comprehensive documentation will help 
 5. [Core Components](#core-components)
 6. [Agent Development](#agent-development)
 7. [API Development](#api-development)
-8. [Testing](#testing)
-9. [Code Style Guide](#code-style-guide)
-10. [Debugging](#debugging)
-11. [Performance Optimization](#performance-optimization)
-12. [Security Considerations](#security-considerations)
-13. [Phase 2 Integration Guide](PHASE_2_INTEGRATION_GUIDE.md)** - Use Phase 2 components in external projects
-14. [Phase 4 Integration Guide](#phase-4-integration-guide)
-14. [Contributing](#contributing)
+8. [Performance & Scaling Services](#performance--scaling-services)
+9. [Testing](#testing)
+10. [Code Style Guide](#code-style-guide)
+11. [Debugging](#debugging)
+12. [Performance Optimization](#performance-optimization)
+13. [Security Considerations](#security-considerations)
+14. [Phase 2 Integration Guide](PHASE_2_INTEGRATION_GUIDE.md)** - Use Phase 2 components in external projects
+15. [Phase 4 Integration Guide](#phase-4-integration-guide)
+16. [Contributing](#contributing)
 
 ---
 
@@ -1599,6 +1600,125 @@ rate_limiter = RateLimiter(requests_per_minute=100)
 async def protected_endpoint():
     """Rate-limited protected endpoint"""
     return {"message": "Protected data"}
+```
+
+---
+
+## ⚡ Performance & Scaling Services
+
+AMAS includes comprehensive performance, scaling, and resilience services. These services are available through the `amas.services` module.
+
+### Available Services
+
+**Performance Services:**
+- `SemanticCacheService` - Intelligent Redis-based caching with semantic similarity
+- `ConnectionPoolService` - Optimized HTTP client connection pooling
+- `RequestDeduplicationService` - Eliminates duplicate concurrent requests
+
+**Resilience Services:**
+- `CircuitBreakerService` - Prevents cascade failures in external calls
+- `RateLimitingService` - User-based rate limiting with sliding window
+
+**Cost & Monitoring Services:**
+- `CostTrackingService` - Tracks token usage and API costs
+- `ScalingMetricsService` - Tracks autoscaling decisions and effectiveness
+
+### Quick Start
+
+```python
+from amas.services import (
+    get_semantic_cache,
+    get_circuit_breaker_service,
+    get_rate_limiting_service,
+    get_deduplication_service,
+    get_cost_tracking_service,
+    get_connection_pool_service,
+)
+
+# Initialize services (singleton pattern)
+cache = get_semantic_cache()
+breaker = get_circuit_breaker_service()
+rate_limiter = get_rate_limiting_service()
+dedup = get_deduplication_service()
+cost_tracker = get_cost_tracking_service()
+pool = get_connection_pool_service()
+```
+
+### Integration Example
+
+```python
+from amas.services import (
+    get_semantic_cache,
+    get_circuit_breaker_service,
+    get_rate_limiting_service,
+    get_deduplication_service,
+    get_cost_tracking_service,
+)
+
+async def optimized_agent_call(user_id: str, query: str):
+    """Example of using all performance services together."""
+    
+    # 1. Rate limiting
+    rate_limiter = get_rate_limiting_service()
+    limit_result = await rate_limiter.check_limit(user_id, "api_calls", 100, 60)
+    if not limit_result.allowed:
+        raise RateLimitExceeded(f"Retry after {limit_result.retry_after}s")
+    
+    # 2. Request deduplication
+    dedup = get_deduplication_service()
+    async with dedup.deduplicate(f"query_{hash(query)}") as result:
+        if result.is_duplicate:
+            return await result.wait()  # Wait for duplicate request
+        
+        # 3. Semantic cache
+        cache = get_semantic_cache()
+        cached = await cache.get_similar(query, threshold=0.85)
+        if cached:
+            return cached[0]["value"]
+        
+        # 4. Circuit breaker
+        breaker = get_circuit_breaker_service()
+        async with breaker.circuit("ai_provider") as cb:
+            try:
+                # Make API call
+                response = await ai_provider_call(query)
+                
+                # 5. Track cost
+                cost_tracker = get_cost_tracking_service()
+                await cost_tracker.track_request(
+                    user_id, "openai", "gpt-4",
+                    input_tokens=response.input_tokens,
+                    output_tokens=response.output_tokens
+                )
+                
+                # 6. Cache result
+                await cache.set(f"query_{hash(query)}", response.data)
+                
+                cb.record_success()
+                result.set_result(response.data)
+                return response.data
+            except Exception as e:
+                cb.record_failure()
+                raise
+```
+
+### Service Documentation
+
+For complete documentation on all services, see:
+- [Performance Services Documentation](../services/PERFORMANCE_SERVICES.md) - Complete API reference
+- [Performance Scaling Integration](../PERFORMANCE_SCALING_INTEGRATION.md) - Integration patterns
+- [Performance Scaling Guide](../PERFORMANCE_SCALING_GUIDE.md) - Infrastructure guide
+
+### Testing Services
+
+All services have comprehensive test coverage:
+
+```bash
+# Run resilience pattern tests
+pytest tests/performance/test_resilience_patterns.py -v
+
+# Run load tests
+python scripts/run_load_test.py --scenario baseline
 ```
 
 ## Database Schema

@@ -67,6 +67,7 @@ click==8.1.7
 rich==13.9.4
 tqdm==4.67.1
 colorama==0.4.6
+jsonschema==4.23.0
 
 # Retry/backoff utilities
 tenacity==8.5.0
@@ -106,3 +107,15 @@ dvc[oss]==3.0.0
 
 # Additional Security Dependencies
 pycryptodome==3.21.0
+
+# OpenTelemetry for Observability
+opentelemetry-api==1.21.0
+opentelemetry-sdk==1.21.0
+opentelemetry-instrumentation-fastapi==0.42b0
+opentelemetry-instrumentation-httpx==0.42b0
+opentelemetry-instrumentation-redis==0.42b0
+opentelemetry-instrumentation-sqlalchemy==0.42b0
+opentelemetry-exporter-otlp-proto-grpc==1.21.0
+
+# JSON Schema validation for agent contracts
+jsonschema==4.20.0

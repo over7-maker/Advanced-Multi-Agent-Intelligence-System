@@ -1,0 +1,73 @@
+{
+  "name": "AMAS Development Environment",
+  "version": "0.1.0",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.11-bullseye",
+  "runArgs": [
+    "--memory=4g",
+    "--cpus=2"
+  ],
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.isort",
+        "charliermarsh.ruff",
+        "redhat.vscode-yaml",
+        "github.vscode-pull-request-github"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/home/vscode/venv/bin/python",
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit",
+            "source.fixAll.ruff": "explicit"
+          }
+        },
+        "python.linting.enabled": true,
+        "ruff.enable": true
+      }
+    }
+  },
+
+  "postCreateCommand": "echo 'Running postCreate setup...' && if test -f .devcontainer/setup.sh; then chmod +x .devcontainer/setup.sh && timeout 300 .devcontainer/setup.sh postCreate; else echo 'Error: .devcontainer/setup.sh not found'; exit 1; fi",
+  "remoteUser": "vscode",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "mounts": [
+    "source=amas-pip-cache,target=/home/vscode/.cache/pip,type=volume"
+  ],
+  "onCreateCommand": "echo 'Running onCreate setup...' && if test -f .devcontainer/setup.sh; then chmod +x .devcontainer/setup.sh && timeout 300 .devcontainer/setup.sh onCreate; else echo 'Warning: setup.sh not found, continuing...'; fi",
+  "updateContentCommand": "echo 'Running updateContent setup...' && if test -f .devcontainer/setup.sh; then chmod +x .devcontainer/setup.sh && timeout 300 .devcontainer/setup.sh updateContent; else echo 'Error: .devcontainer/setup.sh not found'; exit 1; fi",
+  "initializeCommand": "python3 --version",
+  "forwardPorts": [
+    8000,
+    8080
+  ],
+
+  "portsAttributes": {
+    "8000": {
+      "label": "FastAPI",
+      "onAutoForward": "notify"
+    },
+    "8080": {
+      "label": "Dashboard",
+      "onAutoForward": "silent"
+    }
+  },
+
+  "remoteEnv": {
+    "AMAS_ENV": "development",
+    "PYTHONPATH": "/workspaces/${localWorkspaceFolderBasename}"
+  },
+  "containerEnv": {
+    "DEVCONTAINER": "true",
+    "PYTHONUNBUFFERED": "1"
+  },
+  
+  "postStartCommand": "echo 'Dev container ready. Services on ports 8000 (FastAPI) and 8080 (Dashboard).'"
+}

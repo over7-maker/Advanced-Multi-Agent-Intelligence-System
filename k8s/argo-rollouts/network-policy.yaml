@@ -1,0 +1,138 @@
+# Network Policies for Progressive Delivery Pipeline
+# Restricts network traffic to ensure security and proper isolation
+
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: amas-orchestrator-network-policy
+  namespace: amas-prod
+  labels:
+    app: amas-orchestrator
+    component: networking
+spec:
+  podSelector:
+    matchLabels:
+      app: amas-orchestrator
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Allow traffic from NGINX Ingress Controller
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8000
+    - protocol: TCP
+      port: 8080
+  
+  # Allow traffic from monitoring namespace
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8080  # Metrics port
+  
+  # Allow traffic from same namespace (for service-to-service communication)
+  - from:
+    - podSelector:
+        matchLabels:
+          app: amas-orchestrator
+  
+  egress:
+  # Allow DNS resolution
+  - to:
+    - namespaceSelector: {}
+    ports:
+    - protocol: UDP
+      port: 53
+  
+  # Allow HTTPS to external registries and APIs
+  - to: []
+    ports:
+    - protocol: TCP
+      port: 443
+  
+  # Allow HTTP to internal services
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090  # Prometheus
+    - protocol: TCP
+      port: 4317  # OTLP
+  
+  # Allow database connections
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: amas-prod
+    ports:
+    - protocol: TCP
+      port: 5432  # PostgreSQL
+    - protocol: TCP
+      port: 6379  # Redis
+
+---
+# Network Policy for canary pods (more restrictive)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: amas-orchestrator-canary-network-policy
+  namespace: amas-prod
+  labels:
+    app: amas-orchestrator
+    component: networking
+    canary: "true"
+spec:
+  podSelector:
+    matchLabels:
+      app: amas-orchestrator
+      rollouts-pod-template-hash: ""  # Matches canary pods
+  policyTypes:
+  - Ingress
+  - Egress
+  
+  ingress:
+  # Only allow traffic from ingress controller (canary traffic)
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8000
+  
+  # Allow metrics scraping
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 8080
+  
+  egress:
+  # Allow DNS
+  - to: []
+    ports:
+    - protocol: UDP
+      port: 53
+  
+  # Allow metrics submission
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+    ports:
+    - protocol: TCP
+      port: 9090
+    - protocol: TCP
+      port: 4317
