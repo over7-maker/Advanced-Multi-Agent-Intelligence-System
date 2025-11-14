@@ -1,8 +1,6 @@
 name: Progressive Delivery Pipeline
 
-# =============================================================================
-# PROGRESSIVE DELIVERY PIPELINE WORKFLOW
-# =============================================================================
+# Section: Workflow Overview
 # Purpose: Safe, automated deployments with canary releases, SLO-based gates,
 #          automatic rollback, and zero-downtime delivery.
 #
@@ -16,26 +14,34 @@ name: Progressive Delivery Pipeline
 #   - Manual dispatch: Deploy with environment/strategy selection
 #
 # See docs/deployment/PROGRESSIVE_DELIVERY.md for detailed documentation.
-# =============================================================================
+
 on:
-  # Production deployment: Only trigger on merged PRs to main (not direct pushes)
+  # Section: Pull Request Events
+  # Important: Deployment only proceeds if merged PR is confirmed via validate-pr-merge
   # Security: Ensures code review and branch protection are enforced
-  # PR testing: Build and test on PR updates (doesn't deploy)
   # Note: We use pull_request.closed with merge validation instead of push to main
-  # because it allows us to validate PR merge status explicitly before deployment
+  #       because it allows us to validate PR merge status explicitly before deployment
   pull_request:
     branches:
       - main  # Only main branch for production safety
     # Trigger on PR updates for testing, and on PR close for deployment validation
-    # CRITICAL: Closed PRs are validated for merge status in validate-pr-merge job
     types: [opened, synchronize, reopened, closed]
-    # Security: Ignore documentation-only changes to avoid unnecessary runs
+    # Performance: Skip runs for documentation-only changes
     paths-ignore:
       - '**.md'
       - 'docs/**'
-      - '.github/**'
-      - '!**.yml'  # But still trigger on workflow file changes
-      - '!**.yaml'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE/**'
+    # Security: Still trigger on workflow file changes (override ignore)
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - '.github/workflows/**'
+      - 'k8s/**'
+      - 'scripts/**'
+      - 'Dockerfile'
+      - 'requirements.txt'
+  
   workflow_dispatch:
     inputs:
       environment:
@@ -72,46 +78,34 @@ on:
         default: 'ghcr.io'
         type: string
 
-# =============================================================================
-# CONCURRENCY CONTROL
-# =============================================================================
-# Prevents multiple deployments from running simultaneously on the same branch
+# Section: Concurrency Control
+# Performance: Cancel outdated PR runs to save resources
 # Security: Prevents race conditions and conflicting deployments
-# =============================================================================
 concurrency:
-  group: progressive-delivery-${{ github.ref }}
-  cancel-in-progress: false  # Don't cancel deployments in progress (safety)
+  group: progressive-delivery-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}  # Cancel outdated PR runs
 
-# =============================================================================
-# WORKFLOW-LEVEL PERMISSIONS
-# =============================================================================
-# Minimal permissions following principle of least privilege
-# Individual jobs can override if needed
-# Security: Explicitly set permissions to minimum required
-# =============================================================================
+# Section: Workflow Permissions
+# Security: Minimal permissions following principle of least privilege
+# Individual jobs can escalate if needed with job-level permissions
 permissions:
-  contents: read      # Read repository contents (for checkout)
-  packages: write     # Push container images to GHCR
+  contents: read       # Read repository contents (for checkout)
+  packages: write      # Push container images to GHCR
   security-events: write  # Upload security scan results (SARIF)
-  actions: read       # Read workflow status (for job dependencies)
-  deployments: write  # Create deployment status (for progressive delivery tracking)
-  checks: write       # Update check status (for deployment gates)
+  actions: read        # Read workflow status (for job dependencies)
+  deployments: write   # Create deployment status (for progressive delivery tracking)
+  checks: write        # Update check status (for deployment gates)
+  pull-requests: read  # Read PR status for merge validation
 
-# =============================================================================
-# WORKFLOW DEFAULTS
-# =============================================================================
-# Set default shell and timeout for all jobs
+# Section: Workflow Defaults
 # Security: Use bash explicitly to avoid shell injection risks
 # Performance: Set reasonable timeouts to prevent resource exhaustion
-# =============================================================================
 defaults:
   run:
     shell: bash
-    timeout-minutes: 10
 
-# =============================================================================
-# GLOBAL ENVIRONMENT VARIABLES (Non-sensitive)
-# =============================================================================
+# Section: Global Environment Variables
+# Note: Sensitive values (REGISTRY_PASSWORD) are defined at job-level to limit exposure
 env:
   PYTHON_VERSION: '3.11'
   DOCKER_REGISTRY: ${{ github.event.inputs.docker_registry || 'ghcr.io' }}
@@ -120,27 +114,15 @@ env:
   DOCKER_BUILDKIT: 1
   BUILDKIT_INLINE_CACHE: 1
 
-# =============================================================================
-# JOBS DEFINITION
-# =============================================================================
-# Phases: 0=Input Validation, 1=Build & Scan, 2=Staging, 
-#         3=Production Canary, 3B=Production Blue-Green, 
-#         4=Emergency Rollback, 5=Failure Notifications
-# =============================================================================
+# Section: Jobs Definition
+# Flow: validation → build → staging → production → rollback (on failure)
 
 jobs:
-  # =============================================================================
-  # PHASE -1: BRANCH PROTECTION VALIDATION
-  # =============================================================================
-  # Purpose: Validates that branch protection rules are enabled for main branch
-  # Security: Prevents deployment of unreviewed/untested code
-  # Note: This job only runs on pull_request.closed events when PR is merged
-  # =============================================================================
-  
+  # Phase -1: Branch Protection Validation
   validate-pr-merge:
     name: 🛡️ Validate PR Merge
     runs-on: ubuntu-latest
-    # CRITICAL: Only validate on closed PRs that are actually merged
+    # Security: Only validate on closed PRs that are actually merged
     # This ensures unmerged PRs never trigger deployments
     if: |
       github.event_name == 'pull_request' && 
@@ -160,9 +142,15 @@ jobs:
         echo "Action: ${{ github.event.action }}"
         echo "Merged status: ${{ github.event.pull_request.merged }}"
         
-        # CRITICAL: Double-check merge status
+        # Security: Double-check merge status to prevent accidental deployments
         if [ "${{ github.event.pull_request.merged }}" != "true" ]; then
           echo "❌ ERROR: PR was closed but not merged"
+          exit 1
+        fi
+        
+        # Security: Verify PR came from same repository (block external forks)
+        if [ "${{ github.event.pull_request.head.repo.full_name }}" != "${{ github.repository }}" ]; then
+          echo "❌ ERROR: PR from external fork not allowed"
           exit 1
         fi
         
@@ -204,13 +192,7 @@ jobs:
         echo "✅ Required status checks: Enabled"
         echo "✅ Required PR reviews: Enabled"
 
-  # =============================================================================
-  # PHASE 0: INPUT VALIDATION (for workflow_dispatch)
-  # =============================================================================
-  # Purpose: Validates workflow inputs before proceeding with any deployment
-  # Security: Validates format and length to prevent injection attacks
-  # =============================================================================
-  
+  # Phase 0: Input Validation (for workflow_dispatch)
   validate-inputs:
     name: ✅ Validate Workflow Inputs
     runs-on: ubuntu-latest
@@ -226,6 +208,7 @@ jobs:
         fi
         if [[ "$ENV" != "staging" && "$ENV" != "production" ]]; then
           echo "❌ Invalid environment input: $ENV"
+          echo "❌ Must be 'staging' or 'production'"
           exit 1
         fi
         echo "✅ Environment input valid: $ENV"
@@ -239,20 +222,38 @@ jobs:
         fi
         if [[ "$STRATEGY" != "canary" && "$STRATEGY" != "blue-green" ]]; then
           echo "❌ Invalid deployment strategy: $STRATEGY"
+          echo "❌ Must be 'canary' or 'blue-green'"
           exit 1
         fi
         echo "✅ Deployment strategy input valid: $STRATEGY"
+    
+    - name: ✅ Validate image_name format
+      run: |
+        IMAGE="${{ github.event.inputs.image_name }}"
+        if [[ -n "$IMAGE" ]]; then
+          # Security: Validate format to prevent injection
+          if ! [[ "$IMAGE" =~ ^[a-zA-Z0-9._-]{1,255}$ ]]; then
+            echo "❌ Invalid image_name format: $IMAGE"
+            echo "❌ Must be 1-255 chars, alphanumeric with hyphens/dots/underscores"
+            exit 1
+          fi
+        fi
+        echo "✅ Image name format valid: ${IMAGE:-default}"
+    
+    - name: ✅ Validate docker_registry format
+      run: |
+        REGISTRY="${{ github.event.inputs.docker_registry }}"
+        if [[ -n "$REGISTRY" ]]; then
+          # Security: Validate hostname format
+          if ! [[ "$REGISTRY" =~ ^[a-zA-Z0-9.-]+(:[0-9]+)?$ ]]; then
+            echo "❌ Invalid docker_registry format: $REGISTRY"
+            echo "❌ Must be a valid hostname or hostname:port"
+            exit 1
+          fi
+        fi
+        echo "✅ Docker registry format valid: ${REGISTRY:-default}"
 
-  # =============================================================================
-  # PHASE 1: BUILD & SECURITY SCAN
-  # =============================================================================
-  # Purpose: Builds Docker container image and performs security scanning
-  # Dependencies: validate-inputs (if workflow_dispatch)
-  # Outputs: image-digest, image-tag, image-full (used by deployment jobs)
-  # Performance: Uses GitHub Actions cache for Docker layers
-  # Security: Trivy scans for CRITICAL/HIGH vulnerabilities
-  # =============================================================================
-  
+  # Phase 1: Build & Security Scan
   build-and-security-scan:
     name: 🐳 Build & Security Scan
     runs-on: ubuntu-latest
@@ -261,10 +262,10 @@ jobs:
       (github.event_name == 'pull_request' && 
        github.event.pull_request.head.repo.full_name == github.repository) ||
       github.event_name == 'workflow_dispatch'
-    # Run validation first if workflow_dispatch, otherwise skip it
     needs: 
       - validate-inputs
       - validate-pr-merge
+    # Run if validation passed or was skipped (not workflow_dispatch or not PR)
     if: |
       always() && 
       (needs.validate-inputs.result == 'success' || needs.validate-inputs.result == 'skipped') &&
@@ -342,15 +343,7 @@ jobs:
         sarif_file: 'trivy-results.sarif'
         retention-days: 30
 
-  # =============================================================================
-  # PHASE 2: STAGING DEPLOYMENT
-  # =============================================================================
-  # Purpose: Deploy to staging for testing before production
-  # Strategy: Canary or blue-green based on configuration
-  # Safety: Handles missing resources gracefully
-  # Dependencies: build-and-security-scan
-  # =============================================================================
-  
+  # Phase 2: Staging Deployment
   deploy-staging:
     name: 🧪 Deploy to Staging
     runs-on: ubuntu-latest
@@ -412,16 +405,7 @@ jobs:
           exit 0
         fi
 
-  # =============================================================================
-  # PHASE 3: PRODUCTION CANARY DEPLOYMENT
-  # =============================================================================
-  # Purpose: Production canary deployment (10%→25%→50%→75%→100%, ~8-9min)
-  # Security: Requires production environment approval
-  #          Only on merged PRs or manual dispatch with production env
-  # Dependencies: build-and-security-scan, deploy-staging, validate-pr-merge
-  # Rollback: Auto-rollback on SLO violations
-  # =============================================================================
-  
+  # Phase 3: Production Canary Deployment
   deploy-production-canary:
     name: 🌟 Production Canary Deployment
     runs-on: ubuntu-latest
@@ -494,16 +478,7 @@ jobs:
         echo "📊 Monitoring deployment progress..."
         kubectl rollout status rollout/amas-orchestrator -n amas-prod --timeout=10m || exit 0
 
-  # =============================================================================
-  # PHASE 3B: PRODUCTION BLUE-GREEN DEPLOYMENT
-  # =============================================================================
-  # Purpose: Emergency deployment with instant traffic switching
-  # Security: Requires production environment approval
-  #          Only on manual dispatch with blue-green + production
-  # Dependencies: build-and-security-scan, deploy-staging
-  # Use Case: Emergency deployments, hotfixes, instant switch needed
-  # =============================================================================
-  
+  # Phase 3B: Production Blue-Green Deployment
   deploy-production-blue-green:
     name: 🔵 Production Blue-Green Deployment
     runs-on: ubuntu-latest
@@ -544,18 +519,11 @@ jobs:
         chmod +x scripts/deployment/blue_green_deploy.sh
         ./scripts/deployment/blue_green_deploy.sh deploy
 
-  # =============================================================================
-  # PHASE 4: EMERGENCY ROLLBACK
-  # =============================================================================
-  # Purpose: Auto-rollback production deployment on failure (<2min)
-  # Trigger: Production deployment failure
-  # Dependencies: deploy-production-canary or deploy-production-blue-green (on failure)
-  # Security: Requires production environment access
-  # =============================================================================
-  
+  # Phase 4: Emergency Rollback
   emergency-rollback:
     name: 🔄 Emergency Rollback
     runs-on: ubuntu-latest
+    needs: [deploy-production-canary, deploy-production-blue-green]
     if: |
       failure() && (
         (needs.deploy-production-canary.result == 'failure') ||
@@ -589,16 +557,7 @@ jobs:
         kubectl rollout undo rollout/amas-orchestrator -n amas-prod
         kubectl rollout status rollout/amas-orchestrator -n amas-prod --timeout=5m
 
-  # =============================================================================
-  # PHASE 5: FAILURE NOTIFICATIONS
-  # =============================================================================
-  # Purpose: Notify on workflow failures for observability
-  # Trigger: Any workflow failure (not cancelled)
-  # Dependencies: All deployment jobs (monitors status)
-  # Output: GitHub Actions summary with failure details
-  # TODO: External notifications (Slack, email, PagerDuty)
-  # =============================================================================
-  
+  # Phase 5: Failure Notifications
   notify-failure:
     name: 📢 Notify on Failure
     runs-on: ubuntu-latest
