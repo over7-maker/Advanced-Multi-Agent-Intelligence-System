@@ -58,6 +58,8 @@ See [FEATURES.md](FEATURES.md) for the complete, current list of production and 
 - **Enterprise Security:** OIDC/JWT authentication, OPA policy-as-code authorization, comprehensive audit logging with PII redaction
 - **🔍 Observability**: Distributed tracing (OpenTelemetry), SLO monitoring with error budget tracking, automatic performance regression detection
 - **📊 Operational Dashboards**: Real-time Grafana dashboards for performance and SLO status
+- **🚨 Intelligent Alerting**: Multi-channel alerts with burn rate detection
+- **🛡️ Data Governance & Compliance**: Enterprise-grade PII detection, 5-tier classification, GDPR/HIPAA/PCI compliance mapping ([Guide](docs/governance/DATA_GOVERNANCE_GUIDE.md))
 - **🚨 Proactive Alerting**: Real-time SLO burn rate monitoring with automated multi-channel notifications
 
 ---

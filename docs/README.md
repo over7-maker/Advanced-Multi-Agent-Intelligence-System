@@ -22,8 +22,7 @@ Welcome to the **Advanced Multi-Agent Intelligence System (AMAS)** documentation
 <div align="center">
 
 | **Aspect** | **Before** | **After** | **Improvement** |
-|------------|------------|-----------|-----------------|
-| **📊 Total Size** | Basic docs | **117KB+** | **500% More Content** |
+|------------|------------|-----------|-----------------|<brs/>| **📊 Total Size** | Basic docs | **117KB+** | **500% More Content** |
 | **💻 Code Examples** | Few examples | **150+ Samples** | **1000% More Examples** |
 | **⚙️ Configurations** | Basic configs | **75+ Production** | **500% More Configs** |
 | **🎯 Use Cases** | Limited scenarios | **25+ Workflows** | **400% More Scenarios** |
@@ -342,17 +341,15 @@ Safe, automated deployments with canary releases and automatic rollback:
 | **👨‍💻 Developer** | 5 documents | **35KB** | 40+ | 20+ |
 | **🔌 API Reference** | 4 documents | **30KB** | 35+ | 10+ |
 | **🚀 Deployment** | 9 documents | **45KB** | 35+ | 25+ |
-| **📚 Total** | **40 documents** | **282KB** | **295+** | **145+** |
-| **🚀 Deployment** | 4 documents | **25KB** | 20+ | 15+ |
-| **📚 Total** | **38 documents** | **292KB** | **280+** | **135+** |
+| **📚 Total** | **40 documents** | **317KB** | **300+** | **160+** |
 
 </div>
 
 ### **🌟 Documentation Highlights**
 
-- **📊 Total Documentation**: **282KB+** (282,000+ words)
-- **💻 Code Examples**: **295+** real-world samples
-- **⚙️ Configuration Examples**: **145+** production configs
+- **📊 Total Documentation**: **317KB+** (317,000+ words)
+- **💻 Code Examples**: **300+** real-world samples
+- **⚙️ Configuration Examples**: **160+** production configs
 - **🎯 Use Case Scenarios**: **50+** complete workflows
 - **🔄 Progressive Delivery**: Complete canary deployment system documented
 - **🛠️ Troubleshooting Guides**: **50+** solutions
@@ -431,11 +428,11 @@ Safe, automated deployments with canary releases and automatic rollback:
 <div align="center">
 
 **📚 AMAS Documentation Index**  
-**🚀 117KB+ Comprehensive Documentation**  
+**🚀 317KB+ Comprehensive Documentation**  
 **🎯 The Most Advanced AI System Documentation Ever Created**
 
 ---
 
-*Last Updated: October 2025 | Version: 3.0.0 | Status: Production Ready (Phase‑06 docs refreshed)*
+*Last Updated: November 2025 | Version: 3.1.0 | Status: Production Ready (Phase‑06 docs refreshed)*
 
 </div>
