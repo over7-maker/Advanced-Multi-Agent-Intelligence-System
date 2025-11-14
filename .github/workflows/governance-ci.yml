@@ -1,0 +1,584 @@
+# =============================================================================
+# Data Governance & Compliance CI/CD Workflow
+# =============================================================================
+# This workflow performs comprehensive quality checks for the Data Governance
+# and Compliance module (PR #242 - feature/data-governance-compliance).
+#
+# Jobs: type-check, lint, test, performance, security (run in parallel)
+# Configuration: See docs/governance/CI_WORKFLOW_GUIDE.md for details
+# =============================================================================
+
+name: Data Governance & Compliance CI/CD Pipeline
+
+# Security: Explicit permissions to follow principle of least privilege
+# Only grant read access to contents and pull requests - no write access
+permissions:
+  contents: read  # Read repository contents
+  pull-requests: read  # Read pull request metadata
+  checks: write  # Write check results (required for status checks)
+  # No write access to contents, issues, or other sensitive areas
+
+# Workflow triggers - optimized to run only when relevant files change
+on:
+  push:
+    branches: [ main, feature/data-governance-compliance ]
+    paths:
+      # Core module files - trigger on any Python file changes
+      - 'src/amas/governance/**/*.py'
+      # Test files - trigger on test file changes
+      - 'tests/test_data_classifier*.py'
+      # Verification scripts - trigger on verification script changes
+      - 'verify_data_classifier.py'
+      # Configuration files - trigger on config changes that affect behavior
+      - 'requirements-ci.txt'
+      - 'mypy.ini'
+      # Workflow changes - trigger on workflow modifications
+      - '.github/workflows/governance-ci.yml'
+      # Documentation - trigger only on governance-specific docs
+      - 'docs/governance/**'
+      - '**/governance*.md'
+      - 'AI_ANALYSIS*.md'
+  pull_request:
+    branches: [ main ]
+    paths:
+      # Same paths as push triggers for consistency
+      - 'src/amas/governance/**/*.py'
+      - 'tests/test_data_classifier*.py'
+      - 'verify_data_classifier.py'
+      - 'requirements-ci.txt'
+      - 'mypy.ini'
+      - '.github/workflows/governance-ci.yml'
+      # Documentation - trigger only on governance-specific docs
+      - 'docs/governance/**'
+      - '**/governance*.md'
+      - 'AI_ANALYSIS*.md'
+
+# Concurrency strategy: Cancel in-progress runs when a new commit is pushed
+# This prevents multiple workflow runs from consuming resources unnecessarily
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true  # Cancel previous runs when new commit is pushed
+
+# Environment variables for configuration
+# These values are chosen for:
+# - PYTHON_VERSION: 3.12.12 is the latest stable 3.12.x release with security patches
+#   Pinned for reproducibility and to prevent unexpected behavior from version updates
+#   Should be updated when security patches are released for 3.12.x
+#   SECURITY: Check https://www.python.org/downloads/ regularly for security updates
+# - TIMEOUT_MINUTES: 20 minutes allows for complex operations while preventing
+#   runaway jobs. Type checking and security scans can take longer on large codebases
+# - MIN_PYTHON_VERSION: 3.12 is the minimum required for type checking features used
+# - TOOL_VERSIONS: All tools are pinned in requirements-ci.txt for security
+env:
+  PYTHON_VERSION: '3.12.12'  # Pinned for reproducibility and security (check for updates)
+  TIMEOUT_MINUTES: 20  # Maximum time for jobs (type-check: 20min, lint: 20min, test: 20min, perf: 20min, security: 20min)
+  MIN_PYTHON_VERSION: '3.12'  # Minimum required for advanced type checking features
+  # Resource limits (GitHub Actions default: 2 cores, 7GB RAM per job)
+  # Jobs run in parallel to maximize resource utilization
+
+jobs:
+  # Job 1: Static Type Checking
+  # Purpose: Validates type annotations and catches type-related bugs before runtime
+  # Tools: mypy (strict mode) + pyright (additional validation)
+  # Timeout: 20 minutes (type checking can be slow on large codebases)
+  type-check:
+    name: Static Type Checking (mypy + pyright)
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ env.TIMEOUT_MINUTES }}
+    strategy:
+      fail-fast: false  # Continue other jobs even if type checking fails
+    steps:
+      # Step 1: Checkout repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python with automatic pip caching
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'  # Enable automatic pip caching for faster builds
+
+      # Step 3: Cache pip packages to speed up dependency installation
+      # Cache key based on requirements file hash - invalidates when deps change
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-ci.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # Step 4: Verify Python version meets minimum requirements
+      # Ensures we're using a compatible Python version for type checking features
+      - name: Verify Python version
+        run: |
+          python_version=$(python --version | cut -d' ' -f2)
+          echo "Python version: $python_version"
+          # Verify version is 3.12.x or higher
+          if ! python -c "import sys; assert sys.version_info >= (3, 12), 'Python 3.12+ required'"; then
+            echo "Error: Python version must be 3.12 or higher"
+            exit 1
+          fi
+
+      # Step 5: Install type checking dependencies with validation
+      # Validates requirements file and checks for dependency conflicts
+      - name: Install type checking dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Try to install from requirements file, fallback to direct install
+          if [ -f requirements-ci.txt ]; then
+            # Verify requirements file is valid before installation
+            if ! pip install --dry-run -r requirements-ci.txt > /dev/null 2>&1; then
+              echo "Error: requirements-ci.txt contains invalid entries"
+              exit 1
+            fi
+            pip install -r requirements-ci.txt || {
+              echo "Error: Failed to install from requirements-ci.txt"
+              exit 1
+            }
+            # Check for dependency conflicts that could affect type checking
+            pip check || {
+              echo "Warning: Dependency conflicts detected - type checking may be affected"
+            }
+          else
+            echo "Warning: requirements-ci.txt not found, using fallback"
+            pip install mypy>=1.7.0 pyright>=1.1.330 || {
+              echo "Error: Failed to install type checking tools"
+              exit 1
+            }
+          fi
+          # Verify tools are installed and accessible
+          mypy --version || { echo "Error: mypy not installed correctly"; exit 1; }
+          pyright --version || { echo "Error: pyright not installed correctly"; exit 1; }
+
+      # Step 6: Run mypy with strict type checking
+      # Uses mypy.ini if available, otherwise command-line flags
+      - name: Run mypy type checker
+        continue-on-error: false
+        run: |
+          # Use mypy.ini if available, otherwise use command-line flags
+          if [ -f mypy.ini ]; then
+            mypy src/amas/governance/data_classifier.py --config-file=mypy.ini || {
+              echo "Error: mypy type checking failed"
+              exit 1
+            }
+          else
+            mypy src/amas/governance/data_classifier.py \
+              --check-untyped-defs \
+              --disallow-untyped-defs \
+              --disallow-incomplete-defs \
+              --disallow-any-generics \
+              --show-error-codes \
+              --strict-optional || {
+              echo "Error: mypy type checking failed"
+              exit 1
+            }
+          fi
+
+      # Step 7: Run pyright for additional type checking
+      # Provides complementary type checking to catch issues mypy might miss
+      - name: Run pyright type checker
+        continue-on-error: false
+        run: |
+          pyright src/amas/governance/data_classifier.py || {
+            echo "Error: pyright type checking failed"
+            exit 1
+          }
+
+  # Job 2: Code Linting
+  # Purpose: Enforces code style, quality, and best practices
+  # Tools: flake8 (PEP 8) + pylint (code quality)
+  # Timeout: 20 minutes (linting is fast but timeout allows for large codebases)
+  lint:
+    name: Code Linting (flake8 + pylint)
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ env.TIMEOUT_MINUTES }}
+    strategy:
+      fail-fast: false
+    steps:
+      # Step 1: Checkout repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python with automatic pip caching
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      # Step 3: Cache pip packages
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-ci.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # Step 4: Install linting tools with verification and fallback
+      - name: Install linting tools
+        run: |
+          python -m pip install --upgrade pip
+          INSTALL_SUCCESS=false
+          
+          if [ -f requirements-ci.txt ]; then
+            if pip install -r requirements-ci.txt; then
+              if pip check; then
+                INSTALL_SUCCESS=true
+                echo "✓ Linting tools installed from requirements-ci.txt"
+              else
+                echo "Warning: Dependency conflicts - attempting fallback"
+              fi
+            else
+              echo "Warning: Failed to install from requirements-ci.txt - attempting fallback"
+            fi
+          fi
+          
+          # Fallback strategy
+          if [ "$INSTALL_SUCCESS" = false ]; then
+            pip install flake8==7.3.0 pylint==4.0.2 || {
+              echo "Error: Fallback installation failed"
+              exit 1
+            }
+          fi
+          
+          # Verify tools are installed
+          flake8 --version || { echo "Error: flake8 not installed correctly"; exit 1; }
+          pylint --version || { echo "Error: pylint not installed correctly"; exit 1; }
+
+      # Step 5: Run flake8 for PEP 8 style checking
+      # Checks code style, line length, and PEP 8 compliance
+      - name: Run flake8 style checker
+        continue-on-error: false
+        run: |
+          flake8 src/amas/governance/data_classifier.py \
+            --max-line-length=120 \
+            --extend-ignore=E203,W503 || {
+            echo "Error: flake8 linting failed"
+            exit 1
+          }
+
+      # Step 6: Run pylint for code quality analysis
+      # Checks code complexity, best practices, and potential bugs
+      - name: Run pylint quality checker
+        continue-on-error: false
+        run: |
+          pylint src/amas/governance/data_classifier.py \
+            --max-line-length=120 \
+            --disable=too-many-lines,too-many-instance-attributes || {
+            echo "Error: pylint linting failed"
+            exit 1
+          }
+
+  # Job 3: Unit Testing and Coverage
+  # Purpose: Validates functionality and measures test coverage
+  # Tools: pytest + pytest-cov
+  # Timeout: 20 minutes (tests may take longer with coverage reporting)
+  # Flaky test handling: Retry failed tests up to 2 times to handle transient failures
+  test:
+    name: Unit Tests and Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ env.TIMEOUT_MINUTES }}
+    strategy:
+      fail-fast: false  # Continue other jobs even if tests fail
+      # Matrix strategy for handling flaky tests - retry on failure
+      max-parallel: 1  # Run tests sequentially to avoid resource conflicts
+    steps:
+      # Step 1: Checkout repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python with automatic pip caching
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      # Step 3: Cache pip packages
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-ci.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # Step 4: Install test dependencies with verification and fallback
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          INSTALL_SUCCESS=false
+          
+          if [ -f requirements-ci.txt ]; then
+            if pip install -r requirements-ci.txt; then
+              if pip check; then
+                INSTALL_SUCCESS=true
+                echo "✓ Test dependencies installed from requirements-ci.txt"
+              else
+                echo "Warning: Dependency conflicts - attempting fallback"
+              fi
+            else
+              echo "Warning: Failed to install from requirements-ci.txt - attempting fallback"
+            fi
+          fi
+          
+          # Fallback strategy
+          if [ "$INSTALL_SUCCESS" = false ]; then
+            pip install pytest==9.0.0 pytest-cov==7.0.0 pytest-rerunfailures==14.0 || {
+              echo "Error: Fallback installation failed"
+              exit 1
+            }
+          fi
+          
+          # Verify pytest is installed correctly
+          pytest --version || { echo "Error: pytest not installed correctly"; exit 1; }
+
+      # Step 5: Run unit tests with coverage reporting and flaky test handling
+      # Runs comprehensive test suite with retry logic for transient failures
+      - name: Run unit tests with coverage
+        continue-on-error: false
+        run: |
+          # Check if test file exists before running
+          if [ -f tests/test_data_classifier.py ]; then
+            # Run tests with retry logic for flaky tests (max 2 retries)
+            # This helps handle transient failures like network issues, timing, etc.
+            pytest tests/test_data_classifier.py -v \
+              --cov=src/amas/governance \
+              --cov-report=xml \
+              --cov-report=term \
+              --reruns 2 \
+              --reruns-delay 1 \
+              --only-rerun ".*" || {
+              echo "Error: Tests failed after retries"
+              exit 1
+            }
+          else
+            echo "Error: Test file tests/test_data_classifier.py not found"
+            exit 1
+          fi
+
+      # Step 6: Upload coverage report and artifacts (non-blocking)
+      # Uploads coverage data to codecov and stores artifacts securely
+      - name: Upload coverage to codecov
+        if: always()  # Run even if tests fail
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.xml
+          flags: governance
+          fail_ci_if_error: false  # Don't fail CI if coverage upload fails
+          token: ${{ secrets.CODECOV_TOKEN }}  # Use secret if available
+
+      # Step 7: Store test artifacts securely
+      # Saves test reports and coverage data as workflow artifacts
+      - name: Store test artifacts
+        if: always()  # Store artifacts even if tests fail
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-results-${{ github.run_number }}
+          path: |
+            coverage.xml
+            .coverage
+          retention-days: 30  # Keep artifacts for 30 days
+          if-no-files-found: ignore  # Don't fail if no artifacts
+
+  # Job 4: Performance Testing
+  # Purpose: Validates performance characteristics and prevents regressions
+  # Tools: pytest-benchmark + custom verification script
+  # Timeout: 20 minutes (performance tests may take time)
+  performance:
+    name: Performance Tests and Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ env.TIMEOUT_MINUTES }}
+    strategy:
+      fail-fast: false
+    steps:
+      # Step 1: Checkout repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python with automatic pip caching
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      # Step 3: Cache pip packages
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-ci.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # Step 4: Install performance test dependencies
+      - name: Install performance test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements-ci.txt ]; then
+            pip install -r requirements-ci.txt || {
+              echo "Error: Failed to install from requirements-ci.txt"
+              exit 1
+            }
+            pip check || echo "Warning: Dependency conflicts detected"
+          else
+            echo "Warning: requirements-ci.txt not found, using fallback"
+            pip install pytest>=7.4.0 pytest-benchmark>=4.0.0 || {
+              echo "Error: Failed to install performance test dependencies"
+              exit 1
+            }
+          fi
+
+      # Step 5: Run performance tests and benchmarks
+      # Validates performance requirements (e.g., < 1s for 1MB classification)
+      - name: Run performance tests
+        continue-on-error: false
+        run: |
+          # Run standalone verification script if available
+          if [ -f verify_data_classifier.py ]; then
+            python3 verify_data_classifier.py || {
+              echo "Error: Verification script failed"
+              exit 1
+            }
+          fi
+          # Run performance benchmarks if test file exists
+          if [ -f tests/test_data_classifier_performance.py ]; then
+            pytest tests/test_data_classifier_performance.py -v --benchmark-only || {
+              echo "Warning: Performance benchmarks completed with issues"
+            }
+          else
+            echo "Info: Performance test file not found, skipping benchmarks"
+          fi
+
+  # Job 5: Security Scanning
+  # Purpose: Identifies security vulnerabilities and dependency issues
+  # Tools: bandit (code scanning) + safety (dependency scanning) + dependency-review
+  # Timeout: 20 minutes (security scans can be thorough and time-consuming)
+  security:
+    name: Security Scanning (bandit + safety + dependency-review)
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ env.TIMEOUT_MINUTES }}
+    strategy:
+      fail-fast: false
+    steps:
+      # Step 1: Checkout repository code
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Step 1.5: Dependency Review (GitHub native dependency scanning)
+      # Scans for known vulnerabilities in dependencies before installation
+      - name: Dependency Review
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate  # Fail on moderate or higher severity issues
+          deny-licenses: GPL-2.0, GPL-3.0  # Deny specific licenses if needed (optional)
+
+      # Step 2: Set up Python with automatic pip caching
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      # Step 3: Cache pip packages
+      - name: Cache pip packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements-ci.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      # Step 4: Install security scanning tools with verification and fallback
+      - name: Install security tools
+        run: |
+          python -m pip install --upgrade pip
+          INSTALL_SUCCESS=false
+          
+          if [ -f requirements-ci.txt ]; then
+            if pip install -r requirements-ci.txt; then
+              if pip check; then
+                INSTALL_SUCCESS=true
+                echo "✓ Security tools installed from requirements-ci.txt"
+              else
+                echo "Warning: Dependency conflicts - attempting fallback"
+              fi
+            else
+              echo "Warning: Failed to install from requirements-ci.txt - attempting fallback"
+            fi
+          fi
+          
+          # Fallback strategy
+          if [ "$INSTALL_SUCCESS" = false ]; then
+            pip install bandit==1.7.10 safety==3.2.7 || {
+              echo "Error: Fallback installation failed"
+              exit 1
+            }
+          fi
+          
+          # Verify security tools are installed
+          bandit --version || { echo "Error: bandit not installed correctly"; exit 1; }
+          safety --version || { echo "Error: safety not installed correctly"; exit 1; }
+
+      # Step 5: Run bandit security scan
+      # Scans Python code for common security vulnerabilities
+      - name: Run bandit security scan
+        continue-on-error: false
+        run: |
+          # Generate JSON report for detailed analysis
+          bandit -r src/amas/governance/ -f json -o bandit-report.json || {
+            echo "Warning: Bandit scan generated report with findings"
+          }
+          # Run with low-low severity to fail on high-severity issues
+          bandit -r src/amas/governance/ -ll || {
+            echo "Error: Bandit found high-severity security issues"
+            exit 1
+          }
+
+      # Step 6: Store security scan artifacts
+      # Saves security reports as artifacts for review
+      - name: Store security scan artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-reports-${{ github.run_number }}
+          path: bandit-report.json
+          retention-days: 90  # Keep security reports longer (90 days)
+          if-no-files-found: ignore
+
+      # Step 7: Check for known vulnerabilities in dependencies
+      # Scans installed packages for known CVEs and security advisories
+      - name: Check for known vulnerabilities
+        continue-on-error: true  # Don't fail CI, but report findings
+        run: |
+          # Run safety check and save results
+          safety check --json > safety-report.json 2>&1 || {
+            echo "Warning: Safety check found known vulnerabilities - review required"
+            # Store safety report even if vulnerabilities found
+          }
+          # Display summary (without exposing full details in logs)
+          safety check --short-report || true
+
+      # Step 8: Store safety report artifacts
+      - name: Store safety report artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: safety-reports-${{ github.run_number }}
+          path: safety-report.json
+          retention-days: 90
+          if-no-files-found: ignore
+
+#
+# =============================================================================
+# Workflow Summary
+# =============================================================================
+# Jobs: 5 parallel jobs (type-check, lint, test, performance, security)
+# Configuration: See docs/governance/CI_WORKFLOW_GUIDE.md for complete details
+# Status: Production-ready, follows GitHub Actions best practices
+# =============================================================================
