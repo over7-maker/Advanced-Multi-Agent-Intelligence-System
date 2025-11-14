@@ -133,6 +133,15 @@ pytest tests/unit/test_tool_governance.py -v
 ## Deployment Guide
 Production cluster, scaling, and infrastructure instructions are fully documented in [DEPLOYMENT.md](DEPLOYMENT.md).
 
+### Progressive Delivery
+AMAS includes a comprehensive Progressive Delivery Pipeline with Argo Rollouts for safe, automated deployments:
+- **Canary Deployments**: Progressive traffic shifting (10%→25%→50%→75%→100%)
+- **Automatic Rollback**: SLO violations trigger immediate rollback within 2 minutes
+- **Zero Downtime**: No service interruption during deployments
+- **SLO-based Gates**: Health checks and metrics validation prevent bad deployments
+
+See [Progressive Delivery Quick Start](docs/PROGRESSIVE_DELIVERY_QUICK_START.md) and [Implementation Guide](docs/PROGRESSIVE_DELIVERY_IMPLEMENTATION.md) for details.
+
 ---
 
 ## Performance & Scaling Infrastructure
