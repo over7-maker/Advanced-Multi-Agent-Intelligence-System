@@ -1,41 +1,23 @@
-# CI-specific requirements with compatible versions
-# This file is optimized for CI environments with Python 3.11+
+# CI/CD Dependencies for Data Governance & Compliance Module
+# These are the exact versions used in CI/CD pipeline for reproducible builds
+# All versions are pinned for security and reproducibility
 
-# Core dependencies
-asyncio
-aiohttp>=3.8.0,<4.0.0
-pydantic>=2.0.0,<3.0.0
-pydantic-settings>=2.0.0,<3.0.0
+# Type Checking
+mypy==1.18.2
+pyright==1.1.407
+# Note: types-all removed to avoid conflicts with project-specific type stubs
+# Install specific type stubs as needed: types-requests, types-python-dateutil, etc.
 
-# Web framework
-fastapi>=0.100.0,<1.0.0
-uvicorn[standard]>=0.20.0,<1.0.0
-
-# Data processing
-numpy>=1.24.0,<2.0.0
-pandas>=2.0.0,<3.0.0
-scipy>=1.10.0,<2.0.0
-
-# Web scraping
-beautifulsoup4>=4.12.0,<5.0.0
-lxml>=4.9.0,<5.0.0
-
-# Database (optional for CI)
-psycopg2-binary>=2.9.0,<3.0.0
-redis>=4.0.0,<6.0.0
+# Linting
+flake8==7.3.0
+pylint==4.0.2
 
 # Testing
-pytest>=7.0.0,<8.0.0
-pytest-asyncio>=0.21.0,<1.0.0
-pytest-cov>=4.0.0,<5.0.0
-
-# Development tools
-black>=23.0.0,<24.0.0
-flake8>=6.0.0,<7.0.0
-mypy>=1.0.0,<2.0.0
+pytest==9.0.0
+pytest-cov==7.0.0
+pytest-benchmark==4.0.0
+pytest-rerunfailures==14.0  # Required for --reruns flag (flaky test handling)
 
 # Security
-cryptography>=40.0.0,<44.0.0
-
-# Retry logic
-tenacity>=8.0.0,<9.0.0
+bandit==1.7.10
+safety==3.2.7
