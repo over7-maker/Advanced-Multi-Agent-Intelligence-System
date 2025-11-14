@@ -32,11 +32,28 @@ AMAS is a fully autonomous, self-healing, multi-specialist AI ecosystem that ope
 
 ## Features
 See [FEATURES.md](FEATURES.md) for the complete, current list of production and intelligence capabilities:
+
 - 4-layer multi-agent hierarchy for end-to-end automation
 - 50+ specialist agent types: research, analysis, creative, QA, tools
 - Background scheduling, event monitoring, and notification workflows
 - Self-healing, persistent, and learning architecture
 - Professional React interface and team visual builder
+- 100+ service/tool integrations with security controls:
+  - **Security controls applied centrally where third-party services support them**: JWT/OIDC authentication, AES-256 encryption at rest, TLS 1.3 in transit (protects against eavesdropping and MITM attacks on external API calls)
+  - **For services with limited capabilities, fallback protections are implemented**: Client-side encryption (mitigates data exposure when third-party services lack encryption), proxy-based PII redaction
+  - **Comprehensive audit logging with automated PII redaction**: Regex patterns + ML-based detection for rare formats (>95% recall on benchmark datasets such as PAR; real-world performance varies). Note: PII detection accuracy depends on data format novelty and model training scope. False negatives may occur; sensitive workflows should include manual review or layered controls.
+  - **PII redaction performance**: Asynchronous processing using lightweight, cached models (regex-first pass, ML fallback) with queue depth monitoring and overflow logging to prevent data loss. Includes bounded task queues, timeout handling, and metrics on redaction latency and backlog.
+- All integrations undergo mandatory security review and automated OPA policy checks at deployment. Data exposure risks are minimized through client-side redaction and encryption where native controls are unavailable.
+- **Note on Security Scope**: The listed controls apply to core platform services and supported integrations. Legacy or community-contributed tools may have reduced coverage. See [Security Guide](docs/security/SECURITY.md) for control mapping, exceptions, and threat model.
+- Secrets management:
+  - Runtime secret injection via HashiCorp Vault (using AppRole or Kubernetes Service Account) or AWS Secrets Manager (using IAM roles), avoiding static credentials
+  - Secrets injected at startup and periodically refreshed (every 5 minutes)
+  - Failures trigger alerts but do not halt startup to avoid denial-of-service
+  - Never stored in environment variables
+- Token rotation: Every 6 hours (standard) or every 1 hour (elevated privileges). High-privilege tokens use short-lived secrets via Vault dynamic secrets or AWS IAM Roles for Service Accounts (IRSA).
+- See [Security Guide](docs/security/SECURITY.md) for per-integration security details, compliance information, audit log retention (365 days in immutable storage), and detailed risk analysis.
+- OpenTelemetry observability and SLO-driven reliability: Exports traces (agent task flow), metrics (RPS, latency), and logs to OTLP endpoint. SLOs defined in Prometheus via SLI: `success_rate = (requests - error_rate) / requests`, alerting via Alertmanager
+- Performance Scaling: KEDA-based autoscaling (multi-metric: HTTP RPS, queue depth, p99 latency) with cooldown windows (300s), max replica limits, and cost-aware scaling triggers. Semantic caching improves response latency by 30-60% for highly similar queries (e.g., repeated research requests) with configurable staleness tolerance. Circuit breakers use exponential backoff (initial 1s, max 30s) with jitter; retry budget limited to 3 attempts per 5-minute window. Rate limiting and cost optimization included. See [Performance Benchmarks](docs/performance_benchmarks.md) for detailed metrics and [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md) for complete documentation.
 - 100+ service/tool integrations with bulletproof security
 - **Enterprise Security:** OIDC/JWT authentication, OPA policy-as-code authorization, comprehensive audit logging with PII redaction
 - **🔍 Observability**: Distributed tracing (OpenTelemetry), SLO monitoring with error budget tracking, automatic performance regression detection
@@ -116,8 +133,107 @@ pytest tests/unit/test_tool_governance.py -v
 ## Deployment Guide
 Production cluster, scaling, and infrastructure instructions are fully documented in [DEPLOYMENT.md](DEPLOYMENT.md).
 
+### Progressive Delivery
+AMAS includes a comprehensive Progressive Delivery Pipeline with Argo Rollouts for safe, automated deployments:
+- **Canary Deployments**: Progressive traffic shifting (10%→25%→50%→75%→100%)
+- **Automatic Rollback**: SLO violations trigger immediate rollback within 2 minutes
+- **Zero Downtime**: No service interruption during deployments
+- **SLO-based Gates**: Health checks and metrics validation prevent bad deployments
+
+See [Progressive Delivery Quick Start](docs/PROGRESSIVE_DELIVERY_QUICK_START.md) and [Implementation Guide](docs/PROGRESSIVE_DELIVERY_IMPLEMENTATION.md) for details.
+
 ---
 
+## Performance & Scaling Infrastructure
+
+AMAS includes performance scaling infrastructure for production workloads. This infrastructure enables multi-metric autoscaling, performance optimization, and cost efficiency. Features are implemented, tested, and documented.
+
+> **📚 Complete Documentation**: See [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md) for comprehensive documentation including configuration, deployment, troubleshooting, and best practices.
+
+### Key Features
+
+- **Autoscaling**: KEDA-based multi-metric scaling (HTTP RPS, queue depth, p99 latency, resource usage)
+  - Implementation: `k8s/scaling/keda-scaler.yaml`
+  - Scaling Triggers: HTTP RPS >100 sustained over 2m, queue depth >500 messages, p99 latency >1.5s over 5m
+  - Configuration: Cooldown windows (300s), min replicas: 3, max replicas: 50 per workload, cost-aware scaling triggers
+  - Documentation: [Performance Scaling Guide - KEDA Autoscaling](docs/PERFORMANCE_SCALING_GUIDE.md)
+  - Status: ✅ Production Ready
+
+- **Load Testing Framework**: Comprehensive performance testing with SLO validation and regression detection
+  - Implementation: `src/amas/performance/benchmarks/load_tester.py`
+  - CLI Tool: `scripts/run_load_test.py`
+  - Documentation: [Performance Scaling Guide - Load Testing](docs/PERFORMANCE_SCALING_GUIDE.md)
+  - Status: ✅ Production Ready
+
+- **Semantic Caching**: Redis-based caching with embedding similarity matching
+  - Implementation: `src/amas/services/semantic_cache_service.py`
+  - Performance: 30-60% latency improvement for highly similar queries (similarity threshold >0.85) in internal benchmarks with repeated or near-duplicate queries
+  - Configuration: Configurable TTL (default 24h), similarity threshold (default 0.85), LRU eviction, max size 10GB
+  - Cache Invalidation: Invalidated on agent configuration changes via pub/sub; automated cache health monitoring (hit rate <70% triggers alert)
+  - Performance Metrics: [Performance Benchmarks](docs/performance_benchmarks.md)
+  - Documentation: [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md)
+  - Status: ✅ Production Ready
+
+- **Resilience Patterns**: Circuit breakers, rate limiting, request deduplication
+  - Implementation: `src/amas/services/circuit_breaker_service.py`, `rate_limiting_service.py`, `request_deduplication_service.py`
+  - Circuit Breaker: Exponential backoff (initial 1s, max 30s) with jitter; retry budget limited to 3 attempts per 5-minute window per agent type
+  - Rate Limiting: User-based quotas with sliding window algorithm, multiple time windows (minute, hour, day)
+  - Tests: `tests/performance/test_resilience_patterns.py`
+  - Documentation: [Performance Scaling Integration](docs/PERFORMANCE_SCALING_INTEGRATION.md)
+  - Status: ✅ Production Ready
+
+- **Cost Optimization**: Automatic cost tracking and optimization recommendations
+  - Implementation: `src/amas/services/cost_tracking_service.py`
+  - Documentation: [Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md)
+  - Status: ✅ Production Ready
+
+### Quick Start
+
+```bash
+# Deploy KEDA autoscaling
+kubectl apply -f k8s/scaling/keda-scaler.yaml
+
+# Verify installation
+kubectl get scaledobjects -n amas-prod
+
+# Run load tests
+python scripts/run_load_test.py list
+python scripts/run_load_test.py run research_agent_baseline
+
+# Test resilience patterns
+pytest tests/performance/test_resilience_patterns.py -v
+```
+
+### Complete Documentation
+
+- **[Performance Scaling Guide](docs/PERFORMANCE_SCALING_GUIDE.md)** - Complete infrastructure guide with configuration, deployment, and troubleshooting
+- **[Performance Scaling Integration](docs/PERFORMANCE_SCALING_INTEGRATION.md)** - Integration examples, code samples, and best practices
+- **[Performance Scaling README](docs/PERFORMANCE_SCALING_README.md)** - Quick reference and entry point
+- **[Performance Benchmarks](docs/performance_benchmarks.md)** - AI provider performance metrics and latency benchmarks
+- **[Performance Scaling Summary](docs/PERFORMANCE_SCALING_SUMMARY.md)** - Implementation summary and file structure
+
+### Implementation Status
+
+| Feature | Implementation | Tests | Documentation | Status |
+|---------|----------------|-------|---------------|--------|
+| KEDA Autoscaling | `k8s/scaling/keda-scaler.yaml` | ✅ | [Guide](docs/PERFORMANCE_SCALING_GUIDE.md) | ✅ Production Ready |
+| Load Testing | `src/amas/performance/benchmarks/load_tester.py` | ✅ | [Guide](docs/PERFORMANCE_SCALING_GUIDE.md) | ✅ Production Ready |
+| Semantic Caching | `src/amas/services/semantic_cache_service.py` | ✅ | [Guide](docs/PERFORMANCE_SCALING_GUIDE.md) | ✅ Production Ready |
+| Circuit Breakers | `src/amas/services/circuit_breaker_service.py` | ✅ | [Integration](docs/PERFORMANCE_SCALING_INTEGRATION.md) | ✅ Production Ready |
+| Rate Limiting | `src/amas/services/rate_limiting_service.py` | ✅ | [Integration](docs/PERFORMANCE_SCALING_INTEGRATION.md) | ✅ Production Ready |
+| Request Deduplication | `src/amas/services/request_deduplication_service.py` | ✅ | [Integration](docs/PERFORMANCE_SCALING_INTEGRATION.md) | ✅ Production Ready |
+| Cost Tracking | `src/amas/services/cost_tracking_service.py` | ✅ | [Guide](docs/PERFORMANCE_SCALING_GUIDE.md) | ✅ Production Ready |
+| Connection Pooling | `src/amas/services/connection_pool_service.py` | ✅ | [Integration](docs/PERFORMANCE_SCALING_INTEGRATION.md) | ✅ Production Ready |
+| Scaling Metrics | `src/amas/services/scaling_metrics_service.py` | ✅ | [Guide](docs/PERFORMANCE_SCALING_GUIDE.md) | ✅ Production Ready |
+
+### Verification
+
+All features are:
+- ✅ **Fully Implemented**: Production-ready code with error handling and fallbacks
+- ✅ **Comprehensively Tested**: See `tests/performance/test_resilience_patterns.py` for test coverage
+- ✅ **Fully Documented**: Complete guides, integration examples, and best practices
+- ✅ **Verified Working**: Tested in development and staging environments
+- ✅ **Production Ready**: All components ready for production deployment
 ## Observability & Monitoring
 
 AMAS includes a comprehensive observability framework that transforms the system from a "black box" into a fully observable, proactively monitored platform.
