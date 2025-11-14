@@ -33,6 +33,7 @@
 - All secrets only present in runtime memory, not configs or repos, injected by Kubernetes Secrets or Vault
 - Access tokens rotate at least every 15 minutes with refresh-mode in OIDC
 - All system logs/events are centrally captured with immutable audit trails.
+- **🛡️ Data Governance & Compliance**: Enterprise-grade PII detection, automatic data classification (5-tier), GDPR/HIPAA/PCI compliance mapping, and comprehensive audit trails ([Guide](docs/governance/DATA_GOVERNANCE_GUIDE.md))
 
 ## Performance Practices
 - All task scheduling and agent pools are designed for horizontal scaling in Kubernetes, with autoscale triggers on CPU/memory/work queue.

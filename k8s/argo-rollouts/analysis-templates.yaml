@@ -1,0 +1,118 @@
+# Argo Rollouts Analysis Templates for Progressive Delivery
+# These templates define SLO-based deployment gates using Prometheus metrics
+
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: success-rate
+  namespace: amas-prod
+  labels:
+    app: amas-orchestrator
+    component: analysis
+spec:
+  metrics:
+  - name: success-rate
+    interval: 15s  # Faster checks for quicker rollback detection
+    successCondition: result[0] >= 0.95  # 95% success rate threshold
+    failureCondition: result[0] < 0.95
+    failureLimit: 1  # Immediate rollback on failure (within 15-30s)
+    count: 4  # Check 4 times (1 minute at 15s intervals)
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          sum(rate(http_requests_total{
+            service="{{args.service-name}}",
+            namespace="{{args.namespace}}",
+            status!~"5.."
+          }[2m])) 
+          / 
+          sum(rate(http_requests_total{
+            service="{{args.service-name}}",
+            namespace="{{args.namespace}}"
+          }[2m]))
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: latency-p95
+  namespace: amas-prod
+  labels:
+    app: amas-orchestrator
+    component: analysis
+spec:
+  metrics:
+  - name: latency-p95
+    interval: 15s  # Faster checks for quicker rollback detection
+    successCondition: result[0] <= 3.0  # P95 latency must be <= 3.0 seconds
+    failureCondition: result[0] > 3.0
+    failureLimit: 1  # Immediate rollback on failure
+    count: 4  # Check 4 times (1 minute at 15s intervals)
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{
+              service="{{args.service-name}}",
+              namespace="{{args.namespace}}"
+            }[2m])) by (le)
+          )
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: error-budget
+  namespace: amas-prod
+  labels:
+    app: amas-orchestrator
+    component: analysis
+spec:
+  metrics:
+  - name: error-budget
+    interval: 15s  # Faster checks for quicker rollback detection
+    successCondition: result[0] >= 0.05  # At least 5% error budget remaining
+    failureCondition: result[0] < 0.05
+    failureLimit: 1  # Immediate rollback if error budget depleted (within 15-30s)
+    count: 4  # Check 4 times (1 minute at 15s intervals)
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          (
+            sum(rate(http_requests_total{
+              service="{{args.service-name}}",
+              namespace="{{args.namespace}}",
+              status!~"5.."
+            }[2m]))
+            / 
+            sum(rate(http_requests_total{
+              service="{{args.service-name}}",
+              namespace="{{args.namespace}}"
+            }[2m]))
+          ) - 0.99  # Assuming 99% SLO target
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: health-check
+  namespace: amas-prod
+  labels:
+    app: amas-orchestrator
+    component: analysis
+spec:
+  metrics:
+  - name: health-check-success
+    interval: 10s
+    successCondition: result[0] == 1  # Health check must return 1 (healthy)
+    failureCondition: result[0] != 1
+    failureLimit: 6  # Allow 6 failures (60 seconds = 1 minute) before rollback
+    count: 12  # Check for 2 minutes (ensures >2min failure window triggers rollback)
+    provider:
+      prometheus:
+        address: http://prometheus.monitoring.svc.cluster.local:9090
+        query: |
+          up{
+            job="{{args.service-name}}",
+            namespace="{{args.namespace}}"
+          }
