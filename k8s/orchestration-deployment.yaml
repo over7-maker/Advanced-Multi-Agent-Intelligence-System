@@ -1,0 +1,233 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amas-orchestration
+  namespace: amas
+  labels:
+    app: amas
+    component: orchestration
+    layer: intelligence
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: amas
+      component: orchestration
+  template:
+    metadata:
+      labels:
+        app: amas
+        component: orchestration
+        layer: intelligence
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+        prometheus.io/orchestration: "true"
+    spec:
+      seccompProfile:
+        type: RuntimeDefault
+      serviceAccountName: amas-sa
+      terminationGracePeriodSeconds: 60
+      securityContext:
+        runAsNonRoot: true
+        fsGroup: 2000
+      containers:
+      - name: orchestration
+        image: ghcr.io/over7-maker/amas:${IMAGE_TAG}
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+          name: http
+        - containerPort: 9090
+          name: metrics
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://postgres:$(POSTGRES_PASSWORD)@postgres:5432/amas?sslmode=require"
+        - name: REDIS_URL
+          value: "rediss://:$(REDIS_PASSWORD)@redis:6379/0"
+        - name: NEO4J_URI
+          value: "neo4j+s://neo4j:7687"
+        - name: NEO4J_USER
+          value: "neo4j"
+        - name: NEO4J_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: amas-secrets
+              key: NEO4J_PASSWORD
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: amas-secrets
+              key: POSTGRES_PASSWORD
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: amas-secrets
+              key: REDIS_PASSWORD
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: amas-secrets
+              key: SECRET_KEY
+        envFrom:
+        - configMapRef:
+            name: amas-config
+        - configMapRef:
+            name: orchestration-config
+        volumeMounts:
+        - name: orchestration-data
+          mountPath: /app/data/orchestration
+        - name: orchestration-logs
+          mountPath: /app/logs/orchestration
+        - name: tmp-dir
+          mountPath: /tmp
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop: ["ALL"]
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "8Gi"
+            cpu: "4000m"
+        livenessProbe:
+          httpGet:
+            path: /health/orchestration
+            port: 8000
+          initialDelaySeconds: 90
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /ready/orchestration
+            port: 8000
+          initialDelaySeconds: 45
+          periodSeconds: 10
+          timeoutSeconds: 10
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /health/orchestration
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 20
+      volumes:
+      - name: orchestration-data
+        persistentVolumeClaim:
+          claimName: orchestration-data-pvc
+      - name: orchestration-logs
+        persistentVolumeClaim:
+          claimName: orchestration-logs-pvc
+      - name: tmp-dir
+        emptyDir:
+          sizeLimit: 10Gi
+      initContainers:
+      - name: wait-for-dependencies
+        image: busybox:1.35
+        command:
+        - sh
+        - -c
+        - |
+          echo "Waiting for PostgreSQL..."
+          until nc -z postgres 5432; do
+            echo "PostgreSQL is unavailable - sleeping"
+            sleep 2
+          done
+          echo "PostgreSQL is up"
+          
+          echo "Waiting for Redis..."
+          until nc -z redis 6379; do
+            echo "Redis is unavailable - sleeping"
+            sleep 2
+          done
+          echo "Redis is up"
+          
+          echo "Waiting for Neo4j..."
+          until nc -z neo4j 7687; do
+            echo "Neo4j is unavailable - sleeping"
+            sleep 2
+          done
+          echo "Neo4j is up"
+          
+          echo "Waiting for main AMAS service..."
+          until nc -z amas 8000; do
+            echo "AMAS service is unavailable - sleeping"
+            sleep 2
+          done
+          echo "AMAS service is up"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: component
+                  operator: In
+                  values: ["orchestration"]
+              topologyKey: kubernetes.io/hostname
+      topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: kubernetes.io/hostname
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            component: orchestration
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: amas-orchestration
+  namespace: amas
+  labels:
+    app: amas
+    component: orchestration
+spec:
+  selector:
+    app: amas
+    component: orchestration
+  ports:
+  - name: http
+    port: 8000
+    targetPort: 8000
+    protocol: TCP
+  - name: metrics
+    port: 9090
+    targetPort: 9090
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: orchestration-data-pvc
+  namespace: amas
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: orchestration-logs-pvc
+  namespace: amas
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
