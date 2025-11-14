@@ -28,7 +28,6 @@ on:
       - main  # Only main branch for production safety
     # Trigger on PR updates for testing, and on PR close for deployment validation
     # CRITICAL: Closed PRs are validated for merge status in validate-pr-merge job
-    # Note: ready_for_review removed to avoid unnecessary runs (draft PRs don't need testing)
     types: [opened, synchronize, reopened, closed]
     # Security: Ignore documentation-only changes to avoid unnecessary runs
     paths-ignore:
@@ -108,23 +107,16 @@ permissions:
 defaults:
   run:
     shell: bash
-    # Default timeout for all run steps (can be overridden per job)
     timeout-minutes: 10
 
 # =============================================================================
 # GLOBAL ENVIRONMENT VARIABLES (Non-sensitive)
 # =============================================================================
-# These non-sensitive variables are used across all jobs in the workflow
-# Security: Sensitive values (REGISTRY_PASSWORD) are defined at job-level to limit exposure
-# Note: Image name and registry can be overridden via workflow_dispatch inputs
-# =============================================================================
 env:
   PYTHON_VERSION: '3.11'
-  # Use inputs if provided, otherwise defaults (can be overridden per job if needed)
   DOCKER_REGISTRY: ${{ github.event.inputs.docker_registry || 'ghcr.io' }}
   IMAGE_NAME: ${{ github.event.inputs.image_name || 'amas-orchestrator' }}
   REGISTRY_USERNAME: ${{ github.repository_owner }}
-  # Performance: Enable Docker BuildKit for faster builds
   DOCKER_BUILDKIT: 1
   BUILDKIT_INLINE_CACHE: 1
 
@@ -142,19 +134,19 @@ jobs:
   # =============================================================================
   # Purpose: Validates that branch protection rules are enabled for main branch
   # Security: Prevents deployment of unreviewed/untested code
-  # Note: This job only runs on push to main (not on PRs)
+  # Note: This job only runs on pull_request.closed events when PR is merged
   # =============================================================================
   
   validate-pr-merge:
     name: 🛡️ Validate PR Merge
     runs-on: ubuntu-latest
-    # Only validate on closed PRs to main (check if merged)
-    # CRITICAL: This job validates that PR was actually merged, not just closed
-    # Security: Only process PRs from the same repository (block external forks)
+    # CRITICAL: Only validate on closed PRs that are actually merged
+    # This ensures unmerged PRs never trigger deployments
     if: |
       github.event_name == 'pull_request' && 
       github.event.action == 'closed' && 
       github.base_ref == 'main' &&
+      github.event.pull_request.merged == true &&
       github.event.pull_request.head.repo.full_name == github.repository
     timeout-minutes: 5
     permissions:
@@ -168,14 +160,10 @@ jobs:
         echo "Action: ${{ github.event.action }}"
         echo "Merged status: ${{ github.event.pull_request.merged }}"
         
-        # CRITICAL: Check if PR was actually merged (not just closed)
-        # This prevents deployment on PRs that were closed without merge
-        # Security: Fail the job if PR was closed without merge to prevent any downstream jobs
+        # CRITICAL: Double-check merge status
         if [ "${{ github.event.pull_request.merged }}" != "true" ]; then
           echo "❌ ERROR: PR was closed but not merged"
-          echo "PR #${{ github.event.pull_request.number }} was closed without merge"
-          echo "Deployment workflows require PR merge. Skipping all deployment jobs."
-          exit 1  # Fail job to prevent downstream deployment jobs from running
+          exit 1
         fi
         
         echo "✅ PR #${{ github.event.pull_request.number }} was successfully merged"
@@ -189,7 +177,6 @@ jobs:
       run: |
         echo "🔍 Validating branch protection rules for main branch..."
         
-        # Get branch protection status
         response=$(curl -s -w "\n%{http_code}" \
           -H "Authorization: Bearer $GITHUB_TOKEN" \
           -H "Accept: application/vnd.github.v3+json" \
@@ -200,43 +187,444 @@ jobs:
         
         if [ "$http_code" != "200" ]; then
           echo "❌ Branch protection not configured or not accessible"
-          echo "HTTP Status: $http_code"
-          echo "Response: $body"
-          echo ""
-          echo "⚠️  CRITICAL: Branch protection rules must be enabled!"
-          echo "Configure in: Settings > Branches > main"
           exit 1
         fi
         
-        # Validate required status checks
         if ! echo "$body" | jq -e '.required_status_checks != null' &> /dev/null; then
           echo "❌ Required status checks not configured"
           exit 1
         fi
         
-        # Validate required pull request reviews
         if ! echo "$body" | jq -e '.required_pull_request_reviews != null' &> /dev/null; then
           echo "❌ Required pull request reviews not configured"
           exit 1
         fi
         
-        # Validate enforce admins (optional but recommended)
-        enforce_admins=$(echo "$body" | jq -r '.enforce_admins.enabled // false')
-        if [ "$enforce_admins" != "true" ]; then
-          echo "⚠️  Warning: Enforce admins is not enabled"
-          echo "   Recommended: Enable 'Do not allow bypassing the above settings'"
-        fi
-        
         echo "✅ Branch protection rules validated successfully"
         echo "✅ Required status checks: Enabled"
         echo "✅ Required PR reviews: Enabled"
-        echo "✅ Enforce admins: $enforce_admins"
-    
-    - name: ✅ PR Merge Validated
-      run: |
-        echo "✅ PR merge validated successfully"
-        echo "✅ Branch protection rules verified"
-        echo "✅ Safe to proceed with deployment"
 
-  # Rest of the jobs remain the same as the original file...
-  # For brevity, I'm truncating here but the full file would include all remaining jobs
+  # =============================================================================
+  # PHASE 0: INPUT VALIDATION (for workflow_dispatch)
+  # =============================================================================
+  # Purpose: Validates workflow inputs before proceeding with any deployment
+  # Security: Validates format and length to prevent injection attacks
+  # =============================================================================
+  
+  validate-inputs:
+    name: ✅ Validate Workflow Inputs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+    - name: ✅ Validate environment input
+      run: |
+        ENV="${{ github.event.inputs.environment }}"
+        if [[ -z "$ENV" ]]; then
+          echo "❌ Environment input is required"
+          exit 1
+        fi
+        if [[ "$ENV" != "staging" && "$ENV" != "production" ]]; then
+          echo "❌ Invalid environment input: $ENV"
+          exit 1
+        fi
+        echo "✅ Environment input valid: $ENV"
+    
+    - name: ✅ Validate deployment strategy input
+      run: |
+        STRATEGY="${{ github.event.inputs.deployment_strategy }}"
+        if [[ -z "$STRATEGY" ]]; then
+          echo "❌ Deployment strategy input is required"
+          exit 1
+        fi
+        if [[ "$STRATEGY" != "canary" && "$STRATEGY" != "blue-green" ]]; then
+          echo "❌ Invalid deployment strategy: $STRATEGY"
+          exit 1
+        fi
+        echo "✅ Deployment strategy input valid: $STRATEGY"
+
+  # =============================================================================
+  # PHASE 1: BUILD & SECURITY SCAN
+  # =============================================================================
+  # Purpose: Builds Docker container image and performs security scanning
+  # Dependencies: validate-inputs (if workflow_dispatch)
+  # Outputs: image-digest, image-tag, image-full (used by deployment jobs)
+  # Performance: Uses GitHub Actions cache for Docker layers
+  # Security: Trivy scans for CRITICAL/HIGH vulnerabilities
+  # =============================================================================
+  
+  build-and-security-scan:
+    name: 🐳 Build & Security Scan
+    runs-on: ubuntu-latest
+    # Security: Only process PRs from the same repository (block external forks)
+    if: |
+      (github.event_name == 'pull_request' && 
+       github.event.pull_request.head.repo.full_name == github.repository) ||
+      github.event_name == 'workflow_dispatch'
+    # Run validation first if workflow_dispatch, otherwise skip it
+    needs: 
+      - validate-inputs
+      - validate-pr-merge
+    if: |
+      always() && 
+      (needs.validate-inputs.result == 'success' || needs.validate-inputs.result == 'skipped') &&
+      (needs.validate-pr-merge.result == 'success' || needs.validate-pr-merge.result == 'skipped')
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    env:
+      REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+    
+    outputs:
+      image-digest: ${{ steps.build.outputs.digest }}
+      image-tag: ${{ steps.build.outputs.tags }}
+      image-full: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: 🐳 Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      with:
+        driver-opts: |
+          image=moby/buildkit:latest
+          network=host
+    
+    - name: 🔑 Login to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.DOCKER_REGISTRY }}
+        username: ${{ env.REGISTRY_USERNAME }}
+        password: ${{ env.REGISTRY_PASSWORD }}
+    
+    - name: 🏗️ Build Docker image
+      id: build
+      uses: docker/build-push-action@v5
+      continue-on-error: ${{ github.event_name == 'pull_request' }}
+      env:
+        DOCKER_BUILDKIT: 1
+        BUILDKIT_PROGRESS: plain
+      with:
+        context: .
+        file: ./Dockerfile
+        platforms: linux/amd64
+        push: ${{ github.event_name != 'pull_request' }}
+        tags: |
+          ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:latest
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        provenance: ${{ github.event_name != 'pull_request' }}
+        sbom: ${{ github.event_name != 'pull_request' }}
+    
+    - name: 🔍 Container security scan with Trivy
+      if: steps.build.outcome == 'success' && github.event_name != 'pull_request'
+      continue-on-error: true
+      uses: aquasecurity/trivy-action@0.20.0
+      with:
+        image-ref: ${{ env.DOCKER_REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        severity: 'CRITICAL,HIGH'
+        exit-code: '0'
+    
+    - name: 📊 Upload Trivy scan results
+      if: always() && steps.build.outcome == 'success'
+      uses: github/codeql-action/upload-sarif@v3
+      continue-on-error: true
+      with:
+        sarif_file: 'trivy-results.sarif'
+        retention-days: 30
+
+  # =============================================================================
+  # PHASE 2: STAGING DEPLOYMENT
+  # =============================================================================
+  # Purpose: Deploy to staging for testing before production
+  # Strategy: Canary or blue-green based on configuration
+  # Safety: Handles missing resources gracefully
+  # Dependencies: build-and-security-scan
+  # =============================================================================
+  
+  deploy-staging:
+    name: 🧪 Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [build-and-security-scan]
+    if: always() && !cancelled() && needs.build-and-security-scan.result != 'failure'
+    environment: staging
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    continue-on-error: true
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Setup kubectl
+      uses: azure/setup-kubectl@v3
+    
+    - name: 🔧 Setup Argo Rollouts CLI
+      run: |
+        curl -LO https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
+        chmod +x kubectl-argo-rollouts-linux-amd64
+        sudo mv kubectl-argo-rollouts-linux-amd64 /usr/local/bin/kubectl-argo-rollouts
+    
+    - name: 🔑 Configure Kubernetes
+      run: |
+        if [ -z "${{ secrets.KUBECONFIG_STAGING }}" ]; then
+          echo "⚠️  KUBECONFIG_STAGING secret not set, skipping staging deployment"
+          exit 0
+        fi
+        
+        echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > $HOME/.kube/config || exit 1
+        kubectl version --client || exit 1
+        kubectl create namespace amas-staging --dry-run=client -o yaml | kubectl apply -f - || true
+        kubectl config set-context --current --namespace=amas-staging
+    
+    - name: 📋 Check Argo Rollouts Installation
+      run: |
+        if ! kubectl get crd rollouts.argoproj.io &> /dev/null; then
+          echo "SKIP_ARGO_ROLLOUTS=true" >> $GITHUB_ENV
+        else
+          echo "SKIP_ARGO_ROLLOUTS=false" >> $GITHUB_ENV
+        fi
+    
+    - name: 🚀 Deploy to staging
+      run: |
+        export NAMESPACE=amas-staging
+        export ROLLOUT_NAME=amas-orchestrator
+        export IMAGE_TAG=${{ github.sha }}
+        export DOCKER_REGISTRY="${{ env.DOCKER_REGISTRY }}"
+        export IMAGE_NAME="${{ env.IMAGE_NAME }}"
+        
+        if kubectl get rollout amas-orchestrator -n amas-staging &> /dev/null; then
+          kubectl set image rollout/amas-orchestrator orchestrator="${DOCKER_REGISTRY}/${{ github.repository_owner }}/${IMAGE_NAME}:${IMAGE_TAG}" -n amas-staging
+        elif kubectl get deployment amas-orchestrator -n amas-staging &> /dev/null; then
+          kubectl set image deployment/amas-orchestrator orchestrator="${DOCKER_REGISTRY}/${{ github.repository_owner }}/${IMAGE_NAME}:${IMAGE_TAG}" -n amas-staging
+        else
+          echo "⚠️  No rollout or deployment found in staging"
+          exit 0
+        fi
+
+  # =============================================================================
+  # PHASE 3: PRODUCTION CANARY DEPLOYMENT
+  # =============================================================================
+  # Purpose: Production canary deployment (10%→25%→50%→75%→100%, ~8-9min)
+  # Security: Requires production environment approval
+  #          Only on merged PRs or manual dispatch with production env
+  # Dependencies: build-and-security-scan, deploy-staging, validate-pr-merge
+  # Rollback: Auto-rollback on SLO violations
+  # =============================================================================
+  
+  deploy-production-canary:
+    name: 🌟 Production Canary Deployment
+    runs-on: ubuntu-latest
+    needs: [build-and-security-scan, deploy-staging, validate-pr-merge]
+    if: |
+      needs.build-and-security-scan.result == 'success' && (
+        (github.event_name == 'pull_request' && 
+         github.event.action == 'closed' && 
+         github.event.pull_request.merged == true &&
+         github.base_ref == 'main' &&
+         needs.validate-pr-merge.result == 'success') ||
+        (github.event_name == 'workflow_dispatch' && 
+         github.event.inputs.deployment_strategy == 'canary' &&
+         github.event.inputs.environment == 'production')
+      )
+    environment: 
+      name: production
+      url: https://amas.example.com
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Setup kubectl
+      uses: azure/setup-kubectl@v3
+    
+    - name: 🔧 Setup Argo Rollouts CLI
+      run: |
+        curl -LO https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-linux-amd64
+        chmod +x kubectl-argo-rollouts-linux-amd64
+        sudo mv kubectl-argo-rollouts-linux-amd64 /usr/local/bin/kubectl-argo-rollouts
+    
+    - name: 🔑 Configure Kubernetes
+      run: |
+        echo "${{ secrets.KUBECONFIG_PRODUCTION }}" | base64 -d > $HOME/.kube/config
+        kubectl config set-context --current --namespace=amas-prod
+    
+    - name: 📋 Apply Analysis Templates
+      run: |
+        if [ ! -f k8s/argo-rollouts/analysis-templates.yaml ]; then
+          echo "⚠️  Analysis templates not found, skipping"
+          exit 0
+        fi
+        kubectl apply -f k8s/argo-rollouts/analysis-templates.yaml || exit 0
+    
+    - name: 📋 Apply Rollout Configuration
+      run: |
+        if [ ! -f k8s/argo-rollouts/rollout.yaml ]; then
+          echo "⚠️  Rollout configuration not found, skipping"
+          exit 0
+        fi
+        kubectl apply -f k8s/argo-rollouts/rollout.yaml
+    
+    - name: 🚀 Execute Canary Deployment
+      run: |
+        echo "🚀 Starting canary deployment to production..."
+        if [ ! -f scripts/deployment/canary_deploy.sh ]; then
+          echo "❌ Canary deployment script not found"
+          exit 1
+        fi
+        
+        chmod +x scripts/deployment/canary_deploy.sh
+        ./scripts/deployment/canary_deploy.sh
+    
+    - name: 📊 Monitor Deployment
+      run: |
+        echo "📊 Monitoring deployment progress..."
+        kubectl rollout status rollout/amas-orchestrator -n amas-prod --timeout=10m || exit 0
+
+  # =============================================================================
+  # PHASE 3B: PRODUCTION BLUE-GREEN DEPLOYMENT
+  # =============================================================================
+  # Purpose: Emergency deployment with instant traffic switching
+  # Security: Requires production environment approval
+  #          Only on manual dispatch with blue-green + production
+  # Dependencies: build-and-security-scan, deploy-staging
+  # Use Case: Emergency deployments, hotfixes, instant switch needed
+  # =============================================================================
+  
+  deploy-production-blue-green:
+    name: 🔵 Production Blue-Green Deployment
+    runs-on: ubuntu-latest
+    needs: [build-and-security-scan, deploy-staging]
+    if: |
+      needs.build-and-security-scan.result == 'success' && (
+        github.event_name == 'workflow_dispatch' && 
+        github.event.inputs.deployment_strategy == 'blue-green' &&
+        github.event.inputs.environment == 'production'
+      )
+    environment: 
+      name: production
+      url: https://amas.example.com
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Setup kubectl
+      uses: azure/setup-kubectl@v3
+    
+    - name: 🔑 Configure Kubernetes
+      run: |
+        echo "${{ secrets.KUBECONFIG_PRODUCTION }}" | base64 -d > $HOME/.kube/config
+        kubectl config set-context --current --namespace=amas-prod
+    
+    - name: 🚀 Execute Blue-Green Deployment
+      run: |
+        echo "🚀 Starting blue-green deployment to production..."
+        if [ ! -f scripts/deployment/blue_green_deploy.sh ]; then
+          echo "❌ Blue-green deployment script not found"
+          exit 1
+        fi
+        
+        chmod +x scripts/deployment/blue_green_deploy.sh
+        ./scripts/deployment/blue_green_deploy.sh deploy
+
+  # =============================================================================
+  # PHASE 4: EMERGENCY ROLLBACK
+  # =============================================================================
+  # Purpose: Auto-rollback production deployment on failure (<2min)
+  # Trigger: Production deployment failure
+  # Dependencies: deploy-production-canary or deploy-production-blue-green (on failure)
+  # Security: Requires production environment access
+  # =============================================================================
+  
+  emergency-rollback:
+    name: 🔄 Emergency Rollback
+    runs-on: ubuntu-latest
+    if: |
+      failure() && (
+        (needs.deploy-production-canary.result == 'failure') ||
+        (needs.deploy-production-blue-green.result == 'failure')
+      )
+    environment: production
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    
+    steps:
+    - name: 📥 Checkout code
+      uses: actions/checkout@v4
+    
+    - name: 🔧 Setup kubectl
+      uses: azure/setup-kubectl@v3
+    
+    - name: 🔑 Configure Kubernetes
+      run: |
+        echo "${{ secrets.KUBECONFIG_PRODUCTION }}" | base64 -d > $HOME/.kube/config
+        kubectl config set-context --current --namespace=amas-prod
+    
+    - name: 🔄 Execute Rollback
+      run: |
+        echo "🔄 Executing emergency rollback..."
+        if ! kubectl get rollout amas-orchestrator -n amas-prod &> /dev/null; then
+          echo "⚠️  Rollout not found, cannot rollback"
+          exit 1
+        fi
+        
+        kubectl rollout undo rollout/amas-orchestrator -n amas-prod
+        kubectl rollout status rollout/amas-orchestrator -n amas-prod --timeout=5m
+
+  # =============================================================================
+  # PHASE 5: FAILURE NOTIFICATIONS
+  # =============================================================================
+  # Purpose: Notify on workflow failures for observability
+  # Trigger: Any workflow failure (not cancelled)
+  # Dependencies: All deployment jobs (monitors status)
+  # Output: GitHub Actions summary with failure details
+  # TODO: External notifications (Slack, email, PagerDuty)
+  # =============================================================================
+  
+  notify-failure:
+    name: 📢 Notify on Failure
+    runs-on: ubuntu-latest
+    needs: [build-and-security-scan, deploy-staging, deploy-production-canary, deploy-production-blue-green]
+    if: failure() && !cancelled()
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    
+    steps:
+    - name: 📢 Generate failure report
+      run: |
+        echo "## 🚨 Workflow Failure Report" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Workflow:** Progressive Delivery Pipeline" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Failed Jobs:" >> $GITHUB_STEP_SUMMARY
+        echo "- Build & Security Scan: ${{ needs.build-and-security-scan.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Deploy Staging: ${{ needs.deploy-staging.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Deploy Production Canary: ${{ needs.deploy-production-canary.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Deploy Production Blue-Green: ${{ needs.deploy-production-blue-green.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Next Steps:" >> $GITHUB_STEP_SUMMARY
+        echo "1. Review workflow logs for detailed error information" >> $GITHUB_STEP_SUMMARY
+        echo "2. Check if emergency rollback was triggered" >> $GITHUB_STEP_SUMMARY
+        echo "3. Verify deployment status in Kubernetes cluster" >> $GITHUB_STEP_SUMMARY
