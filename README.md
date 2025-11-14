@@ -32,6 +32,9 @@ AMAS is a fully autonomous, self-healing, multi-specialist AI ecosystem that ope
 
 ## Features
 See [FEATURES.md](FEATURES.md) for the complete, current list of production and intelligence capabilities:
+- **Hierarchical Agent Orchestration**: AI-powered task decomposition,
+  4-layer agent hierarchy, autonomous multi-agent coordination
+  ([Full Guide](docs/ORCHESTRATION_SYSTEM.md))
 
 - 4-layer multi-agent hierarchy for end-to-end automation
 - 50+ specialist agent types: research, analysis, creative, QA, tools

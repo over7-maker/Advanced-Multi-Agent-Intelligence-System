@@ -8,6 +8,11 @@
 - **PostgreSQL 15+** (or use Docker)
 - **Redis 7+** (or use Docker)
 - **Neo4j 5+** (or use Docker)
+- **Kubernetes cluster** (for production deployments with Progressive Delivery)
+- **kubectl CLI** configured with cluster access
+- **Argo Rollouts** (for progressive deployments)
+
+> **⚠️ Important**: All Kubernetes commands assume the namespace `amas` unless otherwise specified. You can configure this using the `NAMESPACE` environment variable.
 
 ## 🐳 **Docker Deployment (Recommended)**
 
@@ -180,15 +185,20 @@ NEO4J_URI=bolt://localhost:7687
 NEO4J_USER=neo4j
 NEO4J_PASSWORD=your_password
 
-# Security
-JWT_SECRET=your_jwt_secret
-ENCRYPTION_KEY=your_encryption_key
+# Security (use strong, randomly generated values)
+JWT_SECRET=your_jwt_secret_min_32_chars
+ENCRYPTION_KEY=your_encryption_key_min_32_chars
 
 # Performance
 MAX_CONCURRENT_REQUESTS=10
 REQUEST_TIMEOUT=30
 CACHE_TTL=3600
+
+# Deployment Namespace (for Kubernetes)
+NAMESPACE=amas
 ```
+
+> **🔒 Security Note**: Never commit secrets to version control. Use encrypted secret management (AWS Secrets Manager, Azure Key Vault, HashiCorp Vault, or Kubernetes Secrets with encryption at rest).
 
 ### **Nginx Configuration**
 
@@ -197,10 +207,17 @@ server {
     listen 80;
     server_name your-domain.com;
 
+    # Security: Restrict access to trusted IPs only
+    # Uncomment and configure for production
+    # allow 203.0.113.0/24;  # Your office IP range
+    # deny all;
+
     location / {
         proxy_pass http://localhost:8000;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     location /dashboard {
@@ -256,24 +273,41 @@ psql -d amas -c "SELECT * FROM pg_stat_activity;"
 
 ### **1. API Key Security**
 
-- Store API keys in environment variables
-- Use secrets management (AWS Secrets Manager, Azure Key Vault)
+- Store API keys in environment variables or encrypted secret managers
+- Use secrets management (AWS Secrets Manager, Azure Key Vault, HashiCorp Vault)
 - Never commit keys to version control
-- Rotate keys regularly
+- Rotate keys regularly (recommended: every 90 days)
+- Use separate keys for development, staging, and production
 
 ### **2. Network Security**
 
-- Use HTTPS in production
-- Configure firewall rules
-- Use VPN for internal access
-- Enable rate limiting
+- **Always use HTTPS in production** with valid SSL/TLS certificates
+- Configure firewall rules to restrict access to trusted IPs only
+- Example LoadBalancer IP restriction:
+  ```yaml
+  spec:
+    loadBalancerSourceRanges:
+      - "203.0.113.0/24"  # Your office network
+      - "198.51.100.0/24" # Your VPN network
+  ```
+- Use VPN for internal access to administrative interfaces
+- Enable rate limiting to prevent abuse
+- Implement Web Application Firewall (WAF) for production deployments
 
 ### **3. Data Security**
 
-- Encrypt sensitive data at rest
-- Use secure database connections
-- Implement audit logging
-- Regular security scans
+- Encrypt sensitive data at rest (use database-level encryption)
+- Use secure database connections (SSL/TLS for PostgreSQL, Redis, Neo4j)
+- Implement comprehensive audit logging
+- Regular security scans (weekly recommended)
+- Enable automatic security updates for OS and dependencies
+
+### **4. Secret Management**
+
+- Use encrypted secret storage (never plaintext)
+- Implement secret rotation policies
+- Audit secret access logs
+- Use service accounts with minimal permissions
 
 ## 🚀 **Scaling**
 
@@ -402,29 +436,79 @@ The Progressive Delivery Pipeline provides:
 
 ### **Prerequisites**
 
+> **Prerequisites**: Ensure these are configured before deploying
+
 - Kubernetes cluster with Argo Rollouts controller installed
 - NGINX Ingress Controller for traffic routing
 - Prometheus for metrics-based analysis
 - kubectl and Argo Rollouts CLI configured
+- Namespace created and configured
 
 ### **Quick Start**
 
 ```bash
+# Set namespace (configure as needed)
+export NAMESPACE="${NAMESPACE:-amas}"
+
+# Verify script exists and is executable
+if [[ ! -x ./scripts/deployment/canary_deploy.sh ]]; then
+  echo "ERROR: Deployment script missing or not executable" >&2
+  exit 1
+fi
+chmod 700 ./scripts/deployment/canary_deploy.sh
+
 # Install Argo Rollouts
 kubectl create namespace argo-rollouts
 kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
 
-# Apply analysis templates (required first)
-kubectl apply -f k8s/argo-rollouts/analysis-templates.yaml
+# Apply foundation layer components
+kubectl apply -f k8s/foundation/ --namespace=$NAMESPACE
+
+# Wait for foundation components with parallel checks and proper error handling
+echo "Waiting for foundation components to be ready..."
+
+# Run readiness checks in parallel for faster deployment
+kubectl wait --for=condition=Ready pod -l app=postgres --namespace=$NAMESPACE --timeout=300s &
+PG_PID=$!
+
+kubectl wait --for=condition=Ready pod -l app=redis --namespace=$NAMESPACE --timeout=300s &
+REDIS_PID=$!
+
+# Check if Neo4j pods exist before waiting
+if kubectl get pod -l app=neo4j --namespace=$NAMESPACE --no-headers 2>/dev/null | grep -q .; then
+  kubectl wait --for=condition=Ready pod -l app=neo4j --namespace=$NAMESPACE --timeout=300s &
+  NEO4J_PID=$!
+else
+  echo "Skipping Neo4j: not deployed in this environment"
+  NEO4J_PID=""
+fi
+
+# Wait for all background jobs and check for failures
+wait $PG_PID || { echo "ERROR: PostgreSQL readiness check failed" >&2; exit 1; }
+wait $REDIS_PID || { echo "ERROR: Redis readiness check failed" >&2; exit 1; }
+[[ -n "$NEO4J_PID" ]] && { wait $NEO4J_PID || { echo "ERROR: Neo4j readiness check failed" >&2; exit 1; }; }
+
+echo "✓ All foundation components ready"
+
+# Apply analysis templates (required before rollout)
+kubectl apply -f k8s/argo-rollouts/analysis-templates.yaml --namespace=$NAMESPACE
 
 # Apply rollout configuration
-kubectl apply -f k8s/argo-rollouts/rollout.yaml
+kubectl apply -f k8s/argo-rollouts/rollout.yaml --namespace=$NAMESPACE
 
-# Deploy using canary script
-export NAMESPACE=amas-prod
+# Deploy using canary script with proper environment
 export ROLLOUT_NAME=amas-orchestrator
 export IMAGE_TAG=latest
 ./scripts/deployment/canary_deploy.sh
+
+# Verify script logs and exit codes for successful deployment
+if [[ $? -eq 0 ]]; then
+  echo "✓ Deployment completed successfully"
+  echo "View deployment status: kubectl argo rollouts get rollout $ROLLOUT_NAME -n $NAMESPACE"
+else
+  echo "ERROR: Deployment failed. Check logs: kubectl argo rollouts get rollout $ROLLOUT_NAME -n $NAMESPACE" >&2
+  exit 1
+fi
 ```
 
 ### **Deployment Strategy**
@@ -448,31 +532,107 @@ Rollback is triggered automatically when:
 - Error budget remaining falls below 5%
 - Health checks fail for >2 minutes
 
+**Rollback Time: <2 minutes** for complete reversion to stable version
+
 ### **Monitoring Deployments**
 
 ```bash
 # View rollout status
-kubectl argo rollouts get rollout amas-orchestrator -n amas-prod
+kubectl argo rollouts get rollout amas-orchestrator -n $NAMESPACE
 
 # Watch rollout in real-time
-kubectl argo rollouts get rollout amas-orchestrator -n amas-prod --watch
+kubectl argo rollouts get rollout amas-orchestrator -n $NAMESPACE --watch
 
 # View analysis runs
-kubectl get analysisruns -n amas-prod
+kubectl get analysisruns -n $NAMESPACE
+
+# Check specific analysis details
+kubectl describe analysisrun <analysis-run-name> -n $NAMESPACE
 ```
 
-### **Manual Rollback**
+### **Manual Rollback Procedures**
 
 ```bash
-# Rollback to previous revision
-kubectl rollout undo rollout/amas-orchestrator -n amas-prod
+# Immediate rollback to previous revision
+kubectl argo rollouts undo amas-orchestrator -n $NAMESPACE
 
 # Rollback to specific revision
-kubectl rollout undo rollout/amas-orchestrator --to-revision=2 -n amas-prod
+kubectl argo rollouts undo amas-orchestrator --to-revision=2 -n $NAMESPACE
 
-# Abort current rollout
-kubectl argo rollouts abort amas-orchestrator -n amas-prod
+# Abort current rollout immediately
+kubectl argo rollouts abort amas-orchestrator -n $NAMESPACE
+
+# View rollout history
+kubectl argo rollouts history amas-orchestrator -n $NAMESPACE
+
+# Emergency: Direct Kubernetes rollback (bypass Argo)
+kubectl rollout undo deployment/amas-orchestrator -n $NAMESPACE
 ```
+
+### **Post-Deployment Validation**
+
+After successful deployment, validate the system:
+
+```bash
+# 1. Check all pods are running
+kubectl get pods -n $NAMESPACE
+
+# 2. Verify services are accessible
+kubectl get services -n $NAMESPACE
+
+# 3. Check Prometheus targets
+kubectl port-forward svc/prometheus 9090:9090 -n $NAMESPACE
+# Open http://localhost:9090/targets to verify all targets are UP
+
+# 4. Validate Grafana dashboards
+kubectl port-forward svc/grafana 3000:3000 -n $NAMESPACE
+# Open http://localhost:3000 and verify dashboards show data
+
+# 5. Test application endpoints
+curl http://localhost:8000/health
+curl http://localhost:8000/api/status
+
+# 6. Check recent logs for errors
+kubectl logs -l app=amas-orchestrator -n $NAMESPACE --tail=100 | grep -i error
+
+# 7. Verify SLO compliance
+curl http://localhost:8000/observability/slo/status
+
+# 8. Run smoke tests
+python3 tests/smoke/test_deployment.py
+```
+
+### **Deployment Troubleshooting**
+
+If deployment fails:
+
+1. **Check Rollout Status**:
+   ```bash
+   kubectl argo rollouts get rollout amas-orchestrator -n $NAMESPACE
+   ```
+
+2. **View Analysis Results**:
+   ```bash
+   kubectl get analysisruns -n $NAMESPACE
+   kubectl describe analysisrun <name> -n $NAMESPACE
+   ```
+
+3. **Check Pod Logs**:
+   ```bash
+   kubectl logs -l app=amas-orchestrator -n $NAMESPACE --tail=200
+   ```
+
+4. **Verify Prometheus Metrics**:
+   ```bash
+   kubectl port-forward svc/prometheus 9090:9090 -n $NAMESPACE
+   # Query: rate(http_requests_total[5m])
+   ```
+
+5. **Manual Rollback**:
+   ```bash
+   kubectl argo rollouts abort amas-orchestrator -n $NAMESPACE
+   kubectl argo rollouts undo amas-orchestrator -n $NAMESPACE
+   ```
 
 ### **Documentation**
 
@@ -480,25 +640,61 @@ For detailed information, see:
 - [Progressive Delivery Quick Start Guide](PROGRESSIVE_DELIVERY_QUICK_START.md)
 - [Progressive Delivery Implementation Guide](PROGRESSIVE_DELIVERY_IMPLEMENTATION.md)
 - [Progressive Delivery Success Criteria](PROGRESSIVE_DELIVERY_SUCCESS_CRITERIA.md)
+- [Workflow Security Guide](WORKFLOW_SECURITY.md)
 
 ## 🎯 **Production Checklist**
 
+### **Pre-Deployment**
 - [ ] All API keys configured and validated
 - [ ] Database connections working
-- [ ] Security scanning passed
-- [ ] Monitoring configured
-- [ ] Backup strategy implemented
-- [ ] SSL certificates installed
-- [ ] Firewall rules configured
-- [ ] Load testing completed
-- [ ] Documentation updated
-- [ ] Team trained on operations
-- [ ] Progressive Delivery Pipeline configured (Kubernetes deployments)
+- [ ] Security scanning passed (no critical vulnerabilities)
+- [ ] Secrets encrypted and stored securely (not in Git)
+- [ ] SSL/TLS certificates installed and valid
+- [ ] Firewall rules configured (IP allowlisting)
+- [ ] Network policies applied (Kubernetes)
+
+### **Monitoring & Observability**
+- [ ] Monitoring configured (Prometheus + Grafana)
+- [ ] Alert rules configured and tested
+- [ ] Log aggregation working (centralized logging)
+- [ ] Distributed tracing operational (Jaeger/Zipkin)
+- [ ] SLO definitions documented and monitored
+- [ ] Dashboards created and accessible
+
+### **Operational Readiness**
+- [ ] Backup strategy implemented and tested
+- [ ] Disaster recovery plan documented
+- [ ] Incident response procedures defined
+- [ ] On-call rotation established
+- [ ] Runbooks created for common scenarios
+- [ ] Team trained on operations and troubleshooting
+
+### **Performance & Scaling**
+- [ ] Load testing completed (meets SLO requirements)
+- [ ] Autoscaling configured and tested
+- [ ] Resource limits set appropriately
+- [ ] Database query optimization done
+- [ ] Caching strategy implemented
+
+### **Progressive Delivery** (Kubernetes Deployments)
+- [ ] Progressive Delivery Pipeline configured
 - [ ] Argo Rollouts installed and tested
 - [ ] Prometheus metrics integration verified
+- [ ] Analysis templates configured
+- [ ] Rollback procedures tested
+- [ ] SLO-based gates validated
+
+### **Documentation**
+- [ ] Architecture documentation updated
+- [ ] API documentation complete
+- [ ] Deployment procedures documented
+- [ ] Troubleshooting guides created
+- [ ] Security policies documented
 
 ---
 
 **🎉 Your AMAS system is now production-ready!**
 
 For support, check the [troubleshooting guide](docs/troubleshooting.md) or open an issue on GitHub.
+
+**Security Contact**: For security issues, see [SECURITY.md](../SECURITY.md) for responsible disclosure procedures.
