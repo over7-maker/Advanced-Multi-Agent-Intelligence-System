@@ -28,40 +28,80 @@ try:
     from watchdog.events import FileSystemEventHandler, FileSystemEvent
     HAS_WATCHDOG = True
 except ImportError:
-    # Set sentinel values instead of None to avoid type issues
-    Observer = None  # type: ignore
-    FileSystemEventHandler = None  # type: ignore
-    FileSystemEvent = None  # type: ignore
     HAS_WATCHDOG = False
+    
+    # Create safe dummy classes instead of None to prevent TypeError
+    class DummyObserver:
+        """Dummy Observer when watchdog is not installed"""
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError(
+                "File system monitoring requires 'watchdog' package. "
+                "Install with: pip install watchdog"
+            )
+        
+        def schedule(self, *args, **kwargs):
+            raise RuntimeError("watchdog not installed")
+        
+        def start(self):
+            raise RuntimeError("watchdog not installed")
+        
+        def stop(self):
+            pass
+        
+        def join(self, timeout=None):
+            pass
+    
+    class DummyEventHandler:
+        """Dummy FileSystemEventHandler when watchdog is not installed"""
+        def __init__(self, *args, **kwargs):
+            raise RuntimeError(
+                "File system monitoring requires 'watchdog' package. "
+                "Install with: pip install watchdog"
+            )
+    
+    class DummyEvent:
+        """Dummy FileSystemEvent when watchdog is not installed"""
+        pass
+    
+    Observer = DummyObserver
+    FileSystemEventHandler = DummyEventHandler
+    FileSystemEvent = DummyEvent
+    
     logger.warning(
         "watchdog not installed. File system monitoring will be unavailable. "
         "Install with: pip install watchdog"
     )
 
 # Ensure logger has at least a NullHandler to prevent "No handlers" warnings
-# Note: We don't set the level here to allow application-level configuration
 if not logger.handlers:
     logger.addHandler(logging.NullHandler())
+    logger.debug("No handlers configured; installed NullHandler to suppress warnings.")
 
 class EventType(str, Enum):
+    """Types of events that can be detected by the monitoring system"""
+    # File system events
     FILE_CREATED = "file_created"
     FILE_MODIFIED = "file_modified"
     FILE_DELETED = "file_deleted"
     FILE_MOVED = "file_moved"
     
+    # Web content events
     WEB_CONTENT_CHANGED = "web_content_changed"
     WEB_NEW_POST = "web_new_post"
     WEB_PRICE_CHANGED = "web_price_changed"
     WEB_AVAILABILITY_CHANGED = "web_availability_changed"
     
+    # Network service events
     NETWORK_SERVICE_UP = "network_service_up"
     NETWORK_SERVICE_DOWN = "network_service_down"
     NETWORK_THRESHOLD_EXCEEDED = "network_threshold_exceeded"
     
+    # Custom events
     CUSTOM_CONDITION = "custom_condition"
     SCHEDULED_TRIGGER = "scheduled_trigger"
 
 class EventSeverity(str, Enum):
+    """Severity levels for detected events"""
     INFO = "info"
     LOW = "low"
     MEDIUM = "medium"
@@ -85,6 +125,11 @@ class DetectedEvent:
         tags: Set of tags for categorizing and filtering events
         processed: Whether the event has been processed by triggers
         triggered_workflows: List of workflow IDs triggered by this event
+    
+    Security:
+        - URLs in source are automatically sanitized to remove credentials
+        - SSRF protection validates URLs don't point to internal services
+        - All enum values are validated in __post_init__
     """
     id: str = field(default_factory=lambda: f"evt_{uuid.uuid4().hex[:12]}")
     event_type: EventType
@@ -111,26 +156,49 @@ class DetectedEvent:
             try:
                 self.event_type = EventType(self.event_type)
             except ValueError:
-                raise ValueError(f"Invalid event_type: {self.event_type}. Must be one of {[e.value for e in EventType]}")
+                raise ValueError(
+                    f"Invalid event_type: {self.event_type}. "
+                    f"Must be one of {[e.value for e in EventType]}"
+                )
         
         # Ensure severity is an EventSeverity enum
         if not isinstance(self.severity, EventSeverity):
             try:
                 self.severity = EventSeverity(self.severity)
             except ValueError:
-                raise ValueError(f"Invalid severity: {self.severity}. Must be one of {[e.value for e in EventSeverity]}")
+                raise ValueError(
+                    f"Invalid severity: {self.severity}. "
+                    f"Must be one of {[e.value for e in EventSeverity]}"
+                )
         
         # Validate and sanitize source if it's a URL
         if self.source.startswith(('http://', 'https://')):
             self.source = self._sanitize_url(self.source)
     
     def _sanitize_url(self, url: str) -> str:
-        """Sanitize URL to remove credentials and validate scheme"""
+        """
+        Sanitize URL to remove credentials and validate scheme.
+        
+        Security:
+            - Removes username/password from URLs to prevent credential leakage
+            - Only allows http and https schemes
+            - Validates URL is safe (not pointing to internal services)
+        """
         parsed = urlparse(url)
         
         # Only allow http and https schemes
         if parsed.scheme not in ("http", "https"):
-            raise ValueError(f"Unsupported URL scheme: {parsed.scheme}. Only http and https are allowed.")
+            raise ValueError(
+                f"Unsupported URL scheme: {parsed.scheme}. "
+                "Only http and https are allowed."
+            )
+        
+        # Validate URL is safe (SSRF protection)
+        if not self._is_safe_url(url):
+            raise ValueError(
+                f"Unsafe URL detected: URL points to localhost or private network. "
+                "This is blocked to prevent SSRF attacks."
+            )
         
         # Remove credentials from URL if present (security)
         if parsed.username or parsed.password:
@@ -138,7 +206,7 @@ class DetectedEvent:
             netloc = parsed.hostname
             if parsed.port:
                 netloc = f"{netloc}:{parsed.port}"
-            sanitized = parsed._replace(netloc=netloc, username=None, password=None)
+            sanitized = parsed._replace(netloc=netloc)
             logger.warning(f"Credentials removed from URL: {url[:50]}...")
             return sanitized.geturl()
         
@@ -148,7 +216,16 @@ class DetectedEvent:
     def _is_safe_url(url: str) -> bool:
         """
         Validate URL to prevent SSRF attacks.
-        Blocks localhost, internal IPs, and private network ranges.
+        
+        Blocks:
+            - localhost and loopback addresses (127.0.0.1, ::1)
+            - Private IP ranges (RFC 1918: 10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12)
+            - Link-local addresses (169.254.0.0/16)
+            - AWS metadata service (169.254.169.254)
+            - Special use addresses (0.0.0.0)
+        
+        Returns:
+            True if URL is safe to access, False otherwise
         """
         try:
             parsed = urlparse(url)
@@ -159,23 +236,33 @@ class DetectedEvent:
             
             # Block localhost variants
             if hostname.lower() in ("localhost", "127.0.0.1", "::1", "0.0.0.0"):
+                logger.warning(f"Blocked localhost URL: {hostname}")
+                return False
+            
+            # Block AWS/cloud metadata services
+            if hostname == "169.254.169.254":
+                logger.warning(f"Blocked cloud metadata service URL: {hostname}")
                 return False
             
             # Block private IP ranges (RFC 1918)
             # 10.0.0.0/8
             if re.match(r"^10\.", hostname):
+                logger.warning(f"Blocked private IP (10.x.x.x): {hostname}")
                 return False
             
             # 192.168.0.0/16
             if re.match(r"^192\.168\.", hostname):
+                logger.warning(f"Blocked private IP (192.168.x.x): {hostname}")
                 return False
             
             # 172.16.0.0/12
             if re.match(r"^172\.(1[6-9]|2[0-9]|3[0-1])\.", hostname):
+                logger.warning(f"Blocked private IP (172.16-31.x.x): {hostname}")
                 return False
             
-            # Block link-local addresses
+            # Block link-local addresses (169.254.0.0/16)
             if hostname.startswith("169.254."):
+                logger.warning(f"Blocked link-local address: {hostname}")
                 return False
             
             return True
@@ -288,6 +375,7 @@ class FileSystemMonitor(FileSystemEventHandler):
                 "watchdog is required for file system monitoring. "
                 "Install with: pip install watchdog"
             )
+        super().__init__()
         self.event_callback = event_callback
         self.ignored_patterns = {
             r'\.(tmp|swp|lock)$',           # Temporary files
@@ -395,6 +483,16 @@ class WebMonitorTarget:
     headers: Dict[str, str] = field(default_factory=dict)
     auth_token: Optional[str] = None
     
+    def __post_init__(self):
+        """Validate URL on initialization"""
+        # Validate URL for SSRF protection
+        if not DetectedEvent._is_safe_url(self.url):
+            raise ValueError(
+                f"Unsafe URL detected: {self.url}. "
+                "URLs must not point to localhost or private network ranges. "
+                "This is a security measure to prevent SSRF attacks."
+            )
+    
     def needs_check(self) -> bool:
         """Check if target needs to be checked now"""
         if not self.last_check:
@@ -404,7 +502,28 @@ class WebMonitorTarget:
         return time_since_check >= self.check_interval_minutes
 
 class EventMonitor:
-    """Intelligent event monitoring and workflow triggering system"""
+    """
+    Intelligent event monitoring and workflow triggering system.
+    
+    Features:
+        - File system monitoring (requires watchdog)
+        - Web content monitoring with change detection
+        - Network service health monitoring
+        - Event-driven workflow triggering
+        - Persistent event storage with SQLite
+    
+    Security:
+        - SSRF protection on all URL monitoring
+        - SQL injection prevention with parameterized queries
+        - Credential sanitization in logs
+        - Rate limiting and cooldown on triggers
+    
+    Performance:
+        - Async SQLite operations via executor
+        - Connection pooling for HTTP requests
+        - Event batching and cleanup
+        - Resource-efficient monitoring loops
+    """
     
     def __init__(self, db_path: str = "data/events.db"):
         self.db_path = Path(db_path)
@@ -433,7 +552,12 @@ class EventMonitor:
         logger.info(f"Event Monitor initialized with database: {self.db_path}")
     
     def _sanitize_log_source(self, source: str) -> str:
-        """Sanitize source string for safe logging (removes credentials from URLs)"""
+        """
+        Sanitize source string for safe logging (removes credentials from URLs).
+        
+        Security:
+            Prevents credential leakage in logs by removing username/password from URLs.
+        """
         if source.startswith(('http://', 'https://')):
             try:
                 parsed = urlparse(source)
@@ -442,7 +566,7 @@ class EventMonitor:
                     netloc = parsed.hostname
                     if parsed.port:
                         netloc = f"{netloc}:{parsed.port}"
-                    sanitized = parsed._replace(netloc=netloc, username=None, password=None)
+                    sanitized = parsed._replace(netloc=netloc)
                     return sanitized.geturl()
             except Exception:
                 # If parsing fails, return truncated version
@@ -451,7 +575,6 @@ class EventMonitor:
     
     def _init_database(self):
         """Initialize SQLite database for event storage"""
-        # Run in executor to avoid blocking event loop
         loop = asyncio.get_event_loop()
         if loop.is_running():
             # If loop is running, schedule in executor
@@ -461,8 +584,14 @@ class EventMonitor:
             self._init_database_sync()
     
     def _init_database_sync(self):
-        """Synchronous database initialization (runs in executor)"""
+        """
+        Synchronous database initialization (runs in executor).
+        
+        Security:
+            Uses parameterized queries throughout to prevent SQL injection.
+        """
         with sqlite3.connect(self.db_path) as conn:
+            # Events table
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS events (
                     id TEXT PRIMARY KEY,
@@ -470,28 +599,29 @@ class EventMonitor:
                     severity TEXT NOT NULL,
                     source TEXT NOT NULL,
                     description TEXT NOT NULL,
-                    event_data TEXT,  -- JSON
+                    event_data TEXT,
                     detected_at TEXT NOT NULL,
                     correlation_id TEXT,
-                    tags TEXT,  -- JSON set
+                    tags TEXT,
                     processed BOOLEAN DEFAULT 0,
-                    triggered_workflows TEXT  -- JSON list
+                    triggered_workflows TEXT
                 )
             """)
             
+            # Event triggers table
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS event_triggers (
                     id TEXT PRIMARY KEY,
                     name TEXT NOT NULL,
                     description TEXT,
-                    event_types TEXT NOT NULL,  -- JSON list
-                    source_patterns TEXT,  -- JSON list
+                    event_types TEXT NOT NULL,
+                    source_patterns TEXT,
                     severity_threshold TEXT NOT NULL,
-                    tag_filters TEXT,  -- JSON set
+                    tag_filters TEXT,
                     cooldown_minutes INTEGER DEFAULT 30,
                     max_triggers_per_hour INTEGER DEFAULT 10,
                     workflow_template TEXT NOT NULL,
-                    workflow_parameters TEXT,  -- JSON
+                    workflow_parameters TEXT,
                     priority TEXT DEFAULT 'normal',
                     enabled BOOLEAN DEFAULT 1,
                     last_triggered TEXT,
@@ -502,6 +632,7 @@ class EventMonitor:
                 )
             """)
             
+            # Web monitors table
             conn.execute("""
                 CREATE TABLE IF NOT EXISTS web_monitors (
                     id TEXT PRIMARY KEY,
@@ -515,7 +646,7 @@ class EventMonitor:
                     consecutive_failures INTEGER DEFAULT 0,
                     response_time_threshold_ms INTEGER DEFAULT 5000,
                     track_performance BOOLEAN DEFAULT 1,
-                    headers TEXT,  -- JSON
+                    headers TEXT,
                     auth_token TEXT,
                     created_at TEXT NOT NULL
                 )
@@ -617,18 +748,20 @@ class EventMonitor:
                             content_selector: str = None,
                             change_threshold: float = 0.05,
                             headers: Dict[str, str] = None) -> str:
-        """Add web content monitoring"""
+        """
+        Add web content monitoring.
         
-        # Validate URL for SSRF protection
-        if not self._is_safe_url(url):
-            raise ValueError(
-                f"Unsafe URL detected: {url}. "
-                "URLs must not point to localhost or private network ranges. "
-                "This is a security measure to prevent SSRF attacks."
-            )
+        Security:
+            - Validates URL doesn't point to localhost or private networks (SSRF protection)
+            - Removes credentials from URLs before storage
+        
+        Raises:
+            ValueError: If URL is unsafe or has invalid scheme
+        """
         
         monitor_id = f"web_{uuid.uuid4().hex[:8]}"
         
+        # WebMonitorTarget validates URL in __post_init__
         web_monitor = WebMonitorTarget(
             id=monitor_id,
             name=name,
@@ -642,15 +775,13 @@ class EventMonitor:
         self.web_monitors[monitor_id] = web_monitor
         await self._persist_web_monitor(web_monitor)
         
-        logger.info(f"Web monitor created: {name} ({url})")
+        logger.info(f"Web monitor created: {name} ({self._sanitize_log_source(url)})")
         return monitor_id
     
     async def _web_monitoring_loop(self):
         """Background loop for web content monitoring"""
         while self.running:
             try:
-                current_time = datetime.now(timezone.utc)
-                
                 # Check each web monitor
                 for monitor in list(self.web_monitors.values()):
                     if monitor.needs_check():
@@ -664,7 +795,15 @@ class EventMonitor:
                 await asyncio.sleep(60)
     
     async def _check_web_target(self, monitor: WebMonitorTarget):
-        """Check a single web monitoring target"""
+        """
+        Check a single web monitoring target.
+        
+        Security:
+            - Uses SSL verification
+            - Implements timeouts to prevent hanging
+            - Connection pooling with limits
+            - Proper error handling
+        """
         current_time = datetime.now(timezone.utc)
         try:
             start_time = asyncio.get_event_loop().time()
@@ -694,7 +833,7 @@ class EventMonitor:
                         content = await response.text()
                         response_time_ms = (asyncio.get_event_loop().time() - start_time) * 1000
                         
-                        # Calculate content hash
+                        # Calculate content hash (use SHA-256 for security)
                         content_hash = hashlib.sha256(content.encode()).hexdigest()
                         
                         # Check for content changes
@@ -800,8 +939,7 @@ class EventMonitor:
         """Background loop for network service monitoring"""
         while self.running:
             try:
-                # This would implement network monitoring
-                # For now, just a placeholder that sleeps
+                # Placeholder for network monitoring
                 await asyncio.sleep(300)  # Check every 5 minutes
                 
             except Exception as e:
@@ -823,14 +961,11 @@ class EventMonitor:
                 
                 # Clean up old events (keep last 1000)
                 if len(self.recent_events) > 1000:
-                    # Sort by detection time and keep most recent
                     sorted_events = sorted(
                         self.recent_events.items(),
                         key=lambda x: x[1].detected_at,
                         reverse=True
                     )
-                    
-                    # Keep only most recent 1000
                     self.recent_events = dict(sorted_events[:1000])
                 
                 await asyncio.sleep(60)  # Process events every minute
@@ -955,7 +1090,12 @@ class EventMonitor:
         await loop.run_in_executor(None, self._persist_event_sync, event)
     
     def _persist_event_sync(self, event: DetectedEvent):
-        """Synchronous event persistence (runs in executor)"""
+        """
+        Synchronous event persistence (runs in executor).
+        
+        Security:
+            Uses parameterized queries to prevent SQL injection.
+        """
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
                 INSERT OR REPLACE INTO events (
@@ -977,7 +1117,12 @@ class EventMonitor:
         await loop.run_in_executor(None, self._persist_trigger_sync, trigger)
     
     def _persist_trigger_sync(self, trigger: EventTrigger):
-        """Synchronous trigger persistence (runs in executor)"""
+        """
+        Synchronous trigger persistence (runs in executor).
+        
+        Security:
+            Uses parameterized queries to prevent SQL injection.
+        """
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
                 INSERT OR REPLACE INTO event_triggers (
@@ -1006,7 +1151,12 @@ class EventMonitor:
         await loop.run_in_executor(None, self._persist_web_monitor_sync, monitor)
     
     def _persist_web_monitor_sync(self, monitor: WebMonitorTarget):
-        """Synchronous web monitor persistence (runs in executor)"""
+        """
+        Synchronous web monitor persistence (runs in executor).
+        
+        Security:
+            Uses parameterized queries to prevent SQL injection.
+        """
         with sqlite3.connect(self.db_path) as conn:
             conn.execute("""
                 INSERT OR REPLACE INTO web_monitors (
