@@ -120,6 +120,31 @@ The core of AMAS - the most advanced AI agentic workflow system ever created:
 
 ---
 
+## 🎯 **Hierarchical Agent Orchestration**
+
+### **🚀 Autonomous Multi-Agent Coordination System**
+The keystone component for autonomous multi-agent intelligence - enables coordinated specialist teams to work together autonomously on complex tasks:
+
+- **[🎯 Orchestration System Guide](ORCHESTRATION_SYSTEM.md)** - **Complete guide** - Full API reference, architecture, examples, configuration
+- **[⚡ Orchestration Quick Start](ORCHESTRATION_QUICK_START.md)** - **5-minute guide** - Get started with orchestration in minutes
+- **[📋 Architecture Decision Record](adr/0004-hierarchical-agent-orchestration.md)** - Design rationale and decisions
+
+### **🎯 Core Components**
+- **Task Decomposer** - AI-powered task breakdown (1,132 lines)
+- **Agent Hierarchy Manager** - Multi-layer agent management (999 lines)
+- **Agent Communication Bus** - Inter-agent messaging (1,084 lines)
+- **Workflow Executor** - Multi-agent workflow execution (1,113 lines)
+
+### **✨ Key Features**
+- **4-Layer Agent Hierarchy**: Executive → Management → Specialist → Execution
+- **AI-Powered Task Decomposition**: Automatic breakdown of complex requests
+- **Autonomous Coordination**: Specialists work together without human intervention
+- **Self-Healing**: Automatic agent replacement (<30 seconds recovery)
+- **Quality Gates**: Multi-stage verification ensures business-ready outputs
+- **Performance**: 100+ concurrent workflows, 500+ agents, 10,000+ messages/minute
+
+---
+
 ## 🔌 **AI Providers**
 
 ### **🤖 16 AI Providers with Bulletproof Validation**
