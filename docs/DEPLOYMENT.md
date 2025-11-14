@@ -387,6 +387,100 @@ tail -f logs/amas.log | grep -i error
 - Use async processing
 - Implement queue management
 
+## 🚀 **Progressive Delivery Pipeline**
+
+AMAS includes a comprehensive Progressive Delivery Pipeline using Argo Rollouts for safe, automated deployments with canary releases and automatic rollback.
+
+### **Overview**
+
+The Progressive Delivery Pipeline provides:
+- **Canary Deployments**: Progressive traffic shifting (10%→25%→50%→75%→100%)
+- **Automatic Rollback**: SLO violations trigger immediate rollback within 2 minutes
+- **Zero Downtime**: No service interruption during deployments
+- **SLO-based Gates**: Health checks and metrics validation prevent bad deployments
+- **Blue-Green Capability**: Instant traffic switching for emergency scenarios
+
+### **Prerequisites**
+
+- Kubernetes cluster with Argo Rollouts controller installed
+- NGINX Ingress Controller for traffic routing
+- Prometheus for metrics-based analysis
+- kubectl and Argo Rollouts CLI configured
+
+### **Quick Start**
+
+```bash
+# Install Argo Rollouts
+kubectl create namespace argo-rollouts
+kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+
+# Apply analysis templates (required first)
+kubectl apply -f k8s/argo-rollouts/analysis-templates.yaml
+
+# Apply rollout configuration
+kubectl apply -f k8s/argo-rollouts/rollout.yaml
+
+# Deploy using canary script
+export NAMESPACE=amas-prod
+export ROLLOUT_NAME=amas-orchestrator
+export IMAGE_TAG=latest
+./scripts/deployment/canary_deploy.sh
+```
+
+### **Deployment Strategy**
+
+The canary deployment follows this progressive timeline:
+
+1. **10% Traffic** (1min) → Basic health checks
+2. **25% Traffic** (1min + 1min analysis) → Success rate validation
+3. **50% Traffic** (2min + 2min analysis) → Comprehensive SLO checks
+4. **75% Traffic** (2min + 2min analysis) → Performance regression detection
+5. **Final Validation** (1min + 1min analysis) → Final checks
+6. **100% Traffic** → Full deployment
+
+**Total Time: ~8-9 minutes** (meets <10 minute requirement)
+
+### **Automatic Rollback Triggers**
+
+Rollback is triggered automatically when:
+- Success rate drops below 95%
+- P95 latency exceeds 3.0 seconds
+- Error budget remaining falls below 5%
+- Health checks fail for >2 minutes
+
+### **Monitoring Deployments**
+
+```bash
+# View rollout status
+kubectl argo rollouts get rollout amas-orchestrator -n amas-prod
+
+# Watch rollout in real-time
+kubectl argo rollouts get rollout amas-orchestrator -n amas-prod --watch
+
+# View analysis runs
+kubectl get analysisruns -n amas-prod
+```
+
+### **Manual Rollback**
+
+```bash
+# Rollback to previous revision
+kubectl rollout undo rollout/amas-orchestrator -n amas-prod
+
+# Rollback to specific revision
+kubectl rollout undo rollout/amas-orchestrator --to-revision=2 -n amas-prod
+
+# Abort current rollout
+kubectl argo rollouts abort amas-orchestrator -n amas-prod
+```
+
+### **Documentation**
+
+For detailed information, see:
+- [Progressive Delivery Quick Start Guide](PROGRESSIVE_DELIVERY_QUICK_START.md)
+- [Progressive Delivery Implementation Guide](PROGRESSIVE_DELIVERY_IMPLEMENTATION.md)
+- [Progressive Delivery Success Criteria](PROGRESSIVE_DELIVERY_SUCCESS_CRITERIA.md)
+
 ## 🎯 **Production Checklist**
 
 - [ ] All API keys configured and validated
@@ -399,6 +493,9 @@ tail -f logs/amas.log | grep -i error
 - [ ] Load testing completed
 - [ ] Documentation updated
 - [ ] Team trained on operations
+- [ ] Progressive Delivery Pipeline configured (Kubernetes deployments)
+- [ ] Argo Rollouts installed and tested
+- [ ] Prometheus metrics integration verified
 
 ---
 
