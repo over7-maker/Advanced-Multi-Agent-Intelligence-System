@@ -1,7 +1,8 @@
 {
+  "root": true,
   "env": {
     "browser": true,
-    "es2021": true,
+    "es2022": true,
     "node": true
   },
   "extends": [
@@ -13,11 +14,12 @@
   ],
   "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaVersion": "latest",
+    "ecmaVersion": 2022,
     "sourceType": "module",
     "ecmaFeatures": {
       "jsx": true
-    }
+    },
+    "project": "./tsconfig.json"
   },
   "plugins": [
     "@typescript-eslint",
@@ -28,12 +30,15 @@
     "react/react-in-jsx-scope": "off",
     "react/prop-types": "off",
     "react/jsx-key": "error",
+    "react-hooks/exhaustive-deps": "error",
+    "semi": ["error", "always"],
+    "@typescript-eslint/semi": ["error", "always"],
+    "@typescript-eslint/no-explicit-any": ["error", {"ignoreRestArgs": true}],
     "@typescript-eslint/explicit-module-boundary-types": [
       "warn",
       {
         "allowArgumentsExplicitlyTypedAsAny": false,
-        "allowDirectConstAssertionInArrowFunctions": true,
-        "allowedNames": ["render"]
+        "allowDirectConstAssertionInArrowFunctions": true
       }
     ],
     "@typescript-eslint/no-unused-vars": [
@@ -44,8 +49,7 @@
         "caughtErrorsIgnorePattern": "^_",
         "destructuredArrayIgnorePattern": "^_"
       }
-    ],
-    "react-hooks/exhaustive-deps": "error"
+    ]
   },
   "settings": {
     "react": {
@@ -56,11 +60,11 @@
     {
       "files": ["*.test.tsx", "*.test.ts", "*.spec.tsx", "*.spec.ts"],
       "env": {
-        "jest": true
+        "jest": true,
+        "node": true
       },
       "rules": {
-        "@typescript-eslint/no-unused-vars": "off",
-        "@typescript-eslint/explicit-module-boundary-types": "off"
+        "@typescript-eslint/no-explicit-any": "off"
       }
     }
   ]
