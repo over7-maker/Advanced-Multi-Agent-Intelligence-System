@@ -27,19 +27,41 @@
   "rules": {
     "react/react-in-jsx-scope": "off",
     "react/prop-types": "off",
-    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "react/jsx-key": "error",
+    "@typescript-eslint/explicit-module-boundary-types": [
+      "warn",
+      {
+        "allowArgumentsExplicitlyTypedAsAny": false,
+        "allowDirectConstAssertionInArrowFunctions": true,
+        "allowedNames": ["render"]
+      }
+    ],
     "@typescript-eslint/no-unused-vars": [
       "error",
       {
         "argsIgnorePattern": "^_",
         "varsIgnorePattern": "^_",
-        "caughtErrorsIgnorePattern": "^_"
+        "caughtErrorsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_"
       }
-    ]
+    ],
+    "react-hooks/exhaustive-deps": "error"
   },
   "settings": {
     "react": {
       "version": "detect"
     }
-  }
+  },
+  "overrides": [
+    {
+      "files": ["*.test.tsx", "*.test.ts", "*.spec.tsx", "*.spec.ts"],
+      "env": {
+        "jest": true
+      },
+      "rules": {
+        "@typescript-eslint/no-unused-vars": "off",
+        "@typescript-eslint/explicit-module-boundary-types": "off"
+      }
+    }
+  ]
 }
