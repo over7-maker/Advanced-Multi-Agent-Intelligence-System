@@ -7,13 +7,7 @@
 *.md text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
-*.png binary
-*.jpg binary
-*.jpeg binary
-*.gif binary
-*.ico binary
-*.mov binary
-*.mp4 binary
-*.mp3 binary
-*.gz binary
-*.zip binary
+*.env export-ignore
+*.env.local export-ignore
+*.pem filter=
+*.key filter=
