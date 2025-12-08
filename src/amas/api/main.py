@@ -20,7 +20,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from ..main import AMASApplication
 
 # Import security components
-from ...security import (
+from ..security import (
     JWTMiddleware,
     SecurityHeadersMiddleware,
     AMASHTTPBearer,
