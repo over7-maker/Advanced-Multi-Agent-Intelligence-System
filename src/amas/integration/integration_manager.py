@@ -97,16 +97,9 @@ class IntegrationManager:
         try:
             from src.amas.integration.n8n_connector import N8NConnector
             
-            # Use credentials from settings if available
-            if settings and settings.integration.n8n_base_url:
-                connector = N8NConnector(
-                    n8n_base_url=settings.integration.n8n_base_url,
-                    api_key=settings.integration.n8n_api_key,
-                    username=settings.integration.n8n_username,
-                    password=settings.integration.n8n_password
-                )
-            else:
-                connector = N8NConnector()
+            # N8NConnector now automatically loads credentials from CredentialManager
+            # So we can just initialize it without parameters
+            connector = N8NConnector()
             
             self.connectors[IntegrationPlatform.N8N] = connector
             logger.info("N8N connector initialized with real credentials")

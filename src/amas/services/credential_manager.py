@@ -6,10 +6,18 @@ Centralized credential management with encryption support
 import logging
 import os
 from typing import Any, Dict, Optional
-from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
 import base64
+
+# Optional encryption support - make it graceful if cryptography not available
+try:
+    from cryptography.fernet import Fernet
+    from cryptography.hazmat.primitives import hashes
+    from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+    CRYPTOGRAPHY_AVAILABLE = True
+except ImportError:
+    Fernet = None
+    PBKDF2HMAC = None
+    CRYPTOGRAPHY_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -44,18 +52,22 @@ class CredentialManager:
     
     def _init_encryption(self):
         """Initialize encryption cipher"""
-        if not self.encryption_key:
+        if not self.encryption_key or not CRYPTOGRAPHY_AVAILABLE:
             return
         
-        # Derive key from password
-        kdf = PBKDF2(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=b'amas_credential_salt',  # In production, use random salt
-            iterations=100000,
-        )
-        key = base64.urlsafe_b64encode(kdf.derive(self.encryption_key.encode()))
-        self._cipher = Fernet(key)
+        try:
+            # Derive key from password
+            kdf = PBKDF2HMAC(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=b'amas_credential_salt',  # In production, use random salt
+                iterations=100000,
+            )
+            key = base64.urlsafe_b64encode(kdf.derive(self.encryption_key.encode()))
+            self._cipher = Fernet(key)
+        except Exception as e:
+            logger.warning(f"Failed to initialize encryption cipher: {e}")
+            self._cipher = None
     
     def get_credential(
         self,
