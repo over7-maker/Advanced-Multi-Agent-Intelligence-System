@@ -3,13 +3,13 @@ Integration tests for Monitoring Stack
 Tests PART 6: Monitoring & Observability - Complete Stack
 """
 
-import pytest
 import asyncio
-from unittest.mock import patch, MagicMock, AsyncMock
+from unittest.mock import patch
 
-from src.amas.services.prometheus_metrics_service import PrometheusMetricsService, get_metrics_service
-from src.amas.services.system_monitor import SystemMonitor, get_system_monitor
-from src.amas.services.tracing_service import TracingService, get_tracing_service
+import pytest
+
+from src.amas.services.system_monitor import SystemMonitor
+from src.amas.services.tracing_service import get_tracing_service
 
 
 @pytest.mark.integration

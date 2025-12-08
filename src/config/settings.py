@@ -81,24 +81,44 @@ class SecuritySettings(BaseModel):
 class AISettings(BaseModel):
     """AI provider configuration settings"""
 
-    # OpenAI
+    # Standard Providers (Tier 0)
     openai_api_key: Optional[str] = Field(default=None)
     openai_org_id: Optional[str] = Field(default=None)
-
-    # Anthropic
     anthropic_api_key: Optional[str] = Field(default=None)
-
-    # Google AI
     google_ai_api_key: Optional[str] = Field(default=None)
-
-    # Groq
     groq_api_key: Optional[str] = Field(default=None)
-
-    # Cohere
     cohere_api_key: Optional[str] = Field(default=None)
-
-    # Hugging Face
     huggingface_api_key: Optional[str] = Field(default=None)
+
+    # Premium Speed & Quality (Tier 1)
+    cerebras_api_key: Optional[str] = Field(default=None)
+    nvidia_api_key: Optional[str] = Field(default=None)
+    groq2_api_key: Optional[str] = Field(default=None)
+    groqai_api_key: Optional[str] = Field(default=None)
+
+    # High Quality (Tier 2)
+    deepseek_api_key: Optional[str] = Field(default=None)
+    codestral_api_key: Optional[str] = Field(default=None)
+    glm_api_key: Optional[str] = Field(default=None)
+    gemini2_api_key: Optional[str] = Field(default=None)
+    grok_api_key: Optional[str] = Field(default=None)
+
+    # OpenRouter Free Tier (Tier 4)
+    kimi_api_key: Optional[str] = Field(default=None)
+    qwen_api_key: Optional[str] = Field(default=None)
+    gptoss_api_key: Optional[str] = Field(default=None)
+    chutes_api_key: Optional[str] = Field(default=None)
+
+    # Additional Providers (Architecture Requirement - 16+ providers)
+    together_api_key: Optional[str] = Field(default=None)
+    perplexity_api_key: Optional[str] = Field(default=None)
+    fireworks_api_key: Optional[str] = Field(default=None)
+    replicate_api_key: Optional[str] = Field(default=None)
+    ai21_api_key: Optional[str] = Field(default=None)
+    aleph_alpha_api_key: Optional[str] = Field(default=None)
+    writer_api_key: Optional[str] = Field(default=None)
+    moonshot_api_key: Optional[str] = Field(default=None)
+    mistral_api_key: Optional[str] = Field(default=None)
 
     # Model settings
     default_model: str = Field(default="gpt-4")
@@ -107,6 +127,44 @@ class AISettings(BaseModel):
     temperature: float = Field(default=0.7)
 
     model_config = ConfigDict(env_prefix="AI_")
+
+
+class IntegrationSettings(BaseModel):
+    """Integration platform credentials settings"""
+
+    # N8N
+    n8n_base_url: Optional[str] = Field(default="http://localhost:5678")
+    n8n_api_key: Optional[str] = Field(default=None)
+    n8n_username: Optional[str] = Field(default=None)
+    n8n_password: Optional[str] = Field(default=None)
+
+    # Slack
+    slack_bot_token: Optional[str] = Field(default=None)
+    slack_signing_secret: Optional[str] = Field(default=None)
+    slack_app_token: Optional[str] = Field(default=None)
+
+    # GitHub
+    github_access_token: Optional[str] = Field(default=None)
+    github_webhook_secret: Optional[str] = Field(default=None)
+
+    # Notion
+    notion_api_key: Optional[str] = Field(default=None)
+
+    # Jira
+    jira_server: Optional[str] = Field(default=None)
+    jira_email: Optional[str] = Field(default=None)
+    jira_api_token: Optional[str] = Field(default=None)
+
+    # Salesforce
+    salesforce_username: Optional[str] = Field(default=None)
+    salesforce_password: Optional[str] = Field(default=None)
+    salesforce_security_token: Optional[str] = Field(default=None)
+    salesforce_access_token: Optional[str] = Field(default=None)
+    salesforce_instance_url: Optional[str] = Field(default=None)
+    salesforce_client_id: Optional[str] = Field(default=None)
+    salesforce_client_secret: Optional[str] = Field(default=None)
+
+    model_config = ConfigDict(env_prefix="INTEGRATION_")
 
 
 class MonitoringSettings(BaseModel):
@@ -181,6 +239,7 @@ class Settings(BaseSettings):
     neo4j: Neo4jSettings = Neo4jSettings()
     security: SecuritySettings = SecuritySettings()
     ai: AISettings = AISettings()
+    integration: IntegrationSettings = IntegrationSettings()
     monitoring: MonitoringSettings = MonitoringSettings()
     performance: PerformanceSettings = PerformanceSettings()
     features: FeatureFlags = FeatureFlags()

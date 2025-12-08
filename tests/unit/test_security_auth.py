@@ -2,16 +2,16 @@
 Unit tests for security authentication components
 """
 
-import pytest
-import jwt
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import jwt
+import pytest
 from fastapi import HTTPException
 
 from src.amas.security.auth.jwt_middleware import (
     JWTMiddleware,
     SecurityHeadersMiddleware,
-    AMASHTTPBearer,
     TokenBlacklist,
     auth_context,
 )
@@ -41,7 +41,6 @@ class TestJWTMiddleware:
     @pytest.mark.asyncio
     async def test_get_jwks_caching(self, jwt_middleware):
         """Test JWKS caching functionality"""
-        import httpx
         
         mock_response = {
             "keys": [
@@ -117,9 +116,10 @@ class TestSecurityHeadersMiddleware:
     @pytest.mark.asyncio
     async def test_security_headers_added(self):
         """Test that security headers are added to responses"""
+        from unittest.mock import Mock
+
         from fastapi import Request
         from starlette.responses import Response
-        from unittest.mock import Mock
         
         middleware = SecurityHeadersMiddleware()
         
@@ -144,9 +144,10 @@ class TestSecurityHeadersMiddleware:
     @pytest.mark.asyncio
     async def test_cache_control_for_sensitive_endpoints(self):
         """Test that cache control is set for sensitive endpoints"""
+        from unittest.mock import Mock
+
         from fastapi import Request
         from starlette.responses import Response
-        from unittest.mock import Mock
         
         middleware = SecurityHeadersMiddleware()
         

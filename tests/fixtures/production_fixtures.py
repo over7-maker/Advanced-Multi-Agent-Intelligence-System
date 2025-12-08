@@ -1,10 +1,8 @@
 """
 Production test fixtures for component testing.
 """
-import os
 import tempfile
 from pathlib import Path
-from typing import Dict
 from unittest.mock import MagicMock, patch
 
 import pytest

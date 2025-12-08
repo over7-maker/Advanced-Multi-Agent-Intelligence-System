@@ -1,12 +1,9 @@
 # src/amas/integration/integration_manager.py (CORE INTEGRATION MANAGER)
-from typing import Any, Dict, List, Optional, Callable
-from enum import Enum
 import asyncio
 import logging
 from datetime import datetime
-import hmac
-import hashlib
-import json
+from enum import Enum
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -88,43 +85,80 @@ class IntegrationManager:
         logger.info("IntegrationManager initialized")
     
     def _initialize_connectors(self):
-        """Initialize all integration connectors"""
+        """Initialize all integration connectors with real credentials from settings"""
+        
+        try:
+            from src.config.settings import get_settings
+            settings = get_settings()
+        except ImportError:
+            settings = None
+            logger.debug("Settings not available, using default connector initialization")
         
         try:
             from src.amas.integration.n8n_connector import N8NConnector
-            self.connectors[IntegrationPlatform.N8N] = N8NConnector()
+            
+            # Use credentials from settings if available
+            if settings and settings.integration.n8n_base_url:
+                connector = N8NConnector(
+                    n8n_base_url=settings.integration.n8n_base_url,
+                    api_key=settings.integration.n8n_api_key,
+                    username=settings.integration.n8n_username,
+                    password=settings.integration.n8n_password
+                )
+            else:
+                connector = N8NConnector()
+            
+            self.connectors[IntegrationPlatform.N8N] = connector
+            logger.info("N8N connector initialized with real credentials")
         except ImportError:
             logger.warning("N8N connector not available")
+        except Exception as e:
+            logger.warning(f"Failed to initialize N8N connector: {e}")
         
         try:
             from src.amas.integration.slack_connector import SlackConnector
             self.connectors[IntegrationPlatform.SLACK] = SlackConnector()
+            logger.info("Slack connector initialized")
         except ImportError:
             logger.warning("Slack connector not available")
+        except Exception as e:
+            logger.warning(f"Failed to initialize Slack connector: {e}")
         
         try:
             from src.amas.integration.notion_connector import NotionConnector
             self.connectors[IntegrationPlatform.NOTION] = NotionConnector()
+            logger.info("Notion connector initialized")
         except ImportError:
             logger.warning("Notion connector not available")
+        except Exception as e:
+            logger.warning(f"Failed to initialize Notion connector: {e}")
         
         try:
             from src.amas.integration.github_connector import GitHubConnector
             self.connectors[IntegrationPlatform.GITHUB] = GitHubConnector()
+            logger.info("GitHub connector initialized")
         except ImportError:
             logger.warning("GitHub connector not available")
+        except Exception as e:
+            logger.warning(f"Failed to initialize GitHub connector: {e}")
         
         try:
             from src.amas.integration.salesforce_connector import SalesforceConnector
             self.connectors[IntegrationPlatform.SALESFORCE] = SalesforceConnector()
+            logger.info("Salesforce connector initialized")
         except ImportError:
             logger.warning("Salesforce connector not available")
+        except Exception as e:
+            logger.warning(f"Failed to initialize Salesforce connector: {e}")
         
         try:
             from src.amas.integration.jira_connector import JiraConnector
             self.connectors[IntegrationPlatform.JIRA] = JiraConnector()
+            logger.info("Jira connector initialized")
         except ImportError:
             logger.warning("Jira connector not available")
+        except Exception as e:
+            logger.warning(f"Failed to initialize Jira connector: {e}")
         
         logger.info(f"Initialized {len(self.connectors)} integration connectors")
     

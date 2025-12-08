@@ -1,9 +1,9 @@
 # src/amas/integration/salesforce_connector.py (SALESFORCE INTEGRATION)
-import asyncio
-import httpx
-from typing import Any, Dict, List, Optional
 import logging
 from datetime import datetime
+from typing import Any, Dict
+
+import httpx
 
 logger = logging.getLogger(__name__)
 

@@ -305,9 +305,65 @@ PROVIDER_CONFIGS = {
 
 
 def get_api_key(env_name: str) -> Optional[str]:
-    """Get API key from environment, stripping whitespace."""
+    """
+    Get API key from environment or settings, stripping whitespace.
+    
+    Priority:
+    1. Environment variable (highest priority)
+    2. Settings configuration (from .env file)
+    3. None (if not found)
+    """
+    # First try environment variable (highest priority)
     value = os.getenv(env_name)
-    return value.strip() if value else None
+    if value:
+        return value.strip()
+    
+    # Fallback to settings if available
+    try:
+        from src.config.settings import get_settings
+        settings = get_settings()
+        
+        # Map env names to settings attributes
+        env_to_attr = {
+            "OPENAI_API_KEY": "openai_api_key",
+            "ANTHROPIC_API_KEY": "anthropic_api_key",
+            "GOOGLE_AI_API_KEY": "google_ai_api_key",
+            "GROQ_API_KEY": "groq_api_key",
+            "COHERE_API_KEY": "cohere_api_key",
+            "HUGGINGFACE_API_KEY": "huggingface_api_key",
+            "CEREBRAS_API_KEY": "cerebras_api_key",
+            "NVIDIA_API_KEY": "nvidia_api_key",
+            "GROQ2_API_KEY": "groq2_api_key",
+            "GROQAI_API_KEY": "groqai_api_key",
+            "DEEPSEEK_API_KEY": "deepseek_api_key",
+            "CODESTRAL_API_KEY": "codestral_api_key",
+            "GLM_API_KEY": "glm_api_key",
+            "GEMINI2_API_KEY": "gemini2_api_key",
+            "GROK_API_KEY": "grok_api_key",
+            "KIMI_API_KEY": "kimi_api_key",
+            "QWEN_API_KEY": "qwen_api_key",
+            "GPTOSS_API_KEY": "gptoss_api_key",
+            "CHUTES_API_KEY": "chutes_api_key",
+            "TOGETHER_API_KEY": "together_api_key",
+            "PERPLEXITY_API_KEY": "perplexity_api_key",
+            "FIREWORKS_API_KEY": "fireworks_api_key",
+            "REPLICATE_API_KEY": "replicate_api_key",
+            "AI21_API_KEY": "ai21_api_key",
+            "ALEPH_ALPHA_API_KEY": "aleph_alpha_api_key",
+            "WRITER_API_KEY": "writer_api_key",
+            "MOONSHOT_API_KEY": "moonshot_api_key",
+            "MISTRAL_API_KEY": "mistral_api_key",
+        }
+        
+        attr_name = env_to_attr.get(env_name)
+        if attr_name:
+            value = getattr(settings.ai, attr_name, None)
+            if value:
+                return value.strip()
+    except Exception as e:
+        logger.debug(f"Could not load API key from settings for {env_name}: {e}")
+    
+    return None
 
 
 def get_available_providers() -> List[str]:

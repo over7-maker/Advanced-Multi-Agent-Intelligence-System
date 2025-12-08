@@ -2,17 +2,17 @@
 import asyncio
 import logging
 import os
-from typing import Optional, Dict, Any
 from functools import wraps
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
 # Try to import OpenTelemetry - make it optional
 try:
     from opentelemetry import trace
+    from opentelemetry.sdk.resources import Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-    from opentelemetry.sdk.resources import Resource
     from opentelemetry.trace import Status, StatusCode
     OPENTELEMETRY_AVAILABLE = True
     
@@ -23,7 +23,9 @@ try:
         JAEGER_AVAILABLE = False
         
     try:
-        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+            OTLPSpanExporter,
+        )
         OTLP_AVAILABLE = True
     except ImportError:
         OTLP_AVAILABLE = False

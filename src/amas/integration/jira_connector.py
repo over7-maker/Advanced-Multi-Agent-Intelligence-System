@@ -1,9 +1,9 @@
 # src/amas/integration/jira_connector.py (COMPLETE JIRA INTEGRATION)
-import asyncio
-import httpx
-from typing import Any, Dict, List, Optional
-import logging
 import base64
+import logging
+from typing import Any, Dict
+
+import httpx
 
 logger = logging.getLogger(__name__)
 

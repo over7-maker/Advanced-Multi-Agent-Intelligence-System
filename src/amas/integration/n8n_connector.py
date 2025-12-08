@@ -6,16 +6,16 @@ tool orchestration, and external service coordination.
 """
 
 import asyncio
-import logging
-from typing import Dict, List, Optional, Any, Set, Union
-from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from enum import Enum
-import uuid
 import json
+import logging
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from enum import Enum
+from typing import Any, Dict, List, Optional
+from urllib.parse import urljoin
+
 import aiohttp
-import base64
-from urllib.parse import urljoin, urlparse
 
 logger = logging.getLogger(__name__)
 
@@ -115,15 +115,35 @@ class N8NConnector:
     """N8N integration connector for advanced workflow automation"""
     
     def __init__(self, 
-                 n8n_base_url: str = "http://localhost:5678",
+                 n8n_base_url: str = None,
                  api_key: Optional[str] = None,
                  username: Optional[str] = None,
                  password: Optional[str] = None):
+        """
+        Initialize N8N connector with credentials from settings or parameters
         
-        self.base_url = n8n_base_url.rstrip('/')
-        self.api_key = api_key
-        self.username = username
-        self.password = password
+        Priority:
+        1. Parameters (if provided)
+        2. Credential manager (from settings/env)
+        3. Default values
+        """
+        # Try to get credentials from credential manager
+        try:
+            from src.amas.services.credential_manager import get_credential_manager
+            cred_manager = get_credential_manager()
+            creds = cred_manager.get_integration_credentials("n8n")
+            
+            self.base_url = (n8n_base_url or creds.get("base_url") or "http://localhost:5678").rstrip('/')
+            self.api_key = api_key or creds.get("api_key")
+            self.username = username or creds.get("username")
+            self.password = password or creds.get("password")
+        except Exception as e:
+            logger.debug(f"Could not load credentials from manager: {e}")
+            # Fallback to parameters or defaults
+            self.base_url = (n8n_base_url or "http://localhost:5678").rstrip('/')
+            self.api_key = api_key
+            self.username = username
+            self.password = password
         
         # Session management
         self.session: Optional[aiohttp.ClientSession] = None
@@ -1015,7 +1035,7 @@ class N8NConnector:
                     response.raise_for_status()
                     result = await response.json()
                     
-                    logger.info(f"N8N workflow triggered successfully")
+                    logger.info("N8N workflow triggered successfully")
                     
                     return {
                         "success": True,
@@ -1040,8 +1060,8 @@ class N8NConnector:
         """
         
         try:
-            import hmac
             import hashlib
+            import hmac
             
             signature = headers.get("X-N8N-Signature")
             webhook_secret = headers.get("X-N8N-Webhook-Secret")

@@ -8,8 +8,6 @@ from pathlib import Path
 import pytest
 import requests
 
-from tests.fixtures.production_fixtures import docker_compose_path, project_root
-
 
 @pytest.mark.integration
 @pytest.mark.slow

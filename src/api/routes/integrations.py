@@ -1,16 +1,15 @@
 # src/api/routes/integrations.py (COMPLETE INTEGRATION API)
-from fastapi import APIRouter, Depends, HTTPException, Query, Body, Header, Request
-from typing import List, Optional, Dict, Any
 import logging
-from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from pydantic import BaseModel
 
 from src.amas.integration.integration_manager import (
-    get_integration_manager,
     IntegrationManager,
     IntegrationPlatform,
-    IntegrationStatus
+    get_integration_manager,
 )
-from pydantic import BaseModel
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
 logger = logging.getLogger(__name__)

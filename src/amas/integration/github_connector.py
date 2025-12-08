@@ -1,12 +1,12 @@
 # src/amas/integration/github_connector.py (COMPLETE GITHUB INTEGRATION)
-import asyncio
-import httpx
-from typing import Any, Dict, List, Optional
-import logging
-import hmac
 import hashlib
+import hmac
 import json
+import logging
 from datetime import datetime
+from typing import Any, Dict
+
+import httpx
 
 logger = logging.getLogger(__name__)
 

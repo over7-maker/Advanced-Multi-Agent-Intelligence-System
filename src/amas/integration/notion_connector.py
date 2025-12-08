@@ -1,9 +1,8 @@
 # src/amas/integration/notion_connector.py (COMPLETE NOTION INTEGRATION)
-import asyncio
-import httpx
-from typing import Any, Dict, List, Optional
 import logging
-import json
+from typing import Any, Dict
+
+import httpx
 
 logger = logging.getLogger(__name__)
 
