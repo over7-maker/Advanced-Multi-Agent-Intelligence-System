@@ -1,0 +1,311 @@
+---
+description: Prometheus Metrics - Metric types, naming conventions, label usage, and recording patterns
+globs:
+  - "src/amas/services/prometheus_metrics_service.py"
+  - "src/amas/**/*.py"
+  - "src/api/**/*.py"
+alwaysApply: false
+---
+
+# Prometheus Metrics Rules
+
+When implementing Prometheus metrics:
+
+## Metric Types
+
+1. **Counter** (monotonically increasing):
+   ```python
+   # ✅ CORRECT: Use Counter for cumulative values
+   task_executions_total = Counter(
+       'amas_task_executions_total',
+       'Total number of task executions',
+       ['task_type', 'status'],
+       registry=self.registry
+   )
+   
+   # Increment counter
+   task_executions_total.labels(
+       task_type="code_analysis",
+       status="completed"
+   ).inc()
+   ```
+
+2. **Gauge** (can go up or down):
+   ```python
+   # ✅ CORRECT: Use Gauge for current values
+   tasks_active = Gauge(
+       'amas_tasks_active',
+       'Number of currently executing tasks',
+       ['task_type'],
+       registry=self.registry
+   )
+   
+   # Set gauge value
+   tasks_active.labels(task_type="code_analysis").set(5)
+   
+   # Increment/decrement
+   tasks_active.labels(task_type="code_analysis").inc()
+   tasks_active.labels(task_type="code_analysis").dec()
+   ```
+
+3. **Histogram** (for distributions):
+   ```python
+   # ✅ CORRECT: Use Histogram for durations/latencies
+   task_duration_seconds = Histogram(
+       'amas_task_duration_seconds',
+       'Task execution duration in seconds',
+       ['task_type'],
+       buckets=[0.5, 1, 2, 5, 10, 30, 60, 120, 300, 600],
+       registry=self.registry
+   )
+   
+   # Observe value (automatically buckets)
+   task_duration_seconds.labels(task_type="code_analysis").observe(45.5)
+   ```
+
+## Metric Naming Conventions
+
+1. **Naming Rules**:
+   - Prefix: `amas_` (e.g., `amas_task_executions_total`)
+   - Suffix: `_total` for counters, `_seconds` for durations
+   - Use underscores, not hyphens
+   - Be descriptive but concise
+
+2. **Examples**:
+   ```python
+   # ✅ CORRECT: Good metric names
+   'amas_task_executions_total'
+   'amas_task_duration_seconds'
+   'amas_agent_success_rate'
+   'amas_http_requests_total'
+   'amas_db_query_duration_seconds'
+   
+   # ❌ WRONG: Bad metric names
+   'task-executions'  # No prefix, uses hyphen
+   'task_count'  # Should be _total for counter
+   'duration'  # Too generic, no prefix
+   ```
+
+## Label Usage
+
+1. **Label Best Practices**:
+   ```python
+   # ✅ CORRECT: Use labels for dimensions
+   task_executions_total = Counter(
+       'amas_task_executions_total',
+       'Total number of task executions',
+       ['task_type', 'status'],  # Dimensions
+       registry=self.registry
+   )
+   
+   # ❌ WRONG: Don't use high-cardinality labels
+   task_executions_total = Counter(
+       'amas_task_executions_total',
+       'Total number of task executions',
+       ['task_id'],  # High cardinality - creates too many time series
+       registry=self.registry
+   )
+   ```
+
+2. **Label Guidelines**:
+   - Use labels for dimensions (task_type, status, agent_id)
+   - Avoid high-cardinality labels (task_id, user_id)
+   - Keep label combinations reasonable (< 1000)
+   - Use consistent label names across metrics
+
+## Metric Recording Patterns
+
+1. **Task Metrics**:
+   ```python
+   def record_task_execution(
+       self,
+       task_id: str,
+       task_type: str,
+       status: str,
+       duration: float,
+       success_rate: float = None,
+       quality_score: float = None
+   ):
+       # Increment counter
+       self.task_executions_total.labels(
+           task_type=task_type,
+           status=status
+       ).inc()
+       
+       # Record duration
+       self.task_duration_seconds.labels(
+           task_type=task_type
+       ).observe(duration)
+       
+       # Update gauge
+       if success_rate is not None:
+           self.task_success_rate.labels(
+               task_type=task_type
+           ).set(success_rate)
+   ```
+
+2. **Agent Metrics**:
+   ```python
+   def record_agent_execution(
+       self,
+       agent_id: str,
+       agent_name: str,
+       status: str,
+       duration: float,
+       tokens_used: int = 0,
+       cost_usd: float = 0.0
+   ):
+       # Counter
+       self.agent_executions_total.labels(
+           agent_id=agent_id,
+           agent_name=agent_name,
+           status=status
+       ).inc()
+       
+       # Histogram
+       self.agent_duration_seconds.labels(
+           agent_id=agent_id,
+           agent_name=agent_name
+       ).observe(duration)
+       
+       # Counter (tokens)
+       if tokens_used > 0:
+           self.agent_tokens_total.labels(
+               agent_id=agent_id,
+               agent_name=agent_name
+           ).inc(tokens_used)
+   ```
+
+3. **AI Provider Metrics**:
+   ```python
+   def record_ai_provider_call(
+       self,
+       provider: str,
+       model: str,
+       status: str,
+       latency: float,
+       tokens_used: int = 0,
+       cost_usd: float = 0.0,
+       fallback_from: str = None
+   ):
+       # Counter
+       self.ai_provider_calls_total.labels(
+           provider=provider,
+           model=model,
+           status=status
+       ).inc()
+       
+       # Histogram (convert ms to seconds)
+       self.ai_provider_latency_seconds.labels(
+           provider=provider,
+           model=model
+       ).observe(latency / 1000)
+       
+       # Fallback tracking
+       if fallback_from:
+           self.ai_provider_fallbacks_total.labels(
+               from_provider=fallback_from,
+               to_provider=provider
+           ).inc()
+   ```
+
+## Histogram Buckets
+
+1. **Bucket Selection**:
+   ```python
+   # ✅ CORRECT: Appropriate buckets for task duration
+   task_duration_seconds = Histogram(
+       'amas_task_duration_seconds',
+       'Task execution duration',
+       buckets=[0.5, 1, 2, 5, 10, 30, 60, 120, 300, 600]  # 0.5s to 10min
+   )
+   
+   # ✅ CORRECT: Appropriate buckets for API latency
+   http_request_duration_seconds = Histogram(
+       'amas_http_request_duration_seconds',
+       'HTTP request duration',
+       buckets=[0.01, 0.05, 0.1, 0.5, 1, 2, 5, 10]  # 10ms to 10s
+   )
+   
+   # ✅ CORRECT: Appropriate buckets for DB queries
+   db_query_duration_seconds = Histogram(
+       'amas_db_query_duration_seconds',
+       'Database query duration',
+       buckets=[0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1, 5]  # 1ms to 5s
+   )
+   ```
+
+2. **Bucket Guidelines**:
+   - Cover expected range
+   - Include common percentiles (p50, p95, p99)
+   - Don't create too many buckets (10-15 max)
+   - Use exponential-like distribution
+
+## Metrics Endpoint
+
+1. **Expose Metrics**:
+   ```python
+   @router.get("/metrics")
+   async def prometheus_metrics(
+       metrics_service = Depends(get_metrics_service)
+   ):
+       metrics_data = metrics_service.get_metrics()
+       return Response(
+           content=metrics_data,
+           media_type=metrics_service.get_content_type()
+       )
+   ```
+
+2. **Metrics Endpoint Requirements**:
+   - Path: `/metrics`
+   - Content-Type: `text/plain; version=0.0.4`
+   - No authentication (Prometheus needs access)
+   - Fast response time
+
+## Metric Decorators
+
+1. **Automatic Tracking**:
+   ```python
+   @metrics_service.track_execution(metric_type="task")
+   async def execute_task(task_id: str, task_type: str):
+       # Automatically records metrics
+       ...
+   ```
+
+2. **Custom Decorators**:
+   ```python
+   def track_agent_execution(func):
+       @wraps(func)
+       async def wrapper(*args, **kwargs):
+           start_time = time.time()
+           try:
+               result = await func(*args, **kwargs)
+               metrics_service.record_agent_execution(...)
+               return result
+           except Exception as e:
+               metrics_service.record_agent_execution(..., status="error")
+               raise
+       return wrapper
+   ```
+
+## Best Practices
+
+1. **Always record metrics for**:
+   - Task executions (count, duration, success)
+   - Agent executions (count, duration, tokens, cost)
+   - AI provider calls (count, latency, tokens, cost, fallbacks)
+   - HTTP requests (count, duration, status)
+   - Database queries (count, duration, status)
+   - System resources (CPU, memory, disk)
+
+2. **Don't**:
+   - Create metrics with high-cardinality labels
+   - Record metrics in tight loops
+   - Create too many unique metric names
+   - Use metrics for business data (use database)
+
+3. **Performance**:
+   - Metrics are synchronous but fast
+   - Don't block on metric recording
+   - Use appropriate metric types
+   - Monitor metric collection overhead

@@ -38,8 +38,9 @@ async def init_neo4j():
         logger.info("Neo4j connection initialized")
 
     except Exception as e:
-        logger.error(f"Failed to initialize Neo4j: {e}")
-        raise
+        # Neo4j is optional in development - don't raise, just log
+        logger.debug(f"Neo4j not available (expected in dev): {e}")
+        # Don't raise - allow app to continue without Neo4j
 
 
 async def close_neo4j():
@@ -60,7 +61,7 @@ async def is_connected() -> bool:
         return True
 
     except Exception as e:
-        logger.error(f"Neo4j connection check failed: {e}")
+        logger.debug(f"Neo4j connection check failed (expected in dev): {e}")
         return False
 
 

@@ -1,97 +1,118 @@
+# Dockerfile (PRODUCTION-OPTIMIZED MULTI-STAGE BUILD)
 # AMAS - Advanced Multi-Agent Intelligence System
-# Production-ready Docker configuration with layer caching optimization
 
-# Stage 1: Python dependencies cache layer
-# This large layer is built once and cached for faster subsequent builds
+# ============================================================================
+# STAGE 1: Python Dependencies Builder
+# ============================================================================
 FROM python:3.11-slim as python-builder
 
 WORKDIR /app
 
-# Set environment variables
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONPATH=/app
-
-# Install system dependencies for building
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gcc g++ git ca-certificates \
+# Install system dependencies for Python packages
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    build-essential \
+    libpq-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy and install Python dependencies (this layer gets cached)
+# Copy requirements
 COPY requirements.txt .
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
-# Stage 2: Application with minimal dependencies
+# ============================================================================
+# STAGE 2: Frontend Builder
+# ============================================================================
+FROM node:18-alpine as frontend-builder
+
+WORKDIR /app/frontend
+
+# Copy package files (will fail gracefully if directories don't exist)
+# Use build arg to control which directory to use
+ARG FRONTEND_DIR=frontend
+COPY ${FRONTEND_DIR}/package*.json ./
+
+# Install dependencies
+RUN if [ -f package.json ] && [ -s package.json ]; then \
+      npm ci --only=production || npm install --only=production; \
+    else \
+      echo "No package.json found, creating empty one" && \
+      echo '{"name":"amas-frontend","version":"1.0.0"}' > package.json; \
+    fi
+
+# Copy frontend source
+COPY ${FRONTEND_DIR}/ ./
+
+# Build frontend if package.json has build script
+RUN if [ -f package.json ] && grep -q '"build"' package.json; then \
+      npm run build || echo "Frontend build failed, continuing..."; \
+    else \
+      echo "Skipping frontend build - no build script found"; \
+      mkdir -p build && echo '<html><body>Frontend not built</body></html>' > build/index.html; \
+    fi
+
+# ============================================================================
+# STAGE 3: Production Runtime
+# ============================================================================
 FROM python:3.11-slim
 
-ENV PYTHONUNBUFFERED=1
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV AMAS_ENV=production
-ENV PYTHONPATH=/app
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    ENVIRONMENT=production \
+    PORT=8000 \
+    PYTHONPATH=/app
 
-WORKDIR /app
-
-# Install minimal runtime dependencies only
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl git ca-certificates \
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    libpq5 \
+    curl \
+    ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js for React dashboard (cached separately)
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y --no-install-recommends nodejs && \
-    rm -rf /var/lib/apt/lists/*
+# Create non-root user
+RUN groupadd -r amas && useradd -r -g amas amas
 
-# Copy pre-built Python packages from builder stage (much faster than rebuilding)
+# Set working directory
+WORKDIR /app
+
+# Copy Python dependencies from builder
 COPY --from=python-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=python-builder /usr/local/bin /usr/local/bin
 
-# Copy source code (these layers change frequently, so they come last)
-COPY src/ ./src/
-COPY scripts/ ./scripts/
-COPY config/ ./config/
-# Copy required files
-COPY main.py ./
-COPY main_simple.py ./
-# Copy optional files - ensure they exist first, then copy
-# If files don't exist in build context, empty files will be used
-RUN touch ./pytest.ini ./.env.example
-COPY pytest.ini ./
-COPY .env.example ./
+# Copy frontend build (if it exists)
+COPY --from=frontend-builder /app/frontend/build /app/frontend/build
 
-# Copy web files for React dashboard
-# Note: If web/ directory doesn't exist, this will fail - we'll handle it gracefully in the build step
-COPY web/ ./web/
+# Copy application code
+COPY --chown=amas:amas src/ ./src/
+COPY --chown=amas:amas scripts/ ./scripts/
+COPY --chown=amas:amas config/ ./config/
+COPY --chown=amas:amas main.py ./
+COPY --chown=amas:amas main_simple.py ./
 
-# Build React dashboard (optional - continue on failure)
-WORKDIR /app
-RUN if [ -d web ] && [ -f web/package.json ]; then \
-      echo "Building web dashboard..."; \
-      cd web && \
-      npm install --prefer-offline --no-audit && \
-      npm run build || echo "⚠️  Web build failed, continuing..."; \
-    else \
-      echo "⚠️  Web directory or package.json not found, skipping web build"; \
-    fi
-
-# Return to app directory
-WORKDIR /app
+# Copy Alembic files if they exist (will fail gracefully if not present)
+COPY --chown=amas:amas alembic.ini ./
+COPY --chown=amas:amas alembic/ ./alembic/
 
 # Create necessary directories
-RUN mkdir -p logs data/collective_knowledge data/personalities data/models
+RUN mkdir -p /app/logs /app/data && \
+    chown -R amas:amas /app/logs /app/data
 
-# Create non-root user for security
-RUN useradd --create-home --shell /bin/bash amas && \
-    chown -R amas:amas /app
-
+# Switch to non-root user
 USER amas
 
-# Expose ports
-EXPOSE 8000 3000 8080
-
 # Health check
-HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health/ready || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/health || exit 1
 
-# Default command
-CMD ["python", "main_simple.py"]
+# Expose port
+EXPOSE ${PORT}
+
+# Start command
+CMD ["sh", "-c", "if command -v uvicorn > /dev/null 2>&1; then uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --workers 4; else python main_simple.py; fi"]

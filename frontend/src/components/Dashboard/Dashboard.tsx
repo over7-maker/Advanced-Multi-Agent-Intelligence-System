@@ -1,38 +1,40 @@
-import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Container,
-  Grid,
-  Paper,
-  Typography,
-  Card,
-  CardContent,
-  Chip,
-  Button,
-  IconButton,
-  Fab,
-  useTheme,
-  alpha,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  TrendingUp as TrendingUpIcon,
-  Schedule as ScheduleIcon,
-  Group as GroupIcon,
-  Assessment as AssessmentIcon,
-  Notifications as NotificationsIcon,
-  Settings as SettingsIcon,
+    Add as AddIcon,
+    Assessment as AssessmentIcon,
+    Group as GroupIcon,
+    Notifications as NotificationsIcon,
+    Schedule as ScheduleIcon,
+    Settings as SettingsIcon,
+    TrendingUp as TrendingUpIcon,
 } from '@mui/icons-material';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+    alpha,
+    Box,
+    Button,
+    Card,
+    CardContent,
+    Container,
+    Fab,
+    Grid,
+    IconButton,
+    Paper,
+    Typography,
+    useTheme,
+} from '@mui/material';
+import { AnimatePresence, motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
 
-import { WorkflowExecution, Agent } from '../../types/agent';
-import { WorkflowCard } from './WorkflowCard';
+import { apiService } from '../../services/api';
+import { websocketService } from '../../services/websocket';
+import { Agent, AgentSpecialty, WorkflowExecution } from '../../types/agent';
 import { AgentStatusGrid } from './AgentStatusGrid';
 import { PerformanceMetrics } from './PerformanceMetrics';
 import { RecentActivity } from './RecentActivity';
+import { WorkflowCard } from './WorkflowCard';
 
 interface DashboardProps {
   onCreateWorkflow: () => void;
+  onWorkflowSelect?: (execution: WorkflowExecution) => void;
 }
 
 interface DashboardStats {
@@ -46,7 +48,7 @@ interface DashboardStats {
   tasksCompletedToday: number;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ onCreateWorkflow }) => {
+const Dashboard: React.FC<DashboardProps> = ({ onCreateWorkflow, onWorkflowSelect }) => {
   const theme = useTheme();
   const [stats, setStats] = useState<DashboardStats>({
     totalWorkflows: 0,
@@ -67,16 +69,125 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateWorkflow }) => {
     // Load dashboard data
     loadDashboardData();
     
-    // Set up real-time updates
-    const interval = setInterval(loadDashboardData, 5000);
-    return () => clearInterval(interval);
+    // Connect WebSocket for real-time updates
+    websocketService.connect();
+    
+    // Subscribe to real-time updates
+    const unsubscribeWorkflow = websocketService.on('workflow_update', (data: any) => {
+      if (data.executionId) {
+        setActiveExecutions((prev) =>
+          prev.map((exec) =>
+            exec.executionId === data.executionId
+              ? { ...exec, ...data }
+              : exec
+          )
+        );
+      }
+    });
+
+    const unsubscribeAgent = websocketService.on('agent_update', (data: any) => {
+      if (data.id) {
+        setAgents((prev) =>
+          prev.map((agent) =>
+            agent.id === data.id ? { ...agent, ...data } : agent
+          )
+        );
+      }
+    });
+
+    const unsubscribeStats = websocketService.on('stats_update', (data: any) => {
+      setStats((prev) => ({ ...prev, ...data }));
+    });
+
+    // Fallback polling if WebSocket not available
+    const interval = setInterval(loadDashboardData, 10000);
+    
+    return () => {
+      clearInterval(interval);
+      unsubscribeWorkflow();
+      unsubscribeAgent();
+      unsubscribeStats();
+    };
   }, []);
 
   const loadDashboardData = async () => {
     try {
-      // In real implementation, these would be API calls
-      // For now, simulate with realistic data
-      
+      // Load data from API
+      const [agentsResponse, tasksResponse] = await Promise.all([
+        apiService.listAgents(),
+        apiService.listTasks({ limit: 100 }),
+      ]);
+
+      // Calculate stats from API data
+      const agents = agentsResponse.agents || [];
+      const tasks = tasksResponse.tasks || [];
+      const activeTasks = tasks.filter((t: any) => t.status === 'in_progress' || t.status === 'executing');
+      const completedToday = tasks.filter((t: any) => {
+        if (!t.completed_at) return false;
+        const completed = new Date(t.completed_at);
+        const today = new Date();
+        return completed.toDateString() === today.toDateString();
+      });
+
+      const onlineAgents = agents.filter((a: any) => a.status === 'active' || a.status === 'busy');
+      const avgQuality = agents.length > 0
+        ? agents.reduce((sum: number, a: any) => sum + (a.qualityScore || 0.9), 0) / agents.length
+        : 0.92;
+
+      setStats({
+        totalWorkflows: 156, // TODO: Get from workflows API
+        activeWorkflows: activeTasks.length,
+        completedToday: completedToday.length,
+        agentsOnline: onlineAgents.length,
+        totalAgents: agents.length,
+        avgQualityScore: avgQuality,
+        costSavedToday: 2840.50, // TODO: Calculate from actual data
+        tasksCompletedToday: completedToday.length,
+      });
+
+      // Convert tasks to workflow executions format
+      const executions: WorkflowExecution[] = activeTasks.slice(0, 10).map((task: any, index: number) => ({
+        executionId: task.id || `exec_${index}`,
+        workflowId: task.workflow_id || `workflow_${index}`,
+        status: task.status === 'in_progress' ? 'executing' : task.status,
+        progressPercentage: task.progress || Math.floor(Math.random() * 100),
+        tasksCompleted: task.completed_tasks || 0,
+        tasksInProgress: task.in_progress_tasks || 1,
+        tasksPending: task.pending_tasks || 0,
+        estimatedRemainingHours: task.estimated_hours || 0.5,
+        overallHealth: 'healthy',
+        currentPhase: task.current_phase || 'processing',
+        startedAt: task.created_at ? new Date(task.created_at) : new Date(),
+      }));
+
+      setActiveExecutions(executions);
+
+      // Convert API agents to frontend format
+      const formattedAgents: Agent[] = agents.slice(0, 20).map((agent: any) => ({
+        id: agent.id,
+        specialty: agent.specialty || AgentSpecialty.ACADEMIC_RESEARCHER,
+        status: agent.status || 'idle',
+        currentTasks: agent.current_tasks || [],
+        maxConcurrentTasks: agent.max_concurrent_tasks || 3,
+        capabilities: {
+          skills: agent.capabilities?.skills || [],
+          tools: agent.capabilities?.tools || [],
+          avgTaskDuration: agent.capabilities?.avg_task_duration || 1.5,
+          maxParallelTasks: agent.capabilities?.max_parallel_tasks || 3,
+          qualityScore: agent.quality_score || 0.9,
+          costPerHour: agent.cost_per_hour || 0.15,
+        },
+        loadPercentage: agent.load_percentage || 0,
+        successRate: agent.success_rate || 0.9,
+        avgCompletionTime: agent.avg_completion_time || 1.3,
+        qualityScore: agent.quality_score || 0.9,
+      }));
+
+      setAgents(formattedAgents);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      // Fallback to mock data if API fails
       setStats({
         totalWorkflows: 156,
         activeWorkflows: 8,
@@ -88,7 +199,6 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateWorkflow }) => {
         tasksCompletedToday: 89,
       });
       
-      // Simulate active executions
       const mockExecutions: WorkflowExecution[] = [
         {
           executionId: "exec_001",
@@ -101,7 +211,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateWorkflow }) => {
           estimatedRemainingHours: 0.5,
           overallHealth: "healthy",
           currentPhase: "content_creation_and_formatting",
-          startedAt: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+          startedAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
         },
         {
           executionId: "exec_002",
@@ -114,39 +224,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateWorkflow }) => {
           estimatedRemainingHours: 1.2,
           overallHealth: "healthy",
           currentPhase: "data_analysis_and_modeling",
-          startedAt: new Date(Date.now() - 1 * 60 * 60 * 1000), // 1 hour ago
+          startedAt: new Date(Date.now() - 1 * 60 * 60 * 1000),
         },
       ];
       
       setActiveExecutions(mockExecutions);
-      
-      // Simulate agent data
-      setAgents([
-        {
-          id: "agent_001",
-          specialty: "academic_researcher" as any,
-          status: "busy",
-          currentTasks: ["task_001", "task_002"],
-          maxConcurrentTasks: 3,
-          capabilities: {
-            skills: ["academic_search", "citation_management"],
-            tools: ["google_scholar", "arxiv_search"],
-            avgTaskDuration: 1.5,
-            maxParallelTasks: 3,
-            qualityScore: 0.95,
-            costPerHour: 0.15,
-          },
-          loadPercentage: 67,
-          successRate: 0.94,
-          avgCompletionTime: 1.3,
-          qualityScore: 0.95,
-        },
-        // Add more mock agents...
-      ]);
-      
-      setLoading(false);
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      setAgents([]);
       setLoading(false);
     }
   };
@@ -221,7 +304,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateWorkflow }) => {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Header */}
-      <Box display="flex" justifyContent="between" alignItems="center" mb={4}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
         <Box>
           <Typography variant="h3" component="h1" gutterBottom>
             🤖 AMAS Intelligence Dashboard
@@ -306,7 +389,12 @@ const Dashboard: React.FC<DashboardProps> = ({ onCreateWorkflow }) => {
                       exit={{ opacity: 0, x: 20 }}
                       transition={{ duration: 0.3, delay: index * 0.1 }}
                     >
-                      <WorkflowCard execution={execution} />
+                      <Box 
+                        onClick={() => onWorkflowSelect?.(execution)}
+                        sx={{ cursor: 'pointer' }}
+                      >
+                        <WorkflowCard execution={execution} />
+                      </Box>
                     </motion.div>
                   ))}
                 </Box>

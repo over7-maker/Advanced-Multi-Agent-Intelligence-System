@@ -11,7 +11,7 @@ import os
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin, urlparse
@@ -20,6 +20,21 @@ import aiohttp
 from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
+
+# Tracing support (optional)
+try:
+    from src.amas.services.tracing_service import get_tracing_service
+    TRACING_AVAILABLE = True
+except ImportError:
+    TRACING_AVAILABLE = False
+
+# BaseAgent support (optional)
+try:
+    from src.amas.agents.base_agent import BaseAgent
+    BASE_AGENT_AVAILABLE = True
+except ImportError:
+    BaseAgent = None
+    BASE_AGENT_AVAILABLE = False
 
 
 class TaskPriority(Enum):
@@ -705,17 +720,117 @@ class UnifiedIntelligenceOrchestrator:
         logger.info("Unified Intelligence Orchestrator initialized")
 
     def _initialize_agents(self):
-        """Initialize real agents with actual capabilities"""
-        # Real OSINT Agent
-        osint_agent = RealOSINTAgent("osint_001")
-        self.agents["osint_001"] = osint_agent
+        """Initialize ALL 12 AI-POWERED agents with actual intelligence capabilities"""
+        ai_agents_count = 0
+        try:
+            # Import all AI-powered agents
+            from src.amas.agents.security_expert_agent import SecurityExpertAgent
+            from src.amas.agents.intelligence_gathering_agent import IntelligenceGatheringAgent
+            from src.amas.agents.code_analysis_agent import CodeAnalysisAgent
+            from src.amas.agents.performance_agent import PerformanceAgent
+            from src.amas.agents.documentation_agent import DocumentationAgent
+            from src.amas.agents.testing_agent import TestingAgent
+            from src.amas.agents.deployment_agent import DeploymentAgent
+            from src.amas.agents.monitoring_agent import MonitoringAgent
+            from src.amas.agents.data_agent import DataAgent
+            from src.amas.agents.api_agent import APIAgent
+            from src.amas.agents.research_agent import ResearchAgent
+            from src.amas.agents.integration_agent import IntegrationAgent
+            
+            # 1. Security Expert Agent
+            security_agent = SecurityExpertAgent()
+            self.agents["security_expert"] = security_agent
+            ai_agents_count += 1
+            logger.info("Initialized SecurityExpertAgent (AI-powered)")
+            
+            # 2. Intelligence Gathering Agent
+            intelligence_agent = IntelligenceGatheringAgent()
+            self.agents["intelligence_gathering"] = intelligence_agent
+            ai_agents_count += 1
+            logger.info("Initialized IntelligenceGatheringAgent (AI-powered)")
+            
+            # 3. Code Analysis Agent
+            code_agent = CodeAnalysisAgent()
+            self.agents["code_analysis"] = code_agent
+            ai_agents_count += 1
+            logger.info("Initialized CodeAnalysisAgent (AI-powered)")
+            
+            # 4. Performance Agent
+            performance_agent = PerformanceAgent()
+            self.agents["performance_agent"] = performance_agent
+            ai_agents_count += 1
+            logger.info("Initialized PerformanceAgent (AI-powered)")
+            
+            # 5. Documentation Agent
+            documentation_agent = DocumentationAgent()
+            self.agents["documentation_agent"] = documentation_agent
+            ai_agents_count += 1
+            logger.info("Initialized DocumentationAgent (AI-powered)")
+            
+            # 6. Testing Agent
+            testing_agent = TestingAgent()
+            self.agents["testing_agent"] = testing_agent
+            ai_agents_count += 1
+            logger.info("Initialized TestingAgent (AI-powered)")
+            
+            # 7. Deployment Agent
+            deployment_agent = DeploymentAgent()
+            self.agents["deployment_agent"] = deployment_agent
+            ai_agents_count += 1
+            logger.info("Initialized DeploymentAgent (AI-powered)")
+            
+            # 8. Monitoring Agent
+            monitoring_agent = MonitoringAgent()
+            self.agents["monitoring_agent"] = monitoring_agent
+            ai_agents_count += 1
+            logger.info("Initialized MonitoringAgent (AI-powered)")
+            
+            # 9. Data Agent
+            data_agent = DataAgent()
+            self.agents["data_agent"] = data_agent
+            ai_agents_count += 1
+            logger.info("Initialized DataAgent (AI-powered)")
+            
+            # 10. API Agent
+            api_agent = APIAgent()
+            self.agents["api_agent"] = api_agent
+            ai_agents_count += 1
+            logger.info("Initialized APIAgent (AI-powered)")
+            
+            # 11. Research Agent
+            research_agent = ResearchAgent()
+            self.agents["research_agent"] = research_agent
+            ai_agents_count += 1
+            logger.info("Initialized ResearchAgent (AI-powered)")
+            
+            # 12. Integration Agent
+            integration_agent = IntegrationAgent()
+            self.agents["integration_agent"] = integration_agent
+            ai_agents_count += 1
+            logger.info("Initialized IntegrationAgent (AI-powered)")
+            
+            # Keep the simple agents as fallback for basic operations
+            osint_agent = RealOSINTAgent("osint_001")
+            self.agents["osint_001"] = osint_agent
+            
+            forensics_agent = RealForensicsAgent("forensics_001")
+            self.agents["forensics_001"] = forensics_agent
 
-        # Real Forensics Agent
-        forensics_agent = RealForensicsAgent("forensics_001")
-        self.agents["forensics_001"] = forensics_agent
-
-        self.metrics["active_agents"] = len(self.agents)
-        logger.info(f"Initialized {len(self.agents)} real agents")
+            self.metrics["active_agents"] = len(self.agents)
+            logger.info(f"Initialized {len(self.agents)} agents ({ai_agents_count} AI-powered, {len(self.agents) - ai_agents_count} basic)")
+            
+        except Exception as e:
+            logger.error(f"Failed to initialize some AI agents: {e}", exc_info=True)
+            # Fallback to basic agents if AI agents fail
+            if len(self.agents) == 0:
+                osint_agent = RealOSINTAgent("osint_001")
+                self.agents["osint_001"] = osint_agent
+                forensics_agent = RealForensicsAgent("forensics_001")
+                self.agents["forensics_001"] = forensics_agent
+                self.metrics["active_agents"] = len(self.agents)
+                logger.warning(f"Using fallback agents only: {len(self.agents)} agents")
+            else:
+                logger.info(f"Partial initialization: {len(self.agents)} agents initialized")
 
     async def submit_task(
         self,
@@ -748,6 +863,539 @@ class UnifiedIntelligenceOrchestrator:
         except Exception as e:
             logger.error(f"Failed to submit task: {e}")
             raise
+
+    async def execute_task(
+        self,
+        task_id: str,
+        task_type: str,
+        target: str,
+        parameters: Dict[str, Any],
+        assigned_agents: List[str] = None,
+        user_context: Dict[str, Any] = None,
+        progress_callback: callable = None
+    ) -> Dict[str, Any]:
+        """
+        Execute task with full orchestration (PART_1 requirement)
+        
+        This method provides the execute_task interface required by PART_1,
+        using the existing agent infrastructure.
+        """
+        execution_start = time.time()
+        
+        # Add tracing if available
+        tracing = None
+        span_context = None
+        if TRACING_AVAILABLE:
+            try:
+                tracing = get_tracing_service()
+                if tracing and tracing.enabled:
+                    span_context = tracing.tracer.start_as_current_span("orchestrator.execute_task")
+                    span_context.__enter__()
+                    tracing.set_attribute("task.id", task_id)
+                    tracing.set_attribute("task.type", task_type)
+                    tracing.set_attribute("task.target", target)
+            except Exception:
+                tracing = None
+        
+        try:
+            # STEP 1: VALIDATE
+            if not assigned_agents:
+                # Use existing agent mapping
+                agent_id = await self._find_suitable_agent_for_type(task_type)
+                if agent_id:
+                    assigned_agents = [agent_id]
+                else:
+                    assigned_agents = []
+            
+            # STEP 2: CREATE EXECUTION PLAN
+            if progress_callback:
+                try:
+                    await progress_callback({
+                        "percentage": 10.0,
+                        "current_step": "Execution plan created",
+                        "agent_activity": {}
+                    })
+                except Exception:
+                    pass  # Callback might not be awaitable
+            
+            # STEP 3: EXECUTE AGENTS
+            agent_results = {}
+            
+            for agent_id in assigned_agents:
+                if agent_id in self.agents:
+                    agent = self.agents[agent_id]
+                    
+                    # Create child span for agent execution
+                    agent_span = None
+                    if tracing and tracing.enabled:
+                        try:
+                            agent_span = tracing.tracer.start_as_current_span(f"agent.{agent_id}.execute")
+                            agent_span.__enter__()
+                            tracing.set_attribute("agent.id", agent_id)
+                            tracing.set_attribute("agent.name", getattr(agent, 'name', agent_id))
+                        except Exception:
+                            pass
+                    
+                    try:
+                        # Check if agent is AI-powered (BaseAgent) or simple agent
+                        if BASE_AGENT_AVAILABLE and isinstance(agent, BaseAgent):
+                            # AI-powered agent - use execute method
+                            logger.info(f"Executing with AI-powered agent: {agent_id} for task: {task_type}")
+                            result = await agent.execute(
+                                task_id=task_id,
+                                target=target,
+                                parameters=parameters
+                            )
+                            # Convert BaseAgent result format to expected format
+                            agent_results[agent_id] = {
+                                "success": result.get("success", False),
+                                "output": result.get("result", result.get("output", "")),
+                                "quality_score": result.get("quality_score", 0.8),
+                                "duration": result.get("duration", 0.0),
+                                "tokens_used": result.get("tokens_used", 0),
+                                "cost_usd": result.get("cost_usd", 0.0),
+                                "provider": result.get("provider", "unknown"),
+                                "summary": result.get("summary", result.get("result", ""))
+                            }
+                        else:
+                            # Simple agent - use execute_task method
+                            logger.info(f"Executing with simple agent: {agent_id} for task: {task_type}")
+                            task = IntelligenceTask(
+                                id=task_id,
+                                type=task_type,
+                                description=f"Execute {task_type} on {target}",
+                                priority=TaskPriority.MEDIUM,
+                                parameters=parameters
+                            )
+                            result = await agent.execute_task(task)
+                            agent_results[agent_id] = result
+                        
+                        if agent_span:
+                            try:
+                                agent_span.__exit__(None, None, None)
+                            except Exception:
+                                pass
+                        
+                        if progress_callback:
+                            try:
+                                await progress_callback({
+                                    "percentage": 50.0 + (len(agent_results) * 20.0),
+                                    "current_step": f"Agent {agent_id} complete",
+                                    "agent_activity": {
+                                        agent_id: {
+                                            "status": "complete",
+                                            "duration": result.get("duration", 0)
+                                        }
+                                    }
+                                })
+                            except Exception:
+                                pass
+                    except Exception as e:
+                        logger.error(f"Agent {agent_id} execution failed: {e}")
+                        agent_results[agent_id] = {
+                            "success": False,
+                            "error": str(e)
+                        }
+                        if agent_span:
+                            try:
+                                if tracing:
+                                    tracing.record_exception(e)
+                                agent_span.__exit__(type(e), e, None)
+                            except Exception:
+                                pass
+            
+            # STEP 4: AGGREGATE RESULTS
+            execution_duration = time.time() - execution_start
+            
+            # Use aggregate_results method
+            aggregated = await self.aggregate_results(
+                task_id=task_id,
+                task_type=task_type,
+                target=target,
+                agent_results=agent_results,
+                execution_time=execution_duration
+            )
+            
+            if tracing and tracing.enabled:
+                tracing.set_attribute("task.duration", execution_duration)
+                tracing.set_attribute("task.success", aggregated.get("success", False))
+                tracing.set_attribute("task.agents_count", len(agent_results))
+                tracing.set_attribute("task.quality_score", aggregated.get("quality_score", 0.0))
+            
+            if progress_callback:
+                try:
+                    await progress_callback({
+                        "percentage": 90.0,
+                        "current_step": "Results aggregated",
+                        "agent_activity": agent_results
+                    })
+                except Exception:
+                    pass
+            
+            if progress_callback:
+                try:
+                    await progress_callback({
+                        "percentage": 100.0,
+                        "current_step": "Complete",
+                        "agent_activity": agent_results
+                    })
+                except Exception:
+                    pass
+            
+            # STEP 5: RETURN RESULT (matching PART_1 format)
+            aggregated["agents_used"] = assigned_agents
+            return aggregated
+        
+        except Exception as e:
+            logger.error(f"Task execution failed: {e}", exc_info=True)
+            execution_duration = time.time() - execution_start
+            
+            if tracing and tracing.enabled:
+                try:
+                    tracing.record_exception(e)
+                    tracing.set_attribute("task.success", False)
+                except Exception:
+                    pass
+            
+            return {
+                "task_id": task_id,
+                "success": False,
+                "error": str(e),
+                "execution_time": execution_duration,
+                "summary": f"Task failed: {str(e)}"
+            }
+    
+    async def create_task(
+        self,
+        task_type: str,
+        description: str,
+        parameters: Dict[str, Any],
+        priority: TaskPriority = TaskPriority.MEDIUM,
+        target: Optional[str] = None,
+    ) -> str:
+        """
+        Create task with ML prediction and database persistence
+        
+        This is an enhanced wrapper around submit_task that includes:
+        - ML prediction for task outcome
+        - Database persistence
+        - Cache invalidation
+        """
+        try:
+            # Get ML prediction if available
+            prediction = None
+            try:
+                from src.amas.intelligence.intelligence_manager import get_intelligence_manager
+                intelligence_manager = get_intelligence_manager()
+                
+                task_data = {
+                    "task_type": task_type,
+                    "target": target or description,
+                    "parameters": parameters,
+                    "required_capabilities": []
+                }
+                
+                optimized = await intelligence_manager.optimize_task_before_execution(task_data)
+                prediction = optimized.get("task_prediction", {})
+                
+                logger.info(f"ML prediction for task: {prediction}")
+            except Exception as e:
+                logger.warning(f"ML prediction failed (continuing): {e}")
+            
+            # Submit task (creates task_id)
+            task_id = await self.submit_task(
+                task_type=task_type,
+                description=description,
+                parameters=parameters,
+                priority=priority
+            )
+            
+            # Persist to database if available
+            try:
+                from src.database.connection import async_session
+                from sqlalchemy import text
+                
+                if async_session:
+                    async with async_session() as session:
+                        await session.execute(
+                            text("""
+                                INSERT INTO tasks (
+                                    task_id, task_type, description, parameters,
+                                    priority, status, created_at
+                                ) VALUES (
+                                    :task_id, :task_type, :description, :parameters,
+                                    :priority, :status, CURRENT_TIMESTAMP
+                                )
+                            """),
+                            {
+                                "task_id": task_id,
+                                "task_type": task_type,
+                                "description": description,
+                                "parameters": json.dumps(parameters) if isinstance(parameters, dict) else str(parameters),
+                                "priority": priority.value,
+                                "status": "pending"
+                            }
+                        )
+                        await session.commit()
+                        logger.debug(f"Task {task_id} persisted to database")
+            except Exception as e:
+                logger.warning(f"Database persistence failed (continuing): {e}")
+            
+            return task_id
+            
+        except Exception as e:
+            logger.error(f"Failed to create task: {e}")
+            raise
+    
+    async def select_agents(
+        self,
+        task_type: str,
+        target: str,
+        parameters: Dict[str, Any],
+        required_capabilities: List[str] = None
+    ) -> List[str]:
+        """
+        Select optimal agents using ML-powered intelligence
+        
+        Uses IntelligenceManager for ML-powered agent selection
+        """
+        try:
+            from src.amas.intelligence.intelligence_manager import get_intelligence_manager
+            
+            intelligence_manager = get_intelligence_manager()
+            
+            task_data = {
+                "task_type": task_type,
+                "target": target,
+                "parameters": parameters,
+                "required_capabilities": required_capabilities or []
+            }
+            
+            # Get optimal agents from intelligence manager
+            optimized = await intelligence_manager.optimize_task_before_execution(task_data)
+            optimal_agents = optimized.get("optimal_agents", [])
+            
+            # Filter to only agents that exist and are available
+            available_agents = []
+            for agent_id in optimal_agents:
+                if agent_id in self.agents:
+                    agent = self.agents[agent_id]
+                    if (agent.status == AgentStatus.IDLE and 
+                        agent.circuit_breaker.can_execute()):
+                        available_agents.append(agent_id)
+            
+            # Fallback to basic selection if no ML agents available
+            if not available_agents:
+                agent_id = await self._find_suitable_agent_for_type(task_type)
+                if agent_id:
+                    available_agents = [agent_id]
+            
+            logger.info(f"Selected agents for {task_type}: {available_agents}")
+            return available_agents
+            
+        except Exception as e:
+            logger.warning(f"ML agent selection failed, using fallback: {e}")
+            # Fallback to basic selection
+            agent_id = await self._find_suitable_agent_for_type(task_type)
+            return [agent_id] if agent_id else []
+    
+    async def aggregate_results(
+        self,
+        task_id: str,
+        task_type: str,
+        target: str,
+        agent_results: Dict[str, Dict[str, Any]],
+        execution_time: float
+    ) -> Dict[str, Any]:
+        """
+        Aggregate results from multiple agents with quality scoring and cost tracking
+        
+        Extracted from execute_task for reusability
+        """
+        try:
+            # Determine overall success
+            all_success = all(r.get("success", False) for r in agent_results.values())
+            success_rate = (
+                sum(1 for r in agent_results.values() if r.get("success", False)) 
+                / len(agent_results) if agent_results else 0.0
+            )
+            
+            # Calculate quality score (weighted average of agent quality scores)
+            quality_scores = []
+            total_cost = 0.0
+            total_tokens = 0
+            
+            for agent_id, result in agent_results.items():
+                if result.get("success"):
+                    # Extract quality metrics
+                    agent_quality = result.get("quality_score", 0.5)
+                    quality_scores.append(agent_quality)
+                    
+                    # Extract cost metrics
+                    total_cost += result.get("cost_usd", 0.0)
+                    total_tokens += result.get("tokens_used", 0)
+            
+            quality_score = (
+                sum(quality_scores) / len(quality_scores) 
+                if quality_scores else success_rate
+            )
+            
+            # Aggregate outputs
+            aggregated_output = {
+                "task_id": task_id,
+                "task_type": task_type,
+                "target": target,
+                "agent_results": agent_results,
+                "execution_time": execution_time,
+                "success": all_success,
+                "quality_score": quality_score,
+                "total_cost_usd": total_cost,
+                "total_tokens": total_tokens
+            }
+            
+            # Generate insights
+            insights = {
+                "summary": f"Task {task_id} completed with {len(agent_results)} agents",
+                "success_rate": success_rate,
+                "quality_score": quality_score,
+                "total_duration": execution_time,
+                "total_cost_usd": total_cost,
+                "total_tokens": total_tokens
+            }
+            
+            return {
+                "task_id": task_id,
+                "success": all_success,
+                "output": aggregated_output,
+                "insights": insights,
+                "execution_time": execution_time,
+                "success_rate": success_rate,
+                "quality_score": quality_score,
+                "summary": insights["summary"]
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to aggregate results: {e}")
+            return {
+                "task_id": task_id,
+                "success": False,
+                "error": str(e),
+                "execution_time": execution_time,
+                "summary": f"Result aggregation failed: {str(e)}"
+            }
+    
+    async def _find_suitable_agent_for_type(self, task_type: str) -> Optional[str]:
+        """Find suitable agent for task type - maps to all 12 specialized agents"""
+        task_type_lower = task_type.lower()
+        
+        # Map task types to AI-powered agents (all 12 agents)
+        agent_mapping = {
+            # Security tasks -> Security Expert Agent
+            "security_scan": "security_expert",
+            "security_audit": "security_expert",
+            "security_auditing": "security_expert",
+            "vulnerability_assessment": "security_expert",
+            "penetration_testing": "security_expert",
+            "threat_analysis": "security_expert",
+            "threat_intelligence": "security_expert",
+            
+            # Intelligence gathering tasks -> Intelligence Gathering Agent
+            "intelligence_gathering": "intelligence_gathering",
+            "osint_investigation": "intelligence_gathering",
+            "osint_collection": "intelligence_gathering",
+            "osint": "intelligence_gathering",
+            "web_scraping": "intelligence_gathering",
+            "domain_analysis": "intelligence_gathering",
+            "email_analysis": "intelligence_gathering",
+            "social_media_analysis": "intelligence_gathering",
+            "social_media_monitoring": "intelligence_gathering",
+            "dark_web_monitoring": "intelligence_gathering",
+            "technology_monitoring": "intelligence_gathering",
+            
+            # Code analysis tasks -> Code Analysis Agent
+            "code_analysis": "code_analysis",
+            "code_review": "code_analysis",
+            "code_quality": "code_analysis",
+            "security_code_review": "code_analysis",
+            
+            # Performance tasks -> Performance Agent
+            "performance_analysis": "performance_agent",
+            "performance_monitoring": "performance_agent",
+            "performance_optimization": "performance_agent",
+            "bottleneck_analysis": "performance_agent",
+            
+            # Documentation tasks -> Documentation Agent
+            "documentation": "documentation_agent",
+            "documentation_generation": "documentation_agent",
+            "api_documentation": "documentation_agent",
+            
+            # Testing tasks -> Testing Agent
+            "testing": "testing_agent",
+            "testing_coordination": "testing_agent",
+            "test_generation": "testing_agent",
+            "qa": "testing_agent",
+            
+            # Deployment tasks -> Deployment Agent
+            "deployment": "deployment_agent",
+            "ci_cd": "deployment_agent",
+            "devops": "deployment_agent",
+            
+            # Monitoring tasks -> Monitoring Agent
+            "monitoring": "monitoring_agent",
+            "observability": "monitoring_agent",
+            "metrics_setup": "monitoring_agent",
+            
+            # Data analysis tasks -> Data Agent
+            "data_analysis": "data_agent",
+            "statistical_analysis": "data_agent",
+            "data_processing": "data_agent",
+            
+            # API tasks -> API Agent
+            "api_design": "api_agent",
+            "api_integration": "api_agent",
+            "rest_api": "api_agent",
+            
+            # Research tasks -> Research Agent
+            "research": "research_agent",
+            "technology_research": "research_agent",
+            "evaluation": "research_agent",
+            
+            # Integration tasks -> Integration Agent
+            "integration": "integration_agent",
+            "platform_integration": "integration_agent",
+            "connector": "integration_agent",
+            
+            # Forensics tasks -> Forensics Agent (fallback)
+            "forensics": "forensics_001",
+            "file_analysis": "forensics_001",
+            "hash_analysis": "forensics_001",
+            "metadata_extraction": "forensics_001",
+            "reverse_engineering": "forensics_001",
+            "investigation": "forensics_001",
+        }
+        
+        # Try to find mapped agent
+        agent_id = agent_mapping.get(task_type_lower)
+        
+        # If agent exists and is available, return it
+        if agent_id and agent_id in self.agents:
+            return agent_id
+        
+        # Fallback: try to find any agent that can handle this task type
+        for agent_id, agent in self.agents.items():
+            # Check if agent has the capability (for BaseAgent instances)
+            if BASE_AGENT_AVAILABLE and isinstance(agent, BaseAgent):
+                agent_type = getattr(agent, 'type', '').lower()
+                if agent_type in task_type_lower or task_type_lower in agent_type:
+                    return agent_id
+        
+        # Final fallback to basic agents
+        if "osint" in task_type_lower or "intelligence" in task_type_lower:
+            return "osint_001" if "osint_001" in self.agents else None
+        elif "forensics" in task_type_lower or "file" in task_type_lower:
+            return "forensics_001" if "forensics_001" in self.agents else None
+        
+        return None
 
     async def _process_task_queue(self):
         """Process tasks from the queue with intelligent routing"""

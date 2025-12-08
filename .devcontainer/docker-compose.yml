@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  amas-dev:
+    build:
+      context: ..
+      dockerfile: .devcontainer/Dockerfile
+    volumes:
+      # Mount workspace (devcontainer will substitute ${localWorkspaceFolderBasename})
+      # This variable is automatically replaced by VS Code/Cursor devcontainer system
+      - type: bind
+        source: ..
+        target: /workspaces/${localWorkspaceFolderBasename}
+        bind:
+          propagation: cached
+      # Cache directories for faster rebuilds
+      - type: volume
+        source: amas-pip-cache
+        target: /root/.cache/pip
+      - type: volume
+        source: amas-node-modules
+        target: /workspaces/${localWorkspaceFolderBasename}/frontend/node_modules
+    command: sleep infinity
+    environment:
+      - AMAS_ENV=development
+      - PYTHONPATH=/workspaces/${localWorkspaceFolderBasename}
+      - PYTHONUNBUFFERED=1
+      - DEVCONTAINER=true
+      # Port configuration via environment variables (set before opening devcontainer):
+      #   BACKEND_PORT - Backend API port (default: 8000)
+      #   DASHBOARD_PORT - Dashboard port (default: 8080)
+      #   FRONTEND_PORT - Frontend port (default: 3000)
+      # Example: export BACKEND_PORT=8001 DASHBOARD_PORT=8081 FRONTEND_PORT=3001
+    # Port forwarding configuration
+    # These ports are mapped from host to container using environment variables
+    # If ports conflict, set BACKEND_PORT, DASHBOARD_PORT, FRONTEND_PORT before opening devcontainer
+    # Default ports: Backend=8000, Dashboard=8080, Frontend=3000
+    # Check port usage: bash .devcontainer/fix-ports.sh
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"    # Backend API (FastAPI)
+      - "${DASHBOARD_PORT:-8080}:8080"  # Dashboard/Admin UI
+      - "${FRONTEND_PORT:-3000}:3000"   # Frontend (React)
+
+volumes:
+  amas-pip-cache:
+  amas-node-modules:
+

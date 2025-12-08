@@ -1,0 +1,163 @@
+name: Production Component Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.prod.yml'
+      - 'nginx/**'
+      - 'k8s/**'
+      - '.github/workflows/**'
+      - 'scripts/**'
+      - 'alembic/**'
+      - 'docs/**'
+      - 'tests/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.prod.yml'
+      - 'nginx/**'
+      - 'k8s/**'
+      - '.github/workflows/**'
+      - 'scripts/**'
+      - 'alembic/**'
+      - 'docs/**'
+      - 'tests/**'
+
+jobs:
+  validation:
+    name: Validation Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-asyncio pyyaml
+      
+      - name: Run validation tests
+        run: |
+          pytest tests/validation/ -v --tb=short
+
+  functional:
+    name: Functional Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-asyncio
+      
+      - name: Run functional tests
+        run: |
+          pytest tests/functional/ -v --tb=short -m "not slow"
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-asyncio requests
+      
+      - name: Run integration tests
+        run: |
+          pytest tests/integration/ -v --tb=short -m integration
+        env:
+          DOCKER_BUILDKIT: 1
+
+  security:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-asyncio
+      
+      - name: Run security tests
+        run: |
+          pytest tests/security/ -v --tb=short -m security
+
+  documentation:
+    name: Documentation Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-asyncio
+      
+      - name: Run documentation tests
+        run: |
+          pytest tests/documentation/ -v --tb=short -m documentation
+
+  performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-asyncio
+      
+      - name: Run performance tests
+        run: |
+          pytest tests/performance/ -v --tb=short -m performance
+        env:
+          DOCKER_BUILDKIT: 1
+

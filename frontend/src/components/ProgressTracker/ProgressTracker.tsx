@@ -1,41 +1,43 @@
-import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Typography,
-  Paper,
-  Grid,
-  LinearProgress,
-  Chip,
-  Card,
-  CardContent,
-  Timeline,
-  TimelineItem,
-  TimelineSeparator,
-  TimelineDot,
-  TimelineContent,
-  TimelineConnector,
-  Avatar,
-  IconButton,
-  Collapse,
-  Alert,
-  Tooltip,
-  useTheme,
-  alpha,
-} from '@mui/material';
-import {
-  PlayArrow as PlayIcon,
-  CheckCircle as CompletedIcon,
-  Error as ErrorIcon,
-  Schedule as ScheduleIcon,
-  Group as GroupIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
-  Chat as ChatIcon,
-  Visibility as ViewIcon,
+    Chat as ChatIcon,
+    CheckCircle as CompletedIcon,
+    Error as ErrorIcon,
+    ExpandLess as ExpandLessIcon,
+    ExpandMore as ExpandMoreIcon,
+    Group as GroupIcon,
+    PlayArrow as PlayIcon,
+    Schedule as ScheduleIcon,
+    Visibility as ViewIcon,
 } from '@mui/icons-material';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+    Timeline,
+    TimelineConnector,
+    TimelineContent,
+    TimelineDot,
+    TimelineItem,
+    TimelineSeparator,
+} from '@mui/lab';
+import {
+    Alert,
+    alpha,
+    Avatar,
+    Box,
+    Card,
+    CardContent,
+    Chip,
+    Collapse,
+    Grid,
+    IconButton,
+    LinearProgress,
+    Paper,
+    Typography,
+    useTheme
+} from '@mui/material';
+import { AnimatePresence, motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
 
-import { WorkflowExecution, SubTask, TaskStatus } from '../../types/agent';
+import { websocketService } from '../../services/websocket';
+import { AgentSpecialty, SubTask, TaskStatus, WorkflowExecution } from '../../types/agent';
 
 interface ProgressTrackerProps {
   execution: WorkflowExecution;
@@ -49,7 +51,7 @@ interface AgentActivity {
   activity: string;
   timestamp: Date;
   type: 'started' | 'progress' | 'completed' | 'help_request' | 'communication';
-  details?: any;
+  details?: Record<string, unknown>;
 }
 
 interface QualityCheckpoint {
@@ -67,6 +69,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   realTimeUpdates = true
 }) => {
   const theme = useTheme();
+  const [currentExecution, setCurrentExecution] = useState<WorkflowExecution>(execution);
   const [subTasks, setSubTasks] = useState<SubTask[]>([]);
   const [agentActivities, setAgentActivities] = useState<AgentActivity[]>([]);
   const [qualityCheckpoints, setQualityCheckpoints] = useState<QualityCheckpoint[]>([]);
@@ -74,11 +77,33 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   
   useEffect(() => {
+    setCurrentExecution(execution);
+  }, [execution]);
+  
+  useEffect(() => {
     loadExecutionDetails();
     
     if (realTimeUpdates) {
+      websocketService.connect();
+      const unsubscribe = websocketService.on('workflow_update', (data: any) => {
+        if (data.executionId === execution.executionId || data.id === execution.executionId) {
+          setCurrentExecution((prev) => ({
+            ...prev,
+            ...data,
+            progressPercentage: data.progress !== undefined ? data.progress : prev.progressPercentage,
+            status: data.status || prev.status,
+            tasksCompleted: data.tasksCompleted !== undefined ? data.tasksCompleted : prev.tasksCompleted,
+            tasksInProgress: data.tasksInProgress !== undefined ? data.tasksInProgress : prev.tasksInProgress,
+            tasksPending: data.tasksPending !== undefined ? data.tasksPending : prev.tasksPending,
+          }));
+        }
+      });
+      
       const interval = setInterval(loadExecutionDetails, 2000); // Update every 2 seconds
-      return () => clearInterval(interval);
+      return () => {
+        clearInterval(interval);
+        unsubscribe();
+      };
     }
   }, [execution.executionId, realTimeUpdates]);
   
@@ -92,7 +117,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
           id: "task_001",
           title: "Web Intelligence Gathering",
           description: "Gather competitive intelligence from web sources",
-          assignedAgent: "web_intelligence_gatherer" as any,
+          assignedAgent: AgentSpecialty.WEB_INTELLIGENCE,
           estimatedDurationHours: 1.0,
           priority: 8,
           dependsOn: [],
@@ -107,7 +132,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
           id: "task_002",
           title: "Data Analysis & Modeling",
           description: "Process gathered data and identify trends",
-          assignedAgent: "data_analyst" as any,
+          assignedAgent: AgentSpecialty.DATA_ANALYST,
           estimatedDurationHours: 1.5,
           priority: 7,
           dependsOn: ["task_001"],
@@ -120,7 +145,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
           id: "task_003",
           title: "Graphics Design & Visualization",
           description: "Create professional charts and infographics",
-          assignedAgent: "graphics_designer" as any,
+          assignedAgent: AgentSpecialty.GRAPHICS_DESIGNER,
           estimatedDurationHours: 1.0,
           priority: 6,
           dependsOn: ["task_002"],
@@ -132,7 +157,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
           id: "task_004",
           title: "Executive Summary Writing",
           description: "Create executive-ready content and recommendations",
-          assignedAgent: "content_writer" as any,
+          assignedAgent: AgentSpecialty.CONTENT_WRITER,
           estimatedDurationHours: 1.2,
           priority: 6,
           dependsOn: ["task_002"],
@@ -144,7 +169,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
           id: "task_005",
           title: "Fact Checking & Validation",
           description: "Verify all claims and validate sources",
-          assignedAgent: "fact_checker" as any,
+          assignedAgent: AgentSpecialty.FACT_CHECKER,
           estimatedDurationHours: 0.8,
           priority: 9,
           dependsOn: ["task_001", "task_002", "task_003", "task_004"],
@@ -247,13 +272,13 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
     }
   };
   
-  const getTaskStatusColor = (status: TaskStatus) => {
+  const getTaskStatusColor = (status: TaskStatus): 'success' | 'primary' | 'error' | 'warning' | 'inherit' => {
     switch (status) {
       case TaskStatus.COMPLETED: return 'success';
       case TaskStatus.IN_PROGRESS: return 'primary';
       case TaskStatus.FAILED: return 'error';
       case TaskStatus.BLOCKED: return 'warning';
-      default: return 'default';
+      default: return 'inherit';
     }
   };
   
@@ -272,27 +297,27 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
     <Box>
       {/* Real-time Status Header */}
       <Paper sx={{ p: 2, mb: 3, backgroundColor: alpha(theme.palette.primary.main, 0.02) }}>
-        <Box display="flex" justifyContent="between" alignItems="center">
+        <Box display="flex" justifyContent="space-between" alignItems="center">
           <Box>
             <Typography variant="h6">Live Progress Tracking</Typography>
             <Typography variant="caption" color="textSecondary">
-              Execution: {execution.executionId} • Last updated: {lastUpdate.toLocaleTimeString()}
+              Execution: {currentExecution.executionId} • Last updated: {lastUpdate.toLocaleTimeString()}
             </Typography>
           </Box>
           
           <Box textAlign="right">
             <Typography variant="h4" color="primary.main" fontWeight="bold">
-              {execution.progressPercentage.toFixed(1)}%
+              {currentExecution.progressPercentage.toFixed(1)}%
             </Typography>
             <Typography variant="caption" color="textSecondary">
-              {execution.currentPhase.replace('_', ' ')}
+              {currentExecution.currentPhase.replace('_', ' ')}
             </Typography>
           </Box>
         </Box>
         
         <LinearProgress 
           variant="determinate" 
-          value={execution.progressPercentage}
+          value={currentExecution.progressPercentage}
           sx={{ 
             mt: 2, 
             height: 8, 
@@ -308,7 +333,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
           <Paper sx={{ p: 3 }}>
             <Box 
               display="flex" 
-              justifyContent="between" 
+              justifyContent="space-between" 
               alignItems="center" 
               mb={2}
               onClick={() => toggleSection('tasks')}
@@ -329,7 +354,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
                   <TimelineItem key={task.id}>
                     <TimelineSeparator>
                       <TimelineDot 
-                        color={getTaskStatusColor(task.status) as any}
+                        color={getTaskStatusColor(task.status)}
                         variant={task.status === TaskStatus.COMPLETED ? "filled" : "outlined"}
                       >
                         {getTaskStatusIcon(task.status)}
@@ -347,7 +372,12 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
                           <Chip 
                             size="small" 
                             label={task.status.replace('_', ' ').toUpperCase()}
-                            color={getTaskStatusColor(task.status) as any}
+                            color={
+                              (() => {
+                                const color = getTaskStatusColor(task.status);
+                                return color === 'inherit' ? 'default' : color as 'success' | 'primary' | 'error' | 'warning' | 'default';
+                              })()
+                            }
                           />
                           <Chip 
                             size="small" 
@@ -405,7 +435,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
           <Paper sx={{ p: 3 }}>
             <Box 
               display="flex" 
-              justifyContent="between" 
+              justifyContent="space-between" 
               alignItems="center" 
               mb={2}
               onClick={() => toggleSection('activity')}
@@ -423,7 +453,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
             <Collapse in={expandedSections.has('activity')}>
               <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
                 <AnimatePresence>
-                  {agentActivities.map((activity, index) => (
+                  {agentActivities.map((activity) => (
                     <motion.div
                       key={`${activity.agentId}_${activity.timestamp.getTime()}`}
                       initial={{ opacity: 0, x: -20 }}
@@ -467,13 +497,15 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
                           
                           {activity.details && (
                             <Box mt={1}>
-                              {activity.type === 'completed' && activity.details.sourcesGathered && (
+                              {activity.type === 'completed' && 
+                               typeof activity.details.sourcesGathered === 'number' && (
                                 <Chip size="small" label={`${activity.details.sourcesGathered} sources`} />
                               )}
-                              {activity.type === 'progress' && activity.details.progressPercentage && (
+                              {activity.type === 'progress' && 
+                               typeof activity.details.progressPercentage === 'number' && (
                                 <LinearProgress 
                                   variant="determinate" 
-                                  value={activity.details.progressPercentage}
+                                  value={activity.details.progressPercentage as number}
                                   sx={{ width: 100, mr: 1, display: 'inline-block' }}
                                 />
                               )}
@@ -503,7 +535,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
           <Paper sx={{ p: 3 }}>
             <Box 
               display="flex" 
-              justifyContent="between" 
+              justifyContent="space-between" 
               alignItems="center" 
               mb={2}
               onClick={() => toggleSection('quality')}
@@ -554,7 +586,7 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
                           {checkpoint.details}
                         </Typography>
                         
-                        <Box display="flex" justifyContent="between" alignItems="center">
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
                           <Typography variant="caption">
                             Threshold: {(checkpoint.threshold * 100).toFixed(0)}%
                           </Typography>
@@ -586,18 +618,18 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
       </Grid>
       
       {/* Health Status Alert */}
-      {execution.overallHealth !== 'healthy' && (
+      {currentExecution.overallHealth !== 'healthy' && (
         <Alert 
-          severity={execution.overallHealth === 'warning' ? 'warning' : 'error'}
+          severity={currentExecution.overallHealth === 'warning' ? 'warning' : 'error'}
           sx={{ mt: 2 }}
         >
           <Typography fontWeight="bold">
-            Workflow Health: {execution.overallHealth.toUpperCase()}
+            Workflow Health: {currentExecution.overallHealth.toUpperCase()}
           </Typography>
-          {execution.overallHealth === 'warning' && 
+          {currentExecution.overallHealth === 'warning' && 
             "Some tasks are running longer than expected. Monitoring for potential issues."
           }
-          {execution.overallHealth === 'degraded' && 
+          {currentExecution.overallHealth === 'degraded' && 
             "Multiple agents experiencing issues. System is attempting automatic recovery."
           }
         </Alert>

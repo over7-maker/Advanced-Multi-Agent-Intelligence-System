@@ -3,6 +3,8 @@ Agent management API routes
 """
 
 import logging
+import os
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -12,6 +14,14 @@ from src.config.settings import get_settings
 from src.amas.security.policies.opa_integration import get_policy_engine, PolicyDecision
 from src.amas.security.auth.jwt_middleware import auth_context
 from src.amas.security.audit.audit_logger import get_audit_logger, AuditEventType, AuditStatus
+
+# WebSocket for real-time updates
+try:
+    from src.api.websocket import websocket_manager
+    WEBSOCKET_AVAILABLE = True
+except ImportError:
+    WEBSOCKET_AVAILABLE = False
+    websocket_manager = None
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +60,12 @@ class AgentResponse(BaseModel):
 
 async def check_agent_permission(user_id: str, agent_id: str, action: str) -> bool:
     """Check if user has permission to perform action on agent"""
+    # In development mode, allow all access
+    dev_mode = os.getenv("ENVIRONMENT", "production").lower() in ["development", "dev", "test"]
+    if dev_mode:
+        logger.debug(f"Development mode: Allowing {action} on agent {agent_id} for user {user_id}")
+        return True
+    
     try:
         policy_engine = get_policy_engine()
         result = await policy_engine.opa_client.check_agent_access(
@@ -61,7 +77,8 @@ async def check_agent_permission(user_id: str, agent_id: str, action: str) -> bo
     except Exception as e:
         logger.error(f"Authorization check failed: {e}")
         # Fail open in case of OPA errors (can be configured to fail closed)
-        return False
+        # In development, always allow
+        return dev_mode
 
 
 @router.get("/agents", response_model=List[AgentResponse])
@@ -74,12 +91,19 @@ async def list_agents(
 ) -> List[AgentResponse]:
     """List all agents with optional filtering"""
     try:
-        # Check authentication
+        # Check authentication (bypass in development mode)
+        dev_mode = os.getenv("ENVIRONMENT", "production").lower() in ["development", "dev", "test"]
         user_context = auth_context.get_user()
-        if not user_context:
-            raise HTTPException(status_code=401, detail="Authentication required")
         
-        user_id = user_context.get("user_id")
+        if not user_context:
+            if dev_mode:
+                # Use default user for development
+                user_id = "dev_user"
+                logger.debug("Development mode: Using default user for agent access")
+            else:
+                raise HTTPException(status_code=401, detail="Authentication required")
+        else:
+            user_id = user_context.get("user_id")
         
         # Check authorization - user needs 'read' permission
         # For listing, we check general agent access
@@ -150,12 +174,19 @@ async def list_agents(
 async def get_agent(agent_id: str, request: Request) -> AgentResponse:
     """Get a specific agent by ID"""
     try:
-        # Check authentication
+        # Check authentication (bypass in development mode)
+        dev_mode = os.getenv("ENVIRONMENT", "production").lower() in ["development", "dev", "test"]
         user_context = auth_context.get_user()
-        if not user_context:
-            raise HTTPException(status_code=401, detail="Authentication required")
         
-        user_id = user_context.get("user_id")
+        if not user_context:
+            if dev_mode:
+                # Use default user for development
+                user_id = "dev_user"
+                logger.debug("Development mode: Using default user for agent access")
+            else:
+                raise HTTPException(status_code=401, detail="Authentication required")
+        else:
+            user_id = user_context.get("user_id")
         
         # Check authorization
         has_permission = await check_agent_permission(user_id, agent_id, "read")
@@ -226,8 +257,22 @@ async def update_agent(agent_id: str, agent_update: AgentUpdate) -> AgentRespons
             "capabilities": ["web_search", "data_analysis"],
             "config": agent_update.config or {"model": "gpt-4", "temperature": 0.7},
             "created_at": "2024-01-01T00:00:00Z",
-            "updated_at": "2024-01-01T00:00:00Z",
+            "updated_at": datetime.now().isoformat(),
         }
+
+        # Broadcast agent update via WebSocket
+        if WEBSOCKET_AVAILABLE and websocket_manager:
+            try:
+                await websocket_manager.broadcast({
+                    "event": "agent_update",
+                    "agent_id": agent_id,
+                    "id": agent_id,
+                    "name": updated_agent["name"],
+                    "status": updated_agent["status"],
+                    "updated_at": updated_agent["updated_at"]
+                })
+            except Exception as e:
+                logger.warning(f"WebSocket broadcast failed (non-critical): {e}")
 
         return AgentResponse(**updated_agent)
 

@@ -6,7 +6,8 @@ Coordinates collective learning, adaptive personalities, and predictive intellig
 
 import asyncio
 import logging
-from typing import Any, Dict
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 from ..agents.adaptive_personality import PersonalityOrchestrator
 from .collective_learning import CollectiveIntelligenceEngine
@@ -60,6 +61,68 @@ class AMASIntelligenceManager:
             except Exception as e:
                 self.logger.error(f"❌ Error in learning cycle: {e}")
                 await asyncio.sleep(300)  # Retry in 5 minutes
+
+    async def record_task_execution(
+        self,
+        task_id: str,
+        task_type: str,
+        agents_used: List[str],
+        execution_time: float,
+        success: bool,
+        quality_score: float,
+        user_feedback: Optional[Dict] = None
+    ):
+        """
+        Record task execution for learning (PART_2 requirement)
+        
+        This feeds data back into ML models for continuous improvement
+        """
+        try:
+            # Prepare training data
+            training_data = {
+                "task_id": task_id,
+                "task_type": task_type,
+                "agents_used": agents_used,
+                "execution_time": execution_time,
+                "success_rate": 1.0 if success else 0.0,
+                "quality_score": quality_score,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+            # Add to predictive engine training data
+            await self.predictive_engine.add_training_data(
+                "task_outcome",
+                training_data
+            )
+            
+            # Also record for collective learning
+            await self.collective_intelligence.record_task_execution(
+                task_id=task_id,
+                task_type=task_type,
+                target="",  # Not available in this signature
+                parameters={},  # Not available in this signature
+                agents_used=agents_used,
+                execution_time=execution_time,
+                success_rate=1.0 if success else 0.0,
+                error_patterns=[],
+                solution_quality=quality_score,
+            )
+            
+            self.logger.info(f"Recorded task execution for learning: {task_id}")
+        
+        except Exception as e:
+            self.logger.error(f"Failed to record task execution: {e}")
+
+    async def get_completed_task_count(self) -> int:
+        """Get total completed tasks for retraining triggers"""
+        import pandas as pd
+        
+        task_outcome_data = self.predictive_engine.training_data.get(
+            "task_outcome",
+            pd.DataFrame()
+        )
+        
+        return len(task_outcome_data)
 
     async def process_task_completion(self, task_data: Dict[str, Any]):
         """Process completed task for all intelligence systems"""
@@ -165,7 +228,19 @@ class AMASIntelligenceManager:
 
 
 # Global intelligence manager instance
-intelligence_manager = AMASIntelligenceManager()
+_intelligence_manager_instance: Optional[AMASIntelligenceManager] = None
+
+
+def get_intelligence_manager() -> AMASIntelligenceManager:
+    """Get or create the global intelligence manager instance"""
+    global _intelligence_manager_instance
+    if _intelligence_manager_instance is None:
+        _intelligence_manager_instance = AMASIntelligenceManager()
+    return _intelligence_manager_instance
+
+
+# Backward compatibility
+intelligence_manager = get_intelligence_manager()
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)

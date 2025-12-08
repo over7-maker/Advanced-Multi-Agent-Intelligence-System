@@ -60,8 +60,8 @@ class SecuritySettings(BaseModel):
     jwt_refresh_token_expire_days: int = Field(default=7)
     bcrypt_rounds: int = Field(default=12)
 
-    # CORS settings
-    cors_origins: List[str] = Field(default=["http://localhost:3000"])
+    # CORS settings - allow localhost on any port for development
+    cors_origins: List[str] = Field(default=["http://localhost:3000", "http://localhost:8000", "http://localhost:8001", "http://127.0.0.1:8000", "http://127.0.0.1:8001"])
     cors_allow_credentials: bool = Field(default=True)
     cors_allow_methods: List[str] = Field(
         default=["GET", "POST", "PUT", "DELETE", "OPTIONS"]

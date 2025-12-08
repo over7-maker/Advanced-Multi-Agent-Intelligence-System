@@ -1,0 +1,297 @@
+---
+description: Database Migrations - Alembic migration patterns, version control, and schema evolution best practices
+globs:
+  - "alembic/**/*.py"
+  - "scripts/migrate.sh"
+  - "scripts/init-db.sql"
+alwaysApply: false
+---
+
+# Database Migration Rules
+
+When working with database schema changes and migrations:
+
+## Alembic Migration Workflow
+
+1. **Create New Migration**:
+   ```bash
+   # Auto-generate migration from model changes
+   alembic revision --autogenerate -m "add_new_table"
+   
+   # Manual migration
+   alembic revision -m "add_new_table"
+   ```
+
+2. **Review Generated Migration**:
+   - Always review auto-generated migrations
+   - Check for unintended changes
+   - Verify data type conversions
+   - Ensure indexes are created
+
+3. **Apply Migrations**:
+   ```bash
+   # Apply all pending migrations
+   alembic upgrade head
+   
+   # Apply specific revision
+   alembic upgrade <revision_id>
+   ```
+
+4. **Rollback Migrations**:
+   ```bash
+   # Rollback one migration
+   alembic downgrade -1
+   
+   # Rollback to specific revision
+   alembic downgrade <revision_id>
+   ```
+
+## Migration File Structure
+
+1. **Standard Migration Template**:
+   ```python
+   """Add new table
+    
+   Revision ID: 003
+   Revises: 002
+   Create Date: 2025-01-20 14:00:00.000000
+    
+   """
+   from alembic import op
+   import sqlalchemy as sa
+   from sqlalchemy.dialects import postgresql
+    
+   # revision identifiers
+   revision = '003'
+   down_revision = '002'
+   branch_labels = None
+   depends_on = None
+    
+   def upgrade() -> None:
+       """Apply migration"""
+       op.create_table(
+           'new_table',
+           sa.Column('id', sa.Integer(), nullable=False),
+           sa.Column('name', sa.String(255), nullable=False),
+           sa.PrimaryKeyConstraint('id')
+       )
+       
+       # Create indexes
+       op.create_index('ix_new_table_name', 'new_table', ['name'])
+    
+   def downgrade() -> None:
+       """Rollback migration"""
+       op.drop_index('ix_new_table_name', table_name='new_table')
+       op.drop_table('new_table')
+   ```
+
+## Schema Changes
+
+1. **Adding Tables**:
+   ```python
+   def upgrade() -> None:
+       op.create_table(
+           'table_name',
+           sa.Column('id', sa.Integer(), nullable=False),
+           sa.Column('column_name', sa.String(255), nullable=False),
+           sa.PrimaryKeyConstraint('id'),
+           sa.UniqueConstraint('column_name')
+       )
+   ```
+
+2. **Adding Columns**:
+   ```python
+   def upgrade() -> None:
+       op.add_column('table_name', 
+           sa.Column('new_column', sa.String(100), nullable=True)
+       )
+       
+       # Set default for existing rows
+       op.execute("UPDATE table_name SET new_column = 'default' WHERE new_column IS NULL")
+       
+       # Make NOT NULL after setting defaults
+       op.alter_column('table_name', 'new_column', nullable=False)
+   ```
+
+3. **Adding Indexes**:
+   ```python
+   def upgrade() -> None:
+       op.create_index(
+           'ix_table_column',
+           'table_name',
+           ['column_name']
+       )
+       
+       # Composite index
+       op.create_index(
+           'ix_table_col1_col2',
+           'table_name',
+           ['column1', 'column2']
+       )
+       
+       # Partial index
+       op.create_index(
+           'ix_table_active',
+           'table_name',
+           ['status'],
+           postgresql_where=sa.text("status = 'active'")
+       )
+   ```
+
+4. **Adding Foreign Keys**:
+   ```python
+   def upgrade() -> None:
+       op.create_foreign_key(
+           'fk_table_other',
+           'table_name',
+           'other_table',
+           ['other_id'],
+           ['id'],
+           ondelete='CASCADE'
+       )
+   ```
+
+5. **JSONB Columns**:
+   ```python
+   from sqlalchemy.dialects import postgresql
+   
+   def upgrade() -> None:
+       op.add_column('table_name',
+           sa.Column('metadata', postgresql.JSONB(), nullable=True, server_default='{}')
+       )
+   ```
+
+## Data Migrations
+
+1. **Data Transformation**:
+   ```python
+   def upgrade() -> None:
+       # Transform existing data
+       op.execute("""
+           UPDATE table_name 
+           SET new_column = old_column::text 
+           WHERE old_column IS NOT NULL
+       """)
+   ```
+
+2. **Backfill Data**:
+   ```python
+   def upgrade() -> None:
+       # Backfill with default values
+       op.execute("""
+           UPDATE table_name 
+           SET status = 'active' 
+           WHERE status IS NULL
+       """)
+   ```
+
+## Migration Best Practices
+
+1. **Always Write Downgrade**:
+   - Every upgrade must have a corresponding downgrade
+   - Test downgrade before committing
+   - Ensure data safety in downgrade
+
+2. **Migration Naming**:
+   - Use descriptive names: `add_user_table`, `add_indexes_to_tasks`
+   - Include purpose in migration message
+   - Follow chronological order
+
+3. **Testing Migrations**:
+   ```bash
+   # Test upgrade
+   alembic upgrade head
+   
+   # Test downgrade
+   alembic downgrade -1
+   
+   # Test upgrade again
+   alembic upgrade head
+   ```
+
+4. **Production Migrations**:
+   - Always backup database before migration
+   - Test migrations on staging first
+   - Run migrations during maintenance window
+   - Monitor migration progress
+   - Have rollback plan ready
+
+## Migration Scripts
+
+1. **Use Migration Management Script**:
+   ```bash
+   # Run migrations
+   ./scripts/migrate.sh upgrade
+   
+   # Check current version
+   ./scripts/migrate.sh current
+   
+   # View history
+   ./scripts/migrate.sh history
+   
+   # Create new migration
+   ./scripts/migrate.sh create "add new feature"
+   ```
+
+2. **Migration Status**:
+   ```bash
+   # Check current version
+   alembic current
+   
+   # View migration history
+   alembic history --verbose
+   ```
+
+## Schema Initialization
+
+1. **Initial Schema Setup**:
+   - Use `scripts/init-db.sql` for initial setup
+   - Create extensions: `uuid-ossp`, `pg_trgm`, `btree_gin`
+   - Set up custom types and functions
+   - Grant permissions
+
+2. **Alembic vs SQL Scripts**:
+   - Use Alembic for all schema changes (version controlled)
+   - Use SQL scripts only for initial setup or one-time data migrations
+   - Never mix Alembic and manual SQL changes
+
+## Common Patterns
+
+1. **Adding NOT NULL Column to Existing Table**:
+   ```python
+   def upgrade() -> None:
+       # Add column as nullable first
+       op.add_column('table', sa.Column('new_col', sa.String(), nullable=True))
+       
+       # Backfill data
+       op.execute("UPDATE table SET new_col = 'default' WHERE new_col IS NULL")
+       
+       # Make NOT NULL
+       op.alter_column('table', 'new_col', nullable=False)
+   ```
+
+2. **Renaming Column**:
+   ```python
+   def upgrade() -> None:
+       op.alter_column('table', 'old_name', new_column_name='new_name')
+   ```
+
+3. **Changing Column Type**:
+   ```python
+   def upgrade() -> None:
+       # PostgreSQL handles type conversion
+       op.alter_column('table', 'column', type_=sa.String(500))
+   ```
+
+## Error Handling
+
+1. **Migration Failures**:
+   - Always check migration status after failure
+   - Use `alembic current` to see applied migrations
+   - Fix migration file and retry
+   - Consider manual intervention for data issues
+
+2. **Rollback Strategy**:
+   - Test downgrade before production
+   - Ensure downgrade doesn't lose data
+   - Have backup before major migrations

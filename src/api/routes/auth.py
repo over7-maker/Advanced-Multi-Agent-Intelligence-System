@@ -145,107 +145,15 @@ async def get_user_roles(current_user: User = Depends(get_current_user)) -> List
     return [role.value for role in current_user.roles]
 
 
-@router.post("/users", response_model=Dict[str, Any], tags=["user-management"])
-@require_permission(Permission.USER_MANAGE)
-async def create_user(
-    username: str,
-    email: str,
-    password: str,
-    roles: List[str] = None,
-    full_name: str = None,
-    current_user: User = Depends(get_current_user),
-) -> Dict[str, Any]:
-    """
-    Create a new user (admin only)
-    """
-    try:
-        auth_manager = get_auth_manager()
-
-        # Convert string roles to UserRole enum
-        user_roles = []
-        if roles:
-            for role_str in roles:
-                try:
-                    user_roles.append(UserRole(role_str))
-                except ValueError:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Invalid role: {role_str}",
-                    )
-
-        user = await auth_manager.create_user(
-            username=username,
-            email=email,
-            password=password,
-            roles=user_roles,
-            full_name=full_name,
-        )
-
-        logger.info(f"User {username} created by {current_user.username}")
-
-        return {
-            "id": user.id,
-            "username": user.username,
-            "email": user.email,
-            "full_name": user.full_name,
-            "roles": [role.value for role in user.roles],
-            "permissions": [perm.value for perm in user.permissions],
-            "is_active": user.is_active,
-            "created_at": user.created_at.isoformat(),
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"User creation error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error during user creation",
-        )
+# NOTE: User management routes are handled by users.py router
+# These routes are removed to avoid conflicts
+# User management should use /api/v1/users endpoints from users.py
 
 
-@router.get("/users", response_model=List[Dict[str, Any]], tags=["user-management"])
-@require_permission(Permission.USER_READ)
-async def list_users(
-    current_user: User = Depends(get_current_user),
-) -> List[Dict[str, Any]]:
-    """
-    List all users (admin/manager only)
-    """
-    try:
-        auth_manager = get_auth_manager()
-        users = []
-
-        for user in auth_manager.users.values():
-            users.append(
-                {
-                    "id": user.id,
-                    "username": user.username,
-                    "email": user.email,
-                    "full_name": user.full_name,
-                    "roles": [role.value for role in user.roles],
-                    "is_active": user.is_active,
-                    "is_verified": user.is_verified,
-                    "created_at": user.created_at.isoformat(),
-                    "last_login": (
-                        user.last_login.isoformat() if user.last_login else None
-                    ),
-                }
-            )
-
-        return users
-
-    except Exception as e:
-        logger.error(f"User listing error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error during user listing",
-        )
-
-
-@router.put("/users/{user_id}/roles", tags=["user-management"])
-@require_permission(Permission.USER_MANAGE)
-async def update_user_roles(
+# NOTE: User management routes moved to users.py router to avoid conflicts
+# @router.put("/users/{user_id}/roles", tags=["user-management"])
+# This route is now handled by users.py
+async def _update_user_roles_removed(
     user_id: str, roles: List[str], current_user: User = Depends(get_current_user)
 ) -> Dict[str, str]:
     """
@@ -286,9 +194,10 @@ async def update_user_roles(
         )
 
 
-@router.delete("/users/{user_id}", tags=["user-management"])
-@require_permission(Permission.USER_DELETE)
-async def deactivate_user(
+# NOTE: User management routes moved to users.py router
+# @router.delete("/users/{user_id}", tags=["user-management"])
+# This route is now handled by users.py
+async def _deactivate_user_removed(
     user_id: str, current_user: User = Depends(get_current_user)
 ) -> Dict[str, str]:
     """

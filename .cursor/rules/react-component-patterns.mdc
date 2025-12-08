@@ -1,0 +1,311 @@
+---
+description: React Component Patterns - TypeScript components, hooks, Material-UI, real-time updates, and best practices
+globs:
+  - "frontend/src/components/**/*.tsx"
+  - "frontend/src/**/*.tsx"
+alwaysApply: false
+---
+
+# React Component Patterns Rules
+
+When implementing React components:
+
+## Component Structure
+
+1. **Always use TypeScript with interfaces**:
+   ```typescript
+   // ✅ CORRECT: TypeScript component with props interface
+   interface TaskListProps {
+     onTaskSelect?: (taskId: string) => void;
+     filterStatus?: string;
+   }
+   
+   export const TaskList: React.FC<TaskListProps> = ({ onTaskSelect, filterStatus }) => {
+     const [tasks, setTasks] = useState<Task[]>([]);
+     const [loading, setLoading] = useState(true);
+     
+     // Component logic
+   };
+   ```
+
+2. **Use functional components with hooks**:
+   ```typescript
+   // ✅ CORRECT: Functional component with hooks
+   export const Dashboard: React.FC = () => {
+     const [stats, setStats] = useState<DashboardStats>({
+       totalTasks: 0,
+       activeTasks: 0,
+       // ...
+     });
+     
+     useEffect(() => {
+       fetchDashboardData();
+     }, []);
+     
+     return (
+       <Box sx={{ p: 3 }}>
+         {/* Component JSX */}
+       </Box>
+     );
+   };
+   ```
+
+## State Management
+
+1. **Use useState for local state**:
+   ```typescript
+   // ✅ CORRECT: Typed state with initial values
+   const [tasks, setTasks] = useState<Task[]>([]);
+   const [loading, setLoading] = useState(true);
+   const [page, setPage] = useState(0);
+   const [rowsPerPage, setRowsPerPage] = useState(10);
+   ```
+
+2. **Update state immutably**:
+   ```typescript
+   // ✅ CORRECT: Immutable state updates
+   setTasks((prevTasks) =>
+     prevTasks.map((task) =>
+       task.task_id === data.task_id
+         ? { ...task, status: data.status, updated_at: data.timestamp }
+         : task
+     )
+   );
+   ```
+
+## Data Fetching
+
+1. **Fetch data in useEffect**:
+   ```typescript
+   // ✅ CORRECT: Fetch data on mount and dependency changes
+   useEffect(() => {
+     const fetchTasks = async () => {
+       try {
+         setLoading(true);
+         const response = await apiService.listTasks({ status: filterStatus });
+         setTasks(response.tasks);
+       } catch (error) {
+         console.error('Failed to fetch tasks:', error);
+       } finally {
+         setLoading(false);
+       }
+     };
+     
+     fetchTasks();
+   }, [filterStatus]);
+   ```
+
+2. **Polling for updates**:
+   ```typescript
+   // ✅ CORRECT: Polling with cleanup
+   useEffect(() => {
+     fetchDashboardData();
+     
+     const pollInterval = setInterval(fetchDashboardData, 15000); // Every 15 seconds
+     
+     return () => {
+       clearInterval(pollInterval);
+     };
+   }, []);
+   ```
+
+## Real-Time Updates with WebSocket
+
+1. **Subscribe to WebSocket events**:
+   ```typescript
+   // ✅ CORRECT: WebSocket subscription with cleanup
+   useEffect(() => {
+     if (!taskId) return;
+     
+     // Subscribe to task-specific updates
+     websocketService.subscribeToTask(taskId);
+     
+     const unsubscribeTaskUpdate = websocketService.on('task_update', (data) => {
+       if (data.task_id === taskId) {
+         setTask((prev) => (prev ? { ...prev, ...data } : null));
+       }
+     });
+     
+     const unsubscribeTaskProgress = websocketService.on('task_progress', (data) => {
+       if (data.task_id === taskId) {
+         setProgress(data.progress || 0);
+       }
+     });
+     
+     // Cleanup
+     return () => {
+       websocketService.unsubscribeFromTask(taskId);
+       unsubscribeTaskUpdate();
+       unsubscribeTaskProgress();
+     };
+   }, [taskId]);
+   ```
+
+## Material-UI Components
+
+1. **Use Material-UI components**:
+   ```typescript
+   // ✅ CORRECT: Material-UI components
+   import {
+     Box,
+     Card,
+     CardContent,
+     Typography,
+     Button,
+     TextField,
+     Grid,
+     Chip,
+     LinearProgress,
+   } from '@mui/material';
+   
+   return (
+     <Box sx={{ p: 3 }}>
+       <Card>
+         <CardContent>
+           <Typography variant="h4">Dashboard</Typography>
+           <Grid container spacing={3}>
+             <Grid item xs={12} md={6}>
+               {/* Content */}
+             </Grid>
+           </Grid>
+         </CardContent>
+       </Card>
+     </Box>
+   );
+   ```
+
+2. **Use sx prop for styling**:
+   ```typescript
+   // ✅ CORRECT: sx prop for styling
+   <Box sx={{ p: 3, display: 'flex', gap: 2 }}>
+     <Card sx={{ flex: 1 }}>
+       <CardContent>
+         <Typography variant="h6" sx={{ mb: 2 }}>
+           Title
+         </Typography>
+       </CardContent>
+     </Card>
+   </Box>
+   ```
+
+## Loading States
+
+1. **Show loading indicators**:
+   ```typescript
+   // ✅ CORRECT: Loading state handling
+   if (loading) {
+     return (
+       <Box sx={{ p: 3 }}>
+         <LinearProgress />
+       </Box>
+     );
+   }
+   
+   if (!task) {
+     return (
+       <Box sx={{ p: 3 }}>
+         <Alert severity="error">Task not found</Alert>
+       </Box>
+     );
+   }
+   ```
+
+## Error Handling
+
+1. **Handle errors gracefully**:
+   ```typescript
+   // ✅ CORRECT: Error state and display
+   const [error, setError] = useState<string | null>(null);
+   
+   const handleAction = async () => {
+     try {
+       setError(null);
+       await apiService.createTask(taskData);
+     } catch (err: any) {
+       setError(err.response?.data?.detail || 'Failed to create task');
+       console.error('Task creation failed:', err);
+     }
+   };
+   
+   return (
+     <>
+       {error && (
+         <Alert severity="error" sx={{ mb: 2 }}>
+           {error}
+         </Alert>
+       )}
+       {/* Form */}
+     </>
+   );
+   ```
+
+## Forms and Dialogs
+
+1. **Controlled form inputs**:
+   ```typescript
+   // ✅ CORRECT: Controlled inputs
+   const [formData, setFormData] = useState({
+     title: '',
+     description: '',
+     task_type: 'security_scan',
+     target: '',
+     priority: 5,
+   });
+   
+   const handleInputChange = (field: string, value: any) => {
+     setFormData((prev) => ({ ...prev, [field]: value }));
+   };
+   
+   <TextField
+     fullWidth
+     label="Title"
+     value={formData.title}
+     onChange={(e) => handleInputChange('title', e.target.value)}
+     required
+   />
+   ```
+
+2. **Dialog patterns**:
+   ```typescript
+   // ✅ CORRECT: Dialog with open/close state
+   const [dialogOpen, setDialogOpen] = useState(false);
+   
+   <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
+     <DialogTitle>Create Task</DialogTitle>
+     <DialogContent>
+       {/* Form content */}
+     </DialogContent>
+     <DialogActions>
+       <Button onClick={() => setDialogOpen(false)}>Cancel</Button>
+       <Button onClick={handleCreate} variant="contained">Create</Button>
+     </DialogActions>
+   </Dialog>
+   ```
+
+## Routing
+
+1. **Use React Router**:
+   ```typescript
+   // ✅ CORRECT: React Router navigation
+   import { useNavigate, useParams } from 'react-router-dom';
+   
+   const navigate = useNavigate();
+   const { taskId } = useParams<{ taskId: string }>();
+   
+   const handleViewTask = (taskId: string) => {
+     navigate(`/tasks/${taskId}`);
+   };
+   ```
+
+## Best Practices
+
+1. **Always use TypeScript** - Type all props, state, and functions
+2. **Clean up effects** - Return cleanup functions from useEffect
+3. **Handle loading states** - Show loading indicators during async operations
+4. **Handle errors** - Display user-friendly error messages
+5. **Use Material-UI** - Consistent UI components throughout
+6. **Real-time updates** - Subscribe to WebSocket events for live data
+7. **Immutable updates** - Never mutate state directly
+8. **Component composition** - Break down complex components into smaller ones
+9. **Memoization** - Use useMemo/useCallback for expensive operations
+10. **Accessibility** - Use semantic HTML and ARIA attributes

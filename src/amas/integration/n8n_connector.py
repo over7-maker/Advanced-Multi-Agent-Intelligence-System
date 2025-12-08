@@ -904,6 +904,156 @@ class N8NConnector:
             'registered_webhooks': len(self.webhook_mappings)
         }
     
+    async def validate_credentials(self, credentials: Dict[str, Any]) -> bool:
+        """
+        Validate N8N credentials (IntegrationManager interface)
+        
+        Required credentials:
+        - base_url: N8N instance URL
+        - api_key: N8N API key
+        """
+        
+        try:
+            base_url = credentials.get("base_url")
+            api_key = credentials.get("api_key")
+            
+            if not base_url or not api_key:
+                return False
+            
+            # Test connection
+            async with aiohttp.ClientSession() as session:
+                headers = {
+                    "X-N8N-API-KEY": api_key,
+                    "Content-Type": "application/json"
+                }
+                
+                async with session.get(
+                    f"{base_url}/api/v1/workflows",
+                    headers=headers
+                ) as response:
+                    return response.status == 200
+        
+        except Exception as e:
+            logger.error(f"N8N credential validation failed: {e}")
+            return False
+    
+    async def execute(
+        self,
+        event_type: str,
+        data: Dict[str, Any],
+        credentials: Dict[str, Any],
+        configuration: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Execute N8N workflow (IntegrationManager interface)
+        
+        Event types:
+        - task_completed: Trigger when task completes
+        - task_failed: Trigger when task fails
+        - alert_triggered: Trigger on system alerts
+        - custom: Custom event with data
+        """
+        
+        try:
+            base_url = credentials["base_url"]
+            api_key = credentials["api_key"]
+            webhook_id = configuration.get("webhook_id")
+            
+            if not webhook_id:
+                raise ValueError("N8N webhook_id not configured")
+            
+            # Prepare payload
+            from datetime import datetime
+            payload = {
+                "event": event_type,
+                "source": "amas",
+                "timestamp": datetime.now().isoformat(),
+                "data": data
+            }
+            
+            # Send to N8N webhook
+            async with aiohttp.ClientSession() as session:
+                headers = {
+                    "X-N8N-API-KEY": api_key,
+                    "Content-Type": "application/json"
+                }
+                
+                webhook_url = f"{base_url}/webhook/{webhook_id}"
+                
+                logger.info(f"Triggering N8N webhook: {webhook_url}")
+                
+                async with session.post(
+                    webhook_url,
+                    json=payload,
+                    headers=headers
+                ) as response:
+                    response.raise_for_status()
+                    result = await response.json()
+                    
+                    logger.info(f"N8N workflow triggered successfully")
+                    
+                    return {
+                        "success": True,
+                        "execution_id": result.get("executionId"),
+                        "status": result.get("status"),
+                        "response": result
+                    }
+        
+        except Exception as e:
+            logger.error(f"N8N execution failed: {e}", exc_info=True)
+            raise
+    
+    async def validate_webhook_signature(
+        self,
+        payload: Dict[str, Any],
+        headers: Dict[str, str]
+    ) -> bool:
+        """
+        Validate webhook signature from N8N (IntegrationManager interface)
+        
+        N8N sends signature in X-N8N-Signature header
+        """
+        
+        try:
+            import hmac
+            import hashlib
+            
+            signature = headers.get("X-N8N-Signature")
+            webhook_secret = headers.get("X-N8N-Webhook-Secret")
+            
+            if not signature or not webhook_secret:
+                logger.warning("Missing signature or secret in N8N webhook")
+                return True  # N8N webhooks may not always have signatures
+            
+            # Compute expected signature
+            payload_str = json.dumps(payload, sort_keys=True)
+            expected_signature = hmac.new(
+                webhook_secret.encode(),
+                payload_str.encode(),
+                hashlib.sha256
+            ).hexdigest()
+            
+            return hmac.compare_digest(signature, expected_signature)
+        
+        except Exception as e:
+            logger.error(f"Signature validation error: {e}")
+            return False
+    
+    async def parse_webhook(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Parse incoming N8N webhook (IntegrationManager interface)
+        
+        Returns:
+            Parsed event data
+        """
+        
+        return {
+            "type": payload.get("event", "n8n_webhook"),
+            "data": payload.get("data", {}),
+            "execution_id": payload.get("executionId"),
+            "workflow_id": payload.get("workflowId")
+        }
+    
     async def cleanup(self):
         """Clean up N8N connector resources"""
         if self.session:

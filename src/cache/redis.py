@@ -37,8 +37,9 @@ async def init_redis() -> None:
         logger.info("Redis connection initialized successfully")
 
     except Exception as e:
-        logger.error(f"Failed to initialize Redis: {e}")
-        raise
+        # Redis is optional in development - don't raise, just log
+        logger.debug(f"Redis not available (expected in dev): {e}")
+        # Don't raise - allow app to continue without Redis
 
 
 async def close_redis() -> None:
@@ -60,7 +61,7 @@ async def is_connected() -> bool:
         await _redis_client.ping()
         return True
     except Exception as e:
-        logger.error(f"Redis connection check failed: {e}")
+        logger.debug(f"Redis connection check failed (expected in dev): {e}")
         return False
 
 

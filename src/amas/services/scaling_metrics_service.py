@@ -39,29 +39,147 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-# Prometheus metrics for scaling
+# Prometheus metrics for scaling (check registry first to avoid duplicates)
 if PROMETHEUS_AVAILABLE:
-    SCALING_EVENTS = Counter(
-        "amas_scaling_events_total",
-        "Total scaling events",
-        ["component", "direction", "reason"]
+    from prometheus_client import REGISTRY, CollectorRegistry
+    
+    # Helper to get or create metric (check registry first to avoid duplicates)
+    def get_or_create_counter(name, description, labels):
+        """Get existing counter or create new one"""
+        # Check if metric already exists in registry
+        for collector in list(REGISTRY._collector_to_names.keys()):
+            if hasattr(collector, '_name') and collector._name == name:
+                return collector
+            # Also check for the _created and _total variants
+            if hasattr(collector, '_name'):
+                if collector._name.startswith(name) or name.startswith(collector._name):
+                    # Check if it's the same metric family
+                    if hasattr(collector, '_labelnames') and collector._labelnames == tuple(labels):
+                        return collector
+        
+        # Metric doesn't exist, create it
+        try:
+            return Counter(name, description, labels)
+        except ValueError as e:
+            # If creation fails, try to find existing one more carefully
+            for collector in list(REGISTRY._collector_to_names.keys()):
+                if hasattr(collector, '_name'):
+                    # Check if names match (accounting for _total suffix)
+                    base_name = name.replace('_total', '')
+                    collector_base = collector._name.replace('_total', '').replace('_created', '')
+                    if base_name == collector_base:
+                        return collector
+            # Last resort: create with custom registry to avoid conflicts
+            custom_registry = CollectorRegistry()
+            return Counter(name, description, labels, registry=custom_registry)
+    
+    def get_or_create_gauge(name, description, labels):
+        """Get existing gauge or create new one"""
+        # Check if metric already exists
+        for collector in list(REGISTRY._collector_to_names.keys()):
+            if hasattr(collector, '_name') and collector._name == name:
+                if hasattr(collector, '_labelnames') and collector._labelnames == tuple(labels):
+                    return collector
+        
+        try:
+            return Gauge(name, description, labels)
+        except ValueError:
+            # Find existing one
+            for collector in list(REGISTRY._collector_to_names.keys()):
+                if hasattr(collector, '_name') and collector._name == name:
+                    return collector
+            custom_registry = CollectorRegistry()
+            return Gauge(name, description, labels, registry=custom_registry)
+    
+    def get_or_create_histogram(name, description, labels, buckets):
+        """Get existing histogram or create new one"""
+        # Check if metric already exists
+        for collector in list(REGISTRY._collector_to_names.keys()):
+            if hasattr(collector, '_name') and collector._name == name:
+                if hasattr(collector, '_labelnames') and collector._labelnames == tuple(labels):
+                    return collector
+        
+        try:
+            return Histogram(name, description, labels, buckets=buckets)
+        except ValueError:
+            # Find existing one
+            for collector in list(REGISTRY._collector_to_names.keys()):
+                if hasattr(collector, '_name') and collector._name == name:
+                    return collector
+            custom_registry = CollectorRegistry()
+            return Histogram(name, description, labels, buckets=buckets, registry=custom_registry)
+    
+    # Use module-level cache to prevent duplicate creation
+    _metrics_cache = {}
+    
+    def _get_metric(key, factory):
+        """Get metric from cache or create new one"""
+        if key not in _metrics_cache:
+            _metrics_cache[key] = factory()
+        return _metrics_cache[key]
+    
+    SCALING_EVENTS = _get_metric(
+        "scaling_events",
+        lambda: get_or_create_counter(
+            "amas_scaling_events_total",
+            "Total scaling events",
+            ["component", "direction", "reason"]
+        )
     )
-    CURRENT_REPLICAS = Gauge(
-        "amas_current_replicas",
-        "Current number of replicas",
-        ["component"]
+    
+    CURRENT_REPLICAS = _get_metric(
+        "current_replicas",
+        lambda: get_or_create_gauge(
+            "amas_current_replicas",
+            "Current number of replicas",
+            ["component"]
+        )
     )
-    SCALING_DURATION = Histogram(
-        "amas_scaling_duration_seconds",
-        "Time taken for scaling operations",
-        ["component", "direction"],
-        buckets=[1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
+    
+    SCALING_DURATION = _get_metric(
+        "scaling_duration",
+        lambda: get_or_create_histogram(
+            "amas_scaling_duration_seconds",
+            "Time taken for scaling operations",
+            ["component", "direction"],
+            buckets=[1.0, 5.0, 10.0, 30.0, 60.0, 120.0]
+        )
     )
-    SCALING_EFFECTIVENESS = Gauge(
-        "amas_scaling_effectiveness",
-        "Scaling effectiveness (requests per replica)",
-        ["component"]
+    
+    SCALING_EFFECTIVENESS = _get_metric(
+        "scaling_effectiveness",
+        lambda: get_or_create_gauge(
+            "amas_scaling_effectiveness",
+            "Scaling effectiveness (requests per replica)",
+            ["component"]
+        )
     )
+    
+    SCALING_ERRORS = _get_metric(
+        "scaling_errors",
+        lambda: get_or_create_counter(
+            "amas_scaling_errors_total",
+            "Total scaling errors",
+            ["component", "error_type"]
+        )
+    )
+    
+    SCALING_DECISIONS = _get_metric(
+        "scaling_decisions",
+        lambda: get_or_create_counter(
+            "amas_scaling_decisions_total",
+            "Total scaling decisions",
+            ["component", "decision"]
+        )
+    )
+else:
+    # Dummy metrics when Prometheus not available
+    SCALING_EVENTS = Counter("amas_scaling_events_total", "Total scaling events", ["component", "direction", "reason"])
+    CURRENT_REPLICAS = Gauge("amas_current_replicas", "Current number of replicas", ["component"])
+    SCALING_DURATION = Histogram("amas_scaling_duration_seconds", "Time taken for scaling operations", ["component", "direction"], buckets=[1.0, 5.0, 10.0, 30.0, 60.0, 120.0])
+    SCALING_EFFECTIVENESS = Gauge("amas_scaling_effectiveness", "Scaling effectiveness (requests per replica)", ["component"])
+    SCALING_ERRORS = Counter("amas_scaling_errors_total", "Total scaling errors", ["component", "error_type"])
+    SCALING_DECISIONS = Counter("amas_scaling_decisions_total", "Total scaling decisions", ["component", "decision"])
 
 
 @dataclass

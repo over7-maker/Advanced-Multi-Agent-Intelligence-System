@@ -323,9 +323,37 @@ restore_database() {
         return 1
     fi
     
+    # Check if backup is compressed
+    local db_backup_file="${backup_path}/database-backup.sql"
+    if [[ ! -f "$db_backup_file" ]]; then
+        # Try compressed version
+        db_backup_file="${backup_path}/database-backup.sql.gz"
+        if [[ -f "$db_backup_file" ]]; then
+            log "Decompressing database backup..."
+            gunzip -c "$db_backup_file" > "${backup_path}/database-backup.sql"
+            db_backup_file="${backup_path}/database-backup.sql"
+        else
+            log_error "Database backup not found: ${backup_path}/database-backup.sql[.gz]"
+            return 1
+        fi
+    fi
+    
+    # Drop and recreate database
+    log "Dropping existing database..."
+    docker-compose -f "$compose_file" exec -T "$db_service" psql -U postgres -c "DROP DATABASE IF EXISTS amas;" || true
+    
+    log "Creating new database..."
+    docker-compose -f "$compose_file" exec -T "$db_service" psql -U postgres -c "CREATE DATABASE amas;" || true
+    
     # Restore database
-    if docker-compose -f "$compose_file" exec -T "$db_service" psql -U postgres -d amas < "${backup_path}/database-backup.sql"; then
+    log "Restoring database from backup..."
+    if docker-compose -f "$compose_file" exec -T "$db_service" psql -U postgres -d amas < "$db_backup_file"; then
         log_success "Database restored successfully"
+        
+        # Verify restore
+        local row_count=$(docker-compose -f "$compose_file" exec -T "$db_service" psql -U postgres -d amas -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';" | tr -d ' ')
+        log "Database verification: $row_count tables found"
+        
         return 0
     else
         log_error "Database restore failed"
@@ -635,23 +663,36 @@ confirm_restore() {
     local restore_type="$3"
     
     if [[ "$FORCE" == "true" ]]; then
+        log_warning "Force flag set, skipping confirmation"
         return 0
     fi
     
     echo ""
     log_warning "⚠️  RESTORE CONFIRMATION REQUIRED ⚠️"
     echo ""
+    echo "========================================="
     echo "Environment: $env"
     echo "Backup: $backup_path"
     echo "Type: $restore_type"
+    echo "========================================="
     echo ""
-    echo "This will restore the $env environment from backup."
-    echo "This action may cause data loss and service interruption."
+    echo "WARNING: This will REPLACE the current $env environment from backup."
+    echo "This action may cause:"
+    echo "  - Data loss (current data will be overwritten)"
+    echo "  - Service interruption (services will be stopped)"
+    echo "  - Potential downtime"
     echo ""
-    read -p "Are you sure you want to proceed? (yes/no): " -r
+    echo "Backup details:"
+    if [[ -f "${backup_path}/backup-manifest.json" ]]; then
+        echo "  Timestamp: $(jq -r '.backup_info.timestamp' "${backup_path}/backup-manifest.json" 2>/dev/null || echo "Unknown")"
+        echo "  Created: $(jq -r '.backup_info.created_at' "${backup_path}/backup-manifest.json" 2>/dev/null || echo "Unknown")"
+    fi
+    echo ""
+    read -p "Type 'yes' to confirm restore: " -r
     echo ""
     
     if [[ $REPLY =~ ^[Yy][Ee][Ss]$ ]]; then
+        log "Restore confirmed by user"
         return 0
     else
         log "Restore cancelled by user"

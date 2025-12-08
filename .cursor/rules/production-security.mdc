@@ -1,0 +1,240 @@
+---
+description: Production Security - Authentication, encryption, secrets management, and security hardening
+globs:
+  - "docs/SECURITY.md"
+  - "**/*security*.py"
+  - "nginx/**/*.conf"
+alwaysApply: false
+---
+
+# Production Security Rules
+
+When implementing security measures:
+
+## Authentication & Authorization
+
+1. **JWT token security**:
+   ```python
+   # ✅ CORRECT: Strong token configuration
+   JWT_EXPIRATION = 15 * 60  # 15 minutes
+   REFRESH_TOKEN_EXPIRATION = 7 * 24 * 60 * 60  # 7 days
+   
+   # Use strong secret keys (minimum 32 bytes)
+   SECRET_KEY = secrets.token_urlsafe(32)
+   JWT_SECRET = secrets.token_urlsafe(32)
+   ```
+
+2. **Password policy**:
+   ```python
+   # ✅ CORRECT: Strong password requirements
+   PASSWORD_MIN_LENGTH = 12
+   PASSWORD_REQUIRE_UPPERCASE = True
+   PASSWORD_REQUIRE_LOWERCASE = True
+   PASSWORD_REQUIRE_NUMBERS = True
+   PASSWORD_REQUIRE_SPECIAL = True
+   
+   # Use bcrypt with cost factor 12+
+   password_hash = bcrypt.hashpw(password.encode(), bcrypt.gensalt(rounds=12))
+   ```
+
+3. **Rate limiting**:
+   ```nginx
+   # ✅ CORRECT: Rate limiting in Nginx
+   limit_req_zone $binary_remote_addr zone=api_limit:10m rate=100r/s;
+   limit_req_zone $binary_remote_addr zone=auth_limit:10m rate=5r/s;
+   
+   location /api/ {
+       limit_req zone=api_limit burst=20 nodelay;
+       proxy_pass http://amas_backend;
+   }
+   
+   location /auth/ {
+       limit_req zone=auth_limit burst=5 nodelay;
+       proxy_pass http://amas_backend;
+   }
+   ```
+
+## Input Validation
+
+1. **Always validate inputs**:
+   ```python
+   # ✅ CORRECT: Pydantic validation
+   from pydantic import BaseModel, validator
+   
+   class TaskCreate(BaseModel):
+       title: str
+       task_type: str
+       target: str
+       
+       @validator('title')
+       def validate_title(cls, v):
+           if len(v) < 3 or len(v) > 500:
+               raise ValueError('Title must be between 3 and 500 characters')
+           return v.strip()
+       
+       @validator('task_type')
+       def validate_task_type(cls, v):
+           allowed_types = ['security_scan', 'code_analysis', 'intelligence_gathering']
+           if v not in allowed_types:
+               raise ValueError(f'Task type must be one of {allowed_types}')
+           return v
+   ```
+
+2. **SQL injection prevention**:
+   ```python
+   # ✅ CORRECT: Always use parameterized queries
+   tasks = await db.fetch(
+       "SELECT * FROM tasks WHERE status = $1 AND priority > $2",
+       status, priority
+   )
+   
+   # ❌ WRONG: Never concatenate user input
+   # query = f"SELECT * FROM tasks WHERE status = '{status}'"  # DON'T DO THIS
+   ```
+
+## Secrets Management
+
+1. **Environment variables**:
+   ```bash
+   # ✅ CORRECT: Use environment variables
+   export DATABASE_URL=$(aws secretsmanager get-secret-value --secret-id prod/db/url --query SecretString --output text)
+   export OPENAI_API_KEY=$(aws secretsmanager get-secret-value --secret-id prod/openai/key --query SecretString --output text)
+   ```
+
+2. **Kubernetes secrets**:
+   ```yaml
+   # ✅ CORRECT: Kubernetes secrets
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: amas-secrets
+   type: Opaque
+   stringData:
+     db-password: <base64-encoded>
+     jwt-secret: <base64-encoded>
+   ```
+
+3. **Never commit secrets**:
+   ```bash
+   # ✅ CORRECT: Use .gitignore
+   .env
+   .env.production
+   *.key
+   *.pem
+   secrets/
+   ```
+
+## HTTPS/TLS Configuration
+
+1. **Nginx SSL configuration**:
+   ```nginx
+   # ✅ CORRECT: Strong SSL configuration
+   server {
+       listen 443 ssl http2;
+       ssl_certificate /etc/nginx/ssl/fullchain.pem;
+       ssl_certificate_key /etc/nginx/ssl/privkey.pem;
+       ssl_protocols TLSv1.2 TLSv1.3;
+       ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256';
+       ssl_prefer_server_ciphers off;
+       ssl_session_cache shared:SSL:10m;
+       ssl_session_timeout 10m;
+   }
+   ```
+
+2. **Security headers**:
+   ```nginx
+   # ✅ CORRECT: Security headers
+   add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+   add_header X-Frame-Options "SAMEORIGIN" always;
+   add_header X-Content-Type-Options "nosniff" always;
+   add_header X-XSS-Protection "1; mode=block" always;
+   add_header Referrer-Policy "no-referrer-when-downgrade" always;
+   add_header Content-Security-Policy "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'" always;
+   ```
+
+## CORS Configuration
+
+1. **Restrictive CORS**:
+   ```python
+   # ✅ CORRECT: Specific CORS origins
+   CORS_ALLOWED_ORIGINS = [
+       "https://your-domain.com",
+       "https://www.your-domain.com"
+   ]
+   CORS_ALLOW_CREDENTIALS = True
+   CORS_ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE"]
+   CORS_ALLOWED_HEADERS = ["Authorization", "Content-Type"]
+   ```
+
+## Data Encryption
+
+1. **Encrypt sensitive data at rest**:
+   ```python
+   # ✅ CORRECT: Encrypt sensitive fields
+   from cryptography.fernet import Fernet
+   
+   class EncryptedField:
+       def __init__(self, key: bytes):
+           self.cipher = Fernet(key)
+       
+       def encrypt(self, data: str) -> str:
+           return self.cipher.encrypt(data.encode()).decode()
+       
+       def decrypt(self, encrypted: str) -> str:
+           return self.cipher.decrypt(encrypted.encode()).decode()
+   ```
+
+## Security Logging
+
+1. **Log security events**:
+   ```python
+   # ✅ CORRECT: Security event logging
+   security_logger.info(
+       "login_attempt",
+       extra={
+           "user_id": user_id,
+           "ip_address": request.client.host,
+           "user_agent": request.headers.get("user-agent"),
+           "success": True,
+           "timestamp": datetime.utcnow().isoformat()
+       }
+   )
+   ```
+
+## Container Security
+
+1. **Non-root user**:
+   ```dockerfile
+   # ✅ CORRECT: Run as non-root
+   RUN groupadd -r amas && useradd -r -g amas amas
+   USER amas
+   ```
+
+2. **Security context in Kubernetes**:
+   ```yaml
+   # ✅ CORRECT: Security context
+   securityContext:
+     runAsNonRoot: true
+     runAsUser: 1000
+     capabilities:
+       drop:
+         - ALL
+     readOnlyRootFilesystem: true
+   ```
+
+## Best Practices
+
+1. **Always use HTTPS** - Never expose HTTP in production
+2. **Rotate secrets regularly** - Every 90 days minimum
+3. **Use strong passwords** - Minimum 12 characters, mixed case, numbers, special chars
+4. **Enable MFA** - For all admin accounts
+5. **Validate all inputs** - Use Pydantic or similar
+6. **Use parameterized queries** - Never concatenate SQL
+7. **Encrypt sensitive data** - At rest and in transit
+8. **Log security events** - Audit trail for compliance
+9. **Scan for vulnerabilities** - Regular dependency scanning
+10. **Limit access** - Principle of least privilege
+11. **Use secrets management** - Never hardcode credentials
+12. **Implement rate limiting** - Prevent abuse
+13. **Set security headers** - HSTS, CSP, X-Frame-Options
+14. **Regular security audits** - Schedule penetration testing

@@ -1,0 +1,55 @@
+# monitoring/promtail/config.yml
+# Promtail log shipping configuration
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: amas-backend
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: amas-backend
+          __path__: /var/log/amas/*.log
+    pipeline_stages:
+      - json:
+          expressions:
+            timestamp: timestamp
+            level: level
+            message: message
+            logger: logger
+            module: module
+            function: function
+            line: line
+      - labels:
+          level:
+          logger:
+          module:
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: system
+          __path__: /var/log/syslog
+    pipeline_stages:
+      - regex:
+          expression: '^(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})'
+      - labels:
+          level:
+      - timestamp:
+          source: timestamp
+          format: RFC3339
+

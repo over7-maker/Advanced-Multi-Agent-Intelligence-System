@@ -6,12 +6,12 @@ Implements JWT/OIDC with RBAC for production security
 import logging
 import secrets
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 import jwt
-from fastapi import HTTPException, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from pydantic import BaseModel, Field
@@ -89,7 +89,7 @@ class User(BaseModel):
     permissions: List[Permission] = Field(default_factory=list)
     is_active: bool = True
     is_verified: bool = False
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_login: Optional[datetime] = None
     failed_login_attempts: int = 0
     locked_until: Optional[datetime] = None
@@ -254,7 +254,9 @@ class EnhancedAuthManager:
         admin_user.permissions = RolePermissionMatrix.get_permissions_for_roles(
             admin_user.roles
         )
+        # Store user by both username and id for lookup flexibility
         self.users["admin"] = admin_user
+        self.users[admin_user.id] = admin_user
 
         # Regular user
         user = User(
@@ -266,7 +268,9 @@ class EnhancedAuthManager:
             is_verified=True,
         )
         user.permissions = RolePermissionMatrix.get_permissions_for_roles(user.roles)
+        # Store user by both username and id for lookup flexibility
         self.users["user"] = user
+        self.users[user.id] = user
 
     async def hash_password(self, password: str) -> str:
         """Hash a password using bcrypt"""
@@ -281,9 +285,9 @@ class EnhancedAuthManager:
     ) -> str:
         """Create a JWT access token"""
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(
+            expire = datetime.now(timezone.utc) + timedelta(
                 minutes=self.access_token_expire_minutes
             )
 
@@ -294,12 +298,20 @@ class EnhancedAuthManager:
             permissions=[perm.value for perm in user.permissions],
             token_type=TokenType.ACCESS,
             exp=expire,
-            iat=datetime.utcnow(),
+            iat=datetime.now(timezone.utc),
             jti=str(uuid.uuid4()),
         )
 
+        # Convert TokenData to dict and convert datetime objects to timestamps for JWT
+        payload = token_data.dict()
+        # PyJWT expects exp and iat as timestamps (int/float), not datetime objects
+        if isinstance(payload.get("exp"), datetime):
+            payload["exp"] = int(payload["exp"].timestamp())
+        if isinstance(payload.get("iat"), datetime):
+            payload["iat"] = int(payload["iat"].timestamp())
+
         encoded_jwt = jwt.encode(
-            token_data.dict(), self.jwt_secret, algorithm=self.jwt_algorithm
+            payload, self.jwt_secret, algorithm=self.jwt_algorithm
         )
         return encoded_jwt
 
@@ -308,9 +320,9 @@ class EnhancedAuthManager:
     ) -> str:
         """Create a JWT refresh token"""
         if expires_delta:
-            expire = datetime.utcnow() + expires_delta
+            expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(days=self.refresh_token_expire_days)
+            expire = datetime.now(timezone.utc) + timedelta(days=self.refresh_token_expire_days)
 
         token_data = TokenData(
             sub=user.id,
@@ -319,12 +331,20 @@ class EnhancedAuthManager:
             permissions=[perm.value for perm in user.permissions],
             token_type=TokenType.REFRESH,
             exp=expire,
-            iat=datetime.utcnow(),
+            iat=datetime.now(timezone.utc),
             jti=str(uuid.uuid4()),
         )
 
+        # Convert TokenData to dict and convert datetime objects to timestamps for JWT
+        payload = token_data.dict()
+        # PyJWT expects exp and iat as timestamps (int/float), not datetime objects
+        if isinstance(payload.get("exp"), datetime):
+            payload["exp"] = int(payload["exp"].timestamp())
+        if isinstance(payload.get("iat"), datetime):
+            payload["iat"] = int(payload["iat"].timestamp())
+
         encoded_jwt = jwt.encode(
-            token_data.dict(), self.jwt_secret, algorithm=self.jwt_algorithm
+            payload, self.jwt_secret, algorithm=self.jwt_algorithm
         )
         return encoded_jwt
 
@@ -340,10 +360,37 @@ class EnhancedAuthManager:
                 token, self.jwt_secret, algorithms=[self.jwt_algorithm]
             )
 
-            token_data = TokenData(**payload)
+            # Convert exp and iat from timestamps to datetime objects with timezone
+            if "exp" in payload and isinstance(payload["exp"], (int, float)):
+                payload["exp"] = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
+            if "iat" in payload and isinstance(payload["iat"], (int, float)):
+                payload["iat"] = datetime.fromtimestamp(payload["iat"], tz=timezone.utc)
+
+            # Convert token_type string to TokenType enum if needed
+            if "token_type" in payload and isinstance(payload["token_type"], str):
+                try:
+                    payload["token_type"] = TokenType(payload["token_type"])
+                except ValueError:
+                    logger.warning(f"Invalid token_type: {payload['token_type']}, defaulting to ACCESS")
+                    payload["token_type"] = TokenType.ACCESS
+
+            try:
+                token_data = TokenData(**payload)
+            except Exception as e:
+                logger.error(f"Failed to create TokenData from payload: {e}, payload keys: {list(payload.keys())}")
+                return None
 
             # Check if token is expired
-            if token_data.exp < datetime.utcnow():
+            # Ensure both datetimes are timezone-aware for comparison
+            now = datetime.now(timezone.utc)
+            exp = token_data.exp
+            # Convert exp to timezone-aware if it's naive
+            if exp.tzinfo is None:
+                exp = exp.replace(tzinfo=timezone.utc)
+            elif exp.tzinfo != timezone.utc:
+                exp = exp.astimezone(timezone.utc)
+            
+            if exp < now:
                 logger.warning("Token has expired")
                 return None
 
@@ -375,12 +422,21 @@ class EnhancedAuthManager:
             return None
 
         # Check if user is locked
-        if user.locked_until and user.locked_until > datetime.utcnow():
-            logger.warning(f"User {username} is locked until {user.locked_until}")
-            raise HTTPException(
-                status_code=status.HTTP_423_LOCKED,
-                detail="Account is temporarily locked due to too many failed attempts.",
-            )
+        now = datetime.now(timezone.utc)
+        if user.locked_until:
+            locked_until = user.locked_until
+            # Convert locked_until to timezone-aware if it's naive
+            if locked_until.tzinfo is None:
+                locked_until = locked_until.replace(tzinfo=timezone.utc)
+            elif locked_until.tzinfo != timezone.utc:
+                locked_until = locked_until.astimezone(timezone.utc)
+            
+            if locked_until > now:
+                logger.warning(f"User {username} is locked until {user.locked_until}")
+                raise HTTPException(
+                    status_code=status.HTTP_423_LOCKED,
+                    detail="Account is temporarily locked due to too many failed attempts.",
+                )
 
         # Check if user is active
         if not user.is_active:
@@ -406,7 +462,7 @@ class EnhancedAuthManager:
 
             # Lock account after max attempts
             if user.failed_login_attempts >= self.max_attempts:
-                user.locked_until = datetime.utcnow() + timedelta(
+                user.locked_until = datetime.now(timezone.utc) + timedelta(
                     seconds=self.lockout_duration
                 )
                 logger.warning(
@@ -418,13 +474,13 @@ class EnhancedAuthManager:
         # Reset failed attempts on successful login
         user.failed_login_attempts = 0
         user.locked_until = None
-        user.last_login = datetime.utcnow()
+        user.last_login = datetime.now(timezone.utc)
 
         return user
 
     async def _is_rate_limited(self, username: str, ip_address: str) -> bool:
         """Check if user or IP is rate limited"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         key = f"{username}:{ip_address}"
 
         if key in self.login_attempts:
@@ -444,7 +500,7 @@ class EnhancedAuthManager:
 
     async def _record_failed_attempt(self, username: str, ip_address: str):
         """Record a failed login attempt"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         key = f"{username}:{ip_address}"
 
         if key not in self.login_attempts:
@@ -531,8 +587,8 @@ class EnhancedAuthManager:
             "user_id": user_id,
             "ip_address": ip_address,
             "user_agent": user_agent,
-            "created_at": datetime.utcnow(),
-            "last_activity": datetime.utcnow(),
+            "created_at": datetime.now(timezone.utc),
+            "last_activity": datetime.now(timezone.utc),
         }
 
         self.active_sessions[session_id] = session_data
@@ -546,12 +602,20 @@ class EnhancedAuthManager:
         session = self.active_sessions[session_id]
 
         # Check if session is expired (24 hours)
-        if datetime.utcnow() - session["created_at"] > timedelta(hours=24):
+        now = datetime.now(timezone.utc)
+        created_at = session["created_at"]
+        # Ensure created_at is timezone-aware
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        elif created_at.tzinfo != timezone.utc:
+            created_at = created_at.astimezone(timezone.utc)
+        
+        if now - created_at > timedelta(hours=24):
             del self.active_sessions[session_id]
             return None
 
         # Update last activity
-        session["last_activity"] = datetime.utcnow()
+        session["last_activity"] = now
         return session
 
     async def revoke_token(self, token: str):
@@ -591,9 +655,16 @@ class EnhancedAuthManager:
         self,
         username: str,
         email: str,
-        password: str,
-        roles: List[UserRole] = None,
-        full_name: str = None,
+        password: str,  # TODO: Hash password   
+        roles: List[UserRole] = [UserRole.USER],
+        full_name: str = "",
+        permissions: List[str] = [Permission.USER_READ.value, Permission.USER_WRITE.value],
+        is_active: bool = True,
+        is_verified: bool = False,
+        created_at: Optional[datetime] = None,
+        last_login: Optional[datetime] = None,
+        failed_login_attempts: int = 0,
+        locked_until: Optional[datetime] = None,
     ) -> User:
         """Create a new user"""
         if username in self.users:
@@ -610,12 +681,18 @@ class EnhancedAuthManager:
             email=email,
             full_name=full_name,
             roles=roles,
-            is_active=True,
-            is_verified=False,
+            is_active=is_active,
+            is_verified=is_verified,
+            created_at=created_at or datetime.now(timezone.utc),
+            last_login=last_login,
+            failed_login_attempts=failed_login_attempts,
+            locked_until=locked_until,
         )
 
         user.permissions = RolePermissionMatrix.get_permissions_for_roles(user.roles)
+        # Store user by both username and id for lookup flexibility
         self.users[username] = user
+        self.users[user.id] = user
 
         return user
 

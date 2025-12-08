@@ -172,7 +172,7 @@ async def trigger_learning():
 # Mount static files for dashboard
 try:
     app.mount(
-        "/dashboard", StaticFiles(directory="web/build", html=True), name="dashboard"
+        "/dashboard", StaticFiles(directory="frontend/dist", html=True), name="dashboard"
     )
 except Exception:
     # If build directory doesn't exist, create a simple dashboard
@@ -183,7 +183,7 @@ except Exception:
             <head><title>AMAS Dashboard</title></head>
             <body>
                 <h1>AMAS Dashboard</h1>
-                <p>React dashboard not built yet. Run: cd web && npm install && npm run build</p>
+                <p>React dashboard not built yet. Run: cd frontend && npm install && npm run build</p>
             </body>
         </html>
         """

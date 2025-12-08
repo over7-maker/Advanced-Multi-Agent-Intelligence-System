@@ -1,0 +1,180 @@
+---
+description: Database Persistence - Production-grade PostgreSQL connection pooling, Redis caching, and Neo4j graph database integration
+globs:
+  - "src/api/routes/tasks.py"
+  - "src/api/routes/workflows.py"
+  - "src/database/**/*.py"
+  - "src/amas/services/**/*.py"
+alwaysApply: false
+---
+
+# Database Persistence Rules
+
+When working with database operations, follow production-grade patterns:
+
+## PostgreSQL Connection Pooling
+
+1. **Always use DatabaseConnectionPool** (never create direct connections):
+   ```python
+   from src.database.connection import get_db
+   
+   db = get_db()
+   
+   # ✅ CORRECT: Use pool methods
+   task = await db.fetchrow(
+       "SELECT * FROM tasks WHERE task_id = $1",
+       task_id
+   )
+   
+   # ✅ CORRECT: Use transaction context manager
+   async with db.transaction():
+       await db.execute("INSERT INTO tasks ...", ...)
+       await db.execute("UPDATE agents ...", ...)
+   ```
+
+2. **Connection Pool Features**:
+   - Automatic connection management (min_size=5, max_size=20)
+   - Health checks and automatic reconnection
+   - Query timeout management (30s default)
+   - Prepared statement caching
+   - Transaction support
+
+3. **Query Methods**:
+   - `db.fetch(query, *args)` - Multiple rows
+   - `db.fetchrow(query, *args)` - Single row
+   - `db.fetchval(query, *args)` - Single value
+   - `db.execute(query, *args)` - INSERT/UPDATE/DELETE
+   - `db.executemany(query, args_list)` - Bulk operations
+
+## Data Persistence Patterns
+
+1. **Always persist tasks to database**:
+   ```python
+   from src.database.connection import get_db
+   
+   db = get_db()
+   await db.execute(
+       "INSERT INTO tasks (task_id, title, description, task_type, target, "
+       "parameters, status, priority, execution_metadata, created_at) "
+       "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+       task_id, title, description, task_type, target,
+       json.dumps(parameters), status, priority,
+       json.dumps(prediction), created_at
+   )
+   ```
+
+2. **Store execution metadata**:
+   - Predictions (success_probability, estimated_duration, etc.)
+   - Assigned agents (JSONB array)
+   - Execution results (JSONB)
+   - Quality scores, duration metrics
+   - AI providers used (JSONB array)
+
+3. **Update task status**:
+   - `pending` → `assigned` → `executing` → `completed` / `failed`
+   - Always update `started_at`, `completed_at`, `duration_seconds`
+   - Store error details in `error_details` JSONB column
+
+## Data Format
+
+- Use JSONB columns for complex data (parameters, predictions, results)
+- Store timestamps as PostgreSQL TIMESTAMP (not strings)
+- Use proper data types (INTEGER, TEXT, JSONB, TIMESTAMP, DECIMAL)
+- Serialize datetime objects to ISO format when returning via API
+
+## Error Handling
+
+- Database failures should raise HTTPException (500)
+- Log database errors with full context
+- Use transactions for multi-step operations
+- Rollback on errors automatically (transaction context manager)
+- Never expose database errors directly to clients
+
+## Query Patterns
+
+```python
+# ✅ CORRECT: Parameterized queries
+task = await db.fetchrow(
+    "SELECT * FROM tasks WHERE task_id = $1",
+    task_id
+)
+
+# ✅ CORRECT: JSONB queries
+tasks = await db.fetch(
+    "SELECT * FROM tasks WHERE execution_metadata->>'predicted_duration' > $1",
+    "300"
+)
+
+# ❌ WRONG: String concatenation (SQL injection risk)
+task = await db.fetchrow(f"SELECT * FROM tasks WHERE task_id = '{task_id}'")
+```
+
+## Redis Caching Strategy
+
+1. **Use RedisCacheManager for all caching**:
+   ```python
+   from src.database.redis_cache import get_cache
+   
+   cache = get_cache()
+   
+   # ✅ CORRECT: Use cache service
+   cached_task = await cache.get(f"task:{task_id}")
+   if not cached_task:
+       task = await db.fetchrow(...)
+       await cache.set(f"task:{task_id}", task, ttl=300)
+   ```
+
+2. **Caching Patterns**:
+   - **Read-through**: Check cache, fetch from DB if miss, cache result
+   - **Write-through**: Update DB, update cache immediately
+   - **Cache stampede prevention**: Use `get_or_compute()` with locks
+   - **Pattern invalidation**: Use `delete_pattern()` for related caches
+
+3. **TTL Strategy**:
+   - Short (60s): Task lists, frequently changing data
+   - Medium (300s): Task details, agent performance
+   - Long (3600s): Statistics, rarely changing data
+
+## Neo4j Graph Database
+
+1. **Use Neo4jConnectionManager for graph operations**:
+   ```python
+   from src.database.neo4j_connection import get_neo4j
+   
+   neo4j = get_neo4j()
+   
+   # Create task node
+   await neo4j.create_task_node(task_data)
+   
+   # Link task to agent
+   await neo4j.link_task_to_agent(task_id, agent_id, "ASSIGNED_TO")
+   
+   # Record execution
+   await neo4j.record_agent_execution(agent_id, task_id, execution_data)
+   ```
+
+2. **Graph Operations**:
+   - Task dependency tracking: `create_task_dependency()`
+   - Agent performance analysis: `get_agent_performance_stats()`
+   - Task similarity: `find_similar_tasks()`
+   - Collaboration networks: `get_agent_collaboration_network()`
+
+## Database Initialization
+
+1. **Initialize all databases on startup**:
+   ```python
+   from src.database.connection import init_database
+   from src.database.redis_cache import init_redis_cache
+   from src.database.neo4j_connection import init_neo4j
+   
+   @app.on_event("startup")
+   async def startup_databases():
+       await init_database()
+       await init_redis_cache()
+       await init_neo4j()  # Optional, don't fail if unavailable
+   ```
+
+2. **Health Checks**:
+   - Always implement health check endpoints
+   - Use `db.health_check()`, `cache.health_check()`, `neo4j.health_check()`
+   - Return status, latency, and metrics

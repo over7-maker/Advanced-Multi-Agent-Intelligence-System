@@ -1,0 +1,39 @@
+{
+  "name": "AMAS Development Environment (Simple)",
+  "version": "0.1.0",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "redhat.vscode-yaml"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.formatting.provider": "ruff",
+        "[python]": {
+          "editor.defaultFormatter": "charliermarsh.ruff",
+          "editor.formatOnSave": true
+        }
+      }
+    }
+  },
+  "forwardPorts": [8000, 8080, 3000],
+  "remoteEnv": {
+    "AMAS_ENV": "development",
+    "PYTHONPATH": "/workspaces/${localWorkspaceFolderBasename}",
+    "PYTHONUNBUFFERED": "1"
+  },
+  "containerEnv": {
+    "DEVCONTAINER": "true"
+  },
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "remoteUser": "root"
+}
+

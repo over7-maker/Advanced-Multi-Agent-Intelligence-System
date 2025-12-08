@@ -19,11 +19,7 @@ PROJECT_NAME="AMAS"
 ENVIRONMENT="production"
 LOG_FILE="${PROJECT_ROOT}/logs/production-deployment.log"
 ENV_FILE="${PROJECT_ROOT}/.env.production"
-
-# Blue-green deployment configuration
-CURRENT_STACK="blue"
-NEW_STACK="green"
-LOAD_BALANCER_CONFIG="${PROJECT_ROOT}/nginx/production.conf"
+COMPOSE_FILE="docker-compose.prod.yml"
 
 # Create logs directory if it doesn't exist
 mkdir -p "${PROJECT_ROOT}/logs"
@@ -478,50 +474,219 @@ rollback_deployment() {
     log_success "Rollback completed"
 }
 
+# Pre-flight checks
+pre_flight_checks() {
+    log "Running pre-flight checks..."
+    
+    # Check if Docker is installed
+    if ! command -v docker &> /dev/null; then
+        error "Docker is not installed"
+    fi
+    
+    # Check if Docker Compose is installed
+    if ! command -v docker-compose &> /dev/null; then
+        error "Docker Compose is not installed"
+    fi
+    
+    # Check if .env.production exists
+    if [ ! -f "$ENV_FILE" ]; then
+        error "$ENV_FILE not found. Please create it from .env.production.example"
+    fi
+    
+    # Check if required environment variables are set
+    source "$ENV_FILE"
+    
+    required_vars=(
+        "SECRET_KEY"
+        "JWT_SECRET"
+        "DB_PASSWORD"
+        "REDIS_PASSWORD"
+        "NEO4J_PASSWORD"
+    )
+    
+    for var in "${required_vars[@]}"; do
+        if [ -z "${!var}" ] || [[ "${!var}" == *"CHANGE_THIS"* ]]; then
+            error "Required environment variable $var is not set or using default value"
+        fi
+    done
+    
+    log "✅ Pre-flight checks passed"
+}
+
+# Backup database
+backup_database() {
+    log "Creating database backup before deployment..."
+    
+    if docker ps | grep -q "amas-postgres"; then
+        ./scripts/backup.sh --environment production --type database || warn "Backup failed, continuing anyway..."
+    else
+        warn "Database not running, skipping backup"
+    fi
+}
+
+# Build images
+build_images() {
+    log "Building Docker images..."
+    
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build --no-cache
+    
+    log "✅ Images built successfully"
+}
+
+# Deploy
+deploy() {
+    log "Deploying $PROJECT_NAME to production..."
+    
+    # Pull latest images (if using registry)
+    info "Pulling latest images..."
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" pull || true
+    
+    # Stop old containers
+    info "Stopping old containers..."
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down
+    
+    # Start new containers
+    info "Starting new containers..."
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d
+    
+    # Wait for services to be healthy
+    info "Waiting for services to be healthy..."
+    sleep 10
+    
+    # Check health
+    check_health
+    
+    log "✅ Deployment completed successfully"
+}
+
+# Health check
+check_health() {
+    log "Checking service health..."
+    
+    # Check if containers are running
+    services=(
+        "amas-backend"
+        "amas-postgres"
+        "amas-redis"
+        "amas-nginx"
+        "amas-prometheus"
+        "amas-grafana"
+    )
+    
+    for service in "${services[@]}"; do
+        if docker ps | grep -q "$service"; then
+            echo -e "${GREEN}✓${NC} $service is running"
+        else
+            error "$service is not running"
+        fi
+    done
+    
+    # Check API health endpoint
+    sleep 5
+    if curl -f http://localhost:8000/health > /dev/null 2>&1; then
+        echo -e "${GREEN}✓${NC} API health check passed"
+    else
+        error "API health check failed"
+    fi
+    
+    log "✅ All health checks passed"
+}
+
+# Database migration
+run_migrations() {
+    log "Running database migrations..."
+    
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T amas-backend \
+        alembic upgrade head
+    
+    log "✅ Database migrations completed"
+}
+
+# Post-deployment
+post_deployment() {
+    log "Running post-deployment tasks..."
+    
+    # Show logs
+    info "Displaying recent logs..."
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" logs --tail=50
+    
+    # Show status
+    info "Service status:"
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" ps
+    
+    log "✅ Post-deployment tasks completed"
+}
+
+# Rollback
+rollback() {
+    warn "Rolling back deployment..."
+    
+    # Stop current containers
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down
+    
+    # Restore from backup
+    ./scripts/restore.sh "$1"
+    
+    # Start previous version
+    docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d
+    
+    log "✅ Rollback completed"
+}
+
 # Main deployment function
 main() {
-    log "🌟 Starting AMAS Production Deployment (Blue-Green)"
-    log "Project: $PROJECT_NAME"
-    log "Environment: $ENVIRONMENT"
-    log "Current Stack: $CURRENT_STACK"
-    log "New Stack: $NEW_STACK"
-    log "Directory: $PROJECT_ROOT"
+    echo "╔══════════════════════════════════════════╗"
+    echo "║   AMAS Production Deployment Script     ║"
+    echo "╚══════════════════════════════════════════╝"
+    echo ""
     
-    # Set up error handling
-    trap 'rollback_deployment; exit 1' ERR
+    # Pre-flight checks
+    pre_flight_checks
     
-    pre_deployment_checks
-    deploy_new_stack "$NEW_STACK"
-    run_database_migration "$NEW_STACK"
-    run_production_smoke_tests "$NEW_STACK"
-    switch_load_balancer "$NEW_STACK"
-    cleanup_old_stack "$CURRENT_STACK"
-    send_notifications "SUCCESS" "Production deployment completed successfully"
+    # Backup
+    backup_database
     
-    # Update current stack reference
-    echo "$NEW_STACK" > "${PROJECT_ROOT}/.current-stack"
+    # Build
+    if [ "$1" == "--build" ]; then
+        build_images
+    fi
     
-    log_success "🎉 Production deployment completed successfully!"
+    # Deploy
+    deploy
+    
+    # Migrations
+    run_migrations
+    
+    # Post-deployment
+    post_deployment
     
     echo ""
-    echo "📊 Production Environment URLs:"
-    echo "  • AMAS API: http://localhost:8000"
-    echo "  • AMAS Dashboard: http://localhost:3000"
-    echo "  • Neo4j Browser: http://localhost:7474"
-    echo "  • Prometheus: http://localhost:9090"
-    echo "  • Grafana: http://localhost:3001"
+    echo "╔══════════════════════════════════════════╗"
+    echo "║     Deployment Completed Successfully!   ║"
+    echo "╚══════════════════════════════════════════╝"
     echo ""
-    echo "🔧 Management Commands:"
-    echo "  • View logs: docker-compose -f docker-compose.production-${NEW_STACK}.yml logs -f"
-    echo "  • Stop services: docker-compose -f docker-compose.production-${NEW_STACK}.yml down"
-    echo "  • Restart services: docker-compose -f docker-compose.production-${NEW_STACK}.yml restart"
-    echo ""
-    echo "🔄 Current Active Stack: $NEW_STACK"
+    echo "🌐 Application: http://localhost:8000"
+    echo "📊 Grafana: http://localhost:3001"
+    echo "🔍 Jaeger: http://localhost:16686"
+    echo "📈 Prometheus: http://localhost:9090"
     echo ""
 }
 
-# Handle script interruption
-trap 'log_error "Deployment interrupted by user"; send_notifications "INTERRUPTED" "Production deployment was interrupted"; exit 1' INT TERM
+# ============================================================================
+# SCRIPT EXECUTION
+# ============================================================================
 
-# Run main function
-main "$@"
+case "$1" in
+    --build)
+        main --build
+        ;;
+    --rollback)
+        rollback "$2"
+        ;;
+    --health)
+        check_health
+        ;;
+    *)
+        main
+        ;;
+esac

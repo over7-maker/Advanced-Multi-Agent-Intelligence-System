@@ -187,6 +187,20 @@ class AuditLogger:
                  flush_interval: int = 30,
                  enable_redaction: bool = True,
                  backup_count: int = 5):
+        # Expand environment variables in log_file path if needed
+        if "${" in log_file:
+            import os
+            import re
+            pattern = r'\$\{([^}]+)\}'
+            match = re.search(pattern, log_file)
+            if match:
+                var_part = match.group(1)
+                if ":-" in var_part:
+                    var_name, default = var_part.split(":-", 1)
+                    log_file = os.getenv(var_name.strip(), default.strip())
+                else:
+                    log_file = os.getenv(var_part.strip(), log_file)
+        
         self.log_file = Path(log_file)
         self.buffer_size = buffer_size
         self.flush_interval = flush_interval
@@ -202,8 +216,16 @@ class AuditLogger:
         
         self.pii_redactor = PIIRedactor() if enable_redaction else None
         
-        # Create log directory
-        self.log_file.parent.mkdir(parents=True, exist_ok=True)
+        # Create log directory (handle case where parent is empty or just filename)
+        try:
+            if self.log_file.parent and str(self.log_file.parent) != '.':
+                self.log_file.parent.mkdir(parents=True, exist_ok=True)
+            else:
+                # If no directory specified, create 'logs' directory
+                Path("logs").mkdir(parents=True, exist_ok=True)
+                self.log_file = Path("logs") / self.log_file.name
+        except Exception as e:
+            logger.warning(f"Could not create log directory: {e}, using current directory")
         
         # Setup structured logging
         self.logger = self._setup_logger()

@@ -1,0 +1,377 @@
+---
+description: Integration Connectors - Connector implementation patterns, credential validation, and platform-specific operations
+globs:
+  - "src/amas/integration/*_connector.py"
+  - "src/amas/integration/connectors/**/*.py"
+alwaysApply: false
+---
+
+# Integration Connectors Rules
+
+When implementing platform connectors:
+
+## Connector Base Structure
+
+1. **Required Methods**:
+   ```python
+   class PlatformConnector:
+       def __init__(self):
+           self.http_client = httpx.AsyncClient(timeout=30.0)
+           # Initialize circuit breaker if needed
+       
+       async def validate_credentials(self, credentials: Dict[str, Any]) -> bool:
+           """Validate platform credentials - REQUIRED"""
+           pass
+       
+       async def execute(
+           self,
+           event_type: str,
+           data: Dict[str, Any],
+           credentials: Dict[str, Any],
+           configuration: Dict[str, Any]
+       ) -> Dict[str, Any]:
+           """Execute platform action - REQUIRED"""
+           pass
+       
+       async def validate_webhook_signature(
+           self,
+           payload: Dict[str, Any],
+           headers: Dict[str, str]
+       ) -> bool:
+           """Validate webhook signature - REQUIRED"""
+           pass
+       
+       async def parse_webhook(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+           """Parse webhook payload - REQUIRED"""
+           pass
+   ```
+
+2. **HTTP Client**:
+   - Use httpx.AsyncClient for async operations
+   - Set appropriate timeout (30s default)
+   - Handle connection errors gracefully
+
+## Credential Validation
+
+1. **Validation Pattern**:
+   ```python
+   async def validate_credentials(self, credentials: Dict[str, Any]) -> bool:
+       """✅ CORRECT: Validate with actual API call"""
+       try:
+           # Test connection with simple API call
+           response = await self.http_client.get(
+               f"{base_url}/api/test",
+               headers={"Authorization": f"Bearer {token}"}
+           )
+           return response.status_code == 200
+       except Exception as e:
+           logger.error(f"Credential validation failed: {e}")
+           return False
+   ```
+
+2. **Validation Requirements**:
+   - Always test actual API connection
+   - Return False on any error
+   - Log validation failures
+   - Don't store invalid credentials
+
+## Execute Method Patterns
+
+1. **Event Type Routing**:
+   ```python
+   async def execute(
+       self,
+       event_type: str,
+       data: Dict[str, Any],
+       credentials: Dict[str, Any],
+       configuration: Dict[str, Any]
+   ) -> Dict[str, Any]:
+       """✅ CORRECT: Route by event type"""
+       if event_type == "create_issue":
+           result = await self._create_issue(data, credentials, configuration)
+       elif event_type == "update_issue":
+           result = await self._update_issue(data, credentials, configuration)
+       else:
+           raise ValueError(f"Unknown event type: {event_type}")
+       
+       return {"success": True, "result": result}
+   ```
+
+2. **Error Handling**:
+   ```python
+   try:
+       result = await self._execute_action(...)
+       return {"success": True, "result": result}
+   except PlatformAPIError as e:
+       logger.error(f"Platform API error: {e}", exc_info=True)
+       raise
+   except Exception as e:
+       logger.error(f"Execution failed: {e}", exc_info=True)
+       raise
+   ```
+
+## Webhook Signature Validation
+
+1. **HMAC Validation Pattern**:
+   ```python
+   async def validate_webhook_signature(
+       self,
+       payload: Dict[str, Any],
+       headers: Dict[str, str]
+   ) -> bool:
+       """✅ CORRECT: Validate HMAC signature"""
+       try:
+           signature = headers.get("X-Platform-Signature")
+           secret = headers.get("webhook_secret", "")
+           
+           if not signature or not secret:
+               logger.warning("Missing signature or secret")
+               return True  # Skip if not configured
+           
+           # Compute expected signature
+           payload_str = json.dumps(payload, sort_keys=True)
+           expected = hmac.new(
+               secret.encode(),
+               payload_str.encode(),
+               hashlib.sha256
+           ).hexdigest()
+           
+           return hmac.compare_digest(signature, expected)
+       except Exception as e:
+           logger.error(f"Signature validation error: {e}")
+           return False
+   ```
+
+2. **Platform-Specific Validation**:
+   - GitHub: X-Hub-Signature-256 (sha256=...)
+   - Slack: X-Slack-Signature (v0=...)
+   - N8N: X-N8N-Signature
+   - Salesforce: Custom HMAC
+
+## Webhook Parsing
+
+1. **Parse Pattern**:
+   ```python
+   async def parse_webhook(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+       """✅ CORRECT: Extract event type and data"""
+       event_type = payload.get("action", "unknown")
+       
+       # Extract relevant data
+       if "issue" in payload:
+           return {
+               "type": f"issue_{event_type}",
+               "data": {
+                   "issue_number": payload["issue"]["number"],
+                   "issue_title": payload["issue"]["title"]
+               }
+           }
+       
+       return {
+           "type": event_type,
+           "data": payload
+       }
+   ```
+
+2. **Platform-Specific Parsing**:
+   - GitHub: Extract action, issue/PR data
+   - Slack: Handle url_verification, event_callback, slash_command
+   - Jira: Extract webhookEvent, issue_event_type_name
+   - N8N: Extract event, executionId, workflowId
+
+## Circuit Breaker Pattern
+
+1. **Implementation**:
+   ```python
+   def __init__(self):
+       self.circuit_breaker_failures = 0
+       self.circuit_breaker_threshold = 5
+       self.circuit_breaker_open = False
+   
+   async def execute(self, ...):
+       if self.circuit_breaker_open:
+           raise Exception("Circuit breaker open - platform unavailable")
+       
+       try:
+           result = await self._call_platform(...)
+           # Reset on success
+           self.circuit_breaker_failures = 0
+           self.circuit_breaker_open = False
+           return result
+       except Exception as e:
+           self.circuit_breaker_failures += 1
+           if self.circuit_breaker_failures >= self.circuit_breaker_threshold:
+               self.circuit_breaker_open = True
+               logger.error("Circuit breaker opened")
+           raise
+   ```
+
+## Platform-Specific Patterns
+
+### N8N Connector
+
+1. **Workflow Triggering**:
+   ```python
+   async def execute(self, event_type, data, credentials, configuration):
+       base_url = credentials["base_url"]
+       api_key = credentials["api_key"]
+       webhook_id = configuration.get("webhook_id")
+       
+       payload = {
+           "event": event_type,
+           "source": "amas",
+           "timestamp": datetime.now().isoformat(),
+           "data": data
+       }
+       
+       response = await self.http_client.post(
+           f"{base_url}/webhook/{webhook_id}",
+           json=payload,
+           headers={"X-N8N-API-KEY": api_key}
+       )
+   ```
+
+### Slack Connector
+
+1. **Block Kit Messages**:
+   ```python
+   def _build_task_completed_message(self, data: Dict[str, Any]) -> Dict[str, Any]:
+       return {
+           "text": "Task Completed",
+           "blocks": [
+               {
+                   "type": "header",
+                   "text": {"type": "plain_text", "text": "✅ Task Completed"}
+               },
+               {
+                   "type": "section",
+                   "fields": [
+                       {"type": "mrkdwn", "text": f"*Task:*\n{data['title']}"}
+                   ]
+               }
+           ]
+       }
+   ```
+
+2. **Slack API Client**:
+   ```python
+   from slack_sdk.web.async_client import AsyncWebClient
+   
+   client = AsyncWebClient(token=bot_token)
+   response = await client.chat_postMessage(
+       channel=channel,
+       blocks=blocks,
+       text=text
+   )
+   ```
+
+### GitHub Connector
+
+1. **GitHub API Client**:
+   ```python
+   from github import Github, Auth
+   
+   auth = Auth.Token(access_token)
+   g = Github(auth=auth)
+   repo = g.get_repo(repo_name)
+   
+   # Create issue
+   issue = repo.create_issue(
+       title=title,
+       body=body,
+       labels=labels
+   )
+   ```
+
+2. **Security Scan Results**:
+   - Format as markdown issue
+   - Include vulnerability details
+   - Add remediation steps
+   - Use appropriate labels
+
+### Salesforce Connector
+
+1. **Authentication**:
+   ```python
+   from simple_salesforce import Salesforce
+   
+   # OAuth token
+   if "access_token" in credentials:
+       sf = Salesforce(
+           instance_url=credentials["instance_url"],
+           session_id=credentials["access_token"]
+       )
+   # Username/password
+   else:
+       sf = Salesforce(
+           username=credentials["username"],
+           password=credentials["password"],
+           security_token=credentials["security_token"]
+       )
+   ```
+
+2. **SOQL Queries**:
+   ```python
+   result = sf.query("SELECT Id, Name FROM Account LIMIT 10")
+   records = result["records"]
+   ```
+
+### Notion Connector
+
+1. **Notion API Client**:
+   ```python
+   from notion_client import AsyncClient
+   
+   notion = AsyncClient(auth=api_key)
+   
+   # Create page
+   page = await notion.pages.create(
+       parent={"page_id": parent_page_id},
+       properties={"title": {"title": [{"text": {"content": title}}]}},
+       children=blocks
+   )
+   ```
+
+2. **Block Structure**:
+   - Use proper block types
+   - Format content correctly
+   - Include metadata
+
+### Jira Connector
+
+1. **Jira API Client**:
+   ```python
+   from jira import JIRA
+   
+   jira = JIRA(
+       server=server,
+       basic_auth=(email, api_token)
+   )
+   
+   # Create issue
+   issue = jira.create_issue(
+       fields={
+           "project": {"key": project_key},
+           "summary": summary,
+           "description": description,
+           "issuetype": {"name": "Bug"}
+       }
+   )
+   ```
+
+2. **JQL Queries**:
+   ```python
+   issues = jira.search_issues("project = PROJ AND status = Open", maxResults=50)
+   ```
+
+## Best Practices
+
+1. **Always implement all required methods**
+2. **Validate credentials with actual API calls**
+3. **Validate webhook signatures**
+4. **Handle platform-specific exceptions**
+5. **Implement circuit breaker for external APIs**
+6. **Log all operations with context**
+7. **Use appropriate timeouts**
+8. **Handle rate limiting gracefully**
+9. **Return structured responses**
+10. **Document platform-specific requirements**

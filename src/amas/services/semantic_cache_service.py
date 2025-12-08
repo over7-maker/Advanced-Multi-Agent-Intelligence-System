@@ -6,13 +6,12 @@ Implements semantic similarity matching to cache similar requests, achieving
 30%+ speed improvement for repeated or similar queries.
 """
 
-import asyncio
 import hashlib
 import json
 import logging
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Tuple
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 try:
     import redis.asyncio as redis
@@ -22,8 +21,8 @@ except ImportError:
     redis = None
 
 try:
-    from sentence_transformers import SentenceTransformer
     import numpy as np
+    from sentence_transformers import SentenceTransformer
     EMBEDDINGS_AVAILABLE = True
 except ImportError:
     EMBEDDINGS_AVAILABLE = False
@@ -39,12 +38,12 @@ class CacheEntry:
     key: str
     semantic_key: str  # Embedding-based key
     value: Any
-    embedding: Optional[List[float]] = None
     created_at: datetime
     accessed_at: datetime
+    embedding: Optional[List[float]] = None
     access_count: int = 0
     ttl: int = 3600  # Default 1 hour
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
 
 
 class SemanticCacheService:

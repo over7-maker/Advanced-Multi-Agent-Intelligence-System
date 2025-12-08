@@ -1,11 +1,18 @@
-from standalone_universal_ai_manager import get_api_key
+# Import get_api_key from enhanced_router_v2 instead
+import os
+from typing import Optional
+
+
+def get_api_key(env_name: str) -> Optional[str]:
+    """Get API key from environment, stripping whitespace."""
+    value = os.getenv(env_name)
+    return value.strip() if value else None
 
 """
 Enhanced LLM Service Implementation for AMAS with Multiple API Support
 """
 
 import logging
-import os
 from datetime import datetime
 from typing import Any, Dict, Optional
 
