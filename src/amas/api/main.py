@@ -29,9 +29,15 @@ from ..security import (
     initialize_audit_logger,
     get_audit_logger,
 )
-from ...security.middleware import AuditLoggingMiddleware, AuthenticationMiddleware
-from ...observability.opentelemetry_setup import setup_opentelemetry
-from ...governance.agent_contracts import validate_agent_action
+from ..security.middleware import AuditLoggingMiddleware, AuthenticationMiddleware
+try:
+    from ..observability.opentelemetry_setup import setup_opentelemetry
+except ImportError:
+    setup_opentelemetry = None
+try:
+    from ..governance.agent_contracts import validate_agent_action
+except ImportError:
+    validate_agent_action = None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -254,7 +260,7 @@ async def startup_event():
         # 4. Initialize OPA Policy Engine
         try:
             opa_url = os.getenv("OPA_URL", "http://localhost:8181")
-            from ...security.policies.opa_integration import configure_policy_engine
+            from ..security.policies.opa_integration import configure_policy_engine
             configure_policy_engine(opa_url=opa_url)
             logger.info(f"✅ OPA Policy Engine initialized: {opa_url}")
         except Exception as e:
