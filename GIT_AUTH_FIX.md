@@ -150,3 +150,5 @@ git config --global user.email
 
 **ملاحظة**: بعد إصلاح authentication، استخدم `scripts\create_pr_simple.bat` لإنشاء PR تلقائياً.
 
+
+
