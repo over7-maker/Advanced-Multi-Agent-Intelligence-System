@@ -48,12 +48,15 @@ RUN if [ -f package.json ] && [ -s package.json ]; then \
 COPY ${FRONTEND_DIR}/ ./
 
 # Build frontend if package.json has build script
+# Always ensure build directory exists
+RUN mkdir -p build
 RUN if [ -f package.json ] && grep -q '"build"' package.json; then \
-      npm run build || (echo "Frontend build failed, creating placeholder..." && mkdir -p build && echo '<html><body>Frontend not built</body></html>' > build/index.html); \
+      npm run build || (echo "Frontend build failed, creating placeholder..." && echo '<html><body>Frontend not built</body></html>' > build/index.html); \
     else \
       echo "Skipping frontend build - no build script found"; \
-      mkdir -p build && echo '<html><body>Frontend not built</body></html>' > build/index.html; \
+      echo '<html><body>Frontend not built</body></html>' > build/index.html; \
     fi
+RUN test -f build/index.html || echo '<html><body>Frontend placeholder</body></html>' > build/index.html
 
 # ============================================================================
 # STAGE 3: Production Runtime

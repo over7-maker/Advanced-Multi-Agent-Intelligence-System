@@ -385,11 +385,21 @@ def main():
     parser.add_argument("--auto-apply", default="false", help="Auto-apply changes")
     parser.add_argument("--improvement-results", default="improvement_results/", help="Improvement results directory")
     parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced manager")
+    parser.add_argument("--use-all-providers", action="store_true", help="Use all AI providers")
+    parser.add_argument("--input", help="Input improvements file")
+    parser.add_argument("--create-pr", default="false", help="Create PR after implementation")
     parser.add_argument("--output", default="implementation_results.json", help="Output file")
     
     args = parser.parse_args()
     
     try:
+        # Handle --input argument
+        if args.input:
+            # If input file is provided, use its directory
+            input_path = Path(args.input)
+            if input_path.exists():
+                args.improvement_results = str(input_path.parent)
+        
         # Initialize implementer
         implementer = AIAutomatedImplementer(
             mode=args.mode,
