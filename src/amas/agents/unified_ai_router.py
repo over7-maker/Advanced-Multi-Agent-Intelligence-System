@@ -3,7 +3,6 @@ Unified AI Router with Intelligent Fallback Mechanism
 Handles multiple AI providers with automatic failover and load balancing
 """
 
-import asyncio
 
 # import json
 import logging
@@ -15,9 +14,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
-import aiohttp
 import anthropic
-from openai import AsyncOpenAI, OpenAI
+from openai import AsyncOpenAI
 
 logger = logging.getLogger(__name__)
 

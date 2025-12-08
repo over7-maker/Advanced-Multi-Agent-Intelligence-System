@@ -4,12 +4,11 @@ AMAS API Server
 FastAPI-based REST API for AMAS system
 """
 
-import asyncio
 import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -23,7 +22,7 @@ try:
     intelligence_manager = None  # Will be initialized in startup
     provider_manager = None  # Will be initialized in startup
 except ImportError as e:
-    logger.warning(f"Could not import orchestrator/intelligence manager: {e}")
+    logging.warning(f"Could not import orchestrator/intelligence manager: {e}")
     orchestrator = None
     intelligence_manager = None
     provider_manager = None
@@ -231,7 +230,9 @@ async def startup_event():
     # Initialize orchestrator and intelligence manager if available
     global orchestrator, intelligence_manager, provider_manager
     try:
-        from ..core.unified_intelligence_orchestrator import UnifiedIntelligenceOrchestrator
+        from ..core.unified_intelligence_orchestrator import (
+            UnifiedIntelligenceOrchestrator,
+        )
         orchestrator = UnifiedIntelligenceOrchestrator()
         await orchestrator.initialize()
         logging.info("✅ Orchestrator initialized")

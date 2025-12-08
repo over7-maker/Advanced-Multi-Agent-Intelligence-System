@@ -8,7 +8,7 @@ import os
 from datetime import datetime
 from typing import Any, Dict
 
-from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
+from ..base.intelligence_agent import IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 

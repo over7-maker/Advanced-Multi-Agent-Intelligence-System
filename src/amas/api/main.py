@@ -2,7 +2,6 @@
 FastAPI Main Application for AMAS Intelligence System
 """
 
-import asyncio
 import logging
 import os
 import time
@@ -10,9 +9,9 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 import uvicorn
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Response
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -21,15 +20,13 @@ from ..main import AMASApplication
 
 # Import security components
 from ..security import (
-    JWTMiddleware,
-    SecurityHeadersMiddleware,
-    AMASHTTPBearer,
     SecureAuthenticationManager,
-    get_policy_engine,
-    initialize_audit_logger,
+    SecurityHeadersMiddleware,
     get_audit_logger,
+    initialize_audit_logger,
 )
 from ..security.middleware import AuditLoggingMiddleware, AuthenticationMiddleware
+
 try:
     from ..observability.opentelemetry_setup import setup_opentelemetry
 except ImportError:
