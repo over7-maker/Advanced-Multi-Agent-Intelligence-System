@@ -86,8 +86,13 @@ WORKDIR /app
 COPY --from=python-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
 COPY --from=python-builder /usr/local/bin /usr/local/bin
 
-# Copy frontend build (if it exists)
+# Copy frontend build (create directory first, then copy)
+RUN mkdir -p /app/frontend/build
 COPY --from=frontend-builder /app/frontend/build /app/frontend/build
+RUN if [ ! -d /app/frontend/build ] || [ ! -f /app/frontend/build/index.html ]; then \
+      mkdir -p /app/frontend/build && \
+      echo '<html><body>Frontend placeholder</body></html>' > /app/frontend/build/index.html; \
+    fi
 
 # Copy application code
 COPY --chown=amas:amas src/ ./src/

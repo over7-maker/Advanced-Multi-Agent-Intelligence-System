@@ -303,6 +303,7 @@ def main():
     parser.add_argument("--depth", default="comprehensive", help="Analysis depth")
     parser.add_argument("--auto-apply", default="false", help="Auto-apply improvements")
     parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced manager")
+    parser.add_argument("--use-all-providers", action="store_true", help="Use all AI providers")
     parser.add_argument("--output", default="project_analysis_results.json", help="Output file")
     
     args = parser.parse_args()
