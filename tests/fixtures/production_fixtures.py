@@ -22,7 +22,7 @@ def dockerfile_path(project_root: Path) -> Path:
     return project_root / "Dockerfile"
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def docker_compose_path(project_root: Path) -> Path:
     """Get docker-compose.prod.yml path."""
     return project_root / "docker-compose.prod.yml"

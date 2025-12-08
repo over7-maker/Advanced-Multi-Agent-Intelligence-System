@@ -215,6 +215,39 @@ async def trigger_integration(
         logger.error(f"Failed to trigger integration: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to trigger integration")
 
+@router.put("/{integration_id}", response_model=IntegrationResponse)
+async def update_integration(
+    integration_id: str,
+    integration_request: IntegrationCreateRequest,
+    current_user = Depends(get_current_user),
+    integration_manager: IntegrationManager = Depends(get_integration_manager)
+):
+    """Update integration configuration"""
+    
+    try:
+        # Update integration
+        status = await integration_manager.update_integration(
+            integration_id=integration_id,
+            credentials=integration_request.credentials,
+            configuration=integration_request.configuration
+        )
+        
+        return IntegrationResponse(
+            integration_id=status["integration_id"],
+            platform=status["platform"],
+            status=status["status"],
+            created_at=status["created_at"],
+            last_sync=status["last_sync"],
+            sync_count=status["sync_count"],
+            error_count=status["error_count"]
+        )
+    
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to update integration: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to update integration")
+
 @router.delete("/{integration_id}")
 async def delete_integration(
     integration_id: str,
@@ -224,14 +257,8 @@ async def delete_integration(
     """Delete integration"""
     
     try:
-        # Get integration to verify it exists
-        status = await integration_manager.get_integration_status(integration_id)
-        
-        # Remove from active integrations
-        # Note: In production, this should be persisted to database
-        if hasattr(integration_manager, 'active_integrations'):
-            if integration_id in integration_manager.active_integrations:
-                del integration_manager.active_integrations[integration_id]
+        # Delete integration using manager method
+        await integration_manager.delete_integration(integration_id)
         
         return {"status": "deleted", "integration_id": integration_id}
     

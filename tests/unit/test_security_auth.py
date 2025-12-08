@@ -118,6 +118,7 @@ class TestSecurityHeadersMiddleware:
     async def test_security_headers_added(self):
         """Test that security headers are added to responses"""
         from fastapi import Request
+        from starlette.responses import Response
         from unittest.mock import Mock
         
         middleware = SecurityHeadersMiddleware()
@@ -144,6 +145,7 @@ class TestSecurityHeadersMiddleware:
     async def test_cache_control_for_sensitive_endpoints(self):
         """Test that cache control is set for sensitive endpoints"""
         from fastapi import Request
+        from starlette.responses import Response
         from unittest.mock import Mock
         
         middleware = SecurityHeadersMiddleware()

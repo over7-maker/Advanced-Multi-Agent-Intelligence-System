@@ -354,6 +354,32 @@ class TracingService:
             current_span.set_status(
                 Status(StatusCode.ERROR, str(exception))
             )
+    
+    def start_span(self, name: str, attributes: Dict[str, Any] = None):
+        """
+        Start a new span
+        
+        Args:
+            name: Span name
+            attributes: Optional span attributes
+        
+        Returns:
+            Span context manager
+        """
+        
+        if not self.enabled:
+            # Return a no-op context manager
+            from contextlib import nullcontext
+            return nullcontext()
+        
+        span = self.tracer.start_as_current_span(name)
+        
+        # Set attributes if provided
+        if attributes:
+            for key, value in attributes.items():
+                span.set_attribute(key, value)
+        
+        return span
 
 
 # Global tracing service instance

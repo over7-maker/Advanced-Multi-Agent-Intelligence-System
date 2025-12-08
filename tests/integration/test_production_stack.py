@@ -16,7 +16,7 @@ from tests.fixtures.production_fixtures import docker_compose_path, project_root
 class TestProductionStack:
     """Test suite for full production stack integration."""
     
-    @pytest.fixture(scope="class", autouse=True)
+    @pytest.fixture(scope="function", autouse=True)
     def setup_stack(self, docker_compose_path: Path, project_root: Path):
         """Setup and teardown Docker Compose stack."""
         # Check if Docker is available

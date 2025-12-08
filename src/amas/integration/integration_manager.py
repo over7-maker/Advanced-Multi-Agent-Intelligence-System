@@ -345,6 +345,84 @@ class IntegrationManager:
         self.webhook_handlers[event_type] = handler
         logger.info(f"Registered webhook handler: {event_type}")
     
+    async def update_integration(
+        self,
+        integration_id: str,
+        credentials: Optional[Dict[str, Any]] = None,
+        configuration: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Update integration configuration
+        
+        Args:
+            integration_id: Integration identifier
+            credentials: New credentials (optional)
+            configuration: New configuration (optional)
+        
+        Returns:
+            Updated integration status
+        """
+        
+        try:
+            integration = self.active_integrations.get(integration_id)
+            if not integration:
+                raise ValueError(f"Integration {integration_id} not found")
+            
+            # Update credentials if provided
+            if credentials:
+                platform = IntegrationPlatform(integration["platform"])
+                connector = self.connectors.get(platform)
+                
+                if connector:
+                    # Validate new credentials
+                    is_valid = await connector.validate_credentials(credentials)
+                    if not is_valid:
+                        raise ValueError(f"Invalid credentials for {platform.value}")
+                
+                integration["credentials"] = credentials
+            
+            # Update configuration if provided
+            if configuration:
+                integration["configuration"].update(configuration)
+            
+            logger.info(f"Updated integration: {integration_id}")
+            
+            return await self.get_integration_status(integration_id)
+        
+        except Exception as e:
+            logger.error(f"Failed to update integration: {e}", exc_info=True)
+            raise
+    
+    async def delete_integration(
+        self,
+        integration_id: str
+    ) -> bool:
+        """
+        Delete integration
+        
+        Args:
+            integration_id: Integration identifier
+        
+        Returns:
+            True if deleted successfully
+        """
+        
+        try:
+            integration = self.active_integrations.get(integration_id)
+            if not integration:
+                raise ValueError(f"Integration {integration_id} not found")
+            
+            # Remove from active integrations
+            del self.active_integrations[integration_id]
+            
+            logger.info(f"Deleted integration: {integration_id}")
+            
+            return True
+        
+        except Exception as e:
+            logger.error(f"Failed to delete integration: {e}", exc_info=True)
+            raise
+    
     async def get_integration_status(
         self,
         integration_id: str
