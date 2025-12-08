@@ -41,23 +41,15 @@ except ImportError:
 
 # Google Generative AI
 # Note: Python 3.13 has OpenSSL compatibility issues with google.generativeai
-# We catch both ImportError and AttributeError to handle this gracefully
-try:
-    # Google Generative AI - optional import due to Python 3.13 OpenSSL compatibility
+# We catch both ImportError and OSError to handle this gracefully
 try:
     import google.generativeai as genai
-    GOOGLE_GENAI_AVAILABLE = True
-except (ImportError, OSError) as e:
-    GOOGLE_GENAI_AVAILABLE = False
-    genai = None
-    logger.warning(f"Google Generative AI unavailable due to Python 3.13 OpenSSL compatibility issue. Continuing with other 15 providers.")
-
     # Test if the module actually works (Python 3.13 compatibility check)
     try:
         # This will fail on Python 3.13 if OpenSSL is incompatible
         _ = genai.__version__
         GEMINI_AVAILABLE = True
-    except (AttributeError, ImportError) as e:
+    except (AttributeError, ImportError, OSError) as e:
         if "X509_V_FLAG_NOTIFY_POLICY" in str(e) or "OpenSSL" in str(e):
             logger.warning(
                 "Google Generative AI unavailable due to Python 3.13 OpenSSL compatibility issue. "
@@ -67,7 +59,7 @@ except (ImportError, OSError) as e:
             GEMINI_AVAILABLE = False
         else:
             raise
-except (ImportError, AttributeError) as e:
+except (ImportError, OSError, AttributeError) as e:
     if "X509_V_FLAG_NOTIFY_POLICY" in str(e) or "OpenSSL" in str(e):
         logger.warning(
             "Google Generative AI unavailable due to Python 3.13 OpenSSL compatibility issue. "
@@ -849,6 +841,8 @@ async def _try_providers(
                     timeout=timeout,
                 )
             elif config.provider_type == "gemini":
+                if not GEMINI_AVAILABLE:
+                    raise ImportError("Google Generative AI not available (Python 3.13 OpenSSL compatibility issue). Skipping Gemini provider.")
                 result = await asyncio.wait_for(
                     call_gemini_provider(provider_id, messages, config, max_tokens=max_tokens, temperature=temperature),
                     timeout=timeout,
