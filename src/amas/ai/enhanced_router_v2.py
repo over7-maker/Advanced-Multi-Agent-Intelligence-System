@@ -43,7 +43,14 @@ except ImportError:
 # Note: Python 3.13 has OpenSSL compatibility issues with google.generativeai
 # We catch both ImportError and AttributeError to handle this gracefully
 try:
+    # Google Generative AI - optional import due to Python 3.13 OpenSSL compatibility
+try:
     import google.generativeai as genai
+    GOOGLE_GENAI_AVAILABLE = True
+except (ImportError, OSError) as e:
+    GOOGLE_GENAI_AVAILABLE = False
+    genai = None
+    logger.warning(f"Google Generative AI unavailable due to Python 3.13 OpenSSL compatibility issue. Continuing with other 15 providers.")
 
     # Test if the module actually works (Python 3.13 compatibility check)
     try:

@@ -8,10 +8,37 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from src.amas.ai.enhanced_router_v2 import (
-    generate_with_fallback,
-    get_available_providers,
-)
+import logging
+
+logger = logging.getLogger(__name__)
+
+# Lazy import to avoid circular dependencies and Google AI import issues
+def _get_enhanced_router():
+    """Lazy import of enhanced_router_v2 to avoid import-time errors"""
+    try:
+        from src.amas.ai.enhanced_router_v2 import (
+            generate_with_fallback,
+            get_available_providers,
+        )
+        return generate_with_fallback, get_available_providers
+    except ImportError as e:
+        logger.warning(f"Could not import enhanced_router_v2: {e}")
+        # Return fallback functions
+        async def fallback_generate(*args, **kwargs):
+            raise ImportError("Enhanced router not available")
+        def fallback_get_providers():
+            return []
+        return fallback_generate, fallback_get_providers
+
+# Import at module level but handle errors gracefully
+try:
+    generate_with_fallback, get_available_providers = _get_enhanced_router()
+except Exception as e:
+    logger.warning(f"Failed to load enhanced router: {e}")
+    async def generate_with_fallback(*args, **kwargs):
+        raise ImportError("Enhanced router not available")
+    def get_available_providers():
+        return []
 
 logger = logging.getLogger(__name__)
 

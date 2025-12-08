@@ -30,7 +30,14 @@ except ImportError:
 
 # BaseAgent support (optional)
 try:
+    try:
     from src.amas.agents.base_agent import BaseAgent
+except ImportError:
+    # Fallback if base_agent not available
+    from abc import ABC, abstractmethod
+    class BaseAgent(ABC):
+        """Fallback BaseAgent if import fails"""
+        pass
     BASE_AGENT_AVAILABLE = True
 except ImportError:
     BaseAgent = None
