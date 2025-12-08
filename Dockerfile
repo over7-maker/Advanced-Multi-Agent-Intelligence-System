@@ -49,7 +49,7 @@ COPY ${FRONTEND_DIR}/ ./
 
 # Build frontend if package.json has build script
 RUN if [ -f package.json ] && grep -q '"build"' package.json; then \
-      npm run build || echo "Frontend build failed, continuing..."; \
+      npm run build || (echo "Frontend build failed, creating placeholder..." && mkdir -p build && echo '<html><body>Frontend not built</body></html>' > build/index.html); \
     else \
       echo "Skipping frontend build - no build script found"; \
       mkdir -p build && echo '<html><body>Frontend not built</body></html>' > build/index.html; \
