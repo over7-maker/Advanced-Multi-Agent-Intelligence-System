@@ -62,6 +62,10 @@ class DataAnalysisAgent(IntelligenceAgent):
                 return await self._perform_pattern_recognition(task)
             elif task_type == "anomaly_detection":
                 return await self._perform_anomaly_detection(task)
+            elif task_type == "trend_analysis":
+                return await self._analyze_trends(task)
+            elif task_type == "predictive_modeling":
+                return await self._build_predictive_model(task)
             else:
                 return await self._perform_general_analysis(task)
 
@@ -249,10 +253,10 @@ class DataAnalysisAgent(IntelligenceAgent):
                 "timestamp": datetime.utcnow().isoformat(),
             }
 
-    async def _perform_advanced_correlation_analysis(
+    async def _perform_anomaly_detection(
         self, task: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Perform advanced correlation analysis"""
+        """Perform anomaly detection"""
         try:
             data = task.get("parameters", {}).get("data", [])
             threshold = task.get("parameters", {}).get("threshold", 0.8)

@@ -15,9 +15,18 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from ..intelligence.intelligence_manager import intelligence_manager
-from ..orchestrator import orchestrator
-from ..providers.manager import provider_manager
+# Import managers with graceful fallback
+try:
+    from ..core.unified_intelligence_orchestrator import UnifiedIntelligenceOrchestrator
+    from ..services.credential_manager import get_credential_manager
+    orchestrator = None  # Will be initialized in startup
+    intelligence_manager = None  # Will be initialized in startup
+    provider_manager = None  # Will be initialized in startup
+except ImportError as e:
+    logger.warning(f"Could not import orchestrator/intelligence manager: {e}")
+    orchestrator = None
+    intelligence_manager = None
+    provider_manager = None
 
 # Create FastAPI app
 app = FastAPI(
@@ -97,8 +106,18 @@ async def health_check():
 async def get_system_status():
     """Get comprehensive system status"""
     try:
-        status = await orchestrator.get_system_status()
-        return SystemStatus(**status)
+        if orchestrator:
+            status = await orchestrator.get_system_status()
+            return SystemStatus(**status)
+        else:
+            return SystemStatus(
+                system_status="initializing",
+                agents={},
+                providers={},
+                tasks={},
+                intelligence={},
+                timestamp=datetime.now().isoformat()
+            )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -107,8 +126,11 @@ async def get_system_status():
 async def get_agents():
     """Get all available agents and their capabilities"""
     try:
-        capabilities = await orchestrator.get_agent_capabilities()
-        return {"agents": capabilities}
+        if orchestrator:
+            capabilities = await orchestrator.get_agent_capabilities()
+            return {"agents": capabilities}
+        else:
+            return {"agents": [], "message": "Orchestrator not initialized"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -117,8 +139,13 @@ async def get_agents():
 async def get_providers():
     """Get AI provider status"""
     try:
-        status = provider_manager.get_provider_status()
-        return {"providers": status}
+        if provider_manager:
+            status = provider_manager.get_provider_status()
+            return {"providers": status}
+        else:
+            from src.amas.ai.enhanced_router_v2 import get_available_providers
+            providers = get_available_providers()
+            return {"providers": providers, "message": "Using enhanced router"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -127,13 +154,16 @@ async def get_providers():
 async def execute_task(task_request: TaskRequest, background_tasks: BackgroundTasks):
     """Execute a new task"""
     try:
-        result = await orchestrator.execute_task(
-            task_type=task_request.task_type,
-            target=task_request.target,
-            parameters=task_request.parameters,
-            user_id=task_request.user_id,
-        )
-        return TaskResponse(**result)
+        if orchestrator:
+            result = await orchestrator.execute_task(
+                task_type=task_request.task_type,
+                target=task_request.target,
+                parameters=task_request.parameters,
+                user_id=task_request.user_id,
+            )
+            return TaskResponse(**result)
+        else:
+            raise HTTPException(status_code=503, detail="Orchestrator not initialized")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -153,8 +183,11 @@ async def get_task_status(task_id: str):
 async def get_intelligence_status():
     """Get intelligence system status"""
     try:
-        data = await intelligence_manager.get_intelligence_dashboard_data()
-        return data
+        if intelligence_manager:
+            data = await intelligence_manager.get_intelligence_dashboard_data()
+            return data
+        else:
+            return {"status": "not_initialized", "message": "Intelligence manager not available"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -195,8 +228,24 @@ async def startup_event():
     """Initialize AMAS on startup"""
     logging.info("🚀 Starting AMAS API Server...")
 
-    # Start intelligence systems
-    await intelligence_manager.start_intelligence_systems()
+    # Initialize orchestrator and intelligence manager if available
+    global orchestrator, intelligence_manager, provider_manager
+    try:
+        from ..core.unified_intelligence_orchestrator import UnifiedIntelligenceOrchestrator
+        orchestrator = UnifiedIntelligenceOrchestrator()
+        await orchestrator.initialize()
+        logging.info("✅ Orchestrator initialized")
+    except Exception as e:
+        logging.warning(f"Could not initialize orchestrator: {e}")
+    
+    try:
+        from ..intelligence.intelligence_manager import IntelligenceManager
+        intelligence_manager = IntelligenceManager()
+        if hasattr(intelligence_manager, 'start_intelligence_systems'):
+            await intelligence_manager.start_intelligence_systems()
+        logging.info("✅ Intelligence manager initialized")
+    except Exception as e:
+        logging.warning(f"Could not initialize intelligence manager: {e}")
 
     logging.info("✅ AMAS API Server started successfully")
 

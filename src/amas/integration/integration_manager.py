@@ -96,7 +96,7 @@ class IntegrationManager:
         
         try:
             from src.amas.integration.n8n_connector import N8NConnector
-            
+
             # N8NConnector now automatically loads credentials from CredentialManager
             # So we can just initialize it without parameters
             connector = N8NConnector()

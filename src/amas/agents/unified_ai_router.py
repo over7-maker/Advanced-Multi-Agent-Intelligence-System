@@ -1,5 +1,3 @@
-from standalone_universal_ai_manager import get_api_key
-
 """
 Unified AI Router with Intelligent Fallback Mechanism
 Handles multiple AI providers with automatic failover and load balancing
@@ -22,6 +20,44 @@ import anthropic
 from openai import AsyncOpenAI, OpenAI
 
 logger = logging.getLogger(__name__)
+
+
+def get_api_key(env_name: str) -> Optional[str]:
+    """
+    Get API key from environment or settings, stripping whitespace.
+    
+    Priority:
+    1. Environment variable (highest priority)
+    2. Settings configuration (from .env file)
+    3. None (if not found)
+    """
+    # First try environment variable (highest priority)
+    value = os.getenv(env_name)
+    if value:
+        return value.strip()
+    
+    # Fallback to settings if available
+    try:
+        from src.config.settings import get_settings
+        settings = get_settings()
+        
+        # Map env names to settings attributes
+        env_to_attr = {
+            "OPENAI_API_KEY": "openai_api_key",
+            "ANTHROPIC_API_KEY": "anthropic_api_key",
+            "CLAUDE_API_KEY": "anthropic_api_key",
+            "OPENROUTER_API_KEY": "deepseek_api_key",  # Fallback mapping
+        }
+        
+        attr_name = env_to_attr.get(env_name)
+        if attr_name:
+            value = getattr(settings.ai, attr_name, None)
+            if value:
+                return value.strip()
+    except Exception as e:
+        logger.debug(f"Could not load API key from settings for {env_name}: {e}")
+    
+    return None
 
 
 class ModelProvider(Enum):

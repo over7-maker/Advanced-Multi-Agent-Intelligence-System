@@ -45,6 +45,7 @@ class ReportingAgent(IntelligenceAgent):
 
         self.report_templates = {}
         self.output_formats = ["pdf", "html", "json", "markdown"]
+        self.generated_reports = {}
 
     async def execute_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Execute reporting task"""
@@ -66,6 +67,8 @@ class ReportingAgent(IntelligenceAgent):
                 return await self._create_intelligence_briefing(task)
             elif task_type == "threat_assessment":
                 return await self._create_threat_assessment(task)
+            elif task_type == "chart_creation":
+                return await self._create_charts(task)
             else:
                 return await self._perform_general_reporting(task)
 
@@ -101,7 +104,9 @@ class ReportingAgent(IntelligenceAgent):
             output_format = task.get("parameters", {}).get("output_format", "pdf")
 
             # Mock report generation
+            report_id = f"report_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
             report_content = {
+                "report_id": report_id,
                 "title": f"{report_type.title()} Report",
                 "date": datetime.utcnow().isoformat(),
                 "summary": "This is a comprehensive intelligence report",
@@ -124,7 +129,7 @@ class ReportingAgent(IntelligenceAgent):
             }
 
             # Store report
-            self.generated_reports[report_content["report_id"]] = report_content
+            self.generated_reports[report_id] = report_content
 
             return {
                 "success": True,
@@ -295,6 +300,38 @@ class ReportingAgent(IntelligenceAgent):
     async def _create_charts(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Create charts and graphs"""
         try:
+            data = task.get("parameters", {}).get("data", [])
+            chart_type = task.get("parameters", {}).get("chart_type", "bar")
+
+            # Mock chart creation
+            chart = {
+                "chart_type": chart_type,
+                "data_points": len(data),
+                "title": "Data Visualization Chart",
+                "x_axis": "Categories",
+                "y_axis": "Values",
+                "data": data,
+                "format": "png",
+            }
+
+            return {
+                "success": True,
+                "task_type": "chart_creation",
+                "chart": chart,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+
+        except Exception as e:
+            logger.error(f"Error in chart creation: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+    
+    async def _create_threat_assessment(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Create threat assessment report"""
+        try:
             threat_data = task.get("parameters", {}).get("threat_data", {})
             assessment_scope = task.get("parameters", {}).get(
                 "assessment_scope", "comprehensive"
@@ -330,7 +367,7 @@ class ReportingAgent(IntelligenceAgent):
             }
 
         except Exception as e:
-            logger.error(f"Error in chart creation: {e}")
+            logger.error(f"Error in threat assessment: {e}")
             return {
                 "success": False,
                 "error": str(e),
