@@ -1,23 +1,23 @@
 import { Box, Button } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { Route, Routes, useNavigate, useParams, Navigate } from 'react-router-dom';
+import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 // Dashboard component - using DashboardNew in routes
-import { ProgressTracker } from './components/ProgressTracker/ProgressTracker';
-import { AgentTeamBuilder } from './components/WorkflowBuilder/AgentTeamBuilder';
-import { WorkflowTemplates } from './components/WorkflowBuilder/WorkflowTemplates';
-import { TaskList } from './components/Tasks/TaskList';
 import { AgentList } from './components/Agents/AgentList';
-import { IntegrationList } from './components/Integrations/IntegrationList';
-import { SystemHealth } from './components/System/SystemHealth';
 import { Login } from './components/Auth/Login';
 import { ProtectedRoute } from './components/Auth/ProtectedRoute';
+import { DashboardNew as DashboardNewComponent } from './components/Dashboard/DashboardNew';
+import { IntegrationList } from './components/Integrations/IntegrationList';
 import { MainLayout } from './components/Layout/MainLayout';
+import { ProgressTracker } from './components/ProgressTracker/ProgressTracker';
+import { SystemHealth } from './components/System/SystemHealth';
+import { CreateTask } from './components/Tasks/CreateTask';
+import { TaskExecutionView } from './components/Tasks/TaskExecutionView';
+import { TaskList } from './components/Tasks/TaskList';
+import { AgentTeamBuilder } from './components/WorkflowBuilder/AgentTeamBuilder';
+import { WorkflowTemplates } from './components/WorkflowBuilder/WorkflowTemplates';
 import { apiService } from './services/api';
 import { websocketService } from './services/websocket';
 import { TaskComplexity, TeamComposition, WorkflowExecution } from './types/agent';
-import { TaskExecutionView } from './components/Tasks/TaskExecutionView';
-import { CreateTask } from './components/Tasks/CreateTask';
-import { DashboardNew as DashboardNewComponent } from './components/Dashboard/DashboardNew';
 
 // Template type definition (matches WorkflowTemplates component)
 interface WorkflowTemplate {

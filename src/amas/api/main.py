@@ -308,6 +308,80 @@ async def startup_event():
         raise
 
 
+# Include API routes
+try:
+    from src.api.routes import (
+        agents,
+        analytics,
+        auth,
+        health,
+        integrations,
+        metrics,  # type: ignore
+        predictions,
+        system,
+        tasks,
+        users,
+        workflows,
+    )
+
+    # Authentication routes - MUST be first
+    app.include_router(auth.router, prefix="/api/v1", tags=["authentication"])
+    logger.info("✅ Authentication routes registered at /api/v1")
+    
+    # System routes
+    app.include_router(system.router, prefix="/api/v1", tags=["system"])
+    app.include_router(health.router, prefix="/api/v1", tags=["health"])
+    # Metrics router already has prefix="/metrics", so we add /api/v1 before it
+    app.include_router(metrics.router, prefix="/api/v1", tags=["monitoring"])
+    logger.info("✅ System routes registered at /api/v1")
+    
+    # Task management routes
+    app.include_router(tasks.router, prefix="/api/v1", tags=["tasks"])
+    app.include_router(predictions.router, prefix="/api/v1", tags=["predictions"])
+    logger.info("✅ Task routes registered at /api/v1")
+    
+    # Agent management routes
+    app.include_router(agents.router, prefix="/api/v1", tags=["agents"])
+    logger.info("✅ Agent routes registered at /api/v1")
+    
+    # Analytics routes
+    app.include_router(analytics.router, prefix="/api/v1", tags=["analytics"])
+    logger.info("✅ Analytics routes registered at /api/v1")
+    
+    # Integration routes (router already has prefix="/integrations")
+    app.include_router(integrations.router, prefix="/api/v1", tags=["integrations"])
+    logger.info("✅ Integration routes registered at /api/v1/integrations")
+    
+    # Workflow routes
+    app.include_router(workflows.router, prefix="/api/v1", tags=["workflows"])
+    logger.info("✅ Workflow routes registered at /api/v1")
+    
+    # User management routes
+    app.include_router(users.router, prefix="/api/v1", tags=["users"])
+    logger.info("✅ User routes registered at /api/v1")
+    
+    logger.info("✅ All API routes registered successfully")
+except Exception as e:
+    import traceback
+    logger.error(f"Could not register some API routes: {e}")
+    logger.error(traceback.format_exc())
+
+# Include WebSocket endpoint
+try:
+    from fastapi import WebSocket as FastAPIWebSocket
+
+    from src.api.websocket import websocket_endpoint
+    
+    @app.websocket("/ws")
+    async def websocket_route(websocket: FastAPIWebSocket):
+        """WebSocket endpoint for real-time updates"""
+        # Extract token from query parameters
+        token = websocket.query_params.get("token") if websocket.query_params else None
+        await websocket_endpoint(websocket, token)
+    logger.info("✅ WebSocket endpoint registered at /ws")
+except Exception as e:
+    logger.warning(f"Could not register WebSocket endpoint: {e}")
+
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_event():

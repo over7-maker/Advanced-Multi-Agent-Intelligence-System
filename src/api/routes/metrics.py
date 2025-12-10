@@ -1,13 +1,16 @@
 # src/api/routes/metrics.py (PROMETHEUS METRICS ENDPOINT)
-from fastapi import APIRouter, Response, Depends
 from datetime import datetime
+from typing import Any
+
+from fastapi import APIRouter, Depends, Response
+
 from src.amas.services.prometheus_metrics_service import get_metrics_service
 
 router = APIRouter(prefix="/metrics", tags=["Monitoring"])
 
 @router.get("")
 async def prometheus_metrics(
-    metrics_service = Depends(get_metrics_service)
+    metrics_service: Any = Depends(get_metrics_service)
 ):
     """
     Prometheus metrics endpoint

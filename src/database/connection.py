@@ -5,10 +5,15 @@ Production-ready PostgreSQL connection pool with health checks
 
 import logging
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Any, AsyncGenerator, Dict, Optional
 
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.orm import declarative_base
 
 from src.config.settings import get_settings
@@ -17,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 # Database setup
 Base = declarative_base()
-engine: Optional[create_async_engine] = None
+engine: Optional[AsyncEngine] = None
 async_session: Optional[async_sessionmaker[AsyncSession]] = None
 
 
@@ -56,7 +61,7 @@ async def close_database():
         logger.info("Database connection closed")
 
 
-async def get_session() -> AsyncSession:
+async def get_session() -> AsyncGenerator[AsyncSession, None]:
     """Get database session"""
     if not async_session:
         raise RuntimeError("Database not initialized")
@@ -108,11 +113,11 @@ async def health_check() -> Dict[str, Any]:
             result.scalar()
             
             # Get pool stats
-            pool = engine.pool
-            pool_size = pool.size()
-            pool_checked_in = pool.checkedin()
-            pool_checked_out = pool.checkedout()
-            pool_overflow = pool.overflow()
+            pool_obj = engine.pool
+            pool_size = getattr(pool_obj, 'size', lambda: 0)()
+            pool_checked_in = getattr(pool_obj, 'checkedin', lambda: 0)()
+            pool_checked_out = getattr(pool_obj, 'checkedout', lambda: 0)()
+            pool_overflow = getattr(pool_obj, 'overflow', lambda: 0)()
             
             # Get database stats
             db_stats_result = await session.execute(text("""
@@ -135,7 +140,7 @@ async def health_check() -> Dict[str, Any]:
                 "checked_in": pool_checked_in,
                 "checked_out": pool_checked_out,
                 "overflow": pool_overflow,
-                "max_overflow": pool._max_overflow if hasattr(pool, '_max_overflow') else 0
+                "max_overflow": getattr(pool_obj, '_max_overflow', getattr(pool_obj, 'max_overflow', 0))
             },
             "database": {
                 "total_connections": db_stats[0] if db_stats else 0,

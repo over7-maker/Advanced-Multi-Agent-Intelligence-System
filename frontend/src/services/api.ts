@@ -1,5 +1,5 @@
 // frontend/src/services/api.ts (PRODUCTION-READY API SERVICE)
-import axios, { AxiosInstance, AxiosError } from 'axios';
+import axios, { AxiosError, AxiosInstance } from 'axios';
 
 // ============================================================================
 // TYPE DEFINITIONS
@@ -325,6 +325,17 @@ class APIService {
     return response.data;
   }
 
+  // Agent Management
+  async startAgent(agentId: string): Promise<{ message: string }> {
+    const response = await this.client.post(`/agents/${agentId}/start`);
+    return response.data;
+  }
+
+  async stopAgent(agentId: string): Promise<{ message: string }> {
+    const response = await this.client.post(`/agents/${agentId}/stop`);
+    return response.data;
+  }
+
   async getAgent(agentId: string): Promise<Agent> {
     const response = await this.client.get(`/agents/${agentId}`);
     return response.data;
@@ -332,6 +343,53 @@ class APIService {
 
   async getAgentPerformance(): Promise<Agent[]> {
     const response = await this.client.get('/agents/performance');
+    return response.data;
+  }
+
+  // ========================================================================
+  // AI PROVIDERS
+  // ========================================================================
+
+  async getAIProviders(): Promise<{
+    providers: Array<{
+      id: string;
+      name: string;
+      model: string;
+      type: string;
+      priority: number;
+      enabled: boolean;
+      base_url?: string;
+      available: boolean;
+      models?: string[];
+    }>;
+    total: number;
+    available: number;
+  }> {
+    const response = await this.client.get('/agents/ai-providers');
+    return response.data;
+  }
+
+  async enableAIProvider(providerId: string): Promise<{
+    provider_id: string;
+    status: string;
+    message: string;
+    models?: string[];
+  }> {
+    const response = await this.client.post(`/agents/ai-providers/${providerId}/enable`);
+    return response.data;
+  }
+
+  async getOllamaModels(): Promise<{
+    models: Array<{
+      name: string;
+      size: number;
+      modified_at: string;
+    }>;
+    total: number;
+    available: boolean;
+    error?: string;
+  }> {
+    const response = await this.client.get('/agents/ai-providers/ollama/models');
     return response.data;
   }
 

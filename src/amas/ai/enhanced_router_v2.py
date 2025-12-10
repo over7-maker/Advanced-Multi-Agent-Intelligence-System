@@ -301,6 +301,15 @@ PROVIDER_CONFIGS = {
         provider_type="openai_compatible",
         priority=4,
     ),
+    # Ollama - Local fallback provider (no API key required)
+    "ollama": ProviderConfig(
+        name="Ollama",
+        api_key_env="OLLAMA_API_KEY",  # Not required, but checked
+        model="deepseek-r1:8b",  # Default model, can be overridden
+        base_url="http://localhost:11434/v1",
+        provider_type="ollama",
+        priority=100,  # Lowest priority - fallback only
+    ),
 }
 
 
@@ -370,12 +379,32 @@ def get_available_providers() -> List[str]:
     """Get list of available providers based on API keys."""
     available = []
     for provider_id, config in PROVIDER_CONFIGS.items():
+        # Skip Ollama in initial loop - handle separately
+        if provider_id == "ollama":
+            continue
+            
         if get_api_key(config.api_key_env):
             config.enabled = True
             available.append(provider_id)
         else:
             config.enabled = False
-    return sorted(available, key=lambda p: PROVIDER_CONFIGS[p].priority)
+    
+    # If no providers available, add Ollama as fallback
+    if not available:
+        logger.warning("No API keys found. Checking Ollama as fallback provider.")
+        # Check if Ollama is available
+        try:
+            import httpx
+            response = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
+            if response.status_code == 200:
+                ollama_config = PROVIDER_CONFIGS["ollama"]
+                ollama_config.enabled = True
+                available.append("ollama")
+                logger.info("✅ Ollama detected and added as fallback provider")
+        except Exception as e:
+            logger.debug(f"Ollama not available: {e}")
+    
+    return sorted(available, key=lambda p: PROVIDER_CONFIGS.get(p, ProviderConfig(name=p, api_key_env="", model="", priority=999)).priority)
 
 
 async def call_openrouter_provider(
@@ -811,6 +840,87 @@ async def generate_with_fallback(
         )
 
 
+async def call_ollama_provider(
+    provider_id: str,
+    messages: List[Dict[str, str]],
+    config: ProviderConfig,
+    session: aiohttp.ClientSession,
+    **kwargs
+) -> Dict[str, Any]:
+    """Call Ollama provider (local, no API key required)."""
+    # Ollama uses /api/chat endpoint (not OpenAI-compatible /v1/chat/completions)
+    # Try OpenAI-compatible endpoint first, fallback to native Ollama API
+    url = "http://localhost:11434/v1/chat/completions"
+    headers = {
+        "Content-Type": "application/json",
+    }
+    
+    # Convert messages format for Ollama
+    # Ollama expects: [{"role": "user", "content": "..."}, ...]
+    ollama_messages = []
+    for msg in messages:
+        if msg["role"] in ["user", "assistant", "system"]:
+            ollama_messages.append({
+                "role": msg["role"],
+                "content": msg["content"]
+            })
+    
+    body = {
+        "model": config.model,
+        "messages": ollama_messages,
+        "max_tokens": kwargs.get("max_tokens", 2000),
+        "temperature": kwargs.get("temperature", 0.7),
+    }
+    
+    try:
+        async with session.post(url, headers=headers, json=body, timeout=aiohttp.ClientTimeout(total=45)) as resp:
+            if resp.status >= 400:
+                # Try native Ollama API as fallback
+                error_text = await resp.text()
+                logger.debug(f"Ollama OpenAI-compatible endpoint failed: {error_text}, trying native API")
+                
+                # Try native Ollama /api/chat endpoint
+                native_url = "http://localhost:11434/api/chat"
+                # Convert to Ollama native format
+                prompt_text = "\n".join([msg["content"] for msg in messages if msg["role"] == "user"])
+                native_body = {
+                    "model": config.model,
+                    "messages": ollama_messages,
+                    "stream": False,
+                }
+                
+                async with session.post(native_url, headers=headers, json=native_body, timeout=aiohttp.ClientTimeout(total=45)) as native_resp:
+                    if native_resp.status >= 400:
+                        error_text = await native_resp.text()
+                        raise Exception(f"Ollama {native_resp.status}: {error_text}")
+                    
+                    data = await native_resp.json()
+                    content = data.get("message", {}).get("content", "") if isinstance(data.get("message"), dict) else data.get("response", "")
+                    
+                    return {
+                        "provider": provider_id,
+                        "content": content,
+                        "success": True,
+                        "model": config.model,
+                        "tokens_used": data.get("eval_count", 0) + data.get("prompt_eval_count", 0),
+                    }
+            
+            data = await resp.json()
+            content = data["choices"][0]["message"]["content"]
+            usage = data.get("usage", {})
+            
+            return {
+                "provider": provider_id,
+                "content": content,
+                "success": True,
+                "model": config.model,
+                "tokens_used": usage.get("total_tokens", 0),
+            }
+    except Exception as e:
+        logger.error(f"Ollama provider call failed: {e}")
+        raise
+
+
 async def _try_providers(
     providers: List[str],
     messages: List[Dict[str, str]],
@@ -822,11 +932,34 @@ async def _try_providers(
 ) -> Dict[str, Any]:
     """Try each provider in priority order."""
     for provider_id in providers:
-        config = PROVIDER_CONFIGS[provider_id]
+        # Handle Ollama specially (may not be in PROVIDER_CONFIGS if not initialized)
+        if provider_id == "ollama":
+            if provider_id not in PROVIDER_CONFIGS:
+                # Create temporary config for Ollama
+                config = ProviderConfig(
+                    name="Ollama",
+                    api_key_env="",
+                    model="deepseek-r1:8b",
+                    base_url="http://localhost:11434/v1",
+                    provider_type="ollama",
+                    priority=100,
+                )
+            else:
+                config = PROVIDER_CONFIGS[provider_id]
+        else:
+            if provider_id not in PROVIDER_CONFIGS:
+                logger.warning(f"Provider {provider_id} not found in PROVIDER_CONFIGS, skipping")
+                continue
+            config = PROVIDER_CONFIGS[provider_id]
         start_time = time.time()
         
         try:
-            if config.provider_type == "openrouter":
+            if config.provider_type == "ollama":
+                result = await asyncio.wait_for(
+                    call_ollama_provider(provider_id, messages, config, session, max_tokens=max_tokens, temperature=temperature),
+                    timeout=timeout,
+                )
+            elif config.provider_type == "openrouter":
                 result = await asyncio.wait_for(
                     call_openrouter_provider(provider_id, messages, config, session, max_tokens=max_tokens, temperature=temperature),
                     timeout=timeout,

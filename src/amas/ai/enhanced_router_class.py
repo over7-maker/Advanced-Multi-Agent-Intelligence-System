@@ -153,6 +153,19 @@ class EnhancedAIRouter:
         
         # Initialize circuit breakers for all providers
         available_providers = get_available_providers()
+        
+        # If no providers, try to add Ollama as fallback
+        if not available_providers:
+            logger.warning("No API keys found. Checking Ollama as fallback...")
+            try:
+                import httpx
+                response = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
+                if response.status_code == 200:
+                    available_providers = ["ollama"]
+                    logger.info("✅ Ollama detected and will be used as fallback provider")
+            except Exception as e:
+                logger.debug(f"Ollama not available: {e}")
+        
         for provider in available_providers:
             self.circuit_breakers[provider] = CircuitBreaker()
             self.provider_stats[provider] = {
@@ -228,19 +241,39 @@ class EnhancedAIRouter:
             try:
                 logger.info(f"Attempting provider: {provider} (attempt {attempt_number})")
                 
-                # Call the underlying generate_with_fallback
+                # Call the underlying generate_with_fallback from enhanced_router_v2
+                # This will try all available providers in order, starting with the preferred one
                 result = await generate_with_fallback(
                     prompt=prompt,
                     system_prompt=system_prompt,
                     max_tokens=max_tokens,
                     temperature=temperature,
-                    timeout=45.0
+                    timeout=45.0,
+                    session=None  # Let it create its own session
                 )
                 
+                # Extract the actual provider used from result
+                actual_provider = result.get("provider", provider)
+                
                 if result.get("success"):
-                    # Record success
-                    self.circuit_breakers[provider].record_success()
-                    self._record_success(provider, result)
+                    # Record success for the actual provider used
+                    if actual_provider in self.circuit_breakers:
+                        self.circuit_breakers[actual_provider].record_success()
+                        self._record_success(actual_provider, result)
+                    else:
+                        # Provider not in circuit breakers (e.g., Ollama added dynamically)
+                        self.circuit_breakers[actual_provider] = CircuitBreaker()
+                        self.circuit_breakers[actual_provider].record_success()
+                        self.provider_stats[actual_provider] = {
+                            "total_calls": 0,
+                            "successful_calls": 0,
+                            "failed_calls": 0,
+                            "total_tokens": 0,
+                            "total_cost": 0.0,
+                            "total_latency": 0.0,
+                            "last_used": None
+                        }
+                        self._record_success(actual_provider, result)
                     
                     # Calculate cost (estimate)
                     tokens = result.get("tokens_used", 0)
@@ -251,7 +284,7 @@ class EnhancedAIRouter:
                     
                     response = AIResponse(
                         content=result.get("content", ""),
-                        provider=provider,
+                        provider=actual_provider,
                         model=result.get("model", "unknown"),
                         tokens_used=tokens,
                         cost_usd=cost_usd,
@@ -270,8 +303,9 @@ class EnhancedAIRouter:
                     return response
                 else:
                     # Record failure
-                    self.circuit_breakers[provider].record_failure()
-                    self._record_failure(provider, result.get("error", "Unknown error"))
+                    if provider in self.circuit_breakers:
+                        self.circuit_breakers[provider].record_failure()
+                        self._record_failure(provider, result.get("error", "Unknown error"))
                     last_error = result.get("error", "Unknown error")
                     continue
                     
@@ -280,8 +314,9 @@ class EnhancedAIRouter:
                 logger.error(f"❌ Failed with {provider}: {e}")
                 
                 # Record failure
-                self.circuit_breakers[provider].record_failure()
-                self._record_failure(provider, str(e))
+                if provider in self.circuit_breakers:
+                    self.circuit_breakers[provider].record_failure()
+                    self._record_failure(provider, str(e))
                 
                 # Try next provider
                 continue

@@ -213,7 +213,8 @@ class EnhancedAuthManager:
 
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.jwt_secret = config.get("jwt_secret_key", secrets.token_urlsafe(32))
+        # Support both jwt_secret and jwt_secret_key for compatibility
+        self.jwt_secret = config.get("jwt_secret_key") or config.get("jwt_secret") or secrets.token_urlsafe(32)
         self.jwt_algorithm = config.get("jwt_algorithm", "HS256")
         self.access_token_expire_minutes = config.get(
             "jwt_access_token_expire_minutes", 30
@@ -766,7 +767,12 @@ def get_auth_manager() -> EnhancedAuthManager:
         from src.config.settings import get_settings
 
         settings = get_settings()
-        auth_manager = EnhancedAuthManager(settings.security.dict())
+        # Convert SecurityConfig to dict and map jwt_secret to jwt_secret_key
+        security_dict = settings.security.model_dump() if hasattr(settings.security, 'model_dump') else settings.security.dict()
+        # Map jwt_secret to jwt_secret_key for compatibility
+        if "jwt_secret" in security_dict and "jwt_secret_key" not in security_dict:
+            security_dict["jwt_secret_key"] = security_dict["jwt_secret"]
+        auth_manager = EnhancedAuthManager(security_dict)
     return auth_manager
 
 
