@@ -2,18 +2,17 @@
 Neo4j graph database management
 """
 
-import asyncio
 import logging
 from typing import Optional
 
-from neo4j import AsyncGraphDatabase
+from neo4j import AsyncDriver, AsyncGraphDatabase
 
 from src.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
 # Neo4j connection
-neo4j_driver: Optional[AsyncGraphDatabase] = None
+neo4j_driver: Optional[AsyncDriver] = None
 
 
 async def init_neo4j():
@@ -65,7 +64,7 @@ async def is_connected() -> bool:
         return False
 
 
-async def get_driver() -> AsyncGraphDatabase:
+async def get_driver() -> AsyncDriver:
     """Get Neo4j driver"""
     if not neo4j_driver:
         raise RuntimeError("Neo4j not initialized")

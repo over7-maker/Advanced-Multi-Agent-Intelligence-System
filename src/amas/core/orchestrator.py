@@ -8,10 +8,10 @@ managing agent coordination, task distribution, and workflow execution.
 import asyncio
 import logging
 import uuid
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 from ..agents.base.intelligence_agent import AgentStatus, IntelligenceAgent
 from ..agents.data_analysis.data_analysis_agent import DataAnalysisAgent
@@ -55,18 +55,12 @@ class IntelligenceTask:
     priority: TaskPriority
     assigned_agent: Optional[str] = None
     status: TaskStatus = TaskStatus.PENDING
-    created_at: datetime = None
+    created_at: datetime = field(default_factory=datetime.utcnow)
     started_at: Optional[datetime] = None
     completed_at: Optional[datetime] = None
-    parameters: Dict[str, Any] = None
+    parameters: Dict[str, Any] = field(default_factory=dict)
     result: Optional[Dict[str, Any]] = None
     error: Optional[str] = None
-
-    def __post_init__(self):
-        if self.created_at is None:
-            self.created_at = datetime.utcnow()
-        if self.parameters is None:
-            self.parameters = {}
 
 
 class IntelligenceOrchestrator:
@@ -463,7 +457,6 @@ class IntelligenceOrchestrator:
                 description=description,
                 priority=priority,
                 parameters=parameters,
-                workflow_id=workflow_id,
             )
 
             # Store task
@@ -636,7 +629,7 @@ class IntelligenceOrchestrator:
             # Validate agent contract before execution
             try:
                 from ...governance.agent_contracts import validate_agent_action
-                
+
                 # Get agent role (default to agent type if role not available)
                 agent_role = getattr(agent, 'role', None) or getattr(agent, 'agent_type', 'default')
                 

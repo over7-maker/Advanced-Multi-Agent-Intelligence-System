@@ -201,26 +201,32 @@ async def startup_event():
         logger.info("Initializing AMAS Intelligence System...")
 
         # 1. Initialize OpenTelemetry for observability
-        try:
-            otlp_endpoint = os.getenv("OTLP_ENDPOINT", "http://localhost:4317")
-            setup_opentelemetry(
-                service_name="amas",
-                otlp_endpoint=otlp_endpoint if otlp_endpoint != "http://localhost:4317" else None,
-                enable_console=os.getenv("OTLP_ENABLE_CONSOLE", "false").lower() == "true"
-            )
-            logger.info("✅ OpenTelemetry initialized")
-        except Exception as e:
-            logger.warning(f"OpenTelemetry initialization failed (continuing): {e}")
+        if setup_opentelemetry:
+            try:
+                otlp_endpoint = os.getenv("OTLP_ENDPOINT", "http://localhost:4317")
+                setup_opentelemetry(
+                    service_name="amas",
+                    otlp_endpoint=otlp_endpoint if otlp_endpoint != "http://localhost:4317" else None,
+                    enable_console=os.getenv("OTLP_ENABLE_CONSOLE", "false").lower() == "true"
+                )
+                logger.info("✅ OpenTelemetry initialized")
+            except Exception as e:
+                logger.warning(f"OpenTelemetry initialization failed (continuing): {e}")
+        else:
+            logger.info("OpenTelemetry skipped (components not available).")
 
         # 2. Initialize Audit Logger
         try:
             audit_log_file = os.getenv("AUDIT_LOG_FILE", "logs/audit.log")
             os.makedirs(os.path.dirname(audit_log_file) if os.path.dirname(audit_log_file) else ".", exist_ok=True)
-            initialize_audit_logger(
-                log_file=audit_log_file,
-                buffer_size=int(os.getenv("AUDIT_BUFFER_SIZE", "100")),
-                enable_redaction=os.getenv("AUDIT_REDACT_PII", "true").lower() == "true"
-            )
+            audit_config = {
+                "audit": {
+                    "log_file": audit_log_file,
+                    "buffer_size": int(os.getenv("AUDIT_BUFFER_SIZE", "100")),
+                    "redact_sensitive": os.getenv("AUDIT_REDACT_PII", "true").lower() == "true"
+                }
+            }
+            initialize_audit_logger(audit_config)
             logger.info("✅ Audit logger initialized")
         except Exception as e:
             logger.warning(f"Audit logger initialization failed (continuing): {e}")
@@ -341,13 +347,19 @@ async def health_check():
         except ImportError:
             # Fallback to basic health check
             amas = await get_amas_system()
-            service_health = await amas.service_manager.health_check_all_services()
-
-            return HealthCheck(
-                status=service_health.get("overall_status", "unknown"),
-                services=service_health.get("services", {}),
-                timestamp=datetime.utcnow().isoformat(),
-            )
+            if hasattr(amas, 'service_manager') and amas.service_manager:
+                service_health = await amas.service_manager.health_check_all_services()
+                return HealthCheck(
+                    status=service_health.get("overall_status", "unknown"),
+                    services=service_health.get("services", {}),
+                    timestamp=datetime.utcnow().isoformat(),
+                )
+            else:
+                return HealthCheck(
+                    status="unknown",
+                    services={"error": "Service manager not available"},
+                    timestamp=datetime.utcnow().isoformat(),
+                )
 
     except Exception as e:
         logger.error(f"Health check failed: {e}")
@@ -435,11 +447,41 @@ async def get_system_status():
     """Get system status"""
     try:
         amas = await get_amas_system()
-        status = await amas.orchestrator.get_system_status()
+        
+        # Try to get status from orchestrator
+        status = {}
+        if hasattr(amas, 'orchestrator') and amas.orchestrator:
+            if hasattr(amas.orchestrator, 'get_system_status'):
+                status = await amas.orchestrator.get_system_status()
+            elif hasattr(amas.orchestrator, 'agents'):
+                # Fallback: build status from orchestrator
+                status = {
+                    "status": "active",
+                    "agents": len(amas.orchestrator.agents) if hasattr(amas.orchestrator, 'agents') else 0,
+                    "active_tasks": len(amas.orchestrator.active_tasks) if hasattr(amas.orchestrator, 'active_tasks') else 0,
+                    "total_tasks": len(amas.orchestrator.tasks) if hasattr(amas.orchestrator, 'tasks') else 0,
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+            else:
+                status = {
+                    "status": "unknown",
+                    "agents": 0,
+                    "active_tasks": 0,
+                    "total_tasks": 0,
+                    "timestamp": datetime.utcnow().isoformat(),
+                }
+        else:
+            status = {
+                "status": "initializing",
+                "agents": 0,
+                "active_tasks": 0,
+                "total_tasks": 0,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
 
         return SystemStatus(
-            status=status.get("status", "unknown"),
-            agents=status.get("agents", 0),
+            status=status.get("status", status.get("orchestrator_status", "unknown")),
+            agents=status.get("agents", status.get("active_agents", 0)),
             active_tasks=status.get("active_tasks", 0),
             total_tasks=status.get("total_tasks", 0),
             timestamp=status.get("timestamp", datetime.utcnow().isoformat()),
@@ -472,25 +514,20 @@ async def submit_task(
             }
         )
 
-        # Log audit event
-        await amas.security_service.log_audit_event(
-            event_type="task_submission",
-            user_id=auth["user_id"],
-            action="submit_task",
-            details=f"Task submitted: {task_request.type}",
-            classification="system",
-        )
-
-        # Log audit event
-        security_service = amas.service_manager.get_security_service()
-        if security_service:
-            await security_service.log_audit_event(
-                event_type="task_submission",
-                user_id=auth["user_id"],
-                action="submit_task",
-                details=f"Task submitted: {task_request.type}",
-                classification="system",
-            )
+        # Log audit event (try multiple ways)
+        try:
+            if hasattr(amas, 'service_manager') and amas.service_manager:
+                security_service = amas.service_manager.get_security_service()
+                if security_service:
+                    await security_service.log_audit_event(
+                        event_type="task_submission",
+                        user_id=auth["user_id"],
+                        action="submit_task",
+                        details=f"Task submitted: {task_request.type}",
+                        classification="system",
+                    )
+        except Exception as e:
+            logger.warning(f"Failed to log audit event: {e}")
 
         return TaskResponse(
             task_id=task_id, status="submitted", message="Task submitted successfully"
@@ -531,18 +568,36 @@ async def get_agents(request: Request, auth: dict = Depends(verify_auth)):
 
         agents = []
         if hasattr(amas, "orchestrator") and amas.orchestrator:
-            for agent_id, agent in amas.orchestrator.agents.items():
-                agent_status = await agent.get_status()
-                agents.append(
-                    {
-                        "agent_id": agent_id,
-                        "name": agent_status.get("name", ""),
-                        "status": agent_status.get("status", "unknown"),
-                        "capabilities": agent_status.get("capabilities", []),
-                        "last_activity": agent_status.get("last_activity", ""),
-                        "metrics": agent_status.get("metrics", {}),
-                    }
-                )
+            if hasattr(amas.orchestrator, 'agents'):
+                for agent_id, agent in amas.orchestrator.agents.items():
+                    # Try to get status from agent
+                    agent_status = {}
+                    if hasattr(agent, 'get_status'):
+                        try:
+                            agent_status = await agent.get_status()
+                        except Exception:
+                            pass
+                    
+                    # Fallback: build status from agent attributes
+                    if not agent_status:
+                        agent_status = {
+                            "name": getattr(agent, 'name', getattr(agent, 'id', agent_id)),
+                            "status": str(getattr(agent, 'status', 'unknown')),
+                            "capabilities": getattr(agent, 'capabilities', []),
+                            "last_activity": "",
+                            "metrics": {},
+                        }
+                    
+                    agents.append(
+                        {
+                            "agent_id": agent_id,
+                            "name": agent_status.get("name", getattr(agent, 'name', agent_id)),
+                            "status": agent_status.get("status", str(getattr(agent, 'status', 'unknown'))),
+                            "capabilities": agent_status.get("capabilities", getattr(agent, 'capabilities', [])),
+                            "last_activity": agent_status.get("last_activity", ""),
+                            "metrics": agent_status.get("metrics", {}),
+                        }
+                    )
 
         return {"agents": agents}
 
@@ -561,11 +616,29 @@ async def get_agent_status(agent_id: str, request: Request, auth: dict = Depends
         if not hasattr(amas, "orchestrator") or not amas.orchestrator:
             raise HTTPException(status_code=503, detail="Orchestrator not available")
 
-        if agent_id not in amas.orchestrator.agents:
+        if not hasattr(amas.orchestrator, 'agents') or agent_id not in amas.orchestrator.agents:
             raise HTTPException(status_code=404, detail="Agent not found")
 
         agent = amas.orchestrator.agents[agent_id]
-        status = await agent.get_status()
+        
+        # Try to get status from agent
+        status = {}
+        if hasattr(agent, 'get_status'):
+            try:
+                status = await agent.get_status()
+            except Exception:
+                pass
+        
+        # Fallback: build status from agent attributes
+        if not status:
+            status = {
+                "agent_id": agent_id,
+                "name": getattr(agent, 'name', getattr(agent, 'id', agent_id)),
+                "status": str(getattr(agent, 'status', 'unknown')),
+                "capabilities": getattr(agent, 'capabilities', []),
+                "type": getattr(agent, 'type', 'unknown'),
+                "metrics": {},
+            }
 
         return status
 
@@ -590,16 +663,28 @@ async def execute_workflow(
         amas = await get_amas_system()
 
         # Execute workflow
-        result = await amas.orchestrator.execute_workflow(workflow_id, parameters)
+        if not hasattr(amas, 'orchestrator') or not amas.orchestrator:
+            raise HTTPException(status_code=503, detail="Orchestrator not available")
+        
+        if hasattr(amas.orchestrator, 'execute_workflow'):
+            result = await amas.orchestrator.execute_workflow(workflow_id, parameters)
+        else:
+            raise HTTPException(status_code=501, detail="Workflow execution not supported by this orchestrator")
 
-        # Log audit event
-        await amas.security_service.log_audit_event(
-            event_type="workflow_execution",
-            user_id=auth["user_id"],
-            action="execute_workflow",
-            details=f"Workflow executed: {workflow_id}",
-            classification="system",
-        )
+        # Log audit event (try multiple ways)
+        try:
+            if hasattr(amas, 'service_manager') and amas.service_manager:
+                security_service = amas.service_manager.get_security_service()
+                if security_service:
+                    await security_service.log_audit_event(
+                        event_type="workflow_execution",
+                        user_id=auth["user_id"],
+                        action="execute_workflow",
+                        details=f"Workflow executed: {workflow_id}",
+                        classification="system",
+                    )
+        except Exception as e:
+            logger.warning(f"Failed to log audit event: {e}")
 
         return result
 
@@ -614,7 +699,7 @@ async def get_audit_log(
     user_id: Optional[str] = None,
     event_type: Optional[str] = None,
     limit: int = 100,
-    request: Request = None,
+    request: Optional[Request] = None,
     auth: dict = Depends(verify_auth),
 ):
     """Get audit log"""
@@ -622,9 +707,17 @@ async def get_audit_log(
         amas = await get_amas_system()
 
         # Get audit log
-        audit_log = await amas.security_service.get_audit_log(
-            user_id=user_id, event_type=event_type
-        )
+        audit_log = []
+        if hasattr(amas, 'service_manager') and amas.service_manager:
+            security_service = amas.service_manager.get_security_service()
+            if security_service:
+                # Build kwargs only for non-None values
+                kwargs = {}
+                if user_id is not None:
+                    kwargs['user_id'] = user_id
+                if event_type is not None:
+                    kwargs['event_type'] = event_type
+                audit_log = await security_service.get_audit_log(**kwargs)
 
         # Limit results
         audit_log = audit_log[:limit]

@@ -24,12 +24,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 logger = logging.getLogger(__name__)
 
 try:
-    from amas.core.ai_api_manager import (
-        APIProvider,
-        TaskType,
-        generate_ai_response,
-        get_api_manager,
-    )
+    from amas.core.ai_api_manager import AIAPIManager  # noqa: F401
 
     API_MANAGER_AVAILABLE = True
 except ImportError:
@@ -375,10 +370,16 @@ class EnhancedAgentOrchestrator:
                 raise ValueError("Task must have 'type' and 'description' fields")
 
             task_id = str(uuid.uuid4())
+            task_type = task_data.get("type")
+            task_description = task_data.get("description")
+            
+            if not task_type or not task_description:
+                raise ValueError("Task must have 'type' and 'description' fields")
+            
             task = Task(
                 id=task_id,
-                type=task_data.get("type"),
-                description=task_data.get("description"),
+                type=task_type,
+                description=task_description,
                 priority=TaskPriority(task_data.get("priority", 2)),
                 metadata=task_data.get("metadata", {}),
                 max_retries=task_data.get("max_retries", 3),

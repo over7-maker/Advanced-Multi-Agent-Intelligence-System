@@ -15,17 +15,10 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 # Import managers with graceful fallback
-try:
-    from ..core.unified_intelligence_orchestrator import UnifiedIntelligenceOrchestrator
-    from ..services.credential_manager import get_credential_manager
-    orchestrator = None  # Will be initialized in startup
-    intelligence_manager = None  # Will be initialized in startup
-    provider_manager = None  # Will be initialized in startup
-except ImportError as e:
-    logging.warning(f"Could not import orchestrator/intelligence manager: {e}")
-    orchestrator = None
-    intelligence_manager = None
-    provider_manager = None
+# These will be imported in startup_event if available
+orchestrator = None  # Will be initialized in startup
+intelligence_manager = None  # Will be initialized in startup
+provider_manager = None  # Will be initialized in startup
 
 # Create FastAPI app
 app = FastAPI(
@@ -126,8 +119,18 @@ async def get_agents():
     """Get all available agents and their capabilities"""
     try:
         if orchestrator:
-            capabilities = await orchestrator.get_agent_capabilities()
-            return {"agents": capabilities}
+            # Get agents from orchestrator
+            agents_list = []
+            for agent_id, agent in orchestrator.agents.items():
+                agent_info = {
+                    "agent_id": agent_id,
+                    "name": getattr(agent, 'name', getattr(agent, 'id', agent_id)),
+                    "type": getattr(agent, 'type', 'unknown'),
+                    "capabilities": getattr(agent, 'capabilities', []),
+                    "status": str(getattr(agent, 'status', 'unknown')),
+                }
+                agents_list.append(agent_info)
+            return {"agents": agents_list}
         else:
             return {"agents": [], "message": "Orchestrator not initialized"}
     except Exception as e:
@@ -154,11 +157,13 @@ async def execute_task(task_request: TaskRequest, background_tasks: BackgroundTa
     """Execute a new task"""
     try:
         if orchestrator:
+            import uuid
+            task_id = str(uuid.uuid4())
             result = await orchestrator.execute_task(
+                task_id=task_id,
                 task_type=task_request.task_type,
                 target=task_request.target,
-                parameters=task_request.parameters,
-                user_id=task_request.user_id,
+                parameters=task_request.parameters or {},
             )
             return TaskResponse(**result)
         else:
@@ -234,14 +239,15 @@ async def startup_event():
             UnifiedIntelligenceOrchestrator,
         )
         orchestrator = UnifiedIntelligenceOrchestrator()
-        await orchestrator.initialize()
+        # UnifiedIntelligenceOrchestrator doesn't have initialize() - it initializes in __init__
+        # await orchestrator.initialize()  # Not needed
         logging.info("✅ Orchestrator initialized")
     except Exception as e:
         logging.warning(f"Could not initialize orchestrator: {e}")
     
     try:
-        from ..intelligence.intelligence_manager import IntelligenceManager
-        intelligence_manager = IntelligenceManager()
+        from ..intelligence.intelligence_manager import AMASIntelligenceManager
+        intelligence_manager = AMASIntelligenceManager()
         if hasattr(intelligence_manager, 'start_intelligence_systems'):
             await intelligence_manager.start_intelligence_systems()
         logging.info("✅ Intelligence manager initialized")

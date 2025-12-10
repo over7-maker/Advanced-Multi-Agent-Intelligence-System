@@ -13,7 +13,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import urljoin, urlparse
 
 import aiohttp
@@ -34,7 +34,7 @@ try:
     BASE_AGENT_AVAILABLE = True
 except ImportError:
     # Fallback if base_agent not available
-    from abc import ABC, abstractmethod
+    from abc import ABC
     class BaseAgent(ABC):
         """Fallback BaseAgent if import fails"""
         pass
@@ -728,19 +728,21 @@ class UnifiedIntelligenceOrchestrator:
         ai_agents_count = 0
         try:
             # Import all AI-powered agents
-            from src.amas.agents.security_expert_agent import SecurityExpertAgent
-            from src.amas.agents.intelligence_gathering_agent import IntelligenceGatheringAgent
-            from src.amas.agents.code_analysis_agent import CodeAnalysisAgent
-            from src.amas.agents.performance_agent import PerformanceAgent
-            from src.amas.agents.documentation_agent import DocumentationAgent
-            from src.amas.agents.testing_agent import TestingAgent
-            from src.amas.agents.deployment_agent import DeploymentAgent
-            from src.amas.agents.monitoring_agent import MonitoringAgent
-            from src.amas.agents.data_agent import DataAgent
             from src.amas.agents.api_agent import APIAgent
-            from src.amas.agents.research_agent import ResearchAgent
+            from src.amas.agents.code_analysis_agent import CodeAnalysisAgent
+            from src.amas.agents.data_agent import DataAgent
+            from src.amas.agents.deployment_agent import DeploymentAgent
+            from src.amas.agents.documentation_agent import DocumentationAgent
             from src.amas.agents.integration_agent import IntegrationAgent
-            
+            from src.amas.agents.intelligence_gathering_agent import (
+                IntelligenceGatheringAgent,
+            )
+            from src.amas.agents.monitoring_agent import MonitoringAgent
+            from src.amas.agents.performance_agent import PerformanceAgent
+            from src.amas.agents.research_agent import ResearchAgent
+            from src.amas.agents.security_expert_agent import SecurityExpertAgent
+            from src.amas.agents.testing_agent import TestingAgent
+
             # 1. Security Expert Agent
             security_agent = SecurityExpertAgent()
             self.agents["security_expert"] = security_agent
@@ -874,9 +876,9 @@ class UnifiedIntelligenceOrchestrator:
         task_type: str,
         target: str,
         parameters: Dict[str, Any],
-        assigned_agents: List[str] = None,
-        user_context: Dict[str, Any] = None,
-        progress_callback: callable = None
+        assigned_agents: Optional[List[str]] = None,
+        user_context: Optional[Dict[str, Any]] = None,
+        progress_callback: Optional[Callable] = None
     ) -> Dict[str, Any]:
         """
         Execute task with full orchestration (PART_1 requirement)
@@ -1089,7 +1091,9 @@ class UnifiedIntelligenceOrchestrator:
             # Get ML prediction if available
             prediction = None
             try:
-                from src.amas.intelligence.intelligence_manager import get_intelligence_manager
+                from src.amas.intelligence.intelligence_manager import (
+                    get_intelligence_manager,
+                )
                 intelligence_manager = get_intelligence_manager()
                 
                 task_data = {
@@ -1116,8 +1120,9 @@ class UnifiedIntelligenceOrchestrator:
             
             # Persist to database if available
             try:
-                from src.database.connection import async_session
                 from sqlalchemy import text
+
+                from src.database.connection import async_session
                 
                 if async_session:
                     async with async_session() as session:
@@ -1164,7 +1169,9 @@ class UnifiedIntelligenceOrchestrator:
         Uses IntelligenceManager for ML-powered agent selection
         """
         try:
-            from src.amas.intelligence.intelligence_manager import get_intelligence_manager
+            from src.amas.intelligence.intelligence_manager import (
+                get_intelligence_manager,
+            )
             
             intelligence_manager = get_intelligence_manager()
             
@@ -1184,8 +1191,23 @@ class UnifiedIntelligenceOrchestrator:
             for agent_id in optimal_agents:
                 if agent_id in self.agents:
                     agent = self.agents[agent_id]
-                    if (agent.status == AgentStatus.IDLE and 
-                        agent.circuit_breaker.can_execute()):
+                    agent_status = getattr(agent, 'status', None)
+                    circuit_breaker = getattr(agent, 'circuit_breaker', None)
+                    
+                    # Check if agent is idle
+                    is_idle = False
+                    if agent_status:
+                        if hasattr(agent_status, 'value'):
+                            is_idle = agent_status == AgentStatus.IDLE
+                        else:
+                            is_idle = str(agent_status) == "IDLE" or agent_status == AgentStatus.IDLE
+                    
+                    # Check circuit breaker
+                    can_execute = True
+                    if circuit_breaker and hasattr(circuit_breaker, 'can_execute'):
+                        can_execute = circuit_breaker.can_execute()
+                    
+                    if is_idle and can_execute:
                         available_agents.append(agent_id)
             
             # Fallback to basic selection if no ML agents available
@@ -1446,10 +1468,23 @@ class UnifiedIntelligenceOrchestrator:
         for agent_id in suitable_agents:
             if agent_id in self.agents:
                 agent = self.agents[agent_id]
-                if (
-                    agent.status == AgentStatus.IDLE
-                    and agent.circuit_breaker.can_execute()
-                ):
+                agent_status = getattr(agent, 'status', None)
+                circuit_breaker = getattr(agent, 'circuit_breaker', None)
+                
+                # Check if agent is idle
+                is_idle = False
+                if agent_status:
+                    if hasattr(agent_status, 'value'):
+                        is_idle = agent_status == AgentStatus.IDLE
+                    else:
+                        is_idle = str(agent_status) == "IDLE" or agent_status == AgentStatus.IDLE
+                
+                # Check circuit breaker
+                can_execute = True
+                if circuit_breaker and hasattr(circuit_breaker, 'can_execute'):
+                    can_execute = circuit_breaker.can_execute()
+                
+                if is_idle and can_execute:
                     return agent_id
 
         return None
@@ -1540,11 +1575,27 @@ class UnifiedIntelligenceOrchestrator:
         agent_health = {}
 
         for agent_id, agent in self.agents.items():
+            # Handle both BaseAgent and simple agents
+            agent_name = getattr(agent, 'name', getattr(agent, 'id', agent_id))
+            agent_status = getattr(agent, 'status', None)
+            if agent_status:
+                status_value = agent_status.value if hasattr(agent_status, 'value') else str(agent_status)
+            else:
+                status_value = "unknown"
+            
+            circuit_breaker = getattr(agent, 'circuit_breaker', None)
+            if circuit_breaker:
+                circuit_breaker_state = getattr(circuit_breaker, 'state', 'unknown')
+                can_execute = circuit_breaker.can_execute() if hasattr(circuit_breaker, 'can_execute') else True
+            else:
+                circuit_breaker_state = "N/A"
+                can_execute = True
+            
             agent_health[agent_id] = {
-                "name": agent.name,
-                "status": agent.status.value,
-                "circuit_breaker_state": agent.circuit_breaker.state,
-                "can_execute": agent.circuit_breaker.can_execute(),
+                "name": agent_name,
+                "status": status_value,
+                "circuit_breaker_state": circuit_breaker_state,
+                "can_execute": can_execute,
             }
 
         return {

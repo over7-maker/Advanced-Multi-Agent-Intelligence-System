@@ -5,18 +5,18 @@ Provides centralized tool access control, permissions management,
 and usage monitoring for all agent interactions.
 """
 
-import yaml
-import json
 import logging
-import asyncio
 import uuid
-import jsonschema
-from typing import Dict, List, Set, Optional, Any, Callable
-from pathlib import Path
-from dataclasses import dataclass, asdict
-from datetime import datetime, timezone, timedelta
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta, timezone
 from enum import Enum
-from ..agent_contracts.base_agent_contract import ToolCapability, ContractViolationError
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
+
+import jsonschema
+import yaml
+
+from ..agent_contracts.base_agent_contract import ContractViolationError, ToolCapability
 
 logger = logging.getLogger(__name__)
 
@@ -456,7 +456,7 @@ class ToolExecutionGuard:
             )
             if not params_valid:
                 raise ContractViolationError(
-                    agent_id, "invalid_parameters", param_error
+                    agent_id, "invalid_parameters", param_error or "Invalid parameters"
                 )
             
             # Execute the actual tool

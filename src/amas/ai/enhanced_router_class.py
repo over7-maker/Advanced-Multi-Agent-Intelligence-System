@@ -8,8 +8,6 @@ import time
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-import logging
-
 logger = logging.getLogger(__name__)
 
 # Lazy import to avoid circular dependencies and Google AI import issues

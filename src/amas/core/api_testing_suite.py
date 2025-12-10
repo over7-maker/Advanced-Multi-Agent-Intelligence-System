@@ -13,17 +13,55 @@ import os
 import time
 from dataclasses import dataclass, field
 from datetime import datetime
+
+# Create enum for task types
+from enum import Enum
 from typing import Any, Dict, List, Optional
 
 # Import our API manager
-from .ai_api_manager import (
-    APIProvider,
-    APIStatus,
-    IntelligentAPIManager,
-    TaskType,
-    generate_ai_response,
-    get_api_manager,
-)
+from .ai_api_manager import AIAPIManager
+
+
+class APIProvider(Enum):
+    """API provider enumeration"""
+    CEREBRAS = "cerebras"
+    CODESTRAL = "codestral"
+    DEEPSEEK = "deepseek"
+    GEMINI = "gemini"
+    GLM = "glm"
+    GPTOSS = "gptoss"
+    GROK = "grok"
+    GROQAI = "groqai"
+    KIMI = "kimi"
+    NVIDIA = "nvidia"
+    QWEN = "qwen"
+    GEMINI2 = "gemini2"
+    NVIDIA2 = "nvidia2"
+    GROQ2 = "groq2"
+    COHERE = "cohere"
+    CHUTES = "chutes"
+
+
+class TaskType(Enum):
+    """Task type enumeration"""
+    CHAT_COMPLETION = "chat_completion"
+    CODE_ANALYSIS = "code_analysis"
+    DATA_ANALYSIS = "data_analysis"
+    TEXT_GENERATION = "text_generation"
+    SUMMARIZATION = "summarization"
+    TRANSLATION = "translation"
+    REASONING = "reasoning"
+    QUESTION_ANSWERING = "question_answering"
+
+# Global API manager instance
+_global_api_manager = None
+
+def get_api_manager() -> AIAPIManager:
+    """Get global API manager instance"""
+    global _global_api_manager
+    if _global_api_manager is None:
+        _global_api_manager = AIAPIManager()
+    return _global_api_manager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -252,14 +290,19 @@ Artificial Intelligence has revolutionized many industries, from healthcare to f
         try:
             logger.info(f"🧪 Testing {provider.value} with {test_case.name}")
 
-            # Generate response
-            response = await generate_ai_response(
-                messages=test_case.messages,
-                task_type=test_case.task_type,
-                preferred_provider=provider,
-                max_tokens=2000,
-                temperature=0.7,
-            )
+            # Convert messages to prompt
+            prompt = "\n".join([msg.get("content", "") for msg in test_case.messages if msg.get("role") == "user"])
+            if not prompt:
+                prompt = test_case.messages[0].get("content", "") if test_case.messages else ""
+
+            # Generate response using the API manager directly
+            async with self.api_manager:
+                response = await self.api_manager.generate_response(
+                    prompt=prompt,
+                    task_type=test_case.task_type.value if isinstance(test_case.task_type, Enum) else str(test_case.task_type),
+                    max_tokens=2000,
+                    temperature=0.7,
+                )
 
             response_time = time.time() - start_time
             response_content = response.get("content", "")
@@ -314,7 +357,7 @@ Artificial Intelligence has revolutionized many industries, from healthcare to f
             return result
 
     async def test_all_providers(
-        self, test_case_ids: List[str] = None
+        self, test_case_ids: Optional[List[str]] = None
     ) -> Dict[str, List[TestResult]]:
         """Test all available providers with specified test cases"""
 
@@ -323,8 +366,9 @@ Artificial Intelligence has revolutionized many industries, from healthcare to f
         else:
             test_cases_to_run = [tc for tc in self.test_cases if tc.id in test_case_ids]
 
+        available_providers = list(self.api_manager.apis.keys())
         logger.info(
-            f"🚀 Starting comprehensive testing of {len(self.api_manager.endpoints)} providers with {len(test_cases_to_run)} test cases"
+            f"🚀 Starting comprehensive testing of {len(available_providers)} providers with {len(test_cases_to_run)} test cases"
         )
 
         all_results = {}
@@ -335,13 +379,18 @@ Artificial Intelligence has revolutionized many industries, from healthcare to f
             test_results = []
 
             # Test each available provider
-            for provider in self.api_manager.endpoints.keys():
-                if self.api_manager.endpoints[provider].enabled:
+            for provider_name in available_providers:
+                try:
+                    # Convert provider name to APIProvider enum
+                    provider = APIProvider(provider_name)
                     result = await self.test_single_provider(provider, test_case)
                     test_results.append(result)
 
                     # Small delay between tests to respect rate limits
                     await asyncio.sleep(1)
+                except ValueError:
+                    # Provider name not in enum, skip
+                    continue
 
             all_results[test_case.id] = test_results
 
@@ -376,15 +425,22 @@ Artificial Intelligence has revolutionized many industries, from healthcare to f
             """Single stress test request"""
             try:
                 start_time = time.time()
-                response = await generate_ai_response(
-                    messages=basic_test.messages, task_type=basic_test.task_type
-                )
+                # Convert messages to prompt
+                prompt = "\n".join([msg.get("content", "") for msg in basic_test.messages if msg.get("role") == "user"])
+                if not prompt:
+                    prompt = basic_test.messages[0].get("content", "") if basic_test.messages else ""
+                
+                async with self.api_manager:
+                    response = await self.api_manager.generate_response(
+                        prompt=prompt,
+                        task_type=basic_test.task_type.value if isinstance(basic_test.task_type, Enum) else str(basic_test.task_type)
+                    )
                 response_time = time.time() - start_time
 
                 return {
                     "success": True,
                     "response_time": response_time,
-                    "provider": response.get("provider", "unknown"),
+                    "provider": response.get("api_used", "unknown"),
                 }
             except Exception as e:
                 return {
@@ -453,7 +509,7 @@ Artificial Intelligence has revolutionized many industries, from healthcare to f
             "",
             f"**Generated:** {datetime.now().isoformat()}",
             f"**Total Test Cases:** {len(self.test_results)}",
-            f"**Total Providers:** {len(self.api_manager.endpoints)}",
+            f"**Total Providers:** {len(self.api_manager.apis)}",
             "",
             "---",
             "",
@@ -466,6 +522,7 @@ Artificial Intelligence has revolutionized many industries, from healthcare to f
             for results in self.test_results.values()
         )
 
+        success_rate = (successful_tests / total_tests * 100) if total_tests > 0 else 0.0
         report_lines.extend(
             [
                 "## 📊 Overall Statistics",
@@ -473,7 +530,7 @@ Artificial Intelligence has revolutionized many industries, from healthcare to f
                 f"**Total Tests Executed:** {total_tests}",
                 f"**Successful Tests:** {successful_tests}",
                 f"**Failed Tests:** {total_tests - successful_tests}",
-                f"**Overall Success Rate:** {(successful_tests / total_tests * 100):.1f}%",
+                f"**Overall Success Rate:** {success_rate:.1f}%",
                 "",
                 "---",
                 "",
@@ -588,15 +645,16 @@ Artificial Intelligence has revolutionized many industries, from healthcare to f
             report_lines.extend(["---", ""])
 
         # API Manager Status
-        api_stats = self.api_manager.get_provider_statistics()
-
+        # Get health status from API manager
+        health_status = self.api_manager.get_health_status()
         report_lines.extend(
             [
                 "## 🔧 API Manager Status",
                 "",
-                f"**Healthy Providers:** {api_stats['overview']['healthy_providers']}/{api_stats['overview']['total_providers']}",
-                f"**System Success Rate:** {api_stats['overview']['success_rate']:.1f}%",
-                f"**Total API Requests:** {api_stats['overview']['total_requests']}",
+                f"**Total Providers:** {health_status['total_apis']}",
+                f"**Healthy Providers:** {health_status['healthy_apis']}",
+                f"**Unhealthy Providers:** {health_status['unhealthy_apis']}",
+                f"**Rate Limited Providers:** {health_status['rate_limited_apis']}",
                 "",
                 "---",
                 "",
@@ -644,7 +702,7 @@ Artificial Intelligence has revolutionized many industries, from healthcare to f
                 "",
                 "---",
                 "",
-                f"*Report generated by AMAS API Testing Suite*",
+                "*Report generated by AMAS API Testing Suite*",
                 f"*Timestamp: {datetime.now().isoformat()}*",
             ]
         )
@@ -664,68 +722,65 @@ Artificial Intelligence has revolutionized many industries, from healthcare to f
             "system_resilience_score": 0.0,
         }
 
-        # Test fallback by disabling providers one by one
-        original_states = {}
+        # Test fallback by marking providers as unhealthy one by one
+        original_health_states = {}
 
         try:
-            for provider in self.api_manager.endpoints.keys():
-                # Store original state
-                original_states[provider] = self.api_manager.endpoints[provider].enabled
+            for provider_name in self.api_manager.apis.keys():
+                # Store original health state
+                original_health_states[provider_name] = self.api_manager.health_status[provider_name].is_healthy
 
-                # Disable this provider temporarily
-                self.api_manager.disable_provider(provider)
+                # Mark this provider as unhealthy temporarily
+                self.api_manager.health_status[provider_name].is_healthy = False
 
-                logger.info(f"🔴 Disabled {provider.value} to test fallback")
+                logger.info(f"🔴 Marked {provider_name} as unhealthy to test fallback")
 
                 # Try to generate response (should fallback to other providers)
                 try:
-                    response = await generate_ai_response(
-                        messages=[{"role": "user", "content": "Test fallback system"}],
-                        task_type=TaskType.CHAT_COMPLETION,
-                        preferred_provider=provider,  # Try the disabled provider first
-                    )
+                    prompt = "Test fallback system"
+                    async with self.api_manager:
+                        response = await self.api_manager.generate_response(
+                            prompt=prompt,
+                            task_type=TaskType.CHAT_COMPLETION.value,
+                        )
 
                     fallback_test = {
-                        "disabled_provider": provider.value,
+                        "disabled_provider": provider_name,
                         "fallback_successful": True,
-                        "actual_provider_used": response.get("provider"),
-                        "fallback_attempts": response.get("fallback_attempts", 1),
-                        "response_time": response.get("response_time", 0),
+                        "actual_provider_used": response.get("api_used", "unknown"),
+                        "response_time": 0,
                     }
 
                     validation_results["total_fallbacks_triggered"] += 1
                     validation_results["successful_fallbacks"] += 1
 
                     logger.info(
-                        f"✅ Fallback successful: {provider.value} → {response.get('provider')}"
+                        f"✅ Fallback successful: {provider_name} → {response.get('api_used', 'unknown')}"
                     )
 
                 except Exception as e:
                     fallback_test = {
-                        "disabled_provider": provider.value,
+                        "disabled_provider": provider_name,
                         "fallback_successful": False,
                         "error": str(e),
                     }
 
                     validation_results["total_fallbacks_triggered"] += 1
 
-                    logger.warning(f"❌ Fallback failed for {provider.value}: {e}")
+                    logger.warning(f"❌ Fallback failed for {provider_name}: {e}")
 
                 validation_results["fallback_tests"].append(fallback_test)
 
-                # Re-enable the provider
-                self.api_manager.enable_provider(provider)
+                # Restore original health state
+                self.api_manager.health_status[provider_name].is_healthy = original_health_states[provider_name]
 
                 # Brief pause
                 await asyncio.sleep(1)
 
         finally:
-            # Restore all original states
-            for provider, original_state in original_states.items():
-                if original_state:
-                    self.api_manager.enable_provider(provider)
-                else:
-                    self.api_manager.disable_provider(provider)
+            # Restore all original health states
+            for provider_name, original_state in original_health_states.items():
+                self.api_manager.health_status[provider_name].is_healthy = original_state
 
         # Calculate resilience score
         if validation_results["total_fallbacks_triggered"] > 0:
@@ -754,7 +809,7 @@ async def run_comprehensive_validation():
 
     # 1. Health check all providers
     logger.info("🏥 Running health checks...")
-    health_results = await test_suite.api_manager.health_check_all_providers()
+    health_results = await test_suite.api_manager.health_check()
 
     # 2. Run all test cases
     logger.info("🧪 Running all test cases...")
@@ -781,12 +836,28 @@ async def run_comprehensive_validation():
 
     # Save detailed results
     with open("artifacts/api_test_results.json", "w") as f:
+        # Convert TestResult objects to dicts
+        test_results_dict = {}
+        for test_id, results in test_results.items():
+            test_results_dict[test_id] = []
+            for result in results:
+                result_dict = {
+                    "test_case_id": result.test_case_id,
+                    "provider": result.provider.value if isinstance(result.provider, Enum) else str(result.provider),
+                    "success": result.success,
+                    "response_time": result.response_time,
+                    "response_content": result.response_content,
+                    "error_message": result.error_message,
+                    "response_length": result.response_length,
+                    "contains_keywords": result.contains_keywords,
+                    "timestamp": result.timestamp.isoformat() if hasattr(result.timestamp, 'isoformat') else str(result.timestamp),
+                }
+                test_results_dict[test_id].append(result_dict)
+        
         json.dump(
             {
-                "health_results": {k.value: v for k, v in health_results.items()},
-                "test_results": {
-                    k: [r.__dict__ for r in v] for k, v in test_results.items()
-                },
+                "health_results": health_results,
+                "test_results": test_results_dict,
                 "stress_results": stress_results,
                 "fallback_results": fallback_results,
                 "timestamp": datetime.now().isoformat(),

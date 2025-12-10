@@ -44,6 +44,7 @@ except ImportError:
 # We catch both ImportError and OSError to handle this gracefully
 try:
     import google.generativeai as genai
+
     # Test if the module actually works (Python 3.13 compatibility check)
     try:
         # This will fail on Python 3.13 if OpenSSL is incompatible

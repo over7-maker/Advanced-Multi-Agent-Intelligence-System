@@ -5,11 +5,11 @@ Production-ready configuration with pydantic-settings
 
 from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-from pydantic_settings import BaseSettings
+from pydantic import BaseModel, Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class DatabaseSettings(BaseModel):
+class DatabaseSettings(BaseSettings):
     """Database configuration settings"""
 
     url: str = Field(default="postgresql://postgres:amas_password@localhost:5432/amas")
@@ -22,10 +22,10 @@ class DatabaseSettings(BaseModel):
     max_overflow: int = Field(default=20)
     echo: bool = Field(default=False)
 
-    model_config = ConfigDict(env_prefix="DB_")
+    model_config = SettingsConfigDict(env_prefix="DB_")
 
 
-class RedisSettings(BaseModel):
+class RedisSettings(BaseSettings):
     """Redis configuration settings"""
 
     url: str = Field(default="redis://localhost:6379/0")
@@ -35,10 +35,10 @@ class RedisSettings(BaseModel):
     db: int = Field(default=0)
     max_connections: int = Field(default=20)
 
-    model_config = ConfigDict(env_prefix="REDIS_")
+    model_config = SettingsConfigDict(env_prefix="REDIS_")
 
 
-class Neo4jSettings(BaseModel):
+class Neo4jSettings(BaseSettings):
     """Neo4j configuration settings"""
 
     uri: str = Field(default="bolt://localhost:7687")
@@ -46,7 +46,7 @@ class Neo4jSettings(BaseModel):
     password: str = Field(default="amas_password")
     max_connections: int = Field(default=50)
 
-    model_config = ConfigDict(env_prefix="NEO4J_")
+    model_config = SettingsConfigDict(env_prefix="NEO4J_")
 
 
 class SecuritySettings(BaseModel):
@@ -74,10 +74,10 @@ class SecuritySettings(BaseModel):
             return [origin.strip() for origin in v.split(",")]
         return v
 
-    model_config = ConfigDict(env_prefix="SECURITY_")
+    model_config = SettingsConfigDict(env_prefix="SECURITY_")
 
 
-class AISettings(BaseModel):
+class AISettings(BaseSettings):
     """AI provider configuration settings"""
 
     # Standard Providers (Tier 0)
@@ -125,10 +125,10 @@ class AISettings(BaseModel):
     max_tokens: int = Field(default=4000)
     temperature: float = Field(default=0.7)
 
-    model_config = ConfigDict(env_prefix="AI_")
+    model_config = SettingsConfigDict(env_prefix="AI_")
 
 
-class IntegrationSettings(BaseModel):
+class IntegrationSettings(BaseSettings):
     """Integration platform credentials settings"""
 
     # N8N
@@ -163,10 +163,10 @@ class IntegrationSettings(BaseModel):
     salesforce_client_id: Optional[str] = Field(default=None)
     salesforce_client_secret: Optional[str] = Field(default=None)
 
-    model_config = ConfigDict(env_prefix="INTEGRATION_")
+    model_config = SettingsConfigDict(env_prefix="INTEGRATION_")
 
 
-class MonitoringSettings(BaseModel):
+class MonitoringSettings(BaseSettings):
     """Monitoring and observability settings"""
 
     prometheus_enabled: bool = Field(default=True)
@@ -183,10 +183,10 @@ class MonitoringSettings(BaseModel):
     log_max_size: str = Field(default="100MB")
     log_backup_count: int = Field(default=5)
 
-    model_config = ConfigDict(env_prefix="MONITORING_")
+    model_config = SettingsConfigDict(env_prefix="MONITORING_")
 
 
-class PerformanceSettings(BaseModel):
+class PerformanceSettings(BaseSettings):
     """Performance and scaling settings"""
 
     worker_processes: int = Field(default=4)
@@ -207,10 +207,10 @@ class PerformanceSettings(BaseModel):
     agent_timeout: int = Field(default=300)
     agent_memory_limit: int = Field(default=1000)
 
-    model_config = ConfigDict(env_prefix="PERFORMANCE_")
+    model_config = SettingsConfigDict(env_prefix="PERFORMANCE_")
 
 
-class FeatureFlags(BaseModel):
+class FeatureFlags(BaseSettings):
     """Feature flags for enabling/disabling functionality"""
 
     enable_voice_commands: bool = Field(default=True)
@@ -219,7 +219,7 @@ class FeatureFlags(BaseModel):
     enable_metrics_collection: bool = Field(default=True)
     enable_health_checks: bool = Field(default=True)
 
-    model_config = ConfigDict(env_prefix="FEATURE_")
+    model_config = SettingsConfigDict(env_prefix="FEATURE_")
 
 
 class Settings(BaseSettings):
@@ -263,7 +263,7 @@ class Settings(BaseSettings):
     def is_testing(self) -> bool:
         return self.environment == "testing"
 
-    model_config = ConfigDict(
+    model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,

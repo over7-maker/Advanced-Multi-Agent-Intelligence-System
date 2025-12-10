@@ -115,7 +115,7 @@ class N8NConnector:
     """N8N integration connector for advanced workflow automation"""
     
     def __init__(self, 
-                 n8n_base_url: str = None,
+                 n8n_base_url: Optional[str] = None,
                  api_key: Optional[str] = None,
                  username: Optional[str] = None,
                  password: Optional[str] = None):
@@ -199,6 +199,9 @@ class N8NConnector:
     
     async def _authenticate_with_credentials(self):
         """Authenticate with N8N using username/password"""
+        if self.session is None:
+            raise RuntimeError("Session not initialized")
+        
         auth_url = urljoin(self.base_url, '/rest/login')
         
         auth_data = {
@@ -217,6 +220,9 @@ class N8NConnector:
     
     async def _test_connection(self):
         """Test N8N API connection"""
+        if self.session is None:
+            raise RuntimeError("Session not initialized")
+        
         health_url = urljoin(self.base_url, '/healthz')
         
         async with self.session.get(health_url) as response:
@@ -233,6 +239,10 @@ class N8NConnector:
             return []
         
         try:
+            if self.session is None:
+                logger.warning("Session not initialized - cannot load workflows")
+                return []
+            
             workflows_url = urljoin(self.base_url, '/rest/workflows')
             
             async with self.session.get(workflows_url) as response:
@@ -316,6 +326,10 @@ class N8NConnector:
         )
         
         try:
+            if self.session is None:
+                logger.error("Session not initialized - cannot create workflow")
+                return None
+            
             create_url = urljoin(self.base_url, '/rest/workflows')
             
             async with self.session.post(create_url, json=workflow_config) as response:
@@ -519,7 +533,7 @@ class N8NConnector:
     
     async def execute_workflow(self,
                              workflow_id: str,
-                             input_data: Dict[str, Any] = None,
+                             input_data: Optional[Dict[str, Any]] = None,
                              wait_for_completion: bool = False,
                              timeout_seconds: int = 300) -> Optional[N8NExecution]:
         """Execute N8N workflow and optionally wait for completion"""
@@ -580,6 +594,10 @@ class N8NConnector:
         }
         
         # Trigger webhook
+        if self.session is None:
+            logger.error("Session not initialized - cannot trigger webhook")
+            return None
+        
         async with self.session.post(webhook_url, json=execution_data) as response:
             if response.status in [200, 201]:
                 # Create execution record
@@ -607,6 +625,10 @@ class N8NConnector:
         execute_url = urljoin(self.base_url, f'/rest/workflows/{workflow_id}/execute')
         
         # Prepare execution payload
+        if self.session is None:
+            logger.error("Session not initialized - cannot trigger workflow")
+            return None
+        
         execution_payload = {
             "startNodes": [],  # Empty means start from trigger nodes
             "destinationNode": "",  # Empty means execute complete workflow
@@ -686,6 +708,10 @@ class N8NConnector:
             return None
         
         try:
+            if self.session is None:
+                logger.warning("Session not initialized - returning cached execution")
+                return execution
+            
             # Query N8N for latest execution status
             executions_url = urljoin(self.base_url, f'/rest/executions/{execution_id}')
             
@@ -907,6 +933,7 @@ class N8NConnector:
             total_time = sum(
                 (e.finished_at - e.started_at).total_seconds() 
                 for e in completed_executions
+                if e.finished_at is not None
             )
             avg_execution_time = total_time / len(completed_executions)
         
@@ -938,7 +965,7 @@ class N8NConnector:
             api_key = credentials.get("api_key")
             
             # In test environment, allow test credentials
-            if api_key == "test_key" or credentials.get("test_mode") == True:
+            if api_key == "test_key" or credentials.get("test_mode"):
                 logger.debug("Using test credentials for N8N")
                 return True
             
@@ -960,7 +987,7 @@ class N8NConnector:
                     ) as response:
                         if response.status == 200:
                             return True
-                except:
+                except Exception:
                     pass
                 
                 # Try workflows endpoint if api_key provided
@@ -972,7 +999,7 @@ class N8NConnector:
                             timeout=aiohttp.ClientTimeout(total=5)
                         ) as response:
                             return response.status in [200, 401]  # 401 means auth required but endpoint exists
-                    except:
+                    except Exception:
                         pass
                 
                 # If we get here, validation failed
@@ -1111,7 +1138,7 @@ class N8NConnector:
 # Global N8N connector instance
 _global_n8n_connector: Optional[N8NConnector] = None
 
-async def get_n8n_connector(config: Dict[str, Any] = None) -> N8NConnector:
+async def get_n8n_connector(config: Optional[Dict[str, Any]] = None) -> N8NConnector:
     """Get global N8N connector instance"""
     global _global_n8n_connector
     

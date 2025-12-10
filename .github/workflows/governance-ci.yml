@@ -84,7 +84,7 @@ jobs:
   type-check:
     name: Static Type Checking (mypy + pyright)
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ env.TIMEOUT_MINUTES }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false  # Continue other jobs even if type checking fails
     steps:
@@ -193,7 +193,7 @@ jobs:
   lint:
     name: Code Linting (flake8 + pylint)
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ env.TIMEOUT_MINUTES }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
     steps:
@@ -280,7 +280,7 @@ jobs:
   test:
     name: Unit Tests and Coverage
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ env.TIMEOUT_MINUTES }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false  # Continue other jobs even if tests fail
       # Matrix strategy for handling flaky tests - retry on failure
@@ -391,7 +391,7 @@ jobs:
   performance:
     name: Performance Tests and Benchmarks
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ env.TIMEOUT_MINUTES }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
     steps:
@@ -461,7 +461,7 @@ jobs:
   security:
     name: Security Scanning (bandit + safety + dependency-review)
     runs-on: ubuntu-latest
-    timeout-minutes: ${{ env.TIMEOUT_MINUTES }}
+    timeout-minutes: 20
     strategy:
       fail-fast: false
     steps:

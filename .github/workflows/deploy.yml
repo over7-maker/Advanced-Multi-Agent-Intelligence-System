@@ -182,7 +182,7 @@ jobs:
     if: github.ref == 'refs/heads/main'
     
     environment:
-      name: production
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
       url: https://amas.your-domain.com
     
     steps:
@@ -216,9 +216,10 @@ jobs:
       
       - name: Notify deployment
         uses: 8398a7/action-slack@v3
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
         with:
           status: ${{ job.status }}
           text: 'Production deployment completed! 🚀'
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
         if: always()
 
