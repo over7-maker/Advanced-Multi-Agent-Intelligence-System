@@ -699,7 +699,6 @@ async def get_audit_log(
     user_id: Optional[str] = None,
     event_type: Optional[str] = None,
     limit: int = 100,
-    request: Optional[Request] = None,
     auth: dict = Depends(verify_auth),
 ):
     """Get audit log"""

@@ -31,13 +31,15 @@ class AMASApplication:
         Args:
             config_override: Optional configuration overrides to apply
         """
+        # Setup logger first before any other operations
+        self.logger: logging.Logger = self._setup_logging()
+        
         self.config: AMASConfig = get_settings()
         if config_override:
             self._apply_config_overrides(config_override)
 
         self.orchestrator: Optional[IntelligenceOrchestrator] = None
         self.service_manager: Optional[ServiceManager] = None
-        self.logger: logging.Logger = self._setup_logging()
         self._is_initialized: bool = False
         self._is_running: bool = False
 
