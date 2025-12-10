@@ -31,15 +31,10 @@ class WebSocketService {
 
   constructor() {
     const wsProtocol = typeof window !== 'undefined' && window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Use relative URL to work with any port (recommended)
-    // Falls back to environment variable or current host
-    const wsHost = import.meta.env.VITE_WS_URL || (typeof window !== 'undefined' ? window.location.host : window.location.hostname + ':8001');
-    // Use relative WebSocket URL if on same origin, otherwise use full URL
-    if (typeof window !== 'undefined' && !import.meta.env.VITE_WS_URL) {
-      this.connectionUrl = `${wsProtocol}//${window.location.host}/ws`;
-    } else {
-      this.connectionUrl = `${wsProtocol}//${wsHost}/ws`;
-    }
+    // Use backend URL for WebSocket (not frontend dev server)
+    // In development, Vite proxy should handle /ws, but we'll use backend directly
+    const backendHost = import.meta.env.VITE_API_URL?.replace('http://', '').replace('https://', '') || 'localhost:8000';
+    this.connectionUrl = `${wsProtocol}//${backendHost}/ws`;
   }
 
   // ========================================================================
@@ -47,8 +42,25 @@ class WebSocketService {
   // ========================================================================
 
   connect(): void {
-    if (this.ws?.readyState === WebSocket.OPEN || this.isConnecting) {
-      console.log('WebSocket already connected or connecting');
+    // Check if already connected or connecting
+    if (this.ws) {
+      const state = this.ws.readyState;
+      if (state === WebSocket.OPEN) {
+        console.log('WebSocket already connected');
+        return;
+      }
+      if (state === WebSocket.CONNECTING) {
+        console.log('WebSocket already connecting');
+        return;
+      }
+      // If closing or closed, clean up first
+      if (state === WebSocket.CLOSING || state === WebSocket.CLOSED) {
+        this.ws = null;
+      }
+    }
+    
+    if (this.isConnecting) {
+      console.log('WebSocket connection already in progress');
       return;
     }
 
@@ -131,9 +143,22 @@ class WebSocketService {
   disconnect(): void {
     this.shouldReconnect = false;
     this.stopHeartbeat();
+    this.isConnecting = false;
 
     if (this.ws) {
-      this.ws.close(1000, 'Client disconnect');
+      // Remove event handlers before closing to prevent errors
+      this.ws.onopen = null;
+      this.ws.onclose = null;
+      this.ws.onerror = null;
+      this.ws.onmessage = null;
+      
+      try {
+        if (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING) {
+          this.ws.close(1000, 'Client disconnect');
+        }
+      } catch (e) {
+        // Ignore errors when closing
+      }
       this.ws = null;
     }
   }
@@ -232,16 +257,39 @@ class WebSocketService {
         })
       );
     } else {
-      console.warn('WebSocket not connected, cannot send message');
+      // Silently fail - connection will be established when needed
+      // Don't log warnings for expected behavior
+      if (this.ws?.readyState === WebSocket.CONNECTING) {
+        // Queue message for when connection is ready
+        setTimeout(() => {
+          if (this.ws?.readyState === WebSocket.OPEN) {
+            this.send(command, data);
+          }
+        }, 100);
+      }
     }
   }
 
   subscribeToTask(taskId: string): void {
-    this.send('subscribe_task', { task_id: taskId });
+    // Only subscribe if connected or connecting
+    if (this.ws?.readyState === WebSocket.OPEN || this.ws?.readyState === WebSocket.CONNECTING) {
+      this.send('subscribe_task', { task_id: taskId });
+    } else {
+      // Connect first, then subscribe
+      this.connect();
+      setTimeout(() => {
+        if (this.isConnected()) {
+          this.send('subscribe_task', { task_id: taskId });
+        }
+      }, 500);
+    }
   }
 
   unsubscribeFromTask(taskId: string): void {
-    this.send('unsubscribe_task', { task_id: taskId });
+    // Only unsubscribe if connected
+    if (this.ws?.readyState === WebSocket.OPEN) {
+      this.send('unsubscribe_task', { task_id: taskId });
+    }
   }
 
   // ========================================================================

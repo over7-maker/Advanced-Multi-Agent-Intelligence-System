@@ -146,6 +146,10 @@ class TaskResponse(BaseModel):
     assigned_agents: Optional[List[str]] = None
     created_at: str
     created_by: Optional[str] = None
+    result: Optional[Dict[str, Any]] = None  # Task execution results
+    summary: Optional[str] = None  # Task summary
+    quality_score: Optional[float] = None  # Quality score
+    output: Optional[Dict[str, Any]] = None  # Task output
 
 
 class TaskExecutionResponse(BaseModel):
@@ -252,6 +256,25 @@ async def create_task(
             selected_agents = _get_default_agents_for_task_type(task_data.task_type)
         
         # STEP 4: DATABASE PERSISTENCE (NEW - CRITICAL)
+        # Always save to in-memory store first (for immediate access)
+        task_record = {
+            "id": task_id,
+            "task_id": task_id,
+            "title": task_data.title,
+            "description": task_data.description,
+            "status": "pending",
+            "task_type": task_data.task_type,
+            "target": task_data.target,
+            "priority": task_data.priority or 5,
+            "created_at": datetime.now().isoformat(),
+            "created_by": "system",
+            "parameters": task_data.parameters or {},
+            "execution_metadata": prediction,
+        }
+        _recently_created_tasks[task_id] = task_record
+        _recently_created_tasks_timestamps[task_id] = time.time()
+        
+        # Try to persist to database (optional - in-memory store is primary)
         try:
             if db is not None:
                 # Use SQLAlchemy for database persistence
@@ -285,14 +308,16 @@ async def create_task(
                     logger.warning(f"Database insert failed (table may not exist): {db_error}")
                     await db.rollback()
             else:
-                logger.info(f"Task {task_id} would be persisted to database (DB not available)")
+                logger.debug(f"Task {task_id} saved to in-memory store (DB not available)")
         except Exception as e:
             logger.warning(f"Database insert failed (non-critical): {e}")
         
         # STEP 5: CACHE TASK DATA USING CACHE SERVICES (NEW - PART_4: Task cache with 5 min TTL)
         try:
+            from src.amas.services.prediction_cache_service import (
+                get_prediction_cache_service,
+            )
             from src.amas.services.task_cache_service import get_task_cache_service
-            from src.amas.services.prediction_cache_service import get_prediction_cache_service
             
             task_cache_service = get_task_cache_service()
             prediction_cache_service = get_prediction_cache_service()
@@ -314,16 +339,25 @@ async def create_task(
             # Cache task using TaskCacheService (write-through pattern)
             # The service will handle caching after DB persistence
             if db is not None:
+                # Cache task using TaskCacheService (update_task method)
+                try:
+                    await task_cache_service.update_task(task_id, task_record)
+                except Exception as cache_error:
+                    logger.warning(f"Task cache update failed (non-critical): {cache_error}")
+                
                 # Cache prediction using PredictionCacheService
                 if prediction:
-                    await prediction_cache_service.cache_prediction(
-                        {
-                            "task_type": task_data.task_type,
-                            "target": task_data.target,
-                            "parameters": task_data.parameters or {}
-                        },
-                        prediction
-                    )
+                    try:
+                        await prediction_cache_service.cache_prediction(
+                            {
+                                "task_type": task_data.task_type,
+                                "target": task_data.target,
+                                "parameters": task_data.parameters or {}
+                            },
+                            prediction
+                        )
+                    except Exception as pred_cache_error:
+                        logger.warning(f"Prediction cache set failed (non-critical): {pred_cache_error}")
                 logger.info(f"Task {task_id} cached using cache services")
         except ImportError:
             # Fallback to direct Redis caching if cache services not available
@@ -390,7 +424,7 @@ async def create_task(
         )
         
         # Store in memory for immediate retrieval (before DB persistence)
-        import time
+        # Note: time is already imported at the top of the file
         _recently_created_tasks[task_id] = task_response.dict()
         _recently_created_tasks_timestamps[task_id] = time.time()
         
@@ -954,7 +988,27 @@ async def get_task(
         # Try in-memory store first (for recently created tasks)
         if task_id in _recently_created_tasks:
             logger.debug(f"Task {task_id} found in memory store")
-            return TaskResponse(**_recently_created_tasks[task_id])
+            task_data = _recently_created_tasks[task_id]
+            # Ensure result is included if available
+            task_dict = dict(task_data)
+            # Create TaskResponse with all available data including results
+            return TaskResponse(
+                id=task_dict.get("id") or task_dict.get("task_id", task_id),
+                title=task_dict.get("title", ""),
+                description=task_dict.get("description", ""),
+                status=task_dict.get("status", "pending"),
+                task_type=task_dict.get("task_type", "unknown"),
+                target=task_dict.get("target", ""),
+                priority=task_dict.get("priority", 5),
+                created_at=task_dict.get("created_at", datetime.now().isoformat()),
+                created_by=task_dict.get("created_by"),
+                prediction=task_dict.get("prediction"),
+                assigned_agents=task_dict.get("assigned_agents", []),
+                result=task_dict.get("result"),  # Include execution results
+                summary=task_dict.get("summary"),
+                quality_score=task_dict.get("quality_score"),
+                output=task_dict.get("output")
+            )
         
         # Try cache second
         if redis is not None:
@@ -972,12 +1026,29 @@ async def get_task(
         if db is not None:
             try:
                 result = await db.execute(
-                    text("SELECT id, title, description, task_type, target, status, priority, created_at, created_by "
+                    text("SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by, "
+                         "result, execution_metadata, quality_score "
                          "FROM tasks WHERE id = :task_id OR task_id = :task_id"),
                     {"task_id": task_id}
                 )
                 row = result.fetchone()
                 if row:
+                    # Parse result if it's JSON string
+                    task_result = None
+                    if row.result:
+                        try:
+                            task_result = json.loads(row.result) if isinstance(row.result, str) else row.result
+                        except Exception:
+                            pass
+                    
+                    # Parse execution_metadata for additional info (can be used for prediction data)
+                    # execution_metadata = None
+                    # if row.execution_metadata:
+                    #     try:
+                    #         execution_metadata = json.loads(row.execution_metadata) if isinstance(row.execution_metadata, str) else row.execution_metadata
+                    #     except Exception:
+                    #         pass
+                    
                     return TaskResponse(
                         id=row.id or row.task_id or task_id,
                         title=row.title,
@@ -987,7 +1058,9 @@ async def get_task(
                         target=row.target,
                         priority=row.priority,
                         created_at=row.created_at.isoformat() if hasattr(row.created_at, 'isoformat') else str(row.created_at),
-                        created_by=row.created_by
+                        created_by=row.created_by,
+                        result=task_result,  # Include parsed result
+                        quality_score=row.quality_score if hasattr(row, 'quality_score') else None
                     )
             except Exception as db_error:
                 logger.debug(f"Database fetch failed: {db_error}")
@@ -995,7 +1068,9 @@ async def get_task(
         # Try to get from orchestrator or cache (if task was just created)
         try:
             # Check if task was recently created (might be in memory/cache)
-            from src.amas.core.unified_intelligence_orchestrator import get_unified_orchestrator
+            from src.amas.core.unified_intelligence_orchestrator import (
+                get_unified_orchestrator,
+            )
             orchestrator = get_unified_orchestrator()
             # Try to get task status from orchestrator
             task_status = await orchestrator.get_task_status(task_id)

@@ -1,38 +1,38 @@
 // frontend/src/components/Dashboard/DashboardNew.tsx
-import React, { useEffect, useState } from 'react';
+import {
+  CheckCircle as CheckCircleIcon,
+  Memory as MemoryIcon,
+  Refresh as RefreshIcon,
+  Speed as SpeedIcon,
+  Storage as StorageIcon,
+  TrendingDown as TrendingDownIcon,
+  TrendingUp as TrendingUpIcon,
+} from '@mui/icons-material';
 import {
   Box,
-  Grid,
   Card,
   CardContent,
-  Typography,
-  LinearProgress,
   Chip,
+  Grid,
   IconButton,
+  LinearProgress,
   Tooltip,
+  Typography,
 } from '@mui/material';
 import {
-  Refresh as RefreshIcon,
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
-  Speed as SpeedIcon,
-  Memory as MemoryIcon,
-  Storage as StorageIcon,
-  CheckCircle as CheckCircleIcon,
-} from '@mui/icons-material';
-import { apiService } from '../../services/api';
-import { websocketService } from '../../services/websocket';
-import { Line } from 'react-chartjs-2';
-import {
-  Chart as ChartJS,
   CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
+  Chart as ChartJS,
   Tooltip as ChartTooltip,
   Legend,
+  LinearScale,
+  LineElement,
+  PointElement,
+  Title,
 } from 'chart.js';
+import React, { useEffect, useState } from 'react';
+import { Line } from 'react-chartjs-2';
+import { apiService } from '../../services/api';
+import { websocketService } from '../../services/websocket';
 
 // Register ChartJS components
 ChartJS.register(
@@ -232,9 +232,11 @@ export const DashboardNew: React.FC = () => {
             Last updated: {lastUpdate.toLocaleTimeString()}
           </Typography>
           <Tooltip title="Refresh">
-            <IconButton onClick={fetchDashboardData} disabled={loading}>
-              <RefreshIcon />
-            </IconButton>
+            <span>
+              <IconButton onClick={fetchDashboardData} disabled={loading}>
+                <RefreshIcon />
+              </IconButton>
+            </span>
           </Tooltip>
         </Box>
       </Box>

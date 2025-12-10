@@ -1,32 +1,32 @@
 // frontend/src/components/Layout/MainLayout.tsx
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import {
-  Box,
+  SmartToy as AgentIcon,
+  Dashboard as DashboardIcon,
+  HealthAndSafety as HealthIcon,
+  IntegrationInstructions as IntegrationIcon,
+  Menu as MenuIcon,
+  Assignment as TaskIcon,
+} from '@mui/icons-material';
+import {
   AppBar,
-  Toolbar,
-  Typography,
-  IconButton,
+  Avatar,
+  Box,
   Drawer,
+  IconButton,
   List,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Avatar,
   Menu,
   MenuItem,
-  useTheme,
+  Toolbar,
+  Typography,
   useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import {
-  Menu as MenuIcon,
-  Dashboard as DashboardIcon,
-  Assignment as TaskIcon,
-  SmartToy as AgentIcon,
-  IntegrationInstructions as IntegrationIcon,
-  HealthAndSafety as HealthIcon,
-} from '@mui/icons-material';
+import React, { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { apiService, User } from '../../services/api';
 import { websocketService } from '../../services/websocket';
 
@@ -74,11 +74,22 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
     fetchUser();
 
-    // Connect WebSocket
-    websocketService.connect();
+    // Connect WebSocket (with delay to avoid multiple connections)
+    const connectTimeout = setTimeout(() => {
+      if (!websocketService.isConnected()) {
+        websocketService.connect();
+      }
+    }, 500);
 
     return () => {
-      websocketService.disconnect();
+      clearTimeout(connectTimeout);
+      // Only disconnect if WebSocket is actually connected or connecting
+      // Use a small delay to avoid "WebSocket is closed before the connection is established" error
+      setTimeout(() => {
+        if (websocketService.isConnected() || websocketService.getReadyState() === WebSocket.CONNECTING) {
+          websocketService.disconnect();
+        }
+      }, 100);
     };
   }, []);
 

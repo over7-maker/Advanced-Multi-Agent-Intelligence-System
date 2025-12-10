@@ -6,9 +6,9 @@ import asyncio
 import logging
 import uuid
 from datetime import datetime
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set
 
-from fastapi import Query, WebSocket, WebSocketDisconnect
+from fastapi import WebSocket, WebSocketDisconnect
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +181,7 @@ websocket_manager = ConnectionManager()
 
 async def websocket_endpoint(
     websocket: WebSocket,
-    token: str = Query(None),  # JWT token for authentication (optional for now)
+    token: Optional[str] = None,  # JWT token for authentication (optional for now)
 ):
     """
     WebSocket endpoint for real-time updates
@@ -207,15 +207,54 @@ async def websocket_endpoint(
         # Authenticate user from token (if provided)
         if token:
             try:
-                # TODO: Implement JWT verification
-                # from src.api.auth import verify_jwt_token
-                # user = await verify_jwt_token(token)
-                # user_id = user.id
-                pass
+                import os
+
+                import jwt
+
+                # Get JWT secret - must match the one used in enhanced_auth.py
+                # Use the same method as enhanced_auth to ensure consistency
+                jwt_secret = None
+                try:
+                    from src.amas.security.enhanced_auth import get_auth_manager
+                    auth_mgr = get_auth_manager()
+                    if auth_mgr:
+                        jwt_secret = getattr(auth_mgr, 'jwt_secret', None)
+                except Exception:
+                    pass
+                
+                # Fallback to environment variable
+                if not jwt_secret:
+                    jwt_secret = os.getenv("AMAS_JWT_SECRET")
+                
+                # Final fallback (must match enhanced_auth default)
+                if not jwt_secret:
+                    jwt_secret = "amas_jwt_secret_key_2024_secure"
+                
+                # Try to decode token
+                try:
+                    payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+                    user_id = payload.get("sub") or payload.get("user_id") or payload.get("username")
+                    if user_id:
+                        logger.info(f"WebSocket authenticated user: {user_id}")
+                    else:
+                        logger.warning("Token decoded but no user_id found")
+                        user_id = None
+                except jwt.ExpiredSignatureError:
+                    logger.warning("WebSocket token expired")
+                    user_id = None
+                except jwt.InvalidTokenError as e:
+                    logger.warning(f"WebSocket invalid token: {e}")
+                    user_id = None
+            except ImportError:
+                logger.warning("JWT library not available, allowing unauthenticated connection")
+                user_id = None
             except Exception as e:
                 logger.error(f"WebSocket authentication failed: {e}")
-                await websocket.close(code=1008, reason="Authentication failed")
-                return
+                # Don't close connection, just log warning (allow unauthenticated connections for now)
+                user_id = None
+        else:
+            logger.debug("No token provided, allowing unauthenticated connection (dev mode)")
+            user_id = None
         
         # Connect
         await websocket_manager.connect(websocket, connection_id, user_id)

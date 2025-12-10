@@ -1,7 +1,11 @@
 // frontend/src/components/Tasks/TaskExecutionView.tsx
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
 import {
+  CheckCircle as CheckCircleIcon,
+  PlayArrow as PlayArrowIcon,
+  Schedule as ScheduleIcon,
+} from '@mui/icons-material';
+import {
+  Alert,
   Box,
   Card,
   CardContent,
@@ -13,20 +17,17 @@ import {
   StepContent,
   StepLabel,
   Stepper,
-  Typography,
-  Alert,
   Table,
   TableBody,
   TableCell,
   TableRow,
+  Typography,
 } from '@mui/material';
-import {
-  CheckCircle as CheckCircleIcon,
-  PlayArrow as PlayArrowIcon,
-  Schedule as ScheduleIcon,
-} from '@mui/icons-material';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { apiService, Task } from '../../services/api';
 import { websocketService } from '../../services/websocket';
+import { TaskResultsViewer } from './TaskResultsViewer';
 
 interface ExecutionEvent {
   timestamp: string;
@@ -295,76 +296,9 @@ export const TaskExecutionView: React.FC = () => {
           </Card>
 
           {task.status === 'completed' && (
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  AI Intelligence Results
-                </Typography>
-                {task.result ? (
-                  <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default', maxHeight: 500, overflow: 'auto' }}>
-                    {typeof task.result === 'string' ? (
-                      <Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {task.result}
-                      </Typography>
-                    ) : task.result.output ? (
-                      <Box>
-                        {task.result.summary && (
-                          <Alert severity="info" sx={{ mb: 2 }}>
-                            <Typography variant="subtitle2" gutterBottom>Summary</Typography>
-                            <Typography variant="body2">{task.result.summary}</Typography>
-                          </Alert>
-                        )}
-                        {task.result.output && typeof task.result.output === 'object' ? (
-                          <Box>
-                            {task.result.output.vulnerabilities && (
-                              <Box sx={{ mb: 2 }}>
-                                <Typography variant="subtitle2" gutterBottom>Vulnerabilities Found</Typography>
-                                {Array.isArray(task.result.output.vulnerabilities) && task.result.output.vulnerabilities.map((vuln: any, idx: number) => (
-                                  <Alert key={idx} severity={vuln.severity === 'Critical' || vuln.severity === 'High' ? 'error' : 'warning'} sx={{ mb: 1 }}>
-                                    <Typography variant="body2" fontWeight="bold">{vuln.title || vuln.id}</Typography>
-                                    <Typography variant="caption">{vuln.description}</Typography>
-                                  </Alert>
-                                ))}
-                              </Box>
-                            )}
-                            <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word', fontSize: '0.875rem' }}>
-                              {JSON.stringify(task.result.output, null, 2)}
-                            </pre>
-                          </Box>
-                        ) : (
-                          <Typography variant="body2" component="pre" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                            {typeof task.result.output === 'string' ? task.result.output : JSON.stringify(task.result.output, null, 2)}
-                          </Typography>
-                        )}
-                      </Box>
-                    ) : task.result.summary ? (
-                      <Alert severity="success">
-                        <Typography variant="body2">{task.result.summary}</Typography>
-                      </Alert>
-                    ) : (
-                      <pre style={{ margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-                        {JSON.stringify(task.result, null, 2)}
-                      </pre>
-                    )}
-                    {task.result.quality_score && (
-                      <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-                        <Typography variant="caption" color="text.secondary">
-                          Quality Score: {(task.result.quality_score * 100).toFixed(1)}%
-                        </Typography>
-                      </Box>
-                    )}
-                  </Paper>
-                ) : task.summary ? (
-                  <Alert severity="success">
-                    <Typography variant="body2">{task.summary}</Typography>
-                  </Alert>
-                ) : (
-                  <Alert severity="info">
-                    <Typography variant="body2">Task completed successfully. No detailed results available.</Typography>
-                  </Alert>
-                )}
-              </CardContent>
-            </Card>
+            <Box>
+              <TaskResultsViewer result={task.result || task} taskType={task.task_type} />
+            </Box>
           )}
 
           {task.status === 'failed' && task.error_details && (
