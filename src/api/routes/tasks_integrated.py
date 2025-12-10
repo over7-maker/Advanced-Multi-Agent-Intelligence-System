@@ -515,25 +515,64 @@ async def create_task(
                     logger.info(f"Task {task_id} execution completed. Result: {result.get('success', False)}")
                     
                     # Update task status and result in memory store
+                    # IMPORTANT: Save results even if success=False, as long as we have agent results
                     if task_id in _recently_created_tasks:
-                        if result and result.get("success"):
+                        # Check if we have valuable outputs from agents
+                        has_agent_results = (
+                            result and 
+                            result.get("output") and 
+                            result.get("output", {}).get("agent_results")
+                        )
+                        
+                        # Determine status: completed if success=True OR if we have agent results
+                        is_successful = result and result.get("success", False)
+                        has_valuable_outputs = has_agent_results and (
+                            result.get("quality_score", 0.0) > 0.0 or
+                            result.get("output", {}).get("agent_results", {})
+                        )
+                        
+                        if is_successful or has_valuable_outputs:
                             _recently_created_tasks[task_id]["status"] = "completed"
+                            # Always save the full result with agent outputs
                             _recently_created_tasks[task_id]["result"] = result
                             _recently_created_tasks[task_id]["output"] = result.get("output", {})
-                            _recently_created_tasks[task_id]["summary"] = result.get("summary", "")
+                            _recently_created_tasks[task_id]["summary"] = result.get("summary", "") or result.get("insights", {}).get("summary", "")
                             _recently_created_tasks[task_id]["quality_score"] = result.get("quality_score", 0.0)
+                            _recently_created_tasks[task_id]["execution_time"] = result.get("execution_time", 0.0)
+                            _recently_created_tasks[task_id]["total_cost_usd"] = result.get("output", {}).get("total_cost_usd", 0.0)
+                            _recently_created_tasks[task_id]["agent_results"] = result.get("output", {}).get("agent_results", {})
+                            logger.info(f"Task {task_id} results saved: quality_score={result.get('quality_score', 0.0)}, agents={list(result.get('output', {}).get('agent_results', {}).keys())}")
                         else:
                             _recently_created_tasks[task_id]["status"] = "failed"
                             _recently_created_tasks[task_id]["error"] = result.get("error", "Execution failed") if result else "Unknown error"
+                            # Still save partial results if available
+                            if result:
+                                _recently_created_tasks[task_id]["result"] = result
+                                _recently_created_tasks[task_id]["output"] = result.get("output", {})
                     
-                    # Broadcast completion
+                    # Broadcast completion with full results
+                    # Determine final status: completed if we have valuable outputs
+                    has_agent_results = (
+                        result and 
+                        result.get("output") and 
+                        result.get("output", {}).get("agent_results")
+                    )
+                    final_status = "completed" if (
+                        (result and result.get("success", False)) or 
+                        (has_agent_results and result.get("quality_score", 0.0) > 0.0)
+                    ) else "failed"
+                    
                     await websocket_manager.broadcast({
                         "event": "task_completed",
                         "task_id": task_id,
-                        "status": "completed" if result and result.get("success") else "failed",
-                        "result": result,
-                        "summary": result.get("summary", "") if result else "",
+                        "status": final_status,
+                        "result": result,  # Full result with agent_results
+                        "output": result.get("output", {}) if result else {},
+                        "agent_results": result.get("output", {}).get("agent_results", {}) if result else {},
+                        "summary": result.get("summary", "") or (result.get("insights", {}).get("summary", "") if result else ""),
                         "quality_score": result.get("quality_score", 0.0) if result else 0.0,
+                        "execution_time": result.get("execution_time", 0.0) if result else 0.0,
+                        "total_cost_usd": result.get("output", {}).get("total_cost_usd", 0.0) if result else 0.0,
                         "timestamp": datetime.now().isoformat()
                     })
                     
@@ -715,6 +754,22 @@ async def execute_task(
                     tracing.set_attribute("task.success", True)
                 
                 # STEP 4: PERSIST RESULTS
+                # IMPORTANT: Save results even if success=False, as long as we have agent results
+                has_agent_results = (
+                    result and 
+                    result.get("output") and 
+                    result.get("output", {}).get("agent_results")
+                )
+                has_valuable_outputs = has_agent_results and (
+                    result.get("quality_score", 0.0) > 0.0 or
+                    len(result.get("output", {}).get("agent_results", {})) > 0
+                )
+                
+                # Determine final status: completed if success OR if we have valuable outputs
+                final_status = "completed" if (
+                    result.get("success", False) or has_valuable_outputs
+                ) else "failed"
+                
                 if db is not None:
                     try:
                         await db.execute(
@@ -722,6 +777,8 @@ async def execute_task(
                             UPDATE tasks SET 
                             status = :status,
                             result = :result,
+                            output = :output,
+                            summary = :summary,
                             completed_at = :completed_at,
                             duration_seconds = :duration_seconds,
                             success_rate = :success_rate,
@@ -729,8 +786,10 @@ async def execute_task(
                             WHERE task_id = :task_id
                             """),
                             {
-                                "status": "completed" if result.get("success") else "failed",
-                                "result": json.dumps(result.get("output", {})),
+                                "status": final_status,
+                                "result": json.dumps(result),  # Full result object
+                                "output": json.dumps(result.get("output", {})),  # Agent results
+                                "summary": result.get("summary", "") or result.get("insights", {}).get("summary", ""),
                                 "completed_at": datetime.now(),
                                 "duration_seconds": execution_duration,
                                 "success_rate": result.get("success_rate", 0.0),
@@ -739,9 +798,21 @@ async def execute_task(
                             }
                         )
                         await db.commit()
+                        logger.info(f"Task {task_id} results persisted to database: status={final_status}, quality={result.get('quality_score', 0.0)}")
                     except Exception as db_error:
                         logger.warning(f"Database update failed: {db_error}")
                         await db.rollback()
+                
+                # Also update in-memory store
+                if task_id in _recently_created_tasks:
+                    _recently_created_tasks[task_id]["status"] = final_status
+                    _recently_created_tasks[task_id]["result"] = result
+                    _recently_created_tasks[task_id]["output"] = result.get("output", {})
+                    _recently_created_tasks[task_id]["summary"] = result.get("summary", "") or result.get("insights", {}).get("summary", "")
+                    _recently_created_tasks[task_id]["quality_score"] = result.get("quality_score", 0.0)
+                    _recently_created_tasks[task_id]["execution_time"] = execution_duration
+                    _recently_created_tasks[task_id]["agent_results"] = result.get("output", {}).get("agent_results", {})
+                    logger.info(f"Task {task_id} results updated in memory: agents={list(result.get('output', {}).get('agent_results', {}).keys())}")
                 
                 # STEP 5: UPDATE LEARNING ENGINE (NEW - CRITICAL)
                 try:
@@ -765,14 +836,30 @@ async def execute_task(
                 except Exception as e:
                     logger.error(f"Learning engine update failed: {e}")
                 
-                # STEP 6: BROADCAST COMPLETION
+                # STEP 6: BROADCAST COMPLETION with full results
+                has_agent_results = (
+                    result and 
+                    result.get("output") and 
+                    result.get("output", {}).get("agent_results")
+                )
+                final_status = "completed" if (
+                    result.get("success", False) or 
+                    (has_agent_results and result.get("quality_score", 0.0) > 0.0)
+                ) else "failed"
+                
                 await websocket_manager.broadcast({
                     "event": "task_completed",
                     "task_id": task_id,
+                    "status": final_status,
                     "duration": execution_duration,
                     "success": result.get("success", False),
                     "quality_score": result.get("quality_score", 0.0),
-                    "result_summary": result.get("summary", "")
+                    "result": result,  # Full result with agent_results
+                    "output": result.get("output", {}),
+                    "agent_results": result.get("output", {}).get("agent_results", {}),
+                    "result_summary": result.get("summary", "") or result.get("insights", {}).get("summary", ""),
+                    "execution_time": execution_duration,
+                    "total_cost_usd": result.get("output", {}).get("total_cost_usd", 0.0)
                 })
                 
                 logger.info(f"Task {task_id} completed successfully in {execution_duration:.1f}s")

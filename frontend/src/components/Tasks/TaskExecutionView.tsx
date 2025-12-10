@@ -295,13 +295,23 @@ export const TaskExecutionView: React.FC = () => {
             </CardContent>
           </Card>
 
-          {task.status === 'completed' && (
+          {/* Show results if completed OR if we have valuable outputs even if failed */}
+          {(task.status === 'completed' || (task.status === 'failed' && (task.result || task.output || task.agent_results))) && (
             <Box>
-              <TaskResultsViewer result={task.result || task} taskType={task.task_type} />
+              <TaskResultsViewer 
+                result={task.result || task.output || { 
+                  agent_results: task.agent_results || {},
+                  success: task.status === 'completed',
+                  quality_score: task.quality_score || 0,
+                  execution_time: task.duration_seconds || 0,
+                  total_cost_usd: task.total_cost_usd || 0
+                }} 
+                taskType={task.task_type} 
+              />
             </Box>
           )}
 
-          {task.status === 'failed' && task.error_details && (
+          {task.status === 'failed' && !task.result && !task.output && !task.agent_results && task.error_details && (
             <Alert severity="error">
               <Typography variant="subtitle2" gutterBottom>
                 Execution Failed

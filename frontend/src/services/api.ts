@@ -16,17 +16,22 @@ export interface Task {
   priority: number;
   assigned_agents: string[];
   prediction?: TaskPrediction;
-  result?: any;
+  result?: any;  // Full result object with agent_results
+  output?: any;  // Agent outputs
+  agent_results?: Record<string, any>;  // Individual agent results
+  summary?: string;  // Task summary
   error_details?: any;
   created_at: string;
   updated_at?: string;
   started_at?: string;
   completed_at?: string;
   duration_seconds?: number;
+  execution_time?: number;  // Alternative name for duration
   success_rate?: number;
   quality_score?: number;
   tokens_used?: number;
   cost_usd?: number;
+  total_cost_usd?: number;  // Total cost from all agents
 }
 
 export interface TaskPrediction {
