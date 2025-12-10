@@ -31,30 +31,35 @@ class AMASApplication:
         Args:
             config_override: Optional configuration overrides to apply
         """
-        # Setup logger first before any other operations
-        self.logger: logging.Logger = self._setup_logging()
-        
+        # Load config first (needed for logger setup)
         self.config: AMASConfig = get_settings()
         if config_override:
-            self._apply_config_overrides(config_override)
+            # Temporarily use a basic logger for config override warnings
+            temp_logger = logging.getLogger(__name__)
+            self._apply_config_overrides(config_override, temp_logger)
+        
+        # Setup logger after config is loaded
+        self.logger: logging.Logger = self._setup_logging()
 
         self.orchestrator: Optional[IntelligenceOrchestrator] = None
         self.service_manager: Optional[ServiceManager] = None
         self._is_initialized: bool = False
         self._is_running: bool = False
 
-    def _apply_config_overrides(self, overrides: Dict[str, Any]) -> None:
+    def _apply_config_overrides(self, overrides: Dict[str, Any], logger: Optional[logging.Logger] = None) -> None:
         """
         Apply configuration overrides to the current config.
 
         Args:
             overrides: Dictionary of configuration overrides
+            logger: Optional logger to use (if not provided, uses self.logger)
         """
+        log = logger or self.logger
         for key, value in overrides.items():
             if hasattr(self.config, key):
                 setattr(self.config, key, value)
             else:
-                self.logger.warning(f"Unknown configuration key: {key}")
+                log.warning(f"Unknown configuration key: {key}")
 
     def _setup_logging(self) -> logging.Logger:
         """

@@ -5,7 +5,7 @@ FastAPI Main Application for AMAS Intelligence System
 import logging
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 import uvicorn
@@ -342,7 +342,7 @@ async def health_check():
             return HealthCheck(
                 status=health_result.get("status", "unknown"),
                 services=health_result.get("checks", []),
-                timestamp=health_result.get("timestamp", datetime.utcnow().isoformat()),
+                timestamp=health_result.get("timestamp", datetime.now(timezone.utc).isoformat()),
             )
         except ImportError:
             # Fallback to basic health check
@@ -352,13 +352,13 @@ async def health_check():
                 return HealthCheck(
                     status=service_health.get("overall_status", "unknown"),
                     services=service_health.get("services", {}),
-                    timestamp=datetime.utcnow().isoformat(),
+                    timestamp=datetime.now(timezone.utc).isoformat(),
                 )
             else:
                 return HealthCheck(
                     status="unknown",
                     services={"error": "Service manager not available"},
-                    timestamp=datetime.utcnow().isoformat(),
+                    timestamp=datetime.now(timezone.utc).isoformat(),
                 )
 
     except Exception as e:
@@ -366,7 +366,7 @@ async def health_check():
         return HealthCheck(
             status="unhealthy",
             services={"error": str(e)},
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
 
@@ -380,15 +380,15 @@ async def readiness_probe():
         health_result = await check_health()
 
         if health_result.get("status") == "healthy":
-            return {"status": "ready", "timestamp": datetime.utcnow().isoformat()}
+            return {"status": "ready", "timestamp": datetime.now(timezone.utc).isoformat()}
         else:
-            return {"status": "not_ready", "timestamp": datetime.utcnow().isoformat()}
+            return {"status": "not_ready", "timestamp": datetime.now(timezone.utc).isoformat()}
     except Exception as e:
         logger.error(f"Readiness probe failed: {e}")
         return {
             "status": "not_ready",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -398,13 +398,13 @@ async def liveness_probe():
     """Kubernetes liveness probe endpoint"""
     try:
         # Basic liveness check - just ensure the service is responding
-        return {"status": "alive", "timestamp": datetime.utcnow().isoformat()}
+        return {"status": "alive", "timestamp": datetime.now(timezone.utc).isoformat()}
     except Exception as e:
         logger.error(f"Liveness probe failed: {e}")
         return {
             "status": "not_alive",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -438,7 +438,7 @@ async def detailed_health_check():
         return detailed_info
     except Exception as e:
         logger.error(f"Detailed health check failed: {e}")
-        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
+        return {"error": str(e), "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
 # System status endpoint
@@ -460,7 +460,7 @@ async def get_system_status():
                     "agents": len(amas.orchestrator.agents) if hasattr(amas.orchestrator, 'agents') else 0,
                     "active_tasks": len(amas.orchestrator.active_tasks) if hasattr(amas.orchestrator, 'active_tasks') else 0,
                     "total_tasks": len(amas.orchestrator.tasks) if hasattr(amas.orchestrator, 'tasks') else 0,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
             else:
                 status = {
@@ -468,7 +468,7 @@ async def get_system_status():
                     "agents": 0,
                     "active_tasks": 0,
                     "total_tasks": 0,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
         else:
             status = {
@@ -476,7 +476,7 @@ async def get_system_status():
                 "agents": 0,
                 "active_tasks": 0,
                 "total_tasks": 0,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         return SystemStatus(
@@ -484,7 +484,7 @@ async def get_system_status():
             agents=status.get("agents", status.get("active_agents", 0)),
             active_tasks=status.get("active_tasks", 0),
             total_tasks=status.get("total_tasks", 0),
-            timestamp=status.get("timestamp", datetime.utcnow().isoformat()),
+            timestamp=status.get("timestamp", datetime.now(timezone.utc).isoformat()),
         )
 
     except Exception as e:
@@ -756,7 +756,7 @@ async def root():
         "message": "AMAS Intelligence System API",
         "version": "1.0.0",
         "status": "operational",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 
