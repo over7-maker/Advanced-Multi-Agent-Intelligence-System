@@ -2,10 +2,11 @@
 Analytics endpoints for dashboard statistics
 """
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
+
 from src.amas.services.prometheus_metrics_service import get_metrics_service
 
 logger = logging.getLogger(__name__)

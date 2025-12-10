@@ -4,9 +4,7 @@ Implements RD-083: Optimize database queries and connections
 Implements RD-084: Implement connection pooling
 """
 
-import asyncio
 import logging
-import threading
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -16,7 +14,6 @@ from typing import Any, Dict, List, Optional, Union
 import asyncpg
 import psycopg2
 from prometheus_client import Counter, Gauge, Histogram
-from psycopg2 import pool
 
 logger = logging.getLogger(__name__)
 

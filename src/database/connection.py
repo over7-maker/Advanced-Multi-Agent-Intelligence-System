@@ -3,7 +3,6 @@ Database connection management
 Production-ready PostgreSQL connection pool with health checks
 """
 
-import asyncio
 import logging
 from datetime import datetime
 from typing import Dict, Optional
