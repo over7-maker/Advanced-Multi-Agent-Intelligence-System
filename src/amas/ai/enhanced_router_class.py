@@ -38,8 +38,6 @@ except Exception as e:
     def get_available_providers():
         return []
 
-logger = logging.getLogger(__name__)
-
 
 @dataclass
 class AIResponse:

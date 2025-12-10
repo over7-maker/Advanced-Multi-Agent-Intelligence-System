@@ -3,7 +3,7 @@ Agentic RAG Implementation
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ class AgenticRAG:
                 "response": "This is a mock RAG response",
                 "sources": ["source1", "source2"],
                 "confidence": 0.8,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
             return result

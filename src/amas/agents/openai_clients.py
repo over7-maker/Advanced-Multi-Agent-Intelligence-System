@@ -53,20 +53,19 @@ def xai_grok_chat(prompt: str, image_url: str = None):
         raise EnvironmentError("Missing OPENROUTER_API_KEY_XAI secret")
     client = get_client(api_key)
 
-    # For messages, handle if image_url is present or not
+    # Build messages based on whether image_url is provided
     if image_url:
-        content = [
-            {"type": "text", "text": prompt},
-            {"type": "image_url", "image_url": {"url": image_url}},
-        ]
+        # Multimodal message with image
+        messages = [{
+            "role": "user",
+            "content": [
+                {"type": "text", "text": prompt},
+                {"type": "image_url", "image_url": {"url": image_url}},
+            ]
+        }]
     else:
-        content = [{"role": "user", "content": prompt}]
-
-    messages = (
-        [{"role": "user", "content": content}]
-        if image_url
-        else [{"role": "user", "content": prompt}]
-    )
+        # Text-only message
+        messages = [{"role": "user", "content": prompt}]
 
     completion = client.chat.completions.create(
         extra_headers={
