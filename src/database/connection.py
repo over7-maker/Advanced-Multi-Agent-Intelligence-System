@@ -87,7 +87,7 @@ async def is_connected() -> bool:
         return False
 
 
-async def health_check() -> Dict[str, any]:
+async def health_check() -> Dict[str, Any]:
     """
     Comprehensive database health check (PART_4 requirement)
     
@@ -153,7 +153,7 @@ async def health_check() -> Dict[str, any]:
         }
 
 
-async def get_table_stats() -> Dict[str, any]:
+async def get_table_stats() -> Dict[str, Any]:
     """
     Get statistics for all tables (PART_4 requirement)
     

@@ -90,12 +90,13 @@ async def get_agent_analytics() -> Dict[str, Any]:
         total_agents = 0
         active_agents = 0
         avg_utilization = 0.0
+        top_agents = []
         
         return {
             "total_agents": total_agents,
             "active_agents": active_agents,
             "avg_utilization": avg_utilization,
-            "top_agents": agent_metrics.get("top_agents", []),
+            "top_agents": top_agents,
             "timestamp": datetime.now().isoformat(),
         }
     except Exception as e:

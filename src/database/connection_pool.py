@@ -11,7 +11,7 @@ import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import asyncpg
 import psycopg2

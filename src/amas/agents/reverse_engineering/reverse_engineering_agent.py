@@ -2,14 +2,13 @@
 Reverse Engineering Agent Implementation
 """
 
-import asyncio
 import logging
 import os
 import tempfile
 from datetime import datetime
 from typing import Any, Dict
 
-from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
+from ..base.intelligence_agent import IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +63,7 @@ class ReverseEngineeringAgent(IntelligenceAgent):
             elif task_type == "malware_analysis":
                 return await self._analyze_malware(task)
             elif task_type == "code_deobfuscation":
-                return await self._deobfuscate_code(task)
+                return await self._analyze_binary(task)
             elif task_type == "protocol_analysis":
                 return await self._analyze_protocol(task)
             elif task_type == "firmware_analysis":
