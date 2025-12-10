@@ -6,7 +6,7 @@ Implements PART_3 requirements with AI router integration
 import logging
 import time
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from src.amas.ai.enhanced_router_class import AIResponse, get_ai_router
 
@@ -30,7 +30,7 @@ class BaseAgent(ABC):
         name: str,
         agent_type: str,
         system_prompt: str,
-        tools: List[Any] = None,
+        tools: Optional[List[Any]] = None,
         model_preference: str = "gpt-4-turbo-preview",
         strategy: str = "quality_first"
     ):
