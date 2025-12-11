@@ -29,7 +29,7 @@ import time
 import statistics
 import asyncio
 import copy
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime, timezone, timedelta
@@ -279,7 +279,7 @@ class PIIDetector:
 
                     # Calculate confidence
                     confidence = self._calculate_confidence(
-                        pii_type, matched_value, text, context
+                        pii_type, matched_value, text
                     )
 
                     # Create redacted value
