@@ -1,6 +1,71 @@
 # AMAS .gitignore - Comprehensive exclusion patterns
 
 # =============================================================================
+# CRITICAL: AUDIT LOGS AND SENSITIVE FILES - NEVER COMMIT
+# =============================================================================
+
+# Audit logs contain sensitive information and compliance data
+audit.log
+audit.log.*
+audit_*.log
+*.audit.log
+logs/audit/
+
+# Database credentials and backups
+*.sql
+*.sql.gz
+*.dump
+*.backup
+*.bak
+backups/
+db_dumps/
+
+# Secrets, API keys, and tokens - NEVER commit
+.env
+.env.local
+.env.*.local
+.env.production
+.env.production.local
+.secrets/
+secrets.yml
+secrets.yaml
+secrets.json
+*.pem
+*.key
+*.key.pub
+*.p12
+*.pfx
+private_key*
+public_key*
+id_rsa*
+id_ed25519*
+
+# Integration tokens
+slack_token*
+github_token*
+integration_token*
+api_key*
+api_secret*
+api_credentials*
+
+# OAuth and session tokens
+*.token
+token.json
+refresh_token*
+access_token*
+session_token*
+
+# Configuration with credentials
+config.prod.yml
+config.production.yml
+config.local.yml
+config.*.secret.yml
+db_config.json
+database.conf
+db.conf
+api.conf
+
+# =============================================================================
 # PYTHON
 # =============================================================================
 
@@ -153,14 +218,6 @@ backups/
 temp/
 cache/
 uploads/
-
-# Configuration files with secrets
-.env.local
-.env.production
-*.key
-*.pem
-*.p12
-*.pfx
 
 # AI Models and weights
 *.bin
@@ -362,10 +419,7 @@ temp/
 *.7z
 
 # Backup files
-*.bak
-*.backup
 *.old
-*~
 
 # =============================================================================
 # PROJECT SPECIFIC ARCHIVES
