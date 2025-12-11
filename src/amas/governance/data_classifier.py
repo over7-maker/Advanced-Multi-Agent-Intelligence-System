@@ -28,7 +28,8 @@ import hashlib
 import time
 import statistics
 import asyncio
-from typing import Dict, List, Optional, Any
+import copy
+from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 from datetime import datetime, timezone, timedelta
@@ -48,10 +49,12 @@ def safe_log_pii(detection: 'PIIDetection', message: str = "") -> str:
     Returns:
         Safe log string with only redacted_value and hash
     """
-    safe_info = f"PII type: {detection.pii_type.value}, "
-    safe_info += f"redacted: {detection.redacted_value}, "
-    safe_info += f"hash: {detection.value_hash}, "
-    safe_info += f"confidence: {detection.confidence:.2f}"
+    safe_info = "PII type: %s, redacted: %s, hash: %s, confidence: %.2f" % (
+        detection.pii_type.value,
+        detection.redacted_value,
+        detection.value_hash,
+        detection.confidence
+    )
 
     if message:
         return f"{message} - {safe_info}"
@@ -59,6 +62,7 @@ def safe_log_pii(detection: 'PIIDetection', message: str = "") -> str:
 
 
 class DataClassification(str, Enum):
+    """Enumeration of data classification levels"""
     PUBLIC = "public"
     INTERNAL = "internal"
     CONFIDENTIAL = "confidential"
@@ -67,6 +71,7 @@ class DataClassification(str, Enum):
 
 
 class PIIType(str, Enum):
+    """Enumeration of Personally Identifiable Information types"""
     EMAIL = "email"
     PHONE = "phone"
     SSN = "ssn"
@@ -250,7 +255,8 @@ class PIIDetector:
         }
 
         logger.info(
-            f"PII Detector initialized with {len(self.patterns)} pattern types"
+            "PII Detector initialized with %d pattern types",
+            len(self.patterns)
         )
 
     def detect_pii_in_text(
@@ -347,15 +353,14 @@ class PIIDetector:
         self,
         pii_type: PIIType,
         matched_value: str,
-        full_text: str,
-        context: Optional[str]
+        full_text: str
     ) -> float:
         """Calculate confidence score for PII detection"""
         base_confidence = 0.7  # Base confidence for pattern match
 
         # Boost confidence based on context keywords
-        if context and pii_type in self.context_keywords:
-            context_lower = context.lower()
+        if pii_type in self.context_keywords:
+            context_lower = full_text.lower()
             if any(
                 keyword in context_lower
                 for keyword in self.context_keywords[pii_type]
@@ -554,7 +559,7 @@ class DataClassifier:
             text_content, final_classification
         )
         pii_confidence = max(
-            [d.confidence for d in pii_detections], default=0.0
+            (d.confidence for d in pii_detections), default=0.0
         )
         overall_confidence = max(content_confidence, pii_confidence)
 
@@ -582,9 +587,10 @@ class DataClassifier:
 
         # Safe logging - never log raw PII
         logger.debug(
-            f"Data classified as {final_classification.value} "
-            f"(confidence: {overall_confidence:.2f}, "
-            f"PII items: {len(pii_detections)})"
+            "Data classified as %s (confidence: %.2f, PII items: %d)",
+            final_classification.value,
+            overall_confidence,
+            len(pii_detections)
         )
 
         return result
@@ -626,9 +632,9 @@ class DataClassifier:
         ]
         if credit_card_detections and not result.requires_pci_protection:
             logger.warning(
-                f"Credit card detected but PCI flag not set. "
-                f"Detections: {len(credit_card_detections)}. "
-                f"Auto-correcting compliance flag."
+                "Credit card detected but PCI flag not set. "
+                "Detections: %d. Auto-correcting compliance flag.",
+                len(credit_card_detections)
             )
             result.requires_pci_protection = True
 
@@ -642,9 +648,9 @@ class DataClassifier:
         ]
         if gdpr_detections and not result.requires_gdpr_protection:
             logger.warning(
-                f"GDPR-triggering PII detected but GDPR flag not set. "
-                f"Detections: {len(gdpr_detections)}. "
-                f"Auto-correcting compliance flag."
+                "GDPR-triggering PII detected but GDPR flag not set. "
+                "Detections: %d. Auto-correcting compliance flag.",
+                len(gdpr_detections)
             )
             result.requires_gdpr_protection = True
 
@@ -656,9 +662,9 @@ class DataClassifier:
         ]
         if hipaa_detections and not result.requires_hipaa_protection:
             logger.warning(
-                f"HIPAA-triggering PII detected but HIPAA flag not set. "
-                f"Detections: {len(hipaa_detections)}. "
-                f"Auto-correcting compliance flag."
+                "HIPAA-triggering PII detected but HIPAA flag not set. "
+                "Detections: %d. Auto-correcting compliance flag.",
+                len(hipaa_detections)
             )
             result.requires_hipaa_protection = True
 
@@ -696,8 +702,7 @@ class DataClassifier:
                 d.pii_type in sensitive_types for d in high_confidence_pii
             ):
                 return DataClassification.RESTRICTED
-            else:
-                return DataClassification.CONFIDENTIAL
+            return DataClassification.CONFIDENTIAL
 
         # Medium-confidence PII requires confidential classification
         medium_confidence_pii = [
@@ -803,12 +808,11 @@ class DataClassifier:
 
         if isinstance(data, str):
             return self._redact_string(data, classification_result)
-        elif isinstance(data, dict):
+        if isinstance(data, dict):
             return self._redact_dict(
                 data, classification_result.pii_detected
             )
-        else:
-            return data
+        return data
 
     def _redact_string(
         self,
@@ -861,7 +865,6 @@ class DataClassifier:
         pii_detections: List[PIIDetection]
     ) -> Dict[str, Any]:
         """Redact PII from dictionary based on field locations"""
-        import copy
         redacted_data = copy.deepcopy(data)
 
         for detection in pii_detections:
@@ -898,8 +901,8 @@ class DataClassifier:
                 except (KeyError, TypeError, IndexError):
                     # Field path doesn't exist or is invalid, skip
                     logger.debug(
-                        f"Could not redact field {field_path}: "
-                        f"field not found"
+                        "Could not redact field %s: field not found",
+                        field_path
                     )
 
         return redacted_data
@@ -1082,25 +1085,14 @@ class ComplianceReporter:
         return round(score, 1)
 
 
-# Global instances
-_global_classifier: Optional[DataClassifier] = None
-_global_compliance_reporter: Optional[ComplianceReporter] = None
-
-
 def get_data_classifier() -> DataClassifier:
     """Get global data classifier instance"""
-    global _global_classifier
-    if _global_classifier is None:
-        _global_classifier = DataClassifier()
-    return _global_classifier
+    return DataClassifier()
 
 
 def get_compliance_reporter() -> ComplianceReporter:
     """Get global compliance reporter instance"""
-    global _global_compliance_reporter
-    if _global_compliance_reporter is None:
-        _global_compliance_reporter = ComplianceReporter()
-    return _global_compliance_reporter
+    return ComplianceReporter()
 
 
 # Decorators for automatic classification
@@ -1129,38 +1121,40 @@ def classify_input_data(data_param: str = "data"):
                     # Log if sensitive data detected
                     if result.pii_count > 0:
                         logger.info(
-                            f"Processing {result.classification.value} data "
-                            f"with {result.pii_count} PII items"
+                            "Processing %s data with %d PII items",
+                            result.classification.value,
+                            result.pii_count
                         )
 
                 return await func(*args, **kwargs)
             return async_wrapper
-        else:
-            def sync_wrapper(*args, **kwargs):
-                classifier = get_data_classifier()
-                reporter = get_compliance_reporter()
 
-                # Extract data parameter
-                data = kwargs.get(data_param) or (
-                    args[0] if args else None
-                )
-                if data is not None:
-                    # Classify the data
-                    result = classifier.classify_data(data)
+        def sync_wrapper(*args, **kwargs):
+            classifier = get_data_classifier()
+            reporter = get_compliance_reporter()
 
-                    # Add to compliance reporting
-                    reporter.add_classification_result(result)
+            # Extract data parameter
+            data = kwargs.get(data_param) or (
+                args[0] if args else None
+            )
+            if data is not None:
+                # Classify the data
+                result = classifier.classify_data(data)
 
-                    # Add classification context to kwargs
-                    kwargs['_data_classification'] = result
+                # Add to compliance reporting
+                reporter.add_classification_result(result)
 
-                    # Log if sensitive data detected
-                    if result.pii_count > 0:
-                        logger.info(
-                            f"Processing {result.classification.value} data "
-                            f"with {result.pii_count} PII items"
-                        )
+                # Add classification context to kwargs
+                kwargs['_data_classification'] = result
 
-                return func(*args, **kwargs)
-            return sync_wrapper
+                # Log if sensitive data detected
+                if result.pii_count > 0:
+                    logger.info(
+                        "Processing %s data with %d PII items",
+                        result.classification.value,
+                        result.pii_count
+                    )
+
+            return func(*args, **kwargs)
+        return sync_wrapper
     return decorator
