@@ -11,23 +11,23 @@ import json
 import logging
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 try:
-    import redis.asyncio as redis
+    import redis.asyncio as redis  # type: ignore[import-not-found]
     REDIS_AVAILABLE = True
 except ImportError:
     REDIS_AVAILABLE = False
-    redis = None
+    redis = None  # type: ignore[assignment]
 
 try:
-    import numpy as np
-    from sentence_transformers import SentenceTransformer
+    import numpy as np  # type: ignore[import-not-found]
+    from sentence_transformers import SentenceTransformer  # type: ignore[import-not-found]
     EMBEDDINGS_AVAILABLE = True
 except ImportError:
     EMBEDDINGS_AVAILABLE = False
-    SentenceTransformer = None
-    np = None
+    SentenceTransformer = None  # type: ignore[assignment]
+    np = None  # type: ignore[assignment]
 
 logger = logging.getLogger(__name__)
 
@@ -82,11 +82,12 @@ class SemanticCacheService:
         self.enable_embeddings = enable_embeddings
         self.cache_prefix = cache_prefix
         
-        self.redis_client: Optional[redis.Redis] = None
-        self.embedding_model: Optional[SentenceTransformer] = None
+        self.redis_client: Optional[Any] = None
+        self.embedding_model: Optional[Any] = None
+        self._memory_cache: Dict[str, Any] = {}
         
         # Cache statistics
-        self.stats = {
+        self.stats: Dict[str, int] = {
             "hits": 0,
             "misses": 0,
             "semantic_hits": 0,  # Hits from semantic similarity
@@ -102,72 +103,97 @@ class SemanticCacheService:
                 self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
                 logger.info("Semantic cache: Embedding model loaded")
             except Exception as e:
-                logger.warning(f"Failed to load embedding model: {e}. Semantic matching disabled.")
+                logger.warning(
+                    f"Failed to load embedding model: {e}. "
+                    "Semantic matching disabled."
+                )
                 self.enable_embeddings = False
         else:
             self.enable_embeddings = False
             if enable_embeddings:
-                logger.warning("Embeddings not available. Install sentence-transformers for semantic caching.")
+                logger.warning(
+                    "Embeddings not available. Install sentence-transformers "
+                    "for semantic caching."
+                )
     
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize Redis connection"""
         if not REDIS_AVAILABLE:
-            logger.warning("Redis not available. Semantic cache will use in-memory storage.")
+            logger.warning(
+                "Redis not available. Semantic cache will use "
+                "in-memory storage."
+            )
             self._memory_cache = {}
             return
         
         try:
-            self.redis_client = await redis.from_url(
+            self.redis_client = await redis.from_url(  # type: ignore[union-attr]
                 self.redis_url,
                 encoding="utf-8",
                 decode_responses=True
             )
             # Test connection
-            await self.redis_client.ping()
+            await self.redis_client.ping()  # type: ignore[union-attr]
             logger.info("Semantic cache: Redis connection established")
         except Exception as e:
-            logger.error(f"Failed to connect to Redis: {e}. Using in-memory cache.")
+            logger.error(
+                f"Failed to connect to Redis: {e}. Using in-memory cache."
+            )
             self._memory_cache = {}
             self.redis_client = None
     
-    async def close(self):
+    async def close(self) -> None:
         """Close Redis connection"""
         if self.redis_client:
-            await self.redis_client.close()
+            await self.redis_client.close()  # type: ignore[union-attr]
     
-    def _generate_key(self, query: str, agent_id: str = None) -> str:
+    def _generate_key(
+        self,
+        query: str,
+        agent_id: Optional[str] = None
+    ) -> str:
         """Generate cache key from query and agent"""
-        key_data = {
+        key_data: Dict[str, str] = {
             "query": query.lower().strip(),
             "agent": agent_id or "default"
         }
         key_str = json.dumps(key_data, sort_keys=True)
         return hashlib.sha256(key_str.encode()).hexdigest()[:16]
     
-    async def _get_embedding(self, text: str) -> Optional[List[float]]:
+    async def _get_embedding(
+        self,
+        text: str
+    ) -> Optional[List[float]]:
         """Generate embedding for text"""
         if not self.enable_embeddings or not self.embedding_model:
             return None
         
         try:
             # Generate embedding
-            embedding = self.embedding_model.encode(text, convert_to_numpy=True)
+            embedding = self.embedding_model.encode(
+                text,
+                convert_to_numpy=True
+            )
             return embedding.tolist()
         except Exception as e:
             logger.error(f"Failed to generate embedding: {e}")
             return None
     
-    def _cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
+    def _cosine_similarity(
+        self,
+        vec1: List[float],
+        vec2: List[float]
+    ) -> float:
         """Calculate cosine similarity between two vectors"""
         if not EMBEDDINGS_AVAILABLE or not np:
             return 0.0
         
         try:
-            v1 = np.array(vec1)
-            v2 = np.array(vec2)
-            dot_product = np.dot(v1, v2)
-            norm1 = np.linalg.norm(v1)
-            norm2 = np.linalg.norm(v2)
+            v1 = np.array(vec1)  # type: ignore[union-attr]
+            v2 = np.array(vec2)  # type: ignore[union-attr]
+            dot_product = np.dot(v1, v2)  # type: ignore[union-attr]
+            norm1 = np.linalg.norm(v1)  # type: ignore[union-attr]
+            norm2 = np.linalg.norm(v2)  # type: ignore[union-attr]
             
             if norm1 == 0 or norm2 == 0:
                 return 0.0
@@ -180,7 +206,7 @@ class SemanticCacheService:
     async def get(
         self,
         query: str,
-        agent_id: str = None,
+        agent_id: Optional[str] = None,
         use_semantic: bool = True
     ) -> Optional[Any]:
         """
@@ -219,19 +245,27 @@ class SemanticCacheService:
                 if semantic_match:
                     self.stats["semantic_hits"] += 1
                     self.stats["hits"] += 1
-                    logger.debug(f"Cache semantic hit: {cache_key[:8]}... (similarity: {semantic_match['similarity']:.2f})")
-                    return semantic_match["value"]
+                    similarity = semantic_match.get('similarity', 0.0)
+                    logger.debug(
+                        f"Cache semantic hit: {cache_key[:8]}... "
+                        f"(similarity: {similarity:.2f})"
+                    )
+                    return semantic_match.get("value")
         
         self.stats["misses"] += 1
         return None
     
-    async def _get_from_redis(self, key: str) -> Optional[Dict]:
+    async def _get_from_redis(
+        self,
+        key: str
+    ) -> Optional[Dict[str, Any]]:
         """Get value from Redis"""
         if not self.redis_client:
-            return self._memory_cache.get(key)
+            val = self._memory_cache.get(key)
+            return val if isinstance(val, dict) else None
         
         try:
-            data = await self.redis_client.get(key)
+            data = await self.redis_client.get(key)  # type: ignore[union-attr]
             if data:
                 return json.loads(data)
         except Exception as e:
@@ -242,12 +276,12 @@ class SemanticCacheService:
     async def _find_semantic_match(
         self,
         query_embedding: List[float],
-        agent_id: str = None
+        agent_id: Optional[str] = None
     ) -> Optional[Dict[str, Any]]:
         """Find semantically similar cached entry"""
         if not self.redis_client:
             # In-memory semantic search (limited)
-            best_match = None
+            best_match: Optional[Dict[str, Any]] = None
             best_similarity = 0.0
             
             for key, entry_data in self._memory_cache.items():
@@ -256,22 +290,25 @@ class SemanticCacheService:
                         query_embedding,
                         entry_data["embedding"]
                     )
-                    if similarity > best_similarity and similarity >= self.similarity_threshold:
+                    if (
+                        similarity > best_similarity
+                        and similarity >= self.similarity_threshold
+                    ):
                         best_similarity = similarity
                         best_match = {
                             "value": entry_data.get("value"),
                             "similarity": similarity
                         }
             
-            return best_match if best_similarity >= self.similarity_threshold else None
+            return best_match
         
         # Redis-based semantic search
         try:
             # Get all keys for this agent (or all if no agent specified)
             pattern = f"{self.cache_prefix}*"
-            keys = await self.redis_client.keys(pattern)
+            keys = await self.redis_client.keys(pattern)  # type: ignore[union-attr]
             
-            best_match = None
+            best_match: Optional[Dict[str, Any]] = None
             best_similarity = 0.0
             
             # Check up to 100 cached entries for performance
@@ -282,14 +319,17 @@ class SemanticCacheService:
                         query_embedding,
                         entry_data["embedding"]
                     )
-                    if similarity > best_similarity and similarity >= self.similarity_threshold:
+                    if (
+                        similarity > best_similarity
+                        and similarity >= self.similarity_threshold
+                    ):
                         best_similarity = similarity
                         best_match = {
                             "value": entry_data.get("value"),
                             "similarity": similarity
                         }
             
-            return best_match if best_similarity >= self.similarity_threshold else None
+            return best_match
             
         except Exception as e:
             logger.error(f"Error in semantic search: {e}")
@@ -299,7 +339,7 @@ class SemanticCacheService:
         self,
         query: str,
         value: Any,
-        agent_id: str = None,
+        agent_id: Optional[str] = None,
         ttl: Optional[int] = None
     ) -> bool:
         """
@@ -318,11 +358,11 @@ class SemanticCacheService:
         full_key = f"{self.cache_prefix}{cache_key}"
         
         # Generate embedding if enabled
-        embedding = None
+        embedding: Optional[List[float]] = None
         if self.enable_embeddings:
             embedding = await self._get_embedding(query)
         
-        entry = {
+        entry: Dict[str, Any] = {
             "key": cache_key,
             "value": value,
             "embedding": embedding,
@@ -335,7 +375,7 @@ class SemanticCacheService:
         
         try:
             if self.redis_client:
-                await self.redis_client.setex(
+                await self.redis_client.setex(  # type: ignore[union-attr]
                     full_key,
                     ttl or self.default_ttl,
                     json.dumps(entry, default=str)
@@ -351,7 +391,7 @@ class SemanticCacheService:
             logger.error(f"Error caching value: {e}")
             return False
     
-    async def _update_access_stats(self, key: str):
+    async def _update_access_stats(self, key: str) -> None:
         """Update access statistics for cache entry"""
         try:
             entry = await self._get_from_redis(key)
@@ -360,36 +400,48 @@ class SemanticCacheService:
                 entry["access_count"] = entry.get("access_count", 0) + 1
                 
                 if self.redis_client:
-                    ttl = await self.redis_client.ttl(key)
+                    ttl = await self.redis_client.ttl(key)  # type: ignore[union-attr]
                     if ttl > 0:
-                        await self.redis_client.setex(key, ttl, json.dumps(entry, default=str))
+                        await self.redis_client.setex(  # type: ignore[union-attr]
+                            key,
+                            ttl,
+                            json.dumps(entry, default=str)
+                        )
         except Exception as e:
             logger.debug(f"Error updating access stats: {e}")
     
-    async def invalidate(self, query: str = None, agent_id: str = None):
+    async def invalidate(
+        self,
+        query: Optional[str] = None,
+        agent_id: Optional[str] = None
+    ) -> None:
         """Invalidate cache entries"""
         if query:
             cache_key = self._generate_key(query, agent_id)
             full_key = f"{self.cache_prefix}{cache_key}"
             
             if self.redis_client:
-                await self.redis_client.delete(full_key)
+                await self.redis_client.delete(full_key)  # type: ignore[union-attr]
             else:
                 self._memory_cache.pop(full_key, None)
         else:
             # Invalidate all entries for agent
             pattern = f"{self.cache_prefix}*"
             if self.redis_client:
-                keys = await self.redis_client.keys(pattern)
+                keys = await self.redis_client.keys(pattern)  # type: ignore[union-attr]
                 if keys:
-                    await self.redis_client.delete(*keys)
+                    await self.redis_client.delete(*keys)  # type: ignore[union-attr]
             else:
                 self._memory_cache.clear()
     
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> Dict[str, Union[int, float, bool]]:
         """Get cache statistics"""
         total_requests = self.stats["hits"] + self.stats["misses"]
-        hit_rate = (self.stats["hits"] / total_requests * 100) if total_requests > 0 else 0.0
+        hit_rate = (
+            (self.stats["hits"] / total_requests * 100)
+            if total_requests > 0
+            else 0.0
+        )
         
         return {
             **self.stats,
@@ -399,13 +451,13 @@ class SemanticCacheService:
             "similarity_threshold": self.similarity_threshold
         }
     
-    async def clear(self):
+    async def clear(self) -> None:
         """Clear all cache entries"""
         if self.redis_client:
             pattern = f"{self.cache_prefix}*"
-            keys = await self.redis_client.keys(pattern)
+            keys = await self.redis_client.keys(pattern)  # type: ignore[union-attr]
             if keys:
-                await self.redis_client.delete(*keys)
+                await self.redis_client.delete(*keys)  # type: ignore[union-attr]
         else:
             self._memory_cache.clear()
         
@@ -425,7 +477,7 @@ _semantic_cache: Optional[SemanticCacheService] = None
 
 async def get_semantic_cache(
     redis_url: str = "redis://localhost:6379/0",
-    **kwargs
+    **kwargs: Any
 ) -> SemanticCacheService:
     """Get or create global semantic cache instance"""
     global _semantic_cache
