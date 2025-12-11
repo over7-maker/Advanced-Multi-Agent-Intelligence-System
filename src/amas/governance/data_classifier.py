@@ -49,12 +49,7 @@ def safe_log_pii(detection: 'PIIDetection', message: str = "") -> str:
     Returns:
         Safe log string with only redacted_value and hash
     """
-    safe_info = "PII type: %s, redacted: %s, hash: %s, confidence: %.2f" % (
-        detection.pii_type.value,
-        detection.redacted_value,
-        detection.value_hash,
-        detection.confidence
-    )
+    safe_info = f"PII type: {detection.pii_type.value}, redacted: {detection.redacted_value}, hash: {detection.value_hash}, confidence: {detection.confidence:.2f}"
 
     if message:
         return f"{message} - {safe_info}"
@@ -473,15 +468,13 @@ class DataClassifier:
     def classify_data(
         self,
         data: Any,
-        data_id: Optional[str] = None,
-        context: Optional[Dict[str, Any]] = None
+        data_id: Optional[str] = None
     ) -> ClassificationResult:
         """Classify data and detect compliance requirements
 
         Args:
             data: Input data to classify (str, dict, or other)
             data_id: Optional identifier for the data
-            context: Optional context dictionary
 
         Returns:
             ClassificationResult with classification and compliance flags
@@ -868,42 +861,40 @@ class DataClassifier:
         redacted_data = copy.deepcopy(data)
 
         for detection in pii_detections:
-            if (
-                detection.confidence >= 0.7
-                and detection.location.startswith("field_")
-            ):
-                field_path = detection.location[6:]
+            if detection.confidence < 0.7:
+                continue
+            if not detection.location.startswith("field_"):
+                continue
 
-                # Navigate to the field and redact
-                try:
-                    # Handle simple field paths
-                    if '.' not in field_path and '[' not in field_path:
-                        if field_path in redacted_data:
-                            if isinstance(
-                                redacted_data[field_path], str
-                            ):
-                                # Replace original value with redacted value
-                                redacted_data[field_path] = (
-                                    redacted_data[field_path].replace(
-                                        detection.original_value,
-                                        detection.redacted_value
-                                    )
-                                )
-                            else:
-                                redacted_data[field_path] = (
+            field_path = detection.location[6:]
+
+            # Navigate to the field and redact
+            try:
+                # Handle simple field paths
+                if '.' not in field_path and '[' not in field_path:
+                    if field_path in redacted_data:
+                        if isinstance(redacted_data[field_path], str):
+                            redacted_data[field_path] = (
+                                redacted_data[field_path].replace(
+                                    detection.original_value,
                                     detection.redacted_value
                                 )
-                    else:
-                        # Handle nested paths
-                        self._redact_nested_field(
-                            redacted_data, field_path, detection
-                        )
-                except (KeyError, TypeError, IndexError):
-                    # Field path doesn't exist or is invalid, skip
-                    logger.debug(
-                        "Could not redact field %s: field not found",
-                        field_path
+                            )
+                        else:
+                            redacted_data[field_path] = (
+                                detection.redacted_value
+                            )
+                else:
+                    # Handle nested paths
+                    self._redact_nested_field(
+                        redacted_data, field_path, detection
                     )
+            except (KeyError, TypeError, IndexError):
+                # Field path doesn't exist or is invalid, skip
+                logger.debug(
+                    "Could not redact field %s: field not found",
+                    field_path
+                )
 
         return redacted_data
 
