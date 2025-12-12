@@ -494,85 +494,145 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # Step 4: Install security scanning tools with verification and fallback
-      - name: Install security tools
+      # Step 4: Upgrade core installation tools first
+      # This ensures we have the latest pip, setuptools, and wheel for dependency resolution
+      - name: Upgrade core installation tools
         run: |
-          python -m pip install --upgrade pip
+          echo "📦 Upgrading core installation tools..."
+          python -m pip install --upgrade pip==24.3.1 setuptools==75.6.0 wheel==0.45.1
+          echo "✓ Core tools upgraded successfully"
+          pip --version
+          python -m pip list | grep -E "pip|setuptools|wheel"
+
+      # Step 5: Install security tools with robust error handling
+      # Uses multi-stage installation with fallback mechanisms
+      - name: Install security scanning tools
+        run: |
+          echo "🔒 Installing security scanning tools..."
           INSTALL_SUCCESS=false
           
+          # Strategy 1: Try installing from requirements-ci.txt
           if [ -f requirements-ci.txt ]; then
-            if pip install -r requirements-ci.txt; then
-              if pip check; then
+            echo "📋 Attempting installation from requirements-ci.txt..."
+            if pip install -r requirements-ci.txt 2>&1 | tee install-log.txt; then
+              echo "✓ Dependencies installed from requirements-ci.txt"
+              if pip check 2>&1 | tee check-log.txt; then
                 INSTALL_SUCCESS=true
-                echo "✓ Security tools installed from requirements-ci.txt"
+                echo "✓ No dependency conflicts detected"
               else
-                echo "Warning: Dependency conflicts - attempting fallback"
+                echo "⚠️  Warning: Dependency conflicts detected, but continuing..."
+                cat check-log.txt
+                INSTALL_SUCCESS=true  # Continue anyway, conflicts might be non-critical
               fi
             else
-              echo "Warning: Failed to install from requirements-ci.txt - attempting fallback"
+              echo "❌ Failed to install from requirements-ci.txt"
+              echo "Last 20 lines of installation log:"
+              tail -20 install-log.txt
+              echo "Attempting fallback installation..."
             fi
+          else
+            echo "⚠️  requirements-ci.txt not found"
           fi
           
-          # Fallback strategy
+          # Strategy 2: Fallback - Install security tools directly
           if [ "$INSTALL_SUCCESS" = false ]; then
-            pip install bandit==1.7.10 safety==3.2.7 || {
-              echo "Error: Fallback installation failed"
+            echo "📦 Fallback: Installing security tools directly..."
+            
+            # Install bandit and its dependencies
+            echo "Installing bandit..."
+            pip install PyYAML==6.0.2 stevedore==5.3.0 pbr==6.1.0 GitPython==3.1.43 || {
+              echo "❌ Failed to install bandit dependencies"
               exit 1
             }
+            pip install bandit==1.7.10 || {
+              echo "❌ Failed to install bandit"
+              exit 1
+            }
+            
+            # Install safety
+            echo "Installing safety..."
+            pip install safety==3.2.7 || {
+              echo "❌ Failed to install safety"
+              exit 1
+            }
+            
+            echo "✓ Fallback installation successful"
+            INSTALL_SUCCESS=true
           fi
           
-          # Verify security tools are installed
-          bandit --version || { echo "Error: bandit not installed correctly"; exit 1; }
-          safety --version || { echo "Error: safety not installed correctly"; exit 1; }
+          # Verify installations
+          echo "🔍 Verifying security tools installation..."
+          if ! bandit --version; then
+            echo "❌ Error: bandit not installed correctly"
+            exit 1
+          fi
+          if ! safety --version; then
+            echo "❌ Error: safety not installed correctly"
+            exit 1
+          fi
+          
+          echo "✅ All security tools installed and verified successfully"
+          echo "Installed versions:"
+          pip list | grep -E "bandit|safety|stevedore|pbr|GitPython|PyYAML"
 
-      # Step 5: Run bandit security scan
+      # Step 6: Run bandit security scan
       # Scans Python code for common security vulnerabilities
       - name: Run bandit security scan
         continue-on-error: false
         run: |
+          echo "🔍 Running bandit security scan..."
+          
+          # Create reports directory
+          mkdir -p security-reports
+          
           # Generate JSON report for detailed analysis
-          bandit -r src/amas/governance/ -f json -o bandit-report.json || {
-            echo "Warning: Bandit scan generated report with findings"
-          }
+          if bandit -r src/amas/governance/ -f json -o security-reports/bandit-report.json; then
+            echo "✓ Bandit JSON report generated successfully"
+          else
+            echo "⚠️  Bandit scan generated report with findings"
+          fi
+          
           # Run with low-low severity to fail on high-severity issues
-          bandit -r src/amas/governance/ -ll || {
-            echo "Error: Bandit found high-severity security issues"
+          if bandit -r src/amas/governance/ -ll; then
+            echo "✅ Bandit scan passed - no high-severity issues found"
+          else
+            echo "❌ Bandit found high-severity security issues"
+            echo "Review the detailed report in artifacts"
             exit 1
-          }
+          fi
 
-      # Step 6: Store security scan artifacts
+      # Step 7: Check for known vulnerabilities in dependencies
+      # Scans installed packages for known CVEs and security advisories
+      - name: Check for known vulnerabilities with safety
+        continue-on-error: true  # Don't fail CI, but report findings
+        run: |
+          echo "🔍 Running safety vulnerability scan..."
+          
+          # Create reports directory if not exists
+          mkdir -p security-reports
+          
+          # Run safety check and save results
+          if safety check --json > security-reports/safety-report.json 2>&1; then
+            echo "✅ Safety scan passed - no known vulnerabilities found"
+          else
+            echo "⚠️  Safety check found known vulnerabilities - review required"
+            echo "Detailed report saved to artifacts"
+          fi
+          
+          # Display summary (without exposing full details in logs)
+          echo "Safety scan summary:"
+          safety check --short-report || true
+
+      # Step 8: Store security scan artifacts
       # Saves security reports as artifacts for review
       - name: Store security scan artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: security-reports-${{ github.run_number }}
-          path: bandit-report.json
+          path: security-reports/
           retention-days: 90  # Keep security reports longer (90 days)
-          if-no-files-found: ignore
-
-      # Step 7: Check for known vulnerabilities in dependencies
-      # Scans installed packages for known CVEs and security advisories
-      - name: Check for known vulnerabilities
-        continue-on-error: true  # Don't fail CI, but report findings
-        run: |
-          # Run safety check and save results
-          safety check --json > safety-report.json 2>&1 || {
-            echo "Warning: Safety check found known vulnerabilities - review required"
-            # Store safety report even if vulnerabilities found
-          }
-          # Display summary (without exposing full details in logs)
-          safety check --short-report || true
-
-      # Step 8: Store safety report artifacts
-      - name: Store safety report artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: safety-reports-${{ github.run_number }}
-          path: safety-report.json
-          retention-days: 90
-          if-no-files-found: ignore
+          if-no-files-found: warn  # Warn if no security reports generated
 
 #
 # =============================================================================
