@@ -49,7 +49,12 @@ def safe_log_pii(detection: 'PIIDetection', message: str = "") -> str:
     Returns:
         Safe log string with only redacted_value and hash
     """
-    safe_info = f"PII type: {detection.pii_type.value}, redacted: {detection.redacted_value}, hash: {detection.value_hash}, confidence: {detection.confidence:.2f}"
+    safe_info = (
+        f"PII type: {detection.pii_type.value}, "
+        f"redacted: {detection.redacted_value}, "
+        f"hash: {detection.value_hash}, "
+        f"confidence: {detection.confidence:.2f}"
+    )
 
     if message:
         return f"{message} - {safe_info}"
@@ -101,7 +106,8 @@ class PIIDetection:
         """Validate dataclass fields"""
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError(
-                f"Confidence must be between 0.0 and 1.0, got {self.confidence}"
+                f"Confidence must be between 0.0 and 1.0, "
+                f"got {self.confidence}"
             )
         if not self.value_hash or len(self.value_hash) < 8:
             raise ValueError("value_hash must be at least 8 characters")
@@ -142,7 +148,8 @@ class ClassificationResult:
         """Validate dataclass fields"""
         if not 0.0 <= self.confidence <= 1.0:
             raise ValueError(
-                f"Confidence must be between 0.0 and 1.0, got {self.confidence}"
+                f"Confidence must be between 0.0 and 1.0, "
+                f"got {self.confidence}"
             )
         if self.pii_count < 0:
             raise ValueError(
