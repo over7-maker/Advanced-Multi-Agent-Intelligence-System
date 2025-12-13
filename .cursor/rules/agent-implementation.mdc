@@ -1,0 +1,78 @@
+---
+description: Agent Implementation - All agents must extend BaseAgent and use AI router for execution
+globs:
+  - "src/amas/agents/**/*.py"
+alwaysApply: false
+---
+
+# Agent Implementation Rules
+
+When creating or modifying specialized agents:
+
+## Base Agent Pattern
+
+1. **All agents MUST extend BaseAgent**:
+   ```python
+   from src.amas.agents.base_agent import BaseAgent
+   
+   class SecurityExpertAgent(BaseAgent):
+       def __init__(self):
+           super().__init__(
+               agent_id="security_expert",
+               name="Security Expert",
+               type="security",
+               system_prompt="...",
+               model_preference="gpt-4-turbo-preview",
+               strategy="quality_first"
+           )
+   ```
+
+2. **Required methods to implement**:
+   - `_prepare_prompt(target, parameters) -> str`: Create agent-specific prompt
+   - `_parse_response(response: str) -> Dict`: Parse AI response into structured format
+
+3. **AI Router Integration**:
+   - BaseAgent automatically uses `get_ai_router()`
+   - No need to manually call providers
+   - Fallback handled automatically
+
+## Agent Execution
+
+1. **Execute via base class**:
+   ```python
+   result = await agent.execute(
+       task_id=task_id,
+       target=target,
+       parameters=parameters
+   )
+   ```
+
+2. **Result structure**:
+   ```python
+   {
+       "success": True/False,
+       "agent_id": "...",
+       "agent_name": "...",
+       "result": {...},  # Parsed response
+       "duration": 12.5,
+       "ai_provider": "openai",
+       "ai_model": "gpt-4-turbo-preview",
+       "tokens_used": 1500,
+       "cost_usd": 0.015,
+       "fallback_used": False
+   }
+   ```
+
+## Specialized Agents
+
+- Each agent should have a clear specialization
+- System prompt should define expertise clearly
+- Tools can be added for agent-specific capabilities
+- Track expertise_score and performance metrics
+
+## Error Handling
+
+- Agents should handle parsing errors gracefully
+- Return structured error responses
+- Log agent-specific errors
+- Don't crash on individual agent failures

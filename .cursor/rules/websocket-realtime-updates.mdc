@@ -1,0 +1,67 @@
+---
+description: WebSocket Real-Time Updates - Broadcast all task/agent events via WebSocket for frontend updates
+globs:
+  - "src/api/websocket.py"
+  - "src/api/routes/tasks.py"
+  - "src/api/routes/workflows.py"
+alwaysApply: false
+---
+
+# WebSocket Real-Time Updates Rules
+
+When working with task execution or workflow management:
+
+## WebSocket Integration
+
+1. **Always broadcast task events**:
+   ```python
+   from src.api.websocket import websocket_manager
+   
+   await websocket_manager.broadcast({
+       "event": "task_created",  # or task_progress, task_completed, task_failed
+       "task_id": task_id,
+       "data": {...}
+   })
+   ```
+
+2. **Required events to broadcast**:
+   - `task_created`: When task is created
+   - `task_progress`: During execution (percentage, current_step)
+   - `task_completed`: When task finishes successfully
+   - `task_failed`: When task fails
+   - `agent_update`: When agent status changes
+   - `system_alert`: For system notifications
+
+## Event Structure
+
+```python
+{
+    "event": "task_progress",
+    "task_id": "task_123",
+    "progress": 45.0,  # 0-100
+    "current_step": "Agent execution in progress",
+    "agent_activity": {
+        "agent_1": {"status": "complete", "duration": 12.5},
+        "agent_2": {"status": "executing", "progress": 60}
+    },
+    "timestamp": "2025-01-19T05:34:00Z"
+}
+```
+
+## Task-Specific Subscriptions
+
+- Allow clients to subscribe to specific tasks
+- Use `websocket_manager.subscribe_to_task(connection_id, task_id)`
+- Broadcast task events only to subscribed clients when possible
+
+## Error Handling
+
+- WebSocket failures should not block task execution
+- Log WebSocket errors but continue with task
+- Use try/except around broadcasts (non-critical)
+
+## Frontend Integration
+
+- Frontend WebSocket service should handle reconnection
+- Subscribe to task updates when viewing task details
+- Display real-time progress in UI

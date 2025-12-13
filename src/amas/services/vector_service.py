@@ -5,7 +5,7 @@ Vector Service Implementation for AMAS
 import json
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 try:
@@ -25,7 +25,16 @@ class VectorService:
 
     def __init__(self, config: Dict[str, Any]):
         self.config = config
-        self.index_path = config.get("vector_service_url", "/app/faiss_index")
+        # Use index_path from config, or default to local path (not URL)
+        # If vector_service_url is provided and is a URL, use default local path
+        vector_url = config.get("vector_service_url", "")
+        if vector_url and (vector_url.startswith("http://") or vector_url.startswith("https://")):
+            # URL provided, use local default path
+            import pathlib
+            self.index_path = str(pathlib.Path("data/faiss_index").absolute())
+        else:
+            # Use provided path or default
+            self.index_path = config.get("index_path", config.get("vector_service_url", "data/faiss_index"))
         self.embedding_model_name = config.get(
             "embedding_model", "sentence-transformers/all-MiniLM-L6-v2"
         )
@@ -104,7 +113,7 @@ class VectorService:
         try:
             status = {
                 "status": "healthy",
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "service": "vector",
                 "index_size": self.index.ntotal if self.index else 0,
                 "dimension": self.dimension,
@@ -115,7 +124,7 @@ class VectorService:
             return {
                 "status": "unhealthy",
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "service": "vector",
             }
 
@@ -126,7 +135,7 @@ class VectorService:
                 return {
                     "success": False,
                     "error": "Vector service not properly initialized",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
 
             texts = [doc.get("content", "") for doc in documents]
@@ -156,7 +165,7 @@ class VectorService:
                 "success": True,
                 "documents_added": len(documents),
                 "total_documents": self.index.ntotal,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
@@ -164,7 +173,7 @@ class VectorService:
             return {
                 "success": False,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     async def search(
@@ -176,7 +185,7 @@ class VectorService:
                 return {
                     "success": False,
                     "error": "Vector service not properly initialized",
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                 }
 
             # Generate query embedding
@@ -208,7 +217,7 @@ class VectorService:
                 "query": query,
                 "results": results,
                 "total_found": len(results),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
         except Exception as e:
@@ -216,7 +225,7 @@ class VectorService:
             return {
                 "success": False,
                 "error": str(e),
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
 
     async def _save_index(self):
@@ -244,5 +253,15 @@ class VectorService:
             "dimension": self.dimension,
             "model": self.embedding_model_name,
             "index_path": self.index_path,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+
+    async def close(self):
+        """Close vector service and cleanup resources"""
+        try:
+            # Save index before closing if it exists
+            if self.index:
+                await self._save_index()
+            logger.info("Vector service closed successfully")
+        except Exception as e:
+            logger.error(f"Error closing vector service: {e}")

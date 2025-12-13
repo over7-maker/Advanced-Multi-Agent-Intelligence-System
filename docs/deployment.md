@@ -1,66 +1,700 @@
-# AMAS Deployment Guide
+# 🚀 AMAS Production Deployment Guide
 
-## Purpose
-This guide describes how to deploy AMAS (Advanced Multi-Agent Intelligence System) in production and development environments.
+## 📋 **Prerequisites**
 
----
+- **Docker & Docker Compose** (recommended)
+- **Python 3.11+** (if running directly)
+- **Node.js 18+** (for React dashboard)
+- **PostgreSQL 15+** (or use Docker)
+- **Redis 7+** (or use Docker)
+- **Neo4j 5+** (or use Docker)
+- **Kubernetes cluster** (for production deployments with Progressive Delivery)
+- **kubectl CLI** configured with cluster access
+- **Argo Rollouts** (for progressive deployments)
 
-## Requirements
-- Docker v20+
-- Docker Compose v2+
-- Python 3.11+
-- Node.js v18+ (for GUI)
-- PostgreSQL 14+, Redis 7+
-- Kubernetes 1.23+ (optional, for cloud-native deployment)
+> **⚠️ Important**: All Kubernetes commands assume the namespace `amas` unless otherwise specified. You can configure this using the `NAMESPACE` environment variable.
 
----
+## 🐳 **Docker Deployment (Recommended)**
 
-## Local Development (Docker Compose)
-1. Copy `.env.example` to `.env` and configure secrets
-2. Run:
+### **1. Quick Start with Docker Compose**
+
+```bash
+# Clone the repository
+git clone https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System.git
+cd Advanced-Multi-Agent-Intelligence-System
+
+# Copy environment file
+cp .env.example .env
+
+# Edit .env with your API keys
+nano .env
+
+# Start all services
+docker-compose up -d
+
+# Check status
+docker-compose ps
+```
+
+### **2. Access Services**
+
+- **AMAS API**: http://localhost:8000
+- **React Dashboard**: http://localhost:3000
+- **API Documentation**: http://localhost:8000/api/docs
+- **PostgreSQL**: localhost:5432
+- **Redis**: localhost:6379
+- **Neo4j Browser**: http://localhost:7474
+
+### **3. Monitor Logs**
+
+```bash
+# View all logs
+docker-compose logs -f
+
+# View specific service logs
+docker-compose logs -f amas
+docker-compose logs -f postgres
+docker-compose logs -f redis
+```
+
+## 🐍 **Direct Python Deployment**
+
+### **1. System Setup**
+
+```bash
+# Install system dependencies
+sudo apt-get update
+sudo apt-get install -y python3.11 python3.11-pip postgresql redis-server
+
+# Install Node.js
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+### **2. Database Setup**
+
+```bash
+# PostgreSQL
+sudo -u postgres createdb amas
+sudo -u postgres createuser amas_user
+sudo -u postgres psql -c "ALTER USER amas_user PASSWORD 'amas_password';"
+sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE amas TO amas_user;"
+
+# Redis
+sudo systemctl start redis-server
+sudo systemctl enable redis-server
+
+# Neo4j
+wget https://dist.neo4j.org/neo4j-community-5.15.0-unix.tar.gz
+tar -xzf neo4j-community-5.15.0-unix.tar.gz
+cd neo4j-community-5.15.0
+./bin/neo4j start
+```
+
+### **3. AMAS Installation**
+
+```bash
+# Clone and setup
+git clone https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System.git
+cd Advanced-Multi-Agent-Intelligence-System
+
+# Run setup script
+python3 setup.py
+
+# Configure environment
+cp .env.example .env
+nano .env  # Add your API keys
+
+# Validate setup
+python3 scripts/validate_env.py
+
+# Start AMAS
+python3 -m amas
+```
+
+### **4. React Dashboard Setup**
+
+```bash
+# Install dependencies
+cd web
+npm install
+
+# Build for production
+npm run build
+
+# Start development server
+npm start
+```
+
+## ☁️ **Cloud Deployment**
+
+### **AWS Deployment**
+
+```bash
+# Using AWS CLI
+aws ec2 run-instances \
+  --image-id ami-0c02fb55956c7d316 \
+  --instance-type t3.large \
+  --key-name your-key-pair \
+  --security-groups amas-sg \
+  --user-data file://user-data.sh
+```
+
+### **Google Cloud Platform**
+
+```bash
+# Using gcloud CLI
+gcloud compute instances create amas-server \
+  --image-family ubuntu-2004-lts \
+  --image-project ubuntu-os-cloud \
+  --machine-type e2-standard-2 \
+  --tags amas-server
+```
+
+### **Azure Deployment**
+
+```bash
+# Using Azure CLI
+az vm create \
+  --resource-group amas-rg \
+  --name amas-server \
+  --image UbuntuLTS \
+  --size Standard_B2s \
+  --admin-username azureuser
+```
+
+## 🔧 **Configuration**
+
+### **Environment Variables**
+
+```bash
+# Required API Keys (at least 2-3)
+OPENAI_API_KEY=your_openai_key
+GEMINIAI_API_KEY=your_gemini_key
+GROQAI_API_KEY=your_groq_key
+
+# Optional for redundancy
+COHERE_API_KEY=your_cohere_key
+ANTHROPIC_API_KEY=your_anthropic_key
+HUGGINGFACE_API_KEY=your_huggingface_key
+
+# Database Configuration
+DATABASE_URL=postgresql://user:pass@localhost:5432/amas
+REDIS_URL=redis://localhost:6379/0
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=your_password
+
+# Security (use strong, randomly generated values)
+JWT_SECRET=your_jwt_secret_min_32_chars
+ENCRYPTION_KEY=your_encryption_key_min_32_chars
+
+# Performance
+MAX_CONCURRENT_REQUESTS=10
+REQUEST_TIMEOUT=30
+CACHE_TTL=3600
+
+# Deployment Namespace (for Kubernetes)
+NAMESPACE=amas
+```
+
+> **🔒 Security Note**: Never commit secrets to version control. Use encrypted secret management (AWS Secrets Manager, Azure Key Vault, HashiCorp Vault, or Kubernetes Secrets with encryption at rest).
+
+### **Nginx Configuration**
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    # Security: Restrict access to trusted IPs only
+    # Uncomment and configure for production
+    # allow 203.0.113.0/24;  # Your office IP range
+    # deny all;
+
+    location / {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /dashboard {
+        proxy_pass http://localhost:3000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+## 📊 **Monitoring & Maintenance**
+
+### **Health Checks**
+
+```bash
+# API Health
+curl http://localhost:8000/health
+
+# System Status
+curl http://localhost:8000/api/status
+
+# Provider Status
+curl http://localhost:8000/api/providers
+```
+
+### **Log Monitoring**
+
+```bash
+# View logs
+tail -f logs/amas.log
+
+# Monitor with journalctl (systemd)
+journalctl -u amas -f
+
+# Docker logs
+docker-compose logs -f amas
+```
+
+### **Performance Monitoring**
+
+```bash
+# Run performance tests
+python3 tests/load/amas_load_test.py
+
+# Monitor system resources
+python3 monitor-intelligence.py
+
+# Check database performance
+psql -d amas -c "SELECT * FROM pg_stat_activity;"
+```
+
+## 🔒 **Security Considerations**
+
+### **1. API Key Security**
+
+- Store API keys in environment variables or encrypted secret managers
+- Use secrets management (AWS Secrets Manager, Azure Key Vault, HashiCorp Vault)
+- Never commit keys to version control
+- Rotate keys regularly (recommended: every 90 days)
+- Use separate keys for development, staging, and production
+
+### **2. Network Security**
+
+- **Always use HTTPS in production** with valid SSL/TLS certificates
+- Configure firewall rules to restrict access to trusted IPs only
+- Example LoadBalancer IP restriction:
+  ```yaml
+  spec:
+    loadBalancerSourceRanges:
+      - "203.0.113.0/24"  # Your office network
+      - "198.51.100.0/24" # Your VPN network
+  ```
+- Use VPN for internal access to administrative interfaces
+- Enable rate limiting to prevent abuse
+- Implement Web Application Firewall (WAF) for production deployments
+
+### **3. Data Security**
+
+- Encrypt sensitive data at rest (use database-level encryption)
+- Use secure database connections (SSL/TLS for PostgreSQL, Redis, Neo4j)
+- Implement comprehensive audit logging
+- Regular security scans (weekly recommended)
+- Enable automatic security updates for OS and dependencies
+
+### **4. Secret Management**
+
+- Use encrypted secret storage (never plaintext)
+- Implement secret rotation policies
+- Audit secret access logs
+- Use service accounts with minimal permissions
+
+## 🚀 **Scaling**
+
+### **Horizontal Scaling**
+
+```yaml
+# docker-compose.yml
+services:
+  amas:
+    deploy:
+      replicas: 3
+    environment:
+      - AMAS_INSTANCE_ID=${HOSTNAME}
+```
+
+### **Load Balancing**
+
+```nginx
+upstream amas_backend {
+    server amas1:8000;
+    server amas2:8000;
+    server amas3:8000;
+}
+
+server {
+    location / {
+        proxy_pass http://amas_backend;
+    }
+}
+```
+
+### **Database Scaling**
+
+- Use read replicas for PostgreSQL
+- Implement Redis clustering
+- Configure Neo4j clustering
+- Use connection pooling
+
+## 🆘 **Troubleshooting**
+
+### **Common Issues**
+
+1. **API Keys Not Working**
    ```bash
-   docker-compose up --build
+   python3 scripts/validate_env.py
    ```
-3. Access UI at `http://localhost:3000`
+
+2. **Database Connection Issues**
+   ```bash
+   # Check PostgreSQL
+   sudo systemctl status postgresql
+   
+   # Check Redis
+   redis-cli ping
+   
+   # Check Neo4j
+   curl http://localhost:7474
+   ```
+
+3. **Memory Issues**
+   ```bash
+   # Check memory usage
+   free -h
+   
+   # Check process memory
+   ps aux --sort=-%mem | head
+   ```
+
+4. **Performance Issues**
+   ```bash
+   # Run load tests
+   python3 tests/load/amas_load_test.py
+   
+   # Check system resources
+   htop
+   ```
+
+### **Log Analysis**
+
+```bash
+# Search for errors
+grep -i error logs/amas.log
+
+# Search for warnings
+grep -i warning logs/amas.log
+
+# Monitor real-time
+tail -f logs/amas.log | grep -i error
+```
+
+## 📈 **Performance Optimization**
+
+### **1. Database Optimization**
+
+- Create appropriate indexes
+- Use connection pooling
+- Optimize queries
+- Regular maintenance
+
+### **2. Caching**
+
+- Enable Redis caching
+- Use CDN for static assets
+- Implement application-level caching
+- Cache API responses
+
+### **3. Resource Optimization**
+
+- Tune JVM settings (if using Java components)
+- Optimize Python memory usage
+- Use async processing
+- Implement queue management
+
+## 🚀 **Progressive Delivery Pipeline**
+
+AMAS includes a comprehensive Progressive Delivery Pipeline using Argo Rollouts for safe, automated deployments with canary releases and automatic rollback.
+
+### **Overview**
+
+The Progressive Delivery Pipeline provides:
+- **Canary Deployments**: Progressive traffic shifting (10%→25%→50%→75%→100%)
+- **Automatic Rollback**: SLO violations trigger immediate rollback within 2 minutes
+- **Zero Downtime**: No service interruption during deployments
+- **SLO-based Gates**: Health checks and metrics validation prevent bad deployments
+- **Blue-Green Capability**: Instant traffic switching for emergency scenarios
+
+### **Prerequisites**
+
+> **Prerequisites**: Ensure these are configured before deploying
+
+- Kubernetes cluster with Argo Rollouts controller installed
+- NGINX Ingress Controller for traffic routing
+- Prometheus for metrics-based analysis
+- kubectl and Argo Rollouts CLI configured
+- Namespace created and configured
+
+### **Quick Start**
+
+```bash
+# Set namespace (configure as needed)
+export NAMESPACE="${NAMESPACE:-amas}"
+
+# Verify script exists and is executable
+if [[ ! -x ./scripts/deployment/canary_deploy.sh ]]; then
+  echo "ERROR: Deployment script missing or not executable" >&2
+  exit 1
+fi
+chmod 700 ./scripts/deployment/canary_deploy.sh
+
+# Install Argo Rollouts
+kubectl create namespace argo-rollouts
+kubectl apply -n argo-rollouts -f https://github.com/argoproj/argo-rollouts/releases/latest/download/install.yaml
+
+# Apply foundation layer components
+kubectl apply -f k8s/foundation/ --namespace=$NAMESPACE
+
+# Wait for foundation components with parallel checks and proper error handling
+echo "Waiting for foundation components to be ready..."
+
+# Run readiness checks in parallel for faster deployment
+kubectl wait --for=condition=Ready pod -l app=postgres --namespace=$NAMESPACE --timeout=300s &
+PG_PID=$!
+
+kubectl wait --for=condition=Ready pod -l app=redis --namespace=$NAMESPACE --timeout=300s &
+REDIS_PID=$!
+
+# Check if Neo4j pods exist before waiting
+if kubectl get pod -l app=neo4j --namespace=$NAMESPACE --no-headers 2>/dev/null | grep -q .; then
+  kubectl wait --for=condition=Ready pod -l app=neo4j --namespace=$NAMESPACE --timeout=300s &
+  NEO4J_PID=$!
+else
+  echo "Skipping Neo4j: not deployed in this environment"
+  NEO4J_PID=""
+fi
+
+# Wait for all background jobs and check for failures
+wait $PG_PID || { echo "ERROR: PostgreSQL readiness check failed" >&2; exit 1; }
+wait $REDIS_PID || { echo "ERROR: Redis readiness check failed" >&2; exit 1; }
+[[ -n "$NEO4J_PID" ]] && { wait $NEO4J_PID || { echo "ERROR: Neo4j readiness check failed" >&2; exit 1; }; }
+
+echo "✓ All foundation components ready"
+
+# Apply analysis templates (required before rollout)
+kubectl apply -f k8s/argo-rollouts/analysis-templates.yaml --namespace=$NAMESPACE
+
+# Apply rollout configuration
+kubectl apply -f k8s/argo-rollouts/rollout.yaml --namespace=$NAMESPACE
+
+# Deploy using canary script with proper environment
+export ROLLOUT_NAME=amas-orchestrator
+export IMAGE_TAG=latest
+./scripts/deployment/canary_deploy.sh
+
+# Verify script logs and exit codes for successful deployment
+if [[ $? -eq 0 ]]; then
+  echo "✓ Deployment completed successfully"
+  echo "View deployment status: kubectl argo rollouts get rollout $ROLLOUT_NAME -n $NAMESPACE"
+else
+  echo "ERROR: Deployment failed. Check logs: kubectl argo rollouts get rollout $ROLLOUT_NAME -n $NAMESPACE" >&2
+  exit 1
+fi
+```
+
+### **Deployment Strategy**
+
+The canary deployment follows this progressive timeline:
+
+1. **10% Traffic** (1min) → Basic health checks
+2. **25% Traffic** (1min + 1min analysis) → Success rate validation
+3. **50% Traffic** (2min + 2min analysis) → Comprehensive SLO checks
+4. **75% Traffic** (2min + 2min analysis) → Performance regression detection
+5. **Final Validation** (1min + 1min analysis) → Final checks
+6. **100% Traffic** → Full deployment
+
+**Total Time: ~8-9 minutes** (meets <10 minute requirement)
+
+### **Automatic Rollback Triggers**
+
+Rollback is triggered automatically when:
+- Success rate drops below 95%
+- P95 latency exceeds 3.0 seconds
+- Error budget remaining falls below 5%
+- Health checks fail for >2 minutes
+
+**Rollback Time: <2 minutes** for complete reversion to stable version
+
+### **Monitoring Deployments**
+
+```bash
+# View rollout status
+kubectl argo rollouts get rollout amas-orchestrator -n $NAMESPACE
+
+# Watch rollout in real-time
+kubectl argo rollouts get rollout amas-orchestrator -n $NAMESPACE --watch
+
+# View analysis runs
+kubectl get analysisruns -n $NAMESPACE
+
+# Check specific analysis details
+kubectl describe analysisrun <analysis-run-name> -n $NAMESPACE
+```
+
+### **Manual Rollback Procedures**
+
+```bash
+# Immediate rollback to previous revision
+kubectl argo rollouts undo amas-orchestrator -n $NAMESPACE
+
+# Rollback to specific revision
+kubectl argo rollouts undo amas-orchestrator --to-revision=2 -n $NAMESPACE
+
+# Abort current rollout immediately
+kubectl argo rollouts abort amas-orchestrator -n $NAMESPACE
+
+# View rollout history
+kubectl argo rollouts history amas-orchestrator -n $NAMESPACE
+
+# Emergency: Direct Kubernetes rollback (bypass Argo)
+kubectl rollout undo deployment/amas-orchestrator -n $NAMESPACE
+```
+
+### **Post-Deployment Validation**
+
+After successful deployment, validate the system:
+
+```bash
+# 1. Check all pods are running
+kubectl get pods -n $NAMESPACE
+
+# 2. Verify services are accessible
+kubectl get services -n $NAMESPACE
+
+# 3. Check Prometheus targets
+kubectl port-forward svc/prometheus 9090:9090 -n $NAMESPACE
+# Open http://localhost:9090/targets to verify all targets are UP
+
+# 4. Validate Grafana dashboards
+kubectl port-forward svc/grafana 3000:3000 -n $NAMESPACE
+# Open http://localhost:3000 and verify dashboards show data
+
+# 5. Test application endpoints
+curl http://localhost:8000/health
+curl http://localhost:8000/api/status
+
+# 6. Check recent logs for errors
+kubectl logs -l app=amas-orchestrator -n $NAMESPACE --tail=100 | grep -i error
+
+# 7. Verify SLO compliance
+curl http://localhost:8000/observability/slo/status
+
+# 8. Run smoke tests
+python3 tests/smoke/test_deployment.py
+```
+
+### **Deployment Troubleshooting**
+
+If deployment fails:
+
+1. **Check Rollout Status**:
+   ```bash
+   kubectl argo rollouts get rollout amas-orchestrator -n $NAMESPACE
+   ```
+
+2. **View Analysis Results**:
+   ```bash
+   kubectl get analysisruns -n $NAMESPACE
+   kubectl describe analysisrun <name> -n $NAMESPACE
+   ```
+
+3. **Check Pod Logs**:
+   ```bash
+   kubectl logs -l app=amas-orchestrator -n $NAMESPACE --tail=200
+   ```
+
+4. **Verify Prometheus Metrics**:
+   ```bash
+   kubectl port-forward svc/prometheus 9090:9090 -n $NAMESPACE
+   # Query: rate(http_requests_total[5m])
+   ```
+
+5. **Manual Rollback**:
+   ```bash
+   kubectl argo rollouts abort amas-orchestrator -n $NAMESPACE
+   kubectl argo rollouts undo amas-orchestrator -n $NAMESPACE
+   ```
+
+### **Documentation**
+
+For detailed information, see:
+- [Progressive Delivery Quick Start Guide](PROGRESSIVE_DELIVERY_QUICK_START.md)
+- [Progressive Delivery Implementation Guide](PROGRESSIVE_DELIVERY_IMPLEMENTATION.md)
+- [Progressive Delivery Success Criteria](PROGRESSIVE_DELIVERY_SUCCESS_CRITERIA.md)
+- [Workflow Security Guide](WORKFLOW_SECURITY.md)
+
+## 🎯 **Production Checklist**
+
+### **Pre-Deployment**
+- [ ] All API keys configured and validated
+- [ ] Database connections working
+- [ ] Security scanning passed (no critical vulnerabilities)
+- [ ] Secrets encrypted and stored securely (not in Git)
+- [ ] SSL/TLS certificates installed and valid
+- [ ] Firewall rules configured (IP allowlisting)
+- [ ] Network policies applied (Kubernetes)
+
+### **Monitoring & Observability**
+- [ ] Monitoring configured (Prometheus + Grafana)
+- [ ] Alert rules configured and tested
+- [ ] Log aggregation working (centralized logging)
+- [ ] Distributed tracing operational (Jaeger/Zipkin)
+- [ ] SLO definitions documented and monitored
+- [ ] Dashboards created and accessible
+
+### **Operational Readiness**
+- [ ] Backup strategy implemented and tested
+- [ ] Disaster recovery plan documented
+- [ ] Incident response procedures defined
+- [ ] On-call rotation established
+- [ ] Runbooks created for common scenarios
+- [ ] Team trained on operations and troubleshooting
+
+### **Performance & Scaling**
+- [ ] Load testing completed (meets SLO requirements)
+- [ ] Autoscaling configured and tested
+- [ ] Resource limits set appropriately
+- [ ] Database query optimization done
+- [ ] Caching strategy implemented
+
+### **Progressive Delivery** (Kubernetes Deployments)
+- [ ] Progressive Delivery Pipeline configured
+- [ ] Argo Rollouts installed and tested
+- [ ] Prometheus metrics integration verified
+- [ ] Analysis templates configured
+- [ ] Rollback procedures tested
+- [ ] SLO-based gates validated
+
+### **Documentation**
+- [ ] Architecture documentation updated
+- [ ] API documentation complete
+- [ ] Deployment procedures documented
+- [ ] Troubleshooting guides created
+- [ ] Security policies documented
 
 ---
 
-## Production Deployment (Kubernetes)
-- Apply all manifests in `k8s/`:
-  ```bash
-  kubectl apply -f k8s/
-  ```
-- Ensure secrets/configs are properly mounted
-- Set minimum pod scale for API, orchestrator, workers
+**🎉 Your AMAS system is now production-ready!**
 
----
+For support, check the [troubleshooting guide](docs/troubleshooting.md) or open an issue on GitHub.
 
-## Environment Configuration
-- All integration secrets and config must go in environment variables or sealed secrets
-- Example: `POSTGRES_URL`, `REDIS_URL`, `GITHUB_API_KEY`, etc
-
----
-
-## Health Monitoring
-- Built-in `/health` and `/ready` endpoints on all core services
-- Kubernetes liveness/readiness probes recommended
-- Alerts/monitoring setup recommended via Prometheus/Grafana
-
----
-
-### Useful Commands
-- Rebuild images:
-  ```bash
-  docker-compose build
-  ```
-- Check logs:
-  ```bash
-  docker-compose logs -f
-  ```
-- Run tests:
-  ```bash
-  pytest
-  ```
-
-
-_Last updated: November 15, 2025_
+**Security Contact**: For security issues, see [SECURITY.md](../SECURITY.md) for responsible disclosure procedures.

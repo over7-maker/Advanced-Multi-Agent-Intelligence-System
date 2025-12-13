@@ -1,0 +1,231 @@
+---
+description: Caching Service Patterns - Task caching, agent performance caching, ML prediction caching with intelligent invalidation
+globs:
+  - "src/amas/services/task_cache_service.py"
+  - "src/amas/services/agent_cache_service.py"
+  - "src/amas/services/prediction_cache_service.py"
+  - "src/api/routes/**/*.py"
+alwaysApply: false
+---
+
+# Caching Service Patterns Rules
+
+When implementing caching services for domain-specific data:
+
+## Task Caching Service
+
+1. **Use TaskCacheService for all task-related caching**:
+   ```python
+   from src.amas.services.task_cache_service import get_task_cache_service
+   
+   cache_service = get_task_cache_service()
+   
+   # Get task with caching
+   task = await cache_service.get_task(task_id)
+   
+   # Update task (write-through)
+   updated_task = await cache_service.update_task(task_id, update_data)
+   
+   # Invalidate cache
+   await cache_service.invalidate_task(task_id)
+   ```
+
+2. **Task Caching Patterns**:
+   - **Read-through**: Check cache, fetch from DB if miss, cache result
+   - **Write-through**: Update DB, update cache immediately
+   - **TTL**: 300 seconds (5 minutes) for task details
+   - **Invalidation**: Invalidate on updates, pattern-based for lists
+
+3. **Task List Caching**:
+   ```python
+   # Get tasks by status (cached)
+   tasks = await cache_service.get_tasks_by_status(
+       status="pending",
+       limit=50,
+       offset=0
+   )
+   # TTL: 60 seconds (short, as lists change frequently)
+   ```
+
+4. **Task Statistics Caching**:
+   ```python
+   # Get global statistics (cached)
+   stats = await cache_service.get_task_statistics()
+   # TTL: 300 seconds (medium, stats change slowly)
+   ```
+
+5. **Recent Tasks Feed**:
+   ```python
+   # Add to recent feed (Redis list)
+   await cache_service.add_to_recent_feed(task_data)
+   
+   # Get recent tasks
+   recent = await cache_service.get_recent_tasks(limit=20)
+   ```
+
+## Agent Performance Caching
+
+1. **Use AgentCacheService for agent-related caching**:
+   ```python
+   from src.amas.services.agent_cache_service import get_agent_cache_service
+   
+   cache_service = get_agent_cache_service()
+   
+   # Get agent performance (cached)
+   performance = await cache_service.get_agent_performance(agent_id)
+   
+   # Get top agents (cached)
+   top_agents = await cache_service.get_top_agents(
+       task_type="code_analysis",
+       limit=10
+   )
+   
+   # Invalidate on execution completion
+   await cache_service.invalidate_agent_caches(agent_id)
+   ```
+
+2. **Agent Performance Caching**:
+   - **TTL**: 300 seconds (5 minutes)
+   - **Invalidation**: On execution completion, on agent update
+   - **Pattern**: Cache expensive aggregations
+
+3. **Top Agents Caching**:
+   ```python
+   # Cache rankings (expensive query)
+   top_agents = await cache_service.get_top_agents(
+       task_type="code_analysis",  # Optional filter
+       limit=10
+   )
+   # TTL: 300 seconds
+   ```
+
+## ML Prediction Caching
+
+1. **Use PredictionCacheService for ML predictions**:
+   ```python
+   from src.amas.services.prediction_cache_service import get_prediction_cache_service
+   
+   cache_service = get_prediction_cache_service()
+   
+   # Get cached prediction
+   prediction = await cache_service.get_prediction(task_data)
+   
+   if not prediction:
+       # Compute prediction
+       prediction = await ml_model.predict(task_data)
+       await cache_service.cache_prediction(task_data, prediction)
+   ```
+
+2. **Prediction Caching Strategy**:
+   - **Key Generation**: Hash of canonical JSON representation
+   - **Version Awareness**: Include model version in key
+   - **TTL**: 3600 seconds (1 hour)
+   - **Invalidation**: On model retraining
+
+3. **Version-Aware Caching**:
+   ```python
+   # Cache key includes model version
+   # prediction:v1.0:abc123...
+   
+   # Update model version (invalidates old predictions)
+   await cache_service.update_model_version("v2.0")
+   ```
+
+## Cache Invalidation Patterns
+
+1. **Invalidate on Updates**:
+   ```python
+   # Update task
+   await cache_service.update_task(task_id, data)
+   # Automatically invalidates:
+   # - task:{task_id}
+   # - tasks:status:* (all status lists)
+   # - tasks:stats:* (all statistics)
+   ```
+
+2. **Invalidate on Execution**:
+   ```python
+   # After task execution
+   await cache_service.invalidate_task(task_id)
+   await cache_service.invalidate_agent_caches(agent_id)
+   ```
+
+3. **Pattern-Based Invalidation**:
+   ```python
+   # Invalidate all related caches
+   await cache.delete_pattern("task:*")
+   await cache.delete_pattern("tasks:status:*")
+   await cache.delete_pattern("agents:top:*")
+   ```
+
+## Cache Service Implementation
+
+1. **Service Structure**:
+   ```python
+   class TaskCacheService:
+       def __init__(self):
+           self.cache = get_cache()
+           self.ttl_short = 60
+           self.ttl_medium = 300
+           self.ttl_long = 3600
+       
+       async def get_task(self, task_id: str):
+           # Read-through pattern
+           cache_key = f"task:{task_id}"
+           cached = await self.cache.get(cache_key)
+           if cached:
+               return cached
+           
+           # Fetch from DB
+           task = await db.fetchrow(...)
+           if task:
+               await self.cache.set(cache_key, task, ttl=self.ttl_medium)
+           return task
+   ```
+
+2. **Global Service Access**:
+   ```python
+   # Use singleton pattern
+   _service = None
+   
+   def get_task_cache_service():
+       global _service
+       if _service is None:
+           _service = TaskCacheService()
+       return _service
+   ```
+
+## Best Practices
+
+1. **Always use cache services** (don't access cache directly in routes)
+2. **Implement read-through for expensive queries**
+3. **Implement write-through for consistency**
+4. **Invalidate related caches on updates**
+5. **Use appropriate TTL based on data volatility**
+6. **Monitor cache hit rates**
+7. **Handle cache misses gracefully**
+8. **Serialize datetime objects for JSON caching**
+9. **Use version-aware keys for model predictions**
+10. **Invalidate on model retraining**
+
+## Integration with Routes
+
+1. **Use in API Routes**:
+   ```python
+   @app.get("/tasks/{task_id}")
+   async def get_task(task_id: str):
+       cache_service = get_task_cache_service()
+       task = await cache_service.get_task(task_id)
+       if not task:
+           raise HTTPException(404, "Task not found")
+       return task
+   ```
+
+2. **Update with Caching**:
+   ```python
+   @app.put("/tasks/{task_id}")
+   async def update_task(task_id: str, data: dict):
+       cache_service = get_task_cache_service()
+       updated = await cache_service.update_task(task_id, data)
+       return updated
+   ```

@@ -1,42 +1,40 @@
-import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  CardActions,
-  Button,
-  Chip,
-  Avatar,
-  Rating,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControlLabel,
-  Switch,
-  Tabs,
-  Tab,
-  useTheme,
-  alpha,
-} from '@mui/material';
-import {
-  PlayArrow as PlayIcon,
-  Edit as EditIcon,
-  Favorite as FavoriteIcon,
-  FavoriteBorder as FavoriteBorderIcon,
-  ContentCopy as CopyIcon,
-  Visibility as ViewIcon,
-  TrendingUp as TrendingUpIcon,
-  Schedule as ScheduleIcon,
-  Group as GroupIcon,
+    ContentCopy as CopyIcon,
+    Edit as EditIcon,
+    FavoriteBorder as FavoriteBorderIcon,
+    Favorite as FavoriteIcon,
+    PlayArrow as PlayIcon,
+    Schedule as ScheduleIcon,
+    TrendingUp as TrendingUpIcon,
+    Visibility as ViewIcon
 } from '@mui/icons-material';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+    alpha,
+    Box,
+    Button,
+    Card,
+    CardActions,
+    CardContent,
+    Chip,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogTitle,
+    FormControlLabel,
+    Grid,
+    IconButton,
+    Rating,
+    Switch,
+    Tab,
+    Tabs,
+    TextField,
+    Typography,
+    useTheme
+} from '@mui/material';
+import { AnimatePresence, motion } from 'framer-motion';
+import React, { useState } from 'react';
 
-import { TaskComplexity, AgentSpecialty } from '../../types/agent';
+import { AgentSpecialty, TaskComplexity } from '../../types/agent';
 
 interface WorkflowTemplate {
   id: string;
@@ -159,10 +157,10 @@ const BUILT_IN_TEMPLATES: WorkflowTemplate[] = [
     category: "Technical Analysis",
     taskTemplate: "Perform comprehensive technical audit of {system/codebase}, analyze architecture, identify security vulnerabilities, assess performance bottlenecks, review code quality, provide improvement recommendations",
     suggestedAgents: [
-      AgentSpecialty.SYSTEM_ARCHITECT,
-      AgentSpecialty.SECURITY_ANALYST,
-      AgentSpecialty.PERFORMANCE_ENGINEER,
-      AgentSpecialty.CODE_REVIEWER,
+      AgentSpecialty.PATTERN_RECOGNIZER,
+      AgentSpecialty.RISK_ASSESSOR,
+      AgentSpecialty.STATISTICAL_MODELER,
+      AgentSpecialty.ERROR_DETECTOR,
       AgentSpecialty.CONTENT_WRITER,
       AgentSpecialty.QUALITY_CONTROLLER
     ],
@@ -187,11 +185,11 @@ const BUILT_IN_TEMPLATES: WorkflowTemplate[] = [
     category: "Investigation",
     taskTemplate: "Investigate {subject/case}, gather digital evidence, analyze patterns, correlate data sources, compile comprehensive evidence report with findings and recommendations",
     suggestedAgents: [
-      AgentSpecialty.DIGITAL_FORENSICS,
-      AgentSpecialty.NETWORK_ANALYZER,
       AgentSpecialty.PATTERN_RECOGNIZER,
-      AgentSpecialty.EVIDENCE_COMPILER,
-      AgentSpecialty.CASE_INVESTIGATOR,
+      AgentSpecialty.WEB_INTELLIGENCE,
+      AgentSpecialty.DATA_ANALYST,
+      AgentSpecialty.FACT_CHECKER,
+      AgentSpecialty.QUALITY_CONTROLLER,
       AgentSpecialty.COMPLIANCE_REVIEWER
     ],
     complexity: TaskComplexity.INVESTIGATION,
@@ -272,7 +270,7 @@ export const WorkflowTemplates: React.FC<WorkflowTemplatesProps> = ({
         }}
       >
         <CardContent sx={{ flexGrow: 1 }}>
-          <Box display="flex" justifyContent="between" alignItems="flex-start" mb={2}>
+          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
             <Box flex={1}>
               <Typography variant="h6" component="div" mb={1}>
                 {template.name}
@@ -450,7 +448,7 @@ export const WorkflowTemplates: React.FC<WorkflowTemplatesProps> = ({
           scrollButtons="auto"
         >
           <Tab label="All Templates" />
-          {categories.map((category, index) => (
+          {categories.map((category) => (
             <Tab key={category} label={category} />
           ))}
         </Tabs>

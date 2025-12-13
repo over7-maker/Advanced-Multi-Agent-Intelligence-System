@@ -1,0 +1,816 @@
+{
+  "timestamp": "2025-12-03T23:51:29.835971",
+  "summary": {
+    "total_tests": 119,
+    "passed": 101,
+    "failed": 0,
+    "warnings": 18
+  },
+  "categories": {
+    "infrastructure": {
+      "passed": 16,
+      "failed": 0,
+      "warnings": 7,
+      "tests": [
+        {
+          "name": "Settings loaded",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:25.679358"
+        },
+        {
+          "name": "Configuration validation",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:25.679370"
+        },
+        {
+          "name": "Environment detected",
+          "status": "PASS",
+          "message": "Environment: development",
+          "timestamp": "2025-12-03T23:51:25.679373"
+        },
+        {
+          "name": ".env file exists",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:25.679479"
+        },
+        {
+          "name": "API keys configured",
+          "status": "PASS",
+          "message": "Found 14 API keys",
+          "timestamp": "2025-12-03T23:51:25.679482"
+        },
+        {
+          "name": "OPENAI_API_KEY configured",
+          "status": "WARN",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:25.679487"
+        },
+        {
+          "name": "ANTHROPIC_API_KEY configured",
+          "status": "WARN",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:25.679490"
+        },
+        {
+          "name": "GOOGLE_AI_API_KEY configured",
+          "status": "WARN",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:25.679493"
+        },
+        {
+          "name": "GROQ_API_KEY configured",
+          "status": "WARN",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:25.679496"
+        },
+        {
+          "name": "DEEPSEEK_API_KEY configured",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:25.679498"
+        },
+        {
+          "name": "COHERE_API_KEY configured",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:25.679500"
+        },
+        {
+          "name": "CEREBRAS_API_KEY configured",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:25.679501"
+        },
+        {
+          "name": "NVIDIA_API_KEY configured",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:25.679502"
+        },
+        {
+          "name": "PostgreSQL initialization",
+          "status": "WARN",
+          "message": "The asyncio extension requires an async driver to be used. The loaded 'psycopg2' is not async.",
+          "timestamp": "2025-12-03T23:51:25.872350"
+        },
+        {
+          "name": "Redis initialization",
+          "status": "WARN",
+          "message": "Authentication required.",
+          "timestamp": "2025-12-03T23:51:25.904757"
+        },
+        {
+          "name": "Neo4j initialization",
+          "status": "WARN",
+          "message": "{code: Neo.ClientError.Security.Unauthorized} {message: The client is unauthorized due to authentication failure.}",
+          "timestamp": "2025-12-03T23:51:26.243322"
+        },
+        {
+          "name": "FastAPI installed",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:26.392766"
+        },
+        {
+          "name": "Uvicorn installed",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:26.411873"
+        },
+        {
+          "name": "Pydantic installed",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:26.411884"
+        },
+        {
+          "name": "aiohttp installed",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:26.477903"
+        },
+        {
+          "name": "asyncpg installed",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:26.490485"
+        },
+        {
+          "name": "Redis installed",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:26.490496"
+        },
+        {
+          "name": "Neo4j installed",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:26.490498"
+        }
+      ]
+    },
+    "core_orchestrator": {
+      "passed": 7,
+      "failed": 0,
+      "warnings": 0,
+      "tests": [
+        {
+          "name": "Orchestrator import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:28.416109"
+        },
+        {
+          "name": "Orchestrator initialization",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:28.416139"
+        },
+        {
+          "name": "Orchestrator has execute_task",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:28.416142"
+        },
+        {
+          "name": "Orchestrator has create_task",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:28.416145"
+        },
+        {
+          "name": "Orchestrator has get_task_status",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:28.416146"
+        },
+        {
+          "name": "Orchestrator has select_agents",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:28.416148"
+        },
+        {
+          "name": "Orchestrator has aggregate_results",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:28.416149"
+        }
+      ]
+    },
+    "ai_router": {
+      "passed": 0,
+      "failed": 0,
+      "warnings": 1,
+      "tests": [
+        {
+          "name": "AI Router import",
+          "status": "WARN",
+          "message": "cannot import name 'get_ai_router' from 'src.amas.ai.enhanced_router_v2' (C:\\Users\\Admin\\AMAS\\Advanced-Multi-Agent-Intelligence-System\\src\\amas\\ai\\enhanced_router_v2.py)",
+          "timestamp": "2025-12-03T23:51:29.312475"
+        }
+      ]
+    },
+    "agents": {
+      "passed": 4,
+      "failed": 0,
+      "warnings": 10,
+      "tests": [
+        {
+          "name": "BaseAgent import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.313629"
+        },
+        {
+          "name": "BaseAgent has execute",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.313638"
+        },
+        {
+          "name": "BaseAgent has _prepare_prompt",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.313641"
+        },
+        {
+          "name": "BaseAgent has _parse_response",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.313642"
+        },
+        {
+          "name": "SecurityAgent import",
+          "status": "WARN",
+          "message": "Class not found",
+          "timestamp": "2025-12-03T23:51:29.313879"
+        },
+        {
+          "name": "CodeAgent import",
+          "status": "WARN",
+          "message": "Class not found",
+          "timestamp": "2025-12-03T23:51:29.313931"
+        },
+        {
+          "name": "IntelligenceAgent extends BaseAgent",
+          "status": "WARN",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.313940"
+        },
+        {
+          "name": "IntelligenceAgent initialization",
+          "status": "WARN",
+          "message": "Can't instantiate abstract class IntelligenceAgent without an implementation for abstract methods 'execute_task', 'validate_task'",
+          "timestamp": "2025-12-03T23:51:29.313948"
+        },
+        {
+          "name": "OSINTAgent extends BaseAgent",
+          "status": "WARN",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.313954"
+        },
+        {
+          "name": "OSINTAgent initialization",
+          "status": "WARN",
+          "message": "OSINTAgent.__init__() missing 1 required positional argument: 'agent_id'",
+          "timestamp": "2025-12-03T23:51:29.313959"
+        },
+        {
+          "name": "ForensicsAgent extends BaseAgent",
+          "status": "WARN",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.313963"
+        },
+        {
+          "name": "ForensicsAgent initialization",
+          "status": "WARN",
+          "message": "ForensicsAgent.__init__() missing 1 required positional argument: 'agent_id'",
+          "timestamp": "2025-12-03T23:51:29.313966"
+        },
+        {
+          "name": "InvestigationAgent extends BaseAgent",
+          "status": "WARN",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.313969"
+        },
+        {
+          "name": "InvestigationAgent initialization",
+          "status": "WARN",
+          "message": "InvestigationAgent.__init__() missing 1 required positional argument: 'agent_id'",
+          "timestamp": "2025-12-03T23:51:29.313972"
+        }
+      ]
+    },
+    "intelligence_manager": {
+      "passed": 7,
+      "failed": 0,
+      "warnings": 0,
+      "tests": [
+        {
+          "name": "AMASIntelligenceManager import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.494882"
+        },
+        {
+          "name": "AMASIntelligenceManager initialization",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.495118"
+        },
+        {
+          "name": "AMASIntelligenceManager has record_task_execution",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.495123"
+        },
+        {
+          "name": "PredictiveEngine import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.495127"
+        },
+        {
+          "name": "PredictiveEngine initialization",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.495199"
+        },
+        {
+          "name": "PredictiveEngine has predict_task_outcome",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.495203"
+        },
+        {
+          "name": "PredictiveEngine has predict_system_resources",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.495206"
+        }
+      ]
+    },
+    "api_endpoints": {
+      "passed": 12,
+      "failed": 0,
+      "warnings": 0,
+      "tests": [
+        {
+          "name": "health route import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.498295"
+        },
+        {
+          "name": "tasks route import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.504620"
+        },
+        {
+          "name": "agents route import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.514996"
+        },
+        {
+          "name": "predictions route import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.521281"
+        },
+        {
+          "name": "integrations route import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.527262"
+        },
+        {
+          "name": "metrics route import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.528764"
+        },
+        {
+          "name": "auth route import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.544325"
+        },
+        {
+          "name": "users route import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.552677"
+        },
+        {
+          "name": "workflows route import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.557836"
+        },
+        {
+          "name": "Root endpoint",
+          "status": "PASS",
+          "message": "Status: 200",
+          "timestamp": "2025-12-03T23:51:29.817976"
+        },
+        {
+          "name": "Health endpoint",
+          "status": "PASS",
+          "message": "Status: 200",
+          "timestamp": "2025-12-03T23:51:29.819109"
+        },
+        {
+          "name": "API docs endpoint",
+          "status": "PASS",
+          "message": "Status: 200",
+          "timestamp": "2025-12-03T23:51:29.819984"
+        }
+      ]
+    },
+    "websocket": {
+      "passed": 4,
+      "failed": 0,
+      "warnings": 0,
+      "tests": [
+        {
+          "name": "WebSocket import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.820085"
+        },
+        {
+          "name": "WebSocketManager has broadcast",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.820089"
+        },
+        {
+          "name": "WebSocketManager has connect",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.820091"
+        },
+        {
+          "name": "WebSocketManager has disconnect",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.820093"
+        }
+      ]
+    },
+    "integrations": {
+      "passed": 7,
+      "failed": 0,
+      "warnings": 0,
+      "tests": [
+        {
+          "name": "IntegrationManager import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.820099"
+        },
+        {
+          "name": "GitHubConnector has required methods",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.820525"
+        },
+        {
+          "name": "SlackConnector has required methods",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.820858"
+        },
+        {
+          "name": "N8NConnector has required methods",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.823067"
+        },
+        {
+          "name": "NotionConnector has required methods",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.823974"
+        },
+        {
+          "name": "JiraConnector has required methods",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.824274"
+        },
+        {
+          "name": "SalesforceConnector has required methods",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.824521"
+        }
+      ]
+    },
+    "caching_services": {
+      "passed": 20,
+      "failed": 0,
+      "warnings": 0,
+      "tests": [
+        {
+          "name": "TaskCacheService import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.827660"
+        },
+        {
+          "name": "TaskCacheService has get_task",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.827668"
+        },
+        {
+          "name": "TaskCacheService has update_task",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.827670"
+        },
+        {
+          "name": "TaskCacheService has invalidate_task",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.827671"
+        },
+        {
+          "name": "TaskCacheService has get_tasks_by_status",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.827672"
+        },
+        {
+          "name": "TaskCacheService has get_task_statistics",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.827674"
+        },
+        {
+          "name": "AgentCacheService import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.829646"
+        },
+        {
+          "name": "AgentCacheService has get_agent_performance",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.829653"
+        },
+        {
+          "name": "AgentCacheService has get_top_agents",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.829655"
+        },
+        {
+          "name": "AgentCacheService has invalidate_agent_caches",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.829656"
+        },
+        {
+          "name": "PredictionCacheService import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.831368"
+        },
+        {
+          "name": "PredictionCacheService has get_prediction",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.831376"
+        },
+        {
+          "name": "PredictionCacheService has cache_prediction",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.831378"
+        },
+        {
+          "name": "PredictionCacheService has update_model_version",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.831379"
+        },
+        {
+          "name": "SemanticCacheService import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.831383"
+        },
+        {
+          "name": "PerformanceService has caching",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.832496"
+        },
+        {
+          "name": "Redis cache manager import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.832515"
+        },
+        {
+          "name": "Redis get function available",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.832522"
+        },
+        {
+          "name": "Redis set function available",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.832524"
+        },
+        {
+          "name": "Redis delete function available",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.832525"
+        }
+      ]
+    },
+    "monitoring": {
+      "passed": 6,
+      "failed": 0,
+      "warnings": 0,
+      "tests": [
+        {
+          "name": "PrometheusMetricsService import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.833891"
+        },
+        {
+          "name": "MetricsService has record_task_execution",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.833898"
+        },
+        {
+          "name": "MetricsService has record_agent_execution",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.833901"
+        },
+        {
+          "name": "MetricsService has record_ai_provider_call",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.833903"
+        },
+        {
+          "name": "TracingService import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834078"
+        },
+        {
+          "name": "SystemMonitor import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834403"
+        }
+      ]
+    },
+    "frontend": {
+      "passed": 10,
+      "failed": 0,
+      "warnings": 0,
+      "tests": [
+        {
+          "name": "package.json exists",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834450"
+        },
+        {
+          "name": "tsconfig.json exists",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834466"
+        },
+        {
+          "name": "vite.config.ts exists",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834480"
+        },
+        {
+          "name": "API Service exists",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834501"
+        },
+        {
+          "name": "WebSocket Service exists",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834518"
+        },
+        {
+          "name": "Dashboard component exists",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834537"
+        },
+        {
+          "name": "TaskList component exists",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834553"
+        },
+        {
+          "name": "AgentList component exists",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834569"
+        },
+        {
+          "name": "IntegrationList component exists",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834584"
+        },
+        {
+          "name": "SystemHealth component exists",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834599"
+        }
+      ]
+    },
+    "e2e_workflows": {
+      "passed": 5,
+      "failed": 0,
+      "warnings": 0,
+      "tests": [
+        {
+          "name": "Orchestrator available for E2E",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834606"
+        },
+        {
+          "name": "IntelligenceManager available for E2E",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834609"
+        },
+        {
+          "name": "PredictiveEngine available for E2E",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834612"
+        },
+        {
+          "name": "Tasks API route available for E2E",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834615"
+        },
+        {
+          "name": "WebSocket manager available for E2E",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834617"
+        }
+      ]
+    },
+    "security": {
+      "passed": 3,
+      "failed": 0,
+      "warnings": 0,
+      "tests": [
+        {
+          "name": "SecurityManager import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834902"
+        },
+        {
+          "name": "JWT middleware import",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.834908"
+        },
+        {
+          "name": "Pydantic validation available",
+          "status": "PASS",
+          "message": "",
+          "timestamp": "2025-12-03T23:51:29.835738"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,284 @@
+---
+description: AMAS Architecture Overview - Complete system architecture, component relationships, data flow, and project structure reference
+globs:
+  - "src/**/*.py"
+  - "frontend/src/**/*.tsx"
+  - "docs/ARCHITECTURE.md"
+alwaysApply: true
+---
+
+# AMAS Architecture Overview
+
+This rule enforces the complete AMAS (AI Multi-Agent System) architecture as documented in COMPREHENSIVE FINAL SUMMARY.md.
+
+## System Architecture
+
+### **Layer Structure** (Must Follow)
+
+```
+Client Layer (React Frontend)
+    ↓
+Nginx Reverse Proxy (SSL, Rate Limiting)
+    ↓
+API Layer (FastAPI)
+    ↓
+Orchestration Layer (Unified Intelligence Orchestrator)
+    ↓
+Agent System (12 Specialized Agents)
+    ↓
+AI Provider Router (16 Providers with Fallback)
+    ↓
+Database Layer (PostgreSQL, Redis, Neo4j)
+```
+
+### **Key Principles**
+
+1. **Never bypass orchestrator** - All tasks must go through Unified Intelligence Orchestrator
+2. **Always use AI router** - Never call AI providers directly
+3. **ML-powered selection** - Use ML predictions for agent selection
+4. **Real-time updates** - Broadcast all events via WebSocket
+5. **Complete persistence** - Store all data in PostgreSQL
+6. **Multi-level caching** - Use Redis for all caching
+7. **Graph analytics** - Use Neo4j for relationships
+
+## Core Components
+
+### **1. Unified Intelligence Orchestrator**
+
+**File**: `src/amas/core/unified_intelligence_orchestrator.py`
+
+**Responsibilities** (Must Implement):
+- Task lifecycle management
+- Agent selection and coordination (ML-powered)
+- Parallel/sequential execution
+- Result aggregation
+- Error handling and retry logic
+- Progress tracking
+- Quality scoring
+- Cost tracking
+
+### **2. AI Provider Router**
+
+**File**: `src/amas/core/ai_provider_router.py`
+
+**16 AI Providers** (Must Support):
+1. OpenAI (GPT-4, GPT-4 Turbo)
+2. Anthropic (Claude 3.5 Sonnet)
+3. Google AI (Gemini 1.5 Pro)
+4. Groq (Mixtral, Llama 3)
+5. DeepSeek
+6. Cohere
+7. Mistral AI
+8. Together AI
+9. Perplexity
+10. Fireworks AI
+11. Replicate
+12. HuggingFace
+13. AI21 Labs
+14. Aleph Alpha
+15. Writer
+16. Moonshot AI
+
+**Features** (Must Implement):
+- Automatic fallback chain
+- Circuit breaker pattern
+- Load balancing
+- Cost optimization
+- Rate limit handling
+- Performance tracking
+
+### **3. Agent System**
+
+**12 Specialized Agents** (Must Extend BaseAgent):
+
+1. Security Agent - `src/amas/agents/security_agent.py`
+2. Code Agent - `src/amas/agents/code_agent.py`
+3. Intelligence Agent - `src/amas/agents/intelligence_agent.py`
+4. Performance Agent - `src/amas/agents/performance_agent.py`
+5. Documentation Agent - `src/amas/agents/documentation_agent.py`
+6. Testing Agent - `src/amas/agents/testing_agent.py`
+7. Deployment Agent - `src/amas/agents/deployment_agent.py`
+8. Monitoring Agent - `src/amas/agents/monitoring_agent.py`
+9. Data Agent - `src/amas/agents/data_agent.py`
+10. API Agent - `src/amas/agents/api_agent.py`
+11. Research Agent - `src/amas/agents/research_agent.py`
+12. Integration Agent - `src/amas/agents/integration_agent.py`
+
+**Required Capabilities**:
+- Specialized expertise
+- Multi-provider support
+- Quality scoring
+- Performance tracking
+- Cost monitoring
+
+### **4. Integration Platform**
+
+**6 Platform Integrations** (Must Implement):
+
+1. GitHub - `src/amas/integrations/github_integration.py`
+2. Slack - `src/amas/integrations/slack_integration.py`
+3. N8N - `src/amas/integrations/n8n_integration.py`
+4. Notion - `src/amas/integrations/notion_integration.py`
+5. Jira - `src/amas/integrations/jira_integration.py`
+6. Salesforce - `src/amas/integrations/salesforce_integration.py`
+
+### **5. ML Prediction System**
+
+**File**: `src/amas/ml/task_predictor.py`
+
+**Must Predict**:
+- Task success probability
+- Execution duration estimation
+- Quality score prediction
+- Cost estimation
+- Agent recommendations
+- Resource requirements
+
+### **6. Database Layer**
+
+**PostgreSQL (11 Tables)**:
+1. users
+2. agents
+3. tasks
+4. task_executions
+5. integrations
+6. ml_models
+7. ml_training_data
+8. api_keys
+9. audit_logs
+10. notifications
+11. system_config
+
+**Redis (Multi-level Caching)**:
+- Task cache (5 min TTL)
+- Agent performance cache (5 min TTL)
+- ML predictions cache (1 hour TTL)
+- System metrics cache (1 min TTL)
+- Session cache (24 hour TTL)
+
+**Neo4j (Graph Analytics)**:
+- Task dependencies
+- Agent collaboration networks
+- Task similarity analysis
+- Agent-task affinity
+- Execution paths
+
+## Data Flow (Must Follow)
+
+```
+User Request
+    ↓
+[Nginx] → SSL/TLS Termination → Rate Limiting
+    ↓
+[FastAPI] → Authentication → Validation
+    ↓
+[Orchestrator] → Task Analysis
+    ↓
+[Intelligence Manager] → Agent Selection (ML)
+    ↓
+[Agent Registry] → Agent Retrieval
+    ↓
+[Agents] → Parallel/Sequential Execution
+    ↓
+[AI Router] → Provider Selection + Fallback
+    ↓
+[AI Provider] → API Call → Response
+    ↓
+[Orchestrator] → Result Aggregation
+    ↓
+[Database] → Persist Results
+    ↓
+[Cache] → Update Cache
+    ↓
+[WebSocket] → Real-time Update to Frontend
+    ↓
+[Metrics] → Prometheus Collection
+    ↓
+User Response
+```
+
+## Project Structure (Must Match)
+
+```
+amas/
+├── src/
+│   ├── api/                          # FastAPI application
+│   │   ├── main.py
+│   │   ├── routes/                   # API endpoints
+│   │   └── middleware/
+│   ├── amas/                         # Core business logic
+│   │   ├── core/                     # Core components
+│   │   ├── agents/                   # 12 specialized agents
+│   │   ├── providers/                # 16 AI providers
+│   │   ├── integrations/             # 6 platform integrations
+│   │   ├── ml/                       # Machine Learning
+│   │   └── services/                 # Core services
+│   ├── database/                     # Database layer
+│   └── utils/                        # Utilities
+├── frontend/                         # React frontend
+├── alembic/                          # Database migrations
+├── monitoring/                       # Monitoring configuration
+├── k8s/                             # Kubernetes manifests
+├── nginx/                           # Nginx configuration
+├── scripts/                          # Utility scripts
+├── tests/                           # Test suite
+└── docs/                            # Documentation
+```
+
+## Performance Targets (Must Meet)
+
+| Metric | Target | Critical |
+|--------|--------|----------|
+| API Response Time (p95) | < 200ms | < 500ms |
+| Database Query Time (p95) | < 50ms | < 200ms |
+| Task Execution Time | < 30s | < 60s |
+| Frontend Load Time | < 2s | < 4s |
+| WebSocket Latency | < 100ms | < 300ms |
+| Cache Hit Rate | > 80% | > 60% |
+| Error Rate | < 0.1% | < 1% |
+| Uptime | > 99.9% | > 99.5% |
+
+## Monitoring Requirements
+
+**Prometheus Metrics** (50+ metrics required):
+- Task metrics (executions, duration, success rate, quality)
+- Agent metrics (executions, duration, utilization, tokens, cost)
+- AI provider metrics (calls, latency, tokens, cost, circuit breaker)
+- System metrics (CPU, memory, HTTP requests, DB queries, cache hit rate)
+
+**Grafana Dashboards** (7 dashboards):
+1. System Overview
+2. Task Analytics
+3. Agent Performance
+4. AI Provider Usage
+5. Cost Analysis
+6. Database Performance
+7. Cache Performance
+
+**Alert Rules** (15+ alerts):
+- Critical: AIProviderDown, DatabaseConnectionPoolExhausted, CriticalCPUUsage
+- Warning: HighTaskFailureRate, TaskQueueBacklog, SlowTaskExecution
+
+## Deployment Requirements
+
+**Docker Compose Stack** (15 services):
+- Application: amas-backend, nginx
+- Database: postgres, redis, neo4j
+- Monitoring: prometheus, grafana, jaeger, alertmanager, loki, promtail
+- Exporters: node-exporter, cadvisor, postgres-exporter, redis-exporter
+
+**Kubernetes**:
+- Deployment (3+ replicas)
+- HPA (3-10 replicas, CPU 70%, Memory 80%)
+- Service, Ingress, ConfigMap, Secret, PVC
+
+## Best Practices
+
+1. **Follow the architecture** - Never bypass documented layers
+2. **Use documented components** - Reference existing implementations
+3. **Meet performance targets** - Monitor and optimize continuously
+4. **Implement all features** - Complete all documented capabilities
+5. **Maintain consistency** - Follow established patterns
+6. **Document changes** - Update architecture docs when modifying structure
+7. **Test thoroughly** - Maintain 80%+ test coverage
+8. **Monitor everything** - All operations must be observable

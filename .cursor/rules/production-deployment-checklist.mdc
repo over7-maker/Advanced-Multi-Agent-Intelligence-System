@@ -1,0 +1,241 @@
+---
+description: Production Deployment Checklist - Pre-deployment, deployment day, post-deployment procedures, and verification steps
+globs:
+  - "docs/PRODUCTION_CHECKLIST.md"
+  - "scripts/deploy-production.sh"
+  - "docs/QUICK_START.md"
+alwaysApply: false
+---
+
+# Production Deployment Checklist Rules
+
+When preparing for production deployment:
+
+## Pre-Deployment Checklist
+
+1. **Infrastructure Preparation**:
+   ```bash
+   # ✅ CORRECT: Verify server requirements
+   - Minimum specs: 8 vCPU, 32GB RAM, 500GB SSD
+   - Docker 24.0+ installed
+   - Docker Compose 2.20+ installed
+   - Firewall configured (ports 80, 443, 22)
+   - SSL certificates obtained and configured
+   ```
+
+2. **Security Configuration**:
+   ```bash
+   # ✅ CORRECT: Generate strong secrets
+   SECRET_KEY=$(openssl rand -base64 32)
+   JWT_SECRET=$(openssl rand -base64 32)
+   DB_PASSWORD=$(openssl rand -base64 24)
+   REDIS_PASSWORD=$(openssl rand -base64 24)
+   NEO4J_PASSWORD=$(openssl rand -base64 24)
+   
+   # Store in secure vault (AWS Secrets Manager / HashiCorp Vault)
+   # Never commit to Git
+   ```
+
+3. **Database Setup**:
+   ```bash
+   # ✅ CORRECT: Configure backups
+   - Daily automated backups
+   - Weekly full backups
+   - Off-site backup storage (S3/GCS)
+   - Backup retention policy (30 days)
+   - Backup restoration tested
+   ```
+
+4. **Environment Configuration**:
+   ```bash
+   # ✅ CORRECT: Production environment file
+   cp .env.production.example .env.production
+   
+   # Update all CHANGE_THIS placeholders
+   # Verify all required variables are set
+   # Test environment file loading
+   ```
+
+## Deployment Script
+
+1. **Pre-flight checks**:
+   ```bash
+   # ✅ CORRECT: Pre-deployment validation
+   pre_flight_checks() {
+       # Check Docker installed
+       command -v docker || error "Docker not installed"
+       
+       # Check Docker Compose installed
+       command -v docker-compose || error "Docker Compose not installed"
+       
+       # Check .env.production exists
+       [ -f "$ENV_FILE" ] || error "$ENV_FILE not found"
+       
+       # Verify required variables
+       source "$ENV_FILE"
+       required_vars=("SECRET_KEY" "JWT_SECRET" "DB_PASSWORD")
+       for var in "${required_vars[@]}"; do
+           [ -z "${!var}" ] || [[ "${!var}" == *"CHANGE_THIS"* ]] && \
+               error "Required variable $var not set"
+       done
+   }
+   ```
+
+2. **Backup before deployment**:
+   ```bash
+   # ✅ CORRECT: Always backup before deployment
+   backup_database() {
+       if docker ps | grep -q "amas-postgres"; then
+           ./scripts/backup.sh || warn "Backup failed, continuing anyway..."
+       fi
+   }
+   ```
+
+3. **Deployment flow**:
+   ```bash
+   # ✅ CORRECT: Complete deployment process
+   main() {
+       pre_flight_checks
+       backup_database
+       
+       if [ "$1" == "--build" ]; then
+           build_images
+       fi
+       
+       deploy
+       run_migrations
+       post_deployment
+   }
+   ```
+
+4. **Health checks**:
+   ```bash
+   # ✅ CORRECT: Verify all services healthy
+   check_health() {
+       services=("amas-backend" "amas-postgres" "amas-redis" "amas-nginx")
+       
+       for service in "${services[@]}"; do
+           docker ps | grep -q "$service" || error "$service not running"
+       done
+       
+       # Check API health endpoint
+       curl -f http://localhost:8000/health || error "API health check failed"
+   }
+   ```
+
+5. **Database migrations**:
+   ```bash
+   # ✅ CORRECT: Run migrations after deployment
+   run_migrations() {
+       docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T amas-backend \
+           alembic upgrade head
+   }
+   ```
+
+## Post-Deployment Verification
+
+1. **Service verification**:
+   ```bash
+   # ✅ CORRECT: Verify all services
+   - [ ] All containers running
+   - [ ] Health checks passing
+   - [ ] API responding (/health endpoint)
+   - [ ] Frontend loading correctly
+   - [ ] Database migrations completed
+   ```
+
+2. **Functional verification**:
+   ```bash
+   # ✅ CORRECT: Test core functionality
+   - [ ] User authentication working
+   - [ ] Task creation working
+   - [ ] Task execution working
+   - [ ] Integrations working
+   - [ ] WebSocket connection working
+   ```
+
+3. **Monitoring verification**:
+   ```bash
+   # ✅ CORRECT: Verify monitoring
+   - [ ] Grafana dashboards showing data
+   - [ ] Prometheus metrics collection
+   - [ ] Jaeger traces visible
+   - [ ] Loki logs aggregating
+   - [ ] No critical alerts
+   ```
+
+## Rollback Procedures
+
+1. **Rollback script**:
+   ```bash
+   # ✅ CORRECT: Rollback procedure
+   rollback() {
+       warn "Rolling back deployment..."
+       
+       # Stop current containers
+       docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down
+       
+       # Restore from backup
+       ./scripts/restore.sh "$1"
+       
+       # Start previous version
+       docker-compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d
+   }
+   ```
+
+2. **Rollback checklist**:
+   ```bash
+   # ✅ CORRECT: Rollback steps
+   1. Stop current containers
+   2. Restore database from backup
+   3. Deploy previous version
+   4. Verify rollback successful
+   5. Notify team
+   6. Investigate issue
+   ```
+
+## Success Criteria
+
+1. **Deployment success indicators**:
+   ```bash
+   # ✅ CORRECT: Success criteria
+   - [ ] All services running
+   - [ ] All health checks passing
+   - [ ] API response time < 200ms (p95)
+   - [ ] Error rate < 0.1%
+   - [ ] No critical alerts
+   - [ ] Monitoring dashboards showing data
+   - [ ] Users can successfully use application
+   - [ ] No data loss occurred
+   ```
+
+## Troubleshooting
+
+1. **Common issues**:
+   ```bash
+   # ✅ CORRECT: Database connection issue
+   docker ps | grep postgres
+   docker logs amas-postgres
+   docker exec -it amas-postgres psql -U amas -d amas
+   
+   # ✅ CORRECT: Redis connection issue
+   docker ps | grep redis
+   docker exec -it amas-redis redis-cli ping
+   
+   # ✅ CORRECT: High memory usage
+   docker stats
+   docker-compose -f docker-compose.prod.yml restart amas-backend
+   ```
+
+## Best Practices
+
+1. **Always backup before deployment** - Never skip backups
+2. **Run pre-flight checks** - Validate environment before deploying
+3. **Test migrations on staging** - Never run untested migrations in production
+4. **Monitor during deployment** - Watch logs and metrics
+5. **Have rollback plan ready** - Know how to rollback before deploying
+6. **Verify health checks** - All services must pass health checks
+7. **Document deployment** - Log all steps and issues
+8. **Notify team** - Communicate deployment window
+9. **Test after deployment** - Run smoke tests
+10. **Monitor post-deployment** - Watch for 24-48 hours after deployment

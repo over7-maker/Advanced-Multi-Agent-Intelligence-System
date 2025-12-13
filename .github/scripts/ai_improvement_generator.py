@@ -473,11 +473,26 @@ def main():
     parser.add_argument("--auto-apply", default="false", help="Auto-apply improvements")
     parser.add_argument("--analysis-results", default="analysis_results/", help="Analysis results directory")
     parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced manager")
+    parser.add_argument("--use-all-providers", action="store_true", help="Use all AI providers")
+    parser.add_argument("--input", help="Input analysis results file")
+    parser.add_argument("--type", default="comprehensive", help="Improvement type")
     parser.add_argument("--output", default="improvement_generation_results.json", help="Output file")
     
     args = parser.parse_args()
     
     try:
+        # Handle --input argument
+        if args.input:
+            # If input file is provided, use its directory
+            input_path = Path(args.input)
+            if input_path.exists():
+                args.analysis_results = str(input_path.parent)
+        
+        # Handle --type argument (map to mode or depth)
+        if args.type:
+            if args.type in ["comprehensive", "basic", "quick"]:
+                args.depth = args.type
+        
         # Initialize generator
         generator = AIImprovementGenerator(
             mode=args.mode,

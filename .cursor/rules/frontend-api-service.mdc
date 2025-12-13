@@ -1,0 +1,298 @@
+---
+description: Frontend API Service - Axios-based API client with authentication, error handling, and all endpoint methods
+globs:
+  - "frontend/src/services/api.ts"
+  - "frontend/src/services/**/*.ts"
+  - "frontend/src/**/*api*.ts"
+alwaysApply: false
+---
+
+# Frontend API Service Rules
+
+When implementing frontend API services:
+
+## API Service Class Structure
+
+1. **Always use APIService singleton pattern**:
+   ```typescript
+   class APIService {
+     private client: AxiosInstance;
+     private accessToken: string | null = null;
+     
+     constructor() {
+       this.client = axios.create({
+         baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1',
+         timeout: 30000,
+         headers: { 'Content-Type': 'application/json' },
+       });
+       
+       // Request interceptor - add auth token
+       this.client.interceptors.request.use(
+         (config) => {
+           if (this.accessToken) {
+             config.headers.Authorization = `Bearer ${this.accessToken}`;
+           }
+           return config;
+         }
+       );
+       
+       // Response interceptor - handle 401 errors
+       this.client.interceptors.response.use(
+         (response) => response,
+         async (error: AxiosError) => {
+           if (error.response?.status === 401) {
+             this.clearToken();
+             window.location.href = '/login';
+           }
+           return Promise.reject(error);
+         }
+       );
+     }
+   }
+   
+   export const apiService = new APIService();
+   ```
+
+2. **Token Management**:
+   ```typescript
+   // ✅ CORRECT: Store token in localStorage
+   setToken(token: string): void {
+     this.accessToken = token;
+     localStorage.setItem('access_token', token);
+   }
+   
+   clearToken(): void {
+     this.accessToken = null;
+     localStorage.removeItem('access_token');
+   }
+   
+   loadToken(): void {
+     const token = localStorage.getItem('access_token');
+     if (token) {
+       this.accessToken = token;
+     }
+   }
+   ```
+
+## API Method Patterns
+
+1. **Task Methods**:
+   ```typescript
+   // ✅ CORRECT: List tasks with filters
+   async listTasks(params?: {
+     status?: string;
+     task_type?: string;
+     limit?: number;
+     offset?: number;
+   }): Promise<{ tasks: Task[]; total: number }> {
+     const response = await this.client.get('/tasks', { params });
+     return response.data;
+   }
+   
+   // ✅ CORRECT: Get single task
+   async getTask(taskId: string): Promise<Task> {
+     const response = await this.client.get(`/tasks/${taskId}`);
+     return response.data;
+   }
+   
+   // ✅ CORRECT: Create task with prediction
+   async createTask(taskData: {
+     title: string;
+     description?: string;
+     task_type: string;
+     target: string;
+     parameters?: Record<string, any>;
+     priority?: number;
+   }): Promise<Task> {
+     const response = await this.client.post('/tasks', taskData);
+     return response.data;
+   }
+   
+   // ✅ CORRECT: Execute task
+   async executeTask(taskId: string, options?: Record<string, any>): Promise<{
+     task_id: string;
+     status: string;
+     message: string;
+   }> {
+     const response = await this.client.post(`/tasks/${taskId}/execute`, options);
+     return response.data;
+   }
+   ```
+
+2. **Prediction Methods**:
+   ```typescript
+   // ✅ CORRECT: Predict task outcome
+   async predictTask(taskData: {
+     task_type: string;
+     target: string;
+     parameters?: Record<string, any>;
+   }): Promise<TaskPrediction> {
+     const response = await this.client.post('/predictions/predict/task', taskData);
+     return response.data;
+   }
+   
+   // ✅ CORRECT: Predict system resources
+   async predictSystemResources(timeHorizonMinutes: number = 60): Promise<{
+     predicted_cpu_usage: number;
+     predicted_memory_usage: number;
+     predicted_cost_per_hour: number;
+     // ... other predictions
+   }> {
+     const response = await this.client.get('/predictions/predict/resources', {
+       params: { time_horizon: timeHorizonMinutes },
+     });
+     return response.data;
+   }
+   ```
+
+3. **Agent Methods**:
+   ```typescript
+   // ✅ CORRECT: List agents with filters
+   async listAgents(params?: {
+     status?: string;
+     type?: string;
+   }): Promise<{ agents: Agent[]; total: number }> {
+     const response = await this.client.get('/agents', { params });
+     return response.data;
+   }
+   
+   // ✅ CORRECT: Get agent performance
+   async getAgentPerformance(): Promise<Agent[]> {
+     const response = await this.client.get('/agents/performance');
+     return response.data;
+   }
+   ```
+
+4. **Integration Methods**:
+   ```typescript
+   // ✅ CORRECT: Create integration
+   async createIntegration(integrationData: {
+     platform: string;
+     credentials: Record<string, any>;
+     configuration?: Record<string, any>;
+   }): Promise<Integration> {
+     const response = await this.client.post('/integrations', integrationData);
+     return response.data;
+   }
+   
+   // ✅ CORRECT: Trigger integration
+   async triggerIntegration(
+     integrationId: string,
+     event_type: string,
+     data: Record<string, any>
+   ): Promise<any> {
+     const response = await this.client.post(`/integrations/${integrationId}/trigger`, {
+       event_type,
+       data,
+     });
+     return response.data;
+   }
+   ```
+
+5. **System Methods**:
+   ```typescript
+   // ✅ CORRECT: Get system metrics
+   async getSystemMetrics(): Promise<SystemMetrics> {
+     const response = await this.client.get('/system/metrics');
+     return response.data;
+   }
+   
+   // ✅ CORRECT: Get system health
+   async getSystemHealth(): Promise<{
+     status: string;
+     components: Record<string, { status: string; details?: any }>;
+     timestamp: string;
+   }> {
+     const response = await this.client.get('/system/health');
+     return response.data;
+   }
+   ```
+
+## Type Definitions
+
+1. **Always define TypeScript interfaces**:
+   ```typescript
+   export interface Task {
+     id: string;
+     task_id: string;
+     title: string;
+     description?: string;
+     task_type: string;
+     target: string;
+     status: 'pending' | 'assigned' | 'executing' | 'completed' | 'failed' | 'timeout' | 'cancelled';
+     priority: number;
+     assigned_agents: string[];
+     prediction?: TaskPrediction;
+     result?: any;
+     error_details?: any;
+     created_at: string;
+     updated_at?: string;
+     started_at?: string;
+     completed_at?: string;
+     duration_seconds?: number;
+     success_rate?: number;
+     quality_score?: number;
+     tokens_used?: number;
+     cost_usd?: number;
+   }
+   
+   export interface TaskPrediction {
+     success_probability: number;
+     estimated_duration: number;
+     estimated_cost: number;
+     quality_score_prediction: number;
+     confidence: number;
+     recommended_agents: RecommendedAgent[];
+     risk_factors: string[];
+     optimization_suggestions: string[];
+   }
+   ```
+
+## Error Handling
+
+1. **Always handle errors gracefully**:
+   ```typescript
+   // ✅ CORRECT: Try-catch with user-friendly messages
+   try {
+     const task = await apiService.getTask(taskId);
+     // Use task
+   } catch (error: any) {
+     console.error('Failed to fetch task:', error);
+     // Show error to user
+     setError(error.response?.data?.detail || 'Failed to fetch task');
+   }
+   ```
+
+## Authentication
+
+1. **Login/Logout methods**:
+   ```typescript
+   // ✅ CORRECT: Login with token storage
+   async login(username: string, password: string): Promise<{ access_token: string; user: User }> {
+     const response = await this.client.post('/auth/login', { username, password });
+     this.setToken(response.data.access_token);
+     return response.data;
+   }
+   
+   // ✅ CORRECT: Logout with token cleanup
+   async logout(): Promise<void> {
+     await this.client.post('/auth/logout');
+     this.clearToken();
+   }
+   
+   // ✅ CORRECT: Get current user
+   async getCurrentUser(): Promise<User> {
+     const response = await this.client.get('/auth/me');
+     return response.data;
+   }
+   ```
+
+## Best Practices
+
+1. **Never hardcode API URLs** - Use environment variables
+2. **Always use TypeScript interfaces** - Type safety for all API responses
+3. **Handle 401 errors** - Redirect to login automatically
+4. **Use interceptors** - Centralize token management and error handling
+5. **Export singleton** - Use `export const apiService = new APIService()`
+6. **Include timeout** - Set reasonable timeout (30 seconds default)
+7. **Type all methods** - Return types and parameters should be typed

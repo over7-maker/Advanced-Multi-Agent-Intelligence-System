@@ -1,10 +1,7 @@
-from standalone_universal_ai_manager import get_api_key
-
 """
 Minimal Configuration System for AMAS
 Supports graceful degradation with 3-4 essential API keys
 """
-
 import logging
 import os
 from dataclasses import dataclass
@@ -129,11 +126,12 @@ class MinimalConfigManager:
         providers = []
 
         # Essential providers (minimal setup)
-        if get_api_key("DEEPSEEK_API_KEY"):
+        deepseek_key = os.getenv("DEEPSEEK_API_KEY")
+        if deepseek_key:
             providers.append(
                 ProviderConfig(
                     name="DeepSeek",
-                    api_key=get_api_key("DEEPSEEK_API_KEY"),
+                    api_key=deepseek_key,
                     base_url="https://api.deepseek.com/v1",
                     model="deepseek-chat",
                     priority=1,
@@ -142,11 +140,12 @@ class MinimalConfigManager:
             )
 
         # Optional providers for enhanced functionality
-        if get_api_key("GLM_API_KEY"):
+        glm_key = os.getenv("GLM_API_KEY")
+        if glm_key:
             providers.append(
                 ProviderConfig(
                     name="GLM",
-                    api_key=get_api_key("GLM_API_KEY"),
+                    api_key=glm_key,
                     base_url="https://open.bigmodel.cn/api/paas/v4",
                     model="glm-4-flash",
                     priority=2,
@@ -154,11 +153,12 @@ class MinimalConfigManager:
                 )
             )
 
-        if get_api_key("GROK_API_KEY"):
+        grok_key = os.getenv("GROK_API_KEY")
+        if grok_key:
             providers.append(
                 ProviderConfig(
                     name="Grok",
-                    api_key=get_api_key("GROK_API_KEY"),
+                    api_key=grok_key,
                     base_url="https://api.openrouter.ai/v1",
                     model="x-ai/grok-beta",
                     priority=3,
@@ -166,11 +166,12 @@ class MinimalConfigManager:
                 )
             )
 
-        if get_api_key("NVIDIA_API_KEY"):
+        nvidia_key = os.getenv("NVIDIA_API_KEY")
+        if nvidia_key:
             providers.append(
                 ProviderConfig(
                     name="NVIDIA",
-                    api_key=get_api_key("NVIDIA_API_KEY"),
+                    api_key=nvidia_key,
                     base_url="https://integrate.api.nvidia.com/v1",
                     model="deepseek-ai/deepseek-r1",
                     priority=4,
@@ -178,11 +179,12 @@ class MinimalConfigManager:
                 )
             )
 
-        if get_api_key("CODESTRAL_API_KEY"):
+        codestral_key = os.getenv("CODESTRAL_API_KEY")
+        if codestral_key:
             providers.append(
                 ProviderConfig(
                     name="Codestral",
-                    api_key=get_api_key("CODESTRAL_API_KEY"),
+                    api_key=codestral_key,
                     base_url="https://codestral.mistral.ai/v1",
                     model="codestral-latest",
                     priority=5,
@@ -225,6 +227,7 @@ class MinimalConfigManager:
             "missing_optional": [],
             "warnings": [],
             "errors": [],
+            "recommendations": [],
         }
 
         # Check required providers (basic validation)
@@ -379,7 +382,8 @@ class MinimalConfigManager:
 
     def get_minimal_docker_compose(self, mode: ConfigLevel = ConfigLevel.BASIC) -> str:
         """Get minimal docker-compose configuration"""
-        minimal_config = self.get_minimal_config(mode)
+        # Use current config instead of calling non-existent get_minimal_config
+        minimal_config = self.get_config()
 
         compose = """version: '3.8'
 
@@ -404,12 +408,12 @@ services:
       # AI Providers (Minimal Mode)
 """
 
-        for provider in minimal_config.required_providers:
-            env_var = f"{provider.value.upper()}_API_KEY"
+        for provider_name in minimal_config.required_providers:
+            env_var = f"{provider_name.upper()}_API_KEY"
             compose += f"      {env_var}: ${{{env_var}}}\n"
 
-        for provider in minimal_config.optional_providers:
-            env_var = f"{provider.value.upper()}_API_KEY"
+        for provider_name in minimal_config.optional_providers:
+            env_var = f"{provider_name.upper()}_API_KEY"
             compose += f"      {env_var}: ${{{env_var}}}  # Optional\n"
 
         compose += """

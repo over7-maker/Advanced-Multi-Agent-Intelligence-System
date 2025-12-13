@@ -4,14 +4,14 @@ AI Project Analyzer - Advanced project analysis and learning system
 Version: 3.0 - Optimized for self-improvement workflows
 """
 
+import argparse
 import json
 import os
 import sys
-import argparse
-from pathlib import Path
-from datetime import datetime
 import time
-import subprocess
+from datetime import datetime
+from pathlib import Path
+
 
 class AIProjectAnalyzer:
     def __init__(self, mode="intelligent", areas="all", depth="comprehensive", auto_apply="false"):
@@ -24,7 +24,7 @@ class AIProjectAnalyzer:
     def analyze_project(self):
         """Execute comprehensive project analysis."""
         
-        print(f"🧠 Starting AI Project Analysis & Learning")
+        print("🧠 Starting AI Project Analysis & Learning")
         print(f"🎯 Mode: {self.mode} | Areas: {self.areas}")
         print(f"📐 Depth: {self.depth} | Auto-apply: {self.auto_apply}")
         print("")
@@ -87,7 +87,7 @@ class AIProjectAnalyzer:
             # Finalize results
             self._finalize_analysis(analysis_results)
             
-            print(f"✅ Project analysis completed successfully")
+            print("✅ Project analysis completed successfully")
             return analysis_results
             
         except Exception as e:
@@ -303,6 +303,7 @@ def main():
     parser.add_argument("--depth", default="comprehensive", help="Analysis depth")
     parser.add_argument("--auto-apply", default="false", help="Auto-apply improvements")
     parser.add_argument("--use-advanced-manager", action="store_true", help="Use advanced manager")
+    parser.add_argument("--use-all-providers", action="store_true", help="Use all AI providers")
     parser.add_argument("--output", default="project_analysis_results.json", help="Output file")
     
     args = parser.parse_args()

@@ -1,0 +1,256 @@
+---
+description: Database Migrations & Backup - Alembic migrations, backup scripts, and disaster recovery procedures
+globs:
+  - "alembic/**/*.py"
+  - "scripts/backup.sh"
+  - "scripts/restore.sh"
+  - "alembic.ini"
+alwaysApply: false
+---
+
+# Database Migrations & Backup Rules
+
+When working with database migrations and backups:
+
+## Alembic Migrations
+
+1. **Migration environment setup**:
+   ```python
+   # ✅ CORRECT: alembic/env.py
+   from alembic import context
+   from sqlalchemy import engine_from_config, pool
+   import os
+   import sys
+   
+   sys.path.insert(0, os.path.realpath(os.path.join(os.path.dirname(__file__), '..')))
+   from src.database.models import Base
+   
+   config = context.config
+   target_metadata = Base.metadata
+   
+   def get_url():
+       return os.getenv("DATABASE_URL", config.get_main_option("sqlalchemy.url"))
+   
+   def run_migrations_online():
+       configuration = config.get_section(config.config_ini_section)
+       configuration["sqlalchemy.url"] = get_url()
+       
+       connectable = engine_from_config(
+           configuration,
+           prefix="sqlalchemy.",
+           poolclass=pool.NullPool,
+       )
+       
+       with connectable.connect() as connection:
+           context.configure(
+               connection=connection,
+               target_metadata=target_metadata,
+               compare_type=True,
+               compare_server_default=True,
+           )
+           with context.begin_transaction():
+               context.run_migrations()
+   
+   if context.is_offline_mode():
+       run_migrations_offline()
+   else:
+       run_migrations_online()
+   ```
+
+2. **Creating migrations**:
+   ```bash
+   # ✅ CORRECT: Auto-generate migration
+   alembic revision --autogenerate -m "add_new_table"
+   
+   # ✅ CORRECT: Manual migration
+   alembic revision -m "add_new_table"
+   ```
+
+3. **Migration structure**:
+   ```python
+   # ✅ CORRECT: Migration with upgrade and downgrade
+   """Add new table
+   
+   Revision ID: 002
+   Revises: 001
+   Create Date: 2025-01-02 00:00:00.000000
+   """
+   from alembic import op
+   import sqlalchemy as sa
+   from sqlalchemy.dialects import postgresql
+   
+   revision = '002'
+   down_revision = '001'
+   branch_labels = None
+   depends_on = None
+   
+   def upgrade() -> None:
+       op.create_table(
+           'new_table',
+           sa.Column('id', sa.Integer(), nullable=False),
+           sa.Column('name', sa.String(255), nullable=False),
+           sa.PrimaryKeyConstraint('id')
+       )
+       op.create_index(op.f('ix_new_table_name'), 'new_table', ['name'])
+   
+   def downgrade() -> None:
+       op.drop_index(op.f('ix_new_table_name'), table_name='new_table')
+       op.drop_table('new_table')
+   ```
+
+4. **Applying migrations**:
+   ```bash
+   # ✅ CORRECT: Apply all pending migrations
+   alembic upgrade head
+   
+   # ✅ CORRECT: Apply specific revision
+   alembic upgrade 002
+   
+   # ✅ CORRECT: Rollback one revision
+   alembic downgrade -1
+   
+   # ✅ CORRECT: Check current revision
+   alembic current
+   ```
+
+## Backup Scripts
+
+1. **PostgreSQL backup**:
+   ```bash
+   # ✅ CORRECT: PostgreSQL backup with compression
+   backup_postgresql() {
+       local backup_file="${BACKUP_DIR}/${BACKUP_NAME}_postgres.sql.gz"
+       
+       PGPASSWORD="${DB_PASSWORD}" pg_dump \
+           -h "${DB_HOST}" \
+           -p "${DB_PORT}" \
+           -U "${DB_USER}" \
+           -d "${DB_NAME}" \
+           --format=custom \
+           --compress=9 \
+           --verbose \
+           | gzip > "${backup_file}"
+   }
+   ```
+
+2. **Redis backup**:
+   ```bash
+   # ✅ CORRECT: Redis backup
+   backup_redis() {
+       local backup_file="${BACKUP_DIR}/${BACKUP_NAME}_redis.rdb"
+       
+       docker exec amas-redis redis-cli BGSAVE
+       
+       while [ "$(docker exec amas-redis redis-cli LASTSAVE)" = "0" ]; do
+           sleep 1
+       done
+       
+       docker cp amas-redis:/data/dump.rdb "${backup_file}"
+   }
+   ```
+
+3. **S3 upload**:
+   ```bash
+   # ✅ CORRECT: Upload to S3
+   upload_to_s3() {
+       aws s3 sync "${BACKUP_DIR}" "${S3_BUCKET}/${ENVIRONMENT}/" \
+           --exclude "*" \
+           --include "*${BACKUP_NAME}*" \
+           --storage-class STANDARD_IA
+   }
+   ```
+
+4. **Backup cleanup**:
+   ```bash
+   # ✅ CORRECT: Cleanup old backups
+   cleanup_old_backups() {
+       local retention_days=30
+       
+       # Delete local backups
+       find "${BACKUP_DIR}" -type f -mtime +${retention_days} -delete
+       
+       # Delete old S3 backups
+       aws s3 ls "${S3_BUCKET}/${ENVIRONMENT}/" | while read -r line; do
+           backup_date=$(echo $line | awk '{print $1}')
+           backup_file=$(echo $line | awk '{print $4}')
+           
+           if [ -n "$backup_date" ]; then
+               backup_timestamp=$(date -d "$backup_date" +%s)
+               current_timestamp=$(date +%s)
+               age_days=$(( (current_timestamp - backup_timestamp) / 86400 ))
+               
+               if [ $age_days -gt $retention_days ]; then
+                   aws s3 rm "${S3_BUCKET}/${ENVIRONMENT}/${backup_file}"
+               fi
+           fi
+       done
+   }
+   ```
+
+## Restore Procedures
+
+1. **PostgreSQL restore**:
+   ```bash
+   # ✅ CORRECT: Restore from backup
+   restore_postgresql() {
+       local backup_file=$1
+       
+       # Drop and recreate database
+       PGPASSWORD="${DB_PASSWORD}" psql \
+           -h "${DB_HOST}" \
+           -p "${DB_PORT}" \
+           -U "${DB_USER}" \
+           -d postgres \
+           -c "DROP DATABASE IF EXISTS ${DB_NAME};"
+       
+       PGPASSWORD="${DB_PASSWORD}" psql \
+           -h "${DB_HOST}" \
+           -p "${DB_PORT}" \
+           -U "${DB_USER}" \
+           -d postgres \
+           -c "CREATE DATABASE ${DB_NAME};"
+       
+       # Restore from backup
+       gunzip -c "${backup_file}" | PGPASSWORD="${DB_PASSWORD}" pg_restore \
+           -h "${DB_HOST}" \
+           -p "${DB_PORT}" \
+           -U "${DB_USER}" \
+           -d "${DB_NAME}" \
+           --verbose
+   }
+   ```
+
+2. **Backup verification**:
+   ```bash
+   # ✅ CORRECT: Verify backup integrity
+   verify_backup() {
+       local postgres_backup="${BACKUP_DIR}/${BACKUP_NAME}_postgres.sql.gz"
+       
+       if [ -f "${postgres_backup}" ]; then
+           gzip -t "${postgres_backup}"
+           if [ $? -eq 0 ]; then
+               echo "Backup verification: OK"
+           else
+               echo "Backup verification: FAILED"
+               exit 1
+           fi
+       fi
+   }
+   ```
+
+## Best Practices
+
+1. **Always write downgrade** - Every migration must have downgrade
+2. **Test migrations** - Test on staging before production
+3. **Review auto-generated migrations** - Check for unintended changes
+4. **Use transactions** - Wrap migrations in transactions when possible
+5. **Backup before migration** - Always backup before applying migrations
+6. **Automated backups** - Schedule daily backups
+7. **Test restores** - Regularly test restore procedures
+8. **Off-site backups** - Store backups in S3 or similar
+9. **Encrypt backups** - Encrypt sensitive backup data
+10. **Retention policy** - Keep backups for at least 30 days
+11. **Monitor backup size** - Alert on backup failures
+12. **Document restore procedures** - Clear step-by-step guide
+13. **Version backups** - Include version in backup filename
+14. **Verify backups** - Always verify backup integrity

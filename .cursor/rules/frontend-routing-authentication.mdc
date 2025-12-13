@@ -1,0 +1,320 @@
+---
+description: Frontend Routing & Authentication - React Router patterns, protected routes, and authentication flow
+globs:
+  - "frontend/src/App.tsx"
+  - "frontend/src/components/Auth/**/*.tsx"
+  - "frontend/src/**/*route*.tsx"
+alwaysApply: false
+---
+
+# Frontend Routing & Authentication Rules
+
+When implementing routing and authentication:
+
+## Protected Routes
+
+1. **Always protect routes with authentication check**:
+   ```typescript
+   // ✅ CORRECT: Protected route component
+   const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+     
+     useEffect(() => {
+       const checkAuth = async () => {
+         try {
+           await apiService.getCurrentUser();
+           setIsAuthenticated(true);
+         } catch (error) {
+           setIsAuthenticated(false);
+         }
+       };
+       
+       checkAuth();
+     }, []);
+     
+     if (isAuthenticated === null) {
+       return (
+         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+           <CircularProgress />
+         </Box>
+       );
+     }
+     
+     return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+   };
+   ```
+
+2. **Use in routing configuration**:
+   ```typescript
+   // ✅ CORRECT: Protected routes
+   <Routes>
+     {/* Public Routes */}
+     <Route path="/login" element={<Login />} />
+     
+     {/* Protected Routes */}
+     <Route
+       path="/*"
+       element={
+         <ProtectedRoute>
+           <MainLayout>
+             <Routes>
+               <Route path="/" element={<Dashboard />} />
+               <Route path="/tasks" element={<TaskList />} />
+               <Route path="/tasks/:taskId" element={<TaskExecutionView />} />
+               <Route path="/agents" element={<AgentList />} />
+               <Route path="/integrations" element={<IntegrationList />} />
+               <Route path="/health" element={<SystemHealth />} />
+             </Routes>
+           </MainLayout>
+         </ProtectedRoute>
+       }
+     />
+   </Routes>
+   ```
+
+## Main Layout
+
+1. **App shell with navigation**:
+   ```typescript
+   // ✅ CORRECT: Main layout with drawer and app bar
+   const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+     const navigate = useNavigate();
+     const [drawerOpen, setDrawerOpen] = useState(true);
+     const [user, setUser] = useState<any>(null);
+     
+     useEffect(() => {
+       const fetchUser = async () => {
+         try {
+           const userData = await apiService.getCurrentUser();
+           setUser(userData);
+         } catch (error) {
+           console.error('Failed to fetch user:', error);
+         }
+       };
+       
+       fetchUser();
+       
+       // Connect WebSocket
+       websocketService.connect();
+       
+       return () => {
+         websocketService.disconnect();
+       };
+     }, []);
+     
+     const handleLogout = async () => {
+       try {
+         await apiService.logout();
+         navigate('/login');
+       } catch (error) {
+         console.error('Logout failed:', error);
+       }
+     };
+     
+     const menuItems = [
+       { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+       { text: 'Tasks', icon: <TaskIcon />, path: '/tasks' },
+       { text: 'Agents', icon: <AgentIcon />, path: '/agents' },
+       { text: 'Integrations', icon: <IntegrationIcon />, path: '/integrations' },
+       { text: 'System Health', icon: <HealthIcon />, path: '/health' },
+     ];
+     
+     return (
+       <Box sx={{ display: 'flex' }}>
+         <AppBar position="fixed">
+           <Toolbar>
+             <IconButton onClick={() => setDrawerOpen(!drawerOpen)}>
+               <MenuIcon />
+             </IconButton>
+             <Typography variant="h6" sx={{ flexGrow: 1 }}>
+               AMAS - AI Multi-Agent System
+             </Typography>
+             <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
+               <Avatar>{user?.username?.charAt(0).toUpperCase() || 'U'}</Avatar>
+             </IconButton>
+             <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={() => setAnchorEl(null)}>
+               <MenuItem onClick={handleLogout}>Logout</MenuItem>
+             </Menu>
+           </Toolbar>
+         </AppBar>
+         
+         <Drawer variant="persistent" open={drawerOpen}>
+           <Toolbar />
+           <List>
+             {menuItems.map((item) => (
+               <ListItem key={item.text} disablePadding>
+                 <ListItemButton onClick={() => navigate(item.path)}>
+                   <ListItemIcon>{item.icon}</ListItemIcon>
+                   <ListItemText primary={item.text} />
+                 </ListItemButton>
+               </ListItem>
+             ))}
+           </List>
+         </Drawer>
+         
+         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+           <Toolbar />
+           {children}
+         </Box>
+       </Box>
+     );
+   };
+   ```
+
+## Login Component
+
+1. **Login form with authentication**:
+   ```typescript
+   // ✅ CORRECT: Login component
+   export const Login: React.FC = () => {
+     const navigate = useNavigate();
+     const [username, setUsername] = useState('');
+     const [password, setPassword] = useState('');
+     const [error, setError] = useState<string | null>(null);
+     const [loading, setLoading] = useState(false);
+     
+     const handleSubmit = async (e: React.FormEvent) => {
+       e.preventDefault();
+       setError(null);
+       setLoading(true);
+       
+       try {
+         await apiService.login(username, password);
+         navigate('/');
+       } catch (err: any) {
+         setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
+       } finally {
+         setLoading(false);
+       }
+     };
+     
+     return (
+       <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+         <Card>
+           <CardContent>
+             <Typography variant="h4" gutterBottom>
+               AMAS
+             </Typography>
+             
+             {error && (
+               <Alert severity="error" sx={{ mb: 2 }}>
+                 {error}
+               </Alert>
+             )}
+             
+             <form onSubmit={handleSubmit}>
+               <TextField
+                 fullWidth
+                 label="Username"
+                 value={username}
+                 onChange={(e) => setUsername(e.target.value)}
+                 margin="normal"
+                 required
+                 autoFocus
+               />
+               <TextField
+                 fullWidth
+                 label="Password"
+                 type="password"
+                 value={password}
+                 onChange={(e) => setPassword(e.target.value)}
+                 margin="normal"
+                 required
+               />
+               <Button
+                 type="submit"
+                 fullWidth
+                 variant="contained"
+                 disabled={loading}
+                 sx={{ mt: 3 }}
+               >
+                 {loading ? 'Signing In...' : 'Sign In'}
+               </Button>
+             </form>
+           </CardContent>
+         </Card>
+       </Box>
+     );
+   };
+   ```
+
+## Theme Configuration
+
+1. **Material-UI theme setup**:
+   ```typescript
+   // ✅ CORRECT: Theme configuration
+   const theme = createTheme({
+     palette: {
+       mode: 'dark',
+       primary: {
+         main: '#3f51b5',
+       },
+       secondary: {
+         main: '#f50057',
+       },
+       background: {
+         default: '#0a1929',
+         paper: '#132f4c',
+       },
+     },
+     typography: {
+       fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+     },
+     shape: {
+       borderRadius: 8,
+     },
+   });
+   
+   function App() {
+     return (
+       <ThemeProvider theme={theme}>
+         <CssBaseline />
+         <Router>
+           {/* Routes */}
+         </Router>
+       </ThemeProvider>
+     );
+   }
+   ```
+
+## Navigation Patterns
+
+1. **Use useNavigate for programmatic navigation**:
+   ```typescript
+   // ✅ CORRECT: Programmatic navigation
+   const navigate = useNavigate();
+   
+   const handleViewTask = (taskId: string) => {
+     navigate(`/tasks/${taskId}`);
+   };
+   
+   const handleLogout = async () => {
+     await apiService.logout();
+     navigate('/login');
+   };
+   ```
+
+2. **Use useParams for route parameters**:
+   ```typescript
+   // ✅ CORRECT: Get route parameters
+   const { taskId } = useParams<{ taskId: string }>();
+   
+   useEffect(() => {
+     if (taskId) {
+       fetchTask(taskId);
+     }
+   }, [taskId]);
+   ```
+
+## Best Practices
+
+1. **Always protect routes** - Use ProtectedRoute component
+2. **Check authentication** - Verify token before rendering protected content
+3. **Handle loading states** - Show loading indicator during auth check
+4. **Redirect on logout** - Navigate to login after logout
+5. **Store token** - Use localStorage for token persistence
+6. **Connect WebSocket** - Connect after successful authentication
+7. **Theme consistency** - Use Material-UI theme throughout
+8. **Error handling** - Display login errors to user
+9. **Auto-redirect** - Redirect authenticated users away from login page
+10. **Clean up** - Disconnect WebSocket on logout/unmount

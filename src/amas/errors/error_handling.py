@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
-from fastapi import HTTPException, Request, status
+from fastapi import HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
@@ -307,13 +307,17 @@ class ErrorHandler:
 
         # Handle standard Python exceptions
         if isinstance(error, HTTPException):
+            # Don't log 401/403 as errors - they're expected authentication failures
+            severity = ErrorSeverity.MEDIUM
+            if error.status_code in [401, 403]:
+                severity = ErrorSeverity.LOW  # Lower severity for expected auth failures
             return ProblemDetail(
                 type="https://api.amas.local/problems/http_error",
                 title="HTTP Error",
                 status=error.status_code,
                 detail=error.detail,
                 instance=request.url.path if request else None,
-                severity=ErrorSeverity.MEDIUM,
+                severity=severity,
             )
 
         # Handle generic exceptions
@@ -364,11 +368,21 @@ class ErrorHandler:
                     f"Critical error: {error.detail}", extra=error_context
                 )
             elif error.severity == ErrorSeverity.HIGH:
-                self.logger.error(
-                    f"High severity error: {error.detail}", extra=error_context
-                )
+                # Don't log 401/403 as errors - they're expected
+                if error.status_code not in [401, 403]:
+                    self.logger.error(
+                        f"High severity error: {error.detail}", extra=error_context
+                    )
+                else:
+                    self.logger.debug(f"Authentication/authorization error (expected): {error.detail}", extra=error_context)
             else:
                 self.logger.warning(f"Error: {error.detail}", extra=error_context)
+        elif isinstance(error, HTTPException):
+            # Don't log 401/403 as errors - they're expected authentication failures
+            if error.status_code not in [401, 403]:
+                self.logger.error(f"HTTP error: {error.status_code}: {error.detail}", extra=error_context)
+            else:
+                self.logger.debug(f"HTTP auth error (expected): {error.status_code}: {error.detail}", extra=error_context)
         else:
             self.logger.error(f"Unexpected error: {str(error)}", extra=error_context)
 
@@ -394,9 +408,24 @@ class ErrorHandler:
         # Add correlation ID header
         headers["X-Correlation-ID"] = problem_detail.correlation_id
 
+        # Convert to dict and handle datetime serialization
+        content = problem_detail.dict()
+        
+        # Convert datetime objects to ISO format strings
+        def serialize_datetime(obj):
+            if isinstance(obj, datetime):
+                return obj.isoformat()
+            elif isinstance(obj, dict):
+                return {k: serialize_datetime(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [serialize_datetime(item) for item in obj]
+            return obj
+        
+        content = serialize_datetime(content)
+        
         return JSONResponse(
             status_code=problem_detail.status,
-            content=problem_detail.dict(),
+            content=content,
             headers=headers,
         )
 

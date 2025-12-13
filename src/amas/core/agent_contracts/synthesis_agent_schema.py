@@ -31,7 +31,7 @@ class SynthesisAgentContract(AgentContract):
     # Synthesis-specific settings
     plagiarism_check_enabled: bool = Field(default=True)
     require_citations: bool = Field(default=True)
-    output_format_preference: str = Field(default="structured", regex="^(structured|narrative|mixed)$")
+    output_format_preference: str = Field(default="structured", pattern="^(structured|narrative|mixed)$")
     template_rendering_enabled: bool = Field(default=True)
     
     def get_input_schema(self) -> Dict[str, Any]:

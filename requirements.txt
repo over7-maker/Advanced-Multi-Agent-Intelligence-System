@@ -27,6 +27,8 @@ pandas==2.2.3
 # Database and Storage
 sqlalchemy==2.0.36
 alembic==1.14.0
+psycopg2-binary==2.9.10  # PostgreSQL adapter (synchronous)
+asyncpg==0.30.0  # PostgreSQL adapter (asynchronous)
 redis==5.2.0
 aioredis==2.0.1
 neo4j==5.28.0
@@ -39,6 +41,7 @@ plotly==5.24.1
 
 # Security and Authentication
 bcrypt==4.2.1
+passlib[bcrypt]==1.7.4
 pyjwt==2.10.1
 cryptography==44.0.0
 
@@ -46,6 +49,9 @@ cryptography==44.0.0
 httpx==0.28.1
 aiohttp==3.11.11
 requests==2.32.3
+
+# File System Monitoring (for AI watch daemon)
+watchdog==6.0.0
 
 # Data Processing
 networkx==3.4.2
@@ -96,7 +102,7 @@ python-jose[cryptography]==3.3.0
 # Security Scanning Tools
 bandit==1.7.10
 safety==3.2.7
-pip-audit==2.6.1
+pip-audit==2.7.0
 
 # Data Management Dependencies
 dvc[s3]==3.0.0
@@ -116,6 +122,3 @@ opentelemetry-instrumentation-httpx==0.42b0
 opentelemetry-instrumentation-redis==0.42b0
 opentelemetry-instrumentation-sqlalchemy==0.42b0
 opentelemetry-exporter-otlp-proto-grpc==1.21.0
-
-# JSON Schema validation for agent contracts
-jsonschema==4.20.0

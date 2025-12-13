@@ -174,9 +174,14 @@ backup_database() {
         return 1
     fi
     
-    # Create database backup
-    local db_backup_file="${backup_path}/database-backup.sql"
-    if docker-compose -f "$compose_file" exec -T "$db_service" pg_dump -U postgres -d amas > "$db_backup_file"; then
+    # Get database password from environment or compose file
+    local db_password="${DB_PASSWORD:-amas_password}"
+    
+    # Create database backup (custom format, compressed)
+    local db_backup_file="${backup_path}/database-backup.sql.gz"
+    if docker-compose -f "$compose_file" exec -T "$db_service" \
+        pg_dump -U postgres -d amas --format=custom --compress=9 --verbose | \
+        gzip > "$db_backup_file"; then
         log_success "Database backup created: $db_backup_file"
         
         # Get backup size
@@ -486,6 +491,104 @@ cleanup_old_backups() {
     fi
 }
 
+# Upload to S3
+upload_to_s3() {
+    local backup_path="$1"
+    local env="$2"
+    
+    log "Uploading backups to S3..."
+    
+    # Check if AWS CLI is available
+    if ! command -v aws &> /dev/null; then
+        log_warning "AWS CLI not found, skipping S3 upload"
+        return 0
+    fi
+    
+    # Check if S3_BUCKET is configured
+    if [[ -z "${S3_BUCKET:-}" ]]; then
+        log_warning "S3_BUCKET not configured, skipping S3 upload"
+        return 0
+    fi
+    
+    # Upload all backup files
+    local backup_name=$(basename "$backup_path")
+    if aws s3 sync "$backup_path" "${S3_BUCKET}/${env}/${backup_name}/" \
+        --storage-class STANDARD_IA \
+        --exclude "*" \
+        --include "*"; then
+        log_success "S3 upload completed"
+        return 0
+    else
+        log_error "S3 upload failed"
+        return 1
+    fi
+}
+
+# Verify backup integrity
+verify_backup() {
+    local backup_path="$1"
+    
+    log "Verifying backup integrity..."
+    
+    local verification_passed=true
+    
+    # Check if manifest exists
+    if [[ ! -f "${backup_path}/backup-manifest.json" ]]; then
+        log_error "Backup manifest not found"
+        verification_passed=false
+    fi
+    
+    # Verify PostgreSQL backup
+    local postgres_backup="${backup_path}/database-backup.sql.gz"
+    if [[ -f "$postgres_backup" ]]; then
+        if gzip -t "$postgres_backup" 2>/dev/null; then
+            log_success "PostgreSQL backup verification: OK"
+        else
+            log_error "PostgreSQL backup verification failed"
+            verification_passed=false
+        fi
+    fi
+    
+    # Check Redis backup
+    if [[ -f "${backup_path}/redis-backup.rdb" ]]; then
+        if file "${backup_path}/redis-backup.rdb" | grep -q "data"; then
+            log_success "Redis backup verification: OK"
+        else
+            log_error "Redis backup appears to be corrupted"
+            verification_passed=false
+        fi
+    fi
+    
+    if [[ "$verification_passed" == "true" ]]; then
+        log_success "Backup verification completed successfully"
+        return 0
+    else
+        log_error "Backup verification failed"
+        return 1
+    fi
+}
+
+# Cleanup old backups
+cleanup_old_backups() {
+    local env="$1"
+    local retention_days="$2"
+    
+    log "Cleaning up old backups (retention: $retention_days days)..."
+    
+    # Delete local backups older than retention period
+    find "$BACKUP_DIR" -name "${env}-*" -type d -mtime +${retention_days} -exec rm -rf {} + 2>/dev/null || true
+    
+    # Delete old S3 backups if configured
+    if [[ -n "${S3_BUCKET:-}" ]] && command -v aws &> /dev/null; then
+        log "Cleaning up old S3 backups..."
+        # This would require more complex logic to list and delete old S3 objects
+        # For now, we'll just log that it should be done
+        log "S3 cleanup should be configured via lifecycle policies"
+    fi
+    
+    log_success "Cleanup completed"
+}
+
 # Send backup notifications
 send_backup_notifications() {
     local env="$1"
@@ -496,8 +599,13 @@ send_backup_notifications() {
     log "Sending backup notifications..."
     
     local message=""
+    local total_size=""
+    if [[ -d "$backup_path" ]]; then
+        total_size=$(du -sh "$backup_path" | cut -f1)
+    fi
+    
     if [[ "$status" == "success" ]]; then
-        message="✅ AMAS $env $backup_type backup completed successfully: $backup_path"
+        message="✅ AMAS $env $backup_type backup completed successfully: $backup_path (Size: ${total_size})"
     else
         message="❌ AMAS $env $backup_type backup failed: $backup_path"
     fi
@@ -564,6 +672,15 @@ main() {
         fi
     fi
     
+    # Verify backup if requested
+    if [[ "$VERIFY" == "true" ]]; then
+        if ! verify_backup "$BACKUP_PATH"; then
+            log_error "Backup verification failed"
+            send_backup_notifications "$ENVIRONMENT" "$BACKUP_TYPE" "failed" "$BACKUP_PATH"
+            exit 1
+        fi
+    fi
+    
     # Compress backup if requested
     if [[ "$COMPRESS" == "true" ]]; then
         if ! compress_backup "$BACKUP_PATH"; then
@@ -571,6 +688,11 @@ main() {
             send_backup_notifications "$ENVIRONMENT" "$BACKUP_TYPE" "failed" "$BACKUP_PATH"
             exit 1
         fi
+    fi
+    
+    # Upload to S3 if configured
+    if [[ -n "${S3_BUCKET:-}" ]]; then
+        upload_to_s3 "$BACKUP_PATH" "$ENVIRONMENT"
     fi
     
     # Clean up old backups

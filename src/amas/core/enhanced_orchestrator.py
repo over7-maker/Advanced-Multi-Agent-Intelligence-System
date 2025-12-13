@@ -14,12 +14,11 @@ import logging
 # import os
 # import sys
 import time
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .ai_api_manager import AIAPIManager, get_ai_response
-from .api_clients import APIClientFactory, get_client
+from .ai_api_manager import AIAPIManager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -131,10 +130,10 @@ class EnhancedOrchestrator:
         task_id: str,
         task_type: str,
         prompt: str,
-        system_prompt: str = None,
-        agent_type: str = None,
-        max_retries: int = None,
-        timeout: int = None,
+        system_prompt: Optional[str] = None,
+        agent_type: Optional[str] = None,
+        max_retries: Optional[int] = None,
+        timeout: Optional[int] = None,
     ) -> TaskResult:
         """
         Execute a task with intelligent API selection and fallback
@@ -419,8 +418,26 @@ Focus on accuracy, helpfulness, and professional communication.""",
                     "prompt"
                 ] = f"Context from previous analysis:\n{context}\n\n{phase['prompt']}"
 
-            # Execute phase
-            result = await self.execute_task(**phase)
+            # Execute phase - filter and convert parameters
+            task_params: Dict[str, Any] = {
+                "task_id": phase["task_id"],
+                "task_type": phase["task_type"],
+                "prompt": phase["prompt"],
+            }
+            if "agent_type" in phase:
+                task_params["agent_type"] = phase["agent_type"]
+            if "system_prompt" in phase:
+                task_params["system_prompt"] = phase["system_prompt"]
+            if "max_retries" in phase:
+                max_retries_val = phase["max_retries"]
+                if isinstance(max_retries_val, (str, int)):
+                    task_params["max_retries"] = int(max_retries_val)
+            if "timeout" in phase:
+                timeout_val = phase["timeout"]
+                if isinstance(timeout_val, (str, int)):
+                    task_params["timeout"] = int(timeout_val)
+            
+            result = await self.execute_task(**task_params)
             investigation_results["phases"].append(
                 {"phase": i + 1, "task_type": phase["task_type"], "result": result}
             )
@@ -556,8 +573,10 @@ async def main():
         print(f"✅ Task completed: {result.success}")
         print(f"🔧 API used: {result.api_used}")
         print(f"⏱️ Execution time: {result.execution_time:.2f}s")
-        if result.success:
-            print(f"📝 Response preview: {result.result['content'][:200]}...")
+        if result.success and result.result:
+            content = result.result.get('content', '')
+            if content:
+                print(f"📝 Response preview: {content[:200]}...")
 
         # Test investigation workflow
         print("\n🔍 Testing investigation workflow...")

@@ -1,0 +1,224 @@
+---
+description: Neo4j Graph Database - Task dependencies, agent relationships, performance analysis, and graph analytics patterns
+globs:
+  - "src/database/neo4j_connection.py"
+  - "src/amas/services/**/*.py"
+  - "src/amas/core/**/*.py"
+alwaysApply: false
+---
+
+# Neo4j Graph Database Rules
+
+When working with graph database operations:
+
+## Neo4j Connection Management
+
+1. **Always use Neo4jConnectionManager**:
+   ```python
+   from src.database.neo4j_connection import get_neo4j
+   
+   neo4j = get_neo4j()
+   
+   # ✅ CORRECT: Use manager methods
+   await neo4j.create_task_node(task_data)
+   await neo4j.create_agent_node(agent_data)
+   ```
+
+2. **Connection Pool Configuration**:
+   - Max connection lifetime: 3600 seconds
+   - Max connection pool size: 50
+   - Connection acquisition timeout: 60 seconds
+
+## Node Operations
+
+1. **Create Task Nodes**:
+   ```python
+   task_data = {
+       "task_id": "task_123",
+       "title": "Analyze code",
+       "task_type": "code_analysis",
+       "status": "pending",
+       "priority": 5,
+       "created_at": datetime.now().isoformat(),
+       "updated_at": datetime.now().isoformat()
+   }
+   await neo4j.create_task_node(task_data)
+   ```
+
+2. **Create Agent Nodes**:
+   ```python
+   agent_data = {
+       "agent_id": "agent_123",
+       "name": "Code Analyzer",
+       "type": "analyzer",
+       "status": "active",
+       "expertise_score": 0.95,
+       "created_at": datetime.now().isoformat()
+   }
+   await neo4j.create_agent_node(agent_data)
+   ```
+
+3. **Update Node Properties**:
+   ```python
+   await neo4j.update_task_status(task_id, "completed")
+   ```
+
+## Relationship Operations
+
+1. **Link Task to Agent**:
+   ```python
+   await neo4j.link_task_to_agent(
+       task_id="task_123",
+       agent_id="agent_456",
+       relationship_type="ASSIGNED_TO",
+       properties={"assigned_at": datetime.now().isoformat()}
+   )
+   ```
+
+2. **Task Dependencies**:
+   ```python
+   # Create dependency
+   await neo4j.create_task_dependency(
+       parent_task_id="task_123",
+       child_task_id="task_456",
+       dependency_type="DEPENDS_ON"
+   )
+   
+   # Get dependencies
+   dependencies = await neo4j.get_task_dependencies("task_456")
+   ```
+
+3. **Record Execution**:
+   ```python
+   execution_data = {
+       "started_at": datetime.now().isoformat(),
+       "completed_at": datetime.now().isoformat(),
+       "duration": 45.5,
+       "success": True,
+       "quality_score": 0.92,
+       "tokens_used": 1500,
+       "cost_usd": 0.003
+   }
+   await neo4j.record_agent_execution(
+       agent_id="agent_123",
+       task_id="task_456",
+       execution_data=execution_data
+   )
+   ```
+
+## Graph Analytics
+
+1. **Agent Performance Analysis**:
+   ```python
+   # Get comprehensive performance stats
+   stats = await neo4j.get_agent_performance_stats("agent_123")
+   # Returns: total_executions, success_rate, avg_duration, etc.
+   
+   # Find best agents for task type
+   best_agents = await neo4j.get_best_agent_for_task_type(
+       task_type="code_analysis",
+       limit=5
+   )
+   ```
+
+2. **Task Similarity**:
+   ```python
+   similar_tasks = await neo4j.find_similar_tasks(
+       task_id="task_123",
+       similarity_threshold=0.7,
+       limit=10
+   )
+   ```
+
+3. **Execution Path**:
+   ```python
+   # Get complete execution history
+   execution_path = await neo4j.get_task_execution_path("task_123")
+   # Returns sequence of agents that executed the task
+   ```
+
+4. **Collaboration Network**:
+   ```python
+   # Analyze which agents work together
+   network = await neo4j.get_agent_collaboration_network()
+   # Returns collaboration pairs and frequencies
+   ```
+
+5. **Task-Agent Affinity**:
+   ```python
+   # Analyze which agents are best for which task types
+   affinities = await neo4j.get_task_type_agent_affinity()
+   # Returns affinity matrix
+   ```
+
+## Relationship Types
+
+1. **Standard Relationship Types**:
+   - `ASSIGNED_TO`: Task assigned to agent
+   - `EXECUTED_BY`: Agent executed task
+   - `RECOMMENDED_FOR`: Agent recommended for task
+   - `DEPENDS_ON`: Task dependency relationship
+   - `EXECUTED`: Agent execution record (with metrics)
+
+2. **Relationship Properties**:
+   ```python
+   properties = {
+       "assigned_at": datetime.now().isoformat(),
+       "priority": 5,
+       "confidence": 0.85
+   }
+   await neo4j.link_task_to_agent(
+       task_id, agent_id, "ASSIGNED_TO", properties
+   )
+   ```
+
+## Query Patterns
+
+1. **Cypher Query Best Practices**:
+   - Always use parameters (not string concatenation)
+   - Use indexes for node lookups
+   - Limit result sets
+   - Use appropriate relationship directions
+
+2. **Performance Optimization**:
+   - Create indexes on frequently queried properties
+   - Use constraints for uniqueness
+   - Avoid deep traversals without limits
+   - Use EXPLAIN to analyze query plans
+
+## Health Checks
+
+1. **Monitor Neo4j Health**:
+   ```python
+   health = await neo4j.health_check()
+   # Returns: status, database, node_counts
+   ```
+
+## Initialization
+
+1. **Initialize on startup** (optional, don't fail if unavailable):
+   ```python
+   from src.database.neo4j_connection import init_neo4j
+   
+   @app.on_event("startup")
+   async def startup():
+       try:
+           await init_neo4j(
+               uri=os.getenv("NEO4J_URI"),
+               username=os.getenv("NEO4J_USER"),
+               password=os.getenv("NEO4J_PASSWORD")
+           )
+       except Exception as e:
+           logger.warning(f"Neo4j initialization failed (optional): {e}")
+   ```
+
+## Best Practices
+
+1. **Always create nodes before relationships**
+2. **Use consistent relationship types**
+3. **Store execution metrics on relationships**
+4. **Use graph analytics for intelligent agent selection**
+5. **Track task dependencies for workflow management**
+6. **Analyze collaboration patterns for optimization**
+7. **Don't duplicate data (reference PostgreSQL for details)**
+8. **Use graph for relationships, PostgreSQL for data storage**

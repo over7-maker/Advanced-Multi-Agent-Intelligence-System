@@ -1,0 +1,268 @@
+---
+description: Project Structure Consistency - Enforce correct file locations, naming conventions, and directory structure
+globs:
+  - "**/*.py"
+  - "**/*.tsx"
+  - "**/*.ts"
+  - "**/*.yml"
+  - "**/*.yaml"
+alwaysApply: false
+---
+
+# Project Structure Consistency Rules
+
+When creating or modifying files, ensure they follow the documented project structure:
+
+## File Location Rules
+
+### **Backend API Files**
+
+1. **API Routes** (Must be in `src/api/routes/`):
+   ```python
+   # ✅ CORRECT: API route files
+   src/api/routes/tasks.py          # Task management
+   src/api/routes/agents.py         # Agent management
+   src/api/routes/predictions.py   # ML predictions
+   src/api/routes/integrations.py  # Platform integrations
+   src/api/routes/analytics.py     # Analytics & metrics
+   src/api/routes/metrics.py       # Prometheus metrics
+   ```
+
+2. **Middleware** (Must be in `src/api/middleware/`):
+   ```python
+   # ✅ CORRECT: Middleware files
+   src/api/middleware/auth_middleware.py      # Authentication
+   src/api/middleware/metrics_middleware.py   # Metrics collection
+   src/api/middleware/rate_limit.py          # Rate limiting
+   ```
+
+### **Core Business Logic**
+
+1. **Core Components** (Must be in `src/amas/core/`):
+   ```python
+   # ✅ CORRECT: Core component files
+   src/amas/core/unified_intelligence_orchestrator.py  # Main orchestrator
+   src/amas/core/ai_provider_router.py                 # AI provider routing
+   src/amas/core/agent_registry.py                     # Agent registry
+   src/amas/core/intelligence_manager.py               # Agent selection
+   ```
+
+2. **Agents** (Must be in `src/amas/agents/`):
+   ```python
+   # ✅ CORRECT: Agent files
+   src/amas/agents/base_agent.py          # Base agent class
+   src/amas/agents/security_agent.py     # Security scanning
+   src/amas/agents/code_agent.py         # Code analysis
+   src/amas/agents/intelligence_agent.py # OSINT gathering
+   # ... all 12 agents
+   ```
+
+3. **AI Providers** (Must be in `src/amas/providers/`):
+   ```python
+   # ✅ CORRECT: Provider files
+   src/amas/providers/base_provider.py      # Base provider class
+   src/amas/providers/openai_provider.py    # OpenAI
+   src/amas/providers/anthropic_provider.py # Anthropic
+   # ... all 16 providers
+   ```
+
+4. **Integrations** (Must be in `src/amas/integrations/`):
+   ```python
+   # ✅ CORRECT: Integration files
+   src/amas/integrations/github_integration.py     # GitHub
+   src/amas/integrations/slack_integration.py      # Slack
+   src/amas/integrations/n8n_integration.py       # N8N
+   # ... all 6 integrations
+   ```
+
+5. **ML Components** (Must be in `src/amas/ml/`):
+   ```python
+   # ✅ CORRECT: ML files
+   src/amas/ml/task_predictor.py        # Task outcome prediction
+   src/amas/ml/resource_predictor.py    # Resource usage prediction
+   src/amas/ml/feature_engineering.py # Feature extraction
+   src/amas/ml/model_trainer.py        # Model training
+   ```
+
+6. **Services** (Must be in `src/amas/services/`):
+   ```python
+   # ✅ CORRECT: Service files
+   src/amas/services/task_cache_service.py         # Task caching
+   src/amas/services/agent_cache_service.py       # Agent caching
+   src/amas/services/prediction_cache_service.py  # Prediction caching
+   src/amas/services/prometheus_metrics_service.py # Metrics collection
+   src/amas/services/tracing_service.py           # OpenTelemetry tracing
+   src/amas/services/system_monitor.py            # System monitoring
+   ```
+
+### **Database Layer**
+
+1. **Database Files** (Must be in `src/database/`):
+   ```python
+   # ✅ CORRECT: Database files
+   src/database/connection.py      # PostgreSQL connection pool
+   src/database/redis_cache.py     # Redis cache manager
+   src/database/neo4j_connection.py # Neo4j graph database
+   src/database/models.py          # Database models (11 tables)
+   ```
+
+### **Frontend Files**
+
+1. **Components** (Must be in `frontend/src/components/`):
+   ```typescript
+   // ✅ CORRECT: Component directories
+   frontend/src/components/Dashboard/     # Real-time dashboard
+   frontend/src/components/Tasks/         # Task management UI
+   frontend/src/components/Agents/        # Agent management UI
+   frontend/src/components/Integrations/  # Integration UI
+   frontend/src/components/System/       # System health UI
+   frontend/src/components/Auth/         # Authentication UI
+   ```
+
+2. **Services** (Must be in `frontend/src/services/`):
+   ```typescript
+   // ✅ CORRECT: Service files
+   frontend/src/services/api.ts        # API client (all endpoints)
+   frontend/src/services/websocket.ts  # WebSocket client
+   ```
+
+### **Configuration Files**
+
+1. **Monitoring** (Must be in `monitoring/`):
+   ```yaml
+   # ✅ CORRECT: Monitoring config files
+   monitoring/prometheus/prometheus.yml
+   monitoring/prometheus/rules/alerts.yml
+   monitoring/grafana/dashboards/
+   monitoring/grafana/datasources/
+   monitoring/alertmanager/config.yml
+   monitoring/loki/config.yml
+   monitoring/promtail/config.yml
+   ```
+
+2. **Kubernetes** (Must be in `k8s/`):
+   ```yaml
+   # ✅ CORRECT: K8s files
+   k8s/deployment.yaml
+   ```
+
+3. **Nginx** (Must be in `nginx/`):
+   ```nginx
+   # ✅ CORRECT: Nginx files
+   nginx/nginx.conf
+   ```
+
+4. **Scripts** (Must be in `scripts/`):
+   ```bash
+   # ✅ CORRECT: Script files
+   scripts/deploy-production.sh
+   scripts/backup.sh
+   scripts/restore.sh
+   scripts/migrate.sh
+   scripts/init-db.sql
+   ```
+
+5. **Documentation** (Must be in `docs/`):
+   ```markdown
+   # ✅ CORRECT: Documentation files
+   docs/ARCHITECTURE.md
+   docs/API.md
+   docs/DEPLOYMENT.md
+   docs/SECURITY.md
+   docs/PERFORMANCE.md
+   docs/SCALING.md
+   docs/PRODUCTION_CHECKLIST.md
+   docs/QUICK_START.md
+   ```
+
+## Naming Conventions
+
+1. **Python Files**:
+   ```python
+   # ✅ CORRECT: snake_case for files
+   unified_intelligence_orchestrator.py
+   ai_provider_router.py
+   task_cache_service.py
+   
+   # ✅ CORRECT: snake_case for classes
+   class UnifiedIntelligenceOrchestrator:
+       pass
+   
+   class TaskCacheService:
+       pass
+   ```
+
+2. **TypeScript Files**:
+   ```typescript
+   // ✅ CORRECT: camelCase for files
+   api.ts
+   websocket.ts
+   
+   // ✅ CORRECT: PascalCase for components
+   export const Dashboard: React.FC = () => { }
+   export const TaskList: React.FC = () => { }
+   ```
+
+3. **Configuration Files**:
+   ```yaml
+   # ✅ CORRECT: kebab-case for config files
+   docker-compose.prod.yml
+   prometheus.yml
+   ```
+
+## Directory Structure Rules
+
+1. **Never create files in wrong locations**:
+   ```python
+   # ❌ WRONG: Don't put routes in core directory
+   src/amas/core/tasks.py  # WRONG
+   
+   # ✅ CORRECT: Routes in routes directory
+   src/api/routes/tasks.py  # CORRECT
+   ```
+
+2. **Follow module organization**:
+   ```python
+   # ✅ CORRECT: Group related functionality
+   src/amas/agents/        # All agents together
+   src/amas/providers/     # All providers together
+   src/amas/integrations/  # All integrations together
+   ```
+
+3. **Keep utilities separate**:
+   ```python
+   # ✅ CORRECT: Utilities in utils directory
+   src/utils/logging_config.py
+   src/utils/security.py
+   src/utils/validators.py
+   ```
+
+## Import Path Rules
+
+1. **Use absolute imports**:
+   ```python
+   # ✅ CORRECT: Absolute imports
+   from src.amas.core.unified_intelligence_orchestrator import UnifiedIntelligenceOrchestrator
+   from src.amas.agents.base_agent import BaseAgent
+   from src.database.connection import get_db
+   
+   # ❌ WRONG: Relative imports (avoid when possible)
+   from ..core.unified_intelligence_orchestrator import UnifiedIntelligenceOrchestrator
+   ```
+
+2. **Frontend imports**:
+   ```typescript
+   // ✅ CORRECT: Relative imports for components
+   import { Dashboard } from '../components/Dashboard/Dashboard';
+   import { apiService } from '../services/api';
+   ```
+
+## Best Practices
+
+1. **Always check existing structure** - Before creating new files
+2. **Follow naming conventions** - Consistent naming across project
+3. **Group related files** - Keep similar functionality together
+4. **Document new directories** - Update structure docs when adding
+5. **Maintain separation of concerns** - API, core, database, frontend separate
+6. **Use correct file extensions** - .py for Python, .tsx for React components
+7. **Keep configuration organized** - Group configs by purpose (monitoring, k8s, nginx)

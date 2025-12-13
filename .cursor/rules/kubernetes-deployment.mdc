@@ -1,0 +1,285 @@
+---
+description: Kubernetes Deployment - Production manifests, HPA, services, ingress, and best practices
+globs:
+  - "k8s/**/*.yaml"
+  - "k8s/**/*.yml"
+  - "**/*k8s*.yaml"
+alwaysApply: false
+---
+
+# Kubernetes Deployment Rules
+
+When creating Kubernetes manifests:
+
+## Deployment Configuration
+
+1. **Production deployment with resource limits**:
+   ```yaml
+   # ✅ CORRECT: Deployment with proper configuration
+   apiVersion: apps/v1
+   kind: Deployment
+   metadata:
+     name: amas-backend
+     namespace: amas-production
+   spec:
+     replicas: 3
+     strategy:
+       type: RollingUpdate
+       rollingUpdate:
+         maxSurge: 1
+         maxUnavailable: 0
+     selector:
+       matchLabels:
+         app: amas-backend
+     template:
+       metadata:
+         labels:
+           app: amas-backend
+         annotations:
+           prometheus.io/scrape: "true"
+           prometheus.io/port: "8000"
+       spec:
+         containers:
+         - name: amas-backend
+           image: your-registry/amas-backend:latest
+           imagePullPolicy: Always
+           ports:
+           - containerPort: 8000
+             name: http
+           envFrom:
+           - configMapRef:
+               name: amas-config
+           - secretRef:
+               name: amas-secrets
+           resources:
+             requests:
+               memory: "512Mi"
+               cpu: "500m"
+             limits:
+               memory: "2Gi"
+               cpu: "2000m"
+           livenessProbe:
+             httpGet:
+               path: /health
+               port: 8000
+             initialDelaySeconds: 30
+             periodSeconds: 10
+           readinessProbe:
+             httpGet:
+               path: /health
+               port: 8000
+             initialDelaySeconds: 10
+             periodSeconds: 5
+   ```
+
+2. **ConfigMap and Secrets**:
+   ```yaml
+   # ✅ CORRECT: ConfigMap for non-sensitive config
+   apiVersion: v1
+   kind: ConfigMap
+   metadata:
+     name: amas-config
+     namespace: amas-production
+   data:
+     ENVIRONMENT: "production"
+     LOG_LEVEL: "INFO"
+     JSON_LOGS: "true"
+   
+   # ✅ CORRECT: Secret for sensitive data
+   apiVersion: v1
+   kind: Secret
+   metadata:
+     name: amas-secrets
+     namespace: amas-production
+   type: Opaque
+   stringData:
+     DB_PASSWORD: "your-secure-db-password"
+     SECRET_KEY: "your-secret-key-here"
+     JWT_SECRET: "your-jwt-secret-here"
+   ```
+
+3. **Service configuration**:
+   ```yaml
+   # ✅ CORRECT: ClusterIP service
+   apiVersion: v1
+   kind: Service
+   metadata:
+     name: amas-backend-service
+     namespace: amas-production
+   spec:
+     type: ClusterIP
+     ports:
+     - port: 8000
+       targetPort: 8000
+       protocol: TCP
+       name: http
+     selector:
+       app: amas-backend
+   ```
+
+## Horizontal Pod Autoscaler
+
+1. **HPA configuration**:
+   ```yaml
+   # ✅ CORRECT: HPA with CPU and memory metrics
+   apiVersion: autoscaling/v2
+   kind: HorizontalPodAutoscaler
+   metadata:
+     name: amas-backend-hpa
+     namespace: amas-production
+   spec:
+     scaleTargetRef:
+       apiVersion: apps/v1
+       kind: Deployment
+       name: amas-backend
+     minReplicas: 3
+     maxReplicas: 10
+     metrics:
+     - type: Resource
+       resource:
+         name: cpu
+         target:
+           type: Utilization
+           averageUtilization: 70
+     - type: Resource
+       resource:
+         name: memory
+         target:
+           type: Utilization
+           averageUtilization: 80
+     behavior:
+       scaleUp:
+         stabilizationWindowSeconds: 60
+         policies:
+         - type: Percent
+           value: 50
+           periodSeconds: 60
+       scaleDown:
+         stabilizationWindowSeconds: 300
+         policies:
+         - type: Percent
+           value: 10
+           periodSeconds: 60
+   ```
+
+## Ingress Configuration
+
+1. **TLS-enabled ingress**:
+   ```yaml
+   # ✅ CORRECT: Ingress with TLS
+   apiVersion: networking.k8s.io/v1
+   kind: Ingress
+   metadata:
+     name: amas-ingress
+     namespace: amas-production
+     annotations:
+       cert-manager.io/cluster-issuer: "letsencrypt-prod"
+       nginx.ingress.kubernetes.io/ssl-redirect: "true"
+       nginx.ingress.kubernetes.io/rate-limit: "100"
+   spec:
+     ingressClassName: nginx
+     tls:
+     - hosts:
+       - amas.your-domain.com
+       secretName: amas-tls-secret
+     rules:
+     - host: amas.your-domain.com
+       http:
+         paths:
+         - path: /api
+           pathType: Prefix
+           backend:
+             service:
+               name: amas-backend-service
+               port:
+                 number: 8000
+   ```
+
+## StatefulSets for Databases
+
+1. **PostgreSQL StatefulSet**:
+   ```yaml
+   # ✅ CORRECT: StatefulSet for PostgreSQL
+   apiVersion: apps/v1
+   kind: StatefulSet
+   metadata:
+     name: postgres
+     namespace: amas-production
+   spec:
+     serviceName: postgres-service
+     replicas: 1
+     selector:
+       matchLabels:
+         app: postgres
+     template:
+       spec:
+         containers:
+         - name: postgres
+           image: postgres:15-alpine
+           env:
+           - name: POSTGRES_DB
+             value: "amas"
+           - name: POSTGRES_PASSWORD
+             valueFrom:
+               secretKeyRef:
+                 name: amas-secrets
+                 key: DB_PASSWORD
+           volumeMounts:
+           - name: postgres-storage
+             mountPath: /var/lib/postgresql/data
+     volumeClaimTemplates:
+     - metadata:
+         name: postgres-storage
+       spec:
+         accessModes: ["ReadWriteOnce"]
+         resources:
+           requests:
+             storage: 50Gi
+   ```
+
+## PersistentVolumeClaims
+
+1. **PVC configuration**:
+   ```yaml
+   # ✅ CORRECT: PVC for application data
+   apiVersion: v1
+   kind: PersistentVolumeClaim
+   metadata:
+     name: amas-data-pvc
+     namespace: amas-production
+   spec:
+     accessModes:
+       - ReadWriteMany
+     resources:
+       requests:
+         storage: 20Gi
+   ```
+
+## Security Context
+
+1. **Security best practices**:
+   ```yaml
+   # ✅ CORRECT: Security context
+   securityContext:
+     runAsNonRoot: true
+     runAsUser: 1000
+     capabilities:
+       drop:
+         - ALL
+     readOnlyRootFilesystem: true
+   ```
+
+## Best Practices
+
+1. **Always set resource requests and limits** - Prevent resource starvation
+2. **Use namespaces** - Isolate environments (production, staging, dev)
+3. **Configure health checks** - Liveness and readiness probes
+4. **Use ConfigMaps for config** - Separate from Secrets
+5. **Use Secrets for sensitive data** - Never hardcode credentials
+6. **Set up HPA** - Auto-scale based on metrics
+7. **Use StatefulSets for databases** - Maintain pod identity
+8. **Configure PVCs** - Persistent storage for stateful workloads
+9. **Enable TLS** - Use cert-manager for automatic certificate management
+10. **Monitor with Prometheus** - Add annotations for scraping
+11. **Use rolling updates** - Zero-downtime deployments
+12. **Set imagePullPolicy** - Use `Always` in production

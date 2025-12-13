@@ -4,30 +4,38 @@ Production-ready FastAPI application
 """
 
 import logging
+import os
 import time
 from contextlib import asynccontextmanager
-from typing import Any, Dict
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Union
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
-from fastapi.responses import JSONResponse
-from fastapi.security import HTTPBearer
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
-from src.api.routes import agents, health, tasks, users, auth
+from src.amas.errors.error_handling import (
+    handle_general_exception,
+    handle_http_exception,
+)
+from src.amas.security.auth.jwt_middleware import SecurityHeadersMiddleware
+from src.amas.security.middleware import (
+    AuditLoggingMiddleware,
+    AuthenticationMiddleware,
+)
+from src.amas.security.security_manager import initialize_security
+from src.api.routes import agents, analytics, auth, health, integrations, metrics, predictions, system, tasks, users, workflows
+from src.api.websocket import start_websocket_heartbeat, websocket_endpoint
 from src.config.settings import get_settings, validate_configuration
 from src.middleware.logging import LoggingMiddleware
 from src.middleware.monitoring import MonitoringMiddleware
-from src.middleware.security import SecurityMiddleware
-from src.middleware.rate_limiting import RateLimitingMiddleware, RequestSizeLimitingMiddleware
-from src.amas.security.security_manager import initialize_security
-from src.amas.security.middleware import AuditLoggingMiddleware, AuthenticationMiddleware
-from src.amas.security.auth.jwt_middleware import SecurityHeadersMiddleware
-from src.amas.errors.error_handling import (
-    handle_amas_exception,
-    handle_http_exception,
-    handle_general_exception
+from src.middleware.rate_limiting import (
+    RateLimitingMiddleware,
+    RequestSizeLimitingMiddleware,
 )
+from src.middleware.security import SecurityMiddleware
 
 # Configure logging
 logging.basicConfig(
@@ -57,29 +65,102 @@ async def lifespan(app: FastAPI):
             logger.warning(f"Security initialization failed (may be expected in dev): {e}")
             # Don't fail startup if security config is missing (for development)
 
-        # Initialize database
-        from src.database.connection import init_database
+        # Initialize database (optional)
+        try:
+            from src.database.connection import init_database
+            await init_database()
+            logger.info("Database initialized")
+        except Exception as e:
+            logger.debug(f"Database not available (expected in dev): {e}")
+            # Database is optional - continue without it
 
-        await init_database()
-        logger.info("Database initialized")
+        # Initialize Redis (optional)
+        try:
+            from src.cache.redis import init_redis
+            await init_redis()
+            logger.info("Redis initialized")
+        except Exception as e:
+            logger.debug(f"Redis not available (expected in dev): {e}")
+            # Redis is optional - continue without it
 
-        # Initialize Redis
-        from src.cache.redis import init_redis
+        # Initialize Neo4j (optional)
+        try:
+            from src.graph.neo4j import init_neo4j
+            await init_neo4j()
+            logger.info("Neo4j initialized")
+        except Exception as e:
+            logger.debug(f"Neo4j not available (expected in dev): {e}")
+            # Neo4j is optional - continue without it
 
-        await init_redis()
-        logger.info("Redis initialized")
+        # Initialize monitoring (optional)
+        try:
+            from src.monitoring.prometheus import init_prometheus
+            init_prometheus()
+            logger.info("Monitoring initialized")
+        except Exception as e:
+            logger.warning(f"Prometheus initialization failed (optional): {e}")
+            # Monitoring is optional - continue without it
 
-        # Initialize Neo4j
-        from src.graph.neo4j import init_neo4j
+        # Initialize structured logging (early, before other services)
+        try:
+            from src.utils.logging_config import setup_logging
+            import os
+            setup_logging(environment=os.getenv("ENVIRONMENT", "production"))
+            logger.info("Structured logging configured")
+        except Exception as e:
+            logger.warning(f"Logging configuration failed (optional): {e}")
 
-        await init_neo4j()
-        logger.info("Neo4j initialized")
+        # Initialize orchestrator (for task execution)
+        try:
+            from src.amas.core.unified_intelligence_orchestrator import get_unified_orchestrator
+            orchestrator = get_unified_orchestrator()
+            logger.info("Unified Intelligence Orchestrator initialized")
+        except Exception as e:
+            logger.warning(f"Orchestrator initialization failed (optional): {e}")
 
-        # Initialize monitoring
-        from src.monitoring.prometheus import init_prometheus
+        # Initialize intelligence manager (for ML predictions)
+        try:
+            from src.amas.intelligence.intelligence_manager import get_intelligence_manager
+            intelligence_manager = get_intelligence_manager()
+            logger.info("Intelligence Manager initialized")
+        except Exception as e:
+            logger.warning(f"Intelligence Manager initialization failed (optional): {e}")
 
-        init_prometheus()
-        logger.info("Monitoring initialized")
+        # Initialize metrics service (for Prometheus metrics)
+        try:
+            from src.amas.services.prometheus_metrics_service import get_metrics_service
+            metrics_service = get_metrics_service()
+            logger.info("Prometheus Metrics Service initialized")
+        except Exception as e:
+            logger.warning(f"Metrics service initialization failed (optional): {e}")
+
+        # Initialize cache services (for caching)
+        try:
+            from src.amas.services.task_cache_service import get_task_cache_service
+            from src.amas.services.agent_cache_service import get_agent_cache_service
+            from src.amas.services.prediction_cache_service import get_prediction_cache_service
+            task_cache = get_task_cache_service()
+            agent_cache = get_agent_cache_service()
+            prediction_cache = get_prediction_cache_service()
+            logger.info("Cache services initialized")
+        except Exception as e:
+            logger.warning(f"Cache services initialization failed (optional): {e}")
+
+        # Start WebSocket heartbeat
+        try:
+            await start_websocket_heartbeat()
+            logger.info("WebSocket heartbeat started")
+        except Exception as e:
+            logger.warning(f"WebSocket heartbeat failed (optional): {e}")
+
+        # Start system monitor
+        try:
+            from src.amas.services.system_monitor import get_system_monitor
+            system_monitor = get_system_monitor()
+            await system_monitor.start()
+            logger.info("System monitor started")
+        except Exception as e:
+            logger.warning(f"System monitor failed (optional): {e}")
 
         logger.info("AMAS application started successfully")
 
@@ -118,6 +199,15 @@ async def lifespan(app: FastAPI):
         await close_neo4j()
         logger.info("Neo4j connection closed")
 
+        # Stop system monitor
+        try:
+            from src.amas.services.system_monitor import get_system_monitor
+            system_monitor = get_system_monitor()
+            await system_monitor.stop()
+            logger.info("System monitor stopped")
+        except Exception as e:
+            logger.warning(f"Error stopping system monitor: {e}")
+
         logger.info("AMAS application shutdown complete")
 
     except Exception as e:
@@ -127,12 +217,31 @@ async def lifespan(app: FastAPI):
 # Create FastAPI application
 app = FastAPI(
     title="AMAS - Advanced Multi-Agent Intelligence System",
-    description="Production-ready AI agent management system",
+    description="Production-ready AI agent management system with full API endpoints",
     version="1.0.0",
     docs_url="/docs" if get_settings().features.enable_api_documentation else None,
     redoc_url="/redoc" if get_settings().features.enable_api_documentation else None,
+    openapi_url="/openapi.json" if get_settings().features.enable_api_documentation else None,
     lifespan=lifespan,
 )
+
+# Initialize tracing after app creation (for FastAPI instrumentation)
+try:
+    from src.amas.services.tracing_service import init_tracing
+    import os
+    tracing = init_tracing(
+        service_name="amas-backend",
+        service_version="1.0.0",
+        environment=os.getenv("ENVIRONMENT", "production"),
+        jaeger_endpoint=os.getenv("JAEGER_ENDPOINT"),
+        otlp_endpoint=os.getenv("OTLP_ENDPOINT")
+    )
+    # Instrument FastAPI app
+    tracing.instrument_app(app)
+    logger.info("Tracing initialized and FastAPI instrumented")
+except Exception as e:
+    logger.warning(f"Tracing initialization failed (optional): {e}")
+    # Tracing is optional - continue without it
 
 # Add middleware (order matters - first added is outermost)
 # Security headers middleware (innermost - applied last)
@@ -147,7 +256,20 @@ except Exception as e:
 # Standard middleware stack
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=["*"])
 app.add_middleware(SecurityMiddleware)  # Existing security middleware
-app.add_middleware(RateLimitingMiddleware)
+
+# Metrics middleware (add early to track all requests)
+from src.api.middleware.metrics_middleware import MetricsMiddleware
+app.add_middleware(MetricsMiddleware)
+
+# Rate limiting - use more lenient config for development
+from src.middleware.rate_limiting import RateLimitConfig
+
+rate_limit_config = RateLimitConfig(
+    requests_per_minute=1000,  # Very high limit for development
+    requests_per_hour=10000,
+    burst_limit=100
+)
+app.add_middleware(RateLimitingMiddleware, config=rate_limit_config)
 app.add_middleware(RequestSizeLimitingMiddleware, max_size=10 * 1024 * 1024)  # 10MB
 app.add_middleware(AuthenticationMiddleware)  # JWT authentication check
 app.add_middleware(AuditLoggingMiddleware)  # Audit trail logging
@@ -167,20 +289,18 @@ app.include_router(health.router, prefix="/api/v1", tags=["health"])
 app.include_router(auth.router, prefix="/api/v1", tags=["authentication"])
 app.include_router(agents.router, prefix="/api/v1", tags=["agents"])
 app.include_router(tasks.router, prefix="/api/v1", tags=["tasks"])
+app.include_router(predictions.router, prefix="/api/v1/predictions", tags=["ML Predictions"])
 app.include_router(users.router, prefix="/api/v1", tags=["users"])
+app.include_router(workflows.router, prefix="/api/v1", tags=["workflows"])
+app.include_router(integrations.router, prefix="/api/v1", tags=["integrations"])
+app.include_router(system.router, prefix="/api/v1", tags=["System"])
+app.include_router(analytics.router, prefix="/api/v1", tags=["Analytics"])
+app.include_router(metrics.router, tags=["Monitoring"])
 
+# WebSocket endpoint
+app.websocket("/ws")(websocket_endpoint)
 
-@app.get("/")
-async def root():
-    """Root endpoint"""
-    return {
-        "message": "AMAS - Advanced Multi-Agent Intelligence System",
-        "version": "1.0.0",
-        "status": "running",
-        "docs": "/docs" if get_settings().features.enable_api_documentation else None,
-    }
-
-
+# Health and readiness endpoints (must be before static mount)
 @app.get("/health")
 async def health_check():
     """Comprehensive health check endpoint"""
@@ -384,6 +504,175 @@ async def readiness_check():
             status_code=503,
             content={"status": "not_ready", "timestamp": time.time(), "error": str(e)},
         )
+
+
+# ---------- Frontend Static Serving ----------
+BASE_DIR = Path(__file__).resolve().parent
+FRONTEND_DIST = BASE_DIR / "frontend" / "dist"
+FRONTEND_INDEX = FRONTEND_DIST / "index.html"
+FRONTEND_ASSETS = FRONTEND_DIST / "assets"
+
+# Log frontend status at startup
+logger.info(f"🔍 Checking frontend build...")
+logger.info(f"   BASE_DIR: {BASE_DIR}")
+logger.info(f"   FRONTEND_DIST: {FRONTEND_DIST}")
+logger.info(f"   FRONTEND_INDEX: {FRONTEND_INDEX}")
+logger.info(f"   FRONTEND_INDEX exists: {FRONTEND_INDEX.exists()}")
+logger.info(f"   FRONTEND_ASSETS exists: {FRONTEND_ASSETS.exists()}")
+
+if FRONTEND_ASSETS.exists():
+    app.mount(
+        "/assets",
+        StaticFiles(directory=str(FRONTEND_ASSETS)),
+        name="frontend-assets",
+    )
+    logger.info("✅ Frontend assets mounted at /assets")
+elif FRONTEND_DIST.exists():
+    logger.warning("Frontend dist found but /assets directory missing")
+else:
+    logger.warning(
+        "Frontend build directory not found. Run: cd frontend && npm run build"
+    )
+
+if FRONTEND_DIST.exists():
+    vite_svg = FRONTEND_DIST / "vite.svg"
+    if vite_svg.exists():
+        @app.get("/vite.svg", include_in_schema=False)
+        async def serve_vite_svg() -> FileResponse:
+            return FileResponse(str(vite_svg))
+
+
+def _frontend_ready() -> bool:
+    """Check if frontend is ready to serve"""
+    exists = FRONTEND_INDEX.exists()
+    if not exists:
+        logger.warning(f"Frontend index not found at: {FRONTEND_INDEX.resolve()}")
+        logger.warning(f"BASE_DIR: {BASE_DIR.resolve()}")
+        logger.warning(f"FRONTEND_DIST exists: {FRONTEND_DIST.exists()}")
+    return exists
+
+
+def _should_bypass_spa(path: str) -> bool:
+    protected_prefixes = (
+        "api/",
+        "docs",
+        "redoc",
+        "metrics",
+        "health",
+        "ready",
+        "ws",
+        "assets",
+        "static",
+    )
+    protected_exact = {"openapi.json"}
+
+    if path in protected_exact:
+        return True
+
+    return any(path.startswith(prefix) for prefix in protected_prefixes if path)
+
+
+def _spa_response() -> Union[FileResponse, JSONResponse]:
+    """Return SPA response - ALWAYS try to serve frontend first"""
+    # Re-check file existence at runtime
+    frontend_index_path = BASE_DIR / "frontend" / "dist" / "index.html"
+    
+    if frontend_index_path.exists():
+        logger.info(f"Serving React frontend from: {frontend_index_path}")
+        response = FileResponse(
+            str(frontend_index_path),
+            media_type="text/html",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
+        return response
+    
+    # Only return JSON if frontend truly doesn't exist
+    logger.error(f"Frontend not found at: {frontend_index_path.resolve()}")
+    return JSONResponse(
+        {
+            "message": "AMAS - Advanced Multi-Agent AI System API (Basic Version)",
+            "version": "1.0.0-basic",
+            "status": "running",
+            "timestamp": time.time(),
+            "note": f"Frontend not found at: {frontend_index_path}",
+            "frontend_path": str(frontend_index_path.resolve()),
+        }
+    )
+
+
+@app.get("/", include_in_schema=False)
+async def serve_frontend_root():
+    """Serve React SPA root or fallback JSON."""
+    # Re-check file existence at runtime (not just at module load)
+    frontend_index_path = BASE_DIR / "frontend" / "dist" / "index.html"
+    
+    if frontend_index_path.exists():
+        logger.info(f"Serving React frontend from root: {frontend_index_path}")
+        return FileResponse(
+            str(frontend_index_path),
+            media_type="text/html",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
+    
+    logger.warning(f"Frontend not found, serving JSON fallback. Path: {frontend_index_path.resolve()}")
+    return JSONResponse({
+        "message": "AMAS - Advanced Multi-Agent AI System API",
+        "version": "1.0.0",
+        "status": "running",
+        "error": f"Frontend not found at: {frontend_index_path.resolve()}",
+        "frontend_path": str(frontend_index_path.resolve()),
+        "note": "Run 'cd frontend && npm run build' to build the frontend",
+    })
+
+
+# SPA catch-all route for frontend client-side routing
+# This must come AFTER all API routes to avoid interfering with them
+@app.get("/{full_path:path}", include_in_schema=False)
+async def serve_frontend_spa(full_path: str):
+    """
+    Serve React SPA for client-side routing.
+    This route only handles non-API paths (API routes are matched first).
+    """
+    # Skip API routes, static assets, and special paths
+    if (
+        full_path.startswith("api/")
+        or full_path.startswith("assets/")
+        or full_path.startswith("docs")
+        or full_path.startswith("redoc")
+        or full_path.startswith("openapi.json")
+        or full_path.startswith("health")
+        or full_path.startswith("ready")
+        or full_path.startswith("metrics")
+        or full_path.startswith("ws")
+        or full_path in {"favicon.ico", "robots.txt", "vite.svg"}
+    ):
+        # Return 404 for missing static assets (don't serve SPA for these)
+        raise HTTPException(status_code=404, detail="Not found")
+    
+    # Serve frontend index.html for all other paths (SPA routing)
+    frontend_index_path = BASE_DIR / "frontend" / "dist" / "index.html"
+    
+    if frontend_index_path.exists():
+        logger.info(f"Serving React SPA for path: {full_path}")
+        return FileResponse(
+            str(frontend_index_path),
+            media_type="text/html",
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0",
+            }
+        )
+    
+    raise HTTPException(status_code=404, detail="Frontend not found")
 
 
 # Add exception handlers

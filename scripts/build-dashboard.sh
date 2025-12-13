@@ -3,7 +3,7 @@
 
 echo "🏗️ Building AMAS Dashboard for production..."
 
-cd web
+cd frontend
 
 # Install dependencies
 npm install
@@ -12,7 +12,7 @@ npm install
 npm run build
 
 echo "✅ Production build complete!"
-echo "📁 Build files are in web/build/"
+echo "📁 Build files are in frontend/dist/"
 echo ""
 echo "To serve the production build:"
 echo "  npx serve -s build"

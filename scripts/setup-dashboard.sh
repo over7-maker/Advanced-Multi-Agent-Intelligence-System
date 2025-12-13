@@ -27,13 +27,13 @@ fi
 echo "✅ Node.js $(node --version) detected"
 echo "✅ npm $(npm --version) detected"
 
-# Create web directory if it doesn't exist
-mkdir -p web/src/components
-mkdir -p web/public
-mkdir -p web/src/hooks
-mkdir -p web/src/utils
+# Create frontend directory if it doesn't exist
+mkdir -p frontend/src/components
+mkdir -p frontend/public
+mkdir -p frontend/src/hooks
+mkdir -p frontend/src/utils
 
-cd web
+cd frontend
 
 # Install dependencies
 echo "📦 Installing React dependencies..."
@@ -224,13 +224,13 @@ cat > start-dashboard.sh << 'EOF'
 
 echo "🎨 Starting AMAS Control Center Dashboard..."
 
-# Check if web directory exists
-if [ ! -d "web" ]; then
-    echo "❌ Web directory not found. Run setup-dashboard.sh first."
+# Check if frontend directory exists
+if [ ! -d "frontend" ]; then
+    echo "❌ Frontend directory not found. Run setup-dashboard.sh first."
     exit 1
 fi
 
-cd web
+cd frontend
 
 # Install dependencies if node_modules doesn't exist
 if [ ! -d "node_modules" ]; then

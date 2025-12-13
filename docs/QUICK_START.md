@@ -256,6 +256,36 @@ docker-compose ps
 docker-compose logs -f amas
 ```
 
+#### **🚀 Production Deployment**
+
+For production deployment, use the automated deployment script:
+
+```bash
+# Make script executable
+chmod +x scripts/deploy-production.sh
+
+# Deploy to production (with build)
+./scripts/deploy-production.sh --build
+
+# Or deploy without rebuilding images
+./scripts/deploy-production.sh
+
+# Check health status
+./scripts/deploy-production.sh --health
+
+# Rollback if needed
+./scripts/deploy-production.sh --rollback <backup-file>
+```
+
+**Production Deployment Steps:**
+1. Copy `.env.production.example` to `.env.production`
+2. Update all `CHANGE_THIS` placeholders with secure values
+3. Configure all 16 AI provider API keys
+4. Set database passwords and secrets
+5. Run `./scripts/deploy-production.sh --build`
+6. Verify deployment with health checks
+7. Run database migrations: `docker-compose -f docker-compose.prod.yml exec amas-backend alembic upgrade head`
+
 **✅ Expected Docker Output:**
 ```
 🚀 Starting AMAS Production Stack...
@@ -556,6 +586,67 @@ jobs:
 - **✅ CI/CD Integration** - GitHub Actions with automated analysis
 
 ---
+
+## 🚀 **Production Deployment**
+
+### **Complete Production Setup**
+
+For production deployment, follow these steps:
+
+1. **Prepare Environment**:
+   ```bash
+   # Copy production environment template
+   cp .env.production.example .env.production
+   
+   # Edit and configure all secrets
+   nano .env.production
+   ```
+
+2. **Deploy Stack**:
+   ```bash
+   # Run production deployment script
+   ./scripts/deploy-production.sh --build
+   ```
+
+3. **Run Migrations**:
+   ```bash
+   # Apply database migrations
+   docker-compose -f docker-compose.prod.yml exec amas-backend alembic upgrade head
+   ```
+
+4. **Verify Deployment**:
+   ```bash
+   # Check all services
+   docker-compose -f docker-compose.prod.yml ps
+   
+   # Check health
+   curl http://localhost:8000/health
+   ```
+
+5. **Access Services**:
+   - **Application**: http://localhost:8000
+   - **Grafana**: http://localhost:3001
+   - **Prometheus**: http://localhost:9090
+   - **Jaeger**: http://localhost:16686
+
+### **Common Production Commands**
+
+```bash
+# View logs
+docker-compose -f docker-compose.prod.yml logs -f amas-backend
+
+# Restart service
+docker-compose -f docker-compose.prod.yml restart amas-backend
+
+# Backup database
+./scripts/backup.sh --environment production --type full
+
+# Restore database
+./scripts/restore.sh --environment production --backup <backup-file>
+
+# Check deployment health
+./scripts/deploy-production.sh --health
+```
 
 ## 🚨 **Troubleshooting**
 

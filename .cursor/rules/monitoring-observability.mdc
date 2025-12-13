@@ -1,0 +1,336 @@
+---
+description: Monitoring & Observability - Prometheus metrics, OpenTelemetry tracing, structured logging, and complete observability stack
+globs:
+  - "src/amas/services/prometheus_metrics_service.py"
+  - "src/amas/services/tracing_service.py"
+  - "src/amas/services/system_monitor.py"
+  - "src/api/routes/metrics.py"
+  - "src/api/middleware/metrics_middleware.py"
+  - "monitoring/**/*.yml"
+  - "monitoring/**/*.json"
+alwaysApply: false
+---
+
+# Monitoring & Observability Rules
+
+When implementing monitoring and observability:
+
+## Prometheus Metrics Service
+
+1. **Always use PrometheusMetricsService**:
+   ```python
+   from src.amas.services.prometheus_metrics_service import get_metrics_service
+   
+   metrics_service = get_metrics_service()
+   
+   # ✅ CORRECT: Record task execution metrics
+   metrics_service.record_task_execution(
+       task_id="task_123",
+       task_type="code_analysis",
+       status="completed",
+       duration=45.5,
+       success_rate=0.95,
+       quality_score=0.92
+   )
+   ```
+
+2. **Metric Types**:
+   - **Counter**: For cumulative values (executions, errors, tokens)
+   - **Gauge**: For current values (active tasks, CPU usage, success rate)
+   - **Histogram**: For distributions (durations, latencies)
+   - **Summary**: For percentiles (use Histogram instead)
+
+3. **Metric Naming**:
+   - Prefix: `amas_` (e.g., `amas_task_executions_total`)
+   - Suffix: `_total` for counters, `_seconds` for durations
+   - Use labels for dimensions (task_type, status, agent_id)
+
+## Metric Recording Patterns
+
+1. **Task Execution Metrics**:
+   ```python
+   # Record task execution
+   metrics_service.record_task_execution(
+       task_id=task_id,
+       task_type=task_type,
+       status="completed",
+       duration=duration,
+       success_rate=success_rate,
+       quality_score=quality_score
+   )
+   
+   # Record task errors
+   if error:
+       metrics_service.record_task_execution(
+           task_id=task_id,
+           task_type=task_type,
+           status="failed",
+           duration=duration,
+           error_type=type(error).__name__
+       )
+   ```
+
+2. **Agent Execution Metrics**:
+   ```python
+   # Record agent execution
+   metrics_service.record_agent_execution(
+       agent_id=agent_id,
+       agent_name=agent_name,
+       status="success",
+       duration=duration,
+       tokens_used=tokens_used,
+       cost_usd=cost_usd
+   )
+   ```
+
+3. **AI Provider Metrics**:
+   ```python
+   # Record AI provider call
+   metrics_service.record_ai_provider_call(
+       provider=provider,
+       model=model,
+       status="success",
+       latency=latency_ms,
+       tokens_used=tokens_used,
+       cost_usd=cost_usd,
+       fallback_from=fallback_from  # If fallback occurred
+   )
+   ```
+
+4. **HTTP Request Metrics**:
+   ```python
+   # Record HTTP request (usually done by middleware)
+   metrics_service.record_http_request(
+       method="POST",
+       endpoint="/api/v1/tasks",
+       status_code=200,
+       duration=0.123
+   )
+   ```
+
+5. **Database Query Metrics**:
+   ```python
+   # Record database query
+   metrics_service.record_db_query(
+       operation="SELECT",
+       table="tasks",
+       status="success",
+       duration=0.005
+   )
+   ```
+
+## Metrics Middleware
+
+1. **Automatic HTTP Metrics**:
+   ```python
+   # ✅ CORRECT: Use MetricsMiddleware for automatic tracking
+   from src.api.middleware.metrics_middleware import MetricsMiddleware
+   
+   app.add_middleware(MetricsMiddleware)
+   ```
+
+2. **Middleware Behavior**:
+   - Automatically tracks all HTTP requests
+   - Records duration, status code, method, endpoint
+   - Tracks active requests
+   - Skips `/metrics` endpoint itself
+
+## System Resource Monitoring
+
+1. **System Monitor Usage**:
+   ```python
+   from src.amas.services.system_monitor import get_system_monitor
+   
+   system_monitor = get_system_monitor()
+   
+   # Start monitoring on startup
+   await system_monitor.start()
+   
+   # Get current snapshot
+   snapshot = await system_monitor.get_snapshot()
+   ```
+
+2. **System Metrics**:
+   - CPU usage percentage
+   - Memory usage (bytes and percentage)
+   - Disk usage
+   - Network I/O
+
+## OpenTelemetry Tracing
+
+1. **Always use TracingService**:
+   ```python
+   from src.amas.services.tracing_service import get_tracing_service
+   
+   tracing = get_tracing_service()
+   
+   # ✅ CORRECT: Create span for operation
+   with tracing.tracer.start_as_current_span("task_execution") as span:
+       span.set_attribute("task.id", task_id)
+       span.set_attribute("task.type", task_type)
+       
+       # Execute operation
+       result = await execute_task(...)
+       
+       span.set_status(Status(StatusCode.OK))
+   ```
+
+2. **Span Attributes**:
+   - Add relevant context (task_id, agent_id, user_id)
+   - Set operation metadata
+   - Record exceptions on errors
+   - Set status (OK, ERROR)
+
+3. **Tracing Decorator**:
+   ```python
+   # ✅ CORRECT: Use decorator for automatic tracing
+   @tracing.trace_function(span_name="agent_execution")
+   async def execute_agent(agent_id: str, task_id: str):
+       # Function automatically traced
+       ...
+   ```
+
+4. **Exception Recording**:
+   ```python
+   try:
+       result = await operation()
+   except Exception as e:
+       # Record exception in span
+       span.record_exception(e)
+       span.set_status(Status(StatusCode.ERROR, str(e)))
+       raise
+   ```
+
+5. **Child Spans**:
+   ```python
+   # Create parent span
+   with tracing.tracer.start_as_current_span("orchestrator.execute") as parent:
+       # Create child span
+       with tracing.tracer.start_as_current_span("agent.validate") as child:
+           # Child operation
+           ...
+   ```
+
+## Structured Logging
+
+1. **Use JSON Logging**:
+   ```python
+   from src.utils.logging_config import configure_logging
+   
+   # Configure on startup
+   configure_logging(
+       log_level="INFO",
+       json_logs=True,  # JSON format for Loki/ELK
+       log_file="/var/log/amas/backend.log"
+   )
+   ```
+
+2. **Log with Context**:
+   ```python
+   import logging
+   
+   logger = logging.getLogger(__name__)
+   
+   # ✅ CORRECT: Add context to logs
+   logger.info(
+       "Task execution started",
+       extra={
+           "task_id": task_id,
+           "agent_id": agent_id,
+           "user_id": user_id
+       }
+   )
+   ```
+
+3. **Log Levels**:
+   - **DEBUG**: Detailed diagnostic information
+   - **INFO**: General informational messages
+   - **WARNING**: Warning messages
+   - **ERROR**: Error messages
+   - **CRITICAL**: Critical errors
+
+## Prometheus Configuration
+
+1. **Scrape Configuration**:
+   ```yaml
+   scrape_configs:
+     - job_name: 'amas-backend'
+       static_configs:
+         - targets: ['amas-backend:8000']
+       metrics_path: '/metrics'
+       scrape_interval: 10s
+   ```
+
+2. **Alert Rules**:
+   ```yaml
+   groups:
+     - name: task_alerts
+       rules:
+         - alert: HighTaskFailureRate
+           expr: |
+             rate(amas_task_executions_total{status="failed"}[5m]) 
+             / rate(amas_task_executions_total[5m]) > 0.2
+           for: 5m
+   ```
+
+## Alert Configuration
+
+1. **Alert Severity Levels**:
+   - **critical**: Immediate action required
+   - **warning**: Attention needed
+   - **info**: Informational
+
+2. **Alert Labels**:
+   - Always include `severity` and `component`
+   - Add relevant context labels
+   - Use consistent naming
+
+3. **Alert Annotations**:
+   - `summary`: Brief description
+   - `description`: Detailed information
+
+## Grafana Dashboards
+
+1. **Dashboard Structure**:
+   - Use consistent panel layouts
+   - Include time range selector
+   - Add refresh interval (30s default)
+   - Use appropriate visualization types
+
+2. **Panel Types**:
+   - **Graph**: Time series data
+   - **Gauge**: Single value with thresholds
+   - **Stat**: Single metric value
+   - **Table**: Tabular data
+
+## Best Practices
+
+1. **Metrics**:
+   - Record metrics for all critical operations
+   - Use appropriate metric types
+   - Add relevant labels
+   - Don't create too many unique label combinations
+
+2. **Tracing**:
+   - Create spans for major operations
+   - Add context attributes
+   - Record exceptions
+   - Use child spans for sub-operations
+
+3. **Logging**:
+   - Use structured JSON logging
+   - Add context to logs
+   - Use appropriate log levels
+   - Don't log sensitive data
+
+4. **Alerts**:
+   - Set appropriate thresholds
+   - Use `for` clause to prevent flapping
+   - Group related alerts
+   - Test alert rules
+
+5. **Performance**:
+   - Don't record metrics in hot paths
+   - Use async operations for tracing
+   - Batch log writes when possible
+   - Monitor monitoring overhead

@@ -1,0 +1,253 @@
+---
+description: "AMAS Project Rules - GitHub Integration, AI Analysis, and Development Workflows"
+alwaysApply: true
+---
+
+# Advanced Multi-Agent Intelligence System (AMAS) - Cursor Rules
+
+## GitHub Integration & PR Management
+
+### Viewing PR Comments and AI Analysis
+- **Always use the provided scripts** to view PR comments and AI analysis:
+  - `python scripts/view_pr_comments.py <PR_NUMBER>` - View all PR comments
+  - `python scripts/view_pr_comments.py <PR_NUMBER> --ai-only` - View only AI analysis
+  - `python scripts/view_pr_comments.py <PR_NUMBER> --web` - Open PR in browser
+  - `python scripts/check_pr_workflows.py <PR_NUMBER>` - Check workflow status
+
+### Automated AI Analysis Monitoring (RECOMMENDED)
+- **After committing fixes, ALWAYS wait for AI analysis before merging:**
+  - `python scripts/wait_for_ai_analysis.py <PR_NUMBER> --wait` - Automatically monitors and shows AI analysis when ready
+  - `python scripts/check_ai_ready.py <PR_NUMBER>` - Quick check if AI analysis is ready (returns 0 if ready, 1 if not)
+  - **VSCode/Cursor Tasks**: Use `Ctrl+Shift+P` → "Tasks: Run Task" → "⏳ Wait for AI Analysis"
+  - **Auto-detect PR**: Scripts try to auto-detect PR number from branch name or commit message
+- **Never merge PRs until BULLETPROOF REAL AI Analysis is complete**
+- The wait script automatically:
+  - Monitors PR comments for new AI analysis
+  - Checks workflow status
+  - Displays formatted results when ready
+  - Shows progress updates every 30 seconds
+  - Times out after 30 minutes (configurable)
+
+### Understanding AI Analysis Results
+- **BULLETPROOF REAL AI Analysis** comments indicate real AI provider usage (cerebras, nvidia, groq, etc.)
+- **Provider Attempt** shows fallback system working (e.g., "Provider Attempt: 2/11" means 2nd provider used out of 11)
+- **Analysis Failed after 3 retries** is normal - shows the fallback system tried multiple providers
+- Always review AI recommendations for:
+  - Code Quality Issues (with specific line numbers)
+  - Security Vulnerabilities (unpinned versions, Docker-in-Docker risks)
+  - Performance Bottlenecks (caching, resource limits)
+  - Best Practice Violations (missing error handling, redundant settings)
+
+### PR Workflow
+- Before pushing changes, check PR status: `gh pr checks <PR_NUMBER>`
+- Address AI analysis recommendations before merging
+- Use `git fetch origin pull/<PR_NUMBER>/head:pr-<PR_NUMBER>` to checkout PR branches locally
+
+## AI API Keys System (15 Providers)
+
+### Provider Priority Tiers
+1. **Tier 1 - Premium Speed & Quality** (Priority 1-2):
+   - CEREBRAS_API_KEY - Ultra-fast, model: qwen-3-235b-a22b-instruct-2507
+   - NVIDIA_API_KEY - GPU-accelerated, model: deepseek-ai/deepseek-r1
+   - GROQ2_API_KEY - Fast inference, model: llama-3.3-70b-versatile
+   - GROQAI_API_KEY - Fast inference, model: llama-3.3-70b-versatile
+
+2. **Tier 2 - High Quality** (Priority 3-5):
+   - DEEPSEEK_API_KEY - Free tier, OpenRouter, model: deepseek/deepseek-chat-v3.1:free
+   - CODESTRAL_API_KEY - Code-specialized, model: codestral-latest
+   - GLM_API_KEY - Free tier, OpenRouter, model: z-ai/glm-4.5-air:free
+   - GEMINI2_API_KEY - Multimodal, model: gemini-2.0-flash
+   - GROK_API_KEY - Free tier, OpenRouter, model: x-ai/grok-4-fast:free
+
+3. **Tier 3 - Enterprise** (Priority 6):
+   - COHERE_API_KEY - Enterprise features, model: command-a-03-2025
+
+4. **Tier 4 - Reliable Fallbacks** (Priority 7-10):
+   - KIMI_API_KEY - Long context, OpenRouter, model: moonshotai/kimi-k2:free
+   - QWEN_API_KEY - Code-specialized, OpenRouter, model: qwen/qwen3-coder:free
+   - GPTOSS_API_KEY - Large model, OpenRouter, model: openai/gpt-oss-120b:free
+   - CHUTES_API_KEY - Final fallback, model: zai-org/GLM-4.5-Air
+
+### API Key Management
+- **Never hardcode API keys** - Always use environment variables or `.env` file
+- Store keys in GitHub Secrets for workflows
+- Use `scripts/implement_all_api_keys.py` to update local `.env` file
+- Router automatically falls back through all 15 providers if one fails
+
+## Code Quality Standards
+
+### Python Code
+- Use type hints for all function parameters and return types
+- Follow PEP 8 style guidelines
+- Use `ruff` for linting and `black` for formatting
+- Always include docstrings for functions and classes
+- Use async/await for I/O operations when possible
+
+### Error Handling
+- Always use try/except blocks with specific exception types
+- Log errors with context using structured logging
+- Implement circuit breakers for external API calls
+- Use retry logic with exponential backoff for transient failures
+
+### Security
+- Never log sensitive information (API keys, passwords, tokens)
+- Use environment variables for configuration
+- Validate and sanitize all user inputs
+- Pin dependency versions in requirements files
+- Use Docker image digests instead of tags for reproducibility
+
+### Performance
+- Use async operations for non-blocking I/O
+- Implement caching where appropriate
+- Avoid unnecessary database queries
+- Use connection pooling for database connections
+- Monitor and log performance metrics
+
+## File Structure
+
+### Scripts Location
+- All utility scripts in `scripts/` directory
+- PR viewing scripts: `scripts/view_pr_comments.py`, `scripts/check_pr_workflows.py`
+- Environment setup: `scripts/setup_local_environment.py`
+- API key management: `scripts/implement_all_api_keys.py`
+
+### Configuration Files
+- `.env` - Local environment variables (never commit to git)
+- `.github/workflows/` - GitHub Actions workflows
+- `src/amas/ai/enhanced_router_v2.py` - AI router with 15 provider fallback
+
+### Documentation
+- `CURSOR_GITHUB_COMPLETE_GUIDE.md` - Complete GitHub integration guide
+- `QUICK_START_CURSOR_GITHUB.md` - Quick start guide
+- `VIEW_PR_235_EXAMPLE.md` - Example PR analysis viewing
+
+## Development Workflow
+
+### Before Starting Work
+1. Pull latest changes: `git pull origin main`
+2. Check open PRs: `gh pr list`
+3. Review AI analysis on relevant PRs: `python scripts/view_pr_comments.py <PR_NUMBER> --ai-only`
+
+### While Working
+1. Make small, focused commits
+2. Write clear commit messages following conventional commits format
+3. Test changes locally before pushing
+4. Address any linter warnings
+
+### Before Pushing
+1. Run tests: `python -m pytest` (if tests exist)
+2. Check code quality: `ruff check .` and `black --check .`
+3. Review your changes: `git diff`
+4. Ensure `.env` file is not staged: `git status`
+
+### After Pushing (CRITICAL: Wait for AI Analysis)
+1. **IMMEDIATELY run**: `python scripts/wait_for_ai_analysis.py <PR_NUMBER> --wait`
+   - This automatically monitors and shows AI analysis when ready
+   - Or use VSCode/Cursor task: "⏳ Wait for AI Analysis"
+   - Script auto-detects PR number if not specified
+2. **DO NOT merge** until BULLETPROOF REAL AI Analysis appears
+3. Review AI analysis results displayed by the script
+4. Address any AI recommendations (Critical Issues → Code Quality → Performance → Best Practices)
+5. After addressing issues, commit fixes and repeat step 1
+6. Only merge when AI analysis shows no critical issues
+
+## Git Conventions
+
+### Branch Naming
+- Feature branches: `feature/description`
+- Bug fixes: `fix/description`
+- PR branches: `pr-<PR_NUMBER>`
+
+### Commit Messages
+- Use conventional commits format: `type: description`
+- Types: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+- Be descriptive but concise
+- Reference issue/PR numbers when applicable
+
+### PR Workflow (MANDATORY: Wait for AI Analysis)
+- Always create PRs for significant changes
+- Include description of changes and why
+- Reference related issues
+- **CRITICAL**: After every commit/push, run: `python scripts/wait_for_ai_analysis.py <PR_NUMBER> --wait`
+- **DO NOT merge** until BULLETPROOF REAL AI Analysis is complete and reviewed
+- Address all Critical Issues from AI analysis before merging
+- Ensure all workflow checks pass
+- Use VSCode/Cursor tasks for easy access: "Tasks: Run Task" → "⏳ Wait for AI Analysis"
+
+## Troubleshooting
+
+### GitHub CLI Issues
+- If `gh` command not found: Install via `winget install --id GitHub.cli`
+- If authentication fails: Run `gh auth login` again
+- If PR comments not showing: Use `python scripts/view_pr_comments.py <PR_NUMBER> --web` to open in browser
+
+### Encoding Issues
+- Scripts handle UTF-8 encoding automatically on Windows
+- If you see encoding errors, set `PYTHONIOENCODING=utf-8` environment variable
+
+### API Key Issues
+- Verify keys are in `.env` file: `cat .env | grep API_KEY`
+- Check GitHub Secrets are set for workflows
+- Use `scripts/verify_complete_setup.py` to check configuration
+
+## AI Analysis Best Practices
+
+### When Reviewing AI Analysis
+- Pay attention to **Critical Issues** first (syntax errors, security vulnerabilities)
+- Address **Code Quality Issues** with specific line numbers
+- Consider **Performance Recommendations** for optimization
+- Follow **Best Practice Violations** suggestions for maintainability
+
+### Common Issues to Fix
+1. **Incomplete JSON** - Always validate JSON syntax before committing
+2. **Unpinned Versions** - Pin Docker image tags and dependency versions
+3. **Missing Error Handling** - Add try/except blocks and validation
+4. **Security Vulnerabilities** - Address immediately (unpinned tags, exposed secrets)
+
+### Understanding Provider Attempts
+- "Provider Attempt: 2/11" means 2nd provider succeeded out of 11 available
+- Lower attempt number = higher priority provider
+- "Analysis Failed after 3 retries" = all providers in that tier failed, but system tried
+- This is normal behavior showing the fallback system working
+
+## Documentation Standards
+
+### Code Documentation
+- All public functions must have docstrings
+- Include parameter descriptions and return types
+- Add examples for complex functions
+- Document edge cases and error conditions
+
+### Project Documentation
+- Keep README files updated
+- Document new features in appropriate guide files
+- Update workflow documentation when processes change
+- Include troubleshooting sections for common issues
+
+## Environment Setup
+
+### Required Tools
+- Python 3.11+
+- GitHub CLI (`gh`)
+- Git
+- Docker (for devcontainer)
+
+### Setup Scripts
+- Run `python scripts/setup_local_environment.py` for initial setup
+- Run `python scripts/implement_all_api_keys.py` to configure API keys
+- Run `python scripts/verify_complete_setup.py` to verify configuration
+
+### Environment Variables
+- All API keys must be in `.env` file (see `.env.example` for template)
+- Never commit `.env` file to git
+- Use GitHub Secrets for CI/CD workflows
+
+---
+
+## References
+
+- Cursor User Rules: https://cursor.com/docs/context/rules#user-rules
+- GitHub CLI Docs: https://cli.github.com/manual/
+- Project Documentation: See `CURSOR_GITHUB_COMPLETE_GUIDE.md` and `QUICK_START_CURSOR_GITHUB.md`
+
+

@@ -6,18 +6,17 @@ with state persistence, priority management, and intelligent execution.
 """
 
 import asyncio
-import logging
-from typing import Dict, List, Optional, Any, Set, Callable
-from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from enum import Enum
-import uuid
 import json
-import croniter
-import pickle
-from pathlib import Path
+import logging
 import sqlite3
-import threading
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
+
+import croniter
 
 logger = logging.getLogger(__name__)
 
@@ -490,8 +489,12 @@ class TaskScheduler:
         
         try:
             # Execute task using workflow executor
-            from ..orchestration.workflow_executor import get_workflow_executor
-            workflow_executor = get_workflow_executor()
+            try:
+                from amas.orchestration.workflow_executor import get_workflow_executor
+                workflow_executor = get_workflow_executor()
+            except ImportError:
+                from ..orchestration.workflow_executor import get_workflow_executor
+                workflow_executor = get_workflow_executor()
             
             # Create task with parameters
             full_task_request = scheduled_task.task_request
@@ -588,8 +591,12 @@ class TaskScheduler:
                                         workflow_execution_id: str, 
                                         scheduled_task: ScheduledTask):
         """Monitor workflow execution with periodic status checks"""
-        from ..orchestration.workflow_executor import get_workflow_executor
-        workflow_executor = get_workflow_executor()
+        try:
+            from amas.orchestration.workflow_executor import get_workflow_executor
+            workflow_executor = get_workflow_executor()
+        except ImportError:
+            from ..orchestration.workflow_executor import get_workflow_executor
+            workflow_executor = get_workflow_executor()
         
         max_wait_time = scheduled_task.max_duration_hours * 3600  # Convert to seconds
         start_time = datetime.now(timezone.utc)
@@ -666,7 +673,10 @@ class TaskScheduler:
         
         # Import notification system (will be implemented in PR-H continuation)
         try:
-            from ..automation.notification_engine import get_notification_engine, NotificationPriority
+            from ..automation.notification_engine import (
+                NotificationPriority,
+                get_notification_engine,
+            )
             notification_engine = get_notification_engine()
             
             notification_data = {
@@ -884,7 +894,7 @@ if __name__ == "__main__":
             task_request="Comprehensive competitive landscape analysis, market opportunity assessment, strategic recommendations for product roadmap"
         )
         
-        print(f"Created scheduled tasks:")
+        print("Created scheduled tasks:")
         print(f"Daily: {daily_task_id}")
         print(f"Weekly: {weekly_task_id}")
         print(f"Monthly: {monthly_task_id}")
@@ -894,7 +904,7 @@ if __name__ == "__main__":
         
         # Get metrics
         metrics = scheduler.get_scheduler_metrics()
-        print(f"\nScheduler metrics:")
+        print("\nScheduler metrics:")
         print(json.dumps(metrics, indent=2))
         
         # Let it run for a bit (in real usage, would run indefinitely)

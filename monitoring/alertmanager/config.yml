@@ -1,0 +1,64 @@
+# monitoring/alertmanager/config.yml
+# Alertmanager configuration for AMAS
+
+global:
+  resolve_timeout: 5m
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+
+# The directory from which notification templates are read.
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# The root route on which each incoming alert enters.
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default'
+  routes:
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      continue: true
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+    - match:
+        component: system
+      receiver: 'system-alerts'
+
+# Inhibition rules allow to mute a set of alerts given that another alert is
+# firing.
+inhibit_rules:
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'cluster', 'service']
+
+receivers:
+  - name: 'default'
+    webhook_configs:
+      - url: 'http://amas-backend:8000/api/v1/alerts/webhook'
+        send_resolved: true
+
+  - name: 'critical-alerts'
+    webhook_configs:
+      - url: 'http://amas-backend:8000/api/v1/alerts/webhook'
+        send_resolved: true
+    slack_configs:
+      - channel: '#amas-critical'
+        title: 'AMAS Critical Alert'
+        text: '{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}'
+
+  - name: 'warning-alerts'
+    webhook_configs:
+      - url: 'http://amas-backend:8000/api/v1/alerts/webhook'
+        send_resolved: true
+
+  - name: 'system-alerts'
+    webhook_configs:
+      - url: 'http://amas-backend:8000/api/v1/alerts/webhook'
+        send_resolved: true
+

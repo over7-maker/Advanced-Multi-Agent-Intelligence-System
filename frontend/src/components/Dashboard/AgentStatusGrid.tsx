@@ -1,20 +1,20 @@
-import React from 'react';
 import {
-  Box,
-  Typography,
-  Avatar,
-  Chip,
-  Grid,
-  Tooltip,
-  LinearProgress,
-  useTheme,
-  alpha,
-} from '@mui/material';
-import {
-  Person as PersonIcon,
-  Speed as SpeedIcon,
-  Star as StarIcon,
+    Group as GroupIcon,
+    Person as PersonIcon,
+    Speed as SpeedIcon,
+    Star as StarIcon,
 } from '@mui/icons-material';
+import {
+    alpha,
+    Box,
+    Chip,
+    Grid,
+    LinearProgress,
+    Tooltip,
+    Typography,
+    useTheme,
+} from '@mui/material';
+import React from 'react';
 
 import { Agent, AgentSpecialty } from '../../types/agent';
 
@@ -112,7 +112,7 @@ export const AgentStatusGrid: React.FC<AgentStatusGridProps> = ({ agents }) => {
           }
         }}
       >
-        <Box display="flex" alignItems="center" justifyContent="between" mb={1}>
+        <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
           <Box display="flex" alignItems="center">
             <Typography fontSize="1.2rem" mr={1}>
               {getSpecialtyIcon(agent.specialty)}
@@ -135,7 +135,7 @@ export const AgentStatusGrid: React.FC<AgentStatusGridProps> = ({ agents }) => {
         </Typography>
         
         <Box mb={1}>
-          <Box display="flex" justifyContent="between" mb={0.5}>
+          <Box display="flex" justifyContent="space-between" mb={0.5}>
             <Typography variant="caption" color="textSecondary">
               Load
             </Typography>
@@ -157,7 +157,7 @@ export const AgentStatusGrid: React.FC<AgentStatusGridProps> = ({ agents }) => {
           />
         </Box>
         
-        <Box display="flex" justifyContent="between" alignItems="center">
+        <Box display="flex" justifyContent="space-between" alignItems="center">
           <Box display="flex" alignItems="center">
             <StarIcon fontSize="small" color="action" sx={{ mr: 0.5 }} />
             <Typography variant="caption">

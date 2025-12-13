@@ -1,0 +1,396 @@
+---
+description: Platform Integrations - Integration Manager, connector patterns, webhook handling, and 100+ platform support
+globs:
+  - "src/amas/integration/**/*.py"
+  - "src/api/routes/integrations.py"
+  - "src/api/routes/**/*integration*.py"
+alwaysApply: false
+---
+
+# Platform Integrations Rules
+
+When working with platform integrations:
+
+## Integration Manager Usage
+
+1. **Always use IntegrationManager** (never call connectors directly):
+   ```python
+   from src.amas.integration.integration_manager import (
+       get_integration_manager,
+       IntegrationPlatform
+   )
+   
+   integration_manager = get_integration_manager()
+   
+   # ✅ CORRECT: Register integration via manager
+   integration_id = await integration_manager.register_integration(
+       user_id=user_id,
+       platform=IntegrationPlatform.SLACK,
+       credentials={"bot_token": "xoxb-..."},
+       configuration={"channel": "general"}
+   )
+   
+   # ✅ CORRECT: Trigger integration via manager
+   result = await integration_manager.trigger_integration(
+       integration_id=integration_id,
+       event_type="task_completed",
+       data={"task_id": "task_123", "title": "Task completed"}
+   )
+   ```
+
+2. **Integration Registration**:
+   - Always validate credentials before registration
+   - Store credentials securely (encrypt in production)
+   - Generate unique integration_id
+   - Set initial status to ACTIVE
+   - Store in database for persistence
+
+3. **Integration Status Management**:
+   - Track sync_count, error_count, last_sync
+   - Auto-disable after 5 consecutive errors
+   - Update status: ACTIVE → ERROR → INACTIVE
+
+## Connector Implementation Patterns
+
+1. **All Connectors Must Implement**:
+   ```python
+   class PlatformConnector:
+       async def validate_credentials(self, credentials: Dict[str, Any]) -> bool:
+           """Validate platform credentials"""
+           pass
+       
+       async def execute(
+           self,
+           event_type: str,
+           data: Dict[str, Any],
+           credentials: Dict[str, Any],
+           configuration: Dict[str, Any]
+       ) -> Dict[str, Any]:
+           """Execute platform action"""
+           pass
+       
+       async def validate_webhook_signature(
+           self,
+           payload: Dict[str, Any],
+           headers: Dict[str, str]
+       ) -> bool:
+           """Validate incoming webhook signature"""
+           pass
+       
+       async def parse_webhook(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+           """Parse incoming webhook payload"""
+           pass
+   ```
+
+2. **Credential Validation**:
+   - Always validate credentials before storing
+   - Test connection with simple API call
+   - Return False on authentication failure
+   - Log validation errors
+
+3. **Error Handling**:
+   - Use platform-specific exception types
+   - Log errors with full context
+   - Implement circuit breaker for external APIs
+   - Retry with exponential backoff
+
+## Webhook Handling
+
+1. **Webhook Signature Validation**:
+   ```python
+   # ✅ CORRECT: Always validate webhook signatures
+   is_valid = await connector.validate_webhook_signature(payload, headers)
+   if not is_valid:
+       raise HTTPException(401, "Invalid webhook signature")
+   ```
+
+2. **Webhook Processing**:
+   ```python
+   # Parse webhook
+   event = await connector.parse_webhook(payload)
+   
+   # Add to event queue
+   await integration_manager.event_queue.put({
+       "platform": platform.value,
+       "event_type": event.get("type"),
+       "data": event.get("data"),
+       "timestamp": datetime.now().isoformat()
+   })
+   ```
+
+3. **Event Queue Processing**:
+   - Process events asynchronously
+   - Route to registered handlers
+   - Handle errors gracefully
+   - Log all events
+
+## Platform-Specific Patterns
+
+### N8N Integration
+
+1. **N8N Workflow Triggering**:
+   ```python
+   # Trigger via webhook
+   response = await n8n_connector.execute(
+       event_type="task_completed",
+       data=task_data,
+       credentials={"base_url": "...", "api_key": "..."},
+       configuration={"webhook_id": "..."}
+   )
+   ```
+
+2. **Circuit Breaker**:
+   - Track failures: circuit_breaker_failures
+   - Open circuit after 5 failures
+   - Reset on successful execution
+
+### Slack Integration
+
+1. **Message Posting**:
+   ```python
+   # Use Block Kit for rich formatting
+   message = {
+       "text": "Task Completed",
+       "blocks": [
+           {
+               "type": "header",
+               "text": {"type": "plain_text", "text": "✅ Task Completed"}
+           }
+       ]
+   }
+   
+   await slack_connector.execute(
+       event_type="task_completed",
+       data=task_data,
+       credentials={"bot_token": "..."},
+       configuration={"channel": "general"}
+   )
+   ```
+
+2. **Slack Block Kit**:
+   - Use Block Kit for rich messages
+   - Include interactive buttons
+   - Add context blocks
+   - Use appropriate emojis
+
+### GitHub Integration
+
+1. **Issue/PR Creation**:
+   ```python
+   # Create issue
+   result = await github_connector.execute(
+       event_type="create_issue",
+       data={
+           "title": "Security Scan Results",
+           "body": "...",
+           "labels": ["security"]
+       },
+       credentials={"access_token": "..."},
+       configuration={"repository": "owner/repo"}
+   )
+   ```
+
+2. **Security Scan Integration**:
+   - Post scan results as formatted issues
+   - Include vulnerability details
+   - Add remediation steps
+   - Use appropriate labels
+
+### Salesforce Integration
+
+1. **OAuth 2.0 Authentication**:
+   ```python
+   # Use OAuth token or username/password
+   if "access_token" in credentials:
+       sf = Salesforce(
+           instance_url=credentials["instance_url"],
+           session_id=credentials["access_token"]
+       )
+   else:
+       sf = Salesforce(
+           username=credentials["username"],
+           password=credentials["password"],
+           security_token=credentials["security_token"]
+       )
+   ```
+
+2. **SOQL Queries**:
+   - Always use parameterized queries
+   - Limit result sets
+   - Handle pagination
+
+### Notion Integration
+
+1. **Page Creation**:
+   ```python
+   # Create formatted page
+   page = await notion_connector.execute(
+       event_type="create_page",
+       data={
+           "title": "Task Report",
+           "content": blocks
+       },
+       credentials={"api_key": "..."},
+       configuration={"parent_page_id": "..."}
+   )
+   ```
+
+2. **Block Structure**:
+   - Use proper block types (heading_1, callout, code)
+   - Format content appropriately
+   - Include metadata
+
+### Jira Integration
+
+1. **Issue Creation**:
+   ```python
+   # Create issue with proper fields
+   issue = await jira_connector.execute(
+       event_type="create_issue",
+       data={
+           "summary": "Security Vulnerability",
+           "description": "...",
+           "issue_type": "Bug",
+           "priority": "High",
+           "labels": ["security"]
+       },
+       credentials={"server": "...", "email": "...", "api_token": "..."},
+       configuration={"project_key": "PROJ"}
+   )
+   ```
+
+2. **JQL Queries**:
+   - Use JQL for complex queries
+   - Limit max_results
+   - Handle pagination
+
+## Integration API Endpoints
+
+1. **Create Integration**:
+   ```python
+   @router.post("/", response_model=IntegrationResponse)
+   async def create_integration(
+       integration_request: IntegrationCreateRequest,
+       current_user = Depends(get_current_user),
+       integration_manager = Depends(get_integration_manager)
+   ):
+       # Validate platform
+       platform = IntegrationPlatform(integration_request.platform)
+       
+       # Register integration
+       integration_id = await integration_manager.register_integration(
+           user_id=current_user.id,
+           platform=platform,
+           credentials=integration_request.credentials,
+           configuration=integration_request.configuration
+       )
+       
+       # Persist to database
+       await db.execute("INSERT INTO integrations ...", ...)
+   ```
+
+2. **Trigger Integration**:
+   ```python
+   @router.post("/{integration_id}/trigger")
+   async def trigger_integration(
+       integration_id: str,
+       trigger_request: IntegrationTriggerRequest,
+       current_user = Depends(get_current_user)
+   ):
+       # Verify ownership
+       integration = await integration_manager.get_integration_status(integration_id)
+       if integration["user_id"] != current_user.id:
+           raise HTTPException(403, "Not authorized")
+       
+       # Trigger
+       result = await integration_manager.trigger_integration(
+           integration_id=integration_id,
+           event_type=trigger_request.event_type,
+           data=trigger_request.data
+       )
+   ```
+
+3. **Webhook Endpoint**:
+   ```python
+   @router.post("/webhooks/{platform}")
+   async def handle_webhook(
+       platform: str,
+       payload: Dict[str, Any] = Body(...),
+       headers: Dict[str, str] = Header(...)
+   ):
+       # Validate platform
+       platform_enum = IntegrationPlatform(platform)
+       
+       # Handle webhook
+       result = await integration_manager.handle_webhook(
+           platform=platform_enum,
+           payload=payload,
+           headers=headers
+       )
+   ```
+
+## Security Best Practices
+
+1. **Credential Storage**:
+   - Never log credentials
+   - Encrypt credentials in database
+   - Use environment variables for secrets
+   - Rotate credentials regularly
+
+2. **Webhook Security**:
+   - Always validate signatures
+   - Use HTTPS for webhook URLs
+   - Implement rate limiting
+   - Log all webhook events
+
+3. **Authorization**:
+   - Verify user ownership before operations
+   - Check permissions (INTEGRATION_CREATE, INTEGRATION_EXECUTE)
+   - Validate integration status
+
+## Error Handling
+
+1. **Connector Errors**:
+   ```python
+   try:
+       result = await connector.execute(...)
+   except PlatformSpecificError as e:
+       logger.error(f"Platform error: {e}", exc_info=True)
+       raise HTTPException(500, f"Platform error: {str(e)}")
+   except Exception as e:
+       logger.error(f"Integration error: {e}", exc_info=True)
+       raise HTTPException(500, "Integration failed")
+   ```
+
+2. **Circuit Breaker Pattern**:
+   - Track consecutive failures
+   - Open circuit after threshold
+   - Reset on success
+   - Log circuit state changes
+
+## Event Types
+
+1. **Standard Event Types**:
+   - `task_completed`: Task completed successfully
+   - `task_failed`: Task failed
+   - `alert_triggered`: System alert
+   - `custom_message`: Custom message/action
+
+2. **Platform-Specific Events**:
+   - GitHub: `create_issue`, `create_pr`, `security_scan_completed`
+   - Slack: `task_completed`, `task_failed`, `alert_triggered`
+   - Salesforce: `create_lead`, `update_lead`, `log_activity`
+   - Jira: `create_issue`, `transition_issue`, `create_bug_from_scan`
+
+## Best Practices
+
+1. **Always use IntegrationManager** (never call connectors directly)
+2. **Validate credentials before storing**
+3. **Always validate webhook signatures**
+4. **Handle errors gracefully with circuit breakers**
+5. **Log all integration events**
+6. **Encrypt credentials in production**
+7. **Verify user ownership before operations**
+8. **Use appropriate event types**
+9. **Implement retry logic with exponential backoff**
+10. **Monitor integration health and error rates**

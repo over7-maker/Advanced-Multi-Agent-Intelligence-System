@@ -159,6 +159,26 @@ async def setup_test_environment():
     pass
 
 
+# Import production fixtures
+from tests.fixtures.production_fixtures import (  # noqa: E402
+    alembic_env_path,
+    alembic_ini_path,
+    backup_script_path,
+    cicd_workflow_path,
+    deploy_script_path,
+    docker_compose_path,
+    dockerfile_path,
+    env_template_path,
+    k8s_manifest_path,
+    migration_path,
+    nginx_config_path,
+    project_root,
+    restore_script_path,
+    temp_dir,
+    test_env_vars,
+)
+
+
 @pytest.fixture
 def client():
     """FastAPI test client fixture."""
@@ -195,3 +215,158 @@ def async_test_client():
         mock_client.put = MagicMock()
         mock_client.delete = MagicMock()
         return mock_client
+
+
+# ============================================================================
+# PART 5: Integration Manager Fixtures
+# ============================================================================
+
+@pytest.fixture
+def mock_http_client():
+    """Mock HTTP client for integration connectors."""
+    mock_client = AsyncMock()
+    mock_client.post = AsyncMock()
+    mock_client.get = AsyncMock()
+    mock_client.put = AsyncMock()
+    mock_client.delete = AsyncMock()
+    return mock_client
+
+
+@pytest.fixture
+def mock_integration_connector():
+    """Mock integration connector."""
+    mock_connector = MagicMock()
+    mock_connector.validate_credentials = AsyncMock(return_value=True)
+    mock_connector.execute = AsyncMock(return_value={"success": True})
+    mock_connector.validate_webhook_signature = AsyncMock(return_value=True)
+    mock_connector.parse_webhook = AsyncMock(return_value={"event": "test"})
+    return mock_connector
+
+
+@pytest.fixture
+def sample_integration():
+    """Sample integration for testing."""
+    return {
+        "integration_id": "test_integration_001",
+        "platform": "n8n",
+        "status": "active",
+        "credentials": {"api_key": "test_key", "base_url": "https://test.n8n.io"},
+        "configuration": {},
+        "sync_count": 0,
+        "error_count": 0,
+        "created_at": "2024-01-01T00:00:00Z",
+    }
+
+
+# ============================================================================
+# PART 6: Monitoring & Observability Fixtures
+# ============================================================================
+
+@pytest.fixture
+def mock_metrics_service():
+    """Mock Prometheus metrics service."""
+    mock_service = MagicMock()
+    mock_service.record_task_execution = MagicMock()
+    mock_service.record_agent_execution = MagicMock()
+    mock_service.record_ai_provider_call = MagicMock()
+    mock_service.record_http_request = MagicMock()
+    mock_service.record_db_query = MagicMock()
+    mock_service.update_system_resources = MagicMock()
+    mock_service.get_metrics = MagicMock(return_value=b"# Mock metrics")
+    mock_service.get_content_type = MagicMock(return_value="text/plain")
+    return mock_service
+
+
+@pytest.fixture
+def test_metrics_service():
+    """Real metrics service instance for testing."""
+    try:
+        from src.amas.services.prometheus_metrics_service import PrometheusMetricsService
+        service = PrometheusMetricsService(config={"enabled": True})
+        return service
+    except Exception:
+        # Fallback to mock if real service unavailable
+        return mock_metrics_service()
+
+
+@pytest.fixture
+def mock_tracing_service():
+    """Mock tracing service."""
+    mock_service = MagicMock()
+    mock_service.enabled = True
+    mock_service.tracer = MagicMock()
+    mock_service.tracer.start_as_current_span = MagicMock()
+    mock_service.set_attribute = MagicMock()
+    mock_service.add_event = MagicMock()
+    mock_service.record_exception = MagicMock()
+    mock_service.instrument_app = MagicMock()
+    mock_service.instrument_libraries = MagicMock()
+    return mock_service
+
+
+@pytest.fixture
+def mock_system_monitor():
+    """Mock system monitor."""
+    mock_monitor = MagicMock()
+    mock_monitor.start = AsyncMock()
+    mock_monitor.stop = AsyncMock()
+    mock_monitor.get_snapshot = AsyncMock(return_value={
+        "cpu_percent": 50.0,
+        "memory_percent": 60.0,
+        "disk_usage": 1000000000,
+    })
+    return mock_monitor
+
+
+@pytest.fixture
+def mock_psutil():
+    """Mock psutil for system monitoring tests."""
+    mock_psutil = MagicMock()
+    mock_psutil.cpu_percent = MagicMock(return_value=50.0)
+    mock_psutil.virtual_memory = MagicMock(return_value=MagicMock(
+        used=1000000000,
+        total=2000000000,
+        percent=50.0
+    ))
+    mock_psutil.disk_usage = MagicMock(return_value=MagicMock(
+        used=1000000000,
+        total=2000000000
+    ))
+    mock_psutil.net_io_counters = MagicMock(return_value=MagicMock(
+        bytes_sent=1000000,
+        bytes_recv=2000000
+    ))
+    return mock_psutil
+
+
+# ============================================================================
+# PART 7: Frontend API Fixtures
+# ============================================================================
+
+@pytest.fixture
+def mock_axios():
+    """Mock axios for frontend API tests."""
+    mock_axios = MagicMock()
+    mock_axios.create = MagicMock(return_value=mock_axios)
+    mock_axios.get = AsyncMock()
+    mock_axios.post = AsyncMock()
+    mock_axios.put = AsyncMock()
+    mock_axios.delete = AsyncMock()
+    mock_axios.interceptors = MagicMock()
+    mock_axios.interceptors.request = MagicMock()
+    mock_axios.interceptors.request.use = MagicMock()
+    mock_axios.interceptors.response = MagicMock()
+    mock_axios.interceptors.response.use = MagicMock()
+    return mock_axios
+
+
+@pytest.fixture
+def mock_websocket():
+    """Mock WebSocket for frontend tests."""
+    mock_ws = MagicMock()
+    mock_ws.readyState = 1  # OPEN
+    mock_ws.send = MagicMock()
+    mock_ws.close = MagicMock()
+    mock_ws.addEventListener = MagicMock()
+    mock_ws.removeEventListener = MagicMock()
+    return mock_ws

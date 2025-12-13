@@ -58,18 +58,28 @@ class SecurityManager:
     
     def _expand_env_vars(self, data: Any) -> Any:
         """Recursively expand environment variables in config"""
+        import re
+        
         if isinstance(data, dict):
             return {k: self._expand_env_vars(v) for k, v in data.items()}
         elif isinstance(data, list):
             return [self._expand_env_vars(item) for item in data]
-        elif isinstance(data, str) and data.startswith("${") and data.endswith("}"):
-            # Format: ${VAR:-default}
-            var_part = data[2:-1]
-            if ":-" in var_part:
-                var_name, default = var_part.split(":-", 1)
-                return os.getenv(var_name, default)
-            else:
-                return os.getenv(var_part, data)
+        elif isinstance(data, str) and "${" in data:
+            # Format: ${VAR:-default} or ${VAR}
+            # Match ${VAR:-default} or ${VAR}
+            pattern = r'\$\{([^}]+)\}'
+            result = data
+            # Find all matches and replace them
+            for match in re.finditer(pattern, data):
+                var_part = match.group(1)
+                if ":-" in var_part:
+                    var_name, default = var_part.split(":-", 1)
+                    value = os.getenv(var_name.strip(), default.strip())
+                else:
+                    value = os.getenv(var_part.strip(), "")
+                # Replace the entire ${...} pattern
+                result = result.replace(match.group(0), value)
+            return result
         else:
             return data
     

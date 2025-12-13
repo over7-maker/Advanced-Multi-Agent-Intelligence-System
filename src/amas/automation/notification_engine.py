@@ -6,19 +6,20 @@ intelligent batching, personalization, and delivery optimization.
 """
 
 import asyncio
-import logging
-from typing import Dict, List, Optional, Any, Set, Union
-from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from enum import Enum
-import uuid
 import json
+import logging
 import smtplib
-import aiohttp
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from pathlib import Path
 import sqlite3
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+import aiohttp
 import jinja2
 
 logger = logging.getLogger(__name__)
@@ -520,7 +521,7 @@ Timestamp: {{ alert_time }}
             # Deliver through specific channel
             try:
                 result = await self._deliver_through_channel(
-                    channel, rendered_content, notification.recipient_data
+                    channel, rendered_content, notification.recipient_data, notification
                 )
                 delivery_results[channel_id] = result
                 
@@ -564,7 +565,8 @@ Timestamp: {{ alert_time }}
     async def _deliver_through_channel(self,
                                      channel: NotificationChannelConfig,
                                      content: Dict[str, str],
-                                     recipient_data: Dict[str, Any]) -> Dict[str, Any]:
+                                     recipient_data: Dict[str, Any],
+                                     notification) -> Dict[str, Any]:
         """Deliver notification through specific channel"""
         start_time = asyncio.get_event_loop().time()
         
@@ -576,7 +578,7 @@ Timestamp: {{ alert_time }}
             elif channel.channel_type == NotificationChannel.DISCORD:
                 result = await self._deliver_discord(channel, content, recipient_data)
             elif channel.channel_type == NotificationChannel.WEBHOOK:
-                result = await self._deliver_webhook(channel, content, recipient_data)
+                result = await self._deliver_webhook(channel, content, recipient_data, notification)
             else:
                 result = {"status": "failed", "error": "unsupported_channel_type"}
             
@@ -715,7 +717,8 @@ Timestamp: {{ alert_time }}
     async def _deliver_webhook(self,
                              channel: NotificationChannelConfig,
                              content: Dict[str, str],
-                             recipient_data: Dict[str, Any]) -> Dict[str, Any]:
+                             recipient_data: Dict[str, Any],
+                             notification) -> Dict[str, Any]:
         """Deliver notification via generic webhook"""
         config = channel.config
         webhook_url = config.get('webhook_url')

@@ -1,0 +1,73 @@
+---
+description: ML Predictions Integration - Use predictive engine for task outcome predictions and system resource forecasting
+globs:
+  - "src/amas/intelligence/predictive_engine.py"
+  - "src/api/routes/predictions.py"
+  - "src/api/routes/tasks.py"
+alwaysApply: false
+---
+
+# ML Predictions Integration Rules
+
+When working with ML predictions or task creation:
+
+## Predictive Engine Usage
+
+1. **Always use predictive engine for task creation**:
+   ```python
+   from src.amas.intelligence.predictive_engine import PredictiveIntelligenceEngine
+   
+   prediction_engine = PredictiveIntelligenceEngine()
+   
+   prediction = await prediction_engine.predict_task_outcome(
+       task_type=task_data.task_type,
+       target=task_data.target,
+       parameters=task_data.parameters or {},
+       context={"user_id": user.id, "time_of_day": datetime.now().hour}
+   )
+   ```
+
+2. **Include prediction data in responses**:
+   - `success_probability` (0.0-1.0)
+   - `estimated_duration` (seconds)
+   - `quality_score_prediction` (0.0-1.0)
+   - `estimated_cost` (USD)
+   - `recommended_agents` (list)
+   - `risk_factors` (list)
+   - `optimization_suggestions` (list)
+
+3. **Store predictions in database**:
+   - Save prediction metadata with task record
+   - Use for learning feedback loop
+   - Track prediction accuracy over time
+
+## Learning Feedback Loop
+
+1. **Always record task execution results**:
+   ```python
+   await intelligence_manager.record_task_execution(
+       task_id=task_id,
+       task_type=task_type,
+       agents_used=result.agents_used,
+       execution_time=execution_duration,
+       success=result.success,
+       quality_score=result.quality_score
+   )
+   ```
+
+2. **Trigger model retraining**:
+   - Every 20 completed tasks: `await predictive_engine._retrain_model("task_outcome")`
+   - Use background tasks for retraining
+
+## Model Performance
+
+- Always check `_is_model_trained()` before using predictions
+- Provide fallback defaults if model not trained
+- Log model confidence scores
+- Track prediction accuracy metrics
+
+## Resource Predictions
+
+- Use `predict_system_resources()` for capacity planning
+- Include bottleneck predictions and scaling recommendations
+- Update predictions based on actual usage patterns

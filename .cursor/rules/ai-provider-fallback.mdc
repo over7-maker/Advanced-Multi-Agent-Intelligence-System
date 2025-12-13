@@ -1,0 +1,78 @@
+---
+description: AI Provider Fallback System - Use enhanced router with 16-provider fallback chain for all AI calls
+globs:
+  - "src/amas/ai/enhanced_router_v2.py"
+  - "src/amas/agents/**/*.py"
+  - "src/amas/core/unified_intelligence_orchestrator.py"
+alwaysApply: false
+---
+
+# AI Provider Fallback System Rules
+
+When making AI API calls or working with agents:
+
+## Always Use Enhanced Router
+
+1. **Never call AI providers directly** - Always use the router:
+   ```python
+   from src.amas.ai.enhanced_router_v2 import get_ai_router
+   
+   ai_router = get_ai_router()
+   
+   response = await ai_router.generate_with_fallback(
+       prompt=prompt,
+       model_preference=model_name,
+       max_tokens=4000,
+       temperature=0.3,
+       system_prompt=system_prompt,
+       strategy="quality_first"  # or "speed_first", "cost_optimized"
+   )
+   ```
+
+2. **Use appropriate strategy**:
+   - `quality_first`: OpenAI → Anthropic → Google (best quality)
+   - `speed_first`: Groq → Cerebras → Fireworks (fastest)
+   - `cost_optimized`: DeepSeek → Groq → Together (cheapest)
+
+## Agent Integration
+
+1. **All agents MUST use router**:
+   ```python
+   class BaseAgent:
+       def __init__(self):
+           self.ai_router = get_ai_router()
+       
+       async def execute(self, ...):
+           response = await self.ai_router.generate_with_fallback(
+               prompt=prompt,
+               system_prompt=self.system_prompt,
+               strategy=self.strategy
+           )
+   ```
+
+2. **Never hardcode provider API keys** - Router handles all providers
+
+3. **Handle fallback gracefully**:
+   - Log which provider was used: `response.provider`
+   - Track fallback usage: `response.fallback_used`
+   - Monitor provider health: `await ai_router.get_provider_health()`
+
+## Circuit Breaker Pattern
+
+- Router automatically handles circuit breakers
+- Failed providers are temporarily disabled
+- System automatically retries with next provider
+- No manual retry logic needed in agents
+
+## Provider Selection
+
+- Use `model_preference` to hint preferred model
+- Router will try preferred provider first, then fallback
+- Monitor provider stats: `await ai_router.get_provider_stats()`
+
+## Error Handling
+
+- Router handles all provider errors internally
+- Only raise exceptions if ALL providers fail
+- Log provider failures for monitoring
+- Track success rates per provider

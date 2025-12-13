@@ -1,34 +1,32 @@
-import React from 'react';
 import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  LinearProgress,
-  Chip,
-  IconButton,
-  Avatar,
-  AvatarGroup,
-  Tooltip,
-  useTheme,
-  alpha,
-} from '@mui/material';
-import {
-  PlayArrow as PlayIcon,
-  Pause as PauseIcon,
-  Stop as StopIcon,
-  MoreVert as MoreVertIcon,
-  AccessTime as TimeIcon,
-  Group as GroupIcon,
+    MoreVert as MoreVertIcon,
+    Pause as PauseIcon,
+    PlayArrow as PlayIcon,
+    Stop as StopIcon,
+    AccessTime as TimeIcon,
 } from '@mui/icons-material';
+import {
+    alpha,
+    Avatar,
+    Box,
+    Card,
+    CardContent,
+    Chip,
+    IconButton,
+    LinearProgress,
+    Typography,
+    useTheme,
+} from '@mui/material';
 import { motion } from 'framer-motion';
+import React from 'react';
 import { WorkflowExecution } from '../../types/agent';
 
 interface WorkflowCardProps {
   execution: WorkflowExecution;
+  onClick?: () => void;
 }
 
-export const WorkflowCard: React.FC<WorkflowCardProps> = ({ execution }) => {
+export const WorkflowCard: React.FC<WorkflowCardProps> = ({ execution, onClick }) => {
   const theme = useTheme();
   
   const getStatusColor = (status: string, health: string) => {
@@ -66,16 +64,20 @@ export const WorkflowCard: React.FC<WorkflowCardProps> = ({ execution }) => {
       transition={{ duration: 0.2 }}
     >
       <Card 
+        onClick={onClick}
         sx={{ 
           mb: 2,
           border: `1px solid ${alpha(getStatusColor(execution.status, execution.overallHealth), 0.3)}`,
+          cursor: onClick ? 'pointer' : 'default',
+          transition: 'all 0.2s',
           '&:hover': {
             boxShadow: theme.shadows[8],
+            transform: onClick ? 'translateY(-2px)' : 'none',
           }
         }}
       >
         <CardContent>
-          <Box display="flex" justifyContent="between" alignItems="flex-start" mb={2}>
+          <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
             <Box flex={1}>
               <Box display="flex" alignItems="center" mb={1}>
                 <Avatar 
@@ -121,14 +123,21 @@ export const WorkflowCard: React.FC<WorkflowCardProps> = ({ execution }) => {
               </Box>
             </Box>
             
-            <IconButton size="small">
+            <IconButton 
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                // TODO: Show workflow menu/actions
+                console.log('Workflow menu clicked for:', execution.executionId);
+              }}
+            >
               <MoreVertIcon />
             </IconButton>
           </Box>
 
           {/* Progress Bar */}
           <Box mb={2}>
-            <Box display="flex" justifyContent="between" alignItems="center" mb={1}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
               <Typography variant="body2" color="textSecondary">
                 Progress
               </Typography>
@@ -151,7 +160,7 @@ export const WorkflowCard: React.FC<WorkflowCardProps> = ({ execution }) => {
           </Box>
 
           {/* Task Status */}
-          <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
+          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
             <Box display="flex" alignItems="center" gap={2}>
               <Box display="flex" alignItems="center">
                 <Box 

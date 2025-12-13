@@ -1,0 +1,263 @@
+---
+description: Structured Logging - JSON logging, log levels, context enrichment, and log aggregation patterns
+globs:
+  - "src/utils/logging_config.py"
+  - "src/**/*.py"
+alwaysApply: false
+---
+
+# Structured Logging Rules
+
+When implementing logging:
+
+## Logging Configuration
+
+1. **Use Structured JSON Logging**:
+   ```python
+   from src.utils.logging_config import configure_logging
+   
+   # ✅ CORRECT: Configure JSON logging on startup
+   configure_logging(
+       log_level=os.getenv("LOG_LEVEL", "INFO"),
+       json_logs=True,  # JSON format for Loki/ELK
+       log_file=os.getenv("LOG_FILE")
+   )
+   ```
+
+2. **Log Format**:
+   - Production: JSON format (for log aggregation)
+   - Development: Human-readable format
+   - Include timestamp, level, logger, message, context
+
+## Log Levels
+
+1. **Level Guidelines**:
+   ```python
+   import logging
+   
+   logger = logging.getLogger(__name__)
+   
+   # ✅ CORRECT: Use appropriate log levels
+   logger.debug("Detailed diagnostic information")  # Development only
+   logger.info("General informational message")  # Normal operations
+   logger.warning("Warning message")  # Potential issues
+   logger.error("Error occurred", exc_info=True)  # Errors
+   logger.critical("Critical error")  # System failures
+   ```
+
+2. **Level Usage**:
+   - **DEBUG**: Detailed diagnostic info (development)
+   - **INFO**: General information (startup, operations)
+   - **WARNING**: Potential issues (deprecations, fallbacks)
+   - **ERROR**: Errors that don't stop execution
+   - **CRITICAL**: Critical errors that may stop execution
+
+## Context Enrichment
+
+1. **Add Context to Logs**:
+   ```python
+   # ✅ CORRECT: Add context using extra parameter
+   logger.info(
+       "Task execution started",
+       extra={
+           "task_id": task_id,
+           "task_type": task_type,
+           "agent_id": agent_id,
+           "user_id": user_id
+       }
+   )
+   ```
+
+2. **Structured Context**:
+   ```python
+   # ✅ CORRECT: Use consistent context fields
+   logger.info(
+       "Agent execution completed",
+       extra={
+           "task_id": task_id,
+           "agent_id": agent_id,
+           "agent_name": agent_name,
+           "duration": duration,
+           "tokens_used": tokens_used,
+           "cost_usd": cost_usd,
+           "provider": provider
+       }
+   )
+   ```
+
+3. **Request Context**:
+   ```python
+   # ✅ CORRECT: Add request ID to all logs
+   request_id = request.headers.get("X-Request-ID", str(uuid.uuid4()))
+   
+   logger.info(
+       "Processing request",
+       extra={"request_id": request_id, "endpoint": request.url.path}
+   )
+   ```
+
+## Exception Logging
+
+1. **Log Exceptions**:
+   ```python
+   # ✅ CORRECT: Log exceptions with context
+   try:
+       result = await operation()
+   except Exception as e:
+       logger.error(
+           "Operation failed",
+           exc_info=True,  # Include traceback
+           extra={
+               "task_id": task_id,
+               "error_type": type(e).__name__,
+               "error_message": str(e)
+           }
+       )
+       raise
+   ```
+
+2. **Exception Context**:
+   ```python
+   # ✅ CORRECT: Add full exception context
+   logger.exception(
+       "Task execution failed",
+       extra={
+           "task_id": task_id,
+           "task_type": task_type,
+           "agent_id": agent_id,
+           "error": str(e),
+           "traceback": traceback.format_exc()
+       }
+   )
+   ```
+
+## Log Message Format
+
+1. **Message Guidelines**:
+   ```python
+   # ✅ CORRECT: Clear, descriptive messages
+   logger.info("Task execution started", extra={"task_id": task_id})
+   logger.info("Agent selected for task", extra={"agent_id": agent_id, "task_id": task_id})
+   logger.warning("Provider fallback occurred", extra={"from": provider1, "to": provider2})
+   logger.error("Database connection failed", exc_info=True)
+   
+   # ❌ WRONG: Vague messages
+   logger.info("Started")
+   logger.info("Error")
+   logger.info(f"Task {task_id}")  # Use extra instead
+   ```
+
+2. **Message Structure**:
+   - Start with action/event
+   - Include relevant identifiers
+   - Use consistent format
+
+## Logger Naming
+
+1. **Logger Names**:
+   ```python
+   # ✅ CORRECT: Use module name
+   logger = logging.getLogger(__name__)
+   # Results in: src.amas.core.orchestrator
+   
+   # ✅ CORRECT: Use descriptive names
+   logger = logging.getLogger("amas.orchestrator")
+   logger = logging.getLogger("amas.agent.code_analyzer")
+   ```
+
+2. **Logger Hierarchy**:
+   - Use module path for automatic hierarchy
+   - Use dot notation for custom loggers
+   - Keep names consistent
+
+## Performance Logging
+
+1. **Log Performance Metrics**:
+   ```python
+   # ✅ CORRECT: Log performance with context
+   start_time = time.time()
+   result = await operation()
+   duration = time.time() - start_time
+   
+   logger.info(
+       "Operation completed",
+       extra={
+           "operation": "task_execution",
+           "duration_seconds": duration,
+           "success": True
+       }
+   )
+   ```
+
+2. **Slow Operation Logging**:
+   ```python
+   duration = time.time() - start_time
+   if duration > 5.0:  # Log if > 5 seconds
+       logger.warning(
+           "Slow operation detected",
+           extra={
+               "operation": "task_execution",
+               "duration_seconds": duration,
+               "threshold": 5.0
+           }
+       )
+   ```
+
+## Security Considerations
+
+1. **Don't Log Sensitive Data**:
+   ```python
+   # ❌ WRONG: Logging sensitive data
+   logger.info(f"User login: {username}, password: {password}")
+   logger.info(f"API key: {api_key}")
+   
+   # ✅ CORRECT: Log without sensitive data
+   logger.info("User login successful", extra={"user_id": user_id})
+   logger.info("API key validated", extra={"key_id": key_id})
+   ```
+
+2. **Sanitize Logs**:
+   - Never log passwords, tokens, API keys
+   - Mask PII in logs
+   - Use IDs instead of full data
+
+## Log Aggregation
+
+1. **JSON Format for Aggregation**:
+   ```python
+   # JSON logs are automatically parsed by Loki/ELK
+   # Structure:
+   {
+       "timestamp": "2025-01-20T10:30:00Z",
+       "level": "INFO",
+       "logger": "amas.orchestrator",
+       "message": "Task execution started",
+       "task_id": "task_123",
+       "task_type": "code_analysis"
+   }
+   ```
+
+2. **Log Shipping**:
+   - Logs automatically shipped by Promtail
+   - Use structured JSON for easy parsing
+   - Include relevant labels for filtering
+
+## Best Practices
+
+1. **Always**:
+   - Use structured JSON logging in production
+   - Add context to logs (task_id, agent_id, user_id)
+   - Log exceptions with exc_info=True
+   - Use appropriate log levels
+
+2. **Don't**:
+   - Log sensitive data (passwords, tokens, PII)
+   - Use print() statements
+   - Log in tight loops
+   - Create too many loggers
+
+3. **Performance**:
+   - Logging is synchronous but fast
+   - Use async logging for high-throughput
+   - Don't block on logging
+   - Monitor log volume

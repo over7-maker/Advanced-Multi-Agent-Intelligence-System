@@ -109,6 +109,43 @@ class BaseAgent(ABC):
         logger.info(f"Agent {self.name} status updated to {status}")
 
 
+class LLMService:
+    """LLM service for AI operations"""
+
+    def __init__(self, service_url: str):
+        self.service_url = service_url
+
+    async def generate_response(self, prompt: str) -> str:
+        """Generate a response using the LLM service"""
+        # This would integrate with Ollama or other LLM services
+        # For now, return a placeholder
+        return f"LLM Response to: {prompt[:100]}..."
+
+
+class VectorService:
+    """Vector service for semantic search"""
+
+    def __init__(self, service_url: str):
+        self.service_url = service_url
+
+    async def search(self, query: str, top_k: int = 10) -> List[Dict[str, Any]]:
+        """Search for similar vectors"""
+        # This would integrate with FAISS or other vector services
+        return []
+
+
+class KnowledgeGraph:
+    """Knowledge graph service"""
+
+    def __init__(self, service_url: str):
+        self.service_url = service_url
+
+    async def query(self, cypher_query: str) -> List[Dict[str, Any]]:
+        """Execute a Cypher query on the knowledge graph"""
+        # This would integrate with Neo4j
+        return []
+
+
 class AgentOrchestrator:
     """Core orchestrator for multi-agent intelligence operations"""
 
@@ -399,40 +436,3 @@ class EventBus:
             self.subscribers[event_type] = []
         self.subscribers[event_type].append(handler)
         logger.info(f"Subscribed to event {event_type}")
-
-
-class LLMService:
-    """LLM service for AI operations"""
-
-    def __init__(self, service_url: str):
-        self.service_url = service_url
-
-    async def generate_response(self, prompt: str) -> str:
-        """Generate a response using the LLM service"""
-        # This would integrate with Ollama or other LLM services
-        # For now, return a placeholder
-        return f"LLM Response to: {prompt[:100]}..."
-
-
-class VectorService:
-    """Vector service for semantic search"""
-
-    def __init__(self, service_url: str):
-        self.service_url = service_url
-
-    async def search(self, query: str, top_k: int = 10) -> List[Dict[str, Any]]:
-        """Search for similar vectors"""
-        # This would integrate with FAISS or other vector services
-        return []
-
-
-class KnowledgeGraph:
-    """Knowledge graph service"""
-
-    def __init__(self, service_url: str):
-        self.service_url = service_url
-
-    async def query(self, cypher_query: str) -> List[Dict[str, Any]]:
-        """Execute a Cypher query on the knowledge graph"""
-        # This would integrate with Neo4j
-        return []

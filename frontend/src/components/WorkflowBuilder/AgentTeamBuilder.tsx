@@ -1,42 +1,38 @@
-import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Typography,
-  Grid,
-  Card,
-  CardContent,
-  Chip,
-  Button,
-  Switch,
-  FormControlLabel,
-  Slider,
-  Paper,
-  Divider,
-  Alert,
-  CircularProgress,
-  Tooltip,
-  IconButton,
-  Badge,
-  useTheme,
-  alpha,
-} from '@mui/material';
-import {
-  Add as AddIcon,
-  Remove as RemoveIcon,
-  Info as InfoIcon,
-  TrendingUp as TrendingUpIcon,
-  Schedule as ScheduleIcon,
-  AttachMoney as CostIcon,
-  Group as GroupIcon,
+    Add as AddIcon,
+    AttachMoney as CostIcon,
+    Group as GroupIcon,
+    Info as InfoIcon,
+    Schedule as ScheduleIcon,
+    TrendingUp as TrendingUpIcon
 } from '@mui/icons-material';
-import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
-import { motion, AnimatePresence } from 'framer-motion';
+import {
+    Alert,
+    alpha,
+    Badge,
+    Box,
+    Card,
+    CardContent,
+    Chip,
+    CircularProgress,
+    Divider,
+    FormControlLabel,
+    Grid,
+    IconButton,
+    Paper,
+    Slider,
+    Switch,
+    Tooltip,
+    Typography,
+    useTheme
+} from '@mui/material';
+import { motion } from 'framer-motion';
+import React, { useEffect, useState } from 'react';
 
-import { 
-  AgentSpecialty, 
-  TaskComplexity, 
-  TeamComposition, 
-  Agent 
+import {
+    AgentSpecialty,
+    TaskComplexity,
+    TeamComposition
 } from '../../types/agent';
 
 interface AgentTeamBuilderProps {
@@ -144,7 +140,7 @@ const SPECIALIST_INFO: Record<AgentSpecialty, SpecialtyInfo> = {
     compatibleWith: [AgentSpecialty.FACT_CHECKER]
   },
   // Add remaining specialties...
-} as any;
+} as Record<AgentSpecialty, SpecialtyInfo>;
 
 export const AgentTeamBuilder: React.FC<AgentTeamBuilderProps> = ({
   taskRequest,
@@ -165,6 +161,7 @@ export const AgentTeamBuilder: React.FC<AgentTeamBuilderProps> = ({
     if (autoMode && taskRequest) {
       suggestOptimalTeam();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskRequest, autoMode, budgetLimit, timeLimit, qualityThreshold]);
 
   const suggestOptimalTeam = async () => {
@@ -256,7 +253,7 @@ export const AgentTeamBuilder: React.FC<AgentTeamBuilderProps> = ({
   const calculateTeamMetrics = (agents: AgentSpecialty[]) => {
     let totalCost = 0;
     let maxDuration = 0;
-    let qualityScores: number[] = [];
+    const qualityScores: number[] = [];
     
     // Group agents by category for parallel execution estimation
     const categories = agents.reduce((acc, agent) => {
@@ -349,7 +346,7 @@ export const AgentTeamBuilder: React.FC<AgentTeamBuilderProps> = ({
         onClick={() => toggleAgent(info.specialty)}
       >
         <CardContent sx={{ p: 2 }}>
-          <Box display="flex" alignItems="flex-start" justifyContent="between" mb={1}>
+          <Box display="flex" alignItems="flex-start" justifyContent="space-between" mb={1}>
             <Box display="flex" alignItems="center">
               <Typography fontSize="1.5rem" mr={1}>
                 {info.icon}
@@ -375,7 +372,7 @@ export const AgentTeamBuilder: React.FC<AgentTeamBuilderProps> = ({
             {info.description}
           </Typography>
           
-          <Box display="flex" justifyContent="between" alignItems="center">
+          <Box display="flex" justifyContent="space-between" alignItems="center">
             <Box display="flex" alignItems="center" gap={1}>
               <Box display="flex" alignItems="center">
                 <ScheduleIcon fontSize="small" color="action" sx={{ mr: 0.25 }} />
@@ -418,7 +415,7 @@ export const AgentTeamBuilder: React.FC<AgentTeamBuilderProps> = ({
   return (
     <Box>
       {/* Header Controls */}
-      <Box display="flex" justifyContent="between" alignItems="center" mb={3}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h5" display="flex" alignItems="center">
           <GroupIcon sx={{ mr: 1 }} />
           Agent Team Builder
@@ -547,14 +544,14 @@ export const AgentTeamBuilder: React.FC<AgentTeamBuilderProps> = ({
               <Box>
                 {/* Composition Summary */}
                 <Box mb={3}>
-                  <Box display="flex" justifyContent="between" alignItems="center" mb={1}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                     <Typography variant="body2">Total Agents</Typography>
                     <Typography variant="body2" fontWeight="bold">
                       {selectedAgents.length}
                     </Typography>
                   </Box>
                   
-                  <Box display="flex" justifyContent="between" alignItems="center" mb={1}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                     <Typography variant="body2">Estimated Duration</Typography>
                     <Typography 
                       variant="body2" 
@@ -565,7 +562,7 @@ export const AgentTeamBuilder: React.FC<AgentTeamBuilderProps> = ({
                     </Typography>
                   </Box>
                   
-                  <Box display="flex" justifyContent="between" alignItems="center" mb={1}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                     <Typography variant="body2">Estimated Cost</Typography>
                     <Typography 
                       variant="body2" 
@@ -576,7 +573,7 @@ export const AgentTeamBuilder: React.FC<AgentTeamBuilderProps> = ({
                     </Typography>
                   </Box>
                   
-                  <Box display="flex" justifyContent="between" alignItems="center" mb={2}>
+                  <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
                     <Typography variant="body2">Quality Score</Typography>
                     <Typography 
                       variant="body2" 
@@ -675,17 +672,17 @@ export const AgentTeamBuilder: React.FC<AgentTeamBuilderProps> = ({
                 {(constraints.cost === 'over' || constraints.time === 'over' || constraints.quality === 'under') && (
                   <Box mb={2}>
                     {constraints.cost === 'over' && (
-                      <Alert severity="warning" size="small" sx={{ mb: 1 }}>
+                      <Alert severity="warning" sx={{ mb: 1 }}>
                         Team cost (${teamComposition.estimatedCost.toFixed(2)}) exceeds budget (${budgetLimit})
                       </Alert>
                     )}
                     {constraints.time === 'over' && (
-                      <Alert severity="warning" size="small" sx={{ mb: 1 }}>
+                      <Alert severity="warning" sx={{ mb: 1 }}>
                         Estimated duration ({teamComposition.estimatedDuration.toFixed(1)}h) exceeds limit ({timeLimit}h)
                       </Alert>
                     )}
                     {constraints.quality === 'under' && (
-                      <Alert severity="error" size="small" sx={{ mb: 1 }}>
+                      <Alert severity="error" sx={{ mb: 1 }}>
                         Quality score ({(teamComposition.qualityScore * 100).toFixed(1)}%) below threshold ({(qualityThreshold * 100).toFixed(0)}%)
                       </Alert>
                     )}

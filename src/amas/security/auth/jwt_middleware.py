@@ -56,6 +56,18 @@ class JWTMiddleware:
                 return self._jwks_cache
             
             try:
+                # Check if jwks_uri is valid (starts with http:// or https://)
+                if not self.jwks_uri or not (self.jwks_uri.startswith('http://') or self.jwks_uri.startswith('https://')):
+                    # Invalid or unexpanded jwks_uri - this is expected in development
+                    import os
+                    dev_mode = os.getenv("ENVIRONMENT", "production").lower() in ["development", "dev", "test"]
+                    if dev_mode:
+                        logger.debug(f"JWKS URI not configured (expected in dev): {self.jwks_uri}")
+                        # Return empty cache - tokens won't be validated but app continues
+                        return {"keys": []}
+                    else:
+                        raise ValueError(f"Invalid JWKS URI: {self.jwks_uri}")
+                
                 logger.debug(f"Fetching JWKS from {self.jwks_uri}")
                 async with httpx.AsyncClient(timeout=10.0) as client:
                     response = await client.get(self.jwks_uri)
@@ -68,15 +80,24 @@ class JWTMiddleware:
                     return self._jwks_cache
                     
             except Exception as e:
-                logger.error(f"Failed to fetch JWKS: {e}")
-                # Return cached keys if available, even if expired
-                if self._jwks_cache:
-                    logger.warning("Using expired JWKS cache due to fetch failure")
-                    return self._jwks_cache
-                raise HTTPException(
-                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                    detail="Unable to validate tokens - JWKS unavailable"
-                )
+                import os
+                dev_mode = os.getenv("ENVIRONMENT", "production").lower() in ["development", "dev", "test"]
+                
+                # In development, log as debug instead of error
+                if dev_mode:
+                    logger.debug(f"JWKS fetch failed (expected in dev): {e}")
+                    # Return empty cache - tokens won't be validated but app continues
+                    return {"keys": []}
+                else:
+                    logger.error(f"Failed to fetch JWKS: {e}")
+                    # Return cached keys if available, even if expired
+                    if self._jwks_cache:
+                        logger.warning("Using expired JWKS cache due to fetch failure")
+                        return self._jwks_cache
+                    raise HTTPException(
+                        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                        detail="Unable to validate tokens - JWKS unavailable"
+                    )
     
     async def start_background_refresh(self):
         """Start background task for periodic JWKS refresh"""
@@ -93,7 +114,13 @@ class JWTMiddleware:
                 except asyncio.CancelledError:
                     break
                 except Exception as e:
-                    logger.error(f"Background JWKS refresh error: {e}")
+                    import os
+                    dev_mode = os.getenv("ENVIRONMENT", "production").lower() in ["development", "dev", "test"]
+                    # In development, log as debug instead of error
+                    if dev_mode:
+                        logger.debug(f"Background JWKS refresh failed (expected in dev): {e}")
+                    else:
+                        logger.error(f"Background JWKS refresh error: {e}")
                     # Continue even if refresh fails
                     await asyncio.sleep(60)  # Wait before retrying
         
@@ -482,13 +509,42 @@ class SecureAuthenticationManager:
         # Initialize JWT middleware with enhanced settings
         oidc_config = auth_config.get("oidc", {})
         import os
+        import re
         expected_azp = oidc_config.get("expected_azp") or os.getenv("OIDC_EXPECTED_AZP")
         refresh_interval = oidc_config.get("refresh_interval", 300)
         
+        # Get OIDC config values (may contain unexpanded env vars)
+        issuer = oidc_config.get("issuer", "")
+        audience = oidc_config.get("audience", "")
+        jwks_uri = oidc_config.get("jwks_uri", "")
+        
+        # Expand environment variables if needed (fallback if not expanded by security_manager)
+        if issuer and "${" in issuer:
+            pattern = r'\$\{([^}]+)\}'
+            match = re.search(pattern, issuer)
+            if match:
+                var_part = match.group(1)
+                if ":-" in var_part:
+                    var_name, default = var_part.split(":-", 1)
+                    issuer = os.getenv(var_name.strip(), default.strip())
+                else:
+                    issuer = os.getenv(var_part.strip(), issuer)
+        
+        if jwks_uri and "${" in jwks_uri:
+            pattern = r'\$\{([^}]+)\}'
+            match = re.search(pattern, jwks_uri)
+            if match:
+                var_part = match.group(1)
+                if ":-" in var_part:
+                    var_name, default = var_part.split(":-", 1)
+                    jwks_uri = os.getenv(var_name.strip(), default.strip())
+                else:
+                    jwks_uri = os.getenv(var_part.strip(), jwks_uri)
+        
         self.jwt_middleware = JWTMiddleware(
-            issuer=oidc_config.get("issuer"),
-            audience=oidc_config.get("audience"),
-            jwks_uri=oidc_config.get("jwks_uri"),
+            issuer=issuer,
+            audience=audience,
+            jwks_uri=jwks_uri,
             cache_ttl=oidc_config.get("cache_ttl", 3600),
             expected_azp=expected_azp,
             refresh_interval=refresh_interval

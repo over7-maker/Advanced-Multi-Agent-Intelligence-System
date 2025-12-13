@@ -1,5 +1,3 @@
-from standalone_universal_ai_manager import get_api_key
-
 #!/usr/bin/env python3
 """
 AMAS API Clients - Specialized Adapters for Each AI Provider
@@ -13,13 +11,12 @@ import json
 import os
 import time
 from dataclasses import dataclass
-from typing import Any, AsyncGenerator, Dict, List, Optional
+from typing import AsyncGenerator, Dict, List, Optional, cast
 
 import aiohttp
 import cohere
 import httpx
 from openai import AsyncOpenAI
-from tenacity import retry, stop_after_attempt, wait_exponential
 
 
 @dataclass
@@ -75,16 +72,18 @@ class OpenAICompatibleClient(BaseAPIClient):
 
         client = AsyncOpenAI(base_url=self.base_url, api_key=self.api_key)
 
+        from openai.types.chat import ChatCompletionMessageParam
         response = await client.chat.completions.create(
             model=self.model,
-            messages=messages,
+            messages=cast(List[ChatCompletionMessageParam], messages),
             max_tokens=kwargs.get("max_tokens", 4000),
             temperature=kwargs.get("temperature", 0.7),
             timeout=kwargs.get("timeout", 30),
         )
 
+        content = response.choices[0].message.content or ""
         return APIResponse(
-            content=response.choices[0].message.content,
+            content=content,
             model=response.model,
             usage=response.usage.dict() if response.usage else None,
             api_name=self.__class__.__name__,
@@ -97,9 +96,10 @@ class OpenAICompatibleClient(BaseAPIClient):
         """Generate streaming response"""
         client = AsyncOpenAI(base_url=self.base_url, api_key=self.api_key)
 
+        from openai.types.chat import ChatCompletionMessageParam
         stream = await client.chat.completions.create(
             model=self.model,
-            messages=messages,
+            messages=cast(List[ChatCompletionMessageParam], messages),
             max_tokens=kwargs.get("max_tokens", 4000),
             temperature=kwargs.get("temperature", 0.7),
             stream=True,
@@ -124,6 +124,9 @@ class CerebrasClient(BaseAPIClient):
         """Generate response using Cerebras API"""
         start_time = time.time()
 
+        if self.http_client is None:
+            raise RuntimeError("HTTP client not initialized. Use async context manager.")
+
         # Convert messages to Cerebras format
         system_content = ""
         user_content = ""
@@ -145,20 +148,20 @@ class CerebrasClient(BaseAPIClient):
         if system_content:
             payload["messages"].insert(0, {"role": "system", "content": system_content})
 
-        async with self.http_client.post(
+        response = await self.http_client.post(
             f"{self.base_url}/chat/completions",
             headers={"Authorization": f"Bearer {self.api_key}"},
             json=payload,
-        ) as response:
-            result = await response.json()
+        )
+        result = response.json()
 
-            return APIResponse(
-                content=result["choices"][0]["message"]["content"],
-                model=result["model"],
-                usage=result.get("usage"),
-                api_name="Cerebras",
-                response_time=time.time() - start_time,
-            )
+        return APIResponse(
+            content=result["choices"][0]["message"]["content"],
+            model=result["model"],
+            usage=result.get("usage"),
+            api_name="Cerebras",
+            response_time=time.time() - start_time,
+        )
 
 
 class CohereClient(BaseAPIClient):
@@ -186,10 +189,16 @@ class CohereClient(BaseAPIClient):
             temperature=kwargs.get("temperature", 0.7),
         )
 
+        usage_dict = None
+        if response.meta is not None:
+            if hasattr(response.meta, 'dict'):
+                usage_dict = response.meta.dict()
+            elif isinstance(response.meta, dict):
+                usage_dict = response.meta
         return APIResponse(
             content=response.text,
             model=self.model,
-            usage=response.meta,
+            usage=usage_dict,
             api_name="Cohere",
             response_time=time.time() - start_time,
         )
@@ -202,6 +211,9 @@ class ChutesClient(BaseAPIClient):
         """Generate response using Chutes API"""
         start_time = time.time()
 
+        if self.http_client is None:
+            raise RuntimeError("HTTP client not initialized. Use async context manager.")
+
         payload = {
             "model": self.model,
             "messages": messages,
@@ -210,25 +222,28 @@ class ChutesClient(BaseAPIClient):
             "temperature": kwargs.get("temperature", 0.7),
         }
 
-        async with self.http_client.post(
+        response = await self.http_client.post(
             f"{self.base_url}/chat/completions",
             headers={"Authorization": f"Bearer {self.api_key}"},
             json=payload,
-        ) as response:
-            result = await response.json()
+        )
+        result = response.json()
 
-            return APIResponse(
-                content=result["choices"][0]["message"]["content"],
-                model=result["model"],
-                usage=result.get("usage"),
-                api_name="Chutes",
-                response_time=time.time() - start_time,
-            )
+        return APIResponse(
+            content=result["choices"][0]["message"]["content"],
+            model=result["model"],
+            usage=result.get("usage"),
+            api_name="Chutes",
+            response_time=time.time() - start_time,
+        )
 
     async def generate_streaming(
         self, messages: List[Dict], **kwargs
     ) -> AsyncGenerator[APIResponse, None]:
         """Generate streaming response using Chutes API"""
+        if self.http_client is None:
+            raise RuntimeError("HTTP client not initialized. Use async context manager.")
+
         payload = {
             "model": self.model,
             "messages": messages,
@@ -269,6 +284,9 @@ class GeminiClient(BaseAPIClient):
         """Generate response using Gemini API"""
         start_time = time.time()
 
+        if self.http_client is None:
+            raise RuntimeError("HTTP client not initialized. Use async context manager.")
+
         # Convert messages to Gemini format
         user_content = ""
         for msg in messages:
@@ -284,20 +302,20 @@ class GeminiClient(BaseAPIClient):
             },
         }
 
-        async with self.http_client.post(
+        response = await self.http_client.post(
             f"{self.base_url}/models/{self.model}:generateContent",
             headers={"X-goog-api-key": self.api_key},
             json=payload,
-        ) as response:
-            result = await response.json()
+        )
+        result = response.json()
 
-            return APIResponse(
-                content=result["candidates"][0]["content"]["parts"][0]["text"],
-                model=self.model,
-                usage=result.get("usageMetadata"),
-                api_name="Gemini",
-                response_time=time.time() - start_time,
-            )
+        return APIResponse(
+            content=result["candidates"][0]["content"]["parts"][0]["text"],
+            model=self.model,
+            usage=result.get("usageMetadata"),
+            api_name="Gemini",
+            response_time=time.time() - start_time,
+        )
 
 
 class NVIDIAClient(BaseAPIClient):
@@ -309,16 +327,18 @@ class NVIDIAClient(BaseAPIClient):
 
         client = AsyncOpenAI(base_url=self.base_url, api_key=self.api_key)
 
+        from openai.types.chat import ChatCompletionMessageParam
         response = await client.chat.completions.create(
             model=self.model,
-            messages=messages,
+            messages=cast(List[ChatCompletionMessageParam], messages),
             max_tokens=kwargs.get("max_tokens", 4000),
             temperature=kwargs.get("temperature", 0.7),
             timeout=kwargs.get("timeout", 30),
         )
 
+        content = response.choices[0].message.content or ""
         return APIResponse(
-            content=response.choices[0].message.content,
+            content=content,
             model=response.model,
             usage=response.usage.dict() if response.usage else None,
             api_name="NVIDIA",
@@ -371,7 +391,8 @@ async def test_api_client(
 ) -> bool:
     """Test if an API client is working"""
     try:
-        async with get_client(api_name, api_key, base_url, model) as client:
+        client = await get_client(api_name, api_key, base_url, model)
+        async with client:
             response = await client.generate(
                 [
                     {
@@ -398,13 +419,13 @@ async def main():
     test_configs = [
         {
             "name": "codestral",
-            "key": get_api_key("CODESTRAL_API_KEY"),
+            "key": os.getenv("CODESTRAL_API_KEY"),
             "url": "https://codestral.mistral.ai/v1",
             "model": "codestral-latest",
         },
         {
             "name": "deepseek",
-            "key": get_api_key("DEEPSEEK_API_KEY"),
+            "key": os.getenv("DEEPSEEK_API_KEY"),
             "url": "https://api.deepseek.com/v1",
             "model": "deepseek-chat",
         },
@@ -418,9 +439,10 @@ async def main():
         print(f"\n🧪 Testing {config['name']}...")
 
         try:
-            async with get_client(
+            client = await get_client(
                 config["name"], config["key"], config["url"], config["model"]
-            ) as client:
+            )
+            async with client:
                 response = await client.generate(
                     [{"role": "user", "content": "Explain AI in one sentence."}],
                     max_tokens=50,

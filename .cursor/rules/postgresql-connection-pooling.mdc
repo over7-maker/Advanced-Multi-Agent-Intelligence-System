@@ -1,0 +1,153 @@
+---
+description: PostgreSQL Connection Pooling - Production-grade async connection pool management with health checks and transaction support
+globs:
+  - "src/database/connection.py"
+  - "src/api/**/*.py"
+  - "src/amas/services/**/*.py"
+alwaysApply: false
+---
+
+# PostgreSQL Connection Pooling Rules
+
+When working with PostgreSQL database connections:
+
+## Connection Pool Usage
+
+1. **Always use DatabaseConnectionPool** (never create direct connections):
+   ```python
+   from src.database.connection import get_db
+   
+   db = get_db()
+   
+   # ✅ CORRECT: Use pool methods
+   tasks = await db.fetch("SELECT * FROM tasks WHERE status = $1", "pending")
+   task = await db.fetchrow("SELECT * FROM tasks WHERE task_id = $1", task_id)
+   value = await db.fetchval("SELECT COUNT(*) FROM tasks")
+   ```
+
+2. **Connection Pool Configuration**:
+   - Default: min_size=5, max_size=20
+   - Command timeout: 30 seconds
+   - Max queries per connection: 50,000
+   - Max inactive connection lifetime: 300 seconds
+
+3. **Connection Initialization**:
+   - Each connection sets timezone to UTC
+   - Statement timeout: 30s (prevents long-running queries)
+   - Application name: 'amas_backend' (for monitoring)
+
+## Transaction Management
+
+1. **Always use transaction context manager for multi-step operations**:
+   ```python
+   async with db.transaction():
+       await db.execute("INSERT INTO tasks ...", ...)
+       await db.execute("UPDATE agents ...", ...)
+       # Auto-commit on success, rollback on error
+   ```
+
+2. **Transaction Best Practices**:
+   - Use for operations that must succeed together
+   - Keep transactions short
+   - Don't perform long-running operations inside transactions
+   - Handle exceptions properly (auto-rollback)
+
+## Query Execution Patterns
+
+1. **Parameterized Queries** (always use $1, $2, etc.):
+   ```python
+   # ✅ CORRECT
+   await db.execute(
+       "UPDATE tasks SET status = $1 WHERE task_id = $2",
+       "completed", task_id
+   )
+   
+   # ❌ WRONG: SQL injection risk
+   await db.execute(f"UPDATE tasks SET status = 'completed' WHERE task_id = '{task_id}'")
+   ```
+
+2. **Bulk Operations**:
+   ```python
+   # ✅ CORRECT: Use executemany for bulk inserts
+   await db.executemany(
+       "INSERT INTO tasks (task_id, title, status) VALUES ($1, $2, $3)",
+       [(id1, title1, "pending"), (id2, title2, "pending")]
+   )
+   ```
+
+3. **Query Timeouts**:
+   ```python
+   # Override default timeout if needed
+   result = await db.fetch(query, *args, timeout=60.0)
+   ```
+
+## Health Checks
+
+1. **Implement health checks**:
+   ```python
+   health = await db.health_check()
+   # Returns: status, latency_ms, pool stats, database stats
+   ```
+
+2. **Monitor Pool Metrics**:
+   - Pool size (used/free)
+   - Database connection counts
+   - Query latency
+
+## Error Handling
+
+1. **Handle connection errors gracefully**:
+   ```python
+   try:
+       result = await db.fetch(query, *args)
+   except asyncpg.PostgresError as e:
+       logger.error(f"Database error: {e}", exc_info=True)
+       raise HTTPException(status_code=500, detail="Database error")
+   ```
+
+2. **Connection Pool Errors**:
+   - Pool not initialized: Check if `db.is_initialized()`
+   - Connection timeout: Increase timeout or check pool size
+   - Query timeout: Optimize query or increase timeout
+
+## Performance Optimization
+
+1. **Use Indexes**:
+   - All foreign keys should have indexes
+   - Common query filters should have indexes
+   - Composite indexes for multi-column queries
+
+2. **Query Optimization**:
+   - Use EXPLAIN ANALYZE to check query plans
+   - Avoid N+1 queries (use JOINs or batch queries)
+   - Use LIMIT for large result sets
+   - Use JSONB indexes for JSON queries
+
+3. **Connection Pool Sizing**:
+   - Default (5-20) is good for most applications
+   - Increase max_size for high concurrency
+   - Monitor pool usage via health_check()
+
+## Initialization
+
+1. **Initialize on startup**:
+   ```python
+   from src.database.connection import init_database
+   
+   @app.on_event("startup")
+   async def startup():
+       await init_database(
+           dsn=os.getenv("DATABASE_URL"),
+           min_size=5,
+           max_size=20
+       )
+   ```
+
+2. **Close on shutdown**:
+   ```python
+   from src.database.connection import close_database
+   
+   @app.on_event("shutdown")
+   async def shutdown():
+       await close_database()
+   ```

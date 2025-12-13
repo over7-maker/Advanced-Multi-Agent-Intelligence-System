@@ -4,19 +4,15 @@ Implements RD-083: Optimize database queries and connections
 Implements RD-084: Implement connection pooling
 """
 
-import asyncio
 import logging
-import threading
 import time
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import asyncpg
-import psycopg2
 from prometheus_client import Counter, Gauge, Histogram
-from psycopg2 import pool
 
 logger = logging.getLogger(__name__)
 
@@ -105,9 +101,9 @@ class AsyncConnectionPool:
 
     async def _init_connection(self, connection):
         """Initialize a new connection"""
-        connection_id = id(connection)
+        connection_id = str(id(connection))
         self.connection_info[connection_id] = ConnectionInfo(
-            connection_id=str(connection_id),
+            connection_id=connection_id,
             state=ConnectionState.IDLE,
             created_at=time.time(),
             last_used=time.time(),
@@ -132,7 +128,7 @@ class AsyncConnectionPool:
         connection = None
         try:
             connection = await self.pool.acquire()
-            connection_id = id(connection)
+            connection_id = str(id(connection))
 
             # Update connection info
             if connection_id in self.connection_info:
@@ -141,7 +137,7 @@ class AsyncConnectionPool:
                 info.last_used = time.time()
             else:
                 self.connection_info[connection_id] = ConnectionInfo(
-                    connection_id=str(connection_id),
+                    connection_id=connection_id,
                     state=ConnectionState.ACTIVE,
                     created_at=time.time(),
                     last_used=time.time(),
@@ -153,7 +149,7 @@ class AsyncConnectionPool:
 
         except Exception as e:
             if connection:
-                connection_id = id(connection)
+                connection_id = str(id(connection))
                 if connection_id in self.connection_info:
                     self.connection_info[connection_id].error_count += 1
                     self.connection_info[connection_id].state = ConnectionState.ERROR
@@ -163,7 +159,7 @@ class AsyncConnectionPool:
             raise
         finally:
             if connection:
-                connection_id = id(connection)
+                connection_id = str(id(connection))
                 if connection_id in self.connection_info:
                     self.connection_info[connection_id].state = ConnectionState.IDLE
                 await self.pool.release(connection)
@@ -184,7 +180,7 @@ class AsyncConnectionPool:
                 DB_QUERY_COUNT.labels(query_type=query_type, status="success").inc()
 
                 # Update connection info
-                connection_id = id(conn)
+                connection_id = str(id(conn))
                 if connection_id in self.connection_info:
                     self.connection_info[connection_id].query_count += 1
 
@@ -253,7 +249,12 @@ class SyncConnectionPool:
         # Parse database URL
         self.connection_params = self._parse_database_url(database_url)
 
-        self.pool: Optional[psycopg2.pool.ThreadedConnectionPool] = None
+        try:
+            from psycopg2 import pool
+            self.pool: Optional[pool.ThreadedConnectionPool] = None
+        except ImportError:
+            # Fallback if psycopg2.pool not available
+            self.pool = None
         self.stats = {
             "total_queries": 0,
             "successful_queries": 0,
@@ -297,7 +298,8 @@ class SyncConnectionPool:
     def initialize(self):
         """Initialize the connection pool"""
         try:
-            self.pool = psycopg2.pool.ThreadedConnectionPool(
+            from psycopg2 import pool
+            self.pool = pool.ThreadedConnectionPool(
                 self.min_connections, self.max_connections, **self.connection_params
             )
             logger.info(

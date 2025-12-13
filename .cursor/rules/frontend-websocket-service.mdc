@@ -1,0 +1,290 @@
+---
+description: Frontend WebSocket Service - Production-ready WebSocket client with reconnection, heartbeat, and event handling
+globs:
+  - "frontend/src/services/websocket.ts"
+  - "frontend/src/services/**/*websocket*.ts"
+  - "frontend/src/**/*websocket*.ts"
+alwaysApply: false
+---
+
+# Frontend WebSocket Service Rules
+
+When implementing frontend WebSocket services:
+
+## WebSocket Service Class Structure
+
+1. **Always use WebSocketService singleton pattern**:
+   ```typescript
+   class WebSocketService {
+     private ws: WebSocket | null = null;
+     private eventHandlers: Map<string, Set<WebSocketEventHandler>> = new Map();
+     private reconnectAttempts = 0;
+     private maxReconnectAttempts = 5;
+     private reconnectDelay = 1000;
+     private maxReconnectDelay = 30000;
+     private isConnecting = false;
+     private shouldReconnect = true;
+     private pingInterval: NodeJS.Timeout | null = null;
+     private connectionUrl: string;
+     
+     constructor() {
+       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+       const wsHost = process.env.REACT_APP_WS_URL || window.location.host;
+       this.connectionUrl = `${wsProtocol}//${wsHost}/ws`;
+     }
+   }
+   
+   export const websocketService = new WebSocketService();
+   ```
+
+## Connection Management
+
+1. **Connect with authentication**:
+   ```typescript
+   // ✅ CORRECT: Connect with auth token
+   connect(): void {
+     if (this.ws?.readyState === WebSocket.OPEN || this.isConnecting) {
+       return;
+     }
+     
+     this.isConnecting = true;
+     this.shouldReconnect = true;
+     
+     const token = localStorage.getItem('access_token');
+     if (!token) {
+       console.error('No auth token found for WebSocket connection');
+       this.isConnecting = false;
+       return;
+     }
+     
+     const wsUrl = `${this.connectionUrl}?token=${token}`;
+     this.ws = new WebSocket(wsUrl);
+     
+     this.ws.onopen = () => {
+       console.log('✅ WebSocket connected');
+       this.isConnecting = false;
+       this.reconnectAttempts = 0;
+       this.reconnectDelay = 1000;
+       this.startHeartbeat();
+       this.emit('connected', { timestamp: new Date().toISOString() });
+     };
+     
+     this.ws.onmessage = (event) => {
+       try {
+         const message: WebSocketMessage = JSON.parse(event.data);
+         
+         // Handle heartbeat
+         if (message.event === 'heartbeat') {
+           return;
+         }
+         
+         this.emit(message.event, message.data || message);
+       } catch (error) {
+         console.error('Failed to parse WebSocket message:', error);
+       }
+     };
+     
+     this.ws.onclose = (event) => {
+       console.log('WebSocket closed:', event.code, event.reason);
+       this.isConnecting = false;
+       this.stopHeartbeat();
+       this.emit('disconnected', { timestamp: new Date().toISOString() });
+       
+       if (this.shouldReconnect) {
+         this.scheduleReconnect();
+       }
+     };
+     
+     this.ws.onerror = (error) => {
+       console.error('WebSocket error:', error);
+       this.isConnecting = false;
+       this.emit('error', { error, timestamp: new Date().toISOString() });
+     };
+   }
+   ```
+
+2. **Reconnection with exponential backoff**:
+   ```typescript
+   // ✅ CORRECT: Exponential backoff reconnection
+   private scheduleReconnect(): void {
+     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+       console.error('Max WebSocket reconnection attempts reached');
+       this.emit('reconnect_failed', {
+         attempts: this.reconnectAttempts,
+         timestamp: new Date().toISOString(),
+       });
+       return;
+     }
+     
+     this.reconnectAttempts++;
+     const delay = Math.min(
+       this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1),
+       this.maxReconnectDelay
+     );
+     
+     setTimeout(() => {
+       if (this.shouldReconnect) {
+         this.connect();
+       }
+     }, delay);
+   }
+   ```
+
+3. **Heartbeat mechanism**:
+   ```typescript
+   // ✅ CORRECT: Heartbeat to keep connection alive
+   private startHeartbeat(): void {
+     this.pingInterval = setInterval(() => {
+       if (this.ws?.readyState === WebSocket.OPEN) {
+         this.send('ping', {});
+       }
+     }, 30000); // Ping every 30 seconds
+   }
+   
+   private stopHeartbeat(): void {
+     if (this.pingInterval) {
+       clearInterval(this.pingInterval);
+       this.pingInterval = null;
+     }
+   }
+   ```
+
+## Event Handling
+
+1. **Subscribe to events**:
+   ```typescript
+   // ✅ CORRECT: Subscribe with unsubscribe function
+   on(event: string, handler: WebSocketEventHandler): () => void {
+     if (!this.eventHandlers.has(event)) {
+       this.eventHandlers.set(event, new Set());
+     }
+     
+     this.eventHandlers.get(event)!.add(handler);
+     
+     // Return unsubscribe function
+     return () => {
+       this.off(event, handler);
+     };
+   }
+   
+   // ✅ CORRECT: Unsubscribe from events
+   off(event: string, handler: WebSocketEventHandler): void {
+     const handlers = this.eventHandlers.get(event);
+     if (handlers) {
+       handlers.delete(handler);
+       if (handlers.size === 0) {
+         this.eventHandlers.delete(event);
+       }
+     }
+   }
+   
+   // ✅ CORRECT: Emit events to handlers
+   private emit(event: string, data: any): void {
+     const handlers = this.eventHandlers.get(event);
+     if (handlers) {
+       handlers.forEach((handler) => {
+         try {
+           handler(data);
+         } catch (error) {
+           console.error(`Error in WebSocket event handler for '${event}':`, error);
+         }
+       });
+     }
+   }
+   ```
+
+2. **Task-specific subscriptions**:
+   ```typescript
+   // ✅ CORRECT: Subscribe to task updates
+   subscribeToTask(taskId: string): void {
+     this.send('subscribe_task', { task_id: taskId });
+   }
+   
+   unsubscribeFromTask(taskId: string): void {
+     this.send('unsubscribe_task', { task_id: taskId });
+   }
+   ```
+
+## Message Sending
+
+1. **Send messages safely**:
+   ```typescript
+   // ✅ CORRECT: Check connection before sending
+   send(command: string, data: any): void {
+     if (this.ws?.readyState === WebSocket.OPEN) {
+       this.ws.send(
+         JSON.stringify({
+           command,
+           ...data,
+         })
+       );
+     } else {
+       console.warn('WebSocket not connected, cannot send message');
+     }
+   }
+   ```
+
+## Usage in React Components
+
+1. **Subscribe in useEffect**:
+   ```typescript
+   // ✅ CORRECT: Subscribe in useEffect with cleanup
+   useEffect(() => {
+     // Subscribe to task updates
+     const unsubscribeTaskUpdate = websocketService.on('task_update', (data) => {
+       if (data.task_id === taskId) {
+         setTask((prev) => (prev ? { ...prev, ...data } : null));
+       }
+     });
+     
+     const unsubscribeTaskProgress = websocketService.on('task_progress', (data) => {
+       if (data.task_id === taskId) {
+         setProgress(data.progress || 0);
+       }
+     });
+     
+     // Cleanup
+     return () => {
+       unsubscribeTaskUpdate();
+       unsubscribeTaskProgress();
+     };
+   }, [taskId]);
+   ```
+
+2. **Connect on mount**:
+   ```typescript
+   // ✅ CORRECT: Connect WebSocket on app mount
+   useEffect(() => {
+     websocketService.connect();
+     
+     return () => {
+       websocketService.disconnect();
+     };
+   }, []);
+   ```
+
+## Type Definitions
+
+1. **Always define WebSocket message types**:
+   ```typescript
+   export interface WebSocketMessage {
+     event: string;
+     data?: any;
+     task_id?: string;
+     agent_id?: string;
+     timestamp: string;
+   }
+   
+   export type WebSocketEventHandler = (data: any) => void;
+   ```
+
+## Best Practices
+
+1. **Always check connection state** - Before sending messages
+2. **Implement reconnection** - Exponential backoff with max attempts
+3. **Use heartbeat** - Keep connection alive (30 second intervals)
+4. **Clean up subscriptions** - Return unsubscribe functions from `on()`
+5. **Handle errors gracefully** - Log errors, don't crash
+6. **Use TypeScript** - Type all messages and handlers
+7. **Support authentication** - Include token in connection URL
+8. **Emit connection events** - `connected`, `disconnected`, `error`, `reconnect_failed`

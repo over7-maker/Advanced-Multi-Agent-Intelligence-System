@@ -122,6 +122,7 @@ export interface WorkflowExecution {
   currentPhase: string;
   startedAt?: Date;
   completedAt?: Date;
+  activities?: SubTask[];
 }
 
 export interface TeamComposition {

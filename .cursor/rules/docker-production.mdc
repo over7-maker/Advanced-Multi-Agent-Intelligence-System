@@ -1,0 +1,163 @@
+---
+description: Docker Production Configuration - Multi-stage builds, security, optimization, and production-ready containers
+globs:
+  - "Dockerfile"
+  - "docker-compose*.yml"
+  - "**/Dockerfile*"
+alwaysApply: false
+---
+
+# Docker Production Rules
+
+When creating Docker configurations:
+
+## Multi-Stage Builds
+
+1. **Always use multi-stage builds for production**:
+   ```dockerfile
+   # ✅ CORRECT: Multi-stage build
+   # Stage 1: Python Dependencies Builder
+   FROM python:3.11-slim as python-builder
+   WORKDIR /app
+   RUN apt-get update && apt-get install -y gcc g++ build-essential libpq-dev
+   COPY requirements.txt .
+   RUN pip install --no-cache-dir --upgrade pip && \
+       pip install --no-cache-dir -r requirements.txt
+   
+   # Stage 2: Frontend Builder
+   FROM node:18-alpine as frontend-builder
+   WORKDIR /app/frontend
+   COPY frontend/package*.json ./
+   RUN npm ci --only=production
+   COPY frontend/ ./
+   RUN npm run build
+   
+   # Stage 3: Production Runtime
+   FROM python:3.11-slim
+   ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
+   WORKDIR /app
+   COPY --from=python-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+   COPY --from=frontend-builder /app/frontend/build /app/frontend/build
+   COPY --chown=amas:amas src/ ./src/
+   USER amas
+   CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+   ```
+
+2. **Security best practices**:
+   ```dockerfile
+   # ✅ CORRECT: Run as non-root user
+   RUN groupadd -r amas && useradd -r -g amas amas
+   COPY --chown=amas:amas src/ ./src/
+   USER amas
+   
+   # ✅ CORRECT: Health check
+   HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+       CMD curl -f http://localhost:${PORT}/health || exit 1
+   
+   # ✅ CORRECT: Clean up apt cache
+   RUN apt-get update && apt-get install -y \
+       libpq5 \
+       curl \
+       && rm -rf /var/lib/apt/lists/*
+   ```
+
+3. **Environment variables**:
+   ```dockerfile
+   # ✅ CORRECT: Set production environment variables
+   ENV PYTHONUNBUFFERED=1 \
+       PYTHONDONTWRITEBYTECODE=1 \
+       PIP_NO_CACHE_DIR=1 \
+       ENVIRONMENT=production \
+       PORT=8000
+   ```
+
+## Docker Compose
+
+1. **Production stack configuration**:
+   ```yaml
+   # ✅ CORRECT: Production docker-compose
+   version: '3.8'
+   services:
+     amas-backend:
+       build:
+         context: .
+         dockerfile: Dockerfile
+       restart: unless-stopped
+       environment:
+         - DATABASE_URL=postgresql://amas:${DB_PASSWORD}@postgres:5432/amas
+         - REDIS_URL=redis://redis:6379/0
+         - ENVIRONMENT=production
+       volumes:
+         - amas-logs:/app/logs
+         - amas-data:/app/data
+       networks:
+         - amas-backend
+       depends_on:
+         postgres:
+           condition: service_healthy
+         redis:
+           condition: service_healthy
+       healthcheck:
+         test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+         interval: 30s
+         timeout: 10s
+         retries: 3
+   ```
+
+2. **Database services with health checks**:
+   ```yaml
+   # ✅ CORRECT: PostgreSQL with health check
+   postgres:
+     image: postgres:15-alpine
+     restart: unless-stopped
+     environment:
+       - POSTGRES_DB=amas
+       - POSTGRES_USER=amas
+       - POSTGRES_PASSWORD=${DB_PASSWORD}
+     volumes:
+       - postgres-data:/var/lib/postgresql/data
+     healthcheck:
+       test: ["CMD-SHELL", "pg_isready -U amas"]
+       interval: 10s
+       timeout: 5s
+       retries: 5
+   
+   # ✅ CORRECT: Redis with health check
+   redis:
+     image: redis:7-alpine
+     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+     healthcheck:
+       test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+       interval: 10s
+       timeout: 5s
+       retries: 5
+   ```
+
+3. **Networks and volumes**:
+   ```yaml
+   # ✅ CORRECT: Separate networks for isolation
+   networks:
+     amas-backend:
+       driver: bridge
+     amas-monitoring:
+       driver: bridge
+   
+   volumes:
+     postgres-data:
+     redis-data:
+     amas-logs:
+     amas-data:
+   ```
+
+## Best Practices
+
+1. **Never commit secrets** - Use environment variables or secrets management
+2. **Use specific image tags** - Avoid `latest` in production
+3. **Minimize image size** - Use slim/alpine base images
+4. **Layer caching** - Order Dockerfile commands from least to most frequently changing
+5. **Health checks** - Always include health checks for services
+6. **Resource limits** - Set memory and CPU limits in production
+7. **Non-root user** - Always run containers as non-root
+8. **Clean up** - Remove package managers and caches in final stage
+9. **Multi-arch support** - Build for both amd64 and arm64 when possible
+10. **Scan images** - Use tools like Trivy to scan for vulnerabilities

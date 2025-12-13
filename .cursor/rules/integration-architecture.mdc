@@ -1,0 +1,70 @@
+---
+description: Integration Architecture - Complete flow from Frontend → API → Orchestrator → Agents → AI Providers → Database
+globs:
+  - "src/api/**/*.py"
+  - "src/amas/**/*.py"
+alwaysApply: true
+---
+
+# Integration Architecture Rules
+
+## Complete Integration Flow
+
+**REQUIRED ARCHITECTURE** (never bypass):
+
+```
+Frontend (React)
+    ↓ API calls + WebSocket
+Backend API Layer (FastAPI)
+    ↓ INTEGRATED calls
+Orchestrator Layer (UnifiedIntelligenceOrchestrator)
+    ↓ Task routing
+Intelligence Manager (ML Predictions)
+    ↓ Agent selection
+Specialized AI Agents
+    ↓ AI Provider calls
+AI Provider Fallback Chain (16 providers via EnhancedAIRouter)
+    ↓ Task execution
+Database Layer (PostgreSQL + Redis)
+    ↓ Results storage
+Learning Engine (Continuous improvement)
+    ↓ Monitoring
+Prometheus/Grafana (Observability)
+```
+
+## Critical Rules
+
+1. **NEVER return mock data** - Always use real orchestrator/agents
+2. **NEVER bypass orchestrator** - All tasks go through UnifiedIntelligenceOrchestrator
+3. **NEVER call AI providers directly** - Always use EnhancedAIRouter
+4. **NEVER skip database persistence** - All tasks must be stored
+5. **NEVER skip ML predictions** - Always predict before execution
+6. **NEVER skip learning feedback** - Always record execution results
+
+## Integration Checklist
+
+When implementing any API endpoint:
+
+- [ ] Import orchestrator and intelligence manager
+- [ ] Get ML prediction before task creation
+- [ ] Select agents intelligently
+- [ ] Persist to database
+- [ ] Execute via orchestrator
+- [ ] Broadcast WebSocket events
+- [ ] Record learning feedback
+- [ ] Handle errors gracefully
+
+## Service Initialization
+
+- Initialize services as singletons
+- Use dependency injection (FastAPI Depends)
+- Make services optional only for development (not production)
+- Always check service availability before use
+
+## Error Handling Strategy
+
+- Log all errors with context
+- Return appropriate HTTP status codes
+- Don't expose internal errors to clients
+- Use circuit breakers for external services
+- Implement retry logic with exponential backoff
