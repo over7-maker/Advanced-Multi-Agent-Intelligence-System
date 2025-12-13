@@ -1,0 +1,75 @@
+# Logrotate configuration for AMAS audit and application logs
+# Place this file at /etc/logrotate.d/amas
+# sudo install -m 644 config/logrotate.d/amas /etc/logrotate.d/amas
+
+/var/log/amas/*.log {
+    # Rotate daily
+    daily
+    
+    # Keep 30 days of logs (1 month)
+    rotate 30
+    
+    # Compress old logs to save space
+    compress
+    
+    # Delay compression until next rotation
+    delaycompress
+    
+    # Don't error if log file is missing
+    missingok
+    
+    # Don't rotate if empty
+    notifempty
+    
+    # Create new log file with specific permissions
+    create 0640 root root
+    
+    # Don't rotate if still updating in the last minute
+    dateext
+    dateformat -%Y%m%d-%H%M%S
+    
+    # Run command after rotation
+    sharedscripts
+    postrotate
+        # Signal the application to reopen log files
+        systemctl reload amas 2>/dev/null || true
+        
+        # Optional: archive old logs to cold storage
+        # aws s3 sync /var/log/amas.1/ s3://bucket/logs/archive/ --delete
+    endscript
+}
+
+# Specific configuration for audit logs
+/var/log/amas/audit.log {
+    # Rotate even more frequently for audit logs
+    daily
+    
+    # Keep 90 days of audit logs (3 months) for compliance
+    rotate 90
+    
+    # Always compress audit logs
+    compress
+    delaycompress
+    
+    missingok
+    notifempty
+    
+    # Stricter permissions for audit logs
+    create 0640 root root
+    
+    dateext
+    dateformat -%Y%m%d-%H%M%S
+    
+    sharedscripts
+    postrotate
+        # Reload the service
+        systemctl reload amas 2>/dev/null || true
+        
+        # Archive to cold storage after compression
+        # aws s3 cp /var/log/amas/audit.log.*.gz s3://bucket/audit-logs/
+        
+        # Optional: send to compliance system
+        # curl -X POST https://compliance-system/upload \
+        #   -F "file=@/var/log/amas/audit.log.*.gz"
+    endscript
+}
