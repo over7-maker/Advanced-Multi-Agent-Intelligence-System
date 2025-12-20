@@ -85,14 +85,20 @@ jobs:
         ANALYSIS_TIMESTAMP: ${{ github.run_id }}
         ANALYSIS_TIME: ${{ github.event.head_commit.timestamp || github.event.pull_request.updated_at || '' }}
       run: |
-        echo "🚀 Starting Bulletproof AI PR Analysis..."
+        echo "🚀 Starting Bulletproof AI PR Analysis (Orchestrated)..."
         echo "Repository: ${{ github.repository }}"
         echo "PR Number: ${{ github.event.pull_request.number }}"
         echo "Commit SHA: ${{ github.sha }}"
         echo "Analysis Time: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-        python .github/scripts/bulletproof_ai_pr_analyzer.py || {
-          echo "::warning::Bulletproof AI Analysis script failed, but continuing..."
+        
+        # Use orchestrator-based analyzer
+        python .github/scripts/bulletproof_ai_pr_analyzer_orchestrated.py > artifacts/orchestrated_analysis.txt 2>&1 || {
+          echo "::warning::Bulletproof AI Analysis (orchestrated) failed, but continuing..."
           echo "This may be due to missing API keys or network issues."
+          echo "Falling back to original analyzer..."
+          python .github/scripts/bulletproof_ai_pr_analyzer.py || {
+            echo "::warning::Both analyzers failed, but workflow continues (non-blocking)"
+          }
         }
     
     - name: Upload Analysis Results
