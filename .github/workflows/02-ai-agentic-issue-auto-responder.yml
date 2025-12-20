@@ -68,8 +68,40 @@ env:
   AI_SYSTEM_MODE: 'issue_management'
 
 jobs:
+  # Use Zero-Failure AI Orchestrator for Issue Analysis
+  ai-issue-analysis:
+    name: AI Issue Analysis via Orchestrator
+    uses: ./.github/workflows/00-zero-failure-ai-orchestrator.yml
+    with:
+      task_type: pr_analysis
+      system_message: |
+        You are an expert issue analyzer. Analyze GitHub issues and provide:
+        1. Issue categorization and priority
+        2. Root cause analysis
+        3. Suggested solutions
+        4. Related issues or PRs
+        5. Actionable recommendations
+      user_prompt: |
+        Analyze this GitHub Issue:
+        
+        Issue #${{ github.event.issue.number || 'N/A' }}
+        Title: ${{ github.event.issue.title || 'N/A' }}
+        Body: ${{ github.event.issue.body || 'N/A' }}
+        Author: ${{ github.event.issue.user.login || 'N/A' }}
+        Labels: ${{ toJson(github.event.issue.labels) || '[]' }}
+        
+        Repository: ${{ github.repository }}
+        
+        Provide comprehensive analysis with actionable recommendations.
+      max_tokens: 3000
+      temperature: 0.7
+      use_cache: true
+    secrets: inherit
+    continue-on-error: true
+  
   # Phase 1: Issue Analysis & Categorization
   issue_analysis_categorization:
+    needs: [ai-issue-analysis]
     name: 🔍 Issue Analysis & Categorization
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -166,20 +198,54 @@ jobs:
         echo "Auto-fix: $AUTO_FIX | Target Issues: $TARGET_ISSUES"
         echo ""
         
-        # Run Issue Analysis & Categorization with error handling
-        if python .github/scripts/ai_issue_analyzer.py \
-          --mode $RESPONSE_MODE \
-          --depth $RESPONSE_DEPTH \
-          --language $LANGUAGE_PREFERENCE \
-          --auto-fix $AUTO_FIX \
-          --target-issues $TARGET_ISSUES \
-          --use-advanced-manager \
-          --output issue_analysis_results.json; then
-          echo "✅ Issue Analysis & Categorization completed successfully"
+        # Check if orchestrator succeeded
+        if [ "${{ needs.ai-issue-analysis.outputs.success }}" == "true" ]; then
+          echo "✅ AI Orchestrator succeeded with provider: ${{ needs.ai-issue-analysis.outputs.provider }}"
+          echo "Cached: ${{ needs.ai-issue-analysis.outputs.cached }}"
+          
+          # Use orchestrator response
+          echo "${{ needs.ai-issue-analysis.outputs.response }}" > orchestrator_analysis.txt
+          
+          # Convert to JSON format for compatibility
+          python -c "
+import json
+from datetime import datetime
+
+with open('orchestrator_analysis.txt', 'r', encoding='utf-8') as f:
+    analysis = f.read()
+
+result = {
+    'status': 'success',
+    'timestamp': datetime.utcnow().isoformat() + 'Z',
+    'provider': '${{ needs.ai-issue-analysis.outputs.provider }}',
+    'cached': '${{ needs.ai-issue-analysis.outputs.cached }}',
+    'analysis': analysis,
+    'mode': '$RESPONSE_MODE',
+    'depth': '$RESPONSE_DEPTH'
+}
+
+with open('issue_analysis_results.json', 'w', encoding='utf-8') as f:
+    json.dump(result, f, indent=2, ensure_ascii=False)
+"
+          echo "✅ Issue Analysis completed using orchestrator"
         else
-          echo "⚠️ Issue Analysis & Categorization completed with warnings"
-          # Create a minimal results file if the script fails
-          echo '{"status": "completed_with_warnings", "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'", "message": "Issue analysis completed with some warnings"}' > issue_analysis_results.json
+          echo "⚠️ AI Orchestrator failed, falling back to script-based analysis"
+          echo "Error: ${{ needs.ai-issue-analysis.outputs.error || 'Unknown error' }}"
+          
+          # Fallback to script-based analyzer
+          if python .github/scripts/ai_issue_analyzer.py \
+            --mode $RESPONSE_MODE \
+            --depth $RESPONSE_DEPTH \
+            --language $LANGUAGE_PREFERENCE \
+            --auto-fix $AUTO_FIX \
+            --target-issues $TARGET_ISSUES \
+            --use-advanced-manager \
+            --output issue_analysis_results.json; then
+            echo "✅ Issue Analysis & Categorization completed successfully (fallback)"
+          else
+            echo "⚠️ Issue Analysis & Categorization completed with warnings"
+            echo '{"status": "completed_with_warnings", "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'", "message": "Issue analysis completed with some warnings"}' > issue_analysis_results.json
+          fi
         fi
     
     - name: 📊 Upload Analysis Results
