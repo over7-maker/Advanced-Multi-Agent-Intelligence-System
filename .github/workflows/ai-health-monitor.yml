@@ -1,0 +1,112 @@
+name: AI Health Monitor
+
+# Periodic provider availability checks and alerting
+# Part of PR #272: Zero-Failure AI Orchestrator System
+
+on:
+  schedule:
+    # Check provider health every hour
+    - cron: '0 * * * *'
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install aiohttp
+    
+    - name: Check Provider Health
+      id: health_check
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+        CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+      run: |
+        python -c "
+        import asyncio
+        import json
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, '.github/scripts')
+        
+        from ai_orchestrator import AIOrchestrator
+        
+        async def check_providers():
+            orchestrator = AIOrchestrator(cache_enabled=False)
+            
+            # Test with a simple prompt
+            test_result = await orchestrator.execute(
+                task_type='general',
+                system_message='You are a health check system.',
+                user_prompt='Respond with OK if you are working.',
+                max_tokens=10,
+                use_cache=False
+            )
+            
+            # Get provider status
+            available_providers = len(orchestrator.providers)
+            successful = test_result.get('success', False)
+            provider_used = test_result.get('provider', 'none')
+            
+            health_status = {
+                'available_providers': available_providers,
+                'test_successful': successful,
+                'provider_used': provider_used,
+                'fallback_count': test_result.get('fallback_count', 0)
+            }
+            
+            # Save health status
+            Path('.github/data/health').mkdir(parents=True, exist_ok=True)
+            with open('.github/data/health/latest.json', 'w', encoding='utf-8') as f:
+                json.dump(health_status, f, indent=2, ensure_ascii=False)
+            
+            print(f'Health Check Results:')
+            print(f'  Available Providers: {available_providers}')
+            print(f'  Test Successful: {successful}')
+            print(f'  Provider Used: {provider_used}')
+            print(f'  Fallback Count: {test_result.get(\"fallback_count\", 0)}')
+            
+            if not successful:
+                print('WARNING: All providers failed health check!')
+                sys.exit(1)
+        
+        asyncio.run(check_providers())
+        "
+      continue-on-error: true
+    
+    - name: Upload health status
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: health-status
+        path: .github/data/health/*.json
+        retention-days: 7
