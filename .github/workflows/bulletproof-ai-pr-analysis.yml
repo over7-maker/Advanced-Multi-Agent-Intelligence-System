@@ -16,8 +16,39 @@ env:
   PYTHON_VERSION: '3.11'
 
 jobs:
+  # Use Zero-Failure AI Orchestrator for PR analysis
+  ai-pr-analysis:
+    name: AI PR Analysis via Orchestrator
+    uses: ./.github/workflows/00-zero-failure-ai-orchestrator.yml
+    with:
+      task_type: pr_analysis
+      system_message: |
+        You are an expert code reviewer and PR analyst. Provide comprehensive analysis including:
+        1. Code quality assessment
+        2. Security vulnerabilities
+        3. Performance implications
+        4. Best practices compliance
+        5. Specific recommendations with file names and line numbers
+      user_prompt: |
+        Analyze this Pull Request:
+        
+        PR #${{ github.event.pull_request.number || github.event.inputs.pr_number || 'N/A' }}
+        Title: ${{ github.event.pull_request.title || 'N/A' }}
+        Description: ${{ github.event.pull_request.body || 'N/A' }}
+        
+        Repository: ${{ github.repository }}
+        Commit: ${{ github.sha }}
+        
+        Provide detailed analysis with specific recommendations.
+      max_tokens: 4000
+      temperature: 0.7
+      use_cache: true
+    secrets: inherit
+    continue-on-error: true
+  
   bulletproof-ai-analysis:
     runs-on: ubuntu-latest
+    needs: [ai-pr-analysis]
     
     permissions:
       contents: read
@@ -50,56 +81,101 @@ jobs:
         fi
         python -m pip install aiohttp asyncio requests python-dotenv tenacity
     
-    - name: Run Bulletproof AI Analysis
+    - name: Process AI Analysis Result
+      id: process_ai_result
       env:
-        # All 16 AI API Keys - Comprehensive Fallback Support
-        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
-        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
-        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
-        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
-        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
-        GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
-        CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
-        GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
-        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
-        NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
-        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
-        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
-        COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
-        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
-        
-        # GitHub context - Fixed to use proper variables
+        # GitHub context
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         GITHUB_REPOSITORY: ${{ github.repository }}
         GITHUB_SHA: ${{ github.sha }}
         GITHUB_EVENT_PATH: ${{ github.event_path }}
         GITHUB_ACTIONS: 'true'
         
-        # PR context - Fixed to properly extract PR number
+        # PR context
         PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number || '' }}
         PR_TITLE: ${{ github.event.pull_request.title || '' }}
         PR_BODY: ${{ github.event.pull_request.body || '' }}
         
-        # Analysis timestamp - Use current run timestamp
+        # Analysis timestamp
         ANALYSIS_TIMESTAMP: ${{ github.run_id }}
         ANALYSIS_TIME: ${{ github.event.head_commit.timestamp || github.event.pull_request.updated_at || '' }}
       run: |
-        echo "🚀 Starting Bulletproof AI PR Analysis (Orchestrated)..."
+        echo "🚀 Processing AI PR Analysis Results..."
         echo "Repository: ${{ github.repository }}"
         echo "PR Number: ${{ github.event.pull_request.number }}"
         echo "Commit SHA: ${{ github.sha }}"
         echo "Analysis Time: $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
         
-        # Use orchestrator-based analyzer
-        python .github/scripts/bulletproof_ai_pr_analyzer_orchestrated.py > artifacts/orchestrated_analysis.txt 2>&1 || {
-          echo "::warning::Bulletproof AI Analysis (orchestrated) failed, but continuing..."
-          echo "This may be due to missing API keys or network issues."
-          echo "Falling back to original analyzer..."
-          python .github/scripts/bulletproof_ai_pr_analyzer.py || {
-            echo "::warning::Both analyzers failed, but workflow continues (non-blocking)"
+        # Create artifacts directory
+        mkdir -p artifacts
+        
+        # Check if orchestrator succeeded
+        if [ "${{ needs.ai-pr-analysis.outputs.success }}" == "true" ]; then
+          echo "✅ AI Orchestrator succeeded with provider: ${{ needs.ai-pr-analysis.outputs.provider }}"
+          echo "Cached: ${{ needs.ai-pr-analysis.outputs.cached }}"
+          echo "Fallback count: ${{ needs.ai-pr-analysis.outputs.fallback_count }}"
+          
+          # Save orchestrator response
+          echo "${{ needs.ai-pr-analysis.outputs.response }}" > artifacts/orchestrated_analysis.txt
+          
+          # Generate formatted report
+          python -c "
+import os
+from datetime import datetime
+
+repo = '${{ github.repository }}'
+pr_num = '${{ github.event.pull_request.number || github.event.inputs.pr_number || 'N/A' }}'
+commit = '${{ github.sha }}'
+provider = '${{ needs.ai-pr-analysis.outputs.provider }}'
+cached = '${{ needs.ai-pr-analysis.outputs.cached }}'
+fallback = '${{ needs.ai-pr-analysis.outputs.fallback_count }}'
+duration = '${{ needs.ai-pr-analysis.outputs.duration_ms }}'
+
+with open('artifacts/orchestrated_analysis.txt', 'r', encoding='utf-8') as f:
+    response = f.read()
+
+report = f'''# 🤖 Bulletproof AI PR Analysis Report
+
+**Repository:** {repo}
+**PR:** #{pr_num}
+**Commit:** {commit[:7]}
+**Analysis Time:** {datetime.utcnow().isoformat()}Z
+
+**AI Provider:** {provider}
+**Response Cached:** {cached}
+**Fallback Count:** {fallback}
+**Duration:** {duration}ms
+
+---
+
+## Analysis Results
+
+{response}
+
+---
+
+*Generated by Zero-Failure AI Orchestrator System*
+'''
+
+with open('artifacts/bulletproof_analysis_report.md', 'w', encoding='utf-8') as f:
+    f.write(report)
+"
+          
+          echo "✅ Analysis report generated successfully"
+        else
+          echo "⚠️ AI Orchestrator failed, falling back to script-based analysis"
+          echo "Error: ${{ needs.ai-pr-analysis.outputs.error || 'Unknown error' }}"
+          
+          # Fallback to script-based analyzer
+          python .github/scripts/bulletproof_ai_pr_analyzer_orchestrated.py > artifacts/orchestrated_analysis.txt 2>&1 || {
+            echo "::warning::Bulletproof AI Analysis (orchestrated) failed, but continuing..."
+            echo "This may be due to missing API keys or network issues."
+            echo "Falling back to original analyzer..."
+            python .github/scripts/bulletproof_ai_pr_analyzer.py || {
+              echo "::warning::Both analyzers failed, but workflow continues (non-blocking)"
+            }
           }
-        }
+        fi
     
     - name: Upload Analysis Results
       uses: actions/upload-artifact@v4
