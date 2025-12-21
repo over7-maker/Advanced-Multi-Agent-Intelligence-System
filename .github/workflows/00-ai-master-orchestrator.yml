@@ -97,7 +97,7 @@ jobs:
             replicate==0.28.0 \
             mistralai==0.1.8 \
             cohere==5.4.0 \
-            together==1.0.5 \
+            together==1.0.1 \
             groq==0.4.2 \
             requests==2.32.3 \
             pydantic==2.6.3 \
