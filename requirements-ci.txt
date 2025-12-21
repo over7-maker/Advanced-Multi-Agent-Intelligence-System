@@ -34,7 +34,7 @@ pluggy==1.5.0                    # Plugin management for pytest
 # Security Scanning Tools
 # =============================================================================
 bandit==1.7.10            # Security linter for Python code
-safety==3.2.7             # Dependency vulnerability scanner
+safety>=3.3.0             # Dependency vulnerability scanner (updated for typer compatibility)
 
 # Required dependencies for security tools
 stevedore==5.3.0          # Manage dynamic plugins for Python apps (required by bandit)
@@ -46,6 +46,7 @@ PyYAML==6.0.2             # YAML parser (required by bandit)
 # Supporting Libraries
 # =============================================================================
 # These are required by the above tools but may not be auto-installed
+pydantic-settings>=2.1.0   # Pydantic settings management (required by src/amas/config/settings.py)
 setuptools==75.6.0        # Package installation and distribution
 wheel==0.45.1             # Built-package format for Python
 pip==24.3.1               # Package installer
