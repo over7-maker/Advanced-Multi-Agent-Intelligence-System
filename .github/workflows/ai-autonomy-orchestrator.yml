@@ -1,0 +1,139 @@
+name: AI Autonomy Orchestrator
+
+# Coordinates all 7 autonomous agents with 8 core workflows
+# Part of PR #274: AI Autonomy Initiative
+
+on:
+  workflow_dispatch:
+    inputs:
+      agent:
+        description: 'Specific agent to run (or "all" for all agents)'
+        required: false
+        type: choice
+        options:
+          - all
+          - workflow_orchestrator
+          - data_validator
+          - performance_optimizer
+          - security_monitor
+          - cost_optimizer
+          - analytics_aggregator
+          - rollback_guardian
+      context:
+        description: 'JSON context for agent execution'
+        required: false
+        type: string
+        default: '{}'
+  schedule:
+    # Run all agents every 6 hours
+    - cron: '0 */6 * * *'
+  push:
+    branches: [main, develop]
+    paths:
+      - '.github/scripts/agents/**'
+      - '.github/workflows/ai-autonomy-orchestrator.yml'
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  orchestrate-agents:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install aiohttp
+    
+    - name: Run Agent Orchestrator
+      id: run_agents
+      run: |
+        python -c "
+        import asyncio
+        import json
+        import sys
+        from pathlib import Path
+        sys.path.insert(0, '.github/scripts')
+        
+        from agents.base_agent import BaseAgent
+        from agents.workflow_orchestrator_agent import WorkflowOrchestratorAgent
+        from agents.data_validator_agent import DataValidatorAgent
+        from agents.performance_optimizer_agent import PerformanceOptimizerAgent
+        from agents.security_monitor_agent import SecurityMonitorAgent
+        from agents.cost_optimizer_agent import CostOptimizerAgent
+        from agents.analytics_aggregator_agent import AnalyticsAggregatorAgent
+        from agents.rollback_guardian_agent import RollbackGuardianAgent
+        
+        async def run_all_agents():
+            context = json.loads('${{ inputs.context }}')
+            agent_name = '${{ inputs.agent }}'
+            
+            agents = {
+                'workflow_orchestrator': WorkflowOrchestratorAgent(),
+                'data_validator': DataValidatorAgent(),
+                'performance_optimizer': PerformanceOptimizerAgent(),
+                'security_monitor': SecurityMonitorAgent(),
+                'cost_optimizer': CostOptimizerAgent(),
+                'analytics_aggregator': AnalyticsAggregatorAgent(),
+                'rollback_guardian': RollbackGuardianAgent()
+            }
+            
+            results = {}
+            
+            if agent_name == 'all' or not agent_name:
+                for name, agent in agents.items():
+                    try:
+                        result = await agent.run(context)
+                        results[name] = result
+                        print(f'Agent {name}: {\"success\" if result.get(\"success\") else \"failed\"}')
+                    except Exception as e:
+                        results[name] = {'success': False, 'error': str(e)}
+                        print(f'Agent {name}: Error - {e}')
+            else:
+                if agent_name in agents:
+                    agent = agents[agent_name]
+                    result = await agent.run(context)
+                    results[agent_name] = result
+                    print(f'Agent {agent_name}: {\"success\" if result.get(\"success\") else \"failed\"}')
+                else:
+                    print(f'Unknown agent: {agent_name}')
+                    sys.exit(1)
+            
+            # Save results
+            Path('.github/data/agent_results').mkdir(parents=True, exist_ok=True)
+            with open('.github/data/agent_results/latest.json', 'w', encoding='utf-8') as f:
+                json.dump(results, f, indent=2, ensure_ascii=False)
+            
+            # Count successes
+            success_count = sum(1 for r in results.values() if r.get('success'))
+            total_count = len(results)
+            
+            print(f'Results: {success_count}/{total_count} agents succeeded')
+            
+            if success_count == 0:
+                sys.exit(1)
+        
+        asyncio.run(run_all_agents())
+        "
+      continue-on-error: true
+    
+    - name: Upload agent results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: agent-results
+        path: |
+          .github/data/agent_results/*.json
+          .github/data/agent_metrics/*.json
+        retention-days: 7

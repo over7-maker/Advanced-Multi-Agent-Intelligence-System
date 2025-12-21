@@ -1,0 +1,184 @@
+name: 🤖 AI Multi-Agent Orchestrator
+
+# AI Multi-Agent Orchestration System
+# Part of PR #274: AI Autonomy Initiative
+# Replaces deleted advanced-multi-agent-orchestration.yml
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_type:
+        description: 'Task type to analyze'
+        required: false
+        type: choice
+        options:
+          - analyze-task
+          - code-review
+          - security-scan
+          - performance-analysis
+          - all
+        default: 'analyze-task'
+      context:
+        description: 'JSON context for task execution'
+        required: false
+        type: string
+        default: '{}'
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, develop]
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  analyze-task:
+    name: Analyze Task
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install \
+          anthropic==0.28.1 \
+          openai==1.35.0 \
+          google-generativeai==0.5.4 \
+          aiohttp==3.9.3 \
+          requests==2.32.3 \
+          pydantic==2.6.3 \
+          python-dotenv==1.0.0
+    
+    - name: Run Multi-Agent Analysis
+      id: analysis
+      env:
+        # All 16 AI API Keys
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+        CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+        COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+        NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        python << 'EOF'
+        import asyncio
+        import json
+        import sys
+        from pathlib import Path
+        
+        # Add scripts directory to path
+        sys.path.insert(0, '.github/scripts')
+        
+        try:
+            from ai_orchestrator import AIOrchestrator
+            
+            async def run_analysis():
+                task_type = '${{ inputs.task_type || "analyze-task" }}'
+                try:
+                    context = json.loads('${{ inputs.context || "{}" }}')
+                except:
+                    context = {}
+                
+                orchestrator = AIOrchestrator(cache_enabled=True)
+                
+                system_message = '''You are an expert multi-agent orchestrator. Analyze the task and provide comprehensive recommendations.'''
+                user_prompt = f'''Task Type: {task_type}
+        Context: {json.dumps(context, indent=2)}
+        Repository: ${{ github.repository }}
+        Branch: ${{ github.ref_name }}
+        Commit: ${{ github.sha }}
+                
+        Provide detailed analysis and recommendations.'''
+                
+                result = await orchestrator.execute(
+                    task_type='pr_analysis',
+                    system_message=system_message,
+                    user_prompt=user_prompt,
+                    max_tokens=4000,
+                    temperature=0.7
+                )
+                
+                # Save results
+                Path('.github/data/agent_results').mkdir(parents=True, exist_ok=True)
+                with open('.github/data/agent_results/analysis.json', 'w', encoding='utf-8') as f:
+                    json.dump(result, f, indent=2, ensure_ascii=False)
+                
+                if result.get('success'):
+                    print(f'✅ Analysis completed with provider: {result.get("provider")}')
+                    return 0
+                else:
+                    print(f'❌ Analysis failed: {result.get("error")}')
+                    return 1
+            
+            exit_code = asyncio.run(run_analysis())
+            sys.exit(exit_code)
+        except ImportError as e:
+            print(f'⚠️ Import error: {e}')
+            print('⚠️ Skipping analysis - orchestrator not available')
+            # Create placeholder result
+            Path('.github/data/agent_results').mkdir(parents=True, exist_ok=True)
+            with open('.github/data/agent_results/analysis.json', 'w', encoding='utf-8') as f:
+                json.dump({
+                    'success': False,
+                    'error': f'Import error: {e}',
+                    'message': 'Orchestrator not available, skipping analysis'
+                }, f, indent=2, ensure_ascii=False)
+            sys.exit(0)  # Don't fail the workflow
+        except Exception as e:
+            print(f'❌ Error: {e}')
+            import traceback
+            traceback.print_exc()
+            sys.exit(0)  # Don't fail the workflow
+        EOF
+      continue-on-error: true
+    
+    - name: Upload analysis results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: multi-agent-analysis-results
+        path: |
+          .github/data/agent_results/*.json
+          .github/data/agent_metrics/*.json
+        retention-days: 7
+    
+    - name: Generate summary
+      if: always()
+      run: |
+        echo "## 🤖 AI Multi-Agent Orchestrator - Analyze Task" >> $GITHUB_STEP_SUMMARY
+        echo "- **Task Type**: ${{ inputs.task_type || 'analyze-task' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Results**: Uploaded as artifact" >> $GITHUB_STEP_SUMMARY
+

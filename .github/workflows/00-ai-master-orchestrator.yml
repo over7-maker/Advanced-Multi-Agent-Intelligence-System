@@ -59,14 +59,14 @@ jobs:
       - name: 📦 Install AI Integration Dependencies
         run: |
           python -m pip install --upgrade pip setuptools wheel
-          pip install \
-            anthropic==0.28.10 \
+          pip install --no-build-isolation --only-binary=all \
+            anthropic==0.28.1 \
             openai==1.35.0 \
             google-generativeai==0.5.4 \
-            replicate==0.28.1 \
-            mistralai==0.1.10 \
+            replicate==0.28.0 \
+            mistralai==0.1.8 \
             cohere==5.4.0 \
-            together==1.0.5 \
+            together==1.0.1 \
             groq==0.4.2 \
             requests==2.32.3 \
             pydantic==2.6.3 \
@@ -82,6 +82,37 @@ jobs:
             redis==5.0.1 \
             chromadb==0.4.24 \
             numpy==1.24.3 \
+            pandas==2.2.0 \
+            scipy==1.12.0 \
+            scikit-learn==1.4.2 \
+            black==24.1.1 \
+            ruff==0.3.5 \
+            pylint==3.0.3 \
+            mypy==1.8.0 \
+            bandit==1.7.6 || \
+          pip install \
+            anthropic==0.28.1 \
+            openai==1.35.0 \
+            google-generativeai==0.5.4 \
+            replicate==0.28.0 \
+            mistralai==0.1.8 \
+            cohere==5.4.0 \
+            together==1.0.1 \
+            groq==0.4.2 \
+            requests==2.32.3 \
+            pydantic==2.6.3 \
+            loguru==0.7.2 \
+            tenacity==8.2.3 \
+            aiohttp==3.9.3 \
+            pyyaml==6.0.1 \
+            jinja2==3.1.2 \
+            gitpython==3.1.43 \
+            PyGithub==2.1.1 \
+            python-dotenv==1.0.0 \
+            langchain==0.1.13 \
+            redis==5.0.1 \
+            chromadb==0.4.24 \
+            numpy==1.26.4 \
             pandas==2.2.0 \
             scipy==1.12.0 \
             scikit-learn==1.4.2 \

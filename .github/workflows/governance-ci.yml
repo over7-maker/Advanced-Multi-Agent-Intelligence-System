@@ -375,7 +375,7 @@ jobs:
       # Saves test reports and coverage data as workflow artifacts
       - name: Store test artifacts
         if: always()  # Store artifacts even if tests fail
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: test-results-${{ github.run_number }}
           path: |
@@ -544,7 +544,7 @@ jobs:
       # Saves security reports as artifacts for review
       - name: Store security scan artifacts
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: security-reports-${{ github.run_number }}
           path: bandit-report.json
@@ -567,7 +567,7 @@ jobs:
       # Step 8: Store safety report artifacts
       - name: Store safety report artifacts
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: safety-reports-${{ github.run_number }}
           path: safety-report.json

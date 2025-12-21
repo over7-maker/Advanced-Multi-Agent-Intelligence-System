@@ -1,0 +1,226 @@
+# AI Model Selection Configuration
+# Intelligent routing of tasks to optimal models
+# Based on complexity, cost, speed, and quality requirements
+
+model_registry:
+  gpt4_turbo:
+    provider: openai
+    version: gpt-4-turbo-preview
+    capabilities:
+      - reasoning: expert
+      - speed: medium
+      - cost: high
+      - quality: excellent
+    best_for:
+      - complex reasoning
+      - code review
+      - architecture design
+      - performance optimization
+    cost_per_1k_tokens: $0.03
+    max_tokens: 128000
+  
+  gpt4:
+    provider: openai
+    version: gpt-4
+    capabilities:
+      - reasoning: advanced
+      - speed: slow
+      - cost: high
+      - quality: excellent
+    best_for:
+      - deep analysis
+      - strategic planning
+      - complex refactoring
+    cost_per_1k_tokens: $0.03
+    max_tokens: 8192
+  
+  gpt35_turbo:
+    provider: openai
+    version: gpt-3.5-turbo
+    capabilities:
+      - reasoning: good
+      - speed: fast
+      - cost: low
+      - quality: good
+    best_for:
+      - quick iterations
+      - simple transformations
+      - documentation
+    cost_per_1k_tokens: $0.0005
+    max_tokens: 16384
+  
+  claude_opus:
+    provider: anthropic
+    version: claude-3-opus
+    capabilities:
+      - reasoning: expert
+      - speed: medium
+      - cost: high
+      - quality: excellent
+      - context_window: 200k
+    best_for:
+      - complex architecture
+      - long-context analysis
+      - multi-step reasoning
+      - self-improvement
+    cost_per_1k_tokens: $0.015
+    max_tokens: 4096
+  
+  claude_sonnet:
+    provider: anthropic
+    version: claude-3-sonnet
+    capabilities:
+      - reasoning: advanced
+      - speed: fast
+      - cost: medium
+      - quality: very_good
+    best_for:
+      - code generation
+      - test strategy
+      - balanced tasks
+    cost_per_1k_tokens: $0.003
+    max_tokens: 4096
+  
+  claude_haiku:
+    provider: anthropic
+    version: claude-3-haiku
+    capabilities:
+      - reasoning: good
+      - speed: very_fast
+      - cost: low
+      - quality: good
+    best_for:
+      - simple tasks
+      - lightweight processing
+      - quick responses
+    cost_per_1k_tokens: $0.00025
+    max_tokens: 4096
+  
+  gemini_pro:
+    provider: google
+    version: gemini-pro
+    capabilities:
+      - reasoning: good
+      - speed: medium
+      - cost: low
+      - quality: good
+      - multimodal: yes
+    best_for:
+      - multi-modal analysis
+      - coverage analysis
+      - image understanding
+    cost_per_1k_tokens: $0.001
+    max_tokens: 32000
+  
+  llama3:
+    provider: meta
+    version: llama-3
+    capabilities:
+      - reasoning: good
+      - speed: medium
+      - cost: low
+      - quality: good
+      - open_source: yes
+    best_for:
+      - open-source alternative
+      - sovereign AI option
+      - cost-sensitive tasks
+    cost_per_1k_tokens: $0.0002
+    max_tokens: 8192
+  
+  copilot:
+    provider: github
+    version: github-copilot
+    capabilities:
+      - reasoning: good
+      - speed: very_fast
+      - cost: low
+      - quality: good
+      - code_focused: yes
+    best_for:
+      - code generation
+      - IDE integration
+      - GitHub-native workflows
+    cost_per_1k_tokens: $0.00
+    max_tokens: 4096
+
+# Task-to-Model Routing
+task_routing:
+  code_generation:
+    complexity:
+      complex:
+        primary: claude_opus
+        secondary: gpt4_turbo
+        tertiary: claude_sonnet
+      standard:
+        primary: copilot
+        secondary: claude_sonnet
+        tertiary: gpt4
+      simple:
+        primary: gpt35_turbo
+        secondary: claude_haiku
+        tertiary: copilot
+  
+  testing:
+    strategy:
+      primary: claude_sonnet
+      secondary: gpt4
+    generation:
+      primary: gpt4
+      secondary: claude_sonnet
+    coverage:
+      primary: gemini_pro
+      secondary: gpt4
+  
+  analysis:
+    complex_reasoning:
+      primary: claude_opus
+      secondary: gpt4_turbo
+    code_review:
+      primary: gpt4
+      secondary: claude_sonnet
+    performance:
+      primary: gpt4_turbo
+      secondary: claude_sonnet
+
+# Cost Optimization
+cost_optimization:
+  enabled: true
+  strategy: cost_first_quality_gated
+  
+  rules:
+    - if: task_complexity == "simple"
+      then: use_cheapest_model
+    
+    - if: task_complexity == "standard"
+      then: use_balanced_model
+    
+    - if: task_complexity == "complex"
+      then: use_best_model
+    
+    - if: budget_remaining < 50%
+      then: increase_cost_optimization
+    
+    - if: success_rate > 95%
+      then: optimize_for_cost
+    
+    - if: success_rate < 80%
+      then: optimize_for_quality
+
+# Performance Metrics
+model_performance:
+  tracking:
+    - success_rate
+    - average_response_time
+    - cost_per_task
+    - quality_score
+    - user_satisfaction
+  
+  update_frequency: hourly
+  
+  adjustments:
+    - if: model_success_rate_drops
+      then: reduce_usage
+    
+    - if: model_performance_improves
+      then: increase_allocation
