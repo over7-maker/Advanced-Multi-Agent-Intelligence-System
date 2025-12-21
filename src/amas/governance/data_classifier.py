@@ -1083,14 +1083,25 @@ class ComplianceReporter:
         return round(score, 1)
 
 
+# Global singleton instances
+_classifier_instance: DataClassifier | None = None
+_reporter_instance: ComplianceReporter | None = None
+
+
 def get_data_classifier() -> DataClassifier:
-    """Get global data classifier instance"""
-    return DataClassifier()
+    """Get global data classifier instance (singleton)"""
+    global _classifier_instance
+    if _classifier_instance is None:
+        _classifier_instance = DataClassifier()
+    return _classifier_instance
 
 
 def get_compliance_reporter() -> ComplianceReporter:
-    """Get global compliance reporter instance"""
-    return ComplianceReporter()
+    """Get global compliance reporter instance (singleton)"""
+    global _reporter_instance
+    if _reporter_instance is None:
+        _reporter_instance = ComplianceReporter()
+    return _reporter_instance
 
 
 # Decorators for automatic classification
