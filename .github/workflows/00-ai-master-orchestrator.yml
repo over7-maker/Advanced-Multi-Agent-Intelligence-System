@@ -95,7 +95,7 @@ jobs:
             openai==1.35.0 \
             google-generativeai==0.5.4 \
             replicate==0.28.0 \
-            mistralai==0.1.10 \
+            mistralai==0.1.8 \
             cohere==5.4.0 \
             together==1.0.5 \
             groq==0.4.2 \
