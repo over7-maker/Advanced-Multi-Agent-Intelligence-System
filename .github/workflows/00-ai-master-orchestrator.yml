@@ -112,7 +112,7 @@ jobs:
             langchain==0.1.13 \
             redis==5.0.1 \
             chromadb==0.4.24 \
-            numpy==1.24.3 \
+            numpy==1.26.4 \
             pandas==2.2.0 \
             scipy==1.12.0 \
             scikit-learn==1.4.2 \
