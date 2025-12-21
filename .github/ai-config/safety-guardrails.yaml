@@ -1,0 +1,290 @@
+# Safety Mechanisms & Guardrails Configuration
+# Ensures autonomous operations remain secure and controlled
+
+security:
+  enabled: true
+  level: strict
+  
+  authentication:
+    required: true
+    methods:
+      - github_token
+      - api_key_verification
+    
+    rate_limiting:
+      enabled: true
+      requests_per_minute: 100
+      burst_size: 20
+  
+  authorization:
+    required: true
+    levels:
+      - read: allowed
+      - write: review_required
+      - deploy: approval_required
+  
+  secrets_management:
+    enabled: true
+    encryption: AES-256
+    rotation:
+      enabled: true
+      frequency: monthly
+    
+    api_keys:
+      - store_in: github_secrets
+      - never_log: true
+      - mask_in_output: true
+
+# Cost Controls
+cost_control:
+  enabled: true
+  daily_budget: 500
+  weekly_budget: 3500
+  monthly_budget: 15000
+  
+  spending_limits:
+    per_task_max: 10
+    per_hour_max: 50
+    per_model:
+      gpt4_turbo:
+        daily_limit: 200
+        hourly_limit: 25
+      claude_opus:
+        daily_limit: 150
+        hourly_limit: 20
+      gpt35_turbo:
+        daily_limit: 100
+        hourly_limit: 15
+  
+  alerts:
+    - threshold: 50%
+      action: log_warning
+    - threshold: 75%
+      action: notify_owner
+    - threshold: 90%
+      action: throttle_non_critical
+    - threshold: 100%
+      action: pause_operations
+  
+  throttling_strategy:
+    - disable_simple_tasks
+    - queue_standard_tasks
+    - prioritize_critical_only
+
+# Code Safety
+code_safety:
+  enabled: true
+  
+  sast_scanning:
+    enabled: true
+    tools:
+      - snyk
+      - github_security
+      - codeql
+    
+    severity_levels:
+      critical: block_deployment
+      high: require_review
+      medium: warn
+      low: log
+  
+  dependency_checking:
+    enabled: true
+    tools:
+      - npm_audit
+      - dependabot
+      - snyk
+    
+    update_strategy: auto_for_patches
+    require_review_for: minor_and_major
+  
+  code_quality_gates:
+    enabled: true
+    requirements:
+      test_coverage: '>85%'
+      linting: 'passed'
+      type_checking: 'passed'
+      security_scan: 'passed'
+  
+  malicious_code_detection:
+    enabled: true
+    checks:
+      - suspicious_imports
+      - command_injection
+      - file_access
+      - network_calls
+      - privilege_escalation
+
+# Deployment Safety
+deployment_safety:
+  enabled: true
+  
+  pre_deployment:
+    checks:
+      - security_scan: required
+      - code_review: required
+      - test_coverage: '>80%'
+      - health_check: required
+  
+  deployment_strategy: canary
+  canary_settings:
+    initial_percentage: 5
+    phases:
+      - { percentage: 5, duration: '5m' }
+      - { percentage: 25, duration: '10m' }
+      - { percentage: 50, duration: '10m' }
+      - { percentage: 100, duration: '5m' }
+    
+    auto_rollback_on:
+      - error_rate_exceeds: 1.0
+      - latency_exceeds_ms: 1000
+      - cpu_exceeds_percent: 80
+      - memory_exceeds_percent: 85
+  
+  health_checks:
+    enabled: true
+    frequency_seconds: 30
+    timeout_seconds: 5
+    
+    endpoints:
+      - path: /health
+        expected_status: 200
+        timeout: 2s
+      
+      - path: /api/status
+        expected_status: 200
+        timeout: 2s
+    
+    metrics:
+      - name: error_rate
+        threshold_percent: 1.0
+        action: alert
+      
+      - name: latency_p99
+        threshold_ms: 1000
+        action: alert
+      
+      - name: availability
+        threshold_percent: 99.9
+        action: rollback
+  
+  rollback:
+    enabled: true
+    automatic: true
+    triggers:
+      - health_check_failure
+      - error_rate_spike
+      - performance_degradation
+    
+    procedure:
+      - step: 1
+        action: stop_traffic_to_new_version
+        timeout: 30s
+      
+      - step: 2
+        action: revert_to_previous_version
+        timeout: 60s
+      
+      - step: 3
+        action: verify_health_checks
+        timeout: 60s
+      
+      - step: 4
+        action: notify_team
+        timeout: 10s
+
+# Monitoring & Logging
+monitoring:
+  enabled: true
+  
+  audit_logging:
+    enabled: true
+    log_everything:
+      - api_calls
+      - deployments
+      - security_events
+      - cost_tracking
+      - error_events
+    
+    retention_days: 90
+    format: json
+    encryption: true
+  
+  metrics_collection:
+    enabled: true
+    metrics:
+      - execution_time
+      - success_rate
+      - cost_per_task
+      - error_count
+      - api_usage
+    
+    retention_days: 365
+  
+  alerts:
+    enabled: true
+    
+    critical_events:
+      - security_vulnerability
+      - deployment_failure
+      - cost_spike
+      - service_unavailable
+    
+    notification_channels:
+      - email
+      - slack
+      - pagerduty
+
+# Human Oversight
+human_oversight:
+  enabled: true
+  
+  auto_approval_criteria:
+    # Approve automatically only if all criteria met
+    - success_rate: '>95%'
+    - test_coverage: '>90%'
+    - security_scan: 'passed'
+    - code_review_score: '>85'
+    - cost: '<budget_limit'
+  
+  manual_review_required_for:
+    - security_findings: any
+    - test_failures: any
+    - cost_anomalies: '>2x_average'
+    - dependency_updates: major
+    - infrastructure_changes: any
+  
+  escalation_procedures:
+    - level: 1
+      condition: warning_level
+      action: log_and_notify
+      owner: devops
+    
+    - level: 2
+      condition: error_level
+      action: pause_and_review
+      owner: engineering_lead
+    
+    - level: 3
+      condition: critical_level
+      action: rollback_and_investigate
+      owner: security_team
+
+# Compliance
+compliance:
+  enabled: true
+  
+  standards:
+    - soc2
+    - gdpr
+    - hipaa
+  
+  data_handling:
+    - no_pii_in_logs: true
+    - encrypt_sensitive_data: true
+    - audit_trail_required: true
+  
+  retention_policies:
+    logs: 90 days
+    metrics: 1 year
+    audit_trail: 7 years

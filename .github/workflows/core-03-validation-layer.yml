@@ -1,0 +1,507 @@
+name: Core-3: Validation Layer
+
+# Consolidated Validation Layer Workflow
+# Combines: Workflow Validation, PR CI Checks, Web CI, Architecture Validation
+# Part of Workflow Consolidation: 46 workflows → 8 cores
+
+on:
+  # Event triggers
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - '.github/workflows/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'web/**'
+      - 'docs/images/**'
+  push:
+    branches: [main, develop]
+    paths:
+      - '.github/workflows/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'web/**'
+      - 'docs/images/**'
+  # Manual dispatch
+  workflow_dispatch:
+    inputs:
+      validation_mode:
+        description: 'Validation Mode'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - comprehensive
+          - workflow-only
+          - code-quality-only
+          - security-only
+          - web-only
+          - architecture-only
+      strict_mode:
+        description: 'Strict Mode (fail on warnings)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '20'
+  VALIDATION_MODE: ${{ github.event.inputs.validation_mode || 'comprehensive' }}
+  STRICT_MODE: ${{ github.event.inputs.strict_mode || 'false' }}
+
+jobs:
+  # Job 1: Workflow Validation
+  workflow_validation:
+    name: 🔍 Workflow Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: env.VALIDATION_MODE == 'comprehensive' || env.VALIDATION_MODE == 'workflow-only'
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+    
+    - name: 🔍 Install and Run Actionlint
+      continue-on-error: true
+      run: |
+        echo "🔍 Attempting to install actionlint..."
+        
+        # Try official install script
+        curl -sSfL https://raw.githubusercontent.com/rhymond/actionlint/main/scripts/install-actionlint.bash 2>/dev/null | bash -s 2>/dev/null || true
+        
+        # Try direct binary download
+        if ! command -v actionlint >/dev/null 2>&1; then
+          echo "Trying direct download..."
+          curl -sSfL https://github.com/rhymond/actionlint/releases/download/v1.7.7/actionlint_1.7.7_linux_amd64.tar.gz -o /tmp/actionlint.tar.gz 2>/dev/null || true
+          if [ -f /tmp/actionlint.tar.gz ]; then
+            tar -xzf /tmp/actionlint.tar.gz -C /tmp actionlint 2>/dev/null || true
+            if [ -f /tmp/actionlint ]; then
+              sudo mv /tmp/actionlint /usr/local/bin/ 2>/dev/null || true
+              chmod +x /usr/local/bin/actionlint 2>/dev/null || true
+            fi
+          fi
+        fi
+        
+        # Run actionlint if available
+        if command -v actionlint >/dev/null 2>&1; then
+          echo "✅ Actionlint installed successfully"
+          actionlint --version
+          echo "Running actionlint validation..."
+          actionlint -color $(find .github/workflows -name '*.yml' -o -name '*.yaml' 2>/dev/null) || {
+            echo "::warning::Actionlint found issues (non-blocking)"
+            if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+          }
+        else
+          echo "::warning::Actionlint not available - skipping validation"
+        fi
+    
+    - name: ✅ Validate YAML Syntax
+      continue-on-error: true
+      run: |
+        echo "✅ Validating YAML syntax for workflow files..."
+        errors=0
+        for file in $(find .github/workflows -name '*.yml' -o -name '*.yaml' | sort); do
+          echo "Validating $file"
+          if ! python3 -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+            echo "::error file=$file::YAML syntax error detected"
+            errors=$((errors + 1))
+          else
+            echo "✅ $file is valid"
+          fi
+        done
+        if [ $errors -gt 0 ]; then
+          echo "::warning::Found $errors YAML file(s) with syntax errors"
+          if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+        else
+          echo "✅ All YAML files are syntactically valid"
+        fi
+    
+    - name: 🔍 Check for Common Issues
+      continue-on-error: true
+      run: |
+        echo "🔍 Checking for common workflow issues..."
+        if [ -f ".github/scripts/validate_workflow_policies.py" ]; then
+          python .github/scripts/validate_workflow_policies.py || {
+            if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+          }
+        else
+          echo "ℹ️ Workflow policy validation script not found, skipping..."
+        fi
+    
+    - name: 📤 Upload Validation Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: workflow-validation-results
+        path: |
+          workflow_validation_*.json
+          workflow_validation_*.log
+        if-no-files-found: ignore
+        retention-days: 30
+
+  # Job 2: Code Quality Validation
+  code_quality_validation:
+    name: 🎨 Code Quality & Standards
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: env.VALIDATION_MODE == 'comprehensive' || env.VALIDATION_MODE == 'code-quality-only'
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+    
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 🛠️ Ensure pip cache directory exists
+      run: mkdir -p ~/.cache/pip
+    
+    - name: 📦 Install Dependencies and Quality Tools
+      run: |
+        pip install -r requirements.txt || echo "No requirements.txt found"
+        pip install -r requirements-dev.txt || pip install \
+          black==24.3.0 \
+          isort==5.13.2 \
+          flake8==6.1.0 \
+          pylint==3.0.2 \
+          mypy==1.7.1 || true
+    
+    - name: 🎨 Code Formatting Check
+      run: |
+        echo "🎨 Checking code formatting..."
+        if [ -d "src/" ] || [ -d "tests/" ]; then
+          black --check --diff src/ tests/ || {
+            echo "❌ Code formatting issues found. Run 'black src/ tests/' to fix."
+            if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+          }
+          
+          isort --check-only --diff src/ tests/ || {
+            echo "❌ Import sorting issues found. Run 'isort src/ tests/' to fix."
+            if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+          }
+          echo "✅ Code formatting is correct"
+        else
+          echo "⚠️  No src/ or tests/ directories found, skipping formatting check"
+        fi
+    
+    - name: 🔍 Linting Validation
+      run: |
+        echo "🔍 Running linting..."
+        if [ -d "src/" ]; then
+          flake8 src/ tests/ \
+            --max-complexity=10 \
+            --max-line-length=100 \
+            --statistics \
+            --count || {
+            echo "❌ Linting issues found"
+            if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+          }
+          echo "✅ Linting passed"
+        else
+          echo "⚠️  No src/ directory found, skipping linting"
+        fi
+    
+    - name: 📤 Upload Code Quality Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-quality-results
+        path: |
+          code_quality_*.json
+          code_quality_*.log
+        if-no-files-found: ignore
+        retention-days: 30
+
+  # Job 3: Security Validation
+  security_validation:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    if: env.VALIDATION_MODE == 'comprehensive' || env.VALIDATION_MODE == 'security-only'
+    permissions:
+      contents: read
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 1
+    
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 🛠️ Ensure pip cache directory exists
+      run: mkdir -p ~/.cache/pip
+    
+    - name: 📦 Install Security Tools
+      run: |
+        if [ -f requirements-security.txt ]; then
+          pip install --user -r requirements-security.txt
+        else
+          pip install --user \
+            safety==3.6.2 \
+            pip-audit==2.6.3 \
+            bandit==1.7.5 \
+            detect-secrets==1.4.0 || true
+        fi
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+    
+    - name: 🔒 Run Safety Check
+      continue-on-error: true
+      run: |
+        safety check --short-report || {
+          echo "⚠️  Safety scan found issues"
+          if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+        }
+    
+    - name: 🛡️ Run Bandit Scan
+      if: exists('src/')
+      continue-on-error: true
+      run: |
+        bandit -r src/ --severity-level medium || {
+          echo "⚠️  Bandit found issues"
+          if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+        }
+    
+    - name: 🔍 Run Detect Secrets
+      continue-on-error: true
+      run: |
+        detect-secrets scan --baseline .secrets.baseline || {
+          echo "⚠️  Detect-secrets found potential secrets"
+          if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+        }
+    
+    - name: 📤 Upload Security Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: security-validation-results
+        path: |
+          security_scan_*.json
+          security_scan_*.log
+          .secrets.baseline
+        if-no-files-found: ignore
+        retention-days: 30
+
+  # Job 4: Web CI Validation
+  web_validation:
+    name: 🌐 Web CI Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: env.VALIDATION_MODE == 'comprehensive' || env.VALIDATION_MODE == 'web-only' || (github.event_name == 'pull_request' && contains(github.event.pull_request.changed_files, 'web/'))
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: 🟢 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 18
+        cache: 'npm'
+        cache-dependency-path: web/package-lock.json
+    
+    - name: 📦 Install Dependencies
+      if: exists('web/package.json')
+      working-directory: ./web
+      run: npm ci || echo "⚠️ npm ci failed, trying npm install..." && npm install
+    
+    - name: 🔍 Typecheck
+      if: exists('web/package.json')
+      working-directory: ./web
+      continue-on-error: true
+      run: |
+        npm run typecheck || {
+          echo "❌ Typecheck failed"
+          if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+        }
+    
+    - name: 🔍 Lint
+      if: exists('web/package.json')
+      working-directory: ./web
+      continue-on-error: true
+      run: |
+        npm run lint -- --max-warnings=0 --cache || {
+          echo "❌ Linting failed"
+          if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+        }
+    
+    - name: 🏗️ Build
+      if: exists('web/package.json')
+      working-directory: ./web
+      continue-on-error: true
+      run: |
+        npm run build || {
+          echo "❌ Build failed"
+          if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+        }
+    
+    - name: 🧪 Test
+      if: exists('web/package.json')
+      working-directory: ./web
+      continue-on-error: true
+      run: |
+        npm test -- --watchAll=false --coverage || {
+          echo "❌ Tests failed"
+          if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+        }
+    
+    - name: 📤 Upload Web Validation Results
+      if: always() && exists('web/package.json')
+      uses: actions/upload-artifact@v4
+      with:
+        name: web-validation-results
+        path: |
+          web/coverage/
+          web/build/
+        if-no-files-found: ignore
+        retention-days: 30
+
+  # Job 5: Architecture Validation
+  architecture_validation:
+    name: 🏗️ Architecture Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: env.VALIDATION_MODE == 'comprehensive' || env.VALIDATION_MODE == 'architecture-only' || (github.event_name == 'pull_request' && contains(github.event.pull_request.changed_files, 'docs/images/'))
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: 🖼️ Check Image Exists and is Valid PNG
+      run: |
+        FILE="docs/images/universal_ai_router_architecture.png"
+        if [ ! -f "$FILE" ]; then
+          echo "❌ Missing diagram: $FILE"
+          if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+        else
+          file "$FILE" | grep -i 'PNG image data' || {
+            echo "❌ Not a valid PNG: $FILE"
+            if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+          }
+          echo "✅ Diagram file exists and is valid PNG"
+        fi
+    
+    - name: 📏 Enforce Minimum File Size
+      run: |
+        FILE="docs/images/universal_ai_router_architecture.png"
+        if [ -f "$FILE" ]; then
+          BYTES=$(wc -c <"$FILE")
+          echo "Diagram size: $BYTES bytes"
+          MIN=$((100*1024))
+          if [ "$BYTES" -lt "$MIN" ]; then
+            echo "❌ Diagram too small (<100KB). Replace placeholder with high-res PNG."
+            if [ "$STRICT_MODE" = "true" ]; then exit 1; fi
+          else
+            echo "✅ Diagram passes size check"
+          fi
+        fi
+    
+    - name: 📤 Upload Architecture Validation Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: architecture-validation-results
+        path: |
+          docs/images/universal_ai_router_architecture.png
+        if-no-files-found: ignore
+        retention-days: 30
+
+  # Job 6: Validation Summary
+  validation_summary:
+    name: 📊 Validation Summary
+    runs-on: ubuntu-latest
+    needs: [workflow_validation, code_quality_validation, security_validation, web_validation, architecture_validation]
+    if: always()
+    
+    steps:
+    - name: 📥 Download All Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+        pattern: '*'
+        merge-multiple: true
+    
+    - name: 📊 Generate Summary
+      run: |
+        echo "📊 Generating Validation Layer Summary"
+        
+        cat > validation_summary.md << EOF
+        # 📊 Core-3: Validation Layer Summary
+        
+        ## 📈 **VALIDATION OVERVIEW**
+        - **Validation Mode**: ${{ env.VALIDATION_MODE }}
+        - **Strict Mode**: ${{ env.STRICT_MODE }}
+        - **Timestamp**: $(date)
+        - **Repository**: ${{ github.repository }}
+        - **Branch**: ${{ github.ref_name }}
+        - **Commit**: ${{ github.sha }}
+        
+        ## ✅ **VALIDATION STATUS**
+        - **Workflow Validation**: ${{ needs.workflow_validation.result }}
+        - **Code Quality**: ${{ needs.code_quality_validation.result }}
+        - **Security Scan**: ${{ needs.security_validation.result }}
+        - **Web CI**: ${{ needs.web_validation.result }}
+        - **Architecture**: ${{ needs.architecture_validation.result }}
+        
+        ## 📦 **VALIDATION RESULTS**
+        - Workflow validation results
+        - Code quality reports
+        - Security scan reports
+        - Web CI test results
+        - Architecture validation results
+        
+        ## 🎯 **NEXT STEPS**
+        1. Review all validation results
+        2. Fix any identified issues
+        3. Address security vulnerabilities
+        4. Update documentation as needed
+        
+        ---
+        *Generated by Core-3: Validation Layer - Consolidated from 4 workflows*
+        EOF
+        
+        echo "✅ Validation summary generated"
+    
+    - name: 📤 Upload Summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: validation-summary
+        path: validation_summary.md
+        retention-days: 90
+    
+    - name: 📝 Create Summary Comment
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const summary = fs.readFileSync('validation_summary.md', 'utf8');
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
+

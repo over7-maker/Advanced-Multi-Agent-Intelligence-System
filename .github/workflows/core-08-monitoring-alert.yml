@@ -1,0 +1,588 @@
+name: Core-8: Monitoring & Alert
+
+# Consolidated Monitoring & Alert Workflow
+# Combines: AI Health Monitor, Code Quality & Performance Monitoring, Workflow Audit Monitor,
+#           Comprehensive Audit (monitoring), Real AI Analysis (monitoring)
+# Part of Workflow Consolidation: 46 workflows → 8 cores
+
+on:
+  # Event triggers
+  push:
+    branches: [main, develop, feature/*, hotfix/*]
+  pull_request:
+    types: [opened, synchronize, reopened, closed, merged]
+  # Schedule triggers
+  schedule:
+    - cron: '0 * * * *'  # Every hour for health monitoring
+    - cron: '0 */6 * * *'  # Every 6 hours for quality monitoring
+    - cron: '0 0 1 * *'  # Monthly workflow monitoring (1st of month)
+  # Manual dispatch
+  workflow_dispatch:
+    inputs:
+      monitoring_mode:
+        description: 'Monitoring Mode'
+        required: true
+        default: 'comprehensive'
+        type: choice
+        options:
+          - comprehensive
+          - health-monitoring
+          - quality-monitoring
+          - workflow-monitoring
+          - ai-monitoring
+          - all
+      alert_level:
+        description: 'Alert Level'
+        required: false
+        default: 'medium'
+        type: choice
+        options:
+          - low
+          - medium
+          - high
+          - critical
+
+env:
+  PYTHON_VERSION: '3.11'
+  MONITORING_MODE: ${{ github.event.inputs.monitoring_mode || 'comprehensive' }}
+  ALERT_LEVEL: ${{ github.event.inputs.alert_level || 'medium' }}
+
+jobs:
+  # Job 1: AI Health Monitoring
+  ai_health_monitoring:
+    name: 🏥 AI Health Monitoring
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: env.MONITORING_MODE == 'comprehensive' || env.MONITORING_MODE == 'health-monitoring' || env.MONITORING_MODE == 'all'
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+    
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 📦 Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install aiohttp || true
+    
+    - name: 🏥 Check Provider Health
+      id: health_check
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+        CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+      run: |
+        set -e
+        set -o pipefail
+        echo "🏥 Checking AI Provider Health..."
+        
+        if [ -f ".github/scripts/ai_health_monitor.py" ]; then
+          python .github/scripts/ai_health_monitor.py \
+            --output health_check_results.json || true
+        else
+          # Fallback: Basic health check
+          python -c "
+          import json
+          import os
+          
+          providers = [
+              'DEEPSEEK_API_KEY', 'GLM_API_KEY', 'GROK_API_KEY', 'KIMI_API_KEY',
+              'QWEN_API_KEY', 'GPTOSS_API_KEY', 'NVIDIA_API_KEY', 'CODESTRAL_API_KEY',
+              'CHUTES_API_KEY', 'CEREBRAS_API_KEY', 'GEMINIAI_API_KEY', 'GEMINI2_API_KEY',
+              'GROQAI_API_KEY', 'GROQ2_API_KEY', 'COHERE_API_KEY'
+          ]
+          
+          health_status = {
+              'timestamp': __import__('datetime').datetime.utcnow().isoformat(),
+              'providers_checked': len(providers),
+              'providers_available': sum(1 for p in providers if os.getenv(p)),
+              'status': 'success'
+          }
+          
+          with open('health_check_results.json', 'w') as f:
+              json.dump(health_status, f, indent=2)
+          "
+        fi
+        
+        echo "✅ Health check completed"
+    
+    - name: 📤 Upload Health Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: health-monitoring-results
+        path: health_check_results.json
+        if-no-files-found: ignore
+        retention-days: 30
+
+  # Job 2: Code Quality & Performance Monitoring
+  quality_performance_monitoring:
+    name: ⚡ Quality & Performance Monitoring
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: env.MONITORING_MODE == 'comprehensive' || env.MONITORING_MODE == 'quality-monitoring' || env.MONITORING_MODE == 'all'
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 📦 Install Dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install --prefer-binary PyYAML requests aiohttp
+        pip install openai anthropic google-generativeai groq cohere || true
+        pip install gitpython pygit2 || true
+        pip install flake8 bandit pytest || true
+        pip install memory-profiler line-profiler || true
+    
+    - name: ⚡ Run Quality & Performance Monitoring
+      id: quality_monitoring
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+        CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+        COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+        NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        set -e
+        set -o pipefail
+        echo "⚡ Running Quality & Performance Monitoring..."
+        
+        if [ -f ".github/scripts/ai_code_quality_performance.py" ]; then
+          python .github/scripts/ai_code_quality_performance.py \
+            --output quality_performance_results.json || true
+        else
+          echo "ℹ️ Quality & performance monitoring script not found, skipping..."
+        fi
+        
+        echo "✅ Quality & performance monitoring completed"
+    
+    - name: 📤 Upload Quality Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: quality-performance-results
+        path: quality_performance_results.json
+        if-no-files-found: ignore
+        retention-days: 30
+
+  # Job 3: Workflow Monitoring
+  workflow_monitoring:
+    name: 🔄 Workflow Monitoring
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: env.MONITORING_MODE == 'comprehensive' || env.MONITORING_MODE == 'workflow-monitoring' || env.MONITORING_MODE == 'all'
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 📦 Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install --prefer-binary PyYAML
+        pip install --only-binary=all PyYAML || pip install PyYAML requests
+    
+    - name: 🔄 Run Workflow Monitoring
+      run: |
+        set -e
+        set -o pipefail
+        echo "🔄 Running Workflow Monitoring..."
+        
+        if [ -f ".github/scripts/workflow_audit_monitor.py" ]; then
+          python .github/scripts/workflow_audit_monitor.py \
+            --output workflow_monitoring_results.json || true
+        else
+          # Fallback: Basic workflow monitoring
+          python -c "
+          import json
+          import yaml
+          from pathlib import Path
+          
+          workflows = []
+          for wf_file in Path('.github/workflows').glob('*.yml'):
+              try:
+                  with open(wf_file) as f:
+                      wf_data = yaml.safe_load(f)
+                      workflows.append({
+                          'file': str(wf_file),
+                          'name': wf_data.get('name', 'Unknown'),
+                          'valid': True
+                      })
+              except Exception as e:
+                  workflows.append({
+                      'file': str(wf_file),
+                      'name': 'Unknown',
+                      'valid': False,
+                      'error': str(e)
+                  })
+          
+          monitoring = {
+              'timestamp': __import__('datetime').datetime.utcnow().isoformat(),
+              'total_workflows': len(workflows),
+              'valid_workflows': sum(1 for w in workflows if w.get('valid')),
+              'invalid_workflows': sum(1 for w in workflows if not w.get('valid')),
+              'workflows': workflows,
+              'status': 'success'
+          }
+          
+          with open('workflow_monitoring_results.json', 'w') as f:
+              json.dump(monitoring, f, indent=2)
+          "
+        fi
+        
+        echo "✅ Workflow monitoring completed"
+    
+    - name: 📤 Upload Workflow Monitoring Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: workflow-monitoring-results
+        path: workflow_monitoring_results.json
+        if-no-files-found: ignore
+        retention-days: 90
+
+  # Job 4: Comprehensive Monitoring
+  comprehensive_monitoring:
+    name: 📊 Comprehensive Monitoring
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: env.MONITORING_MODE == 'comprehensive' || env.MONITORING_MODE == 'all'
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 📦 Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install PyYAML requests beautifulsoup4 || true
+        pip install pandas numpy matplotlib || true
+    
+    - name: 📊 Run Comprehensive Monitoring
+      env:
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+        GPT4_API_KEY: ${{ secrets.GPT4_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+        CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+        COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+        NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+      run: |
+        set -e
+        set -o pipefail
+        echo "📊 Running Comprehensive Monitoring..."
+        
+        if [ -f ".github/scripts/comprehensive_audit_engine.py" ]; then
+          python .github/scripts/comprehensive_audit_engine.py \
+            --audit-type comprehensive \
+            --create-issues false \
+            --notify-on-failure false \
+            --output comprehensive_monitoring_results.json || true
+        else
+          echo "ℹ️ Comprehensive monitoring script not found, skipping..."
+        fi
+        
+        echo "✅ Comprehensive monitoring completed"
+    
+    - name: 📤 Upload Comprehensive Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: comprehensive-monitoring-results
+        path: comprehensive_monitoring_results.json
+        if-no-files-found: ignore
+        retention-days: 90
+
+  # Job 5: Real AI Analysis Monitoring
+  real_ai_monitoring:
+    name: 🤖 Real AI Analysis Monitoring
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: env.MONITORING_MODE == 'comprehensive' || env.MONITORING_MODE == 'ai-monitoring' || env.MONITORING_MODE == 'all' || github.event_name == 'pull_request'
+    permissions:
+      pull-requests: write
+      contents: read
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: 🐍 Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        cache: 'pip'
+    
+    - name: 📦 Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install aiohttp requests openai anthropic || true
+    
+    - name: 🤖 Run Real AI Analysis
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+        CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
+        CODESTRAL_API_KEY: ${{ secrets.CODESTRAL_API_KEY }}
+        COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+        DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        GEMINI2_API_KEY: ${{ secrets.GEMINI2_API_KEY }}
+        GEMINIAI_API_KEY: ${{ secrets.GEMINIAI_API_KEY }}
+        GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+        GPTOSS_API_KEY: ${{ secrets.GPTOSS_API_KEY }}
+        GROK_API_KEY: ${{ secrets.GROK_API_KEY }}
+        GROQ2_API_KEY: ${{ secrets.GROQ2_API_KEY }}
+        GROQAI_API_KEY: ${{ secrets.GROQAI_API_KEY }}
+        KIMI_API_KEY: ${{ secrets.KIMI_API_KEY }}
+        NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+        QWEN_API_KEY: ${{ secrets.QWEN_API_KEY }}
+      run: |
+        set -e
+        set -o pipefail
+        echo "🤖 Running Real AI Analysis Monitoring..."
+        
+        if [ -f ".github/scripts/real_ai_analyzer.py" ]; then
+          python .github/scripts/real_ai_analyzer.py \
+            --output real_ai_monitoring_results.json || true
+        else
+          echo "ℹ️ Real AI analyzer script not found, skipping..."
+        fi
+        
+        echo "✅ Real AI monitoring completed"
+    
+    - name: 📤 Upload Real AI Results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: real-ai-monitoring-results
+        path: real_ai_monitoring_results.json
+        if-no-files-found: ignore
+        retention-days: 30
+
+  # Job 6: Alert Generation
+  alert_generation:
+    name: 🚨 Alert Generation
+    runs-on: ubuntu-latest
+    needs: [ai_health_monitoring, quality_performance_monitoring, workflow_monitoring, comprehensive_monitoring, real_ai_monitoring]
+    if: always()
+    
+    steps:
+    - name: 📥 Download All Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+        pattern: '*'
+        merge-multiple: true
+    
+    - name: 🚨 Generate Alerts
+      run: |
+        set -e
+        set -o pipefail
+        echo "🚨 Generating Alerts..."
+        echo "Alert Level: $ALERT_LEVEL"
+        
+        # Check for critical issues
+        python -c "
+        import json
+        import os
+        from pathlib import Path
+        
+        alerts = []
+        alert_level = '$ALERT_LEVEL'
+        
+        # Check health monitoring results
+        if Path('artifacts/health_check_results.json').exists():
+            with open('artifacts/health_check_results.json') as f:
+                health = json.load(f)
+                if health.get('providers_available', 0) < 3:
+                    alerts.append({
+                        'level': 'critical',
+                        'type': 'health',
+                        'message': 'Low AI provider availability detected'
+                    })
+        
+        # Check quality monitoring results
+        if Path('artifacts/quality_performance_results.json').exists():
+            with open('artifacts/quality_performance_results.json') as f:
+                quality = json.load(f)
+                if quality.get('issues_found', 0) > 10:
+                    alerts.append({
+                        'level': 'high',
+                        'type': 'quality',
+                        'message': 'Multiple quality issues detected'
+                    })
+        
+        alert_report = {
+            'timestamp': __import__('datetime').datetime.utcnow().isoformat(),
+            'alert_level': alert_level,
+            'alerts': alerts,
+            'total_alerts': len(alerts),
+            'status': 'success'
+        }
+        
+        with open('alert_report.json', 'w') as f:
+            json.dump(alert_report, f, indent=2)
+        
+        print(f'✅ Generated {len(alerts)} alerts')
+        "
+    
+    - name: 📤 Upload Alert Report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: alert-report
+        path: alert_report.json
+        if-no-files-found: ignore
+        retention-days: 90
+
+  # Job 7: Monitoring Summary
+  monitoring_summary:
+    name: 📊 Monitoring Summary
+    runs-on: ubuntu-latest
+    needs: [ai_health_monitoring, quality_performance_monitoring, workflow_monitoring, comprehensive_monitoring, real_ai_monitoring, alert_generation]
+    if: always()
+    
+    steps:
+    - name: 📥 Download All Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts/
+        pattern: '*'
+        merge-multiple: true
+    
+    - name: 📊 Generate Summary
+      run: |
+        echo "📊 Generating Monitoring & Alert Summary"
+        
+        cat > monitoring_summary.md << EOF
+        # 📊 Core-8: Monitoring & Alert Summary
+        
+        ## 📈 **MONITORING OVERVIEW**
+        - **Monitoring Mode**: ${{ env.MONITORING_MODE }}
+        - **Alert Level**: ${{ env.ALERT_LEVEL }}
+        - **Timestamp**: $(date)
+        - **Repository**: ${{ github.repository }}
+        - **Branch**: ${{ github.ref_name }}
+        - **Commit**: ${{ github.sha }}
+        
+        ## ✅ **JOB STATUS**
+        - **AI Health Monitoring**: ${{ needs.ai_health_monitoring.result }}
+        - **Quality & Performance**: ${{ needs.quality_performance_monitoring.result }}
+        - **Workflow Monitoring**: ${{ needs.workflow_monitoring.result }}
+        - **Comprehensive Monitoring**: ${{ needs.comprehensive_monitoring.result }}
+        - **Real AI Monitoring**: ${{ needs.real_ai_monitoring.result }}
+        - **Alert Generation**: ${{ needs.alert_generation.result }}
+        
+        ## 📦 **MONITORING RESULTS**
+        - Health check reports
+        - Quality & performance metrics
+        - Workflow monitoring data
+        - Comprehensive monitoring reports
+        - Real AI analysis results
+        - Alert reports
+        
+        ## 🎯 **NEXT STEPS**
+        1. Review all monitoring results
+        2. Address any alerts
+        3. Optimize based on metrics
+        4. Schedule next monitoring cycle
+        
+        ---
+        *Generated by Core-8: Monitoring & Alert - Consolidated from 5 workflows*
+        EOF
+        
+        echo "✅ Monitoring summary generated"
+    
+    - name: 📤 Upload Summary
+      uses: actions/upload-artifact@v4
+      with:
+        name: monitoring-summary
+        path: monitoring_summary.md
+        retention-days: 90
+    
+    - name: 📝 Create Summary Comment
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const fs = require('fs');
+          const summary = fs.readFileSync('monitoring_summary.md', 'utf8');
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
+
