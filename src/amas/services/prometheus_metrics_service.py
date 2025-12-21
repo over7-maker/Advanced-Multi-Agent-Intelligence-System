@@ -291,6 +291,96 @@ class PrometheusMetricsService:
         )
 
         # ========================================================================
+        # ENHANCED TASK METRICS (percentiles and detailed metrics)
+        # ========================================================================
+        self.metrics["amas_task_creation_duration_seconds"] = Histogram(
+            "amas_task_creation_duration_seconds",
+            "Task creation duration in seconds",
+            ["task_type", "status"],
+            buckets=[0.1, 0.5, 1.0, 2.0, 5.0],
+            registry=self.registry,
+        )
+        
+        self.metrics["amas_task_execution_duration_percentiles"] = Histogram(
+            "amas_task_execution_duration_percentiles_seconds",
+            "Task execution duration percentiles (p50, p95, p99)",
+            ["task_type"],
+            buckets=[1.0, 5.0, 10.0, 30.0, 60.0, 120.0, 300.0],
+            registry=self.registry,
+        )
+        
+        # ========================================================================
+        # CACHE METRICS (hit/miss ratios)
+        # ========================================================================
+        self.metrics["amas_cache_hits_total"] = Counter(
+            "amas_cache_hits_total",
+            "Total cache hits",
+            ["cache_type"],
+            registry=self.registry,
+        )
+        
+        self.metrics["amas_cache_misses_total"] = Counter(
+            "amas_cache_misses_total",
+            "Total cache misses",
+            ["cache_type"],
+            registry=self.registry,
+        )
+        
+        self.metrics["amas_cache_hit_ratio"] = Gauge(
+            "amas_cache_hit_ratio",
+            "Cache hit ratio (0.0-1.0)",
+            ["cache_type"],
+            registry=self.registry,
+        )
+        
+        # ========================================================================
+        # WEBSOCKET METRICS
+        # ========================================================================
+        self.metrics["amas_websocket_connections"] = Gauge(
+            "amas_websocket_connections",
+            "Active WebSocket connections",
+            registry=self.registry,
+        )
+        
+        self.metrics["amas_websocket_messages_total"] = Counter(
+            "amas_websocket_messages_total",
+            "Total WebSocket messages sent",
+            ["event_type"],
+            registry=self.registry,
+        )
+        
+        self.metrics["amas_websocket_latency_seconds"] = Histogram(
+            "amas_websocket_latency_seconds",
+            "WebSocket message latency in seconds",
+            ["event_type"],
+            buckets=[0.01, 0.05, 0.1, 0.2, 0.5, 1.0],
+            registry=self.registry,
+        )
+        
+        # ========================================================================
+        # DATABASE METRICS (query time percentiles)
+        # ========================================================================
+        self.metrics["amas_database_query_duration_seconds"] = Histogram(
+            "amas_database_query_duration_seconds",
+            "Database query duration in seconds",
+            ["query_type", "table"],
+            buckets=[0.01, 0.05, 0.1, 0.5, 1.0, 2.0, 5.0],
+            registry=self.registry,
+        )
+        
+        self.metrics["amas_database_connections_active"] = Gauge(
+            "amas_database_connections_active",
+            "Active database connections",
+            registry=self.registry,
+        )
+        
+        self.metrics["amas_database_connection_pool_size"] = Gauge(
+            "amas_database_connection_pool_size",
+            "Database connection pool size",
+            registry=self.registry,
+        )
+        
+        # ========================================================================
         # API METRICS (4 metrics)
         # ========================================================================
         self.metrics["amas_http_requests_total"] = Counter(

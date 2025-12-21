@@ -18,8 +18,11 @@ class DatabaseSettings(BaseSettings):
     name: str = Field(default="amas")
     user: str = Field(default="postgres")
     password: str = Field(default="amas_password")
-    pool_size: int = Field(default=10)
-    max_overflow: int = Field(default=20)
+    pool_size: int = Field(default=10, description="Base number of database connections")
+    max_overflow: int = Field(default=20, description="Additional connections allowed beyond pool_size")
+    pool_timeout: int = Field(default=30, description="Timeout in seconds for getting connection from pool")
+    pool_recycle: int = Field(default=3600, description="Recycle connections after this many seconds")
+    pool_pre_ping: bool = Field(default=True, description="Verify connections before using them")
     echo: bool = Field(default=False)
 
     model_config = SettingsConfigDict(env_prefix="DB_")

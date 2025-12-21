@@ -623,8 +623,8 @@ jobs:
           echo "Safety scan summary:"
           safety check --short-report || true
 
-      # Step 6: Store security scan artifacts
-      # Saves security reports as artifacts for review
+      # Step 8: Store security scan artifacts
+      # Saves all security reports (bandit + safety) as artifacts for review
       - name: Store security scan artifacts
         if: always()
         uses: actions/upload-artifact@v4
@@ -633,38 +633,6 @@ jobs:
           path: security-reports/
           retention-days: 90  # Keep security reports longer (90 days)
           if-no-files-found: warn  # Warn if no security reports generated
-
-      # Step 7: Check for known vulnerabilities in dependencies
-      # Scans installed packages for known CVEs and security advisories
-      - name: Check for known vulnerabilities with safety
-        continue-on-error: true  # Don't fail CI, but report findings
-        run: |
-          echo "🔍 Running safety vulnerability scan..."
-          
-          # Create reports directory if not exists
-          mkdir -p security-reports
-          
-          # Run safety check and save results
-          if safety check --json > security-reports/safety-report.json 2>&1; then
-            echo "✅ Safety scan passed - no known vulnerabilities found"
-          else
-            echo "⚠️  Safety check found known vulnerabilities - review required"
-            echo "Detailed report saved to artifacts"
-          fi
-          
-          # Display summary (without exposing full details in logs)
-          echo "Safety scan summary:"
-          safety check --short-report || true
-
-      # Step 8: Store safety report artifacts
-      - name: Store safety report artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: safety-reports-${{ github.run_number }}
-          path: security-reports/safety-report.json
-          retention-days: 90
-          if-no-files-found: ignore
 
 #
 # =============================================================================
