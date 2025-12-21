@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Path, Query
 from pydantic import BaseModel, Field
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -2019,7 +2019,7 @@ async def list_tasks(
     tags=["tasks"]
 )
 async def get_task(
-    task_id: str = Query(..., description="Task ID to retrieve"),
+    task_id: str = Path(..., description="Task ID to retrieve"),
     db: AsyncSession = Depends(get_db),
     redis = Depends(get_redis),
     current_user: User = Depends(get_current_user_optional if AUTH_AVAILABLE else get_current_user),
