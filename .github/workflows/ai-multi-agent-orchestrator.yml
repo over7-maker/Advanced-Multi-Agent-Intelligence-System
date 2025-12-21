@@ -92,52 +92,76 @@ jobs:
         CHUTES_API_KEY: ${{ secrets.CHUTES_API_KEY }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
-        python -c "
+        python << 'EOF'
         import asyncio
         import json
         import sys
         from pathlib import Path
+        
+        # Add scripts directory to path
         sys.path.insert(0, '.github/scripts')
         
-        from ai_orchestrator import AIOrchestrator
-        
-        async def run_analysis():
-            task_type = '${{ inputs.task_type || \"analyze-task\" }}'
-            context = json.loads('${{ inputs.context }}')
+        try:
+            from ai_orchestrator import AIOrchestrator
             
-            orchestrator = AIOrchestrator(cache_enabled=True)
+            async def run_analysis():
+                task_type = '${{ inputs.task_type || "analyze-task" }}'
+                try:
+                    context = json.loads('${{ inputs.context || "{}" }}')
+                except:
+                    context = {}
+                
+                orchestrator = AIOrchestrator(cache_enabled=True)
+                
+                system_message = '''You are an expert multi-agent orchestrator. Analyze the task and provide comprehensive recommendations.'''
+                user_prompt = f'''Task Type: {task_type}
+        Context: {json.dumps(context, indent=2)}
+        Repository: ${{ github.repository }}
+        Branch: ${{ github.ref_name }}
+        Commit: ${{ github.sha }}
+                
+        Provide detailed analysis and recommendations.'''
+                
+                result = await orchestrator.execute(
+                    task_type='pr_analysis',
+                    system_message=system_message,
+                    user_prompt=user_prompt,
+                    max_tokens=4000,
+                    temperature=0.7
+                )
+                
+                # Save results
+                Path('.github/data/agent_results').mkdir(parents=True, exist_ok=True)
+                with open('.github/data/agent_results/analysis.json', 'w', encoding='utf-8') as f:
+                    json.dump(result, f, indent=2, ensure_ascii=False)
+                
+                if result.get('success'):
+                    print(f'✅ Analysis completed with provider: {result.get("provider")}')
+                    return 0
+                else:
+                    print(f'❌ Analysis failed: {result.get("error")}')
+                    return 1
             
-            system_message = '''You are an expert multi-agent orchestrator. Analyze the task and provide comprehensive recommendations.'''
-            user_prompt = f'''Task Type: {task_type}
-Context: {json.dumps(context, indent=2)}
-Repository: ${{ github.repository }}
-Branch: ${{ github.ref_name }}
-Commit: ${{ github.sha }}
-            
-Provide detailed analysis and recommendations.'''
-            
-            result = await orchestrator.execute(
-                task_type='pr_analysis',
-                system_message=system_message,
-                user_prompt=user_prompt,
-                max_tokens=4000,
-                temperature=0.7
-            )
-            
-            # Save results
+            exit_code = asyncio.run(run_analysis())
+            sys.exit(exit_code)
+        except ImportError as e:
+            print(f'⚠️ Import error: {e}')
+            print('⚠️ Skipping analysis - orchestrator not available')
+            # Create placeholder result
             Path('.github/data/agent_results').mkdir(parents=True, exist_ok=True)
             with open('.github/data/agent_results/analysis.json', 'w', encoding='utf-8') as f:
-                json.dump(result, f, indent=2, ensure_ascii=False)
-            
-            if result.get('success'):
-                print(f'✅ Analysis completed with provider: {result.get(\"provider\")}')
-                sys.exit(0)
-            else:
-                print(f'❌ Analysis failed: {result.get(\"error\")}')
-                sys.exit(1)
-        
-        asyncio.run(run_analysis())
-        "
+                json.dump({
+                    'success': False,
+                    'error': f'Import error: {e}',
+                    'message': 'Orchestrator not available, skipping analysis'
+                }, f, indent=2, ensure_ascii=False)
+            sys.exit(0)  # Don't fail the workflow
+        except Exception as e:
+            print(f'❌ Error: {e}')
+            import traceback
+            traceback.print_exc()
+            sys.exit(0)  # Don't fail the workflow
+        EOF
       continue-on-error: true
     
     - name: Upload analysis results
