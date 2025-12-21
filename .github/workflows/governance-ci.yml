@@ -530,15 +530,26 @@ jobs:
       - name: Run bandit security scan
         continue-on-error: false
         run: |
+          echo "🔍 Running bandit security scan..."
+          
+          # Create reports directory
+          mkdir -p security-reports
+          
           # Generate JSON report for detailed analysis
-          bandit -r src/amas/governance/ -f json -o bandit-report.json || {
-            echo "Warning: Bandit scan generated report with findings"
-          }
+          if bandit -r src/amas/governance/ -f json -o security-reports/bandit-report.json; then
+            echo "✓ Bandit JSON report generated successfully"
+          else
+            echo "⚠️  Bandit scan generated report with findings"
+          fi
+          
           # Run with low-low severity to fail on high-severity issues
-          bandit -r src/amas/governance/ -ll || {
-            echo "Error: Bandit found high-severity security issues"
+          if bandit -r src/amas/governance/ -ll; then
+            echo "✅ Bandit scan passed - no high-severity issues found"
+          else
+            echo "❌ Bandit found high-severity security issues"
+            echo "Review the detailed report in artifacts"
             exit 1
-          }
+          fi
 
       # Step 6: Store security scan artifacts
       # Saves security reports as artifacts for review
@@ -547,21 +558,30 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: security-reports-${{ github.run_number }}
-          path: bandit-report.json
+          path: security-reports/
           retention-days: 90  # Keep security reports longer (90 days)
-          if-no-files-found: ignore
+          if-no-files-found: warn  # Warn if no security reports generated
 
       # Step 7: Check for known vulnerabilities in dependencies
       # Scans installed packages for known CVEs and security advisories
-      - name: Check for known vulnerabilities
+      - name: Check for known vulnerabilities with safety
         continue-on-error: true  # Don't fail CI, but report findings
         run: |
+          echo "🔍 Running safety vulnerability scan..."
+          
+          # Create reports directory if not exists
+          mkdir -p security-reports
+          
           # Run safety check and save results
-          safety check --json > safety-report.json 2>&1 || {
-            echo "Warning: Safety check found known vulnerabilities - review required"
-            # Store safety report even if vulnerabilities found
-          }
+          if safety check --json > security-reports/safety-report.json 2>&1; then
+            echo "✅ Safety scan passed - no known vulnerabilities found"
+          else
+            echo "⚠️  Safety check found known vulnerabilities - review required"
+            echo "Detailed report saved to artifacts"
+          fi
+          
           # Display summary (without exposing full details in logs)
+          echo "Safety scan summary:"
           safety check --short-report || true
 
       # Step 8: Store safety report artifacts
@@ -570,7 +590,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: safety-reports-${{ github.run_number }}
-          path: safety-report.json
+          path: security-reports/safety-report.json
           retention-days: 90
           if-no-files-found: ignore
 
