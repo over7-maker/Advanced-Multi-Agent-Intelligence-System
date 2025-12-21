@@ -1151,13 +1151,13 @@ async def create_task(
         return task_response
     
     except Exception as e:
-                _log_error_with_context(
-                    e,
-                    level="error",
-                    task_id=task_id if 'task_id' in locals() else None,
-                    user_id=user_id if 'user_id' in locals() else (current_user.id if current_user and hasattr(current_user, 'id') else None),
-                    operation="create_task"
-                )
+        _log_error_with_context(
+            e,
+            level="error",
+            task_id=task_id if 'task_id' in locals() else None,
+            user_id=user_id if 'user_id' in locals() else (current_user.id if current_user and hasattr(current_user, 'id') else None),
+            operation="create_task"
+        )
         raise HTTPException(status_code=500, detail=f"Failed to create task: {str(e)}")
 
 
@@ -1780,7 +1780,7 @@ async def list_tasks(
                 for row in rows:
                     task_id = row.id or row.task_id
                     # Add task from database (database is primary source)
-                        all_tasks.append({
+                    all_tasks.append({
                             "id": task_id,
                             "title": row.title or "",
                             "description": row.description or "",

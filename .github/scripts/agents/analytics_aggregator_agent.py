@@ -7,7 +7,14 @@ Unified metrics and AI-driven insights
 from pathlib import Path
 from typing import Any, Dict
 
-from base_agent import BaseAgent
+import sys
+from pathlib import Path
+
+# Add project root to path
+project_root = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(project_root))
+
+from src.amas.agents.base.base_agent import BaseAgent
 
 
 class AnalyticsAggregatorAgent(BaseAgent):
