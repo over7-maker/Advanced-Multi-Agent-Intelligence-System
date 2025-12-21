@@ -48,6 +48,8 @@ PyYAML==6.0.2             # YAML parser (required by bandit)
 # These are required by the above tools but may not be auto-installed
 pydantic-settings>=2.1.0   # Pydantic settings management (required by src/amas/config/settings.py)
 aiohttp==3.11.11          # Async HTTP client (required by src/amas/agents/osint/osint_agent.py)
+bcrypt==4.2.0             # Password hashing library (required by src/amas/services/security_service.py)
+PyJWT==2.9.0              # JWT token library (required by src/amas/services/security_service.py)
 setuptools==75.6.0        # Package installation and distribution
 wheel==0.45.1             # Built-package format for Python
 pip==24.3.1               # Package installer
