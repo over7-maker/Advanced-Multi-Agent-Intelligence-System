@@ -25,7 +25,7 @@ pytest==9.0.0                    # Testing framework
 pytest-cov==7.0.0                # Coverage plugin for pytest
 pytest-benchmark==4.0.0          # Benchmark plugin for pytest
 pytest-rerunfailures==14.0       # Plugin for re-running flaky tests
-coverage==7.6.1                  # Code coverage measurement
+coverage>=7.10.6                 # Code coverage measurement (pytest-cov 7.0.0 requires >=7.10.6)
 iniconfig==2.0.0                 # INI config parser for pytest
 packaging==24.1                  # Core utilities for Python packages
 pluggy==1.5.0                    # Plugin management for pytest

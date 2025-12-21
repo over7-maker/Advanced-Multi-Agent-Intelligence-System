@@ -37,14 +37,16 @@ def upgrade() -> None:
         unique=False
     )
     
-    # Composite index for user task queries (created_by + created_at)
-    # This optimizes queries like: SELECT * FROM tasks WHERE created_by = 'user123' ORDER BY created_at DESC
-    op.create_index(
-        'ix_tasks_created_by_created_at',
-        'tasks',
-        ['created_by', 'created_at'],
-        unique=False
-    )
+    # Note: created_by column doesn't exist in tasks table schema
+    # If needed, add created_by column in a future migration before creating this index
+    # Composite index for user task queries (created_by + created_at) - REMOVED
+    # This would optimize queries like: SELECT * FROM tasks WHERE created_by = 'user123' ORDER BY created_at DESC
+    # op.create_index(
+    #     'ix_tasks_created_by_created_at',
+    #     'tasks',
+    #     ['created_by', 'created_at'],
+    #     unique=False
+    # )
     
     # GIN index for JSONB queries on execution_metadata
     # This optimizes queries like: SELECT * FROM tasks WHERE execution_metadata @> '{"prediction": {...}}'
@@ -88,7 +90,7 @@ def downgrade() -> None:
     
     op.drop_index('ix_tasks_completed_at', table_name='tasks')
     op.drop_index('ix_tasks_priority', table_name='tasks')
-    op.drop_index('ix_tasks_created_by_created_at', table_name='tasks')
+    # op.drop_index('ix_tasks_created_by_created_at', table_name='tasks')  # Index doesn't exist
     op.drop_index('ix_tasks_task_type_status', table_name='tasks')
     op.drop_index('ix_tasks_status_created_at', table_name='tasks')
 
