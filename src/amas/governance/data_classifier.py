@@ -612,7 +612,7 @@ class DataClassifier:
         current_depth: int = 0
     ) -> int:
         """Calculate the maximum nesting depth of a dictionary"""
-        # Compute actual depth (do not cap by MAX_DICT_DEPTH here)
+        # Base case: non-dict values contribute current depth
         if not isinstance(data, dict):
             return current_depth
 
