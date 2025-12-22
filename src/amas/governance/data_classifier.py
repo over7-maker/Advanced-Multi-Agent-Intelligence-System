@@ -635,7 +635,6 @@ class DataClassifier:
         pii_detections: List[PIIDetection]
     ) -> None:
         """Validate compliance flags are correctly set"""
-        """Validate that compliance flags are correctly set"""
         # Check for credit card detection - must have PCI flag
         credit_card_detections = [
             d for d in pii_detections
@@ -914,12 +913,8 @@ class DataClassifier:
         text: str
     ) -> bool:
         """Check if position is valid for redaction"""
-        return (
-            start_pos >= 0
-            and end_pos > start_pos
-            and start_pos < len(text)
-            and end_pos <= len(text)
-        )
+        text_len = len(text)
+        return 0 <= start_pos < end_pos <= text_len
 
     def _redact_dict(
         self,
