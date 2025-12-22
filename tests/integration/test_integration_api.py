@@ -63,9 +63,12 @@ class TestIntegrationAPI:
         manager.handle_webhook = AsyncMock(return_value={"event": "test", "data": {}})
         return manager
 
-    def test_create_integration(self, client, mock_integration_manager):
+    def test_create_integration(self, app, client, mock_integration_manager):
         """Test creating integration via API"""
-        with patch('src.api.routes.integrations.get_integration_manager', return_value=mock_integration_manager):
+        from src.amas.integration.integration_manager import get_integration_manager
+        app.dependency_overrides[get_integration_manager] = lambda: mock_integration_manager
+        
+        try:
             response = client.post(
                 "/integrations/",
                 json={
@@ -79,10 +82,15 @@ class TestIntegrationAPI:
             data = response.json()
             assert data["integration_id"] == "test_integration_001"
             assert data["platform"] == "n8n"
+        finally:
+            app.dependency_overrides.clear()
 
-    def test_create_integration_invalid_platform(self, client, mock_integration_manager):
+    def test_create_integration_invalid_platform(self, app, client, mock_integration_manager):
         """Test creating integration with invalid platform"""
-        with patch('src.api.routes.integrations.get_integration_manager', return_value=mock_integration_manager):
+        from src.amas.integration.integration_manager import get_integration_manager
+        app.dependency_overrides[get_integration_manager] = lambda: mock_integration_manager
+        
+        try:
             response = client.post(
                 "/integrations/",
                 json={
@@ -93,29 +101,50 @@ class TestIntegrationAPI:
             )
             
             assert response.status_code == 400
+        finally:
+            app.dependency_overrides.clear()
 
-    def test_list_integrations(self, client, mock_integration_manager):
+    def test_list_integrations(self, app, client, mock_integration_manager):
         """Test listing integrations via API"""
-        with patch('src.api.routes.integrations.get_integration_manager', return_value=mock_integration_manager):
+        from src.amas.integration.integration_manager import get_integration_manager
+        from src.api.routes.integrations import get_current_user
+        app.dependency_overrides[get_integration_manager] = lambda: mock_integration_manager
+        app.dependency_overrides[get_current_user] = lambda: {"user_id": "default_user"}
+        
+        try:
             response = client.get("/integrations/")
             
             assert response.status_code == 200
             data = response.json()
             assert "integrations" in data
             assert len(data["integrations"]) > 0
+        finally:
+            app.dependency_overrides.clear()
 
-    def test_get_integration(self, client, mock_integration_manager):
+    def test_get_integration(self, app, client, mock_integration_manager):
         """Test getting integration via API"""
-        with patch('src.api.routes.integrations.get_integration_manager', return_value=mock_integration_manager):
+        from src.amas.integration.integration_manager import get_integration_manager
+        from src.api.routes.integrations import get_current_user
+        app.dependency_overrides[get_integration_manager] = lambda: mock_integration_manager
+        app.dependency_overrides[get_current_user] = lambda: {"user_id": "default_user"}
+        
+        try:
             response = client.get("/integrations/test_integration_001")
             
             assert response.status_code == 200
             data = response.json()
             assert data["integration_id"] == "test_integration_001"
+        finally:
+            app.dependency_overrides.clear()
 
-    def test_update_integration(self, client, mock_integration_manager):
+    def test_update_integration(self, app, client, mock_integration_manager):
         """Test updating integration via API"""
-        with patch('src.api.routes.integrations.get_integration_manager', return_value=mock_integration_manager):
+        from src.amas.integration.integration_manager import get_integration_manager
+        from src.api.routes.integrations import get_current_user
+        app.dependency_overrides[get_integration_manager] = lambda: mock_integration_manager
+        app.dependency_overrides[get_current_user] = lambda: {"user_id": "default_user"}
+        
+        try:
             response = client.put(
                 "/integrations/test_integration_001",
                 json={
@@ -124,17 +153,31 @@ class TestIntegrationAPI:
             )
             
             assert response.status_code == 200
+        finally:
+            app.dependency_overrides.clear()
 
-    def test_delete_integration(self, client, mock_integration_manager):
+    def test_delete_integration(self, app, client, mock_integration_manager):
         """Test deleting integration via API"""
-        with patch('src.api.routes.integrations.get_integration_manager', return_value=mock_integration_manager):
+        from src.amas.integration.integration_manager import get_integration_manager
+        from src.api.routes.integrations import get_current_user
+        app.dependency_overrides[get_integration_manager] = lambda: mock_integration_manager
+        app.dependency_overrides[get_current_user] = lambda: {"user_id": "default_user"}
+        
+        try:
             response = client.delete("/integrations/test_integration_001")
             
             assert response.status_code == 200
+        finally:
+            app.dependency_overrides.clear()
 
-    def test_trigger_integration(self, client, mock_integration_manager):
+    def test_trigger_integration(self, app, client, mock_integration_manager):
         """Test triggering integration event via API"""
-        with patch('src.api.routes.integrations.get_integration_manager', return_value=mock_integration_manager):
+        from src.amas.integration.integration_manager import get_integration_manager
+        from src.api.routes.integrations import get_current_user
+        app.dependency_overrides[get_integration_manager] = lambda: mock_integration_manager
+        app.dependency_overrides[get_current_user] = lambda: {"user_id": "default_user"}
+        
+        try:
             response = client.post(
                 "/integrations/test_integration_001/trigger",
                 json={
@@ -146,10 +189,15 @@ class TestIntegrationAPI:
             assert response.status_code == 200
             data = response.json()
             assert data["success"] is True
+        finally:
+            app.dependency_overrides.clear()
 
-    def test_webhook_endpoint(self, client, mock_integration_manager):
+    def test_webhook_endpoint(self, app, client, mock_integration_manager):
         """Test webhook endpoint"""
-        with patch('src.api.routes.integrations.get_integration_manager', return_value=mock_integration_manager):
+        from src.amas.integration.integration_manager import get_integration_manager
+        app.dependency_overrides[get_integration_manager] = lambda: mock_integration_manager
+        
+        try:
             # Webhook endpoint uses platform-based path: /integrations/webhooks/{platform}
             response = client.post(
                 "/integrations/webhooks/n8n",
@@ -159,4 +207,6 @@ class TestIntegrationAPI:
             
             # Should succeed or return appropriate error
             assert response.status_code in [200, 400, 404]
+        finally:
+            app.dependency_overrides.clear()
 
