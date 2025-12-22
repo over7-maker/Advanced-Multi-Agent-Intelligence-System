@@ -6,7 +6,7 @@ Implements comprehensive metrics collection for monitoring and observability
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 try:
     from prometheus_client import (
@@ -298,6 +298,13 @@ class PrometheusMetricsService:
             "Task creation duration in seconds",
             ["task_type", "status"],
             buckets=[0.1, 0.5, 1.0, 2.0, 5.0],
+            registry=self.registry,
+        )
+        
+        self.metrics["amas_task_creations_total"] = Counter(
+            "amas_task_creations_total",
+            "Total number of task creations",
+            ["task_type", "status"],
             registry=self.registry,
         )
         
@@ -710,6 +717,31 @@ class PrometheusMetricsService:
                 task_type=task_type,
                 status=status
             ).observe(duration)
+        
+        # Increment task creations counter
+        if "amas_task_creations_total" in self.metrics:
+            self.metrics["amas_task_creations_total"].labels(
+                task_type=task_type,
+                status=status
+            ).inc()
+    
+    def record_cache_hit(self, cache_type: str):
+        """Record cache hit"""
+        if not self.enabled:
+            return
+        
+        if "amas_cache_hits_total" in self.metrics:
+            self.metrics["amas_cache_hits_total"].labels(
+                cache_type=cache_type
+            ).inc()
+        
+        # Update cache hit ratio
+        if "amas_cache_hit_ratio" in self.metrics:
+            # Get current hits and misses to calculate ratio
+            # This is a simplified version - in production, you'd track both
+            self.metrics["amas_cache_hit_ratio"].labels(
+                cache_type=cache_type
+            ).set(0.8)  # Placeholder - should be calculated from actual hits/misses
 
     def record_task_execution(
         self,

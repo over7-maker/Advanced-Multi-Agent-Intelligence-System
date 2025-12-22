@@ -230,12 +230,15 @@ class AuditLogger:
         # Setup structured logging
         self.logger = self._setup_logger()
         
-        # Start async write queue and writer task
+        # Start async write queue and writer task (only if event loop is running)
         self._write_queue = asyncio.Queue(maxsize=1000)
-        self._start_async_writer()
-        
-        # Start background flush task
-        self._start_flush_task()
+        try:
+            loop = asyncio.get_running_loop()
+            self._start_async_writer()
+            self._start_flush_task()
+        except RuntimeError:
+            # No running event loop - tasks will be started on first async call
+            logger.debug("No running event loop, deferring async task creation")
         
         logger.info(f"Audit logger initialized: {log_file} (buffer: {buffer_size}, redaction: {enable_redaction})")
     
@@ -317,6 +320,21 @@ class AuditLogger:
     
     async def log_event(self, event: AuditEvent):
         """Log an audit event with automatic buffering and redaction"""
+        # Ensure async tasks are started if they weren't in __init__
+        if self._writer_task is None or self._flush_task is None:
+            try:
+                loop = asyncio.get_running_loop()
+                if self._writer_task is None:
+                    self._start_async_writer()
+                if self._flush_task is None:
+                    self._start_flush_task()
+            except RuntimeError:
+                # Still no event loop - write synchronously
+                logger.warning("No event loop available, writing audit event synchronously")
+                event_dict = asdict(event)
+                self.logger.info(json.dumps(event_dict, default=str))
+                return
+        
         # Redact PII if enabled
         if self.enable_redaction and self.pii_redactor:
             redacted_details, pii_found = self.pii_redactor.redact_dict(event.details)

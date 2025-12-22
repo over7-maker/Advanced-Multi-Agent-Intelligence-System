@@ -21,8 +21,8 @@ from agents.analytics_aggregator_agent import AnalyticsAggregatorAgent
 from agents.rollback_guardian_agent import RollbackGuardianAgent
 
 
-async def test_agent_initialization(agent: BaseAgent, agent_name: str):
-    """Test agent initialization"""
+async def _test_agent_initialization(agent: BaseAgent, agent_name: str):
+    """Test agent initialization (helper function, not a pytest test)"""
     print(f"\nTest: {agent_name} Initialization")
     try:
         result = await agent.initialize()
@@ -34,8 +34,8 @@ async def test_agent_initialization(agent: BaseAgent, agent_name: str):
         return False
 
 
-async def test_agent_execution(agent: BaseAgent, agent_name: str, context: dict):
-    """Test agent execution"""
+async def _test_agent_execution(agent: BaseAgent, agent_name: str, context: dict):
+    """Test agent execution (helper function, not a pytest test)"""
     print(f"\nTest: {agent_name} Execution")
     try:
         # Ensure agent is initialized
@@ -51,8 +51,8 @@ async def test_agent_execution(agent: BaseAgent, agent_name: str, context: dict)
         return False
 
 
-async def test_agent_monitoring(agent: BaseAgent, agent_name: str):
-    """Test agent monitoring"""
+async def _test_agent_monitoring(agent: BaseAgent, agent_name: str):
+    """Test agent monitoring (helper function, not a pytest test)"""
     print(f"\nTest: {agent_name} Monitoring")
     try:
         result = await agent.monitor()
@@ -65,8 +65,8 @@ async def test_agent_monitoring(agent: BaseAgent, agent_name: str):
         return False
 
 
-async def test_agent_cleanup(agent: BaseAgent, agent_name: str):
-    """Test agent cleanup"""
+async def _test_agent_cleanup(agent: BaseAgent, agent_name: str):
+    """Test agent cleanup (helper function, not a pytest test)"""
     print(f"\nTest: {agent_name} Cleanup")
     try:
         result = await agent.cleanup()
@@ -87,15 +87,15 @@ async def test_workflow_orchestrator_agent():
     agent = WorkflowOrchestratorAgent()
     
     results = []
-    results.append(await test_agent_initialization(agent, "WorkflowOrchestrator"))
+    results.append(await _test_agent_initialization(agent, "WorkflowOrchestrator"))
     
     context = {
         "task_type": "code_review",
         "task_data": {"files": ["test.py"], "complexity": "medium"}
     }
-    results.append(await test_agent_execution(agent, "WorkflowOrchestrator", context))
-    results.append(await test_agent_monitoring(agent, "WorkflowOrchestrator"))
-    results.append(await test_agent_cleanup(agent, "WorkflowOrchestrator"))
+    results.append(await _test_agent_execution(agent, "WorkflowOrchestrator", context))
+    results.append(await _test_agent_monitoring(agent, "WorkflowOrchestrator"))
+    results.append(await _test_agent_cleanup(agent, "WorkflowOrchestrator"))
     
     return all(results)
 
@@ -109,15 +109,15 @@ async def test_data_validator_agent():
     agent = DataValidatorAgent()
     
     results = []
-    results.append(await test_agent_initialization(agent, "DataValidator"))
+    results.append(await _test_agent_initialization(agent, "DataValidator"))
     
     context = {
         "data": {"name": "test", "value": 123, "timestamp": "2024-01-01T00:00:00Z"},
         "validation_type": "comprehensive"
     }
-    results.append(await test_agent_execution(agent, "DataValidator", context))
-    results.append(await test_agent_monitoring(agent, "DataValidator"))
-    results.append(await test_agent_cleanup(agent, "DataValidator"))
+    results.append(await _test_agent_execution(agent, "DataValidator", context))
+    results.append(await _test_agent_monitoring(agent, "DataValidator"))
+    results.append(await _test_agent_cleanup(agent, "DataValidator"))
     
     return all(results)
 
@@ -131,15 +131,15 @@ async def test_performance_optimizer_agent():
     agent = PerformanceOptimizerAgent()
     
     results = []
-    results.append(await test_agent_initialization(agent, "PerformanceOptimizer"))
+    results.append(await _test_agent_initialization(agent, "PerformanceOptimizer"))
     
     context = {
         "metrics": {"execution_time": 1200, "memory_usage": 512, "cpu_usage": 75},
         "target": "execution_time"
     }
-    results.append(await test_agent_execution(agent, "PerformanceOptimizer", context))
-    results.append(await test_agent_monitoring(agent, "PerformanceOptimizer"))
-    results.append(await test_agent_cleanup(agent, "PerformanceOptimizer"))
+    results.append(await _test_agent_execution(agent, "PerformanceOptimizer", context))
+    results.append(await _test_agent_monitoring(agent, "PerformanceOptimizer"))
+    results.append(await _test_agent_cleanup(agent, "PerformanceOptimizer"))
     
     return all(results)
 
@@ -153,15 +153,15 @@ async def test_security_monitor_agent():
     agent = SecurityMonitorAgent()
     
     results = []
-    results.append(await test_agent_initialization(agent, "SecurityMonitor"))
+    results.append(await _test_agent_initialization(agent, "SecurityMonitor"))
     
     context = {
         "target": "codebase",
         "scan_type": "comprehensive"
     }
-    results.append(await test_agent_execution(agent, "SecurityMonitor", context))
-    results.append(await test_agent_monitoring(agent, "SecurityMonitor"))
-    results.append(await test_agent_cleanup(agent, "SecurityMonitor"))
+    results.append(await _test_agent_execution(agent, "SecurityMonitor", context))
+    results.append(await _test_agent_monitoring(agent, "SecurityMonitor"))
+    results.append(await _test_agent_cleanup(agent, "SecurityMonitor"))
     
     return all(results)
 
@@ -175,15 +175,15 @@ async def test_cost_optimizer_agent():
     agent = CostOptimizerAgent()
     
     results = []
-    results.append(await test_agent_initialization(agent, "CostOptimizer"))
+    results.append(await _test_agent_initialization(agent, "CostOptimizer"))
     
     context = {
         "costs": {"compute": 0.10, "storage": 0.05, "api_calls": 0.15},
         "budget_limit": 0.20
     }
-    results.append(await test_agent_execution(agent, "CostOptimizer", context))
-    results.append(await test_agent_monitoring(agent, "CostOptimizer"))
-    results.append(await test_agent_cleanup(agent, "CostOptimizer"))
+    results.append(await _test_agent_execution(agent, "CostOptimizer", context))
+    results.append(await _test_agent_monitoring(agent, "CostOptimizer"))
+    results.append(await _test_agent_cleanup(agent, "CostOptimizer"))
     
     return all(results)
 
@@ -197,15 +197,15 @@ async def test_analytics_aggregator_agent():
     agent = AnalyticsAggregatorAgent()
     
     results = []
-    results.append(await test_agent_initialization(agent, "AnalyticsAggregator"))
+    results.append(await _test_agent_initialization(agent, "AnalyticsAggregator"))
     
     context = {
         "time_range": "24h",
         "metrics_types": ["performance", "cost", "security"]
     }
-    results.append(await test_agent_execution(agent, "AnalyticsAggregator", context))
-    results.append(await test_agent_monitoring(agent, "AnalyticsAggregator"))
-    results.append(await test_agent_cleanup(agent, "AnalyticsAggregator"))
+    results.append(await _test_agent_execution(agent, "AnalyticsAggregator", context))
+    results.append(await _test_agent_monitoring(agent, "AnalyticsAggregator"))
+    results.append(await _test_agent_cleanup(agent, "AnalyticsAggregator"))
     
     return all(results)
 
@@ -219,15 +219,15 @@ async def test_rollback_guardian_agent():
     agent = RollbackGuardianAgent()
     
     results = []
-    results.append(await test_agent_initialization(agent, "RollbackGuardian"))
+    results.append(await _test_agent_initialization(agent, "RollbackGuardian"))
     
     context = {
         "deployment_status": {"status": "healthy", "error_rate": 0.01},
         "metrics": {"response_time": 200, "error_count": 5}
     }
-    results.append(await test_agent_execution(agent, "RollbackGuardian", context))
-    results.append(await test_agent_monitoring(agent, "RollbackGuardian"))
-    results.append(await test_agent_cleanup(agent, "RollbackGuardian"))
+    results.append(await _test_agent_execution(agent, "RollbackGuardian", context))
+    results.append(await _test_agent_monitoring(agent, "RollbackGuardian"))
+    results.append(await _test_agent_cleanup(agent, "RollbackGuardian"))
     
     return all(results)
 

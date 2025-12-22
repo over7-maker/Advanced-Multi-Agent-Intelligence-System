@@ -218,8 +218,18 @@ class ToolRegistry:
     
     def save_definitions(self):
         """Save tool definitions to config file"""
+        def convert_enums(obj):
+            """Recursively convert Enum objects to their string values"""
+            if isinstance(obj, Enum):
+                return obj.value
+            elif isinstance(obj, dict):
+                return {k: convert_enums(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_enums(item) for item in obj]
+            return obj
+        
         config = {
-            "tools": [asdict(tool) for tool in self.tools.values()]
+            "tools": [convert_enums(asdict(tool)) for tool in self.tools.values()]
         }
         
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
