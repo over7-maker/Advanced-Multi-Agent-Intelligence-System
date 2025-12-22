@@ -1,4 +1,4 @@
-name: Core-6: Security Gateway
+name: "Core-6: Security Gateway"
 
 # Consolidated Security Gateway Workflow
 # Combines: Security Threat Intelligence, Governance CI, Production Secure CI/CD,

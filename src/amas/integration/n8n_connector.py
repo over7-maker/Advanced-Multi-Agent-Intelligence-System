@@ -998,7 +998,9 @@ class N8NConnector:
                             headers=headers,
                             timeout=aiohttp.ClientTimeout(total=5)
                         ) as response:
-                            return response.status in [200, 401]  # 401 means auth required but endpoint exists
+                            # For credential validation, only HTTP 200 is considered success.
+                            # 401 (unauthorized) should be treated as a failure.
+                            return response.status == 200
                     except Exception:
                         pass
                 

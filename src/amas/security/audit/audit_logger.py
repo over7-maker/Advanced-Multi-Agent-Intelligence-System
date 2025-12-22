@@ -5,18 +5,18 @@ Provides structured audit logging with PII redaction,
 buffered writes, and compliance-ready audit trails.
 """
 
-import json
-import logging
 import asyncio
 import hashlib
+import json
+import logging
 import os
-from datetime import datetime, timezone, timedelta
-from typing import Dict, List, Any, Optional, Set
-from dataclasses import dataclass, asdict, field
+import re
+from contextlib import asynccontextmanager
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
-from contextlib import asynccontextmanager
-import re
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -323,14 +323,19 @@ class AuditLogger:
         # Ensure async tasks are started if they weren't in __init__
         if self._writer_task is None or self._flush_task is None:
             try:
-                loop = asyncio.get_running_loop()
+                asyncio.get_running_loop()
                 if self._writer_task is None:
                     self._start_async_writer()
                 if self._flush_task is None:
                     self._start_flush_task()
             except RuntimeError:
-                # Still no event loop - write synchronously
+                # Still no event loop - write synchronously (with redaction)
                 logger.warning("No event loop available, writing audit event synchronously")
+                if self.enable_redaction and self.pii_redactor:
+                    redacted_details, pii_found = self.pii_redactor.redact_dict(event.details)
+                    event.details = redacted_details
+                    event.pii_detected = pii_found
+                    event.sensitive_data_redacted = True
                 event_dict = asdict(event)
                 self.logger.info(json.dumps(event_dict, default=str))
                 return
@@ -356,9 +361,17 @@ class AuditLogger:
                 await self._flush_buffer_internal()
     
     async def flush_buffer(self):
-        """Manually flush buffer to disk"""
+        """Manually flush buffer to disk and wait for writes to complete"""
         async with self._buffer_lock:
             await self._flush_buffer_internal()
+        
+        # Ensure all queued events are written before returning
+        if self._write_queue is not None:
+            try:
+                await self._write_queue.join()
+            except Exception:
+                # Best-effort; do not fail caller if join has issues
+                pass
     
     async def _flush_buffer_internal(self):
         """Internal buffer flush (must be called with buffer_lock held)"""
@@ -478,6 +491,14 @@ class AuditLogger:
                                    trace_id: Optional[str] = None,
                                    details: Optional[Dict] = None):
         """Log security violation"""
+        severity_normalized = (severity or "").lower()
+        if severity_normalized in {"high", "critical"}:
+            risk_score = 1.0
+        elif severity_normalized == "medium":
+            risk_score = 0.7
+        else:
+            risk_score = 0.3
+        
         event = AuditEvent(
             event_id=self._generate_event_id(),
             timestamp=datetime.now(timezone.utc).isoformat(),
@@ -487,7 +508,7 @@ class AuditLogger:
             action="security_violation",
             ip_address=ip_address,
             trace_id=trace_id,
-            risk_score=1.0 if severity == "critical" else 0.7,
+            risk_score=risk_score,
             details={
                 "violation_type": violation_type,
                 "severity": severity,

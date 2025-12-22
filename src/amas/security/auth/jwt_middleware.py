@@ -5,17 +5,16 @@ Provides enterprise-grade authentication with JWKS caching,
 token validation, and comprehensive security headers.
 """
 
-import jwt
-import httpx
+import asyncio
 import json
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import Dict, Optional, List, Any
-from functools import lru_cache
-from fastapi import HTTPException, status, Request, Response
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-import asyncio
-import hashlib
+from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional
+
+import httpx
+import jwt
+from fastapi import HTTPException, Request, Response, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +72,12 @@ class JWTMiddleware:
                     response = await client.get(self.jwks_uri)
                     response.raise_for_status()
                     
-                    self._jwks_cache = response.json()
+                    data = response.json()
+                    # In tests, response.json() may be an AsyncMock (coroutine)
+                    if asyncio.iscoroutine(data):
+                        data = await data
+                    
+                    self._jwks_cache = data
                     self._cache_timestamp = now
                     
                     logger.info(f"JWKS cache updated with {len(self._jwks_cache.get('keys', []))} keys")
@@ -595,7 +599,7 @@ class SecureAuthenticationManager:
             
             if jti and exp:
                 token_blacklist.blacklist_token(jti, exp)
-                logger.info(f"User logged out successfully")
+                logger.info("User logged out successfully")
             else:
                 logger.warning("Token logout failed: missing JTI or EXP claims")
                 

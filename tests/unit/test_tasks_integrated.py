@@ -3,24 +3,22 @@ Unit tests for tasks_integrated.py helper functions
 Tests individual functions extracted from create_task()
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
-import uuid
+
+import pytest
 
 from src.api.routes.tasks_integrated import (
+    TaskCreate,
+    _broadcast_task_created,
+    _cache_task,
+    _create_error_response,
     _generate_task_id,
     _get_ml_prediction,
-    _select_agents,
-    _persist_task_to_db,
-    _cache_task,
-    _broadcast_task_created,
-    _schedule_auto_execution,
-    _log_error_with_context,
-    _create_error_response,
     _handle_database_error,
     _handle_orchestrator_error,
-    TaskCreate
+    _log_error_with_context,
+    _persist_task_to_db,
+    _select_agents,
 )
 
 
@@ -218,7 +216,10 @@ class TestCacheTask:
         selected_agents = ["agent1"]
         
         # Clear cache first
-        from src.api.routes.tasks_integrated import _recently_accessed_tasks, _recently_accessed_tasks_timestamps
+        from src.api.routes.tasks_integrated import (
+            _recently_accessed_tasks,
+            _recently_accessed_tasks_timestamps,
+        )
         _recently_accessed_tasks.clear()
         _recently_accessed_tasks_timestamps.clear()
         
@@ -243,8 +244,8 @@ class TestCacheTask:
         mock_redis.setex = AsyncMock()
         
         # Mock cache services to raise ImportError so it falls back to Redis
-        with patch('src.api.routes.tasks_integrated.get_task_cache_service', side_effect=ImportError):
-            with patch('src.api.routes.tasks_integrated.get_prediction_cache_service', side_effect=ImportError):
+        with patch('src.amas.services.task_cache_service.get_task_cache_service', side_effect=ImportError):
+            with patch('src.amas.services.prediction_cache_service.get_prediction_cache_service', side_effect=ImportError):
                 await _cache_task("task_123", task_data, prediction, selected_agents, mock_redis, "user_123")
         
         # Should call setex for task and prediction
@@ -360,7 +361,7 @@ class TestUserContextExtraction:
     def test_user_context_with_user(self):
         """Test user context extraction with user"""
         from src.api.routes.tasks_integrated import User
-        
+
         # Create User with required fields
         user = User(
             id="user_123",

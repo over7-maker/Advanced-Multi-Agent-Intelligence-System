@@ -663,21 +663,25 @@ class PrometheusMetricsService:
                 pass
         
         dummy = DummyMetric()
-        # Create dummy metrics that do nothing
+        # Create dummy metrics that do nothing. Ensure keys expected by tests exist
         self.metrics = {
+            # Legacy HTTP metrics
             "http_requests_total": dummy,
             "http_request_duration_seconds": dummy,
             "http_request_size_bytes": dummy,
             "http_response_size_bytes": dummy,
+            # Auth metrics
             "auth_attempts_total": dummy,
             "auth_failures_total": dummy,
             "active_sessions": dummy,
+            # Agent/task metrics
             "agents_total": dummy,
             "agent_executions_total": dummy,
             "agent_execution_duration_seconds": dummy,
             "tasks_total": dummy,
             "task_duration_seconds": dummy,
             "tasks_in_progress": dummy,
+            # System/DB/cache metrics
             "system_uptime_seconds": dummy,
             "system_memory_usage_bytes": dummy,
             "system_cpu_usage_percent": dummy,
@@ -691,10 +695,13 @@ class PrometheusMetricsService:
             "users_total": dummy,
             "api_keys_total": dummy,
             "application_info": dummy,
-            # Add all amas_ prefixed metrics
+            # amas_* metrics expected by tests
             "amas_task_executions_total": dummy,
             "amas_agent_executions_total": dummy,
+            "amas_ai_provider_calls_total": dummy,
             "amas_http_requests_total": dummy,
+            "amas_db_query_duration_seconds": dummy,
+            "amas_system_cpu_usage_percent": dummy,
         }
 
     # ========================================================================
