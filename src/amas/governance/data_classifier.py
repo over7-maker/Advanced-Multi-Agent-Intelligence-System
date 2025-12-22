@@ -837,6 +837,17 @@ class DataClassifier:
     ) -> str:
         """Redact PII from string data"""
         redacted_text = data
+        position_detections = self._extract_position_detections(
+            classification_result, redacted_text
+        )
+        return self._apply_redactions(redacted_text, position_detections)
+
+    def _extract_position_detections(
+        self,
+        classification_result: ClassificationResult,
+        redacted_text: str
+    ) -> List[tuple[int, int, PIIDetection]]:
+        """Extract and deduplicate position-based detections"""
         position_detections = []
         seen_positions: set[tuple[int, int]] = set()
 
@@ -849,7 +860,7 @@ class DataClassifier:
                     parts = detection.location.split('_')
                     start_pos = int(parts[1])
                     end_pos = int(parts[2])
-                    
+
                     # Deduplicate: only add if we haven't seen this position range
                     position_key = (start_pos, end_pos)
                     if position_key not in seen_positions:
@@ -866,26 +877,25 @@ class DataClassifier:
                             1
                         )
 
-        # Apply redactions in reverse order to maintain position validity
-        # Sort by start position (descending) to avoid position shifts
+        return position_detections
+
+    def _apply_redactions(
+        self,
+        redacted_text: str,
+        position_detections: List[tuple[int, int, PIIDetection]]
+    ) -> str:
+        """Apply redactions to text in reverse order"""
         # Use a set to track which positions have been redacted to avoid duplicates
         redacted_positions: set[tuple[int, int]] = set()
-        
+
         for start_pos, end_pos, detection in sorted(
             position_detections, key=lambda x: x[0], reverse=True
         ):
             # Skip if this position range has already been redacted
             if (start_pos, end_pos) in redacted_positions:
                 continue
-                
-            if (
-                start_pos >= 0
-                and end_pos > start_pos
-                and start_pos < len(redacted_text)
-                and end_pos <= len(redacted_text)
-            ):
-                # Verify the original value matches at this position
-                # (before any modifications)
+
+            if self._is_valid_position(start_pos, end_pos, redacted_text):
                 if redacted_text[start_pos:end_pos] == detection.original_value:
                     redacted_text = (
                         redacted_text[:start_pos] +
@@ -896,6 +906,20 @@ class DataClassifier:
                     redacted_positions.add((start_pos, end_pos))
 
         return redacted_text
+
+    def _is_valid_position(
+        self,
+        start_pos: int,
+        end_pos: int,
+        text: str
+    ) -> bool:
+        """Check if position is valid for redaction"""
+        return (
+            start_pos >= 0
+            and end_pos > start_pos
+            and start_pos < len(text)
+            and end_pos <= len(text)
+        )
 
     def _redact_dict(
         self,
@@ -954,26 +978,46 @@ class DataClassifier:
         current: Any = data
 
         # Navigate to the parent of the target field
-        for part in parts[:-1]:
+        current = self._navigate_to_field(data, parts[:-1])
+        if current is None:
+            return  # Invalid path
+
+        # Redact the final field
+        self._redact_final_field(current, parts[-1], detection)
+
+    def _navigate_to_field(
+        self,
+        data: Any,
+        path_parts: List[str]
+    ) -> Any:
+        """Navigate to a field in nested structure"""
+        current: Any = data
+        for part in path_parts:
             if part.isdigit():
                 if isinstance(current, list):
                     idx = int(part)
                     if idx < len(current):
                         current = current[idx]
                     else:
-                        return  # Invalid path
+                        return None  # Invalid path
                 elif isinstance(current, dict):
                     current = current[part]
                 else:
-                    return  # Invalid path
+                    return None  # Invalid path
             else:
                 if isinstance(current, dict):
                     current = current[part]
                 else:
-                    return  # Invalid path
+                    return None  # Invalid path
+        return current
 
-        # Redact the final field
-        final_key = parts[-1]
+    def _redact_final_field(
+        self,
+        current: Any,
+        final_key: str,
+        detection: PIIDetection
+    ) -> None:
+        """Redact the final field in the path"""
         if final_key.isdigit():
             idx = int(final_key)
             if isinstance(current, list) and idx < len(current):
