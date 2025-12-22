@@ -1090,7 +1090,7 @@ _reporter_instance: ComplianceReporter | None = None
 
 def get_data_classifier() -> DataClassifier:
     """Get global data classifier instance (singleton)"""
-    global _classifier_instance
+    global _classifier_instance  # pylint: disable=global-statement
     if _classifier_instance is None:
         _classifier_instance = DataClassifier()
     return _classifier_instance
@@ -1098,7 +1098,7 @@ def get_data_classifier() -> DataClassifier:
 
 def get_compliance_reporter() -> ComplianceReporter:
     """Get global compliance reporter instance (singleton)"""
-    global _reporter_instance
+    global _reporter_instance  # pylint: disable=global-statement
     if _reporter_instance is None:
         _reporter_instance = ComplianceReporter()
     return _reporter_instance
