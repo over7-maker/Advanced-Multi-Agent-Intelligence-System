@@ -440,12 +440,28 @@ class ToolExecutionGuard:
                 agent_id, tool_name, user_id
             )
             
+            # Hard denials and rate limits take precedence
             if access_decision == ToolAccessDecision.DENY:
                 raise ContractViolationError(
                     agent_id, "tool_access_denied", f"Access denied to tool {tool_name}"
                 )
             
-            elif access_decision == ToolAccessDecision.REQUIRE_APPROVAL:
+            if access_decision == ToolAccessDecision.RATE_LIMITED:
+                raise ContractViolationError(
+                    agent_id, "rate_limit_exceeded", f"Rate limit exceeded for tool {tool_name}"
+                )
+            
+            # Validate parameters BEFORE approval flow so invalid input is rejected
+            params_valid, param_error = self.permissions_engine.validate_tool_parameters(
+                tool_name, parameters
+            )
+            if not params_valid:
+                raise ContractViolationError(
+                    agent_id, "invalid_parameters", param_error or "Invalid parameters"
+                )
+            
+            # High‑risk tools may require approval after validation
+            if access_decision == ToolAccessDecision.REQUIRE_APPROVAL:
                 approval_id = await self._request_approval(
                     execution_id, agent_id, tool_name, parameters, user_id
                 )
@@ -454,20 +470,6 @@ class ToolExecutionGuard:
                     "approval_id": approval_id,
                     "message": f"Tool {tool_name} requires human approval"
                 }
-            
-            elif access_decision == ToolAccessDecision.RATE_LIMITED:
-                raise ContractViolationError(
-                    agent_id, "rate_limit_exceeded", f"Rate limit exceeded for tool {tool_name}"
-                )
-            
-            # Validate parameters
-            params_valid, param_error = self.permissions_engine.validate_tool_parameters(
-                tool_name, parameters
-            )
-            if not params_valid:
-                raise ContractViolationError(
-                    agent_id, "invalid_parameters", param_error or "Invalid parameters"
-                )
             
             # Execute the actual tool
             # In real implementation, this would dispatch to actual tool handlers

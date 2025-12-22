@@ -96,14 +96,18 @@ except ImportError:
 
 # Database dependency (optional)
 async def get_db():
-    """Get database session (optional)"""
+    """Get database session (optional)
+    
+    In test/development environments, returns None when the database
+    is not initialized so API routes can still be exercised.
+    """
     try:
         from src.database.connection import get_session
         async for session in get_session():
-            yield session
+            return session
     except Exception as e:
         logger.debug(f"Database not available (expected in dev): {e}")
-        yield None
+        return None
 
 # Redis dependency (optional)
 async def get_redis():

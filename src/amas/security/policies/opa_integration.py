@@ -42,7 +42,6 @@ class OPAClient:
         self.opa_url = opa_url.rstrip('/')
         self.timeout_seconds = timeout_seconds
         self.retry_attempts = retry_attempts
-        self.client = httpx.AsyncClient(timeout=timeout_seconds)
         
         logger.info(f"OPA Client initialized for {self.opa_url}")
     
@@ -73,15 +72,16 @@ class OPAClient:
             try:
                 logger.debug(f"Evaluating policy {policy_path} (attempt {attempt + 1})")
                 
-                response = await self.client.post(
-                    url,
-                    json=payload,
-                    headers=headers
-                )
-                
-                # Calculate evaluation time
-                end_time = datetime.now(timezone.utc)
-                evaluation_time_ms = (end_time - start_time).total_seconds() * 1000
+                async with httpx.AsyncClient(timeout=self.timeout_seconds) as client:
+                    response = await client.post(
+                        url,
+                        json=payload,
+                        headers=headers
+                    )
+                    
+                    # Calculate evaluation time
+                    end_time = datetime.now(timezone.utc)
+                    evaluation_time_ms = (end_time - start_time).total_seconds() * 1000
                 
                 if response.status_code == 200:
                     result_data = response.json()

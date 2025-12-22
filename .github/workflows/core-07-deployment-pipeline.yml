@@ -1,4 +1,4 @@
-name: Core-7: Deployment Pipeline
+name: "Core-7: Deployment Pipeline"
 
 # Consolidated Deployment Pipeline Workflow
 # Combines: Enhanced Build & Deploy, Enhanced CI/CD Pipeline, Production CI/CD,
