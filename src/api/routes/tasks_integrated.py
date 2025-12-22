@@ -917,7 +917,8 @@ def _schedule_auto_execution(
 class TaskCreate(BaseModel):
     """Task creation model with full integration support"""
     title: str
-    description: str
+    # Limit description size to prevent abuse and ensure security tests pass
+    description: str = Field(..., max_length=10000)
     task_type: str  # security_scan, code_analysis, intelligence_gathering, etc.
     target: str  # URL, repo, system, etc.
     parameters: Optional[Dict[str, Any]] = None
