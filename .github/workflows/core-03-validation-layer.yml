@@ -1,4 +1,4 @@
-name: Core-3: Validation Layer
+name: "Core-3: Validation Layer"
 
 # Consolidated Validation Layer Workflow
 # Combines: Workflow Validation, PR CI Checks, Web CI, Architecture Validation

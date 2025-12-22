@@ -694,6 +694,23 @@ class PrometheusMetricsService:
     # METRIC RECORDING METHODS (PART_6.MD specification)
     # ========================================================================
     
+    def record_task_creation(
+        self,
+        task_type: str,
+        duration: float,
+        status: str = "success"
+    ) -> None:
+        """Record task creation metrics"""
+        if not self.enabled:
+            return
+        
+        # Record task creation duration
+        if "amas_task_creation_duration_seconds" in self.metrics:
+            self.metrics["amas_task_creation_duration_seconds"].labels(
+                task_type=task_type,
+                status=status
+            ).observe(duration)
+
     def record_task_execution(
         self,
         task_id: str,
