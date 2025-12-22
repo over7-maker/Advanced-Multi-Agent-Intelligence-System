@@ -197,7 +197,7 @@ class TestTokenBlacklist:
         token_blacklist.blacklist_token(valid_jti, valid_timestamp)
         
         # Force cleanup
-        token_blacklist._cleanup_expired()
+        token_blacklist._cleanup_expired(force=True)
         
         # Expired token should be removed
         assert token_blacklist.is_blacklisted(expired_jti) is False

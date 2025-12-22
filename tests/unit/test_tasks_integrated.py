@@ -242,7 +242,10 @@ class TestCacheTask:
         mock_redis = AsyncMock()
         mock_redis.setex = AsyncMock()
         
-        await _cache_task("task_123", task_data, prediction, selected_agents, mock_redis, "user_123")
+        # Mock cache services to raise ImportError so it falls back to Redis
+        with patch('src.api.routes.tasks_integrated.get_task_cache_service', side_effect=ImportError):
+            with patch('src.api.routes.tasks_integrated.get_prediction_cache_service', side_effect=ImportError):
+                await _cache_task("task_123", task_data, prediction, selected_agents, mock_redis, "user_123")
         
         # Should call setex for task and prediction
         assert mock_redis.setex.call_count >= 1
@@ -358,10 +361,12 @@ class TestUserContextExtraction:
         """Test user context extraction with user"""
         from src.api.routes.tasks_integrated import User
         
-        user = User()
-        user.id = "user_123"
-        user.username = "testuser"
-        user.email = "test@example.com"
+        # Create User with required fields
+        user = User(
+            id="user_123",
+            username="testuser",
+            email="test@example.com"
+        )
         user.roles = ["admin"]
         
         user_id = user.id if user and hasattr(user, 'id') else "system"

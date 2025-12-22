@@ -43,7 +43,11 @@ except ImportError:
 
 # Authentication support (optional - allows unauthenticated access in dev)
 try:
-    from src.amas.security.enhanced_auth import get_current_user, get_current_user_optional, User
+    from src.amas.security.enhanced_auth import (
+        User,
+        get_current_user,
+        get_current_user_optional,
+    )
     AUTH_AVAILABLE = True
 except ImportError:
     AUTH_AVAILABLE = False
@@ -510,7 +514,7 @@ async def _persist_task_to_db(
         True if persisted successfully, False otherwise
     """
     if db is None:
-        logger.debug(f"Database not available, using cache only (dev mode)",
+        logger.debug("Database not available, using cache only (dev mode)",
                     extra={"task_id": task_id, "operation": "persist_task"})
         return True  # In dev mode without DB, allow cache-only storage
     
@@ -593,7 +597,9 @@ async def _cache_task(
     
     # Try to cache using cache services
     try:
-        from src.amas.services.prediction_cache_service import get_prediction_cache_service
+        from src.amas.services.prediction_cache_service import (
+            get_prediction_cache_service,
+        )
         from src.amas.services.task_cache_service import get_task_cache_service
         
         task_cache_service = get_task_cache_service()
@@ -916,13 +922,13 @@ def _schedule_auto_execution(
 # Pydantic Models
 class TaskCreate(BaseModel):
     """Task creation model with full integration support"""
-    title: str
+    title: str = Field(..., min_length=1, description="Task title (required, non-empty)")
     # Limit description size to prevent abuse and ensure security tests pass
-    description: str = Field(..., max_length=10000)
+    description: str = Field(..., max_length=10000, min_length=1, description="Task description (required, non-empty)")
     task_type: str  # security_scan, code_analysis, intelligence_gathering, etc.
     target: str  # URL, repo, system, etc.
     parameters: Optional[Dict[str, Any]] = None
-    priority: Optional[int] = 5  # 1-10, default 5
+    priority: Optional[int] = Field(5, ge=1, le=10)  # 1-10, default 5
     required_capabilities: Optional[List[str]] = None
 
 

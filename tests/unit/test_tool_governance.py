@@ -117,6 +117,7 @@ class TestToolRegistry:
             record = ToolUsageRecord(
                 timestamp=datetime.now(timezone.utc) - timedelta(minutes=i),
                 agent_id="agent001",
+                user_id="user001",
                 tool_name="web_search",
                 parameters={},
                 duration_seconds=1.0,
@@ -404,6 +405,9 @@ agents:
     @pytest.mark.asyncio
     async def test_execute_tool_invalid_parameters(self, execution_guard):
         """Test tool execution with invalid parameters"""
+        # First grant permission to the agent
+        execution_guard.permissions_engine.add_agent_permission("test_agent", "file_write")
+        
         tool = execution_guard.permissions_engine.registry.get_tool("file_write")
         if tool and tool.forbidden_parameters:
             with pytest.raises(ContractViolationError) as exc_info:
@@ -526,6 +530,9 @@ agents:
         )
         
         execution_guard = ToolExecutionGuard(permissions_engine)
+        
+        # Grant permission first
+        permissions_engine.add_agent_permission("test_agent", "file_write")
         
         # Try with forbidden parameter
         tool = registry.get_tool("file_write")

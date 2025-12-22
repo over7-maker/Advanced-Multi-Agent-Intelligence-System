@@ -328,7 +328,12 @@ class SecurityHeadersMiddleware:
             response.headers[header] = value
         
         # Add cache control for sensitive endpoints
-        if any(path in str(request.url) for path in ["/api/", "/auth/", "/admin/"]):
+        # Check both request.url (string) and request.url.path (if available)
+        request_path = str(request.url)
+        if hasattr(request.url, 'path'):
+            request_path = request.url.path
+        
+        if any(path in request_path for path in ["/api/", "/auth/", "/admin/"]):
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
             response.headers["Pragma"] = "no-cache"
             response.headers["Expires"] = "0"
@@ -475,12 +480,12 @@ class TokenBlacklist:
         self._cleanup_expired()
         return token_jti in self._blacklisted_tokens
     
-    def _cleanup_expired(self):
+    def _cleanup_expired(self, force: bool = False):
         """Remove expired tokens from blacklist"""
         now = datetime.now(timezone.utc)
         
-        # Only cleanup if enough time has passed
-        if (now - self._last_cleanup).seconds < self.cleanup_interval:
+        # Only cleanup if enough time has passed (unless forced)
+        if not force and (now - self._last_cleanup).seconds < self.cleanup_interval:
             return
         
         expired_tokens = [
