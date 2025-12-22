@@ -5,7 +5,7 @@ name: Core-1: Data Pipeline
 #           Version/Package Build, and Bulletproof Analyzer Test
 # Part of Workflow Consolidation: 46 workflows → 8 cores
 
-on:
+"on":
   # Schedule triggers
   schedule:
     - cron: '0 2 * * 0'  # Weekly comprehensive audit (Sunday 2 AM)
