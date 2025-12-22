@@ -3,13 +3,14 @@ Integration tests for Integration API
 Tests PART 5: Platform Integration Layer - API Endpoints
 """
 
-import pytest
-from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, MagicMock, patch
-from fastapi import FastAPI
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
+from fastapi import FastAPI
+from fastapi.testclient import TestClient
+
+from src.amas.integration.integration_manager import IntegrationManager
 from src.api.routes.integrations import router
-from src.amas.integration.integration_manager import IntegrationManager, IntegrationPlatform
 
 
 @pytest.mark.integration
@@ -57,10 +58,18 @@ class TestIntegrationAPI:
             "status": "active",
             "created_at": "2024-01-01T00:00:00Z"
         })
-        manager.update_integration = AsyncMock()
+        manager.update_integration = AsyncMock(return_value={
+            "integration_id": "test_integration_001",
+            "platform": "n8n",
+            "status": "active",
+            "created_at": "2024-01-01T00:00:00Z",
+            "last_sync": None,
+            "sync_count": 0,
+            "error_count": 0
+        })
         manager.delete_integration = AsyncMock()
-        manager.trigger_integration_event = AsyncMock(return_value={"success": True})
-        manager.handle_webhook = AsyncMock(return_value={"event": "test", "data": {}})
+        manager.trigger_integration = AsyncMock(return_value={"success": True})
+        manager.handle_webhook = AsyncMock(return_value={"status": "processed", "event_type": "test"})
         return manager
 
     def test_create_integration(self, app, client, mock_integration_manager):
@@ -148,6 +157,8 @@ class TestIntegrationAPI:
             response = client.put(
                 "/integrations/test_integration_001",
                 json={
+                    "platform": "n8n",
+                    "credentials": {"api_key": "test_key"},
                     "configuration": {"new_setting": "value"}
                 }
             )
