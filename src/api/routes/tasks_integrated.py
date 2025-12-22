@@ -112,16 +112,22 @@ async def get_db():
 # Redis dependency (optional)
 async def get_redis():
     """Get Redis client (optional)"""
+    redis_client = None
     try:
         from src.cache.redis import get_redis_client
         redis_client = get_redis_client()
-        if redis_client:
-            yield redis_client
-        else:
-            yield None
+    except HTTPException as http_exc:
+        # For HTTP exceptions (like 403), log and yield None since Redis is optional
+        logger.warning(f"Redis not available (auth error): {http_exc.detail}")
+        redis_client = None
     except Exception as e:
         logger.warning(f"Redis not available: {e}")
-        yield None
+        redis_client = None
+    try:
+        yield redis_client
+    finally:
+        # Generator cleanup - ensure we always complete
+        pass
 
 logger = logging.getLogger(__name__)
 

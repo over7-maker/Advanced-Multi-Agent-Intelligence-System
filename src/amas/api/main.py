@@ -413,9 +413,17 @@ async def health_check():
 
             health_result = await check_health()
 
+            # Ensure services is a dict, not a list
+            services_data = health_result.get("services", {})
+            if isinstance(services_data, list):
+                # Convert list to dict if needed
+                services_data = {f"service_{i}": service for i, service in enumerate(services_data)}
+            elif not isinstance(services_data, dict):
+                services_data = {"checks": services_data} if services_data else {}
+
             return HealthCheck(
                 status=health_result.get("status", "unknown"),
-                services=health_result.get("checks", []),
+                services=services_data,
                 timestamp=health_result.get("timestamp", datetime.now(timezone.utc).isoformat()),
             )
         except ImportError:

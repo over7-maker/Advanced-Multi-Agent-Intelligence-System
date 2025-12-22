@@ -608,7 +608,7 @@ class DataClassifier:
 
     def _get_dict_depth(
         self,
-        data: Dict[str, Any],
+        data: Any,
         current_depth: int = 0
     ) -> int:
         """Calculate the maximum nesting depth of a dictionary"""
