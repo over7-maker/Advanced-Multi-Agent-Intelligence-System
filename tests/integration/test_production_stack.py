@@ -24,6 +24,13 @@ class TestProductionStack:
         except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
             pytest.skip("Docker not available")
         
+        # Check if docker-compose is available
+        try:
+            subprocess.run(['docker-compose', '--version'], 
+                         capture_output=True, check=True, timeout=5)
+        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+            pytest.skip("docker-compose not available")
+        
         # Start stack
         subprocess.run(
             ['docker-compose', '-f', str(docker_compose_path), 'up', '-d'],
@@ -45,6 +52,13 @@ class TestProductionStack:
     
     def test_all_services_running(self, docker_compose_path: Path, project_root: Path):
         """Test that all services are running."""
+        # Check if docker-compose is available
+        try:
+            subprocess.run(['docker-compose', '--version'], 
+                         capture_output=True, check=True, timeout=5)
+        except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+            pytest.skip("docker-compose not available")
+        
         result = subprocess.run(
             ['docker-compose', '-f', str(docker_compose_path), 'ps'],
             cwd=project_root,
