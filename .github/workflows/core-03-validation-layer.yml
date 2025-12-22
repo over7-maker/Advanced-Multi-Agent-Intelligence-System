@@ -4,7 +4,7 @@ name: "Core-3: Validation Layer"
 # Combines: Workflow Validation, PR CI Checks, Web CI, Architecture Validation
 # Part of Workflow Consolidation: 46 workflows → 8 cores
 
-on:
+"on":
   # Event triggers
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
