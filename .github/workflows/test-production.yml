@@ -110,7 +110,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install pytest pytest-asyncio pyyaml
+          pip install pytest pytest-asyncio pyyaml fastapi==0.115.6
       
       - name: Run security tests
         run: |
