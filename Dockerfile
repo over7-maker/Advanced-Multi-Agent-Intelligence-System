@@ -9,20 +9,30 @@ FROM python:3.11-slim as python-builder
 WORKDIR /app
 
 # Install system dependencies for Python packages
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     build-essential \
     libpq-dev \
     curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean
 
 # Copy requirements
 COPY requirements.txt .
 
-# Install Python dependencies
+# Install Python dependencies with aggressive cleanup
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    # Remove build dependencies to save space (update apt first)
+    apt-get update && \
+    apt-get purge -y gcc g++ build-essential && \
+    apt-get autoremove -y && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* && \
+    # Clean Python cache
+    find /usr/local/lib/python3.11 -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true && \
+    find /usr/local/lib/python3.11 -type f -name "*.pyc" -delete 2>/dev/null || true
 
 # ============================================================================
 # STAGE 2: Frontend Builder

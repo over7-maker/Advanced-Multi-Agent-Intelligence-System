@@ -1,6 +1,7 @@
 """
 Docker build functional tests.
 """
+import os
 import subprocess
 import time
 from pathlib import Path
@@ -24,15 +25,36 @@ class TestDockerBuild:
         except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
             pytest.skip("Docker not available")
         
+        # Check available disk space (skip if less than 5GB free)
+        try:
+            import shutil
+            free_space_gb = shutil.disk_usage(project_root).free / (1024 ** 3)
+            if free_space_gb < 5:
+                pytest.skip(f"Insufficient disk space: {free_space_gb:.2f}GB free (need at least 5GB)")
+        except Exception:
+            pass  # Continue if we can't check disk space
+        
+        # Clean up Docker to free space before build
+        try:
+            subprocess.run(['docker', 'system', 'prune', '-f'], 
+                         capture_output=True, timeout=60)
+        except Exception:
+            pass  # Continue even if cleanup fails
+        
         # Build Docker image
         build_start = time.time()
         result = subprocess.run(
             ['docker', 'build', '-t', 'amas-test:latest', '-f', str(dockerfile_path), str(project_root)],
             capture_output=True,
             text=True,
-            timeout=600  # 10 minute timeout
+            timeout=600,  # 10 minute timeout
+            env={**os.environ, 'DOCKER_BUILDKIT': '1'}  # Enable BuildKit for better caching
         )
         build_time = time.time() - build_start
+        
+        # Check if failure was due to disk space
+        if result.returncode != 0 and 'No space left on device' in result.stderr:
+            pytest.skip(f"Docker build failed due to insufficient disk space: {result.stderr}")
         
         assert result.returncode == 0, \
             f"Docker build failed: {result.stderr}\n{result.stdout}"
@@ -49,6 +71,22 @@ class TestDockerBuild:
         except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
             pytest.skip("Docker not available")
         
+        # Check available disk space
+        try:
+            import shutil
+            free_space_gb = shutil.disk_usage(project_root).free / (1024 ** 3)
+            if free_space_gb < 5:
+                pytest.skip(f"Insufficient disk space: {free_space_gb:.2f}GB free (need at least 5GB)")
+        except Exception:
+            pass
+        
+        # Clean up Docker before build
+        try:
+            subprocess.run(['docker', 'system', 'prune', '-f'], 
+                         capture_output=True, timeout=60)
+        except Exception:
+            pass
+        
         # Build with target stages
         stages = ['python-builder', 'frontend-builder']
         
@@ -58,8 +96,11 @@ class TestDockerBuild:
                  '-t', f'amas-test:{stage}', '-f', str(dockerfile_path), str(project_root)],
                 capture_output=True,
                 text=True,
-                timeout=300
+                timeout=300,
+                env={**os.environ, 'DOCKER_BUILDKIT': '1'}
             )
+            if result.returncode != 0 and 'No space left on device' in result.stderr:
+                pytest.skip(f"Build failed due to insufficient disk space: {result.stderr}")
             assert result.returncode == 0, \
                 f"Failed to build stage {stage}: {result.stderr}"
     
@@ -84,16 +125,35 @@ class TestDockerBuild:
         except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
             pytest.skip("Docker not available")
         
+        # Check available disk space
+        try:
+            import shutil
+            free_space_gb = shutil.disk_usage(project_root).free / (1024 ** 3)
+            if free_space_gb < 5:
+                pytest.skip(f"Insufficient disk space: {free_space_gb:.2f}GB free (need at least 5GB)")
+        except Exception:
+            pass
+        
+        # Clean up Docker before build
+        try:
+            subprocess.run(['docker', 'system', 'prune', '-f'], 
+                         capture_output=True, timeout=60)
+        except Exception:
+            pass
+        
         # Build image
         result = subprocess.run(
             ['docker', 'build', '-t', 'amas-test:size-test', 
              '-f', str(dockerfile_path), str(project_root)],
             capture_output=True,
             text=True,
-            timeout=600
+            timeout=600,
+            env={**os.environ, 'DOCKER_BUILDKIT': '1'}
         )
         
         if result.returncode != 0:
+            if 'No space left on device' in result.stderr:
+                pytest.skip(f"Docker build failed due to insufficient disk space: {result.stderr}")
             pytest.skip(f"Docker build failed: {result.stderr}")
         
         # Get image size
@@ -121,16 +181,35 @@ class TestDockerBuild:
         except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
             pytest.skip("Docker not available")
         
+        # Check available disk space
+        try:
+            import shutil
+            free_space_gb = shutil.disk_usage(project_root).free / (1024 ** 3)
+            if free_space_gb < 5:
+                pytest.skip(f"Insufficient disk space: {free_space_gb:.2f}GB free (need at least 5GB)")
+        except Exception:
+            pass
+        
+        # Clean up Docker before build
+        try:
+            subprocess.run(['docker', 'system', 'prune', '-f'], 
+                         capture_output=True, timeout=60)
+        except Exception:
+            pass
+        
         # Build image
         result = subprocess.run(
             ['docker', 'build', '-t', 'amas-test:health-test', 
              '-f', str(dockerfile_path), str(project_root)],
             capture_output=True,
             text=True,
-            timeout=600
+            timeout=600,
+            env={**os.environ, 'DOCKER_BUILDKIT': '1'}
         )
         
         if result.returncode != 0:
+            if 'No space left on device' in result.stderr:
+                pytest.skip(f"Docker build failed due to insufficient disk space: {result.stderr}")
             pytest.skip(f"Docker build failed: {result.stderr}")
         
         # Inspect image for health check
