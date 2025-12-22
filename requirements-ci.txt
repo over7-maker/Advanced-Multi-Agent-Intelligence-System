@@ -46,6 +46,7 @@ PyYAML==6.0.2             # YAML parser (required by bandit)
 # Supporting Libraries
 # =============================================================================
 # These are required by the above tools but may not be auto-installed
+fastapi==0.115.6          # FastAPI web framework (required by security tests)
 pydantic-settings>=2.1.0   # Pydantic settings management (required by src/amas/config/settings.py)
 aiohttp==3.11.11          # Async HTTP client (required by src/amas/agents/osint/osint_agent.py)
 bcrypt==4.2.0             # Password hashing library (required by src/amas/services/security_service.py)

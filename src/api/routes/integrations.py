@@ -93,6 +93,9 @@ async def create_integration(
             error_count=status["error_count"]
         )
     
+    except HTTPException:
+        # Re-raise HTTP exceptions (like 400 for invalid platform)
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
