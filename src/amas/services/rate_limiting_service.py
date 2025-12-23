@@ -191,6 +191,11 @@ class RateLimitingService:
                         retry_after = oldest[0][1] + window_seconds - current_time
                     else:
                         retry_after = window_seconds
+                    # Set remaining to 0 when limit exceeded
+                    remaining = 0
+                    # Calculate reset_time from the first window that failed
+                    reset_time = min(reset_time, current_time + window_seconds)
+                    # Break immediately - don't check other windows
                     break
                 
                 remaining = min(remaining, limit - count)
