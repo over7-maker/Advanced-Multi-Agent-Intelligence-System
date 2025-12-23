@@ -245,6 +245,7 @@ class RateLimitingService:
                 remaining = 0
                 # Calculate reset_time from the first window that failed
                 reset_time = min(reset_time, current_time + window_seconds)
+                # Break immediately - don't check other windows
                 break
             
             # Add current request only if within limit
@@ -253,6 +254,10 @@ class RateLimitingService:
             # Calculate remaining after adding this request
             remaining = min(remaining, limit - len(window))
             reset_time = min(reset_time, current_time + window_seconds)
+        
+        # Ensure remaining is 0 if not allowed
+        if not allowed:
+            remaining = 0
         
         return RateLimitResult(
             allowed=allowed,
