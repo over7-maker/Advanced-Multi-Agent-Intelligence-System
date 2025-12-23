@@ -69,12 +69,19 @@ class TestDeploymentHealthChecker:
             from aiohttp import ClientSession
             health_checker.session = ClientSession()
         
-        with patch.object(health_checker.session, 'get', return_value=mock_get_context()):
+        # Mock the get method to return our async context manager
+        # The return value should be the context manager itself, not a callable
+        mock_context = mock_get_context()
+        with patch.object(health_checker.session, 'get', return_value=mock_context):
             result = await health_checker.check_http_endpoint("/health/ready")
             
             assert result.status == HealthStatus.HEALTHY
             assert result.latency_ms is not None
             assert "ready" in result.message.lower()
+        
+        # Clean up session if we created it
+        if health_checker.session and not health_checker.session.closed:
+            await health_checker.session.close()
     
     @pytest.mark.asyncio
     async def test_check_http_endpoint_unhealthy(self, health_checker):
