@@ -255,15 +255,12 @@ class RateLimitingService:
             remaining = min(remaining, limit - len(window))
             reset_time = min(reset_time, current_time + window_seconds)
         
-        # Ensure remaining is 0 if not allowed
-        if not allowed:
-            remaining = 0
-        
         # Convert remaining to int, ensuring 0 when blocked, 999999 when unlimited
-        if remaining == float('inf'):
-            final_remaining = 999999
-        elif not allowed:
+        # Priority: blocked requests (not allowed) must have remaining=0
+        if not allowed:
             final_remaining = 0
+        elif remaining == float('inf'):
+            final_remaining = 999999
         else:
             final_remaining = int(remaining)
         
