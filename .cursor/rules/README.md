@@ -1,5 +1,14 @@
 # Cursor Project Rules
 
+<!--
+Version: 1.0.0
+Author: Architecture Team
+Effective: 2025-01-20
+Status: Active
+-->
+
+> ⚠️ **Confidential**: This document contains proprietary architecture details. Do not distribute outside authorized personnel.
+
 This directory contains Cursor project rules based on the AMAS Production Implementation Guide (PART_1, PART_2, PART_3, PART_4, PART_5, PART_6, PART_7, PART_8, PART_9, PART_10).
 
 ## Rules Overview
@@ -9,27 +18,49 @@ This directory contains Cursor project rules based on the AMAS Production Implem
 #### 1. **amas-architecture-overview.mdc** (Always Apply)
 - **Purpose**: Complete AMAS architecture reference, component relationships, data flow, and system structure
 - **When**: Applied to all files in `src/**/*.py` and `frontend/src/**/*.tsx`
-- **Key Rules**: Follow documented architecture, never bypass layers, use all 16 providers, implement all 12 agents, maintain performance targets
+- **Key Rules**:
+  - Follow documented architecture patterns
+  - Prefer orchestrator for complex operations (allow bypass for high-throughput, low-complexity tasks)
+  - Use AI router with fallback chain (16 providers available, use as needed)
+  - Implement agents as required by use case (12 agents available)
+  - Maintain performance targets (p95 < 200ms for API, < 30s for task execution)
 
 #### 2. **integration-architecture.mdc** (Always Apply)
 - **Purpose**: Enforces the complete integration architecture flow
 - **When**: Applied to all files in `src/api/**/*.py` and `src/amas/**/*.py`
-- **Key Rules**: Never bypass orchestrator, never use mock data, always use real integrations
+- **Key Rules**:
+  - Prefer orchestrator for task execution (bypass only for latency-critical operations > 200ms)
+  - Never use mock data in production code
+  - Always use real integrations for external services
+  - Log and alert when bypassing architectural layers
 
 #### 3. **ai-orchestration-integration.mdc** (File-Specific)
 - **Purpose**: Guides AI orchestration integration in task/workflow APIs
 - **When**: Applied to `src/api/routes/tasks.py`, `src/api/routes/workflows.py`, orchestrator files
-- **Key Rules**: Always use orchestrator, include ML predictions, intelligent agent selection, database persistence
+- **Key Rules**:
+  - Use orchestrator for task execution
+  - Include ML predictions for task creation
+  - Use intelligent agent selection based on task type
+  - Persist all tasks and results to database
 
 #### 4. **ml-predictions-integration.mdc** (File-Specific)
 - **Purpose**: Ensures ML predictions are used for all task creation
 - **When**: Applied to predictive engine, prediction routes, and task routes
-- **Key Rules**: Always predict task outcomes, include prediction data, record learning feedback
+- **Key Rules**:
+  - Predict task outcomes before execution
+  - Include prediction data in task metadata
+  - Record learning feedback after execution
+  - Use predictions for agent selection and resource estimation
 
 #### 5. **ai-provider-fallback.mdc** (File-Specific)
 - **Purpose**: Enforces use of enhanced router with 16-provider fallback
 - **When**: Applied to AI router, agent files, orchestrator
-- **Key Rules**: Never call providers directly, always use router, handle fallback gracefully
+- **Key Rules**:
+  - Never call AI providers directly - always use EnhancedAIRouter
+  - Use router's automatic fallback chain (16 providers available)
+  - Handle fallback gracefully with circuit breakers
+  - Log provider attempts and failures for monitoring
+  - Fallback to next provider if current provider fails (max 3 retries per tier)
 
 #### 6. **websocket-realtime-updates.mdc** (File-Specific)
 - **Purpose**: Ensures real-time updates via WebSocket
@@ -215,13 +246,13 @@ Rule content with code examples, patterns, and guidelines...
 
 ## Key Principles Enforced
 
-1. **Complete Integration**: Never bypass any layer (orchestrator, agents, AI providers)
-2. **Real Data**: Never return mock data - always use real orchestrator/agents
-3. **ML Intelligence**: Always use predictions for task creation
-4. **Provider Fallback**: Always use enhanced router with 16-provider fallback
-5. **Real-Time Updates**: Always broadcast WebSocket events
-6. **Persistence**: Always store tasks and results in database
-7. **Learning Loop**: Always record execution results for ML improvement
+1. **Complete Integration**: Prefer orchestrator for complex operations; allow bypass for latency-critical paths (> 200ms)
+2. **Real Data**: Never return mock data in production - always use real orchestrator/agents
+3. **ML Intelligence**: Use predictions for task creation when available; fallback gracefully if predictions fail
+4. **Provider Fallback**: Use enhanced router with 16-provider fallback chain; circuit breakers prevent cascading failures
+5. **Real-Time Updates**: Broadcast WebSocket events for all task/agent state changes
+6. **Persistence**: Store all tasks and results in database with proper transaction handling
+7. **Learning Loop**: Record execution results for ML improvement; use feedback to refine predictions
 
 ## Adding New Rules
 
