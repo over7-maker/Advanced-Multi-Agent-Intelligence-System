@@ -95,19 +95,22 @@ class TestAPIEndpoints:
     def test_tasks_create_endpoint(self, async_test_client):
         """Test task creation endpoint"""
         task_data = {
-            "agent_id": "agent-1",
-            "description": "Test task",
-            "priority": "high",
-            "config": {"timeout": 300},
+            "title": "Test Task",
+            "description": "Test task description",
+            "task_type": "security_scan",
+            "target": "example.com",
+            "priority": 5,
+            "parameters": {"timeout": 300},
         }
 
         response = async_test_client.post("/api/v1/tasks", json=task_data)
         assert response.status_code == 200
 
         data = response.json()
-        assert data["agent_id"] == task_data["agent_id"]
+        assert data["title"] == task_data["title"]
         assert data["description"] == task_data["description"]
-        assert data["priority"] == task_data["priority"]
+        assert data["task_type"] == task_data["task_type"]
+        assert data["target"] == task_data["target"]
 
     def test_users_list_endpoint(self, async_test_client):
         """Test users list endpoint"""

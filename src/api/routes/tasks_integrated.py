@@ -1791,7 +1791,7 @@ async def list_tasks(
                 
                 # Record database query time
                 if metrics_service:
-                    metrics_service.record_database_query_time("select", "tasks", db_query_duration)
+                    metrics_service.record_db_query("select", "tasks", "success", db_query_duration)
                 rows = result.fetchall()
                 
                 for row in rows:
@@ -2109,7 +2109,7 @@ async def get_task(
                 
                 # Record database query time
                 if metrics_service:
-                    metrics_service.record_database_query_time("select", "tasks", db_query_duration)
+                    metrics_service.record_db_query("select", "tasks", "success", db_query_duration)
                 row = result.fetchone()
                 if row:
                     # Parse result if it's JSON string

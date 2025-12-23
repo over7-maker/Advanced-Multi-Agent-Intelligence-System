@@ -749,6 +749,23 @@ class PrometheusMetricsService:
             self.metrics["amas_cache_hit_ratio"].labels(
                 cache_type=cache_type
             ).set(0.8)  # Placeholder - should be calculated from actual hits/misses
+    
+    def record_cache_miss(self, cache_type: str):
+        """Record cache miss"""
+        if not self.enabled:
+            return
+        
+        if "amas_cache_misses_total" in self.metrics:
+            self.metrics["amas_cache_misses_total"].labels(
+                cache_type=cache_type
+            ).inc()
+        
+        # Update cache hit ratio (decrease it)
+        if "amas_cache_hit_ratio" in self.metrics:
+            # This is a simplified version - in production, you'd calculate from actual hits/misses
+            self.metrics["amas_cache_hit_ratio"].labels(
+                cache_type=cache_type
+            ).set(0.7)  # Placeholder - should be calculated from actual hits/misses
 
     def record_task_execution(
         self,
