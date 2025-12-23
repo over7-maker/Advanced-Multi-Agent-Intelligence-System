@@ -243,6 +243,8 @@ class RateLimitingService:
                     retry_after = window_seconds
                 # Don't add request if limit exceeded
                 remaining = 0
+                # Calculate reset_time from the first window that failed
+                reset_time = min(reset_time, current_time + window_seconds)
                 break
             
             # Add current request only if within limit

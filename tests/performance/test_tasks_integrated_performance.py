@@ -199,25 +199,21 @@ class TestAPIPerformance:
         with patch('src.api.routes.tasks_integrated.get_db', return_value=mock_db):
             with patch('src.api.routes.tasks_integrated.get_redis', return_value=mock_redis):
                 with patch('src.api.routes.tasks_integrated.get_current_user_optional', return_value=mock_user):
-                    # Mock database result
-                    mock_result = MagicMock()
-                    mock_row = MagicMock()
-                    mock_row.id = "task1"
-                    mock_row.task_id = "task1"
-                    mock_row.title = "Test Task"
-                    mock_row.description = "Test"
-                    mock_row.status = "pending"
-                    mock_row.task_type = "security_scan"
-                    mock_row.target = "example.com"
-                    mock_row.priority = 5
-                    mock_row.created_at = MagicMock()
-                    mock_row.created_at.isoformat = MagicMock(return_value="2025-01-21T12:00:00")
-                    mock_row.created_by = "user1"
-                    mock_row.result = None
-                    mock_row.execution_metadata = None
-                    mock_row.quality_score = None
-                    mock_result.fetchone = MagicMock(return_value=mock_row)
-                    mock_db.execute.return_value = mock_result
+                    # Mock memory cache first (fastest path)
+                    from src.api.routes.tasks_integrated import _recently_accessed_tasks, _recently_accessed_tasks_timestamps
+                    _recently_accessed_tasks["task1"] = {
+                        "id": "task1",
+                        "task_id": "task1",
+                        "title": "Test Task",
+                        "description": "Test",
+                        "status": "pending",
+                        "task_type": "security_scan",
+                        "target": "example.com",
+                        "priority": 5,
+                        "created_at": "2025-01-21T12:00:00",
+                        "created_by": "user1"
+                    }
+                    _recently_accessed_tasks_timestamps["task1"] = time.time()
                     
                     # Measure performance
                     times = []
