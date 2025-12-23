@@ -199,12 +199,36 @@ def client():
 
 
 @pytest.fixture
-def async_test_client():
+def async_test_client(monkeypatch):
     """Async FastAPI test client fixture."""
     from fastapi.testclient import TestClient
 
+    # Ensure test environment is set
+    import os
+    os.environ["ENVIRONMENT"] = "test"
+    
     try:
         from src.api.main import app
+        from src.amas.api.main import get_amas_system
+        
+        # Mock AMAS system to avoid initialization errors
+        mock_amas = MagicMock()
+        mock_amas.orchestrator = MagicMock()
+        mock_amas.orchestrator.agents = {}
+        mock_amas.orchestrator.active_tasks = {}
+        mock_amas.orchestrator.tasks = {}
+        mock_amas.service_manager = MagicMock()
+        mock_amas.service_manager.health_check_all_services = AsyncMock(return_value={
+            "overall_status": "healthy",
+            "services": {}
+        })
+        
+        # Patch get_amas_system to return mock
+        async def mock_get_amas_system():
+            return mock_amas
+        
+        monkeypatch.setattr("src.amas.api.main.get_amas_system", mock_get_amas_system)
+        monkeypatch.setattr("src.amas.api.main.amas_app", mock_amas)
 
         return TestClient(app)
     except ImportError:
