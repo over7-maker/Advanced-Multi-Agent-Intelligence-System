@@ -233,16 +233,18 @@ class RateLimitingService:
             # Remove old entries
             window[:] = [t for t in window if current_time - t < window_seconds]
             
-            # Check limit
+            # Check limit BEFORE adding current request
             if len(window) >= limit:
                 allowed = False
                 if window:
                     retry_after = window[0] + window_seconds - current_time
                 else:
                     retry_after = window_seconds
+                # Don't add request if limit exceeded
+                remaining = 0
                 break
             
-            # Add current request
+            # Add current request only if within limit
             window.append(current_time)
             
             remaining = min(remaining, limit - len(window))
