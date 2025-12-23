@@ -1,11 +1,11 @@
-name: Core-2: Processing Engine
+name: "Core-2: Processing Engine"
 
 # Consolidated Processing Engine Workflow
 # Combines: Project Self-Improver, Issue Auto-Responder, Project Audit,
 #           PR Analyzer, and Hardened Analysis
 # Part of Workflow Consolidation: 46 workflows → 8 cores
 
-on:
+"on":
   # Event triggers
   push:
     branches: [main, develop, feature/*, hotfix/*]

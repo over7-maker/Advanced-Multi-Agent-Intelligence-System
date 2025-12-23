@@ -122,6 +122,10 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
     
     def __init__(self, app, exclude_paths: Optional[list] = None):
         super().__init__(app)
+        import os
+        # For development, allow unauthenticated access to API endpoints
+        dev_mode = os.getenv("ENVIRONMENT", "production").lower() in ["development", "dev", "test"]
+        
         self.exclude_paths = exclude_paths or [
             "/",
             "/health",
@@ -132,15 +136,26 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             "/api/v1/auth/login",
             "/api/v1/auth/refresh",
         ]
+        
+        # In development mode, exclude all API paths from authentication requirement
+        if dev_mode:
+            # Exclude all /api/v1 paths for development
+            self.exclude_paths.append("/api/v1")
     
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
         """Check authentication for protected routes"""
+        import os
         # Skip authentication for excluded paths
         if any(request.url.path.startswith(path) for path in self.exclude_paths):
             return await call_next(request)
         
         # Check if route is in /api/v1 (protected area)
         if request.url.path.startswith("/api/v1"):
+            # In test/dev mode, skip authentication
+            dev_mode = os.getenv("ENVIRONMENT", "production").lower() in ["development", "dev", "test"]
+            if dev_mode:
+                return await call_next(request)
+            
             # Check if user is authenticated
             user_context = auth_context.get_user()
             if not user_context:

@@ -117,13 +117,26 @@ class AgentContract(BaseModel, ABC):
     
     def to_manifest(self) -> Dict[str, Any]:
         """Export contract as deployment manifest"""
+        # Handle role - might be enum or string due to use_enum_values=True
+        role_value = self.role
+        if hasattr(role_value, 'value'):
+            role_value = role_value.value
+        
+        # Handle allowed_tools - might be enum or string
+        tools_list = []
+        for tool in self.allowed_tools:
+            if hasattr(tool, 'value'):
+                tools_list.append(tool.value)
+            else:
+                tools_list.append(tool)
+        
         return {
             "agent_id": self.agent_id,
             "agent_version": self.agent_version,
-            "role": self.role.value,
+            "role": role_value,
             "input_schema": self.get_input_schema(),
             "output_schema": self.get_output_schema(),
-            "allowed_tools": [tool.value for tool in self.allowed_tools],
+            "allowed_tools": tools_list,
             "constraints": {
                 "max_iterations": self.max_iterations,
                 "timeout_seconds": self.timeout_seconds,

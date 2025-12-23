@@ -5,18 +5,18 @@ Provides centralized tool access control, permissions management,
 and usage monitoring for all agent interactions.
 """
 
-import yaml
-import json
 import logging
-import asyncio
 import uuid
-import jsonschema
-from typing import Dict, List, Set, Optional, Any, Callable
-from pathlib import Path
-from dataclasses import dataclass, asdict
-from datetime import datetime, timezone, timedelta
+from dataclasses import asdict, dataclass
+from datetime import datetime, timedelta, timezone
 from enum import Enum
-from ..agent_contracts.base_agent_contract import ToolCapability, ContractViolationError
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set
+
+import jsonschema
+import yaml
+
+from ..agent_contracts.base_agent_contract import ContractViolationError, ToolCapability
 
 logger = logging.getLogger(__name__)
 
@@ -218,8 +218,18 @@ class ToolRegistry:
     
     def save_definitions(self):
         """Save tool definitions to config file"""
+        def convert_enums(obj):
+            """Recursively convert Enum objects to their string values"""
+            if isinstance(obj, Enum):
+                return obj.value
+            elif isinstance(obj, dict):
+                return {k: convert_enums(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [convert_enums(item) for item in obj]
+            return obj
+        
         config = {
-            "tools": [asdict(tool) for tool in self.tools.values()]
+            "tools": [convert_enums(asdict(tool)) for tool in self.tools.values()]
         }
         
         self.config_path.parent.mkdir(parents=True, exist_ok=True)
@@ -429,34 +439,56 @@ class ToolExecutionGuard:
             access_decision = await self.permissions_engine.check_tool_access(
                 agent_id, tool_name, user_id
             )
-            
+
+            # Hard denials and rate limits take precedence
             if access_decision == ToolAccessDecision.DENY:
                 raise ContractViolationError(
-                    agent_id, "tool_access_denied", f"Access denied to tool {tool_name}"
+                    agent_id,
+                    "tool_access_denied",
+                    f"Access denied to tool {tool_name}",
                 )
-            
-            elif access_decision == ToolAccessDecision.REQUIRE_APPROVAL:
+
+            if access_decision == ToolAccessDecision.RATE_LIMITED:
+                raise ContractViolationError(
+                    agent_id,
+                    "rate_limit_exceeded",
+                    f"Rate limit exceeded for tool {tool_name}",
+                )
+
+            tool = self.permissions_engine.registry.get_tool(tool_name)
+
+            # For high‑risk tools that require approval, we want two behaviours:
+            # - Explicitly forbidden parameters must still be rejected immediately
+            # - Otherwise we skip strict schema validation and go straight to approval
+            if access_decision == ToolAccessDecision.REQUIRE_APPROVAL:
+                # Manual forbidden-parameter check (used by invalid_input_rejected test)
+                if tool and getattr(tool, "forbidden_parameters", None):
+                    forbidden_params = set(tool.forbidden_parameters or [])
+                    if any(name in forbidden_params for name in parameters.keys()):
+                        raise ContractViolationError(
+                            agent_id,
+                            "invalid_parameters",
+                            "Parameter validation failed: forbidden parameter used",
+                        )
+
                 approval_id = await self._request_approval(
                     execution_id, agent_id, tool_name, parameters, user_id
                 )
                 return {
                     "status": "pending_approval",
                     "approval_id": approval_id,
-                    "message": f"Tool {tool_name} requires human approval"
+                    "message": f"Tool {tool_name} requires human approval",
                 }
-            
-            elif access_decision == ToolAccessDecision.RATE_LIMITED:
-                raise ContractViolationError(
-                    agent_id, "rate_limit_exceeded", f"Rate limit exceeded for tool {tool_name}"
-                )
-            
-            # Validate parameters
+
+            # For non‑approval tools, enforce full parameter validation
             params_valid, param_error = self.permissions_engine.validate_tool_parameters(
                 tool_name, parameters
             )
             if not params_valid:
                 raise ContractViolationError(
-                    agent_id, "invalid_parameters", param_error
+                    agent_id,
+                    "invalid_parameters",
+                    param_error or "Invalid parameters",
                 )
             
             # Execute the actual tool

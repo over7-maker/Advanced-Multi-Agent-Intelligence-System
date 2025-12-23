@@ -148,15 +148,20 @@ async def test_rate_limiting_blocks_excess():
     service = RateLimitingService(default_config=config)
     await service.initialize()
     
-    # Make requests up to limit
+    # Clear any existing state for this user
+    await service.reset_user_limits("user1")
+    
+    # Make requests up to limit (should all be allowed)
     for i in range(5):
         result = await service.check_rate_limit("user1")
-        assert result.allowed is True
+        assert result.allowed is True, f"Request {i+1} should be allowed but got allowed={result.allowed}, remaining={result.remaining}"
+        assert result.remaining >= 0, f"Request {i+1} should have remaining >= 0 but got {result.remaining}"
     
-    # Next request should be blocked
+    # Next request should be blocked (6th request)
     result = await service.check_rate_limit("user1")
-    assert result.allowed is False
+    assert result.allowed is False, f"6th request should be blocked but got allowed={result.allowed}, remaining={result.remaining}"
     assert result.retry_after is not None
+    assert result.remaining == 0, f"Blocked request should have remaining=0 but got {result.remaining}"
     
     await service.close()
 

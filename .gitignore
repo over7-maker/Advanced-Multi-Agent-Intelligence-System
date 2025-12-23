@@ -422,6 +422,37 @@ temp/
 *.old
 
 # =============================================================================
+# NODE.JS / FRONTEND
+# =============================================================================
+
+# Node modules (should never be committed)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Frontend build artifacts
+frontend/dist/
+frontend/build/
+frontend/.vite/
+frontend/.next/
+frontend/.nuxt/
+frontend/.output/
+
+# Package manager lock files (keep package-lock.json, ignore others)
+# package-lock.json  # Keep this - it should be committed
+yarn.lock
+pnpm-lock.yaml
+
+# Environment files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# =============================================================================
 # PROJECT SPECIFIC ARCHIVES
 # =============================================================================
 

@@ -8,7 +8,7 @@ import os
 from datetime import datetime
 from typing import Any, Dict
 
-from ..base.intelligence_agent import AgentStatus, IntelligenceAgent
+from ..base.intelligence_agent import IntelligenceAgent
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +89,10 @@ class ForensicsAgent(IntelligenceAgent):
             logger.info(f"Executing forensics task: {task_description}")
 
             # Determine task type from description
-            task_type = self._classify_task(task_description)
+            task_type = task.get("type", "general")
+            if not task_type or task_type == "general":
+                # Classify from description
+                task_type = self._classify_task(task_description)
             # metadata = task.get("parameters", {})
 
             if task_type == "file_analysis":
@@ -98,7 +101,7 @@ class ForensicsAgent(IntelligenceAgent):
                 return await self._analyze_hash(task)
             elif task_type == "metadata_extraction":
                 return await self._extract_metadata(task)
-            elif task_type == "timeline_analysis":
+            elif task_type == "timeline_analysis" or task_type == "timeline_reconstruction":
                 return await self._reconstruct_timeline(task)
             else:
                 return await self._perform_general_forensics(task)
@@ -127,6 +130,52 @@ class ForensicsAgent(IntelligenceAgent):
 
         task_text = f"{task.get('type', '')} {task.get('description', '')}".lower()
         return any(keyword in task_text for keyword in forensics_keywords)
+    
+    def _classify_task(self, description: str) -> str:
+        """Classify task type from description"""
+        description_lower = description.lower()
+        if "hash" in description_lower:
+            return "hash_analysis"
+        elif "metadata" in description_lower:
+            return "metadata_extraction"
+        elif "timeline" in description_lower:
+            return "timeline_reconstruction"
+        elif "file" in description_lower:
+            return "file_analysis"
+        else:
+            return "general"
+    
+    async def _analyze_hash(self, task: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze hash values"""
+        try:
+            hash_value = task.get("parameters", {}).get("hash", "")
+            hash_type = task.get("parameters", {}).get("hash_type", "sha256")
+            
+            # Mock hash analysis
+            hash_analysis = {
+                "hash": hash_value,
+                "hash_type": hash_type,
+                "analysis": {
+                    "length": len(hash_value),
+                    "format": "hex" if all(c in "0123456789abcdefABCDEF" for c in hash_value) else "unknown",
+                    "possible_algorithms": [hash_type],
+                },
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+            
+            return {
+                "success": True,
+                "task_type": "hash_analysis",
+                "result": hash_analysis,
+                "timestamp": datetime.utcnow().isoformat(),
+            }
+        except Exception as e:
+            logger.error(f"Error in hash analysis: {e}")
+            return {
+                "success": False,
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat(),
+            }
 
     async def _acquire_evidence(self, task: Dict[str, Any]) -> Dict[str, Any]:
         """Acquire digital evidence with real file operations"""

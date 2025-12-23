@@ -1,0 +1,204 @@
+---
+description: Redis Caching Strategy - Production-grade caching with read-through, write-through, stampede prevention, and intelligent invalidation
+globs:
+  - "src/database/redis_cache.py"
+  - "src/amas/services/**/*cache*.py"
+  - "src/api/routes/**/*.py"
+alwaysApply: false
+---
+
+# Redis Caching Strategy Rules
+
+When implementing caching in the application:
+
+## Cache Manager Usage
+
+1. **Always use RedisCacheManager**:
+   ```python
+   from src.database.redis_cache import get_cache
+   
+   cache = get_cache()
+   
+   # ✅ CORRECT: Use cache methods
+   value = await cache.get("key")
+   await cache.set("key", value, ttl=300)
+   await cache.delete("key")
+   ```
+
+2. **Cache Key Naming**:
+   - Use prefixes: `task:{task_id}`, `agent:{agent_id}`, `user:{user_id}`
+   - Be consistent with naming patterns
+   - Include version in keys for model predictions: `prediction:v1.0:{hash}`
+
+## Caching Patterns
+
+1. **Read-Through Cache**:
+   ```python
+   async def get_task(task_id: str):
+       cache_key = f"task:{task_id}"
+       
+       # Try cache first
+       cached = await cache.get(cache_key)
+       if cached:
+           return cached
+       
+       # Fetch from database
+       task = await db.fetchrow("SELECT * FROM tasks WHERE task_id = $1", task_id)
+       
+       # Cache result
+       if task:
+           await cache.set(cache_key, task, ttl=300)
+       
+       return task
+   ```
+
+2. **Write-Through Cache**:
+   ```python
+   async def update_task(task_id: str, data: dict):
+       # Update database
+       task = await db.execute("UPDATE tasks SET ... WHERE task_id = $1", ...)
+       
+       # Update cache immediately
+       cache_key = f"task:{task_id}"
+       await cache.set(cache_key, task, ttl=300)
+       
+       # Invalidate related caches
+       await cache.delete_pattern("tasks:status:*")
+   ```
+
+3. **Cache Stampede Prevention**:
+   ```python
+   # ✅ CORRECT: Use get_or_compute with lock
+   value = await cache.get_or_compute(
+       key="expensive:computation",
+       compute_func=lambda: expensive_computation(),
+       ttl=3600,
+       lock_timeout=30
+   )
+   ```
+
+## TTL Strategy
+
+1. **TTL Guidelines**:
+   - **Short (60s)**: Task lists, frequently changing data, real-time feeds
+   - **Medium (300s)**: Task details, agent performance, user data
+   - **Long (3600s)**: Statistics, configuration, rarely changing data
+
+2. **TTL Selection**:
+   ```python
+   # Frequently changing data
+   await cache.set("tasks:list", tasks, ttl=60)
+   
+   # Stable data
+   await cache.set("task:details", task, ttl=300)
+   
+   # Rarely changing data
+   await cache.set("system:stats", stats, ttl=3600)
+   ```
+
+## Cache Invalidation
+
+1. **Pattern-Based Invalidation**:
+   ```python
+   # Invalidate all task-related caches
+   await cache.delete_pattern("task:*")
+   
+   # Invalidate specific pattern
+   await cache.delete_pattern("tasks:status:pending:*")
+   ```
+
+2. **Invalidation on Updates**:
+   ```python
+   async def update_task(task_id: str, data: dict):
+       # Update database
+       await db.execute(...)
+       
+       # Invalidate specific cache
+       await cache.delete(f"task:{task_id}")
+       
+       # Invalidate related caches
+       await cache.delete_pattern("tasks:list:*")
+       await cache.delete_pattern("tasks:stats:*")
+   ```
+
+## Advanced Caching Features
+
+1. **Hash Operations** (for structured data):
+   ```python
+   # Store structured data
+   await cache.hset("user:profile", "name", "John")
+   await cache.hset("user:profile", "email", "john@example.com")
+   
+   # Get all fields
+   profile = await cache.hgetall("user:profile")
+   ```
+
+2. **List Operations** (for feeds/queues):
+   ```python
+   # Add to feed
+   await cache.lpush("tasks:recent_feed", task_data)
+   
+   # Get recent items
+   recent = await cache.lrange("tasks:recent_feed", 0, 19)
+   
+   # Keep only last 100 items
+   await cache._client.ltrim(cache._make_key("tasks:recent_feed"), 0, 99)
+   ```
+
+3. **Cache Decorator**:
+   ```python
+   @cache.cached(key_prefix="user", ttl=300)
+   async def get_user(user_id: str):
+       return await db.fetchrow("SELECT * FROM users WHERE user_id = $1", user_id)
+   ```
+
+## Serialization
+
+1. **JSON Serialization** (default, for most data):
+   ```python
+   await cache.set("key", {"data": "value"}, serialize="json")
+   value = await cache.get("key", deserialize="json")
+   ```
+
+2. **Pickle Serialization** (for complex Python objects):
+   ```python
+   await cache.set("key", complex_object, serialize="pickle")
+   value = await cache.get("key", deserialize="pickle")
+   ```
+
+## Cache Warming
+
+1. **Pre-populate cache**:
+   ```python
+   # Warm cache with frequently accessed data
+   warm_data = {
+       "task:stats": global_stats,
+       "agent:top:10": top_agents,
+   }
+   await cache.warm_cache(warm_data, ttl=3600)
+   ```
+
+## Cache Statistics
+
+1. **Monitor cache performance**:
+   ```python
+   stats = await cache.get_stats()
+   # Returns: hits, misses, sets, hit_rate, redis info
+   ```
+
+2. **Health Checks**:
+   ```python
+   health = await cache.health_check()
+   # Returns: status, stats
+   ```
+
+## Best Practices
+
+1. **Always check cache before expensive operations**
+2. **Invalidate related caches on updates**
+3. **Use appropriate TTL based on data volatility**
+4. **Monitor cache hit rates**
+5. **Use pattern invalidation for related data**
+6. **Implement cache stampede prevention for expensive computations**
+7. **Don't cache sensitive data without encryption**
+8. **Use versioned keys for model predictions**

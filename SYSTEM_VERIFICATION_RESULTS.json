@@ -1,0 +1,49 @@
+{
+  "passed": 3,
+  "failed": 0,
+  "warnings": 4,
+  "tests": [
+    {
+      "name": "Backend health endpoint",
+      "status": "PASS",
+      "message": "Status: healthy",
+      "timestamp": "2025-12-04T00:44:52.163877"
+    },
+    {
+      "name": "API docs endpoint",
+      "status": "PASS",
+      "message": "Swagger UI accessible",
+      "timestamp": "2025-12-04T00:44:52.180515"
+    },
+    {
+      "name": "Metrics endpoint",
+      "status": "PASS",
+      "message": "Metrics available: False",
+      "timestamp": "2025-12-04T00:44:52.195349"
+    },
+    {
+      "name": "Agents endpoint",
+      "status": "WARN",
+      "message": "Status: 404",
+      "timestamp": "2025-12-04T00:44:52.211622"
+    },
+    {
+      "name": "Task creation endpoint",
+      "status": "WARN",
+      "message": "Status: 404, {\"detail\":\"Not Found\"}",
+      "timestamp": "2025-12-04T00:44:52.226853"
+    },
+    {
+      "name": "Frontend accessible",
+      "status": "WARN",
+      "message": "Cannot connect to frontend (is it running?)",
+      "timestamp": "2025-12-04T00:44:56.347345"
+    },
+    {
+      "name": "WebSocket connection",
+      "status": "WARN",
+      "message": "server rejected WebSocket connection: HTTP 403",
+      "timestamp": "2025-12-04T00:44:56.362507"
+    }
+  ]
+}

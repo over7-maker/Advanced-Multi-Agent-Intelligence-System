@@ -1,0 +1,302 @@
+---
+description: OpenTelemetry Tracing - Distributed tracing patterns, span creation, context propagation, and instrumentation
+globs:
+  - "src/amas/services/tracing_service.py"
+  - "src/amas/core/**/*.py"
+  - "src/api/routes/**/*.py"
+  - "src/amas/agents/**/*.py"
+alwaysApply: false
+---
+
+# OpenTelemetry Tracing Rules
+
+When implementing distributed tracing:
+
+## Tracing Service Usage
+
+1. **Always use TracingService**:
+   ```python
+   from src.amas.services.tracing_service import get_tracing_service
+   from opentelemetry.trace import Status, StatusCode
+   
+   tracing = get_tracing_service()
+   
+   # ✅ CORRECT: Create span for operation
+   with tracing.tracer.start_as_current_span("task_execution") as span:
+       span.set_attribute("task.id", task_id)
+       span.set_attribute("task.type", task_type)
+       
+       # Execute operation
+       result = await execute_task(...)
+       
+       span.set_status(Status(StatusCode.OK))
+   ```
+
+2. **Initialize Tracing**:
+   ```python
+   from src.amas.services.tracing_service import init_tracing
+   
+   # Initialize on startup
+   tracing = init_tracing(
+       service_name="amas-backend",
+       service_version="1.0.0",
+       environment="production",
+       jaeger_endpoint="jaeger:6831",
+       otlp_endpoint=None
+   )
+   
+   # Instrument FastAPI app
+   tracing.instrument_app(app)
+   ```
+
+## Span Creation Patterns
+
+1. **Basic Span**:
+   ```python
+   # ✅ CORRECT: Use context manager
+   with tracing.tracer.start_as_current_span("operation_name") as span:
+       span.set_attribute("key", "value")
+       # Operation code
+       span.set_status(Status(StatusCode.OK))
+   ```
+
+2. **Span with Attributes**:
+   ```python
+   # ✅ CORRECT: Add relevant attributes
+   with tracing.tracer.start_as_current_span("task_execution") as span:
+       span.set_attribute("task.id", task_id)
+       span.set_attribute("task.type", task_type)
+       span.set_attribute("task.user_id", user_id)
+       span.set_attribute("task.priority", priority)
+       
+       # Execute
+       result = await execute_task(...)
+   ```
+
+3. **Child Spans**:
+   ```python
+   # ✅ CORRECT: Create child spans for sub-operations
+   with tracing.tracer.start_as_current_span("orchestrator.execute") as parent:
+       # Child span 1
+       with tracing.tracer.start_as_current_span("orchestrator.validate") as child1:
+           await validate_task(...)
+       
+       # Child span 2
+       with tracing.tracer.start_as_current_span("orchestrator.execute_agents") as child2:
+           await execute_agents(...)
+   ```
+
+4. **Span Kinds**:
+   ```python
+   from opentelemetry.trace import SpanKind
+   
+   # INTERNAL: Internal operation
+   with tracing.tracer.start_as_current_span("internal_operation", kind=SpanKind.INTERNAL):
+       ...
+   
+   # SERVER: Incoming request
+   with tracing.tracer.start_as_current_span("http_request", kind=SpanKind.SERVER):
+       ...
+   
+   # CLIENT: Outgoing request
+   with tracing.tracer.start_as_current_span("http_client", kind=SpanKind.CLIENT):
+       ...
+   ```
+
+## Exception Handling
+
+1. **Record Exceptions**:
+   ```python
+   # ✅ CORRECT: Record exceptions in spans
+   with tracing.tracer.start_as_current_span("operation") as span:
+       try:
+           result = await risky_operation()
+           span.set_status(Status(StatusCode.OK))
+           return result
+       except Exception as e:
+           # Record exception
+           span.record_exception(e)
+           span.set_status(Status(StatusCode.ERROR, str(e)))
+           raise
+   ```
+
+2. **Exception Attributes**:
+   ```python
+   try:
+       result = await operation()
+   except Exception as e:
+       span.record_exception(e)
+       span.set_attribute("error.type", type(e).__name__)
+       span.set_attribute("error.message", str(e))
+       span.set_status(Status(StatusCode.ERROR, str(e)))
+       raise
+   ```
+
+## Span Events
+
+1. **Add Events**:
+   ```python
+   # ✅ CORRECT: Add events to span
+   with tracing.tracer.start_as_current_span("task_execution") as span:
+       # Add event
+       span.add_event("task_validated", {
+           "task_id": task_id,
+           "validation_result": "success"
+       })
+       
+       # Add another event
+       span.add_event("agents_selected", {
+           "agent_count": len(agents),
+           "agent_ids": [a.id for a in agents]
+       })
+   ```
+
+2. **Event Usage**:
+   - Use for important milestones
+   - Add relevant context
+   - Don't overuse (keep traces readable)
+
+## Tracing Decorator
+
+1. **Function Tracing**:
+   ```python
+   # ✅ CORRECT: Use decorator for automatic tracing
+   @tracing.trace_function(span_name="agent_execution")
+   async def execute_agent(agent_id: str, task_id: str):
+       # Automatically creates span
+       # Records exceptions
+       # Sets status
+       ...
+   ```
+
+2. **Custom Attributes**:
+   ```python
+   @tracing.trace_function(
+       span_name="task_execution",
+       attributes={"component": "orchestrator"}
+   )
+   async def execute_task(task_id: str):
+       ...
+   ```
+
+## Instrumentation
+
+1. **FastAPI Instrumentation**:
+   ```python
+   # ✅ CORRECT: Instrument FastAPI app
+   tracing.instrument_app(app)
+   # Automatically creates spans for all HTTP requests
+   ```
+
+2. **Library Instrumentation**:
+   ```python
+   # ✅ CORRECT: Instrument libraries
+   tracing.instrument_libraries()
+   # Automatically traces:
+   # - HTTP requests (httpx, requests)
+   # - Database queries (asyncpg)
+   # - Redis operations
+   ```
+
+3. **Manual Instrumentation**:
+   ```python
+   # For custom operations, create spans manually
+   with tracing.tracer.start_as_current_span("custom_operation") as span:
+       span.set_attribute("custom.key", "value")
+       # Operation code
+   ```
+
+## Context Propagation
+
+1. **Distributed Tracing**:
+   - Context automatically propagated via HTTP headers
+   - Works across services
+   - Maintains trace continuity
+
+2. **Manual Context**:
+   ```python
+   from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+   
+   # Extract context from headers
+   propagator = TraceContextTextMapPropagator()
+   context = propagator.extract(carrier=headers)
+   
+   # Use context
+   with tracing.tracer.start_as_current_span("operation", context=context):
+       ...
+   ```
+
+## Task Execution Tracing
+
+1. **Complete Task Trace**:
+   ```python
+   # Main execution span
+   with tracing.tracer.start_as_current_span("task_execution") as span:
+       span.set_attribute("task.id", task_id)
+       span.set_attribute("task.type", task_type)
+       
+       # Validation span
+       with tracing.tracer.start_as_current_span("task.validate") as validate_span:
+           await validate_task(...)
+       
+       # Agent execution spans
+       with tracing.tracer.start_as_current_span("agent.execute") as agent_span:
+           agent_span.set_attribute("agent.id", agent_id)
+           # AI call creates child span automatically
+           result = await agent.execute(...)
+       
+       # Result aggregation span
+       with tracing.tracer.start_as_current_span("result.aggregate") as agg_span:
+           aggregated = await aggregate_results(...)
+   ```
+
+## Agent Execution Tracing
+
+1. **Agent Trace Structure**:
+   ```python
+   with tracing.tracer.start_as_current_span(f"agent.{agent_id}.execute") as span:
+       span.set_attribute("agent.id", agent_id)
+       span.set_attribute("agent.name", agent_name)
+       span.set_attribute("agent.type", agent_type)
+       
+       # Prompt preparation
+       with tracing.tracer.start_as_current_span("agent.prepare_prompt") as prompt_span:
+           prompt = await prepare_prompt(...)
+           prompt_span.set_attribute("prompt.length", len(prompt))
+       
+       # AI call (auto-traced by httpx instrumentation)
+       response = await ai_router.generate_with_fallback(...)
+       span.set_attribute("ai.provider", response.provider)
+       span.set_attribute("ai.tokens", response.tokens_used)
+       
+       # Response parsing
+       with tracing.tracer.start_as_current_span("agent.parse_response") as parse_span:
+           result = await parse_response(...)
+   ```
+
+## Best Practices
+
+1. **Span Naming**:
+   - Use dot notation: `component.operation` (e.g., `agent.execute`)
+   - Be descriptive but concise
+   - Use consistent naming
+
+2. **Attributes**:
+   - Add relevant context (IDs, types, counts)
+   - Don't add sensitive data
+   - Keep attribute count reasonable (< 20)
+
+3. **Span Duration**:
+   - Create spans for operations > 10ms
+   - Don't create spans for trivial operations
+   - Use child spans for sub-operations
+
+4. **Error Handling**:
+   - Always record exceptions
+   - Set ERROR status on failures
+   - Include error context in attributes
+
+5. **Performance**:
+   - Tracing has minimal overhead
+   - Use async operations
+   - Don't block on span creation

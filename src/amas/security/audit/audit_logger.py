@@ -5,18 +5,18 @@ Provides structured audit logging with PII redaction,
 buffered writes, and compliance-ready audit trails.
 """
 
-import json
-import logging
 import asyncio
 import hashlib
+import json
+import logging
 import os
-from datetime import datetime, timezone, timedelta
-from typing import Dict, List, Any, Optional, Set
-from dataclasses import dataclass, asdict, field
+import re
+from contextlib import asynccontextmanager
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
-from contextlib import asynccontextmanager
-import re
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -187,6 +187,20 @@ class AuditLogger:
                  flush_interval: int = 30,
                  enable_redaction: bool = True,
                  backup_count: int = 5):
+        # Expand environment variables in log_file path if needed
+        if "${" in log_file:
+            import os
+            import re
+            pattern = r'\$\{([^}]+)\}'
+            match = re.search(pattern, log_file)
+            if match:
+                var_part = match.group(1)
+                if ":-" in var_part:
+                    var_name, default = var_part.split(":-", 1)
+                    log_file = os.getenv(var_name.strip(), default.strip())
+                else:
+                    log_file = os.getenv(var_part.strip(), log_file)
+        
         self.log_file = Path(log_file)
         self.buffer_size = buffer_size
         self.flush_interval = flush_interval
@@ -202,18 +216,29 @@ class AuditLogger:
         
         self.pii_redactor = PIIRedactor() if enable_redaction else None
         
-        # Create log directory
-        self.log_file.parent.mkdir(parents=True, exist_ok=True)
+        # Create log directory (handle case where parent is empty or just filename)
+        try:
+            if self.log_file.parent and str(self.log_file.parent) != '.':
+                self.log_file.parent.mkdir(parents=True, exist_ok=True)
+            else:
+                # If no directory specified, create 'logs' directory
+                Path("logs").mkdir(parents=True, exist_ok=True)
+                self.log_file = Path("logs") / self.log_file.name
+        except Exception as e:
+            logger.warning(f"Could not create log directory: {e}, using current directory")
         
         # Setup structured logging
         self.logger = self._setup_logger()
         
-        # Start async write queue and writer task
+        # Start async write queue and writer task (only if event loop is running)
         self._write_queue = asyncio.Queue(maxsize=1000)
-        self._start_async_writer()
-        
-        # Start background flush task
-        self._start_flush_task()
+        try:
+            loop = asyncio.get_running_loop()
+            self._start_async_writer()
+            self._start_flush_task()
+        except RuntimeError:
+            # No running event loop - tasks will be started on first async call
+            logger.debug("No running event loop, deferring async task creation")
         
         logger.info(f"Audit logger initialized: {log_file} (buffer: {buffer_size}, redaction: {enable_redaction})")
     
@@ -295,6 +320,26 @@ class AuditLogger:
     
     async def log_event(self, event: AuditEvent):
         """Log an audit event with automatic buffering and redaction"""
+        # Ensure async tasks are started if they weren't in __init__
+        if self._writer_task is None or self._flush_task is None:
+            try:
+                asyncio.get_running_loop()
+                if self._writer_task is None:
+                    self._start_async_writer()
+                if self._flush_task is None:
+                    self._start_flush_task()
+            except RuntimeError:
+                # Still no event loop - write synchronously (with redaction)
+                logger.warning("No event loop available, writing audit event synchronously")
+                if self.enable_redaction and self.pii_redactor:
+                    redacted_details, pii_found = self.pii_redactor.redact_dict(event.details)
+                    event.details = redacted_details
+                    event.pii_detected = pii_found
+                    event.sensitive_data_redacted = True
+                event_dict = asdict(event)
+                self.logger.info(json.dumps(event_dict, default=str))
+                return
+        
         # Redact PII if enabled
         if self.enable_redaction and self.pii_redactor:
             redacted_details, pii_found = self.pii_redactor.redact_dict(event.details)
@@ -316,9 +361,17 @@ class AuditLogger:
                 await self._flush_buffer_internal()
     
     async def flush_buffer(self):
-        """Manually flush buffer to disk"""
+        """Manually flush buffer to disk and wait for writes to complete"""
         async with self._buffer_lock:
             await self._flush_buffer_internal()
+        
+        # Ensure all queued events are written before returning
+        if self._write_queue is not None:
+            try:
+                await self._write_queue.join()
+            except Exception:
+                # Best-effort; do not fail caller if join has issues
+                pass
     
     async def _flush_buffer_internal(self):
         """Internal buffer flush (must be called with buffer_lock held)"""
@@ -438,6 +491,14 @@ class AuditLogger:
                                    trace_id: Optional[str] = None,
                                    details: Optional[Dict] = None):
         """Log security violation"""
+        severity_normalized = (severity or "").lower()
+        if severity_normalized in {"high", "critical"}:
+            risk_score = 1.0
+        elif severity_normalized == "medium":
+            risk_score = 0.7
+        else:
+            risk_score = 0.3
+        
         event = AuditEvent(
             event_id=self._generate_event_id(),
             timestamp=datetime.now(timezone.utc).isoformat(),
@@ -447,7 +508,7 @@ class AuditLogger:
             action="security_violation",
             ip_address=ip_address,
             trace_id=trace_id,
-            risk_score=1.0 if severity == "critical" else 0.7,
+            risk_score=risk_score,
             details={
                 "violation_type": violation_type,
                 "severity": severity,

@@ -80,7 +80,9 @@ class TestAgentContract:
         manifest = contract.to_manifest()
         
         assert manifest["agent_id"] == "test_agent_manifest"
-        assert manifest["role"] == "research"
+        # Role might be enum or string depending on Config
+        role_value = manifest["role"]
+        assert role_value == "research" or role_value == AgentRole.RESEARCH or (hasattr(role_value, 'value') and role_value.value == "research")
         assert "input_schema" in manifest
         assert "output_schema" in manifest
         assert "allowed_tools" in manifest

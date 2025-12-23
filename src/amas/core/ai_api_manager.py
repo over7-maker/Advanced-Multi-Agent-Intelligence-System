@@ -1,5 +1,3 @@
-from standalone_universal_ai_manager import get_api_key
-
 #!/usr/bin/env python3
 """
 AMAS AI API Manager - Comprehensive Multi-API Fallback System
@@ -26,7 +24,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import aiohttp
 import httpx
@@ -112,10 +110,11 @@ class AIAPIManager:
         """Setup all available API configurations"""
 
         # Cerebras API
-        if get_api_key("CEREBRAS_API_KEY"):
+        cerebras_key = os.getenv("CEREBRAS_API_KEY")
+        if cerebras_key:
             self.apis["cerebras"] = APIConfig(
                 name="Cerebras",
-                api_key=get_api_key("CEREBRAS_API_KEY"),
+                api_key=cerebras_key,
                 base_url="https://api.cerebras.ai/v1",
                 model="qwen-3-235b-a22b-instruct-2507",
                 api_type=APIType.CEREBRAS,
@@ -124,10 +123,11 @@ class AIAPIManager:
             )
 
         # Codestral API
-        if get_api_key("CODESTRAL_API_KEY"):
+        codestral_key = os.getenv("CODESTRAL_API_KEY")
+        if codestral_key:
             self.apis["codestral"] = APIConfig(
                 name="Codestral",
-                api_key=get_api_key("CODESTRAL_API_KEY"),
+                api_key=codestral_key,
                 base_url="https://codestral.mistral.ai/v1",
                 model="codestral-latest",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -140,10 +140,11 @@ class AIAPIManager:
             )
 
         # DeepSeek API
-        if get_api_key("DEEPSEEK_API_KEY"):
+        deepseek_key = os.getenv("DEEPSEEK_API_KEY")
+        if deepseek_key:
             self.apis["deepseek"] = APIConfig(
                 name="DeepSeek",
-                api_key=get_api_key("DEEPSEEK_API_KEY"),
+                api_key=deepseek_key,
                 base_url="https://api.deepseek.com/v1",
                 model="deepseek-chat",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -152,10 +153,11 @@ class AIAPIManager:
             )
 
         # Gemini AI API
-        if get_api_key("GEMINIAI_API_KEY"):
+        gemini_key = os.getenv("GEMINIAI_API_KEY")
+        if gemini_key:
             self.apis["gemini"] = APIConfig(
                 name="Gemini",
-                api_key=get_api_key("GEMINIAI_API_KEY"),
+                api_key=gemini_key,
                 base_url="https://generativelanguage.googleapis.com/v1beta",
                 model="gemini-pro",
                 api_type=APIType.GEMINI,
@@ -164,10 +166,11 @@ class AIAPIManager:
             )
 
         # GLM API (via OpenRouter)
-        if get_api_key("GLM_API_KEY"):
+        glm_key = os.getenv("GLM_API_KEY")
+        if glm_key:
             self.apis["glm"] = APIConfig(
                 name="GLM",
-                api_key=get_api_key("GLM_API_KEY"),
+                api_key=glm_key,
                 base_url="https://openrouter.ai/api/v1",
                 model="deepseek/deepseek-chat",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -176,10 +179,11 @@ class AIAPIManager:
             )
 
         # GPTOSS API
-        if get_api_key("GPTOSS_API_KEY"):
+        gptoss_key = os.getenv("GPTOSS_API_KEY")
+        if gptoss_key:
             self.apis["gptoss"] = APIConfig(
                 name="GPTOSS",
-                api_key=get_api_key("GPTOSS_API_KEY"),
+                api_key=gptoss_key,
                 base_url="https://api.openai.com/v1",
                 model="gpt-4",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -188,10 +192,11 @@ class AIAPIManager:
             )
 
         # Grok API (via OpenRouter)
-        if get_api_key("GROK_API_KEY"):
+        grok_key = os.getenv("GROK_API_KEY")
+        if grok_key:
             self.apis["grok"] = APIConfig(
                 name="Grok",
-                api_key=get_api_key("GROK_API_KEY"),
+                api_key=grok_key,
                 base_url="https://openrouter.ai/api/v1",
                 model="x-ai/grok-beta",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -200,10 +205,11 @@ class AIAPIManager:
             )
 
         # GroqAI API
-        if get_api_key("GROQAI_API_KEY"):
+        groqai_key = os.getenv("GROQAI_API_KEY")
+        if groqai_key:
             self.apis["groqai"] = APIConfig(
                 name="GroqAI",
-                api_key=get_api_key("GROQAI_API_KEY"),
+                api_key=groqai_key,
                 base_url="https://api.groq.com/openai/v1",
                 model="llama3-8b-8192",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -212,10 +218,11 @@ class AIAPIManager:
             )
 
         # Kimi API
-        if get_api_key("KIMI_API_KEY"):
+        kimi_key = os.getenv("KIMI_API_KEY")
+        if kimi_key:
             self.apis["kimi"] = APIConfig(
                 name="Kimi",
-                api_key=get_api_key("KIMI_API_KEY"),
+                api_key=kimi_key,
                 base_url="https://api.moonshot.cn/v1",
                 model="moonshot-v1-8k",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -224,10 +231,11 @@ class AIAPIManager:
             )
 
         # NVIDIA API
-        if get_api_key("NVIDIA_API_KEY"):
+        nvidia_key = os.getenv("NVIDIA_API_KEY")
+        if nvidia_key:
             self.apis["nvidia"] = APIConfig(
                 name="NVIDIA",
-                api_key=get_api_key("NVIDIA_API_KEY"),
+                api_key=nvidia_key,
                 base_url="https://integrate.api.nvidia.com/v1",
                 model="deepseek-ai/deepseek-r1",
                 api_type=APIType.NVIDIA,
@@ -236,10 +244,11 @@ class AIAPIManager:
             )
 
         # Qwen API
-        if get_api_key("QWEN_API_KEY"):
+        qwen_key = os.getenv("QWEN_API_KEY")
+        if qwen_key:
             self.apis["qwen"] = APIConfig(
                 name="Qwen",
-                api_key=get_api_key("QWEN_API_KEY"),
+                api_key=qwen_key,
                 base_url="https://dashscope.aliyuncs.com/api/v1",
                 model="qwen-turbo",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -248,10 +257,11 @@ class AIAPIManager:
             )
 
         # Gemini2 API
-        if get_api_key("GEMINI2_API_KEY"):
+        gemini2_key = os.getenv("GEMINI2_API_KEY")
+        if gemini2_key:
             self.apis["gemini2"] = APIConfig(
                 name="Gemini2",
-                api_key=get_api_key("GEMINI2_API_KEY"),
+                api_key=gemini2_key,
                 base_url="https://generativelanguage.googleapis.com/v1beta",
                 model="gemini-2.0-flash",
                 api_type=APIType.GEMINI,
@@ -259,11 +269,11 @@ class AIAPIManager:
                 priority=12,
             )
 
-        # NVIDIA2 API
-        if get_api_key("NVIDIA_API_KEY"):
+        # NVIDIA2 API (reuse NVIDIA_API_KEY)
+        if nvidia_key:
             self.apis["nvidia2"] = APIConfig(
                 name="NVIDIA2",
-                api_key=get_api_key("NVIDIA_API_KEY"),
+                api_key=nvidia_key,
                 base_url="https://integrate.api.nvidia.com/v1",
                 model="qwen/qwen2.5-coder-32b-instruct",
                 api_type=APIType.NVIDIA,
@@ -272,10 +282,11 @@ class AIAPIManager:
             )
 
         # Groq2 API
-        if get_api_key("GROQ2_API_KEY"):
+        groq2_key = os.getenv("GROQ2_API_KEY")
+        if groq2_key:
             self.apis["groq2"] = APIConfig(
                 name="Groq2",
-                api_key=get_api_key("GROQ2_API_KEY"),
+                api_key=groq2_key,
                 base_url="https://api.groq.com/openai/v1",
                 model="llama3-70b-8192",
                 api_type=APIType.OPENAI_COMPATIBLE,
@@ -284,10 +295,11 @@ class AIAPIManager:
             )
 
         # Cohere API
-        if get_api_key("COHERE_API_KEY"):
+        cohere_key = os.getenv("COHERE_API_KEY")
+        if cohere_key:
             self.apis["cohere"] = APIConfig(
                 name="Cohere",
-                api_key=get_api_key("COHERE_API_KEY"),
+                api_key=cohere_key,
                 base_url="https://api.cohere.ai/v1",
                 model="command-a-03-2025",
                 api_type=APIType.COHERE,
@@ -296,10 +308,11 @@ class AIAPIManager:
             )
 
         # Chutes API
-        if get_api_key("CHUTES_API_KEY"):
+        chutes_key = os.getenv("CHUTES_API_KEY")
+        if chutes_key:
             self.apis["chutes"] = APIConfig(
                 name="Chutes",
-                api_key=get_api_key("CHUTES_API_KEY"),
+                api_key=chutes_key,
                 base_url="https://llm.chutes.ai/v1",
                 model="zai-org/GLM-4.5-Air",
                 api_type=APIType.CHUTES,
@@ -326,7 +339,7 @@ class AIAPIManager:
         if self.http_client:
             await self.http_client.aclose()
 
-    def get_available_apis(self, task_type: str = None) -> List[str]:
+    def get_available_apis(self, task_type: Optional[str] = None) -> List[str]:
         """Get list of available APIs, optionally filtered by task type"""
         available = []
 
@@ -359,9 +372,10 @@ class AIAPIManager:
 
         client = AsyncOpenAI(base_url=api_config.base_url, api_key=api_config.api_key)
 
+        from openai.types.chat import ChatCompletionMessageParam
         response = await client.chat.completions.create(
             model=api_config.model,
-            messages=messages,
+            messages=cast(List[ChatCompletionMessageParam], messages),
             max_tokens=kwargs.get("max_tokens", api_config.max_tokens),
             temperature=kwargs.get("temperature", api_config.temperature),
             timeout=kwargs.get("timeout", api_config.timeout),
@@ -378,6 +392,9 @@ class AIAPIManager:
     ) -> Dict:
         """Make request to Cerebras API"""
         api_config = self.apis[api_name]
+
+        if self.http_client is None:
+            raise RuntimeError("HTTP client not initialized. Use async context manager.")
 
         # Convert messages to Cerebras format
         system_content = ""
@@ -400,24 +417,27 @@ class AIAPIManager:
         if system_content:
             payload["messages"].insert(0, {"role": "system", "content": system_content})
 
-        async with self.http_client.post(
+        response = await self.http_client.post(
             f"{api_config.base_url}/chat/completions",
             headers={"Authorization": f"Bearer {api_config.api_key}"},
             json=payload,
-        ) as response:
-            result = await response.json()
+        )
+        result = response.json()
 
-            return {
-                "content": result["choices"][0]["message"]["content"],
-                "usage": result.get("usage"),
-                "model": result["model"],
-            }
+        return {
+            "content": result["choices"][0]["message"]["content"],
+            "usage": result.get("usage"),
+            "model": result["model"],
+        }
 
     async def _make_cohere_request(
         self, api_name: str, messages: List[Dict], **kwargs
     ) -> Dict:
         """Make request to Cohere API"""
         api_config = self.apis[api_name]
+
+        if self.http_client is None:
+            raise RuntimeError("HTTP client not initialized. Use async context manager.")
 
         # Convert messages to Cohere format
         user_content = ""
@@ -433,24 +453,27 @@ class AIAPIManager:
             "temperature": kwargs.get("temperature", api_config.temperature),
         }
 
-        async with self.http_client.post(
+        response = await self.http_client.post(
             f"{api_config.base_url}/chat",
             headers={"Authorization": f"Bearer {api_config.api_key}"},
             json=payload,
-        ) as response:
-            result = await response.json()
+        )
+        result = response.json()
 
-            return {
-                "content": result["text"],
-                "usage": result.get("meta"),
-                "model": api_config.model,
-            }
+        return {
+            "content": result["text"],
+            "usage": result.get("meta"),
+            "model": api_config.model,
+        }
 
     async def _make_chutes_request(
         self, api_name: str, messages: List[Dict], **kwargs
     ) -> Dict:
         """Make request to Chutes API"""
         api_config = self.apis[api_name]
+
+        if self.http_client is None:
+            raise RuntimeError("HTTP client not initialized. Use async context manager.")
 
         payload = {
             "model": api_config.model,
@@ -460,24 +483,27 @@ class AIAPIManager:
             "temperature": kwargs.get("temperature", api_config.temperature),
         }
 
-        async with self.http_client.post(
+        response = await self.http_client.post(
             f"{api_config.base_url}/chat/completions",
             headers={"Authorization": f"Bearer {api_config.api_key}"},
             json=payload,
-        ) as response:
-            result = await response.json()
+        )
+        result = response.json()
 
-            return {
-                "content": result["choices"][0]["message"]["content"],
-                "usage": result.get("usage"),
-                "model": result["model"],
-            }
+        return {
+            "content": result["choices"][0]["message"]["content"],
+            "usage": result.get("usage"),
+            "model": result["model"],
+        }
 
     async def _make_gemini_request(
         self, api_name: str, messages: List[Dict], **kwargs
     ) -> Dict:
         """Make request to Gemini API"""
         api_config = self.apis[api_name]
+
+        if self.http_client is None:
+            raise RuntimeError("HTTP client not initialized. Use async context manager.")
 
         # Convert messages to Gemini format
         user_content = ""
@@ -494,18 +520,18 @@ class AIAPIManager:
             },
         }
 
-        async with self.http_client.post(
+        response = await self.http_client.post(
             f"{api_config.base_url}/models/{api_config.model}:generateContent",
             headers={"X-goog-api-key": api_config.api_key},
             json=payload,
-        ) as response:
-            result = await response.json()
+        )
+        result = response.json()
 
-            return {
-                "content": result["candidates"][0]["content"]["parts"][0]["text"],
-                "usage": result.get("usageMetadata"),
-                "model": api_config.model,
-            }
+        return {
+            "content": result["candidates"][0]["content"]["parts"][0]["text"],
+            "usage": result.get("usageMetadata"),
+            "model": api_config.model,
+        }
 
     async def _make_nvidia_request(
         self, api_name: str, messages: List[Dict], **kwargs
@@ -515,9 +541,10 @@ class AIAPIManager:
 
         client = AsyncOpenAI(base_url=api_config.base_url, api_key=api_config.api_key)
 
+        from openai.types.chat import ChatCompletionMessageParam
         response = await client.chat.completions.create(
             model=api_config.model,
-            messages=messages,
+            messages=cast(List[ChatCompletionMessageParam], messages),
             max_tokens=kwargs.get("max_tokens", api_config.max_tokens),
             temperature=kwargs.get("temperature", api_config.temperature),
             timeout=kwargs.get("timeout", api_config.timeout),
@@ -618,11 +645,11 @@ class AIAPIManager:
     async def generate_response(
         self,
         prompt: str,
-        system_prompt: str = None,
-        task_type: str = None,
-        max_tokens: int = None,
-        temperature: float = None,
-        timeout: int = None,
+        system_prompt: Optional[str] = None,
+        task_type: Optional[str] = None,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
+        timeout: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         Generate response using available APIs with automatic fallback
@@ -683,10 +710,10 @@ class AIAPIManager:
     async def generate_streaming_response(
         self,
         prompt: str,
-        system_prompt: str = None,
-        task_type: str = None,
-        max_tokens: int = None,
-        temperature: float = None,
+        system_prompt: Optional[str] = None,
+        task_type: Optional[str] = None,
+        max_tokens: Optional[int] = None,
+        temperature: Optional[float] = None,
     ):
         """
         Generate streaming response using available APIs
@@ -798,7 +825,7 @@ class AIAPIManager:
 
         return health_results
 
-    def reset_api_health(self, api_name: str = None):
+    def reset_api_health(self, api_name: Optional[str] = None):
         """Reset health status for specific API or all APIs"""
         if api_name:
             if api_name in self.health_status:
@@ -815,7 +842,7 @@ ai_api_manager = AIAPIManager()
 
 
 async def get_ai_response(
-    prompt: str, system_prompt: str = None, task_type: str = None, **kwargs
+    prompt: str, system_prompt: Optional[str] = None, task_type: Optional[str] = None, **kwargs
 ) -> Dict[str, Any]:
     """
     Convenience function to get AI response using the global API manager

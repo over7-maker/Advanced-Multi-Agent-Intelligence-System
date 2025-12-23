@@ -1,0 +1,180 @@
+name: Production Component Tests
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.prod.yml'
+      - 'nginx/**'
+      - 'k8s/**'
+      - '.github/workflows/**'
+      - 'scripts/**'
+      - 'alembic/**'
+      - 'docs/**'
+      - 'tests/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'Dockerfile'
+      - 'docker-compose.prod.yml'
+      - 'nginx/**'
+      - 'k8s/**'
+      - '.github/workflows/**'
+      - 'scripts/**'
+      - 'alembic/**'
+      - 'docs/**'
+      - 'tests/**'
+
+jobs:
+  validation:
+    name: Validation Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-asyncio pyyaml fastapi pydantic httpx aiohttp
+      
+      - name: Run validation tests
+        run: |
+          pytest tests/validation/ -v --tb=short
+
+  functional:
+    name: Functional Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Clean up disk space
+        run: |
+          # Clean up system packages and Docker if available
+          sudo apt-get clean || true
+          docker system prune -af --volumes || true
+          df -h
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-asyncio
+      
+      - name: Run functional tests
+        run: |
+          pytest tests/functional/ -v --tb=short -m "not slow"
+
+  integration:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov
+      
+      - name: Run integration tests
+        run: |
+          pytest tests/integration/ -v --tb=short -m integration
+        env:
+          DOCKER_BUILDKIT: 1
+
+  security:
+    name: Security Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          # Install core dependencies for security tests
+          pip install pytest pytest-asyncio pyyaml fastapi==0.115.6 sqlalchemy==2.0.36 pydantic-settings==2.7.0 aiohttp==3.11.11 httpx==0.28.1 bcrypt==4.2.1 PyJWT==2.10.1 cryptography==44.0.0 beautifulsoup4==4.12.3 networkx==3.4.2 numpy==2.2.1 scikit-learn==1.6.0 pandas==2.2.3
+      
+      - name: Run security tests
+        run: |
+          pytest tests/security/ -v --tb=short -m security
+
+  documentation:
+    name: Documentation Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-asyncio pyyaml
+      
+      - name: Run documentation tests
+        run: |
+          pytest tests/documentation/ -v --tb=short -m documentation
+
+  performance:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Clean up disk space
+        run: |
+          # Clean up system packages and Docker
+          sudo apt-get clean || true
+          docker system prune -af --volumes || true
+          df -h
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-asyncio
+      
+      - name: Run performance tests
+        run: |
+          pytest tests/performance/ -v --tb=short -m performance
+        env:
+          DOCKER_BUILDKIT: 1
+
+

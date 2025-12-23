@@ -2,22 +2,63 @@
 # These are the exact versions used in CI/CD pipeline for reproducible builds
 # All versions are pinned for security and reproducibility
 
-# Type Checking
-mypy==1.18.2
-pyright==1.1.407
-# Note: types-all removed to avoid conflicts with project-specific type stubs
-# Install specific type stubs as needed: types-requests, types-python-dateutil, etc.
+# =============================================================================
+# Type Checking Tools
+# =============================================================================
+mypy==1.18.2              # Static type checker for Python
+pyright==1.1.407          # Microsoft's static type checker
+typing-extensions==4.12.2  # Backported type hints for older Python versions
+mypy-extensions==1.0.0    # Extensions to the standard typing module
+pathspec==0.12.1          # Utility library for pattern matching of file paths
 
-# Linting
-flake8==7.3.0
-pylint==4.0.2
+# =============================================================================
+# Code Formatting & Linting Tools
+# =============================================================================
+black==24.4.2             # Opinionated code formatter
+flake8==7.3.0             # Style guide enforcement (PEP 8)
+pylint==4.0.2             # Code analysis for errors and code quality
 
-# Testing
-pytest==9.0.0
-pytest-cov==7.0.0
-pytest-benchmark==4.0.0
-pytest-rerunfailures==14.0  # Required for --reruns flag (flaky test handling)
+# =============================================================================
+# Testing Framework & Plugins
+# =============================================================================
+pytest==9.0.0                    # Testing framework
+pytest-cov==7.0.0                # Coverage plugin for pytest
+pytest-benchmark==4.0.0          # Benchmark plugin for pytest
+pytest-rerunfailures==14.0       # Plugin for re-running flaky tests
+coverage>=7.10.6                 # Code coverage measurement (pytest-cov 7.0.0 requires >=7.10.6)
+iniconfig==2.0.0                 # INI config parser for pytest
+packaging==24.1                  # Core utilities for Python packages
+pluggy==1.5.0                    # Plugin management for pytest
 
-# Security
-bandit==1.7.10
-safety==3.2.7
+# =============================================================================
+# Security Scanning Tools
+# =============================================================================
+bandit==1.7.10            # Security linter for Python code
+safety>=3.3.0             # Dependency vulnerability scanner (updated for typer compatibility)
+
+# Required dependencies for security tools
+stevedore==5.3.0          # Manage dynamic plugins for Python apps (required by bandit)
+pbr==6.1.0                # Python Build Reasonableness (required by stevedore)
+GitPython==3.1.43         # Git interface (required by bandit)
+PyYAML==6.0.2             # YAML parser (required by bandit)
+
+# =============================================================================
+# Supporting Libraries
+# =============================================================================
+# These are required by the above tools but may not be auto-installed
+fastapi==0.115.6          # FastAPI web framework (required by security tests)
+pydantic-settings>=2.1.0   # Pydantic settings management (required by src/amas/config/settings.py)
+aiohttp==3.11.11          # Async HTTP client (required by src/amas/agents/osint/osint_agent.py)
+bcrypt==4.2.0             # Password hashing library (required by src/amas/services/security_service.py)
+PyJWT==2.9.0              # JWT token library (required by src/amas/services/security_service.py)
+setuptools>=75.7.0        # Package installation and distribution (fixed GHSA-5rjg-fvgr-3xxf vulnerability)
+wheel==0.45.1             # Built-package format for Python
+pip>=24.3.2               # Package installer (fixed GHSA-4xh5-x5gv-qwph vulnerability)
+
+# =============================================================================
+# Notes:
+# - All versions are pinned for reproducibility and security
+# - Update these versions when security patches are released
+# - Check https://pypi.org/ for latest secure versions
+# - Run 'pip install --upgrade -r requirements-ci.txt' to update all
+# =============================================================================

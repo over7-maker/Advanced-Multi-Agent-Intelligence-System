@@ -61,17 +61,17 @@ class TechnologyMonitorAgent(IntelligenceAgent):
             )
 
             if task_type == "technology_trends":
-                return await self._monitor_technology_trends(task)
+                return await self._track_technology(task)
             elif task_type == "academic_papers":
-                return await self._monitor_academic_papers(task)
+                return await self._analyze_trends(task)
             elif task_type == "github_monitoring":
-                return await self._monitor_github_repos(task)
+                return await self._detect_innovation(task)
             elif task_type == "tech_news":
-                return await self._monitor_tech_news(task)
+                return await self._monitor_research(task)
             elif task_type == "patent_analysis":
                 return await self._analyze_patents(task)
             elif task_type == "innovation_tracking":
-                return await self._track_innovation(task)
+                return await self._analyze_market(task)
             else:
                 return await self._perform_general_technology_monitoring(task)
 

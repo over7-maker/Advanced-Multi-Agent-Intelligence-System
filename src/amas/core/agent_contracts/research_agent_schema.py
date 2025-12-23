@@ -31,7 +31,7 @@ class ResearchAgentContract(AgentContract):
     
     # Research-specific settings
     max_search_results: int = Field(default=20, ge=5, le=100)
-    search_depth: str = Field(default="comprehensive", regex="^(basic|standard|comprehensive|deep)$")
+    search_depth: str = Field(default="comprehensive", pattern="^(basic|standard|comprehensive|deep)$")
     fact_checking_enabled: bool = Field(default=True)
     source_diversity_required: bool = Field(default=True)
     

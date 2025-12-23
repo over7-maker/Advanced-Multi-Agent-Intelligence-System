@@ -1,0 +1,77 @@
+---
+description: AI Orchestration Integration - Connect orchestrator, agents, and intelligence manager to API endpoints
+globs:
+  - "src/api/routes/tasks.py"
+  - "src/api/routes/workflows.py"
+  - "src/amas/core/unified_intelligence_orchestrator.py"
+alwaysApply: false
+---
+
+# AI Orchestration Integration Rules
+
+When working on task/workflow API endpoints or orchestrator:
+
+## Critical Integration Requirements
+
+1. **Always import and use orchestrator**:
+   ```python
+   from src.amas.core.unified_intelligence_orchestrator import UnifiedIntelligenceOrchestrator
+   from src.amas.intelligence.intelligence_manager import IntelligenceManager
+   ```
+
+2. **Task creation MUST include**:
+   - ✅ ML predictions via `predictive_engine.predict_task_outcome()`
+   - ✅ Intelligent agent selection via `intelligence_manager.select_optimal_agents()`
+   - ✅ Database persistence (not mock data)
+   - ✅ Real-time WebSocket broadcasts
+   - ✅ Redis caching
+
+3. **Task execution MUST use**:
+   - ✅ `orchestrator.execute_task()` (not placeholder functions)
+   - ✅ Background task execution with `BackgroundTasks`
+   - ✅ Real-time progress callbacks via WebSocket
+   - ✅ Learning feedback loop: `intelligence_manager.record_task_execution()`
+   - ✅ Result persistence to database
+
+4. **Never return mock data** - Always use real orchestrator results
+
+5. **Always handle errors gracefully** - Log errors but don't crash the API
+
+## Code Pattern
+
+```python
+# ✅ CORRECT: Full integration
+orchestrator = UnifiedIntelligenceOrchestrator()
+intelligence_manager = IntelligenceManager()
+
+# Get ML prediction
+prediction = await predictive_engine.predict_task_outcome(...)
+
+# Select agents intelligently
+agents = await intelligence_manager.select_optimal_agents(...)
+
+# Execute via orchestrator
+result = await orchestrator.execute_task(
+    task_id=task_id,
+    task_type=task_type,
+    target=target,
+    parameters=parameters,
+    assigned_agents=agents,
+    progress_callback=websocket_callback
+)
+
+# ❌ WRONG: Mock data
+return {"status": "pending", "message": "Task started"}  # NO!
+```
+
+## WebSocket Integration
+
+- Always broadcast task events: `task_created`, `task_progress`, `task_completed`, `task_failed`
+- Use `websocket_manager.broadcast()` for real-time updates
+- Include task_id, status, and relevant data in broadcasts
+
+## Database Integration
+
+- Always persist tasks to PostgreSQL: `await db.execute("INSERT INTO tasks ...")`
+- Store predictions, agent assignments, and execution metadata
+- Use JSON columns for complex data (parameters, predictions, results)

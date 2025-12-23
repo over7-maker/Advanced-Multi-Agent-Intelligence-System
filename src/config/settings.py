@@ -3,14 +3,13 @@ AMAS Configuration Management
 Production-ready configuration with pydantic-settings
 """
 
-import os
-from typing import List, Optional, Union
+from typing import List, Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
-from pydantic_settings import BaseSettings
+from pydantic import BaseModel, Field, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class DatabaseSettings(BaseModel):
+class DatabaseSettings(BaseSettings):
     """Database configuration settings"""
 
     url: str = Field(default="postgresql://postgres:amas_password@localhost:5432/amas")
@@ -19,14 +18,17 @@ class DatabaseSettings(BaseModel):
     name: str = Field(default="amas")
     user: str = Field(default="postgres")
     password: str = Field(default="amas_password")
-    pool_size: int = Field(default=10)
-    max_overflow: int = Field(default=20)
+    pool_size: int = Field(default=10, description="Base number of database connections")
+    max_overflow: int = Field(default=20, description="Additional connections allowed beyond pool_size")
+    pool_timeout: int = Field(default=30, description="Timeout in seconds for getting connection from pool")
+    pool_recycle: int = Field(default=3600, description="Recycle connections after this many seconds")
+    pool_pre_ping: bool = Field(default=True, description="Verify connections before using them")
     echo: bool = Field(default=False)
 
-    model_config = ConfigDict(env_prefix="DB_")
+    model_config = SettingsConfigDict(env_prefix="DB_")
 
 
-class RedisSettings(BaseModel):
+class RedisSettings(BaseSettings):
     """Redis configuration settings"""
 
     url: str = Field(default="redis://localhost:6379/0")
@@ -36,10 +38,10 @@ class RedisSettings(BaseModel):
     db: int = Field(default=0)
     max_connections: int = Field(default=20)
 
-    model_config = ConfigDict(env_prefix="REDIS_")
+    model_config = SettingsConfigDict(env_prefix="REDIS_")
 
 
-class Neo4jSettings(BaseModel):
+class Neo4jSettings(BaseSettings):
     """Neo4j configuration settings"""
 
     uri: str = Field(default="bolt://localhost:7687")
@@ -47,7 +49,7 @@ class Neo4jSettings(BaseModel):
     password: str = Field(default="amas_password")
     max_connections: int = Field(default=50)
 
-    model_config = ConfigDict(env_prefix="NEO4J_")
+    model_config = SettingsConfigDict(env_prefix="NEO4J_")
 
 
 class SecuritySettings(BaseModel):
@@ -60,8 +62,8 @@ class SecuritySettings(BaseModel):
     jwt_refresh_token_expire_days: int = Field(default=7)
     bcrypt_rounds: int = Field(default=12)
 
-    # CORS settings
-    cors_origins: List[str] = Field(default=["http://localhost:3000"])
+    # CORS settings - allow localhost on any port for development
+    cors_origins: List[str] = Field(default=["http://localhost:3000", "http://localhost:8000", "http://localhost:8001", "http://127.0.0.1:8000", "http://127.0.0.1:8001"])
     cors_allow_credentials: bool = Field(default=True)
     cors_allow_methods: List[str] = Field(
         default=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
@@ -75,30 +77,50 @@ class SecuritySettings(BaseModel):
             return [origin.strip() for origin in v.split(",")]
         return v
 
-    model_config = ConfigDict(env_prefix="SECURITY_")
+    model_config = SettingsConfigDict(env_prefix="SECURITY_")
 
 
-class AISettings(BaseModel):
+class AISettings(BaseSettings):
     """AI provider configuration settings"""
 
-    # OpenAI
+    # Standard Providers (Tier 0)
     openai_api_key: Optional[str] = Field(default=None)
     openai_org_id: Optional[str] = Field(default=None)
-
-    # Anthropic
     anthropic_api_key: Optional[str] = Field(default=None)
-
-    # Google AI
     google_ai_api_key: Optional[str] = Field(default=None)
-
-    # Groq
     groq_api_key: Optional[str] = Field(default=None)
-
-    # Cohere
     cohere_api_key: Optional[str] = Field(default=None)
-
-    # Hugging Face
     huggingface_api_key: Optional[str] = Field(default=None)
+
+    # Premium Speed & Quality (Tier 1)
+    cerebras_api_key: Optional[str] = Field(default=None)
+    nvidia_api_key: Optional[str] = Field(default=None)
+    groq2_api_key: Optional[str] = Field(default=None)
+    groqai_api_key: Optional[str] = Field(default=None)
+
+    # High Quality (Tier 2)
+    deepseek_api_key: Optional[str] = Field(default=None)
+    codestral_api_key: Optional[str] = Field(default=None)
+    glm_api_key: Optional[str] = Field(default=None)
+    gemini2_api_key: Optional[str] = Field(default=None)
+    grok_api_key: Optional[str] = Field(default=None)
+
+    # OpenRouter Free Tier (Tier 4)
+    kimi_api_key: Optional[str] = Field(default=None)
+    qwen_api_key: Optional[str] = Field(default=None)
+    gptoss_api_key: Optional[str] = Field(default=None)
+    chutes_api_key: Optional[str] = Field(default=None)
+
+    # Additional Providers (Architecture Requirement - 16+ providers)
+    together_api_key: Optional[str] = Field(default=None)
+    perplexity_api_key: Optional[str] = Field(default=None)
+    fireworks_api_key: Optional[str] = Field(default=None)
+    replicate_api_key: Optional[str] = Field(default=None)
+    ai21_api_key: Optional[str] = Field(default=None)
+    aleph_alpha_api_key: Optional[str] = Field(default=None)
+    writer_api_key: Optional[str] = Field(default=None)
+    moonshot_api_key: Optional[str] = Field(default=None)
+    mistral_api_key: Optional[str] = Field(default=None)
 
     # Model settings
     default_model: str = Field(default="gpt-4")
@@ -106,10 +128,48 @@ class AISettings(BaseModel):
     max_tokens: int = Field(default=4000)
     temperature: float = Field(default=0.7)
 
-    model_config = ConfigDict(env_prefix="AI_")
+    model_config = SettingsConfigDict(env_prefix="AI_")
 
 
-class MonitoringSettings(BaseModel):
+class IntegrationSettings(BaseSettings):
+    """Integration platform credentials settings"""
+
+    # N8N
+    n8n_base_url: Optional[str] = Field(default="http://localhost:5678")
+    n8n_api_key: Optional[str] = Field(default=None)
+    n8n_username: Optional[str] = Field(default=None)
+    n8n_password: Optional[str] = Field(default=None)
+
+    # Slack
+    slack_bot_token: Optional[str] = Field(default=None)
+    slack_signing_secret: Optional[str] = Field(default=None)
+    slack_app_token: Optional[str] = Field(default=None)
+
+    # GitHub
+    github_access_token: Optional[str] = Field(default=None)
+    github_webhook_secret: Optional[str] = Field(default=None)
+
+    # Notion
+    notion_api_key: Optional[str] = Field(default=None)
+
+    # Jira
+    jira_server: Optional[str] = Field(default=None)
+    jira_email: Optional[str] = Field(default=None)
+    jira_api_token: Optional[str] = Field(default=None)
+
+    # Salesforce
+    salesforce_username: Optional[str] = Field(default=None)
+    salesforce_password: Optional[str] = Field(default=None)
+    salesforce_security_token: Optional[str] = Field(default=None)
+    salesforce_access_token: Optional[str] = Field(default=None)
+    salesforce_instance_url: Optional[str] = Field(default=None)
+    salesforce_client_id: Optional[str] = Field(default=None)
+    salesforce_client_secret: Optional[str] = Field(default=None)
+
+    model_config = SettingsConfigDict(env_prefix="INTEGRATION_")
+
+
+class MonitoringSettings(BaseSettings):
     """Monitoring and observability settings"""
 
     prometheus_enabled: bool = Field(default=True)
@@ -126,10 +186,10 @@ class MonitoringSettings(BaseModel):
     log_max_size: str = Field(default="100MB")
     log_backup_count: int = Field(default=5)
 
-    model_config = ConfigDict(env_prefix="MONITORING_")
+    model_config = SettingsConfigDict(env_prefix="MONITORING_")
 
 
-class PerformanceSettings(BaseModel):
+class PerformanceSettings(BaseSettings):
     """Performance and scaling settings"""
 
     worker_processes: int = Field(default=4)
@@ -150,10 +210,10 @@ class PerformanceSettings(BaseModel):
     agent_timeout: int = Field(default=300)
     agent_memory_limit: int = Field(default=1000)
 
-    model_config = ConfigDict(env_prefix="PERFORMANCE_")
+    model_config = SettingsConfigDict(env_prefix="PERFORMANCE_")
 
 
-class FeatureFlags(BaseModel):
+class FeatureFlags(BaseSettings):
     """Feature flags for enabling/disabling functionality"""
 
     enable_voice_commands: bool = Field(default=True)
@@ -162,7 +222,7 @@ class FeatureFlags(BaseModel):
     enable_metrics_collection: bool = Field(default=True)
     enable_health_checks: bool = Field(default=True)
 
-    model_config = ConfigDict(env_prefix="FEATURE_")
+    model_config = SettingsConfigDict(env_prefix="FEATURE_")
 
 
 class Settings(BaseSettings):
@@ -181,6 +241,7 @@ class Settings(BaseSettings):
     neo4j: Neo4jSettings = Neo4jSettings()
     security: SecuritySettings = SecuritySettings()
     ai: AISettings = AISettings()
+    integration: IntegrationSettings = IntegrationSettings()
     monitoring: MonitoringSettings = MonitoringSettings()
     performance: PerformanceSettings = PerformanceSettings()
     features: FeatureFlags = FeatureFlags()
@@ -205,7 +266,7 @@ class Settings(BaseSettings):
     def is_testing(self) -> bool:
         return self.environment == "testing"
 
-    model_config = ConfigDict(
+    model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,

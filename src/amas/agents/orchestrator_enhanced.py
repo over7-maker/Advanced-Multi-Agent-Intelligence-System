@@ -11,7 +11,6 @@ import os
 import sys
 
 # import sys
-import traceback
 import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -25,12 +24,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "..", ".."))
 logger = logging.getLogger(__name__)
 
 try:
-    from amas.core.ai_api_manager import (
-        APIProvider,
-        TaskType,
-        generate_ai_response,
-        get_api_manager,
-    )
+    from amas.core.ai_api_manager import AIAPIManager  # noqa: F401
 
     API_MANAGER_AVAILABLE = True
 except ImportError:
@@ -376,10 +370,16 @@ class EnhancedAgentOrchestrator:
                 raise ValueError("Task must have 'type' and 'description' fields")
 
             task_id = str(uuid.uuid4())
+            task_type = task_data.get("type")
+            task_description = task_data.get("description")
+            
+            if not task_type or not task_description:
+                raise ValueError("Task must have 'type' and 'description' fields")
+            
             task = Task(
                 id=task_id,
-                type=task_data.get("type"),
-                description=task_data.get("description"),
+                type=task_type,
+                description=task_description,
                 priority=TaskPriority(task_data.get("priority", 2)),
                 metadata=task_data.get("metadata", {}),
                 max_retries=task_data.get("max_retries", 3),
@@ -419,7 +419,95 @@ class EnhancedAgentOrchestrator:
             logger.error(f"Failed to submit task: {e}")
             raise
 
-    # ... (rest of the methods following the same pattern)
+    async def _dependencies_met(self, task: Task) -> bool:
+        """Check if all task dependencies are met"""
+        for dep_id in task.dependencies:
+            if dep_id not in self.tasks:
+                return False
+            dep_task = self.tasks[dep_id]
+            if dep_task.status not in [TaskStatus.COMPLETED]:
+                return False
+        return True
+    
+    def _sort_task_queue(self):
+        """Sort task queue by priority"""
+        self.task_queue.sort(
+            key=lambda tid: self.tasks[tid].priority.value, reverse=True
+        )
+    
+    async def _task_processor(self):
+        """Background task processor"""
+        while self.running:
+            try:
+                if self.task_queue:
+                    async with self.task_semaphore:
+                        task_id = self.task_queue.pop(0)
+                        await self._execute_task(task_id)
+                else:
+                    await asyncio.sleep(1)
+            except Exception as e:
+                logger.error(f"Error in task processor: {e}")
+                await asyncio.sleep(5)
+    
+    async def _execute_task(self, task_id: str):
+        """Execute a single task"""
+        try:
+            task = self.tasks[task_id]
+            task.status = TaskStatus.IN_PROGRESS
+            
+            # Find suitable agent
+            agent = await self._find_suitable_agent(task)
+            if not agent:
+                task.status = TaskStatus.FAILED
+                task.error = "No suitable agent found"
+                return
+            
+            # Execute task
+            result = await agent.execute_task(task)
+            task.result = result
+            task.status = TaskStatus.COMPLETED
+            
+            self.system_metrics["total_tasks_processed"] += 1
+        except Exception as e:
+            logger.error(f"Error executing task {task_id}: {e}")
+            task.status = TaskStatus.FAILED
+            task.error = str(e)
+            self.system_metrics["total_tasks_failed"] += 1
+    
+    async def _find_suitable_agent(self, task: Task) -> Optional[BaseAgent]:
+        """Find a suitable agent for the task"""
+        for agent in self.agents.values():
+            if await agent.can_handle_task(task):
+                if agent.status == AgentStatus.IDLE:
+                    return agent
+        return None
+    
+    async def _health_monitor(self):
+        """Background health monitor"""
+        while self.running:
+            try:
+                for agent in self.agents.values():
+                    health = await agent.health_check()
+                    if not health:
+                        agent.status = AgentStatus.ERROR
+                await asyncio.sleep(self.health_check_interval)
+            except Exception as e:
+                logger.error(f"Error in health monitor: {e}")
+                await asyncio.sleep(60)
+    
+    async def _metrics_collector(self):
+        """Background metrics collector"""
+        while self.running:
+            try:
+                # Update system metrics
+                self.system_metrics["active_agents"] = len([
+                    a for a in self.agents.values()
+                    if a.status not in [AgentStatus.ERROR, AgentStatus.OFFLINE]
+                ])
+                await asyncio.sleep(30)
+            except Exception as e:
+                logger.error(f"Error in metrics collector: {e}")
+                await asyncio.sleep(60)
 
     async def get_system_metrics(self) -> Dict[str, Any]:
         """Get comprehensive system metrics"""

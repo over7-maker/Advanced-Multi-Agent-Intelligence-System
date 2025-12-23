@@ -2,17 +2,16 @@
 FastAPI Main Application for AMAS Intelligence System
 """
 
-import asyncio
 import logging
 import os
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 import uvicorn
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, Response
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 from pydantic import BaseModel
 from starlette.middleware.base import BaseHTTPMiddleware
 
@@ -20,18 +19,22 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from ..main import AMASApplication
 
 # Import security components
-from ...security import (
-    JWTMiddleware,
-    SecurityHeadersMiddleware,
-    AMASHTTPBearer,
+from ..security import (
     SecureAuthenticationManager,
-    get_policy_engine,
-    initialize_audit_logger,
+    SecurityHeadersMiddleware,
     get_audit_logger,
+    initialize_audit_logger,
 )
-from ...security.middleware import AuditLoggingMiddleware, AuthenticationMiddleware
-from ...observability.opentelemetry_setup import setup_opentelemetry
-from ...governance.agent_contracts import validate_agent_action
+from ..security.middleware import AuditLoggingMiddleware, AuthenticationMiddleware
+
+try:
+    from ..observability.opentelemetry_setup import setup_opentelemetry
+except ImportError:
+    setup_opentelemetry = None
+try:
+    from ..governance.agent_contracts import validate_agent_action
+except ImportError:
+    validate_agent_action = None
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -198,26 +201,32 @@ async def startup_event():
         logger.info("Initializing AMAS Intelligence System...")
 
         # 1. Initialize OpenTelemetry for observability
-        try:
-            otlp_endpoint = os.getenv("OTLP_ENDPOINT", "http://localhost:4317")
-            setup_opentelemetry(
-                service_name="amas",
-                otlp_endpoint=otlp_endpoint if otlp_endpoint != "http://localhost:4317" else None,
-                enable_console=os.getenv("OTLP_ENABLE_CONSOLE", "false").lower() == "true"
-            )
-            logger.info("✅ OpenTelemetry initialized")
-        except Exception as e:
-            logger.warning(f"OpenTelemetry initialization failed (continuing): {e}")
+        if setup_opentelemetry:
+            try:
+                otlp_endpoint = os.getenv("OTLP_ENDPOINT", "http://localhost:4317")
+                setup_opentelemetry(
+                    service_name="amas",
+                    otlp_endpoint=otlp_endpoint if otlp_endpoint != "http://localhost:4317" else None,
+                    enable_console=os.getenv("OTLP_ENABLE_CONSOLE", "false").lower() == "true"
+                )
+                logger.info("✅ OpenTelemetry initialized")
+            except Exception as e:
+                logger.warning(f"OpenTelemetry initialization failed (continuing): {e}")
+        else:
+            logger.info("OpenTelemetry skipped (components not available).")
 
         # 2. Initialize Audit Logger
         try:
             audit_log_file = os.getenv("AUDIT_LOG_FILE", "logs/audit.log")
             os.makedirs(os.path.dirname(audit_log_file) if os.path.dirname(audit_log_file) else ".", exist_ok=True)
-            initialize_audit_logger(
-                log_file=audit_log_file,
-                buffer_size=int(os.getenv("AUDIT_BUFFER_SIZE", "100")),
-                enable_redaction=os.getenv("AUDIT_REDACT_PII", "true").lower() == "true"
-            )
+            audit_config = {
+                "audit": {
+                    "log_file": audit_log_file,
+                    "buffer_size": int(os.getenv("AUDIT_BUFFER_SIZE", "100")),
+                    "redact_sensitive": os.getenv("AUDIT_REDACT_PII", "true").lower() == "true"
+                }
+            }
+            initialize_audit_logger(audit_config)
             logger.info("✅ Audit logger initialized")
         except Exception as e:
             logger.warning(f"Audit logger initialization failed (continuing): {e}")
@@ -254,7 +263,7 @@ async def startup_event():
         # 4. Initialize OPA Policy Engine
         try:
             opa_url = os.getenv("OPA_URL", "http://localhost:8181")
-            from ...security.policies.opa_integration import configure_policy_engine
+            from ..security.policies.opa_integration import configure_policy_engine
             configure_policy_engine(opa_url=opa_url)
             logger.info(f"✅ OPA Policy Engine initialized: {opa_url}")
         except Exception as e:
@@ -299,6 +308,80 @@ async def startup_event():
         raise
 
 
+# Include API routes
+try:
+    from src.api.routes import (
+        agents,
+        analytics,
+        auth,
+        health,
+        integrations,
+        metrics,  # type: ignore
+        predictions,
+        system,
+        tasks,
+        users,
+        workflows,
+    )
+
+    # Authentication routes - MUST be first
+    app.include_router(auth.router, prefix="/api/v1", tags=["authentication"])
+    logger.info("✅ Authentication routes registered at /api/v1")
+    
+    # System routes
+    app.include_router(system.router, prefix="/api/v1", tags=["system"])
+    app.include_router(health.router, prefix="/api/v1", tags=["health"])
+    # Metrics router already has prefix="/metrics", so we add /api/v1 before it
+    app.include_router(metrics.router, prefix="/api/v1", tags=["monitoring"])
+    logger.info("✅ System routes registered at /api/v1")
+    
+    # Task management routes
+    app.include_router(tasks.router, prefix="/api/v1", tags=["tasks"])
+    app.include_router(predictions.router, prefix="/api/v1", tags=["predictions"])
+    logger.info("✅ Task routes registered at /api/v1")
+    
+    # Agent management routes
+    app.include_router(agents.router, prefix="/api/v1", tags=["agents"])
+    logger.info("✅ Agent routes registered at /api/v1")
+    
+    # Analytics routes
+    app.include_router(analytics.router, prefix="/api/v1", tags=["analytics"])
+    logger.info("✅ Analytics routes registered at /api/v1")
+    
+    # Integration routes (router already has prefix="/integrations")
+    app.include_router(integrations.router, prefix="/api/v1", tags=["integrations"])
+    logger.info("✅ Integration routes registered at /api/v1/integrations")
+    
+    # Workflow routes
+    app.include_router(workflows.router, prefix="/api/v1", tags=["workflows"])
+    logger.info("✅ Workflow routes registered at /api/v1")
+    
+    # User management routes
+    app.include_router(users.router, prefix="/api/v1", tags=["users"])
+    logger.info("✅ User routes registered at /api/v1")
+    
+    logger.info("✅ All API routes registered successfully")
+except Exception as e:
+    import traceback
+    logger.error(f"Could not register some API routes: {e}")
+    logger.error(traceback.format_exc())
+
+# Include WebSocket endpoint
+try:
+    from fastapi import WebSocket as FastAPIWebSocket
+
+    from src.api.websocket import websocket_endpoint
+    
+    @app.websocket("/ws")
+    async def websocket_route(websocket: FastAPIWebSocket):
+        """WebSocket endpoint for real-time updates"""
+        # Extract token from query parameters
+        token = websocket.query_params.get("token") if websocket.query_params else None
+        await websocket_endpoint(websocket, token)
+    logger.info("✅ WebSocket endpoint registered at /ws")
+except Exception as e:
+    logger.warning(f"Could not register WebSocket endpoint: {e}")
+
 # Shutdown event
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -330,28 +413,42 @@ async def health_check():
 
             health_result = await check_health()
 
+            # Ensure services is a dict, not a list
+            services_data = health_result.get("services", {})
+            if isinstance(services_data, list):
+                # Convert list to dict if needed
+                services_data = {f"service_{i}": service for i, service in enumerate(services_data)}
+            elif not isinstance(services_data, dict):
+                services_data = {"checks": services_data} if services_data else {}
+
             return HealthCheck(
                 status=health_result.get("status", "unknown"),
-                services=health_result.get("checks", []),
-                timestamp=health_result.get("timestamp", datetime.utcnow().isoformat()),
+                services=services_data,
+                timestamp=health_result.get("timestamp", datetime.now(timezone.utc).isoformat()),
             )
         except ImportError:
             # Fallback to basic health check
             amas = await get_amas_system()
-            service_health = await amas.service_manager.health_check_all_services()
-
-            return HealthCheck(
-                status=service_health.get("overall_status", "unknown"),
-                services=service_health.get("services", {}),
-                timestamp=datetime.utcnow().isoformat(),
-            )
+            if hasattr(amas, 'service_manager') and amas.service_manager:
+                service_health = await amas.service_manager.health_check_all_services()
+                return HealthCheck(
+                    status=service_health.get("overall_status", "unknown"),
+                    services=service_health.get("services", {}),
+                    timestamp=datetime.now(timezone.utc).isoformat(),
+                )
+            else:
+                return HealthCheck(
+                    status="unknown",
+                    services={"error": "Service manager not available"},
+                    timestamp=datetime.now(timezone.utc).isoformat(),
+                )
 
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return HealthCheck(
             status="unhealthy",
             services={"error": str(e)},
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
         )
 
 
@@ -365,15 +462,15 @@ async def readiness_probe():
         health_result = await check_health()
 
         if health_result.get("status") == "healthy":
-            return {"status": "ready", "timestamp": datetime.utcnow().isoformat()}
+            return {"status": "ready", "timestamp": datetime.now(timezone.utc).isoformat()}
         else:
-            return {"status": "not_ready", "timestamp": datetime.utcnow().isoformat()}
+            return {"status": "not_ready", "timestamp": datetime.now(timezone.utc).isoformat()}
     except Exception as e:
         logger.error(f"Readiness probe failed: {e}")
         return {
             "status": "not_ready",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -383,13 +480,13 @@ async def liveness_probe():
     """Kubernetes liveness probe endpoint"""
     try:
         # Basic liveness check - just ensure the service is responding
-        return {"status": "alive", "timestamp": datetime.utcnow().isoformat()}
+        return {"status": "alive", "timestamp": datetime.now(timezone.utc).isoformat()}
     except Exception as e:
         logger.error(f"Liveness probe failed: {e}")
         return {
             "status": "not_alive",
             "error": str(e),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -423,7 +520,7 @@ async def detailed_health_check():
         return detailed_info
     except Exception as e:
         logger.error(f"Detailed health check failed: {e}")
-        return {"error": str(e), "timestamp": datetime.utcnow().isoformat()}
+        return {"error": str(e), "timestamp": datetime.now(timezone.utc).isoformat()}
 
 
 # System status endpoint
@@ -432,14 +529,44 @@ async def get_system_status():
     """Get system status"""
     try:
         amas = await get_amas_system()
-        status = await amas.orchestrator.get_system_status()
+        
+        # Try to get status from orchestrator
+        status = {}
+        if hasattr(amas, 'orchestrator') and amas.orchestrator:
+            if hasattr(amas.orchestrator, 'get_system_status'):
+                status = await amas.orchestrator.get_system_status()
+            elif hasattr(amas.orchestrator, 'agents'):
+                # Fallback: build status from orchestrator
+                status = {
+                    "status": "active",
+                    "agents": len(amas.orchestrator.agents) if hasattr(amas.orchestrator, 'agents') else 0,
+                    "active_tasks": len(amas.orchestrator.active_tasks) if hasattr(amas.orchestrator, 'active_tasks') else 0,
+                    "total_tasks": len(amas.orchestrator.tasks) if hasattr(amas.orchestrator, 'tasks') else 0,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            else:
+                status = {
+                    "status": "unknown",
+                    "agents": 0,
+                    "active_tasks": 0,
+                    "total_tasks": 0,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+        else:
+            status = {
+                "status": "initializing",
+                "agents": 0,
+                "active_tasks": 0,
+                "total_tasks": 0,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
 
         return SystemStatus(
-            status=status.get("status", "unknown"),
-            agents=status.get("agents", 0),
+            status=status.get("status", status.get("orchestrator_status", "unknown")),
+            agents=status.get("agents", status.get("active_agents", 0)),
             active_tasks=status.get("active_tasks", 0),
             total_tasks=status.get("total_tasks", 0),
-            timestamp=status.get("timestamp", datetime.utcnow().isoformat()),
+            timestamp=status.get("timestamp", datetime.now(timezone.utc).isoformat()),
         )
 
     except Exception as e:
@@ -469,25 +596,20 @@ async def submit_task(
             }
         )
 
-        # Log audit event
-        await amas.security_service.log_audit_event(
-            event_type="task_submission",
-            user_id=auth["user_id"],
-            action="submit_task",
-            details=f"Task submitted: {task_request.type}",
-            classification="system",
-        )
-
-        # Log audit event
-        security_service = amas.service_manager.get_security_service()
-        if security_service:
-            await security_service.log_audit_event(
-                event_type="task_submission",
-                user_id=auth["user_id"],
-                action="submit_task",
-                details=f"Task submitted: {task_request.type}",
-                classification="system",
-            )
+        # Log audit event (try multiple ways)
+        try:
+            if hasattr(amas, 'service_manager') and amas.service_manager:
+                security_service = amas.service_manager.get_security_service()
+                if security_service:
+                    await security_service.log_audit_event(
+                        event_type="task_submission",
+                        user_id=auth["user_id"],
+                        action="submit_task",
+                        details=f"Task submitted: {task_request.type}",
+                        classification="system",
+                    )
+        except Exception as e:
+            logger.warning(f"Failed to log audit event: {e}")
 
         return TaskResponse(
             task_id=task_id, status="submitted", message="Task submitted successfully"
@@ -528,18 +650,36 @@ async def get_agents(request: Request, auth: dict = Depends(verify_auth)):
 
         agents = []
         if hasattr(amas, "orchestrator") and amas.orchestrator:
-            for agent_id, agent in amas.orchestrator.agents.items():
-                agent_status = await agent.get_status()
-                agents.append(
-                    {
-                        "agent_id": agent_id,
-                        "name": agent_status.get("name", ""),
-                        "status": agent_status.get("status", "unknown"),
-                        "capabilities": agent_status.get("capabilities", []),
-                        "last_activity": agent_status.get("last_activity", ""),
-                        "metrics": agent_status.get("metrics", {}),
-                    }
-                )
+            if hasattr(amas.orchestrator, 'agents'):
+                for agent_id, agent in amas.orchestrator.agents.items():
+                    # Try to get status from agent
+                    agent_status = {}
+                    if hasattr(agent, 'get_status'):
+                        try:
+                            agent_status = await agent.get_status()
+                        except Exception:
+                            pass
+                    
+                    # Fallback: build status from agent attributes
+                    if not agent_status:
+                        agent_status = {
+                            "name": getattr(agent, 'name', getattr(agent, 'id', agent_id)),
+                            "status": str(getattr(agent, 'status', 'unknown')),
+                            "capabilities": getattr(agent, 'capabilities', []),
+                            "last_activity": "",
+                            "metrics": {},
+                        }
+                    
+                    agents.append(
+                        {
+                            "agent_id": agent_id,
+                            "name": agent_status.get("name", getattr(agent, 'name', agent_id)),
+                            "status": agent_status.get("status", str(getattr(agent, 'status', 'unknown'))),
+                            "capabilities": agent_status.get("capabilities", getattr(agent, 'capabilities', [])),
+                            "last_activity": agent_status.get("last_activity", ""),
+                            "metrics": agent_status.get("metrics", {}),
+                        }
+                    )
 
         return {"agents": agents}
 
@@ -558,11 +698,29 @@ async def get_agent_status(agent_id: str, request: Request, auth: dict = Depends
         if not hasattr(amas, "orchestrator") or not amas.orchestrator:
             raise HTTPException(status_code=503, detail="Orchestrator not available")
 
-        if agent_id not in amas.orchestrator.agents:
+        if not hasattr(amas.orchestrator, 'agents') or agent_id not in amas.orchestrator.agents:
             raise HTTPException(status_code=404, detail="Agent not found")
 
         agent = amas.orchestrator.agents[agent_id]
-        status = await agent.get_status()
+        
+        # Try to get status from agent
+        status = {}
+        if hasattr(agent, 'get_status'):
+            try:
+                status = await agent.get_status()
+            except Exception:
+                pass
+        
+        # Fallback: build status from agent attributes
+        if not status:
+            status = {
+                "agent_id": agent_id,
+                "name": getattr(agent, 'name', getattr(agent, 'id', agent_id)),
+                "status": str(getattr(agent, 'status', 'unknown')),
+                "capabilities": getattr(agent, 'capabilities', []),
+                "type": getattr(agent, 'type', 'unknown'),
+                "metrics": {},
+            }
 
         return status
 
@@ -587,16 +745,28 @@ async def execute_workflow(
         amas = await get_amas_system()
 
         # Execute workflow
-        result = await amas.orchestrator.execute_workflow(workflow_id, parameters)
+        if not hasattr(amas, 'orchestrator') or not amas.orchestrator:
+            raise HTTPException(status_code=503, detail="Orchestrator not available")
+        
+        if hasattr(amas.orchestrator, 'execute_workflow'):
+            result = await amas.orchestrator.execute_workflow(workflow_id, parameters)
+        else:
+            raise HTTPException(status_code=501, detail="Workflow execution not supported by this orchestrator")
 
-        # Log audit event
-        await amas.security_service.log_audit_event(
-            event_type="workflow_execution",
-            user_id=auth["user_id"],
-            action="execute_workflow",
-            details=f"Workflow executed: {workflow_id}",
-            classification="system",
-        )
+        # Log audit event (try multiple ways)
+        try:
+            if hasattr(amas, 'service_manager') and amas.service_manager:
+                security_service = amas.service_manager.get_security_service()
+                if security_service:
+                    await security_service.log_audit_event(
+                        event_type="workflow_execution",
+                        user_id=auth["user_id"],
+                        action="execute_workflow",
+                        details=f"Workflow executed: {workflow_id}",
+                        classification="system",
+                    )
+        except Exception as e:
+            logger.warning(f"Failed to log audit event: {e}")
 
         return result
 
@@ -611,7 +781,6 @@ async def get_audit_log(
     user_id: Optional[str] = None,
     event_type: Optional[str] = None,
     limit: int = 100,
-    request: Request = None,
     auth: dict = Depends(verify_auth),
 ):
     """Get audit log"""
@@ -619,9 +788,17 @@ async def get_audit_log(
         amas = await get_amas_system()
 
         # Get audit log
-        audit_log = await amas.security_service.get_audit_log(
-            user_id=user_id, event_type=event_type
-        )
+        audit_log = []
+        if hasattr(amas, 'service_manager') and amas.service_manager:
+            security_service = amas.service_manager.get_security_service()
+            if security_service:
+                # Build kwargs only for non-None values
+                kwargs = {}
+                if user_id is not None:
+                    kwargs['user_id'] = user_id
+                if event_type is not None:
+                    kwargs['event_type'] = event_type
+                audit_log = await security_service.get_audit_log(**kwargs)
 
         # Limit results
         audit_log = audit_log[:limit]
@@ -661,7 +838,7 @@ async def root():
         "message": "AMAS Intelligence System API",
         "version": "1.0.0",
         "status": "operational",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
     }
 
 

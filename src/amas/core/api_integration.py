@@ -17,9 +17,6 @@ import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from ..agents.forensics.forensics_agent import ForensicsAgent
-from ..agents.investigation.investigation_agent import InvestigationAgent
-
 # Import existing AMAS components
 from ..agents.orchestrator import (
     AgentOrchestrator,
@@ -28,12 +25,10 @@ from ..agents.orchestrator import (
     Task,
     TaskStatus,
 )
-from ..agents.osint.osint_agent import OSINTAgent
-from ..agents.reporting.reporting_agent import ReportingAgent
 
 # Import the new API manager components
-from .ai_api_manager import AIAPIManager, get_ai_response
-from .enhanced_orchestrator import EnhancedOrchestrator, execute_task, run_investigation
+from .ai_api_manager import AIAPIManager
+from .enhanced_orchestrator import EnhancedOrchestrator, execute_task
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -48,7 +43,7 @@ class EnhancedLLMService:
         self.orchestrator = EnhancedOrchestrator()
 
     async def generate_response(
-        self, prompt: str, system_prompt: str = None, task_type: str = None, **kwargs
+        self, prompt: str, system_prompt: Optional[str] = None, task_type: Optional[str] = None, **kwargs
     ) -> str:
         """Generate response using the enhanced API manager"""
         try:
@@ -65,7 +60,7 @@ class EnhancedLLMService:
             return f"AI Response: {prompt[:100]}... (API unavailable)"
 
     async def generate_streaming_response(
-        self, prompt: str, system_prompt: str = None, task_type: str = None, **kwargs
+        self, prompt: str, system_prompt: Optional[str] = None, task_type: Optional[str] = None, **kwargs
     ):
         """Generate streaming response"""
         try:
@@ -90,7 +85,7 @@ class EnhancedAgent(BaseAgent):
         self.api_manager = AIAPIManager()
 
     async def generate_ai_response(
-        self, prompt: str, system_prompt: str = None, task_type: str = None, **kwargs
+        self, prompt: str, system_prompt: Optional[str] = None, task_type: Optional[str] = None, **kwargs
     ) -> Dict[str, Any]:
         """Generate AI response with fallback"""
         try:
@@ -169,7 +164,7 @@ class EnhancedAgent(BaseAgent):
 class EnhancedOSINTAgent(EnhancedAgent):
     """Enhanced OSINT agent with multi-API fallback"""
 
-    def __init__(self, agent_id: str = None):
+    def __init__(self, agent_id: Optional[str] = None):
         super().__init__(
             agent_id or "osint_001", "Enhanced OSINT Agent", AgentType.OSINT
         )
@@ -192,13 +187,14 @@ class EnhancedOSINTAgent(EnhancedAgent):
                 agent_type="osint_agent",
             )
 
+            result_content = result.result.get("content", "") if result.result else ""
             return {
                 "success": result.success,
                 "osint_data": (
-                    result.result.get("content", "") if result.success else None
+                    result_content if result.success else None
                 ),
-                "sources": self._extract_sources(result.result.get("content", "")),
-                "confidence": self._assess_confidence(result.result.get("content", "")),
+                "sources": self._extract_sources(result_content),
+                "confidence": self._assess_confidence(result_content),
                 "api_used": result.api_used,
                 "execution_time": result.execution_time,
                 "timestamp": datetime.now().isoformat(),
@@ -274,7 +270,7 @@ class EnhancedOSINTAgent(EnhancedAgent):
 class EnhancedInvestigationAgent(EnhancedAgent):
     """Enhanced investigation agent with multi-API fallback"""
 
-    def __init__(self, agent_id: str = None):
+    def __init__(self, agent_id: Optional[str] = None):
         super().__init__(
             agent_id or "investigation_001",
             "Enhanced Investigation Agent",
@@ -299,17 +295,14 @@ class EnhancedInvestigationAgent(EnhancedAgent):
                 agent_type="analysis_agent",
             )
 
+            result_content = result.result.get("content", "") if result.result else ""
             return {
                 "success": result.success,
                 "analysis": (
-                    result.result.get("content", "") if result.success else None
+                    result_content if result.success else None
                 ),
-                "threat_level": self._assess_threat_level(
-                    result.result.get("content", "")
-                ),
-                "recommendations": self._extract_recommendations(
-                    result.result.get("content", "")
-                ),
+                "threat_level": self._assess_threat_level(result_content),
+                "recommendations": self._extract_recommendations(result_content),
                 "api_used": result.api_used,
                 "execution_time": result.execution_time,
                 "timestamp": datetime.now().isoformat(),
@@ -376,7 +369,7 @@ class EnhancedInvestigationAgent(EnhancedAgent):
 class EnhancedForensicsAgent(EnhancedAgent):
     """Enhanced forensics agent with multi-API fallback"""
 
-    def __init__(self, agent_id: str = None):
+    def __init__(self, agent_id: Optional[str] = None):
         super().__init__(
             agent_id or "forensics_001", "Enhanced Forensics Agent", AgentType.FORENSICS
         )
@@ -399,15 +392,14 @@ class EnhancedForensicsAgent(EnhancedAgent):
                 agent_type="forensics_agent",
             )
 
+            result_content = result.result.get("content", "") if result.result else ""
             return {
                 "success": result.success,
                 "forensics_analysis": (
-                    result.result.get("content", "") if result.success else None
+                    result_content if result.success else None
                 ),
-                "evidence_types": self._identify_evidence_types(
-                    result.result.get("content", "")
-                ),
-                "timeline": self._extract_timeline(result.result.get("content", "")),
+                "evidence_types": self._identify_evidence_types(result_content),
+                "timeline": self._extract_timeline(result_content),
                 "api_used": result.api_used,
                 "execution_time": result.execution_time,
                 "timestamp": datetime.now().isoformat(),
@@ -475,7 +467,7 @@ class EnhancedForensicsAgent(EnhancedAgent):
 class EnhancedReportingAgent(EnhancedAgent):
     """Enhanced reporting agent with multi-API fallback"""
 
-    def __init__(self, agent_id: str = None):
+    def __init__(self, agent_id: Optional[str] = None):
         super().__init__(
             agent_id or "reporting_001", "Enhanced Reporting Agent", AgentType.REPORTING
         )
@@ -498,18 +490,13 @@ class EnhancedReportingAgent(EnhancedAgent):
                 agent_type="reporting_agent",
             )
 
+            result_content = result.result.get("content", "") if result.result else ""
             return {
                 "success": result.success,
-                "report": result.result.get("content", "") if result.success else None,
-                "executive_summary": self._extract_executive_summary(
-                    result.result.get("content", "")
-                ),
-                "key_findings": self._extract_key_findings(
-                    result.result.get("content", "")
-                ),
-                "recommendations": self._extract_recommendations(
-                    result.result.get("content", "")
-                ),
+                "report": result_content if result.success else None,
+                "executive_summary": self._extract_executive_summary(result_content),
+                "key_findings": self._extract_key_findings(result_content),
+                "recommendations": self._extract_recommendations(result_content),
                 "api_used": result.api_used,
                 "execution_time": result.execution_time,
                 "timestamp": datetime.now().isoformat(),

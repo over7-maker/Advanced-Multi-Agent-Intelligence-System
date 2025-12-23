@@ -3,25 +3,22 @@ Rate limiting middleware for AMAS
 Implements token bucket algorithm for API rate limiting
 """
 
-import asyncio
 import time
-from collections import defaultdict, deque
+from collections import deque
 from dataclasses import dataclass, field
 from typing import Dict, Optional, Tuple
 
-from fastapi import HTTPException, Request, Response
+from fastapi import HTTPException, Request
 from starlette.middleware.base import BaseHTTPMiddleware
-
-from src.config.settings import get_settings
 
 
 @dataclass
 class RateLimitConfig:
     """Rate limit configuration"""
 
-    requests_per_minute: int = 60
-    requests_per_hour: int = 1000
-    burst_limit: int = 10
+    requests_per_minute: int = 1000  # Increased for development
+    requests_per_hour: int = 10000  # Increased for development
+    burst_limit: int = 100  # Increased for development
     window_size: int = 60  # seconds
 
 
@@ -74,6 +71,13 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
         self.clients: Dict[str, ClientRateLimit] = {}
         self.cleanup_interval = 300  # 5 minutes
         self.last_cleanup = time.time()
+        # Allow bypassing rate limits for health checks and API routes in development
+        import os
+        is_dev = os.getenv("ENVIRONMENT", "production").lower() in ["development", "dev", "test"]
+        self.bypass_paths = ["/health", "/docs", "/redoc", "/openapi.json"]
+        if is_dev:
+            # In development, bypass rate limiting for all API routes
+            self.bypass_paths.append("/api/v1")
 
     def _get_client_id(self, request: Request) -> str:
         """Get client identifier for rate limiting"""
@@ -175,15 +179,34 @@ class RateLimitingMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         """Process request with rate limiting"""
-        # Skip rate limiting for health checks and static files
-        if request.url.path in [
+        # Skip rate limiting for health checks, static files, and frontend routes
+        path = request.url.path
+        
+        # Exact paths to bypass
+        if path in [
             "/health",
             "/ready",
             "/metrics",
             "/docs",
             "/redoc",
             "/openapi.json",
+            "/",
         ]:
+            return await call_next(request)
+        
+        # Bypass for static assets and frontend routes (not API routes)
+        if path.startswith("/assets") or path.startswith("/vite.svg"):
+            return await call_next(request)
+        
+        # Bypass for frontend routes (anything that's not an API route)
+        # Only apply rate limiting to API endpoints
+        if not path.startswith("/api/"):
+            return await call_next(request)
+        
+        # In development mode, bypass rate limiting for all API routes
+        import os
+        is_dev = os.getenv("ENVIRONMENT", "production").lower() in ["development", "dev", "test"]
+        if is_dev and path.startswith("/api/v1"):
             return await call_next(request)
 
         # Clean up old clients periodically

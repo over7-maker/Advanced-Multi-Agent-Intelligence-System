@@ -191,14 +191,28 @@ class RateLimitingService:
                         retry_after = oldest[0][1] + window_seconds - current_time
                     else:
                         retry_after = window_seconds
+                    # Set remaining to 0 when limit exceeded
+                    remaining = 0
+                    # Calculate reset_time from the first window that failed
+                    reset_time = min(reset_time, current_time + window_seconds)
+                    # Break immediately - don't check other windows
                     break
                 
                 remaining = min(remaining, limit - count)
                 reset_time = min(reset_time, current_time + window_seconds)
         
+        # Convert remaining to int, ensuring 0 when blocked, 999999 when unlimited
+        # Priority: blocked requests (not allowed) must have remaining=0
+        if not allowed:
+            final_remaining = 0
+        elif remaining == float('inf'):
+            final_remaining = 999999
+        else:
+            final_remaining = int(remaining)
+        
         return RateLimitResult(
             allowed=allowed,
-            remaining=int(remaining) if remaining != float('inf') else 999999,
+            remaining=final_remaining,
             reset_time=reset_time,
             retry_after=retry_after
         )
@@ -233,24 +247,40 @@ class RateLimitingService:
             # Remove old entries
             window[:] = [t for t in window if current_time - t < window_seconds]
             
-            # Check limit
+            # Check limit BEFORE adding current request
+            # If window already has 'limit' entries, we've reached the limit
             if len(window) >= limit:
                 allowed = False
                 if window:
                     retry_after = window[0] + window_seconds - current_time
                 else:
                     retry_after = window_seconds
+                # Don't add request if limit exceeded
+                remaining = 0
+                # Calculate reset_time from the first window that failed
+                reset_time = min(reset_time, current_time + window_seconds)
+                # Break immediately - don't check other windows
                 break
             
-            # Add current request
+            # Add current request only if within limit
             window.append(current_time)
             
+            # Calculate remaining after adding this request
             remaining = min(remaining, limit - len(window))
             reset_time = min(reset_time, current_time + window_seconds)
         
+        # Convert remaining to int, ensuring 0 when blocked, 999999 when unlimited
+        # Priority: blocked requests (not allowed) must have remaining=0
+        if not allowed:
+            final_remaining = 0
+        elif remaining == float('inf'):
+            final_remaining = 999999
+        else:
+            final_remaining = int(remaining)
+        
         return RateLimitResult(
             allowed=allowed,
-            remaining=int(remaining) if remaining != float('inf') else 999999,
+            remaining=final_remaining,
             reset_time=reset_time,
             retry_after=retry_after
         )

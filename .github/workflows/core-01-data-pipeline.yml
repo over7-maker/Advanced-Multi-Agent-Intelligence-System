@@ -1,11 +1,11 @@
-name: Core-1: Data Pipeline
+name: "Core-1: Data Pipeline"
 
 # Consolidated Data Pipeline Workflow
 # Combines: Project Audit, Comprehensive Audit, Simple Audit, Workflow Audit Monitor,
 #           Version/Package Build, and Bulletproof Analyzer Test
 # Part of Workflow Consolidation: 46 workflows → 8 cores
 
-on:
+"on":
   # Schedule triggers
   schedule:
     - cron: '0 2 * * 0'  # Weekly comprehensive audit (Sunday 2 AM)

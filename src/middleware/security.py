@@ -191,7 +191,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             sanitized[sanitized_key] = sanitized_value
         return sanitized
 
-    def _add_security_headers(self, response: Response) -> None:
+    def _add_security_headers(self, response: Response, request_path: str = "") -> None:
         """Add comprehensive security headers"""
         # Prevent clickjacking
         response.headers["X-Frame-Options"] = "DENY"
@@ -212,6 +212,7 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
 
         # Permissions Policy (formerly Feature Policy)
+        # Only include recognized features to avoid browser warnings
         response.headers["Permissions-Policy"] = (
             "geolocation=(), "
             "microphone=(), "
@@ -221,56 +222,67 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             "magnetometer=(), "
             "gyroscope=(), "
             "accelerometer=(), "
-            "ambient-light-sensor=(), "
             "autoplay=(), "
-            "battery=(), "
             "bluetooth=(), "
             "clipboard-read=(), "
             "clipboard-write=(), "
             "display-capture=(), "
-            "document-domain=(), "
             "encrypted-media=(), "
-            "execution-while-not-rendered=(), "
-            "execution-while-out-of-viewport=(), "
             "fullscreen=(), "
             "gamepad=(), "
-            "layout-animations=(), "
-            "legacy-image-formats=(), "
             "midi=(), "
-            "notifications=(), "
-            "oversized-images=(), "
             "picture-in-picture=(), "
             "publickey-credentials-get=(), "
             "screen-wake-lock=(), "
             "sync-xhr=(), "
-            "unoptimized-images=(), "
-            "unsized-media=(), "
-            "vibrate=(), "
-            "wake-lock=(), "
             "web-share=(), "
             "xr-spatial-tracking=()"
         )
 
         # Content Security Policy
-        csp = (
-            "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
-            "style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data: https:; "
-            "font-src 'self' data:; "
-            "connect-src 'self' https:; "
-            "media-src 'self'; "
-            "object-src 'none'; "
-            "child-src 'none'; "
-            "frame-ancestors 'none'; "
-            "form-action 'self'; "
-            "base-uri 'self'; "
-            "manifest-src 'self'; "
-            "worker-src 'self'; "
-            "frame-src 'none'; "
-            "upgrade-insecure-requests; "
-            "block-all-mixed-content"
-        )
+        # Allow Swagger UI CDN resources for /docs endpoint
+        if '/docs' in request_path or '/redoc' in request_path:
+            # Relaxed CSP for Swagger/ReDoc documentation
+            csp = (
+                "default-src 'self' https://cdn.jsdelivr.net https://fastapi.tiangolo.com; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
+                "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+                "img-src 'self' data: https: https://fastapi.tiangolo.com; "
+                "font-src 'self' data: https://cdn.jsdelivr.net; "
+                "connect-src 'self' http://localhost:8000 http://localhost:8001 https:; "
+                "media-src 'self'; "
+                "object-src 'none'; "
+                "child-src 'none'; "
+                "frame-ancestors 'none'; "
+                "form-action 'self'; "
+                "base-uri 'self'; "
+                "manifest-src 'self'; "
+                "worker-src 'self'; "
+                "frame-src 'none'; "
+                "upgrade-insecure-requests; "
+                "block-all-mixed-content"
+            )
+        else:
+            # Strict CSP for regular pages
+            csp = (
+                "default-src 'self'; "
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "
+                "style-src 'self' 'unsafe-inline'; "
+                "img-src 'self' data: https:; "
+                "font-src 'self' data:; "
+                "connect-src 'self' http://localhost:8000 http://localhost:8001 https:; "
+                "media-src 'self'; "
+                "object-src 'none'; "
+                "child-src 'none'; "
+                "frame-ancestors 'none'; "
+                "form-action 'self'; "
+                "base-uri 'self'; "
+                "manifest-src 'self'; "
+                "worker-src 'self'; "
+                "frame-src 'none'; "
+                "upgrade-insecure-requests; "
+                "block-all-mixed-content"
+            )
         response.headers["Content-Security-Policy"] = csp
 
         # Additional security headers
@@ -287,6 +299,8 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         response.headers["X-AMAS-Security"] = "enabled"
 
     async def dispatch(self, request: Request, call_next: Callable) -> Response:
+        # Store request path for CSP customization
+        request_path = str(request.url.path)
         """Process request with comprehensive security checks"""
         try:
             # Validate and sanitize query parameters
@@ -316,28 +330,37 @@ class SecurityMiddleware(BaseHTTPMiddleware):
             if request.method in ["POST", "PUT", "PATCH"]:
                 content_type = request.headers.get("content-type", "")
                 if "application/json" in content_type:
-                    body = await request.body()
-                    if body:
-                        try:
-                            self._validate_json_input(body)
-                        except HTTPException:
-                            raise
-                        except Exception as e:
-                            logger.warning(f"JSON validation error: {e}")
-                            raise HTTPException(
-                                status_code=400, detail="Invalid request data"
-                            )
+                    try:
+                        body = await request.body()
+                        if body:
+                            try:
+                                self._validate_json_input(body)
+                            except HTTPException:
+                                raise
+                            except Exception as e:
+                                logger.warning(f"JSON validation error: {e}")
+                                raise HTTPException(
+                                    status_code=400, detail="Invalid request data"
+                                )
+                    except HTTPException:
+                        raise
+                    except Exception as e:
+                        # If body reading fails, log and continue (non-critical)
+                        logger.debug(f"Body validation failed (non-critical): {e}")
 
             # Process request
             response = await call_next(request)
 
             # Add security headers
-            self._add_security_headers(response)
+            self._add_security_headers(response, request_path)
 
             return response
 
         except HTTPException:
             raise
         except Exception as e:
-            logger.error(f"Security middleware error: {e}")
+            # Log the full exception for debugging
+            import traceback
+            logger.error(f"Security middleware error: {e}", exc_info=True)
+            # Re-raise as HTTPException to maintain error handling chain
             raise HTTPException(status_code=500, detail="Internal server error")

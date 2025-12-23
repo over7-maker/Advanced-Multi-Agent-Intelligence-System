@@ -9,7 +9,7 @@ import asyncio
 import logging
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -572,7 +572,7 @@ class IntegrationManager:
             raise
 
     async def execute_advanced_workflow(
-        self, workflow_id: str, parameters: Dict[str, Any], user_id: str = None
+        self, workflow_id: str, parameters: Dict[str, Any], user_id: Optional[str] = None
     ) -> str:
         """
         Execute an advanced workflow with enhanced capabilities.
