@@ -53,7 +53,7 @@ bcrypt==4.2.0             # Password hashing library (required by src/amas/servi
 PyJWT==2.9.0              # JWT token library (required by src/amas/services/security_service.py)
 setuptools>=75.7.0        # Package installation and distribution (fixed GHSA-5rjg-fvgr-3xxf vulnerability)
 wheel==0.45.1             # Built-package format for Python
-pip==24.3.1               # Package installer
+pip>=24.3.2               # Package installer (fixed GHSA-4xh5-x5gv-qwph vulnerability)
 
 # =============================================================================
 # Notes:
