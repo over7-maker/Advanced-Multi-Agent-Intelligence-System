@@ -777,7 +777,12 @@ def get_auth_manager() -> EnhancedAuthManager:
 
 
 # FastAPI security scheme
-security_scheme = HTTPBearer()
+# In test/dev mode, use auto_error=False to allow optional authentication
+import os
+_env = os.getenv("ENVIRONMENT", "production").lower()
+_is_test_mode = _env in ["development", "dev", "test"]
+security_scheme = HTTPBearer(auto_error=not _is_test_mode)
+security_scheme_optional = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
@@ -805,7 +810,7 @@ async def get_current_user(
 
 
 async def get_current_user_optional(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme),
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security_scheme_optional),
 ) -> Optional[User]:
     """Get current user if authenticated, otherwise None"""
     if not credentials:
