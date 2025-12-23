@@ -259,9 +259,17 @@ class RateLimitingService:
         if not allowed:
             remaining = 0
         
+        # Convert remaining to int, ensuring 0 when blocked, 999999 when unlimited
+        if remaining == float('inf'):
+            final_remaining = 999999
+        elif not allowed:
+            final_remaining = 0
+        else:
+            final_remaining = int(remaining)
+        
         return RateLimitResult(
             allowed=allowed,
-            remaining=int(remaining) if remaining != float('inf') else 999999,
+            remaining=final_remaining,
             reset_time=reset_time,
             retry_after=retry_after
         )
