@@ -10,7 +10,6 @@
     "resolveJsonModule": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
@@ -24,5 +23,21 @@
     }
   },
   "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/components/Agents",
+    "src/components/Dashboard",
+    "src/components/Auth",
+    "src/components/Integrations",
+    "src/components/Layout",
+    "src/components/Onboarding",
+    "src/components/ProgressTracker",
+    "src/components/System",
+    "src/components/Tasks",
+    "src/components/WorkflowBuilder",
+    "src/__tests__",
+    "src/services"
+  ],
+  "references": [{"path": "./tsconfig.node.json"}]
 }
