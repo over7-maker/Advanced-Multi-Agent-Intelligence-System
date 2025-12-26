@@ -2,31 +2,31 @@
 // Replace with real API calls when backend is ready
 
 export interface SystemMetrics {
-  cpuUsage: number;
-  memoryUsage: number;
+  cpu: number;
+  memory: number;
   activeAgents: number;
-  completedTasks: number;
-  successRate: number;
-  avgLatency: number;
+  tasksCompleted: number;
+  uptime: number;
+  latency: number;
 }
 
 export interface Agent {
   id: string;
   name: string;
-  status: 'idle' | 'running' | 'error';
+  status: 'healthy' | 'running' | 'error' | 'idle';
   tasksCompleted: number;
-  efficiency: number;
+  uptime: number;
   lastActive: string;
 }
 
 // Mock system metrics
 const mockSystemMetrics: SystemMetrics = {
-  cpuUsage: 42,
-  memoryUsage: 58,
+  cpu: 42,
+  memory: 58,
   activeAgents: 12,
-  completedTasks: 1543,
-  successRate: 98.7,
-  avgLatency: 23,
+  tasksCompleted: 1543,
+  uptime: 99.97,
+  latency: 23,
 };
 
 // Mock agents
@@ -34,26 +34,50 @@ const mockAgents: Agent[] = [
   {
     id: '1',
     name: 'DataProcessor',
-    status: 'running',
+    status: 'healthy',
     tasksCompleted: 342,
-    efficiency: 96.5,
+    uptime: 99.8,
     lastActive: 'now',
   },
   {
     id: '2',
     name: 'TaskOrchestrator',
-    status: 'running',
+    status: 'healthy',
     tasksCompleted: 287,
-    efficiency: 94.2,
+    uptime: 99.9,
     lastActive: 'now',
   },
   {
     id: '3',
     name: 'AnalysisAgent',
-    status: 'idle',
+    status: 'healthy',
     tasksCompleted: 156,
-    efficiency: 97.8,
+    uptime: 98.5,
     lastActive: '2m ago',
+  },
+  {
+    id: '4',
+    name: 'ValidationBot',
+    status: 'healthy',
+    tasksCompleted: 421,
+    uptime: 99.7,
+    lastActive: 'now',
+  },
+  {
+    id: '5',
+    name: 'ReportGenerator',
+    status: 'healthy',
+    tasksCompleted: 189,
+    uptime: 99.2,
+    lastActive: '5m ago',
+  },
+  {
+    id: '6',
+    name: 'APIGateway',
+    status: 'healthy',
+    tasksCompleted: 512,
+    uptime: 99.99,
+    lastActive: 'now',
   },
 ];
 
@@ -89,9 +113,9 @@ export async function executeDemoCommand(command: string): Promise<string> {
   const commands: Record<string, string> = {
     'help': 'Available commands: help, status, metrics, ping, agents',
     'status': 'System status: ✅ All systems operational',
-    'metrics': `Active agents: ${mockSystemMetrics.activeAgents} | Tasks: ${mockSystemMetrics.completedTasks} | Success: ${mockSystemMetrics.successRate}%`,
+    'metrics': `Active agents: ${mockSystemMetrics.activeAgents} | Tasks: ${mockSystemMetrics.tasksCompleted} | Uptime: ${mockSystemMetrics.uptime}%`,
     'ping': 'pong',
-    'agents': `Active agents: ${mockAgents.filter(a => a.status === 'running').length} / ${mockAgents.length}`,
+    'agents': `Active agents: ${mockAgents.filter(a => a.status === 'healthy').length} / ${mockAgents.length}`,
   };
   
   return commands[command.toLowerCase()] || `❌ Command not found: ${command}. Type 'help' for available commands.`;
