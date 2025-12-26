@@ -22,10 +22,19 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"],
+  "include": [
+    "src/main.tsx",
+    "src/App.tsx",
+    "src/index.css",
+    "src/components/landing",
+    "src/hooks",
+    "src/lib"
+  ],
   "exclude": [
     "node_modules",
     "dist",
+    "src/test",
+    "src/__tests__",
     "src/components/Agents",
     "src/components/Dashboard",
     "src/components/Auth",
@@ -36,7 +45,6 @@
     "src/components/System",
     "src/components/Tasks",
     "src/components/WorkflowBuilder",
-    "src/__tests__",
     "src/services"
   ],
   "references": [{"path": "./tsconfig.node.json"}]
