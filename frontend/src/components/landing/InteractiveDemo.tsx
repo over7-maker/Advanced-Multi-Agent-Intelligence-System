@@ -1,144 +1,108 @@
+/**
+ * Interactive Demo Component
+ * 
+ * SECURITY FEATURES (per AI audit):
+ * - NO arbitrary code execution
+ * - Input sanitization
+ * - Output escaping
+ * - Allow-listed commands only
+ * - XSS prevention
+ */
+
 import { useState } from 'react';
-import { Play, Terminal, Copy, Check } from 'lucide-react';
-import { executeDemo, type DemoResponse } from '@/lib/api';
 
-const demoCommands = [
-  { value: 'spawn-agent', label: 'Spawn Agent', description: 'Create a new agent instance' },
-  { value: 'execute-task', label: 'Execute Task', description: 'Run a task on an agent' },
-  { value: 'query-database', label: 'Query Database', description: 'Execute a database query' },
-  { value: 'check-health', label: 'Health Check', description: 'Check system health status' },
-  { value: 'list-agents', label: 'List Agents', description: 'Show all active agents' },
-];
+// ============================================================================
+// SECURITY: Allow-listed commands only (no eval!)
+// ============================================================================
+const ALLOWED_COMMANDS = {
+  help: () => 'Available commands: help, status, metrics, ping',
+  status: () => 'System status: ✅ All systems operational',
+  metrics: () => 'Active agents: 12 | Tasks: 1543 | Success rate: 98.7%',
+  ping: () => 'pong',
+} as const;
 
-export default function InteractiveDemo() {
-  const [selectedCommand, setSelectedCommand] = useState(demoCommands[0].value);
-  const [output, setOutput] = useState<string>('');
-  const [executing, setExecuting] = useState(false);
-  const [copied, setCopied] = useState(false);
+type AllowedCommand = keyof typeof ALLOWED_COMMANDS;
 
-  const handleExecute = async () => {
-    setExecuting(true);
-    setOutput('');
+// ============================================================================
+// COMPONENT
+// ============================================================================
+export function InteractiveDemo() {
+  const [input, setInput] = useState('');
+  const [output, setOutput] = useState<string[]>(['👋 Welcome to AMAS Interactive Demo']);
+
+  const handleCommand = (cmd: string) => {
+    const trimmed = cmd.trim().toLowerCase();
     
-    try {
-      const result: DemoResponse = await executeDemo(selectedCommand);
-      setOutput(result.output);
-    } catch (error) {
-      setOutput(`Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setExecuting(false);
+    // SECURITY: Sanitize input (remove special characters)
+    const sanitized = trimmed.replace(/[^a-z0-9\s-]/g, '');
+    
+    // Add command to output
+    const newOutput = [...output, `$ ${sanitized}`];
+    
+    // SECURITY: Only execute allow-listed commands
+    if (sanitized in ALLOWED_COMMANDS) {
+      const result = ALLOWED_COMMANDS[sanitized as AllowedCommand]();
+      newOutput.push(result);
+    } else if (sanitized === '') {
+      // Empty command - do nothing
+    } else {
+      newOutput.push(`❌ Command not found: ${sanitized}. Type 'help' for available commands.`);
+    }
+    
+    setOutput(newOutput);
+    setInput('');
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleCommand(input);
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(output);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
-    <section id="demo" className="py-20 px-6 bg-gray-50 dark:bg-gray-900/50">
-      <div className="container-custom">
-        <div className="section-header text-center">
-          <h2 className="section-title">Interactive Demo</h2>
-          <p className="section-subtitle mx-auto">
-            Try out AMAS commands in real-time and see how agents respond
-          </p>
-        </div>
-
-        <div className="max-w-4xl mx-auto">
-          <div className="card">
-            {/* Command Selector */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium mb-3">Select a command to execute:</label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {demoCommands.map((cmd) => (
-                  <button
-                    key={cmd.value}
-                    onClick={() => setSelectedCommand(cmd.value)}
-                    className={`p-3 rounded-lg border-2 text-left transition-all ${
-                      selectedCommand === cmd.value
-                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                        : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700'
-                    }`}
-                  >
-                    <div className="font-medium text-sm mb-1">{cmd.label}</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">{cmd.description}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Execute Button */}
-            <div className="mb-6">
-              <button
-                onClick={handleExecute}
-                disabled={executing}
-                className="btn-primary w-full flex items-center justify-center gap-2"
-              >
-                {executing ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Executing...
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-4 h-4" />
-                    Execute Command
-                  </>
-                )}
-              </button>
-            </div>
-
-            {/* Output Terminal */}
-            <div className="relative">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <Terminal className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  <span className="text-sm font-medium">Output</span>
+    <section className="py-16 bg-gray-50 dark:bg-gray-900">
+      <div className="container mx-auto px-4">
+        <div className="max-w-3xl mx-auto">
+          <h2 className="text-3xl font-bold text-center mb-8 text-gray-900 dark:text-white">
+            Try It Live
+          </h2>
+          
+          {/* Terminal-style Demo */}
+          <div className="bg-gray-900 rounded-lg shadow-xl p-6 font-mono text-sm">
+            {/* Output Area */}
+            <div className="mb-4 space-y-2 h-64 overflow-y-auto">
+              {output.map((line, idx) => (
+                <div 
+                  key={idx} 
+                  className={line.startsWith('$') ? 'text-green-400' : 'text-gray-300'}
+                >
+                  {/* SECURITY: React automatically escapes text - no XSS risk */}
+                  {line}
                 </div>
-                {output && (
-                  <button
-                    onClick={handleCopy}
-                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-500 flex items-center gap-2"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="w-4 h-4" />
-                        Copied!
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="w-4 h-4" />
-                        Copy
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-              <div className="bg-charcoal dark:bg-black rounded-lg p-4 min-h-[300px] max-h-[400px] overflow-auto font-mono text-sm">
-                {executing ? (
-                  <div className="flex items-center gap-2 text-green-400">
-                    <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                    Executing command...
-                  </div>
-                ) : output ? (
-                  <pre className="text-green-400 whitespace-pre-wrap">{output}</pre>
-                ) : (
-                  <div className="text-gray-500 italic">
-                    Click "Execute Command" to see the output here...
-                  </div>
-                )}
-              </div>
+              ))}
             </div>
-
-            {/* Info Box */}
-            <div className="mt-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-              <p className="text-sm text-blue-900 dark:text-blue-200">
-                <strong>Note:</strong> This demo uses simulated data. In production, these commands would interact with your actual agent systems.
-              </p>
+            
+            {/* Input Area */}
+            <div className="flex items-center space-x-2">
+              <span className="text-green-400">$</span>
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="flex-1 bg-transparent text-white outline-none"
+                placeholder="Type 'help' for commands..."
+                autoComplete="off"
+                spellCheck="false"
+                maxLength={50} // SECURITY: Limit input length
+              />
             </div>
           </div>
+          
+          {/* Help Text */}
+          <p className="mt-4 text-center text-gray-600 dark:text-gray-400 text-sm">
+            This is a safe, sandboxed demo. No actual system commands are executed.
+          </p>
         </div>
       </div>
     </section>
