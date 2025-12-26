@@ -72,7 +72,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8000:8000"
-      - "3000:3000"
     environment:
       - DATABASE_URL=postgresql://postgres:amas_password@postgres:5432/amas
       - REDIS_URL=redis://:amas_redis_password@redis:6379/0
@@ -113,7 +112,32 @@ services:
           memory: 1G
           cpus: '0.5'
 
-  # Nginx Reverse Proxy
+  # Frontend React Application
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=http://amas:8000/api/v1
+      - NODE_ENV=production
+    depends_on:
+      - amas
+    volumes:
+      - ./frontend/dist:/app/dist
+      - ./frontend/node_modules:/app/node_modules
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - amas-network
+
+  # Nginx Reverse Proxy (routes /ui to frontend)
   nginx:
     image: nginx:alpine
     ports:
@@ -125,6 +149,7 @@ services:
       - ./nginx/logs:/var/log/nginx
     depends_on:
       - amas
+      - frontend
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
