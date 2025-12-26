@@ -1,107 +1,132 @@
-/**
- * AMAS Frontend API Client
- * 
- * SECURITY FEATURES (per AI audit):
- * - Separate mock/real clients (no production leak)
- * - Environment-based switching
- * - Tree-shakeable for production builds
- */
+// Mock API client for development
+// Replace with real API calls when backend is ready
 
-// Types
-export interface MetricsData {
+export interface SystemMetrics {
+  cpuUsage: number;
+  memoryUsage: number;
   activeAgents: number;
-  tasksProcessed: number;
-  avgResponseTime: number;
+  completedTasks: number;
   successRate: number;
-  timestamp: string;
+  avgLatency: number;
 }
 
-export interface SystemStatus {
-  status: 'healthy' | 'degraded' | 'down';
-  uptime: number;
-  version: string;
+export interface Agent {
+  id: string;
+  name: string;
+  status: 'idle' | 'running' | 'error';
+  tasksCompleted: number;
+  efficiency: number;
+  lastActive: string;
 }
 
-// ============================================================================
-// MOCK DATA (Development Only)
-// ============================================================================
-const MOCK_METRICS: MetricsData = {
+// Mock system metrics
+const mockSystemMetrics: SystemMetrics = {
+  cpuUsage: 42,
+  memoryUsage: 58,
   activeAgents: 12,
-  tasksProcessed: 1543,
-  avgResponseTime: 145,
+  completedTasks: 1543,
   successRate: 98.7,
-  timestamp: new Date().toISOString()
+  avgLatency: 23,
 };
 
-const MOCK_STATUS: SystemStatus = {
-  status: 'healthy',
-  uptime: 99.94,
-  version: '1.0.0-alpha'
-};
-
-// ============================================================================
-// MOCK API CLIENT (Never bundled in production)
-// ============================================================================
-class MockApiClient {
-  async getMetrics(): Promise<MetricsData> {
-    // Simulate network delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    return { ...MOCK_METRICS, timestamp: new Date().toISOString() };
-  }
-
-  async getSystemStatus(): Promise<SystemStatus> {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    return MOCK_STATUS;
-  }
-}
-
-// ============================================================================
-// REAL API CLIENT (Production)
-// ============================================================================
-class RealApiClient {
-  private baseUrl: string;
-
-  constructor() {
-    // SECURITY: Use environment variable (never hardcode)
-    this.baseUrl = import.meta.env.VITE_API_URL || '/api';
-  }
-
-  async getMetrics(): Promise<MetricsData> {
-    const response = await fetch(`${this.baseUrl}/metrics`);
-    if (!response.ok) throw new Error('Failed to fetch metrics');
-    return response.json();
-  }
-
-  async getSystemStatus(): Promise<SystemStatus> {
-    const response = await fetch(`${this.baseUrl}/status`);
-    if (!response.ok) throw new Error('Failed to fetch status');
-    return response.json();
-  }
-}
-
-// ============================================================================
-// API CLIENT FACTORY (Security-Audited Switch)
-// ============================================================================
+// Mock agents
+const mockAgents: Agent[] = [
+  {
+    id: '1',
+    name: 'DataProcessor',
+    status: 'running',
+    tasksCompleted: 342,
+    efficiency: 96.5,
+    lastActive: 'now',
+  },
+  {
+    id: '2',
+    name: 'TaskOrchestrator',
+    status: 'running',
+    tasksCompleted: 287,
+    efficiency: 94.2,
+    lastActive: 'now',
+  },
+  {
+    id: '3',
+    name: 'AnalysisAgent',
+    status: 'idle',
+    tasksCompleted: 156,
+    efficiency: 97.8,
+    lastActive: '2m ago',
+  },
+];
 
 /**
- * SECURITY: Strict environment check
- * - Uses import.meta.env.PROD (Vite's built-in flag)
- * - Tree-shaking removes MockApiClient in production builds
- * - No risk of mock data in production
+ * Fetch system metrics from API
+ * @returns Promise resolving to SystemMetrics
  */
-function createApiClient() {
-  // PROD is a compile-time constant in Vite - tree-shaken
-  if (import.meta.env.PROD) {
-    console.info('[API] Using REAL API client');
-    return new RealApiClient();
-  } else {
-    console.warn('[API] Using MOCK API client (development only)');
-    return new MockApiClient();
-  }
+export async function fetchSystemMetrics(): Promise<SystemMetrics> {
+  // Mock delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+  return mockSystemMetrics;
 }
 
-// Export singleton instance
-export const api = createApiClient();
+/**
+ * Fetch agent status from API
+ * @returns Promise resolving to array of Agents
+ */
+export async function fetchAgentStatus(): Promise<Agent[]> {
+  // Mock delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+  return mockAgents;
+}
 
-// Export types
-export type ApiClient = MockApiClient | RealApiClient;
+/**
+ * Execute demo command (mock)
+ * @param command Command to execute
+ * @returns Promise resolving to command output
+ */
+export async function executeDemoCommand(command: string): Promise<string> {
+  // Mock delay
+  await new Promise(resolve => setTimeout(resolve, 200));
+  
+  const commands: Record<string, string> = {
+    'help': 'Available commands: help, status, metrics, ping, agents',
+    'status': 'System status: ✅ All systems operational',
+    'metrics': `Active agents: ${mockSystemMetrics.activeAgents} | Tasks: ${mockSystemMetrics.completedTasks} | Success: ${mockSystemMetrics.successRate}%`,
+    'ping': 'pong',
+    'agents': `Active agents: ${mockAgents.filter(a => a.status === 'running').length} / ${mockAgents.length}`,
+  };
+  
+  return commands[command.toLowerCase()] || `❌ Command not found: ${command}. Type 'help' for available commands.`;
+}
+
+/**
+ * Submit feedback (mock)
+ * @param feedback Feedback message
+ * @returns Promise resolving when feedback is submitted
+ */
+export async function submitFeedback(feedback: string): Promise<void> {
+  // Mock delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  console.log('Feedback submitted:', feedback);
+}
+
+/**
+ * Health check (mock)
+ * @returns Promise resolving to health status
+ */
+export async function healthCheck(): Promise<{ status: string }> {
+  // Mock delay
+  await new Promise(resolve => setTimeout(resolve, 100));
+  return { status: 'healthy' };
+}
+
+// For real API integration, uncomment and configure:
+// const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api';
+// 
+// export async function fetchSystemMetrics(): Promise<SystemMetrics> {
+//   const response = await fetch(`${API_BASE_URL}/metrics`);
+//   return response.json();
+// }
+// 
+// export async function fetchAgentStatus(): Promise<Agent[]> {
+//   const response = await fetch(`${API_BASE_URL}/agents`);
+//   return response.json();
+// }
