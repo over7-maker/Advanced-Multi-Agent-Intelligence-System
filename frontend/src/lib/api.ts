@@ -83,22 +83,68 @@ const mockAgents: Agent[] = [
 
 /**
  * Fetch system metrics from API
+ * Uses real landing API endpoint when available, falls back to mock data
  * @returns Promise resolving to SystemMetrics
  */
 export async function fetchSystemMetrics(): Promise<SystemMetrics> {
-  // Mock delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  return mockSystemMetrics;
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || '/api/v1';
+    const response = await fetch(`${apiUrl}/landing/metrics`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Transform landing API response to frontend format
+    return {
+      cpu: data.cpu_usage_percent || 0,
+      memory: data.memory_usage_percent || 0,
+      activeAgents: data.active_agents || 0,
+      tasksCompleted: data.completed_tasks || 0,
+      uptime: data.uptime_hours || 0,
+      latency: data.avg_task_duration || 0,
+    };
+  } catch (error) {
+    console.warn('Failed to fetch real metrics, using mock data:', error);
+    // Fallback to mock data
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return mockSystemMetrics;
+  }
 }
 
 /**
  * Fetch agent status from API
+ * Uses real landing API endpoint when available, falls back to mock data
  * @returns Promise resolving to array of Agents
  */
 export async function fetchAgentStatus(): Promise<Agent[]> {
-  // Mock delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  return mockAgents;
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || '/api/v1';
+    const response = await fetch(`${apiUrl}/landing/agents-status`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    // Transform landing API response to frontend format
+    return data.map((agent: any) => ({
+      id: agent.agent_id || agent.id,
+      name: agent.name || 'Unknown Agent',
+      status: agent.status === 'active' ? 'healthy' : agent.status === 'error' ? 'error' : 'idle',
+      tasksCompleted: agent.executions_today || 0,
+      uptime: agent.success_rate ? (agent.success_rate * 100) : 99.0,
+      lastActive: 'now',
+    }));
+  } catch (error) {
+    console.warn('Failed to fetch real agent status, using mock data:', error);
+    // Fallback to mock data
+    await new Promise(resolve => setTimeout(resolve, 300));
+    return mockAgents;
+  }
 }
 
 /**
