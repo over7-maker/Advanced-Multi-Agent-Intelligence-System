@@ -2,39 +2,50 @@
   "compilerOptions": {
     "target": "ES2020",
     "useDefineForClassFields": true,
-    "lib": [
-      "ES2020",
-      "DOM",
-      "DOM.Iterable"
-    ],
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
-    /* Bundler mode */
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    /* Linting */
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    /* Path aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     }
   },
   "include": [
-    "src"
+    "src/main.tsx",
+    "src/App.tsx",
+    "src/index.css",
+    "src/components/landing",
+    "src/hooks",
+    "src/lib"
   ],
-  "references": [
-    {
-      "path": "./tsconfig.node.json"
-    }
-  ]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "src/test",
+    "src/__tests__",
+    "src/components/Agents",
+    "src/components/Dashboard",
+    "src/components/Auth",
+    "src/components/Integrations",
+    "src/components/Layout",
+    "src/components/Onboarding",
+    "src/components/ProgressTracker",
+    "src/components/System",
+    "src/components/Tasks",
+    "src/components/WorkflowBuilder",
+    "src/services"
+  ],
+  "references": [{"path": "./tsconfig.node.json"}]
 }

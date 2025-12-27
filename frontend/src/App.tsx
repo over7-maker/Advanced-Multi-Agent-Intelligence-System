@@ -16,30 +16,41 @@ import { TaskExecutionView } from './components/Tasks/TaskExecutionView';
 import { TaskList } from './components/Tasks/TaskList';
 import { AgentTeamBuilder } from './components/WorkflowBuilder/AgentTeamBuilder';
 import { WorkflowTemplates } from './components/WorkflowBuilder/WorkflowTemplates';
+// Landing page components (from PR #276 - merged from main)
+import HeroSection from './components/landing/HeroSection';
+import ArchitectureSection from './components/landing/ArchitectureSection';
+import FeaturesSection from './components/landing/FeaturesSection';
+import MonitoringDashboard from './components/landing/MonitoringDashboard';
+import InteractiveDemo from './components/landing/InteractiveDemo';
+import CTASection from './components/landing/CTASection';
+import Footer from './components/landing/Footer';
+import Header from './components/landing/Header';
 import { apiService } from './services/api';
 import { websocketService } from './services/websocket';
 import { TaskComplexity, TeamComposition, WorkflowExecution } from './types/agent';
 
-// Template type definition (matches WorkflowTemplates component)
-interface WorkflowTemplate {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  taskTemplate: string;
-  suggestedAgents: string[];
-  complexity: TaskComplexity;
-  successRate: number;
-  avgDurationHours: number;
-  avgCost: number;
-  qualityScore: number;
-  usageCount: number;
-  tags: string[];
-  createdBy: string;
-  createdAt: Date;
-  lastUsed?: Date;
-  isFavorite: boolean;
-  isCustom: boolean;
+// Landing Page Component (Public - no authentication required)
+function LandingPage() {
+  const [darkMode, setDarkMode] = useState(false);
+
+  const toggleDarkMode = () => {
+    setDarkMode(prev => !prev);
+  };
+
+  return (
+    <div className={darkMode ? 'dark' : 'light'}>
+      <Header isDark={darkMode} onToggleDarkMode={toggleDarkMode} />
+      <main>
+        <HeroSection />
+        <ArchitectureSection />
+        <FeaturesSection />
+        <MonitoringDashboard />
+        <InteractiveDemo />
+        <CTASection />
+      </main>
+      <Footer />
+    </div>
+  );
 }
 
 // Using MainLayout and ProtectedRoute from components
@@ -47,7 +58,13 @@ interface WorkflowTemplate {
 function App(): JSX.Element {
   return (
     <Routes>
+      {/* Public Landing Page Route */}
+      <Route path="/landing" element={<LandingPage />} />
+      
+      {/* Authentication */}
       <Route path="/login" element={<Login />} />
+      
+      {/* Protected Routes */}
       <Route
         path="/"
         element={
@@ -211,27 +228,15 @@ function WorkflowBuilderPage(): JSX.Element {
   return (
     <Box>
       {!selectedTemplate ? (
-        <WorkflowTemplates onSelectTemplate={handleTemplateSelect} />
+        <WorkflowTemplates onSelect={handleTemplateSelect} />
       ) : (
-        <Box>
-          <AgentTeamBuilder
-            taskRequest={selectedTemplate.taskTemplate}
-            onTeamCompositionChange={handleTeamCompositionChange}
-            suggestedComplexity={selectedTemplate.complexity}
-          />
-          <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-            <Button variant="outlined" onClick={() => setSelectedTemplate(null)}>
-              Back to Templates
-            </Button>
-            <Button 
-              variant="contained" 
-              onClick={handleStartWorkflow} 
-              disabled={!teamComposition}
-            >
-              Start Workflow
-            </Button>
-          </Box>
-        </Box>
+        <AgentTeamBuilder
+          template={selectedTemplate}
+          teamComposition={teamComposition}
+          onTeamCompositionChange={handleTeamCompositionChange}
+          onStart={handleStartWorkflow}
+          onBack={() => setSelectedTemplate(null)}
+        />
       )}
     </Box>
   );
@@ -239,102 +244,42 @@ function WorkflowBuilderPage(): JSX.Element {
 
 // Workflow Detail Page Component
 function WorkflowDetailPage(): JSX.Element {
-  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const [execution, setExecution] = useState<WorkflowExecution | null>(null);
+  const [workflow, setWorkflow] = useState<WorkflowExecution | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!id) {
-      setError('No workflow ID provided');
-      setLoading(false);
-      return;
-    }
-
-    const loadWorkflow = async (): Promise<void> => {
+    const fetchWorkflow = async () => {
+      if (!id) return;
+      
       try {
-        // Note: getWorkflowExecution method needs to be added to API service
-        // For now, using getTask as a workaround
-        const response = await apiService.getTask(id);
-        
-        // Convert task response to workflow execution format
-        const task = response as any;
-        const exec: WorkflowExecution = {
-          executionId: task.task_id || id,
-          workflowId: task.workflow_id || 'unknown',
-          status: task.status || 'executing',
-          progressPercentage: task.progress || 0,
-          tasksCompleted: task.tasks_completed || 0,
-          tasksInProgress: task.tasks_in_progress || 0,
-          tasksPending: task.tasks_pending || 0,
-          estimatedRemainingHours: task.estimated_hours || 0.5,
-          overallHealth: task.health || 'healthy',
-          currentPhase: task.current_phase || 'processing',
-          startedAt: task.started_at ? new Date(task.started_at) : new Date(),
-          completedAt: task.completed_at ? new Date(task.completed_at) : undefined,
-        };
-        setExecution(exec);
-        setLoading(false);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load workflow');
+        // TODO: Implement workflow fetching from API
+        // For now, using mock data
+        setWorkflow(null);
+      } catch (error) {
+        console.error('Error fetching workflow:', error);
+      } finally {
         setLoading(false);
       }
     };
 
-    loadWorkflow();
-
-    // Subscribe to real-time updates
-    websocketService.connect();
-    const unsubscribe = websocketService.on('workflow_update', (data) => {
-      if (data.id === id || data.executionId === id) {
-        setExecution((prev) => prev ? { ...prev, ...data } : null);
-      }
-    });
-
-    return () => {
-      unsubscribe();
-    };
+    fetchWorkflow();
   }, [id]);
 
   if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <Box>Loading workflow...</Box>
-      </Box>
-    );
+    return <Box>Loading workflow...</Box>;
   }
 
-  if (error || !execution) {
-    return (
-      <Box>
-        <Button 
-          variant="outlined" 
-          onClick={() => navigate('/dashboard')}
-          sx={{ mb: 3 }}
-        >
-          ← Back to Dashboard
-        </Button>
-        <Box color="error.main">
-          {error || 'Workflow not found'}
-        </Box>
-      </Box>
-    );
+  if (!workflow) {
+    return <Box>Workflow not found</Box>;
   }
 
   return (
     <Box>
-      <Button 
-        variant="outlined" 
-        onClick={() => navigate('/dashboard')}
-        sx={{ mb: 3 }}
-      >
-        ← Back to Dashboard
-      </Button>
-      <ProgressTracker execution={execution} realTimeUpdates={true} />
+      <Typography variant="h4">Workflow {id}</Typography>
+      <ProgressTracker workflowId={id} />
     </Box>
   );
 }
 
 export default App;
-

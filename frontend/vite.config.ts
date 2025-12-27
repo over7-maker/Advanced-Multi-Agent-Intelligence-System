@@ -44,13 +44,11 @@ export default defineConfig({
       output: {
         manualChunks: {
           vendor: ['react', 'react-dom'],
-          ui: ['@mui/material', '@mui/icons-material'],
-          charts: ['recharts'],
         },
       },
     },
   },
   optimizeDeps: {
-    include: ['react', 'react-dom', '@mui/material', 'recharts'],
+    include: ['react', 'react-dom'],
   },
 })
