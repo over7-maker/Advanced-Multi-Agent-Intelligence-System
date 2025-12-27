@@ -27,6 +27,7 @@ AMAS is the world’s most advanced autonomous AI orchestration platform, suppor
 - **[ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md)** - Complete system architecture, data flow, integration patterns
 - **[COMPONENTS_COMPLETE.md](docs/COMPONENTS_COMPLETE.md)** - All components, agents, services, integrations with capabilities
 - **[CAPABILITIES_COMPLETE.md](docs/CAPABILITIES_COMPLETE.md)** - System capabilities, usage examples, best practices
+- **[TESTING_DASHBOARD_COMPLETE.md](docs/TESTING_DASHBOARD_COMPLETE.md)** - Comprehensive testing dashboard implementation and usage
 
 ### Additional Documentation
 - Full technical reference: `docs/architecture.md`
