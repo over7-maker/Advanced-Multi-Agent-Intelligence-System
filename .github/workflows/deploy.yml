@@ -100,8 +100,24 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Enforce package-lock.json exists
+        working-directory: ./frontend
+        run: |
+          if [ ! -f "package-lock.json" ]; then
+            echo "🚨 Error: package-lock.json is required for reproducible builds."
+            echo "Run 'npm install' locally and commit the lock file."
+            exit 1
+          fi
+          echo "✅ package-lock.json found"
+      
+      - name: Cache node modules
+        uses: actions/cache@v3
+        with:
+          path: ./frontend/node_modules
+          key: ${{ runner.os }}-npm-cache-${{ hashFiles('./frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-cache-
       
       - name: Install dependencies
         working-directory: ./frontend
@@ -222,4 +238,3 @@ jobs:
           status: ${{ job.status }}
           text: 'Production deployment completed! 🚀'
         if: always()
-

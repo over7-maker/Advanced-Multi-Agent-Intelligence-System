@@ -1,110 +1,177 @@
-# AMAS Frontend Dashboard
+# AMAS Frontend - Landing Page
 
-Advanced Multi-Agent Intelligence System - Professional Dashboard
+Modern, responsive React frontend for the Advanced Multi-Agent Intelligence System.
+
+## 🎄 Features
+
+- 🌉 **Dark Mode Support** - Seamless light/dark theme switching
+- 🌿 **Responsive Design** - Beautiful on all devices
+- ⚡ **Fast Development** - Vite with HMR
+- 🚀 **Optimized Build** - Production-ready with code splitting
+- 💫 **Mock API** - Develop without backend
+- 🎨 **Tailwind CSS** - Utility-first styling
+- 📄 **TypeScript** - Full type safety
+- 🛰 **Lucide Icons** - Beautiful icon library
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-
-- **Node.js**: >=18.17.0 <20.0.0
-- **npm**: >=9.0.0
+- Node.js 18+
+- npm or yarn
 
 ### Installation
 
 ```bash
-# Install dependencies
+cd frontend
 npm install
+```
 
-# Verify setup
-./verify_setup.sh
+### Development
 
-# Start development server
+```bash
 npm run dev
 ```
 
-The frontend will be available at: **http://localhost:3000**
+Open [http://localhost:5173](http://localhost:5173) in your browser.
 
-## 📋 Available Scripts
+### Production Build
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run type-check` - TypeScript type checking
-- `npm run lint` - Run ESLint
-- `npm run lint:fix` - Fix ESLint errors
-- `npm run format` - Format code with Prettier
-- `npm test` - Run tests
+```bash
+npm run build
+```
 
-## 🔗 Backend Integration
+Output files will be in `dist/` directory.
 
-The frontend is configured to proxy API requests to the backend:
+### Preview Production Build
 
-- **Development**: Frontend (`:3000`) → proxies `/api/*` → Backend (`:8000`)
-- **WebSocket**: `/ws` → `ws://localhost:8000/ws`
+```bash
+npm run preview
+```
 
-To change the backend URL, edit `vite.config.ts`:
+## 📂 Project Structure
+
+```
+src/
+├── components/
+│   └── landing/
+│       ├── Header.tsx
+│       ├── HeroSection.tsx
+│       ├── ArchitectureSection.tsx
+│       ├── FeaturesSection.tsx
+│       ├── MonitoringDashboard.tsx
+│       ├── InteractiveDemo.tsx
+│       ├── DocumentationSection.tsx
+│       └── Footer.tsx
+├── hooks/
+│   └── useDarkMode.ts
+├── lib/
+│   └── api.ts
+├── App.tsx
+├── main.tsx
+└── index.css
+```
+
+## 🎎 Customization
+
+### Colors
+
+Edit `tailwind.config.ts` to change the color palette:
 
 ```typescript
-server: {
-  proxy: {
-    '/api': {
-      target: 'http://localhost:8000', // Change this
-      changeOrigin: true,
-    },
-  },
-}
+// Primary colors (Teal)
+// Secondary colors (Brown)
+// Accent colors (Orange)
 ```
 
-## 📁 Project Structure
+### Fonts
+
+Customize fonts in `index.css`. Currently using Inter from Google Fonts.
+
+### Dark Mode
+
+Dark mode toggle is in the header. Preferences persist in localStorage.
+
+## 🔇 API Integration
+
+### Mock Data (Development)
+
+By default, the app uses mock data. To enable real backend:
+
+```typescript
+// frontend/src/lib/api.ts
+const USE_MOCK_DATA = false; // Set to false
+```
+
+### Backend Endpoints
+
+Required endpoints:
 
 ```
-frontend/
-├── src/
-│   ├── components/        # React components
-│   │   ├── Dashboard/     # Dashboard components
-│   │   ├── WorkflowBuilder/
-│   │   └── ProgressTracker/
-│   ├── types/            # TypeScript types
-│   ├── App.tsx           # Main app component
-│   └── main.tsx          # Entry point
-├── index.html            # HTML template
-├── vite.config.ts        # Vite configuration
-└── package.json          # Dependencies
+GET  /api/metrics    - System metrics
+GET  /api/agents     - Agent list
+POST /api/demo/execute - Execute command
+POST /api/feedback   - Submit feedback
+GET  /api/health     - Health check
 ```
 
-## 🎨 Features
+## 📆 Scripts
 
-- ✅ React 18 + TypeScript
-- ✅ Material-UI (MUI) components with dark theme
-- ✅ React Router for navigation
-- ✅ React Query for data fetching
-- ✅ Framer Motion for animations
-- ✅ Vite for fast builds
-- ✅ ESLint + Prettier for code quality
+```bash
+npm run dev          # Start dev server
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run lint         # Run ESLint
+```
 
-## 🐛 Troubleshooting
+## 📄 Documentation
 
-### "npm: command not found"
-- Install Node.js from https://nodejs.org/
-- Or use nvm: `nvm install 18 && nvm use 18`
+See the main project documentation for:
+- [Full Integration Guide](../FRONTEND_INTEGRATION_COMPLETE.md)
+- [Architecture Overview](../ARCHITECTURE.md)
+- [API Reference](../API.md)
 
-### "Cannot connect to backend"
-- Make sure backend is running on port 8000
-- Check `vite.config.ts` proxy configuration
-- Check backend health: `curl http://localhost:8000/health`
+## 🚦 Deployment
 
-### TypeScript errors
-- Run `npm run type-check` to see all errors
-- Run `npm run lint:fix` to auto-fix some issues
+### Docker
 
-## 📚 Documentation
+```bash
+# Build image
+docker build -t amas-frontend .
 
-- [Vite Documentation](https://vitejs.dev/)
-- [React Documentation](https://react.dev/)
-- [Material-UI Documentation](https://mui.com/)
-- [TypeScript Documentation](https://www.typescriptlang.org/)
+# Run container
+docker run -p 3000:3000 amas-frontend
+```
+
+### Environment Variables
+
+```bash
+VITE_API_URL=http://localhost:8000/api
+```
+
+## 🔓 Browser Support
+
+- Chrome (latest)
+- Firefox (latest)
+- Safari (latest)
+- Edge (latest)
+
+## 📝 License
+
+MIT License - See LICENSE file in root directory
+
+## 🚽c Contributing
+
+Contributions are welcome! Please:
+
+1. Create a new branch
+2. Make your changes
+3. Test thoroughly
+4. Submit a PR
+
+## 🌐 Live Demo
+
+Available at: `https://ui.example.com` (after deployment)
 
 ---
 
-**Ready to develop! 🎉**
-
+**Built with ❤️ by the AMAS team**
