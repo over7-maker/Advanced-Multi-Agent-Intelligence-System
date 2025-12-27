@@ -64,7 +64,7 @@ async def is_connected() -> bool:
         return False
 
 
-async def get_driver() -> AsyncDriver:
+def get_driver() -> AsyncDriver:
     """Get Neo4j driver"""
     if not neo4j_driver:
         raise RuntimeError("Neo4j not initialized")

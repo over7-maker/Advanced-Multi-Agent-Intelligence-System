@@ -51,15 +51,20 @@ class ConnectionManager:
                 self.user_connections[user_id] = set()
             self.user_connections[user_id].add(connection_id)
         
-        logger.info(f"WebSocket connected: {connection_id} (user: {user_id})")
+        logger.info(f"WebSocket connected: {connection_id} (user: {user_id})",
+                   extra={"connection_id": connection_id, "user_id": user_id, "operation": "websocket_connect"})
         
         # Send queued messages if any
         if connection_id in self.message_queue:
+            queued_count = len(self.message_queue[connection_id])
+            logger.info(f"Sending {queued_count} queued messages to {connection_id}",
+                       extra={"connection_id": connection_id, "queued_count": queued_count, "operation": "send_queued_messages"})
             for message in self.message_queue[connection_id]:
                 try:
                     await websocket.send_json(message)
                 except Exception as e:
-                    logger.error(f"Failed to send queued message: {e}")
+                    logger.error(f"Failed to send queued message: {e}",
+                               extra={"connection_id": connection_id, "operation": "send_queued_message", "error": str(e)})
             del self.message_queue[connection_id]
     
     def disconnect(self, connection_id: str):
@@ -109,7 +114,8 @@ class ConnectionManager:
         for connection_id in disconnected:
             self.disconnect(connection_id)
         
-        logger.debug(f"Broadcast to {len(self.active_connections)} clients: {message.get('event', 'unknown')}")
+        logger.info(f"Broadcast to {len(self.active_connections)} clients: {message.get('event', 'unknown')}",
+                   extra={"event": message.get('event', 'unknown'), "client_count": len(self.active_connections), "operation": "websocket_broadcast"})
     
     async def send_to_user(self, user_id: str, message: Dict):
         """Send message to all connections for specific user"""

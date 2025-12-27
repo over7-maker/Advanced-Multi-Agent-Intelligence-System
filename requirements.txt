@@ -81,6 +81,9 @@ tenacity==8.5.0
 # Web Scraping (for OSINT)
 beautifulsoup4==4.12.3
 selenium==4.28.0
+dnspython==2.6.1  # DNS lookups for intelligence gathering
+python-whois==0.8.0  # WHOIS lookups for intelligence gathering
+geopy==2.4.1  # IP geolocation for intelligence gathering
 
 # Vector Search and Embeddings
 sentence-transformers==3.3.1

@@ -528,42 +528,75 @@ async def _persist_task_to_db(
                     extra={"task_id": task_id, "operation": "persist_task"})
         return True  # In dev mode without DB, allow cache-only storage
     
-    try:
-        await db.execute(
-            text("""
-            INSERT INTO tasks (task_id, title, description, task_type, target, 
-            parameters, status, priority, execution_metadata, created_at, created_by) 
-            VALUES (:task_id, :title, :description, :task_type, :target, 
-            :parameters, :status, :priority, :execution_metadata, :created_at, :created_by)
-            """),
-            {
-                "task_id": task_id,
-                "title": task_data.title,
-                "description": task_data.description,
-                "task_type": task_data.task_type,
-                "target": task_data.target,
-                "parameters": json.dumps(task_data.parameters or {}),
-                "status": "pending",
-                "priority": task_data.priority or 5,
-                "execution_metadata": json.dumps(prediction),
-                "created_at": datetime.now(),
-                "created_by": user_id
-            }
-        )
-        await db.commit()
-        logger.info(f"Task {task_id} persisted to database by user {user_id}",
-                   extra={"task_id": task_id, "user_id": user_id, "operation": "persist_task"})
-        return True
-    except Exception as db_error:
-        _log_error_with_context(
-            db_error,
-            level="warning",
-            task_id=task_id,
-            user_id=user_id,
-            operation="persist_task_to_db"
-        )
-        await db.rollback()
-        return False
+    # Retry logic for database persistence
+    max_retries = 3
+    retry_delay = 0.1  # 100ms
+    
+    for attempt in range(max_retries):
+        try:
+            # Use INSERT OR IGNORE / ON CONFLICT to handle duplicate task_ids gracefully
+            await db.execute(
+                text("""
+                INSERT INTO tasks (task_id, title, description, task_type, target, 
+                parameters, status, priority, execution_metadata, created_at, created_by) 
+                VALUES (:task_id, :title, :description, :task_type, :target, 
+                :parameters, :status, :priority, :execution_metadata, :created_at, :created_by)
+                ON CONFLICT (task_id) DO UPDATE SET
+                    title = EXCLUDED.title,
+                    description = EXCLUDED.description,
+                    task_type = EXCLUDED.task_type,
+                    target = EXCLUDED.target,
+                    parameters = EXCLUDED.parameters,
+                    priority = EXCLUDED.priority,
+                    execution_metadata = EXCLUDED.execution_metadata
+                """),
+                {
+                    "task_id": task_id,
+                    "title": task_data.title,
+                    "description": task_data.description,
+                    "task_type": task_data.task_type,
+                    "target": task_data.target,
+                    "parameters": json.dumps(task_data.parameters or {}),
+                    "status": "pending",
+                    "priority": task_data.priority or 5,
+                    "execution_metadata": json.dumps(prediction),
+                    "created_at": datetime.now(),
+                    "created_by": user_id
+                }
+            )
+            await db.commit()
+            logger.info(f"Task {task_id} persisted to database by user {user_id} (attempt {attempt + 1})",
+                       extra={"task_id": task_id, "user_id": user_id, "operation": "persist_task", "attempt": attempt + 1})
+            return True
+        except Exception as db_error:
+            error_str = str(db_error).lower()
+            # Check if it's a constraint violation (duplicate key) - this is acceptable
+            if "unique" in error_str or "duplicate" in error_str or "constraint" in error_str:
+                logger.info(f"Task {task_id} already exists in database (acceptable)",
+                           extra={"task_id": task_id, "user_id": user_id, "operation": "persist_task"})
+                await db.rollback()
+                return True  # Consider this success - task already exists
+            
+            # For other errors, retry
+            if attempt < max_retries - 1:
+                logger.warning(f"Task {task_id} persistence failed (attempt {attempt + 1}/{max_retries}), retrying: {db_error}",
+                             extra={"task_id": task_id, "user_id": user_id, "operation": "persist_task", "attempt": attempt + 1})
+                await db.rollback()
+                await asyncio.sleep(retry_delay * (attempt + 1))  # Exponential backoff
+            else:
+                # Final attempt failed
+                _log_error_with_context(
+                    db_error,
+                    level="error",
+                    task_id=task_id,
+                    user_id=user_id,
+                    operation="persist_task_to_db",
+                    attempt=attempt + 1
+                )
+                await db.rollback()
+                return False
+    
+    return False
 
 
 async def _cache_task(
@@ -987,6 +1020,10 @@ class TaskResponse(BaseModel):
     summary: Optional[str] = Field(None, description="Task summary (available after execution)")
     quality_score: Optional[float] = Field(None, description="Task quality score (0.0-1.0, available after execution)", ge=0.0, le=1.0)
     output: Optional[Dict[str, Any]] = Field(None, description="Task output with agent results (available after execution)")
+    agent_results: Optional[Dict[str, Any]] = Field(None, description="Individual agent execution results (available after execution)")
+    duration_seconds: Optional[float] = Field(None, description="Task execution duration in seconds (available after execution)")
+    success_rate: Optional[float] = Field(None, description="Task success rate (0.0-1.0, available after execution)", ge=0.0, le=1.0)
+    completed_at: Optional[str] = Field(None, description="Task completion timestamp (ISO format, available after execution)")
 
 
 class TaskExecutionResponse(BaseModel):
@@ -1371,6 +1408,11 @@ async def execute_task(
             """Background task execution with full orchestration"""
             
             execution_start = time.time()
+            import uuid
+            correlation_id = str(uuid.uuid4())[:8]
+            
+            logger.info(f"[{correlation_id}] Starting task execution: {task_id}",
+                       extra={"task_id": task_id, "correlation_id": correlation_id, "operation": "execute_task_start"})
             
             # Add tracing if available
             tracing = None
@@ -1393,6 +1435,8 @@ async def execute_task(
                 span = None
             
             try:
+                logger.info(f"[{correlation_id}] Getting orchestrator instance for task {task_id}",
+                           extra={"task_id": task_id, "correlation_id": correlation_id, "operation": "get_orchestrator"})
                 
                 orchestrator = get_orchestrator_instance()
                 
@@ -1402,8 +1446,11 @@ async def execute_task(
                     try:
                         metadata = json.loads(task_data["execution_metadata"]) if isinstance(task_data["execution_metadata"], str) else task_data["execution_metadata"]
                         assigned_agents = metadata.get("assigned_agents", [])
-                    except Exception:
-                        pass
+                        logger.info(f"[{correlation_id}] Task {task_id} assigned agents: {assigned_agents}",
+                                   extra={"task_id": task_id, "correlation_id": correlation_id, "assigned_agents": assigned_agents, "operation": "get_assigned_agents"})
+                    except Exception as e:
+                        logger.warning(f"[{correlation_id}] Failed to parse assigned agents: {e}",
+                                     extra={"task_id": task_id, "correlation_id": correlation_id, "operation": "parse_assigned_agents"})
                 
                 if tracing:
                     tracing.set_attribute("task.assigned_agents", ",".join(assigned_agents))
@@ -1419,6 +1466,9 @@ async def execute_task(
                         "roles": getattr(current_user, 'roles', [])
                     }
                 
+                logger.info(f"[{correlation_id}] Executing task {task_id} via orchestrator: type={task_data['task_type']}, target={task_data.get('target', '')}, agents={assigned_agents}",
+                           extra={"task_id": task_id, "correlation_id": correlation_id, "task_type": task_data["task_type"], "target": task_data.get("target", ""), "assigned_agents": assigned_agents, "operation": "execute_via_orchestrator"})
+                
                 result = await orchestrator.execute_task(
                     task_id=task_id,
                     task_type=task_data["task_type"],
@@ -1430,6 +1480,9 @@ async def execute_task(
                 )
                 
                 execution_duration = time.time() - execution_start
+                
+                logger.info(f"[{correlation_id}] Task {task_id} execution completed: success={result.get('success', False)}, quality={result.get('quality_score', 0.0)}, duration={execution_duration:.2f}s",
+                           extra={"task_id": task_id, "correlation_id": correlation_id, "success": result.get("success", False), "quality_score": result.get("quality_score", 0.0), "duration": execution_duration, "operation": "execute_completed"})
                 
                 # Record execution metrics
                 if metrics_service:
@@ -1464,50 +1517,92 @@ async def execute_task(
                     len(result.get("output", {}).get("agent_results", {})) > 0
                 )
                 
+                logger.info(f"[{correlation_id}] Task {task_id} results analysis: has_agent_results={has_agent_results}, has_valuable_outputs={has_valuable_outputs}, agent_count={len(result.get('output', {}).get('agent_results', {})) if has_agent_results else 0}",
+                           extra={"task_id": task_id, "correlation_id": correlation_id, "has_agent_results": has_agent_results, "has_valuable_outputs": has_valuable_outputs, "operation": "analyze_results"})
+                
                 # Determine final status: completed if success OR if we have valuable outputs
                 final_status = "completed" if (
                     result.get("success", False) or has_valuable_outputs
                 ) else "failed"
                 
+                logger.info(f"[{correlation_id}] Task {task_id} final status: {final_status}",
+                           extra={"task_id": task_id, "correlation_id": correlation_id, "final_status": final_status, "operation": "determine_final_status"})
+                
                 if db is not None:
                     try:
-                        await db.execute(
-                            text("""
-                            UPDATE tasks SET 
-                            status = :status,
-                            result = :result,
-                            output = :output,
-                            summary = :summary,
-                            completed_at = :completed_at,
-                            duration_seconds = :duration_seconds,
-                            success_rate = :success_rate,
-                            quality_score = :quality_score
-                            WHERE task_id = :task_id
-                            """),
-                            {
-                                "status": final_status,
-                                "result": json.dumps(result),  # Full result object
-                                "output": json.dumps(result.get("output", {})),  # Agent results
-                                "summary": result.get("summary", "") or result.get("insights", {}).get("summary", ""),
-                                "completed_at": datetime.now(),
-                                "duration_seconds": execution_duration,
-                                "success_rate": result.get("success_rate", 0.0),
-                                "quality_score": result.get("quality_score", 0.0),
-                                "task_id": task_id
-                            }
-                        )
+                        # Build UPDATE query dynamically to handle missing columns gracefully
+                        update_fields = {
+                            "status": final_status,
+                            "result": json.dumps(result),  # Full result object
+                            "summary": result.get("summary", "") or result.get("insights", {}).get("summary", ""),
+                            "completed_at": datetime.now(),
+                            "task_id": task_id
+                        }
+                        
+                        # Add optional fields if they exist in schema
+                        update_query = "UPDATE tasks SET status = :status, result = :result, summary = :summary, completed_at = :completed_at"
+                        
+                        # Try to add optional columns (they may not exist in older schemas)
+                        try:
+                            update_query += ", output = :output"
+                            update_fields["output"] = json.dumps(result.get("output", {}))
+                        except Exception:
+                            pass
+                        
+                        try:
+                            update_query += ", duration_seconds = :duration_seconds"
+                            update_fields["duration_seconds"] = execution_duration
+                        except Exception:
+                            pass
+                        
+                        try:
+                            update_query += ", success_rate = :success_rate"
+                            update_fields["success_rate"] = result.get("success_rate", 0.0)
+                        except Exception:
+                            pass
+                        
+                        try:
+                            update_query += ", quality_score = :quality_score"
+                            update_fields["quality_score"] = result.get("quality_score", 0.0)
+                        except Exception:
+                            pass
+                        
+                        update_query += " WHERE task_id = :task_id"
+                        
+                        await db.execute(text(update_query), update_fields)
                         await db.commit()
                         logger.info(f"Task {task_id} results persisted to database: status={final_status}, quality={result.get('quality_score', 0.0)}",
                                    extra={"task_id": task_id, "operation": "persist_results", "status": final_status, "quality_score": result.get('quality_score', 0.0)})
                     except Exception as db_error:
-                        _log_error_with_context(
-                            db_error,
-                            level="warning",
-                            task_id=task_id,
-                            user_id=user_id,
-                            operation="persist_results_db"
-                        )
-                        await db.rollback()
+                        # If update fails, try a simpler update with only required fields
+                        try:
+                            await db.execute(
+                                text("""
+                                UPDATE tasks SET 
+                                status = :status,
+                                result = :result,
+                                completed_at = :completed_at
+                                WHERE task_id = :task_id
+                                """),
+                                {
+                                    "status": final_status,
+                                    "result": json.dumps(result),
+                                    "completed_at": datetime.now(),
+                                    "task_id": task_id
+                                }
+                            )
+                            await db.commit()
+                            logger.info(f"Task {task_id} results persisted to database (basic fields only): status={final_status}",
+                                       extra={"task_id": task_id, "operation": "persist_results_basic", "status": final_status})
+                        except Exception as db_error2:
+                            _log_error_with_context(
+                                db_error2,
+                                level="warning",
+                                task_id=task_id,
+                                user_id=user_id,
+                                operation="persist_results_db"
+                            )
+                            await db.rollback()
                 
                 # Also update cache
                 if task_id in _recently_accessed_tasks:
@@ -1562,7 +1657,7 @@ async def execute_task(
                     (has_agent_results and result.get("quality_score", 0.0) > 0.0)
                 ) else "failed"
                 
-                await websocket_manager.broadcast({
+                completion_message = {
                     "event": "task_completed",
                     "task_id": task_id,
                     "status": final_status,
@@ -1575,9 +1670,12 @@ async def execute_task(
                     "result_summary": result.get("summary", "") or result.get("insights", {}).get("summary", ""),
                     "execution_time": execution_duration,
                     "total_cost_usd": result.get("output", {}).get("total_cost_usd", 0.0)
-                })
+                }
                 
-                logger.info(f"Task {task_id} completed successfully in {execution_duration:.1f}s")
+                await websocket_manager.broadcast(completion_message)
+                
+                logger.info(f"[{correlation_id}] Task {task_id} completed: status={final_status}, quality={result.get('quality_score', 0.0)}, duration={execution_duration:.1f}s, agents={list(result.get('output', {}).get('agent_results', {}).keys())}",
+                           extra={"task_id": task_id, "correlation_id": correlation_id, "status": final_status, "quality_score": result.get('quality_score', 0.0), "duration": execution_duration, "operation": "task_completed", "agent_count": len(result.get('output', {}).get('agent_results', {}))})
                 
             except Exception as e:
                 _log_error_with_context(
@@ -1616,11 +1714,16 @@ async def execute_task(
                         await db.rollback()
                 
                 # Broadcast failure
-                await websocket_manager.broadcast({
+                failure_message = {
                     "event": "task_failed",
                     "task_id": task_id,
-                    "error": str(e)
-                })
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat()
+                }
+                await websocket_manager.broadcast(failure_message)
+                
+                logger.error(f"[{correlation_id}] Task {task_id} execution failed: {str(e)}",
+                           extra={"task_id": task_id, "correlation_id": correlation_id, "error": str(e), "operation": "task_failed"}, exc_info=True)
         
         # Schedule background execution
         background_tasks.add_task(execute_task_async)
@@ -1733,7 +1836,8 @@ async def list_tasks(
                 if status and task_type:
                     # Use composite index (task_type, status) + created_at
                     query = """
-                    SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by 
+                    SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by,
+                           result, output, summary, quality_score, duration_seconds, success_rate, completed_at
                     FROM tasks 
                     WHERE task_type = :task_type AND status = :status
                     ORDER BY created_at DESC
@@ -1748,7 +1852,8 @@ async def list_tasks(
                 elif status:
                     # Use composite index (status, created_at)
                     query = """
-                    SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by 
+                    SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by,
+                           result, output, summary, quality_score, duration_seconds, success_rate, completed_at
                     FROM tasks 
                     WHERE status = :status
                     ORDER BY created_at DESC
@@ -1762,7 +1867,8 @@ async def list_tasks(
                 elif task_type:
                     # Use index on task_type
                     query = """
-                    SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by 
+                    SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by,
+                           result, output, summary, quality_score, duration_seconds, success_rate, completed_at
                     FROM tasks 
                     WHERE task_type = :task_type
                     ORDER BY created_at DESC
@@ -1776,7 +1882,8 @@ async def list_tasks(
                 else:
                     # No filters - use created_at index
                     query = """
-                    SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by 
+                    SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by,
+                           result, output, summary, quality_score, duration_seconds, success_rate, completed_at
                     FROM tasks 
                     ORDER BY created_at DESC
                     LIMIT :limit OFFSET :offset
@@ -1794,8 +1901,45 @@ async def list_tasks(
                     metrics_service.record_db_query("select", "tasks", "success", db_query_duration)
                 rows = result.fetchall()
                 
+                logger.info(f"List tasks query returned {len(rows)} rows: status={status}, task_type={task_type}, skip={skip}, limit={limit}",
+                           extra={"operation": "list_tasks_query", "row_count": len(rows), "status": status, "task_type": task_type, "skip": skip, "limit": limit})
+                
                 for row in rows:
                     task_id = row.id or row.task_id
+                    
+                    # Parse result and output if they exist
+                    task_result = None
+                    task_output = None
+                    agent_results = None
+                    
+                    if hasattr(row, 'result') and row.result:
+                        try:
+                            task_result = json.loads(row.result) if isinstance(row.result, str) else row.result
+                        except Exception:
+                            try:
+                                task_result = row.result if isinstance(row.result, dict) else None
+                            except Exception:
+                                pass
+                    
+                    if hasattr(row, 'output') and row.output:
+                        try:
+                            task_output = json.loads(row.output) if isinstance(row.output, str) else row.output
+                            if isinstance(task_output, dict):
+                                agent_results = task_output.get("agent_results")
+                        except Exception:
+                            try:
+                                task_output = row.output if isinstance(row.output, dict) else None
+                                if isinstance(task_output, dict):
+                                    agent_results = task_output.get("agent_results")
+                            except Exception:
+                                pass
+                    
+                    # Extract agent_results from result if not in output
+                    if not agent_results and task_result and isinstance(task_result, dict):
+                        output_data = task_result.get("output", {})
+                        if isinstance(output_data, dict):
+                            agent_results = output_data.get("agent_results")
+                    
                     # Add task from database (database is primary source)
                     all_tasks.append({
                             "id": task_id,
@@ -1806,12 +1950,23 @@ async def list_tasks(
                             "target": row.target or "",
                             "priority": row.priority or 5,
                             "created_at": row.created_at.isoformat() if hasattr(row.created_at, 'isoformat') else str(row.created_at),
-                            "created_by": row.created_by
+                            "created_by": row.created_by,
+                            "result": task_result,
+                            "output": task_output,
+                            "agent_results": agent_results,
+                            "summary": getattr(row, 'summary', None) or (task_result.get("summary") if task_result and isinstance(task_result, dict) else None),
+                            "quality_score": getattr(row, 'quality_score', None) or (task_result.get("quality_score") if task_result and isinstance(task_result, dict) else None),
+                            "duration_seconds": getattr(row, 'duration_seconds', None) or (task_result.get("execution_time") if task_result and isinstance(task_result, dict) else None),
+                            "success_rate": getattr(row, 'success_rate', None) or (task_result.get("success_rate") if task_result and isinstance(task_result, dict) else None),
+                            "completed_at": getattr(row, 'completed_at', None).isoformat() if hasattr(row, 'completed_at') and row.completed_at and hasattr(row.completed_at, 'isoformat') else None
                         })
             except Exception as db_error:
+                logger.error(f"Database query failed in list_tasks: {db_error}", exc_info=True,
+                           extra={"operation": "list_tasks_db_query", "status": status, "task_type": task_type, 
+                                  "user_id": current_user.id if current_user and hasattr(current_user, 'id') else None})
                 _log_error_with_context(
                     db_error,
-                    level="debug",
+                    level="error",
                     operation="list_tasks_db_query",
                     user_id=current_user.id if current_user and hasattr(current_user, 'id') else None
                 )
@@ -1861,12 +2016,39 @@ async def list_tasks(
                 seen_ids.add(task_id)
                 unique_tasks.append(task)
         
+        # Log unique tasks count
+        logger.info(f"List tasks: {len(unique_tasks)} unique tasks found after deduplication",
+                   extra={"operation": "list_tasks_deduplication", "unique_count": len(unique_tasks)})
+        
         # If we got data from database with pagination, tasks are already paginated
         # Otherwise, apply pagination here
         if db is not None and (status or task_type):
             # Already paginated by database query
             paginated_tasks = unique_tasks
-            total = total_count if 'total_count' in locals() else len(unique_tasks)
+            # For paginated queries, we need to get total count separately
+            # Try to get total count from database
+            try:
+                count_query = "SELECT COUNT(*) as total FROM tasks"
+                count_params = {}
+                if status and task_type:
+                    count_query += " WHERE task_type = :task_type AND status = :status"
+                    count_params = {"task_type": task_type, "status": status}
+                elif status:
+                    count_query += " WHERE status = :status"
+                    count_params = {"status": status}
+                elif task_type:
+                    count_query += " WHERE task_type = :task_type"
+                    count_params = {"task_type": task_type}
+                
+                count_result = await db.execute(text(count_query), count_params)
+                count_row = count_result.fetchone()
+                total = count_row.total if count_row and hasattr(count_row, 'total') else len(unique_tasks)
+                logger.info(f"List tasks: Total count from database = {total}",
+                           extra={"operation": "list_tasks_total_count", "total": total})
+            except Exception as count_error:
+                logger.warning(f"Failed to get total count from database: {count_error}, using unique_tasks length",
+                             extra={"operation": "list_tasks_total_count_fallback"})
+                total = len(unique_tasks)
         else:
             # Apply filters (if not already filtered by DB query)
             if not status and not task_type:
@@ -1905,7 +2087,15 @@ async def list_tasks(
                     created_at=task.get("created_at", datetime.now().isoformat()),
                     created_by=task.get("created_by"),
                     prediction=task.get("prediction"),
-                    assigned_agents=task.get("assigned_agents", [])
+                    assigned_agents=task.get("assigned_agents", []),
+                    result=task.get("result"),
+                    output=task.get("output"),
+                    agent_results=task.get("agent_results"),
+                    summary=task.get("summary"),
+                    quality_score=task.get("quality_score"),
+                    duration_seconds=task.get("duration_seconds"),
+                    success_rate=task.get("success_rate"),
+                    completed_at=task.get("completed_at")
                 ))
             except Exception as e:
                 _log_error_with_context(
@@ -1923,6 +2113,9 @@ async def list_tasks(
                 metrics_service.record_cache_hit("redis")
             else:
                 metrics_service.record_cache_miss("redis")
+        
+        logger.info(f"List tasks completed: returning {len(task_responses)} tasks (total: {total})",
+                   extra={"operation": "list_tasks_complete", "returned_count": len(task_responses), "total": total, "duration": list_duration})
         
         return TaskListResponse(
             tasks=task_responses,
@@ -2058,6 +2251,17 @@ async def get_task(
             # Ensure result is included if available
             task_dict = dict(task_data)
             # Create TaskResponse with all available data including results
+            # Extract agent_results from output or result
+            agent_results = None
+            task_output = task_dict.get("output")
+            task_result = task_dict.get("result")
+            if task_output and isinstance(task_output, dict):
+                agent_results = task_output.get("agent_results")
+            elif task_result and isinstance(task_result, dict):
+                output_data = task_result.get("output", {})
+                if isinstance(output_data, dict):
+                    agent_results = output_data.get("agent_results")
+            
             return TaskResponse(
                 id=task_dict.get("id") or task_dict.get("task_id", task_id),
                 title=task_dict.get("title", ""),
@@ -2070,10 +2274,14 @@ async def get_task(
                 created_by=task_dict.get("created_by"),
                 prediction=task_dict.get("prediction"),
                 assigned_agents=task_dict.get("assigned_agents", []),
-                result=task_dict.get("result"),  # Include execution results
+                result=task_result,  # Include execution results
+                output=task_output,  # Include parsed output
+                agent_results=agent_results,  # Include agent results
                 summary=task_dict.get("summary"),
                 quality_score=task_dict.get("quality_score"),
-                output=task_dict.get("output")
+                duration_seconds=task_dict.get("duration_seconds") or task_dict.get("execution_time"),
+                success_rate=task_dict.get("success_rate"),
+                completed_at=task_dict.get("completed_at")
             )
         
         # Try cache second
@@ -2099,12 +2307,24 @@ async def get_task(
         if db is not None:
             try:
                 db_query_start = time.time()
-                result = await db.execute(
-                    text("SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by, "
-                         "result, execution_metadata, quality_score "
-                         "FROM tasks WHERE id = :task_id OR task_id = :task_id"),
-                    {"task_id": task_id}
-                )
+                # Try to get all fields, but handle missing columns gracefully
+                try:
+                    result = await db.execute(
+                        text("SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by, "
+                             "result, output, summary, execution_metadata, quality_score, duration_seconds, success_rate, completed_at "
+                             "FROM tasks WHERE id = :task_id OR task_id = :task_id"),
+                        {"task_id": task_id}
+                    )
+                except Exception as query_error:
+                    # If query fails (columns don't exist), try basic query
+                    logger.debug(f"Full query failed, trying basic query: {query_error}")
+                    result = await db.execute(
+                        text("SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by, "
+                             "result, execution_metadata "
+                             "FROM tasks WHERE id = :task_id OR task_id = :task_id"),
+                        {"task_id": task_id}
+                    )
+                
                 db_query_duration = time.time() - db_query_start
                 
                 # Record database query time
@@ -2114,19 +2334,83 @@ async def get_task(
                 if row:
                     # Parse result if it's JSON string
                     task_result = None
-                    if row.result:
+                    if hasattr(row, 'result') and row.result:
                         try:
                             task_result = json.loads(row.result) if isinstance(row.result, str) else row.result
                         except Exception:
-                            pass
+                            try:
+                                # Try to parse as dict if it's already a dict
+                                task_result = row.result if isinstance(row.result, dict) else None
+                            except Exception:
+                                pass
                     
-                    # Parse execution_metadata for additional info (can be used for prediction data)
-                    # execution_metadata = None
-                    # if row.execution_metadata:
-                    #     try:
-                    #         execution_metadata = json.loads(row.execution_metadata) if isinstance(row.execution_metadata, str) else row.execution_metadata
-                    #     except Exception:
-                    #         pass
+                    # Parse output if it's JSON string (may not exist in older schemas)
+                    task_output = None
+                    try:
+                        if hasattr(row, 'output') and row.output:
+                            try:
+                                task_output = json.loads(row.output) if isinstance(row.output, str) else row.output
+                            except Exception:
+                                try:
+                                    task_output = row.output if isinstance(row.output, dict) else None
+                                except Exception:
+                                    pass
+                    except Exception:
+                        pass  # Column doesn't exist
+                    
+                    # Extract agent_results from output or result
+                    agent_results = None
+                    try:
+                        if task_output and isinstance(task_output, dict):
+                            agent_results = task_output.get("agent_results")
+                        elif task_result and isinstance(task_result, dict):
+                            output_data = task_result.get("output", {})
+                            if isinstance(output_data, dict):
+                                agent_results = output_data.get("agent_results")
+                    except Exception:
+                        pass
+                    
+                    # Get optional fields safely
+                    summary = None
+                    quality_score = None
+                    duration_seconds = None
+                    success_rate = None
+                    completed_at = None
+                    
+                    try:
+                        summary = getattr(row, 'summary', None)
+                        if not summary and task_result and isinstance(task_result, dict):
+                            summary = task_result.get("summary")
+                    except Exception:
+                        pass
+                    
+                    try:
+                        quality_score = getattr(row, 'quality_score', None)
+                        if quality_score is None and task_result and isinstance(task_result, dict):
+                            quality_score = task_result.get("quality_score")
+                    except Exception:
+                        pass
+                    
+                    try:
+                        duration_seconds = getattr(row, 'duration_seconds', None)
+                        if duration_seconds is None and task_result and isinstance(task_result, dict):
+                            duration_seconds = task_result.get("execution_time")
+                    except Exception:
+                        pass
+                    
+                    try:
+                        success_rate = getattr(row, 'success_rate', None)
+                        if success_rate is None and task_result and isinstance(task_result, dict):
+                            success_rate = task_result.get("success_rate")
+                    except Exception:
+                        pass
+                    
+                    try:
+                        completed_at_attr = getattr(row, 'completed_at', None)
+                        if completed_at_attr and hasattr(completed_at_attr, 'isoformat'):
+                            completed_at = completed_at_attr.isoformat()
+                    except Exception:
+                        pass
                     
                     return TaskResponse(
                         id=row.id or row.task_id or task_id,
@@ -2134,15 +2418,21 @@ async def get_task(
                         description=row.description or "",
                         status=row.status,
                         task_type=row.task_type,
-                        target=row.target,
-                        priority=row.priority,
+                        target=getattr(row, 'target', '') or "",
+                        priority=getattr(row, 'priority', 5) or 5,
                         created_at=row.created_at.isoformat() if hasattr(row.created_at, 'isoformat') else str(row.created_at),
-                        created_by=row.created_by,
+                        created_by=getattr(row, 'created_by', None),
                         result=task_result,  # Include parsed result
-                        quality_score=row.quality_score if hasattr(row, 'quality_score') else None
+                        output=task_output,  # Include parsed output
+                        agent_results=agent_results,  # Include agent results
+                        summary=summary,
+                        quality_score=quality_score,
+                        duration_seconds=duration_seconds,
+                        success_rate=success_rate,
+                        completed_at=completed_at
                     )
             except Exception as db_error:
-                logger.debug(f"Database fetch failed: {db_error}")
+                logger.error(f"Database fetch failed for task {task_id}: {db_error}", exc_info=True)
         
         # Try to get from orchestrator or cache (if task was just created)
         try:
@@ -2156,6 +2446,16 @@ async def get_task(
             if task_status:
                 # Return a basic task response from orchestrator data
                 # Map orchestrator task fields to TaskResponse
+                # Extract result and output from orchestrator status
+                orchestrator_result = task_status.get("result")
+                orchestrator_output = None
+                orchestrator_agent_results = None
+                
+                if orchestrator_result and isinstance(orchestrator_result, dict):
+                    orchestrator_output = orchestrator_result.get("output", {})
+                    if isinstance(orchestrator_output, dict):
+                        orchestrator_agent_results = orchestrator_output.get("agent_results")
+                
                 return TaskResponse(
                     id=task_id,
                     title=task_status.get("description", "Task") or "Task",
@@ -2165,7 +2465,14 @@ async def get_task(
                     target=task_status.get("parameters", {}).get("target", "") if isinstance(task_status.get("parameters"), dict) else "",
                     priority=task_status.get("priority", 5) if isinstance(task_status.get("priority"), int) else 5,
                     created_at=task_status.get("created_at", datetime.now().isoformat()),
-                    created_by=None
+                    created_by=None,
+                    result=orchestrator_result,
+                    output=orchestrator_output,
+                    agent_results=orchestrator_agent_results,
+                    summary=task_status.get("summary") or (orchestrator_result.get("summary") if orchestrator_result and isinstance(orchestrator_result, dict) else None),
+                    quality_score=task_status.get("quality_score") or (orchestrator_result.get("quality_score") if orchestrator_result and isinstance(orchestrator_result, dict) else None),
+                    duration_seconds=task_status.get("execution_time") or (orchestrator_result.get("execution_time") if orchestrator_result and isinstance(orchestrator_result, dict) else None),
+                    success_rate=task_status.get("success_rate") or (orchestrator_result.get("success_rate") if orchestrator_result and isinstance(orchestrator_result, dict) else None)
                 )
         except Exception as orch_error:
             logger.debug(f"Orchestrator fetch failed: {orch_error}")

@@ -24,6 +24,19 @@ import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { apiService, TaskPrediction } from '../../services/api';
 
+const toErrorMessage = (err: any): string => {
+  const data = err?.response?.data;
+  // Pydantic validation errors come as array of {type, msg, ...}
+  if (Array.isArray(data)) {
+    return data.map((e: any) => e?.msg || JSON.stringify(e)).join(', ');
+  }
+  if (typeof data === 'object' && data !== null) {
+    return data.detail || data.message || JSON.stringify(data);
+  }
+  if (typeof data === 'string') return data;
+  return 'Failed to create task';
+};
+
 export const CreateTask: React.FC = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -70,8 +83,8 @@ export const CreateTask: React.FC = () => {
   };
 
   const handleCreate = async () => {
-    if (!formData.title || !formData.task_type || !formData.target) {
-      setError('Please fill in all required fields (Title, Task Type, Target)');
+    if (!formData.title || !formData.description || !formData.task_type || !formData.target) {
+      setError('Please fill in all required fields (Title, Description, Task Type, Target)');
       return;
     }
 
@@ -86,7 +99,7 @@ export const CreateTask: React.FC = () => {
         navigate(`/tasks/${task.id || task.task_id}`);
       }, 1000);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || 'Failed to create task');
+      setError(toErrorMessage(err));
       console.error('Task creation failed:', err);
     } finally {
       setCreating(false);

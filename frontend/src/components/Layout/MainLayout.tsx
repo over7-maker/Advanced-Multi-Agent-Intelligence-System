@@ -6,6 +6,7 @@ import {
   IntegrationInstructions as IntegrationIcon,
   Menu as MenuIcon,
   Assignment as TaskIcon,
+  BugReport as TestingIcon,
 } from '@mui/icons-material';
 import {
   AppBar,
@@ -56,6 +57,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     { text: 'Agents', icon: <AgentIcon />, path: '/agents' },
     { text: 'Integrations', icon: <IntegrationIcon />, path: '/integrations' },
     { text: 'System Health', icon: <HealthIcon />, path: '/health' },
+    { text: 'Testing', icon: <TestingIcon />, path: '/testing' },
   ];
 
   useEffect(() => {

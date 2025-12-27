@@ -24,6 +24,12 @@ class JSONFormatter(logging.Formatter):
             JSON string
         """
         
+        # Generate correlation ID if not present
+        correlation_id = getattr(record, "correlation_id", None)
+        if not correlation_id:
+            import uuid
+            correlation_id = str(uuid.uuid4())[:8]
+        
         # Base log data
         log_data: Dict[str, Any] = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -33,6 +39,7 @@ class JSONFormatter(logging.Formatter):
             "module": record.module,
             "function": record.funcName,
             "line": record.lineno,
+            "correlation_id": correlation_id,
         }
         
         # Add exception info if present
@@ -112,9 +119,33 @@ def configure_logging(
     console_handler.setFormatter(formatter)
     root_logger.addHandler(console_handler)
     
-    # File handler (if specified)
-    if log_file:
-        file_handler = logging.FileHandler(log_file)
+    # File handler (if specified or if LOG_FILE env var is set)
+    log_file_path = log_file or os.getenv("LOG_FILE", None)
+    if log_file_path:
+        from logging.handlers import RotatingFileHandler
+        # Create logs directory if it doesn't exist
+        log_dir = os.path.dirname(log_file_path)
+        if log_dir and not os.path.exists(log_dir):
+            os.makedirs(log_dir, exist_ok=True)
+        
+        file_handler = RotatingFileHandler(
+            log_file_path,
+            maxBytes=10 * 1024 * 1024,  # 10MB
+            backupCount=5
+        )
+        file_handler.setLevel(log_level)
+        file_handler.setFormatter(formatter)
+        root_logger.addHandler(file_handler)
+    elif os.getenv("LOG_TO_FILE", "false").lower() == "true":
+        # Default log file if LOG_TO_FILE is enabled
+        log_dir = os.getenv("LOG_DIR", "logs")
+        os.makedirs(log_dir, exist_ok=True)
+        from logging.handlers import RotatingFileHandler
+        file_handler = RotatingFileHandler(
+            os.path.join(log_dir, "amas.log"),
+            maxBytes=10 * 1024 * 1024,  # 10MB
+            backupCount=5
+        )
         file_handler.setLevel(log_level)
         file_handler.setFormatter(formatter)
         root_logger.addHandler(file_handler)

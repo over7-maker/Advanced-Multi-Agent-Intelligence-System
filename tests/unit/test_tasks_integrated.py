@@ -197,7 +197,8 @@ class TestPersistTaskToDB:
         result = await _persist_task_to_db("task_123", task_data, prediction, "user_123", mock_db)
         
         assert result is False
-        mock_db.rollback.assert_called_once()
+        # rollback is called 3 times (once per retry attempt)
+        assert mock_db.rollback.call_count == 3
 
 
 class TestCacheTask:
