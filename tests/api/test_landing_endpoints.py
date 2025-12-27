@@ -3,6 +3,7 @@ Tests for landing page API endpoints
 """
 
 import pytest
+import time
 from datetime import datetime
 from fastapi.testclient import TestClient
 from unittest.mock import AsyncMock, patch, MagicMock
