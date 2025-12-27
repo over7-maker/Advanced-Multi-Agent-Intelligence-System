@@ -89,25 +89,48 @@ const mockAgents: Agent[] = [
 export async function fetchSystemMetrics(): Promise<SystemMetrics> {
   try {
     const apiUrl = import.meta.env.VITE_API_URL || '/api/v1';
-    const response = await fetch(`${apiUrl}/landing/metrics`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const response = await fetch(`${apiUrl}/landing/metrics`, {
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      const errorText = await response.text().catch(() => 'Unknown error');
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
     
     const data = await response.json();
     
+    // Validate response structure
+    if (typeof data.cpu_usage_percent !== 'number' || 
+        typeof data.memory_usage_percent !== 'number') {
+      throw new Error('Invalid response format from API');
+    }
+    
     // Transform landing API response to frontend format
     return {
-      cpu: data.cpu_usage_percent || 0,
-      memory: data.memory_usage_percent || 0,
-      activeAgents: data.active_agents || 0,
-      tasksCompleted: data.completed_tasks || 0,
-      uptime: data.uptime_hours || 0,
-      latency: data.avg_task_duration || 0,
+      cpu: Math.max(0, Math.min(100, data.cpu_usage_percent || 0)),
+      memory: Math.max(0, Math.min(100, data.memory_usage_percent || 0)),
+      activeAgents: Math.max(0, Math.floor(data.active_agents || 0)),
+      tasksCompleted: Math.max(0, Math.floor(data.completed_tasks || 0)),
+      uptime: Math.max(0, data.uptime_hours || 0),
+      latency: Math.max(0, data.avg_task_duration || 0),
     };
   } catch (error) {
-    console.warn('Failed to fetch real metrics, using mock data:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Don't log AbortError (timeout) as warning, it's expected
+    if (error instanceof Error && error.name !== 'AbortError') {
+      console.warn('Failed to fetch real metrics, using mock data:', errorMessage);
+    }
+    
     // Fallback to mock data
     await new Promise(resolve => setTimeout(resolve, 300));
     return mockSystemMetrics;
@@ -122,25 +145,56 @@ export async function fetchSystemMetrics(): Promise<SystemMetrics> {
 export async function fetchAgentStatus(): Promise<Agent[]> {
   try {
     const apiUrl = import.meta.env.VITE_API_URL || '/api/v1';
-    const response = await fetch(`${apiUrl}/landing/agents-status`);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    
+    const response = await fetch(`${apiUrl}/landing/agents-status`, {
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    clearTimeout(timeoutId);
     
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      const errorText = await response.text().catch(() => 'Unknown error');
+      throw new Error(`HTTP ${response.status}: ${errorText}`);
     }
     
     const data = await response.json();
     
-    // Transform landing API response to frontend format
-    return data.map((agent: any) => ({
-      id: agent.agent_id || agent.id,
-      name: agent.name || 'Unknown Agent',
-      status: agent.status === 'active' ? 'healthy' : agent.status === 'error' ? 'error' : 'idle',
-      tasksCompleted: agent.executions_today || 0,
-      uptime: agent.success_rate ? (agent.success_rate * 100) : 99.0,
-      lastActive: 'now',
-    }));
+    // Validate response is an array
+    if (!Array.isArray(data)) {
+      throw new Error('Invalid response format: expected array');
+    }
+    
+    // Transform landing API response to frontend format with validation
+    return data.map((agent: any, index: number) => {
+      const agentId = agent.agent_id || agent.id || `agent-${index}`;
+      const agentName = agent.name || 'Unknown Agent';
+      const agentStatus = agent.status === 'active' ? 'healthy' : 
+                         agent.status === 'error' ? 'error' : 'idle';
+      const tasksCompleted = Math.max(0, Math.floor(agent.executions_today || 0));
+      const successRate = agent.success_rate ? Math.max(0, Math.min(100, agent.success_rate * 100)) : 99.0;
+      
+      return {
+        id: agentId,
+        name: agentName,
+        status: agentStatus,
+        tasksCompleted: tasksCompleted,
+        uptime: successRate,
+        lastActive: 'now',
+      };
+    });
   } catch (error) {
-    console.warn('Failed to fetch real agent status, using mock data:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    // Don't log AbortError (timeout) as warning, it's expected
+    if (error instanceof Error && error.name !== 'AbortError') {
+      console.warn('Failed to fetch real agent status, using mock data:', errorMessage);
+    }
+    
     // Fallback to mock data
     await new Promise(resolve => setTimeout(resolve, 300));
     return mockAgents;

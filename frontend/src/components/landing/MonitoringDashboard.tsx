@@ -6,33 +6,68 @@ export default function MonitoringDashboard() {
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const loadData = async () => {
+    try {
+      setError(null);
+      const [metricsData, agentsData] = await Promise.all([
+        fetchSystemMetrics(),
+        fetchAgentStatus()
+      ]);
+      setMetrics(metricsData);
+      setAgents(agentsData);
+      setRetryCount(0); // Reset retry count on success
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      console.error('Failed to load dashboard data:', err);
+      setError(errorMessage);
+      
+      // Use fallback data if available (from mock)
+      // The API already falls back to mock data, so we just show error message
+      if (retryCount < 3) {
+        setRetryCount(prev => prev + 1);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [metricsData, agentsData] = await Promise.all([
-          fetchSystemMetrics(),
-          fetchAgentStatus()
-        ]);
-        setMetrics(metricsData);
-        setAgents(agentsData);
-      } catch (error) {
-        console.error('Failed to load dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadData();
     const interval = setInterval(loadData, 5000); // Refresh every 5 seconds
     return () => clearInterval(interval);
   }, []);
 
-  if (loading || !metrics) {
+  if (loading && !metrics) {
     return (
       <section id="monitoring" className="py-20 px-6">
         <div className="container-custom text-center">
-          <div className="animate-pulse">Loading dashboard...</div>
+          <div className="animate-pulse text-gray-600 dark:text-gray-400">
+            Loading dashboard...
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (error && !metrics) {
+    return (
+      <section id="monitoring" className="py-20 px-6">
+        <div className="container-custom text-center">
+          <div className="card max-w-md mx-auto">
+            <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-xl font-bold mb-2">Failed to Load Dashboard</h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">{error}</p>
+            <button
+              onClick={loadData}
+              className="btn-primary"
+              disabled={retryCount >= 3}
+            >
+              {retryCount >= 3 ? 'Max retries reached' : 'Retry'}
+            </button>
+          </div>
         </div>
       </section>
     );

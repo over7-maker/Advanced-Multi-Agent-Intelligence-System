@@ -300,10 +300,10 @@ async def submit_feedback(
                 await db.execute(text("""
                     INSERT INTO feedback (
                         feedback_id, email, name, message, 
-                        sentiment, page_context, created_at
+                        sentiment, page_context, email_sent, created_at
                     ) VALUES (
                         :feedback_id, :email, :name, :message,
-                        :sentiment, :page_context, :now
+                        :sentiment, :page_context, false, :now
                     )
                 """), {
                     "feedback_id": feedback_id,
@@ -329,7 +329,24 @@ async def submit_feedback(
             send_feedback_confirmation_email,
             email=feedback.email,
             name=feedback.name,
+            feedback_id=feedback_id,
         )
+        
+        # Update email_sent status in database if available
+        if db:
+            try:
+                from sqlalchemy import text
+                await db.execute(text("""
+                    UPDATE feedback 
+                    SET email_sent = true, email_sent_at = :now
+                    WHERE feedback_id = :feedback_id
+                """), {
+                    "feedback_id": feedback_id,
+                    "now": datetime.utcnow(),
+                })
+                await db.commit()
+            except Exception as db_error:
+                logger.warning(f"Could not update email_sent status: {db_error}")
         
         response = FeedbackResponse(
             feedback_id=feedback_id,
@@ -360,12 +377,30 @@ async def landing_health():
 # BACKGROUND TASKS
 # ============================================================================
 
-async def send_feedback_confirmation_email(email: str, name: str):
+async def send_feedback_confirmation_email(email: str, name: str, feedback_id: Optional[str] = None):
     """
     Background task to send feedback confirmation email.
-    In production, integrate with your email service.
+    Uses EmailService for sending confirmation emails.
     """
-    # TODO: Implement email sending
-    logger.info(f"Feedback confirmation email would be sent to {email} ({name})")
-    pass
+    try:
+        from src.amas.services.email_service import get_email_service
+        
+        email_service = get_email_service()
+        result = await email_service.send_feedback_confirmation(
+            to_email=email,
+            to_name=name,
+            feedback_id=feedback_id
+        )
+        
+        if result.get("status") == "success":
+            logger.info(f"Feedback confirmation email sent to {email} ({name})")
+        elif result.get("status") == "skipped":
+            logger.debug(f"Email skipped: {result.get('reason')}")
+        else:
+            logger.warning(f"Failed to send feedback confirmation email: {result.get('error')}")
+            
+    except ImportError:
+        logger.debug("EmailService not available, skipping email")
+    except Exception as e:
+        logger.error(f"Error sending feedback confirmation email: {e}", exc_info=True)
 
