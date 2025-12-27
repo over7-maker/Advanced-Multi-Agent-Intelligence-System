@@ -1,6 +1,7 @@
 """
 Environment template validation tests.
 """
+import warnings
 import pytest
 from pathlib import Path
 
@@ -172,7 +173,7 @@ class TestEnvTemplateValidation:
         assert 'REDIS_URL' in content or 'REDIS_HOST' in content, "Missing Redis configuration"
         # REDIS_PASSWORD might be optional
         if 'REDIS_PASSWORD' not in content and 'REDIS_AUTH' not in content:
-            pytest.warn("Redis password not configured (might be optional)")
+            warnings.warn("Redis password not configured (might be optional)", UserWarning)
         assert 'NEO4J_URI' in content or 'NEO4J_URL' in content or 'NEO4J_HOST' in content, \
             "Missing Neo4j configuration"
     
