@@ -1,4 +1,4 @@
-import { Box, Button } from '@mui/material';
+import { Box, Button, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 // Dashboard component - using DashboardNew in routes
@@ -16,6 +16,27 @@ import { TaskExecutionView } from './components/Tasks/TaskExecutionView';
 import { TaskList } from './components/Tasks/TaskList';
 import { AgentTeamBuilder } from './components/WorkflowBuilder/AgentTeamBuilder';
 import { WorkflowTemplates } from './components/WorkflowBuilder/WorkflowTemplates';
+// WorkflowTemplate type - defined in WorkflowTemplates.tsx
+interface WorkflowTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  taskTemplate: string;
+  suggestedAgents: any[];
+  complexity: any;
+  successRate: number;
+  avgDurationHours: number;
+  avgCost: number;
+  qualityScore: number;
+  usageCount: number;
+  tags: string[];
+  createdBy: string;
+  createdAt: Date;
+  lastUsed?: Date;
+  isFavorite: boolean;
+  isCustom: boolean;
+}
 // Landing page components (from PR #276 - merged from main)
 import HeroSection from './components/landing/HeroSection';
 import ArchitectureSection from './components/landing/ArchitectureSection';
@@ -228,7 +249,7 @@ function WorkflowBuilderPage(): JSX.Element {
   return (
     <Box>
       {!selectedTemplate ? (
-        <WorkflowTemplates onSelect={handleTemplateSelect} />
+        <WorkflowTemplates onSelectTemplate={handleTemplateSelect} />
       ) : (
         <AgentTeamBuilder
           template={selectedTemplate}
