@@ -1,4 +1,4 @@
-/// <reference types="../../vite-env" />
+/// <reference types="../vite-env" />
 // Mock API client for development
 // Replace with real API calls when backend is ready
 
