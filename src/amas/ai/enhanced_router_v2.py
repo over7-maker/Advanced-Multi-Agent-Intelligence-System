@@ -305,7 +305,8 @@ PROVIDER_CONFIGS = {
     "ollama": ProviderConfig(
         name="Ollama",
         api_key_env="OLLAMA_API_KEY",  # Not required, but checked
-        model="deepseek-r1:8b",  # Default model, can be overridden
+        # Use a commonly available local model to avoid 404 if deepseek-r1 is not pulled
+        model="phi3:3.8b",
         base_url="http://localhost:11434/v1",
         provider_type="ollama",
         priority=100,  # Lowest priority - fallback only

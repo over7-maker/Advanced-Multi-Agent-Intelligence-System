@@ -322,6 +322,7 @@ try:
         predictions,
         system,
         tasks,
+        testing,
         users,
         workflows,
     )
@@ -357,6 +358,10 @@ try:
     # Workflow routes
     app.include_router(workflows.router, prefix="/api/v1", tags=["workflows"])
     logger.info("✅ Workflow routes registered at /api/v1")
+    
+    # Testing routes (router already has prefix="/api/v1/testing")
+    app.include_router(testing.router, tags=["testing"])
+    logger.info("✅ Testing routes registered at /api/v1/testing")
     
     # User management routes
     app.include_router(users.router, prefix="/api/v1", tags=["users"])
