@@ -89,6 +89,7 @@ app.add_middleware(
         "/redoc",
         "/openapi.json",
         "/metrics",
+        "/api/v1/landing",  # Landing page endpoints are public
     ]
 )
 
@@ -316,6 +317,7 @@ try:
         auth,
         health,
         integrations,
+        landing,
         metrics,  # type: ignore
         predictions,
         system,
@@ -359,6 +361,10 @@ try:
     # User management routes
     app.include_router(users.router, prefix="/api/v1", tags=["users"])
     logger.info("✅ User routes registered at /api/v1")
+    
+    # Landing page routes (public endpoints)
+    app.include_router(landing.router, prefix="/api/v1", tags=["landing"])
+    logger.info("✅ Landing page routes registered at /api/v1/landing")
     
     logger.info("✅ All API routes registered successfully")
 except Exception as e:
