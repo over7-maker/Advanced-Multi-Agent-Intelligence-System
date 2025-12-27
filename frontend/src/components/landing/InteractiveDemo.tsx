@@ -26,7 +26,7 @@ type AllowedCommand = keyof typeof ALLOWED_COMMANDS;
 // ============================================================================
 // COMPONENT
 // ============================================================================
-export function InteractiveDemo() {
+export default function InteractiveDemo() {
   const [input, setInput] = useState('');
   const [output, setOutput] = useState<string[]>(['👋 Welcome to AMAS Interactive Demo']);
 

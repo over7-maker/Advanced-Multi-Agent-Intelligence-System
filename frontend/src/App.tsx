@@ -11,9 +11,13 @@ import Header from './components/landing/Header';
 function App() {
   const [darkMode, setDarkMode] = useState(false);
 
+  const toggleDarkMode = () => {
+    setDarkMode(prev => !prev);
+  };
+
   return (
     <div className={darkMode ? 'dark' : 'light'}>
-      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+      <Header isDark={darkMode} onToggleDarkMode={toggleDarkMode} />
       <main>
         <HeroSection />
         <ArchitectureSection />

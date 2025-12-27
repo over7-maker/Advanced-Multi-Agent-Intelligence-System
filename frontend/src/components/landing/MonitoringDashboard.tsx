@@ -73,6 +73,19 @@ export default function MonitoringDashboard() {
     );
   }
 
+  // Ensure metrics is not null before rendering
+  if (!metrics) {
+    return (
+      <section id="monitoring" className="py-20 px-6">
+        <div className="container-custom text-center">
+          <div className="animate-pulse text-gray-600 dark:text-gray-400">
+            Loading dashboard...
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section id="monitoring" className="py-20 px-6">
       <div className="container-custom">
