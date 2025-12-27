@@ -2,7 +2,7 @@
 """Add feedback table for landing page
 
 Revision ID: 004
-Revises: 003_fix_task_results_schema
+Revises: 003
 Create Date: 2025-12-27 14:00:00.000000
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers
 revision = '004'
-down_revision = '003_fix_task_results_schema'
+down_revision = '003'  # Points to 003_add_task_indexes in this branch
 branch_labels = None
 depends_on = None
 

@@ -1,3 +1,4 @@
+/// <reference types="../../vite-env" />
 /**
  * Landing Page API Client
  * Handles all API calls for landing page components

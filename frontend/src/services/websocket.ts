@@ -1,3 +1,4 @@
+/// <reference types="../../vite-env" />
 // frontend/src/services/websocket.ts (PRODUCTION-READY WEBSOCKET)
 // ============================================================================
 // TYPE DEFINITIONS
