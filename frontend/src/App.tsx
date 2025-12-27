@@ -10,6 +10,7 @@ import { IntegrationList } from './components/Integrations/IntegrationList';
 import { MainLayout } from './components/Layout/MainLayout';
 import { ProgressTracker } from './components/ProgressTracker/ProgressTracker';
 import { SystemHealth } from './components/System/SystemHealth';
+import { TestingDashboard } from './components/Testing/TestingDashboard';
 import { CreateTask } from './components/Tasks/CreateTask';
 import { TaskExecutionView } from './components/Tasks/TaskExecutionView';
 import { TaskList } from './components/Tasks/TaskList';
@@ -123,6 +124,16 @@ function App(): JSX.Element {
           <ProtectedRoute>
             <MainLayout>
               <SystemHealth />
+            </MainLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/testing"
+        element={
+          <ProtectedRoute>
+            <MainLayout>
+              <TestingDashboard />
             </MainLayout>
           </ProtectedRoute>
         }

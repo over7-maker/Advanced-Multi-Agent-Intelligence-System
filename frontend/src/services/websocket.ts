@@ -82,7 +82,7 @@ class WebSocketService {
 
       // Connection opened
       this.ws.onopen = () => {
-        console.log('✅ WebSocket connected');
+        console.log('[WebSocket] Connected', { timestamp: new Date().toISOString() });
         this.isConnecting = false;
         this.reconnectAttempts = 0;
         this.reconnectDelay = 1000;
@@ -96,7 +96,16 @@ class WebSocketService {
       this.ws.onmessage = (event) => {
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
-          console.log('📨 WebSocket message:', message.event);
+          
+          // Log WebSocket message (skip heartbeat for cleaner logs)
+          if (message.event !== 'heartbeat' && message.event !== 'pong') {
+            console.log(`[WebSocket] ${message.event}`, {
+              task_id: message.task_id,
+              agent_id: message.agent_id,
+              data: message.data,
+              timestamp: message.timestamp || new Date().toISOString()
+            });
+          }
 
           // Handle heartbeat
           if (message.event === 'heartbeat' || message.event === 'pong') {
@@ -106,13 +115,21 @@ class WebSocketService {
           // Emit to registered handlers
           this.emit(message.event, message.data || message);
         } catch (error) {
-          console.error('Failed to parse WebSocket message:', error);
+          console.error('[WebSocket] Failed to parse message:', error, {
+            raw: event.data,
+            timestamp: new Date().toISOString()
+          });
         }
       };
 
       // Connection closed
       this.ws.onclose = (event) => {
-        console.log('WebSocket closed:', event.code, event.reason);
+        console.log('[WebSocket] Closed', {
+          code: event.code,
+          reason: event.reason,
+          wasClean: event.wasClean,
+          timestamp: new Date().toISOString()
+        });
         this.isConnecting = false;
         this.stopHeartbeat();
 
@@ -127,7 +144,11 @@ class WebSocketService {
 
       // Connection error
       this.ws.onerror = (error) => {
-        console.error('WebSocket error:', error);
+        console.error('[WebSocket] Error', {
+          error,
+          reconnectAttempts: this.reconnectAttempts,
+          timestamp: new Date().toISOString()
+        });
         this.isConnecting = false;
 
         // Notify error handlers

@@ -112,23 +112,35 @@ async def health_check() -> Dict[str, Any]:
             result = await session.execute(text("SELECT 1"))
             result.scalar()
             
-            # Get pool stats
+            # Get pool stats (works for both PostgreSQL and SQLite)
             pool_obj = engine.pool
-            pool_size = getattr(pool_obj, 'size', lambda: 0)()
-            pool_checked_in = getattr(pool_obj, 'checkedin', lambda: 0)()
-            pool_checked_out = getattr(pool_obj, 'checkedout', lambda: 0)()
-            pool_overflow = getattr(pool_obj, 'overflow', lambda: 0)()
+            try:
+                pool_size = getattr(pool_obj, 'size', lambda: 0)()
+                pool_checked_in = getattr(pool_obj, 'checkedin', lambda: 0)()
+                pool_checked_out = getattr(pool_obj, 'checkedout', lambda: 0)()
+                pool_overflow = getattr(pool_obj, 'overflow', lambda: 0)()
+            except Exception:
+                # SQLite doesn't have pool stats - use defaults
+                pool_size = 1
+                pool_checked_in = 0
+                pool_checked_out = 1
+                pool_overflow = 0
             
-            # Get database stats
-            db_stats_result = await session.execute(text("""
-                SELECT 
-                    count(*) as total_connections,
-                    count(*) FILTER (WHERE state = 'active') as active_connections,
-                    count(*) FILTER (WHERE state = 'idle') as idle_connections
-                FROM pg_stat_activity
-                WHERE datname = current_database()
-            """))
-            db_stats = db_stats_result.fetchone()
+            # Get database stats (PostgreSQL only)
+            db_stats = None
+            try:
+                db_stats_result = await session.execute(text("""
+                    SELECT 
+                        count(*) as total_connections,
+                        count(*) FILTER (WHERE state = 'active') as active_connections,
+                        count(*) FILTER (WHERE state = 'idle') as idle_connections
+                    FROM pg_stat_activity
+                    WHERE datname = current_database()
+                """))
+                db_stats = db_stats_result.fetchone()
+            except Exception:
+                # SQLite or other databases - skip PostgreSQL-specific stats
+                pass
         
         latency_ms = (datetime.now() - start_time).total_seconds() * 1000
         
@@ -143,14 +155,14 @@ async def health_check() -> Dict[str, Any]:
                 "max_overflow": getattr(pool_obj, '_max_overflow', getattr(pool_obj, 'max_overflow', 0))
             },
             "database": {
-                "total_connections": db_stats[0] if db_stats else 0,
-                "active_connections": db_stats[1] if db_stats else 0,
-                "idle_connections": db_stats[2] if db_stats else 0
+                "total_connections": db_stats[0] if db_stats else None,
+                "active_connections": db_stats[1] if db_stats else None,
+                "idle_connections": db_stats[2] if db_stats else None
             }
         }
     
     except Exception as e:
-        logger.error(f"Database health check failed: {e}")
+        logger.error(f"Database health check failed: {e}", exc_info=True)
         return {
             "status": "unhealthy",
             "error": str(e)

@@ -23,11 +23,22 @@ AMAS is the world’s most advanced autonomous AI orchestration platform, suppor
 
 ## 📖 Documentation & Contributing
 
+### Complete Documentation (NEW)
+- **[ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md)** - Complete system architecture, data flow, integration patterns
+- **[COMPONENTS_COMPLETE.md](docs/COMPONENTS_COMPLETE.md)** - All components, agents, services, integrations with capabilities
+- **[CAPABILITIES_COMPLETE.md](docs/CAPABILITIES_COMPLETE.md)** - System capabilities, usage examples, best practices
+
+### Additional Documentation
 - Full technical reference: `docs/architecture.md`
 - Integration setup: `docs/integrations.md`
 - Self-improvement engine: `docs/self-improvement.md`
 - Deployment and security: `docs/deployment.md`, `SECURITY.md`
 - Roadmap and docs for maintainers: `docs/roadmap.md`, `TODO.md`, `CONTRIBUTING.md`
+
+### Quick Start
+1. **Setup Environment**: See [ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md#deployment-architecture)
+2. **Create First Task**: See [CAPABILITIES_COMPLETE.md](docs/CAPABILITIES_COMPLETE.md#usage-examples)
+3. **Understand Components**: See [COMPONENTS_COMPLETE.md](docs/COMPONENTS_COMPLETE.md)
 
 ---
 
