@@ -16,6 +16,9 @@ import aiohttp
 from bs4 import BeautifulSoup
 
 from src.amas.agents.base_agent import BaseAgent
+from src.amas.agents.tools import get_tool_registry
+from src.amas.agents.utils.json_parser import JSONParser
+from src.amas.agents.schemas import SecurityAnalysisResult
 
 logger = logging.getLogger(__name__)
 
@@ -57,11 +60,24 @@ class SecurityExpertAgent(BaseAgent):
             
             Always provide actionable, technical recommendations.""",
             tools=[],  # Tools can be added here
-            model_preference="gpt-4-turbo-preview",
+            model_preference=None,  # Use local models first
             strategy="quality_first"
         )
         
         self.expertise_score = 0.95  # High expertise
+        
+        # Get tool registry and register security tools
+        tool_registry = get_tool_registry()
+        # Tools will be available via registry
+        self.security_tools = [
+            "web_scraper",
+            "ssl_analyzer",
+            "virustotal",
+            "shodan",
+            "haveibeenpwned",
+            "abuseipdb",
+            "censys"
+        ]
     
     async def _perform_real_web_scraping(self, target: str) -> Dict[str, Any]:
         """Perform real web scraping to collect actual data from target"""
@@ -316,21 +332,116 @@ class SecurityExpertAgent(BaseAgent):
         parameters: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Execute security analysis with real data collection
-        Overrides BaseAgent.execute to add real data collection
+        Execute security analysis with enhanced data collection and tools
+        Overrides BaseAgent.execute to add comprehensive security analysis
         """
         execution_start = time.time()
         
         try:
-            logger.info(f"SecurityExpertAgent: Starting real data collection for {target}")
+            logger.info(f"SecurityExpertAgent: Starting enhanced security analysis for {target}")
             
-            # STEP 1: Collect real data
-            web_data = await self._perform_real_web_scraping(target)
-            ssl_data = await self._analyze_ssl_certificate(target)
+            # STEP 1: Collect real data using tools
+            tool_registry = get_tool_registry()
+            web_scraper = tool_registry.get("web_scraper")
+            ssl_tool = tool_registry.get("ssl_analyzer")
+            
+            # Use tools if available, otherwise fallback to methods
+            if web_scraper:
+                web_result = await web_scraper.execute({"url": target, "extract_metadata": True})
+                web_data = web_result.get("result", {}) if web_result.get("success") else {}
+            else:
+                web_data = await self._perform_real_web_scraping(target)
+            
+            if ssl_tool:
+                # Extract hostname for SSL check
+                if "://" in target:
+                    parsed = urlparse(target)
+                    hostname = parsed.hostname or target.split("://")[1].split("/")[0]
+                else:
+                    hostname = target.split("/")[0].split(":")[0]
+                ssl_result = await ssl_tool.execute({"hostname": hostname, "port": 443})
+                ssl_data = ssl_result.get("result", {}) if ssl_result.get("success") else {}
+            else:
+                ssl_data = await self._analyze_ssl_certificate(target)
+            
             security_headers = await self._analyze_security_headers(web_data.get("http_headers", {}))
             
-            # STEP 2: Prepare prompt with real data
-            prompt = await self._prepare_prompt(target, parameters, web_data, ssl_data, security_headers)
+            # STEP 2: Enhanced security checks
+            # Port scanning
+            port_scan_data = await self._perform_port_scan(target)
+            
+            # Security headers compliance
+            compliance_data = await self._check_security_headers_compliance(web_data.get("http_headers", {}))
+            
+            # Subdomain enumeration
+            if "://" in target:
+                parsed = urlparse(target)
+                domain = parsed.hostname or target.split("://")[1].split("/")[0]
+            else:
+                domain = target.split("/")[0].split(":")[0]
+            subdomain_data = await self._perform_subdomain_enumeration(domain)
+            
+            # CVE and dependency checks (if applicable)
+            cve_data = {}
+            dependency_data = {}
+            if parameters.get("check_cves"):
+                software = parameters.get("software", target)
+                version = parameters.get("version")
+                cve_data = await self._check_cve_database(software, version)
+            
+            if parameters.get("check_dependencies"):
+                dependencies = parameters.get("dependencies", {})
+                dependency_data = await self._analyze_dependencies(dependencies)
+            
+            # Security API checks
+            security_api_data = {}
+            virustotal_tool = tool_registry.get("virustotal")
+            shodan_tool = tool_registry.get("shodan")
+            abuseipdb_tool = tool_registry.get("abuseipdb")
+            
+            if virustotal_tool:
+                try:
+                    vt_result = await virustotal_tool.execute({"resource": target, "resource_type": "url"})
+                    if vt_result.get("success"):
+                        security_api_data["virustotal"] = vt_result.get("result")
+                except Exception as e:
+                    logger.debug(f"VirusTotal check failed: {e}")
+            
+            # Get IP for Shodan/AbuseIPDB
+            ip_address = None
+            if web_data.get("dns_data", {}).get("a_records"):
+                ip_address = web_data["dns_data"]["a_records"][0]
+            elif "://" in target:
+                try:
+                    parsed = urlparse(target)
+                    hostname = parsed.hostname or target.split("://")[1].split("/")[0]
+                    ip_address = socket.gethostbyname(hostname)
+                except Exception:
+                    pass
+            
+            if ip_address:
+                if shodan_tool:
+                    try:
+                        shodan_result = await shodan_tool.execute({"query": ip_address, "query_type": "host"})
+                        if shodan_result.get("success"):
+                            security_api_data["shodan"] = shodan_result.get("result")
+                    except Exception as e:
+                        logger.debug(f"Shodan check failed: {e}")
+                
+                if abuseipdb_tool:
+                    try:
+                        abuse_result = await abuseipdb_tool.execute({"ip": ip_address})
+                        if abuse_result.get("success"):
+                            security_api_data["abuseipdb"] = abuse_result.get("result")
+                    except Exception as e:
+                        logger.debug(f"AbuseIPDB check failed: {e}")
+            
+            # STEP 3: Prepare enhanced prompt with all collected data
+            prompt = await self._prepare_prompt(
+                target, parameters, web_data, ssl_data, security_headers,
+                port_scan_data, compliance_data, subdomain_data, cve_data,
+                dependency_data, security_api_data
+            )
             
             # STEP 3: Call AI via router
             logger.info(f"SecurityExpertAgent: Calling AI with real collected data")
@@ -442,17 +553,23 @@ class SecurityExpertAgent(BaseAgent):
         parameters: Dict[str, Any],
         web_data: Dict[str, Any] = None,
         ssl_data: Dict[str, Any] = None,
-        security_headers: Dict[str, Any] = None
+        security_headers: Dict[str, Any] = None,
+        port_scan_data: Dict[str, Any] = None,
+        compliance_data: Dict[str, Any] = None,
+        subdomain_data: Dict[str, Any] = None,
+        cve_data: Dict[str, Any] = None,
+        dependency_data: Dict[str, Any] = None,
+        security_api_data: Dict[str, Any] = None
     ) -> str:
-        """Prepare security analysis prompt with real collected data"""
+        """Prepare enhanced security analysis prompt with all collected data"""
         
         depth = parameters.get("depth", "standard")
         
-        # Build context from real collected data
+        # Build context from all collected data
         real_data_context = ""
         
         if web_data:
-            real_data_context += f"\n\n=== REAL WEB SCRAPING DATA ===\n"
+            real_data_context += f"\n\n=== WEB SCRAPING DATA ===\n"
             real_data_context += f"HTTP Status: {web_data.get('status_code', 'N/A')}\n"
             if web_data.get("technology_indicators"):
                 real_data_context += f"Technology Indicators: {', '.join(web_data['technology_indicators'])}\n"
@@ -460,7 +577,7 @@ class SecurityExpertAgent(BaseAgent):
                 real_data_context += f"Web Scraping Error: {web_data['error']}\n"
         
         if ssl_data:
-            real_data_context += f"\n=== REAL SSL/TLS CERTIFICATE DATA ===\n"
+            real_data_context += f"\n=== SSL/TLS CERTIFICATE DATA ===\n"
             real_data_context += f"Certificate Valid: {ssl_data.get('valid', False)}\n"
             if ssl_data.get("expires"):
                 real_data_context += f"Certificate Expires: {ssl_data['expires']}\n"
@@ -468,19 +585,67 @@ class SecurityExpertAgent(BaseAgent):
                 real_data_context += f"Issuer: {ssl_data['issuer']}\n"
             if ssl_data.get("version"):
                 real_data_context += f"SSL Version: {ssl_data['version']}\n"
-            if ssl_data.get("cipher"):
-                real_data_context += f"Cipher Suite: {ssl_data['cipher']}\n"
             if ssl_data.get("issues"):
-                real_data_context += f"SSL Issues: {', '.join(ssl_data['issues'])}\n"
+                real_data_context += f"SSL Issues: {', '.join(ssl_data.get('issues', []))}\n"
         
         if security_headers:
-            real_data_context += f"\n=== REAL SECURITY HEADERS DATA ===\n"
+            real_data_context += f"\n=== SECURITY HEADERS DATA ===\n"
             if security_headers.get("present"):
                 real_data_context += f"Present Headers: {', '.join(security_headers['present'])}\n"
             if security_headers.get("missing"):
                 real_data_context += f"Missing Headers: {', '.join(security_headers['missing'])}\n"
             if security_headers.get("issues"):
                 real_data_context += f"Header Issues: {', '.join(security_headers['issues'])}\n"
+        
+        if port_scan_data:
+            real_data_context += f"\n=== PORT SCAN RESULTS ===\n"
+            if port_scan_data.get("open_ports"):
+                open_ports = [str(p.get("port", "")) for p in port_scan_data["open_ports"]]
+                real_data_context += f"Open Ports: {', '.join(open_ports)}\n"
+            if port_scan_data.get("error"):
+                real_data_context += f"Port Scan Error: {port_scan_data['error']}\n"
+        
+        if compliance_data:
+            real_data_context += f"\n=== SECURITY HEADERS COMPLIANCE ===\n"
+            real_data_context += f"OWASP Compliance Score: {compliance_data.get('overall_score', 0.0):.2%}\n"
+            if compliance_data.get("missing_headers"):
+                missing = [h.get("header", "") for h in compliance_data["missing_headers"]]
+                real_data_context += f"Missing Headers: {', '.join(missing)}\n"
+            if compliance_data.get("weak_headers"):
+                weak = [h.get("header", "") for h in compliance_data["weak_headers"]]
+                real_data_context += f"Weak Headers: {', '.join(weak)}\n"
+        
+        if subdomain_data:
+            real_data_context += f"\n=== SUBDOMAIN ENUMERATION ===\n"
+            if subdomain_data.get("subdomains_found"):
+                subdomains = [s.get("subdomain", "") for s in subdomain_data["subdomains_found"]]
+                real_data_context += f"Found Subdomains: {', '.join(subdomains[:10])}\n"  # Limit to 10
+            if subdomain_data.get("error"):
+                real_data_context += f"Subdomain Enumeration Error: {subdomain_data['error']}\n"
+        
+        if cve_data:
+            real_data_context += f"\n=== CVE DATABASE CHECK ===\n"
+            if cve_data.get("cves"):
+                real_data_context += f"CVE Check Performed for: {cve_data.get('software', 'N/A')}\n"
+            if cve_data.get("error"):
+                real_data_context += f"CVE Check Error: {cve_data['error']}\n"
+        
+        if dependency_data:
+            real_data_context += f"\n=== DEPENDENCY VULNERABILITY ANALYSIS ===\n"
+            if dependency_data.get("vulnerable_packages"):
+                vulnerable = [p.get("name", "") for p in dependency_data["vulnerable_packages"]]
+                real_data_context += f"Potentially Vulnerable Packages: {', '.join(vulnerable[:10])}\n"
+            if dependency_data.get("error"):
+                real_data_context += f"Dependency Analysis Error: {dependency_data['error']}\n"
+        
+        if security_api_data:
+            real_data_context += f"\n=== SECURITY API DATA ===\n"
+            if security_api_data.get("virustotal"):
+                real_data_context += f"VirusTotal: Check performed\n"
+            if security_api_data.get("shodan"):
+                real_data_context += f"Shodan: Data retrieved\n"
+            if security_api_data.get("abuseipdb"):
+                real_data_context += f"AbuseIPDB: Reputation checked\n"
         
         prompt = f"""Perform a comprehensive security analysis of the target: {target}
 
@@ -569,7 +734,37 @@ Provide results in the following JSON format:
                     json_str = json_str[start_idx:end_idx+1]
             
             if json_str:
-                parsed = json.loads(json_str)
+                # Fix common JSON escape issues
+                import re
+                # Fix invalid escape sequences (like \' or \. or \:)
+                # Only allow valid JSON escape sequences: \", \\, \/, \b, \f, \n, \r, \t, \uXXXX
+                # Replace invalid escapes with escaped backslash + character
+                def fix_escape(match):
+                    char = match.group(1)
+                    # Valid escapes: n, r, t, b, f, u, ", \, /
+                    if char in ['n', 'r', 't', 'b', 'f', 'u', '"', '\\', '/']:
+                        return match.group(0)  # Keep valid escapes
+                    # Invalid escape - escape the backslash
+                    return '\\\\' + char
+                
+                # Fix invalid escape sequences (but preserve valid ones)
+                json_str = re.sub(r'\\([^nrtbfu"\\/])', fix_escape, json_str)
+                
+                # Also fix unicode escapes that might be malformed
+                # Try to parse, if it fails, try more aggressive fixes
+                try:
+                    parsed = json.loads(json_str)
+                except json.JSONDecodeError as parse_err:
+                    # If still fails, try to fix more aggressively
+                    logger.debug(f"First parse attempt failed: {parse_err}, trying aggressive fix")
+                    # Remove comments (JSON doesn't support comments)
+                    json_str = re.sub(r'//.*?$', '', json_str, flags=re.MULTILINE)
+                    json_str = re.sub(r'/\*.*?\*/', '', json_str, flags=re.DOTALL)
+                    # Fix trailing commas
+                    json_str = re.sub(r',\s*}', '}', json_str)
+                    json_str = re.sub(r',\s*]', ']', json_str)
+                    # Try again
+                    parsed = json.loads(json_str)
                 
                 # Ensure parsed is a dict
                 if isinstance(parsed, dict):

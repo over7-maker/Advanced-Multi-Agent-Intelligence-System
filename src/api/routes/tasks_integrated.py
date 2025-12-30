@@ -102,12 +102,36 @@ async def get_db():
     is not initialized so API routes can still be exercised.
     """
     try:
-        from src.database.connection import get_session
-        async for session in get_session():
-            return session
+        from src.database.connection import get_session, is_connected
+        # Check if database is initialized
+        if await is_connected():
+            # Use get_session() which is already an async generator
+            # It handles session lifecycle properly
+            async for session in get_session():
+                try:
+                    yield session
+                except GeneratorExit:
+                    # Generator is being closed - this is normal, let it propagate
+                    raise
+                except Exception:
+                    # Re-raise to allow proper cleanup
+                    raise
+                # Only yield once per session
+                return
+        else:
+            yield None
+            return
+    except RuntimeError as e:
+        logger.debug(f"Database not initialized (expected in dev): {e}")
+        yield None
+        return
+    except GeneratorExit:
+        # Normal generator cleanup - propagate
+        raise
     except Exception as e:
         logger.debug(f"Database not available (expected in dev): {e}")
-        return None
+        yield None
+        return
 
 # Redis dependency (optional)
 async def get_redis():
@@ -534,34 +558,38 @@ async def _persist_task_to_db(
     
     for attempt in range(max_retries):
         try:
-            # Use INSERT OR IGNORE / ON CONFLICT to handle duplicate task_ids gracefully
+            # Insert task using actual schema columns: id, title, description, status, priority, created_at
+            # Store additional metadata (task_id, task_type, target, parameters, execution_metadata) in description as JSON
+            # or skip them if not critical for basic functionality
+            task_metadata = {
+                "task_id": task_id,
+                "task_type": task_data.task_type,
+                "target": task_data.target,
+                "parameters": task_data.parameters or {},
+                "execution_metadata": prediction,
+                "created_by": user_id
+            }
+            
+            # Combine description with metadata as JSON string
+            full_description = task_data.description or ""
+            if task_metadata:
+                metadata_json = json.dumps(task_metadata)
+                if full_description:
+                    full_description = f"{full_description}\n\n[METADATA:{metadata_json}]"
+                else:
+                    full_description = f"[METADATA:{metadata_json}]"
+            
             await db.execute(
                 text("""
-                INSERT INTO tasks (task_id, title, description, task_type, target, 
-                parameters, status, priority, execution_metadata, created_at, created_by) 
-                VALUES (:task_id, :title, :description, :task_type, :target, 
-                :parameters, :status, :priority, :execution_metadata, :created_at, :created_by)
-                ON CONFLICT (task_id) DO UPDATE SET
-                    title = EXCLUDED.title,
-                    description = EXCLUDED.description,
-                    task_type = EXCLUDED.task_type,
-                    target = EXCLUDED.target,
-                    parameters = EXCLUDED.parameters,
-                    priority = EXCLUDED.priority,
-                    execution_metadata = EXCLUDED.execution_metadata
+                INSERT INTO tasks (title, description, status, priority, created_at) 
+                VALUES (:title, :description, :status, :priority, :created_at)
                 """),
                 {
-                    "task_id": task_id,
                     "title": task_data.title,
-                    "description": task_data.description,
-                    "task_type": task_data.task_type,
-                    "target": task_data.target,
-                    "parameters": json.dumps(task_data.parameters or {}),
+                    "description": full_description,
                     "status": "pending",
                     "priority": task_data.priority or 5,
-                    "execution_metadata": json.dumps(prediction),
-                    "created_at": datetime.now(),
-                    "created_by": user_id
+                    "created_at": datetime.now()
                 }
             )
             await db.commit()
@@ -1315,8 +1343,8 @@ async def execute_task(
         if db is not None:
             try:
                 result = await db.execute(
-                    text("SELECT task_id, title, description, task_type, target, parameters, status, priority, execution_metadata "
-                         "FROM tasks WHERE task_id = :task_id"),
+                    text("SELECT id, id::text as task_id, title, description, '' as task_type, '' as target, NULL::jsonb as parameters, status, priority, NULL::jsonb as execution_metadata "
+                         "FROM tasks WHERE id = :task_id::integer OR id::text = :task_id"),
                     {"task_id": task_id}
                 )
                 row = result.fetchone()
@@ -1835,25 +1863,26 @@ async def list_tasks(
                 # - ix_tasks_created_by_created_at for user-specific queries
                 if status and task_type:
                     # Use composite index (task_type, status) + created_at
+                    # Note: Using id as task_id since task_id column doesn't exist in current schema
                     query = """
-                    SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by,
-                           result, output, summary, quality_score, duration_seconds, success_rate, completed_at
+                    SELECT id, id::text as task_id, title, description, '' as task_type, '' as target, status, priority, created_at, '' as created_by,
+                           NULL::jsonb as result, NULL::jsonb as output, '' as summary, NULL::numeric as quality_score, NULL::numeric as duration_seconds, NULL::numeric as success_rate, completed_at
                     FROM tasks 
-                    WHERE task_type = :task_type AND status = :status
+                    WHERE status = :status
                     ORDER BY created_at DESC
                     LIMIT :limit OFFSET :offset
                     """
                     params = {
-                        "task_type": task_type,
                         "status": status,
                         "limit": limit,
                         "offset": skip
                     }
                 elif status:
                     # Use composite index (status, created_at)
+                    # Note: Using id as task_id since task_id column doesn't exist in current schema
                     query = """
-                    SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by,
-                           result, output, summary, quality_score, duration_seconds, success_rate, completed_at
+                    SELECT id, id::text as task_id, title, description, '' as task_type, '' as target, status, priority, created_at, '' as created_by,
+                           NULL::jsonb as result, NULL::jsonb as output, '' as summary, NULL::numeric as quality_score, NULL::numeric as duration_seconds, NULL::numeric as success_rate, completed_at
                     FROM tasks 
                     WHERE status = :status
                     ORDER BY created_at DESC
@@ -1866,24 +1895,23 @@ async def list_tasks(
                     }
                 elif task_type:
                     # Use index on task_type
+                    # Note: task_type column doesn't exist, so filtering by task_type is not possible
                     query = """
-                    SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by,
-                           result, output, summary, quality_score, duration_seconds, success_rate, completed_at
+                    SELECT id, id::text as task_id, title, description, '' as task_type, '' as target, status, priority, created_at, '' as created_by,
+                           NULL::jsonb as result, NULL::jsonb as output, '' as summary, NULL::numeric as quality_score, NULL::numeric as duration_seconds, NULL::numeric as success_rate, completed_at
                     FROM tasks 
-                    WHERE task_type = :task_type
                     ORDER BY created_at DESC
                     LIMIT :limit OFFSET :offset
                     """
                     params = {
-                        "task_type": task_type,
                         "limit": limit,
                         "offset": skip
                     }
                 else:
                     # No filters - use created_at index
                     query = """
-                    SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by,
-                           result, output, summary, quality_score, duration_seconds, success_rate, completed_at
+                    SELECT id, id::text as task_id, title, description, '' as task_type, '' as target, status, priority, created_at, '' as created_by,
+                           NULL::jsonb as result, NULL::jsonb as output, '' as summary, NULL::numeric as quality_score, NULL::numeric as duration_seconds, NULL::numeric as success_rate, completed_at
                     FROM tasks 
                     ORDER BY created_at DESC
                     LIMIT :limit OFFSET :offset
@@ -2308,20 +2336,21 @@ async def get_task(
             try:
                 db_query_start = time.time()
                 # Try to get all fields, but handle missing columns gracefully
+                # Note: Current schema only has: id, title, description, status, priority, created_at, updated_at, completed_at
                 try:
                     result = await db.execute(
-                        text("SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by, "
-                             "result, output, summary, execution_metadata, quality_score, duration_seconds, success_rate, completed_at "
-                             "FROM tasks WHERE id = :task_id OR task_id = :task_id"),
+                        text("SELECT id, id::text as task_id, title, description, '' as task_type, '' as target, status, priority, created_at, '' as created_by, "
+                             "NULL::jsonb as result, NULL::jsonb as output, '' as summary, NULL::jsonb as execution_metadata, NULL::numeric as quality_score, NULL::numeric as duration_seconds, NULL::numeric as success_rate, completed_at "
+                             "FROM tasks WHERE id = :task_id::integer OR id::text = :task_id"),
                         {"task_id": task_id}
                     )
                 except Exception as query_error:
                     # If query fails (columns don't exist), try basic query
                     logger.debug(f"Full query failed, trying basic query: {query_error}")
                     result = await db.execute(
-                        text("SELECT id, task_id, title, description, task_type, target, status, priority, created_at, created_by, "
-                             "result, execution_metadata "
-                             "FROM tasks WHERE id = :task_id OR task_id = :task_id"),
+                        text("SELECT id, id::text as task_id, title, description, '' as task_type, '' as target, status, priority, created_at, '' as created_by, "
+                             "NULL::jsonb as result, NULL::jsonb as execution_metadata "
+                             "FROM tasks WHERE id = :task_id::integer OR id::text = :task_id"),
                         {"task_id": task_id}
                     )
                 

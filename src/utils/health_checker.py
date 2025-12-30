@@ -169,18 +169,26 @@ class HealthChecker:
         try:
             from src.database.redis_cache import redis_client
             
+            if not redis_client:
+                component.status = HealthStatus.UNHEALTHY
+                component.error_message = "Redis client not initialized"
+                component.failure_count += 1
+                return
+            
             start = datetime.now()
             
             # Non-blocking ping with timeout
             try:
-                redis_client.ping(timeout=0.5)
+                await asyncio.wait_for(redis_client.ping(), timeout=0.5)
                 elapsed_ms = (datetime.now() - start).total_seconds() * 1000
                 component.status = HealthStatus.HEALTHY
                 component.response_time_ms = elapsed_ms
                 component.error_message = None
+                component.failure_count = 0  # Reset on success
             except asyncio.TimeoutError:
                 component.status = HealthStatus.DEGRADED
                 component.error_message = "Redis ping timeout"
+                component.failure_count += 1
         
         except Exception as e:
             component.status = HealthStatus.UNHEALTHY

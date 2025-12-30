@@ -19,6 +19,9 @@ except ImportError:
     WHOIS_AVAILABLE = False
 
 from src.amas.agents.base_agent import BaseAgent
+from src.amas.agents.tools import get_tool_registry
+from src.amas.agents.utils.json_parser import JSONParser
+from src.amas.agents.schemas import IntelligenceReport
 
 logger = logging.getLogger(__name__)
 
@@ -80,11 +83,22 @@ class IntelligenceGatheringAgent(BaseAgent):
             
             Follow legal and ethical guidelines for intelligence gathering.""",
             tools=[],  # Tools can be added here
-            model_preference="gpt-4-turbo-preview",
+            model_preference=None,  # Use local models first
             strategy="quality_first"
         )
         
         self.expertise_score = 0.95  # High expertise
+        
+        # Get tool registry
+        tool_registry = get_tool_registry()
+        self.intelligence_tools = [
+            "web_scraper",
+            "dns_lookup",
+            "whois_lookup",
+            "api_fetcher",
+            "github_api",
+            "haveibeenpwned"
+        ]
     
     async def _perform_dns_lookup(self, domain: str) -> Dict[str, Any]:
         """Perform real DNS lookup for domain"""
@@ -281,33 +295,85 @@ class IntelligenceGatheringAgent(BaseAgent):
         parameters: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Execute intelligence gathering with real data collection
-        Overrides BaseAgent.execute to add real data collection
+        Execute enhanced intelligence gathering with comprehensive data collection
+        Overrides BaseAgent.execute to add comprehensive intelligence gathering
         """
         execution_start = time.time()
         
         try:
-            logger.info(f"IntelligenceGatheringAgent: Starting real data collection for {target}")
+            logger.info(f"IntelligenceGatheringAgent: Starting enhanced intelligence gathering for {target}")
             
             # Extract domain from target
             domain = await self._extract_domain_from_target(target)
             
-            # STEP 1: Collect real data
-            dns_data = await self._perform_dns_lookup(domain)
-            whois_data = await self._perform_whois_lookup(domain)
+            # STEP 1: Collect real data using tools
+            tool_registry = get_tool_registry()
+            dns_tool = tool_registry.get("dns_lookup")
+            whois_tool = tool_registry.get("whois_lookup")
+            web_scraper = tool_registry.get("web_scraper")
+            
+            # Use tools if available, otherwise fallback to methods
+            if dns_tool:
+                dns_result = await dns_tool.execute({"domain": domain, "record_types": ["A", "MX", "NS", "TXT"]})
+                dns_data = dns_result.get("result", {}) if dns_result.get("success") else {}
+            else:
+                dns_data = await self._perform_dns_lookup(domain)
+            
+            if whois_tool:
+                whois_result = await whois_tool.execute({"domain": domain})
+                whois_data = whois_result.get("result", {}) if whois_result.get("success") else {}
+            else:
+                whois_data = await self._perform_whois_lookup(domain)
             
             # Get IP from DNS if available
             ip_address = None
             if dns_data.get("a_records"):
-                ip_address = dns_data["a_records"][0]
+                ip_address = dns_data["a_records"][0] if isinstance(dns_data["a_records"], list) else None
             
             # Perform IP geolocation if we have an IP
             geo_data = None
             if ip_address:
                 geo_data = await self._perform_ip_geolocation(ip_address)
             
-            # STEP 2: Prepare prompt with real data
-            prompt = await self._prepare_prompt(target, parameters, dns_data, whois_data, geo_data)
+            # STEP 2: Enhanced intelligence gathering
+            # Breach database check
+            breach_data = {}
+            if parameters.get("check_breaches"):
+                email = parameters.get("email") or target if "@" in target else None
+                breach_data = await self._check_breach_databases(email=email, domain=domain)
+            
+            # DNS history analysis
+            dns_history_data = {}
+            if parameters.get("analyze_dns_history"):
+                dns_history_data = await self._analyze_dns_history(domain)
+            
+            # Reverse WHOIS
+            reverse_whois_data = {}
+            if parameters.get("reverse_whois"):
+                email = parameters.get("email")
+                org = whois_data.get("org") if whois_data else None
+                reverse_whois_data = await self._perform_reverse_whois(email=email, org=org)
+            
+            # Social media analysis
+            social_media_data = {}
+            if parameters.get("social_media_analysis"):
+                social_media_data = await self._perform_social_media_analysis(target)
+            
+            # Web scraping for additional intelligence
+            web_data = {}
+            if web_scraper:
+                try:
+                    web_result = await web_scraper.execute({"url": target if target.startswith("http") else f"https://{target}"})
+                    if web_result.get("success"):
+                        web_data = web_result.get("result", {})
+                except Exception as e:
+                    logger.debug(f"Web scraping failed: {e}")
+            
+            # STEP 3: Prepare enhanced prompt with all collected data
+            prompt = await self._prepare_prompt(
+                target, parameters, dns_data, whois_data, geo_data,
+                breach_data, dns_history_data, reverse_whois_data, social_media_data, web_data
+            )
             
             # STEP 3: Call AI via router
             logger.info(f"IntelligenceGatheringAgent: Calling AI with real collected data")
@@ -410,18 +476,23 @@ class IntelligenceGatheringAgent(BaseAgent):
         parameters: Dict[str, Any],
         dns_data: Dict[str, Any] = None,
         whois_data: Dict[str, Any] = None,
-        geo_data: Dict[str, Any] = None
+        geo_data: Dict[str, Any] = None,
+        breach_data: Dict[str, Any] = None,
+        dns_history_data: Dict[str, Any] = None,
+        reverse_whois_data: Dict[str, Any] = None,
+        social_media_data: Dict[str, Any] = None,
+        web_data: Dict[str, Any] = None
     ) -> str:
-        """Prepare intelligence gathering prompt with real collected data"""
+        """Prepare enhanced intelligence gathering prompt with all collected data"""
         
         depth = parameters.get("depth", "standard")
         focus_areas = parameters.get("focus_areas", [])
         
-        # Build context from real collected data
+        # Build context from all collected data
         real_data_context = ""
         
         if dns_data:
-            real_data_context += f"\n\n=== REAL DNS DATA ===\n"
+            real_data_context += f"\n\n=== DNS DATA ===\n"
             real_data_context += f"Domain: {dns_data.get('domain', target)}\n"
             if dns_data.get("a_records"):
                 real_data_context += f"IP Addresses (A records): {', '.join(dns_data['a_records'])}\n"
@@ -435,7 +506,7 @@ class IntelligenceGatheringAgent(BaseAgent):
                 real_data_context += f"DNS Error: {dns_data['error']}\n"
         
         if whois_data and not whois_data.get("error"):
-            real_data_context += f"\n=== REAL WHOIS DATA ===\n"
+            real_data_context += f"\n=== WHOIS DATA ===\n"
             real_data_context += f"Domain: {whois_data.get('domain', target)}\n"
             if whois_data.get("registrar"):
                 real_data_context += f"Registrar: {whois_data['registrar']}\n"
@@ -443,28 +514,54 @@ class IntelligenceGatheringAgent(BaseAgent):
                 real_data_context += f"Creation Date: {whois_data['creation_date']}\n"
             if whois_data.get("expiration_date"):
                 real_data_context += f"Expiration Date: {whois_data['expiration_date']}\n"
-            if whois_data.get("last_updated"):
-                real_data_context += f"Last Updated: {whois_data['last_updated']}\n"
             if whois_data.get("org"):
                 real_data_context += f"Organization: {whois_data['org']}\n"
             if whois_data.get("name_servers"):
                 real_data_context += f"Name Servers: {', '.join(whois_data['name_servers'][:5])}\n"
-            if whois_data.get("status"):
-                real_data_context += f"Status: {whois_data['status']}\n"
         
         if geo_data:
-            real_data_context += f"\n=== REAL IP GEOLOCATION DATA ===\n"
+            real_data_context += f"\n=== IP GEOLOCATION DATA ===\n"
             real_data_context += f"IP Address: {geo_data.get('ip', 'N/A')}\n"
             if geo_data.get("country"):
                 real_data_context += f"Country: {geo_data['country']}\n"
             if geo_data.get("city"):
                 real_data_context += f"City: {geo_data['city']}\n"
-            if geo_data.get("region"):
-                real_data_context += f"Region: {geo_data['region']}\n"
             if geo_data.get("isp"):
                 real_data_context += f"ISP: {geo_data['isp']}\n"
-            if geo_data.get("error"):
-                real_data_context += f"Geolocation Error: {geo_data['error']}\n"
+        
+        if breach_data:
+            real_data_context += f"\n=== BREACH DATABASE CHECK ===\n"
+            if breach_data.get("breached"):
+                real_data_context += f"Email/Domain has been breached: {len(breach_data.get('breaches', []))} breaches found\n"
+            else:
+                real_data_context += f"No breaches found in database\n"
+        
+        if dns_history_data:
+            real_data_context += f"\n=== DNS HISTORY ===\n"
+            if dns_history_data.get("current_records"):
+                real_data_context += f"Current DNS records available\n"
+            if dns_history_data.get("note"):
+                real_data_context += f"Note: {dns_history_data['note']}\n"
+        
+        if reverse_whois_data:
+            real_data_context += f"\n=== REVERSE WHOIS ===\n"
+            if reverse_whois_data.get("domains_found"):
+                real_data_context += f"Associated domains found: {len(reverse_whois_data['domains_found'])}\n"
+            if reverse_whois_data.get("note"):
+                real_data_context += f"Note: {reverse_whois_data['note']}\n"
+        
+        if social_media_data:
+            real_data_context += f"\n=== SOCIAL MEDIA ANALYSIS ===\n"
+            if social_media_data.get("profiles_found"):
+                profiles = [p.get("platform", "") for p in social_media_data["profiles_found"]]
+                real_data_context += f"Profiles found on: {', '.join(profiles)}\n"
+        
+        if web_data:
+            real_data_context += f"\n=== WEB SCRAPING DATA ===\n"
+            if web_data.get("status_code"):
+                real_data_context += f"HTTP Status: {web_data['status_code']}\n"
+            if web_data.get("technology_indicators"):
+                real_data_context += f"Technology Stack: {', '.join(web_data['technology_indicators'][:5])}\n"
         
         prompt = f"""Perform comprehensive intelligence gathering on the target: {target}
 

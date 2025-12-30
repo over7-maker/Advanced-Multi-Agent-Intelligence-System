@@ -16,12 +16,20 @@ from sqlalchemy.ext.asyncio import AsyncSession
 async def get_db():
     """Get database session (optional)"""
     try:
-        from src.database.connection import get_session
-        async for session in get_session():
-            return session
+        from src.database.connection import get_session, is_connected
+        # Check if database is initialized
+        if await is_connected():
+            async for session in get_session():
+                yield session
+                return
+        else:
+            yield None
+    except RuntimeError as e:
+        logger.debug(f"Database not initialized (expected in dev): {e}")
+        yield None
     except Exception as e:
         logger.debug(f"Database not available (expected in dev): {e}")
-        return None
+        yield None
 
 logger = logging.getLogger(__name__)
 

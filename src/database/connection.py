@@ -33,9 +33,25 @@ async def init_database():
     try:
         settings = get_settings()
 
+        # Ensure URL uses async driver (asyncpg or psycopg)
+        # Strip whitespace to handle trailing spaces from environment variables
+        db_url = settings.database.url.strip()
+        if db_url.startswith("postgresql://"):
+            # Replace with asyncpg driver (faster) or psycopg (more compatible)
+            try:
+                import asyncpg
+                db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            except ImportError:
+                try:
+                    import psycopg
+                    db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+                except ImportError:
+                    logger.warning("No async PostgreSQL driver found. Install 'asyncpg' or 'psycopg[binary]'")
+                    raise
+
         # Create async engine
         engine = create_async_engine(
-            settings.database.url,
+            db_url,
             echo=settings.database.echo,
             pool_size=settings.database.pool_size,
             max_overflow=settings.database.max_overflow,
@@ -50,7 +66,8 @@ async def init_database():
 
     except Exception as e:
         # Database is optional in development - don't raise, just log
-        logger.debug(f"Database not available (expected in dev): {e}")
+        logger.warning(f"Database initialization failed: {e}")
+        logger.warning(f"Database URL was: {settings.database.url if 'settings' in locals() else 'N/A'}")
         # Don't raise - allow app to continue without database
 
 
@@ -72,8 +89,8 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
-        finally:
-            await session.close()
+        # Note: async with context manager handles session.close() automatically
+        # No need for explicit close() call
 
 
 async def is_connected() -> bool:
@@ -87,7 +104,8 @@ async def is_connected() -> bool:
         return True
 
     except Exception as e:
-        logger.error(f"Database connection check failed: {e}")
+        # Log at debug level to reduce noise - database might not be available in dev
+        logger.debug(f"Database connection check failed (expected in dev): {e}")
         return False
 
 

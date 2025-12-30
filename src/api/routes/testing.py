@@ -20,11 +20,20 @@ router = APIRouter(prefix="/api/v1/testing", tags=["testing"])
 async def get_db():
     """Get database session (optional)"""
     try:
-        from src.database.connection import get_session
-        async for session in get_session():
-            yield session
-            return
-    except Exception:
+        from src.database.connection import get_session, is_connected
+        # Check if database is initialized
+        if await is_connected():
+            async for session in get_session():
+                yield session
+                return
+        else:
+            logger.warning("Database not connected")
+            yield None
+    except RuntimeError as e:
+        logger.warning(f"Database not initialized: {e}")
+        yield None
+    except Exception as e:
+        logger.warning(f"Database error: {e}")
         yield None
 
 # Redis dependency (optional) - matches tasks_integrated.py pattern
@@ -32,8 +41,13 @@ async def get_redis():
     """Get Redis client (optional)"""
     redis_client = None
     try:
-        from src.cache.redis import get_redis_client
-        redis_client = get_redis_client()
+        from src.cache.redis import get_redis_client, is_connected
+        # Check if Redis is initialized
+        if await is_connected():
+            redis_client = get_redis_client()
+        else:
+            logger.warning("Redis not connected")
+            redis_client = None
     except HTTPException as http_exc:
         logger.warning(f"Redis not available (auth error): {http_exc.detail}")
         redis_client = None
@@ -242,14 +256,25 @@ async def list_providers_for_testing(
             ))
         
         # Also include configured providers that might not be available
+        # Use a set to track which providers we've already added
+        added_providers = {p.provider for p in providers}
+        
         for provider_name, config in PROVIDER_CONFIGS.items():
-            if provider_name not in available_providers:
+            if provider_name not in added_providers:
                 providers.append(ProviderTestResponse(
                     provider=provider_name,
                     available=False
                 ))
         
-        return providers
+        # Remove duplicates and return
+        seen = set()
+        unique_providers = []
+        for p in providers:
+            if p.provider not in seen:
+                seen.add(p.provider)
+                unique_providers.append(p)
+        
+        return unique_providers
     except Exception as e:
         logger.error(f"Failed to list providers: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to list providers: {str(e)}")
@@ -400,7 +425,26 @@ async def test_database_query(
     
     try:
         if db is None:
-            raise HTTPException(status_code=503, detail="Database not available")
+            # Try direct connection check
+            from src.database.connection import is_connected
+            if not await is_connected():
+                raise HTTPException(status_code=503, detail="Database not available")
+            # If connected but no session, create one
+            from src.database.connection import get_session
+            async for db in get_session():
+                from sqlalchemy import text
+                result = await db.execute(text(query))
+                rows = result.fetchall()
+                
+                test_duration = time.time() - test_start
+                
+                return TestResult(
+                    test_name="Database query execution",
+                    success=True,
+                    message=f"Query executed successfully, returned {len(rows)} rows",
+                    duration=test_duration,
+                    data={"rows": len(rows), "sample": [dict(row._mapping) for row in rows[:5]] if rows else []}
+                )
         
         from sqlalchemy import text
         result = await db.execute(text(query))
