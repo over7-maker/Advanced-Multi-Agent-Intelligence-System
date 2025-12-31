@@ -10,19 +10,19 @@ import pytest
 import time
 from unittest.mock import AsyncMock, MagicMock
 
-from src.amas.services.circuit_breaker_service import (
+from amas.services.circuit_breaker_service import (
     CircuitBreaker,
     CircuitBreakerConfig,
     CircuitState,
     CircuitBreakerOpenException,
     get_circuit_breaker_service
 )
-from src.amas.services.rate_limiting_service import (
+from amas.services.rate_limiting_service import (
     RateLimitingService,
     RateLimitConfig,
     get_rate_limiting_service
 )
-from src.amas.services.request_deduplication_service import (
+from amas.services.request_deduplication_service import (
     RequestDeduplicationService,
     DeduplicationConfig,
     get_deduplication_service
