@@ -634,7 +634,7 @@ class PrometheusMetricsService:
         self.metrics["application_info"].info(
             {
                 "name": "AMAS",
-                "version": "1.1.0",
+                "version": "3.1.0",
                 "environment": self.config.get("environment", "development"),
             }
         )

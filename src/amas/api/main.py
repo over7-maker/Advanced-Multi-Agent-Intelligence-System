@@ -44,7 +44,7 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="AMAS Intelligence System API",
     description="Advanced Multi-Agent Intelligence System API",
-    version="1.1.0",
+    version="3.1.0",
 )
 
 # Global security components
@@ -887,7 +887,7 @@ async def root():
     """Root endpoint"""
     return {
         "message": "AMAS Intelligence System API",
-        "version": "1.1.0",
+        "version": "3.1.0",
         "status": "operational",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
