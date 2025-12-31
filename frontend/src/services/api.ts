@@ -487,6 +487,31 @@ class APIService {
     return response.data;
   }
 
+  async getOrchestratorStatus(): Promise<{
+    orchestrator_status: string;
+    active_agents: number;
+    active_tasks: number;
+    total_tasks: number;
+    metrics: {
+      tasks_processed: number;
+      tasks_completed: number;
+      tasks_failed: number;
+      average_task_time: number;
+      active_agents: number;
+      active_tasks: number;
+    };
+    agent_health: Record<string, {
+      name: string;
+      status: string;
+      circuit_breaker_state: string;
+      can_execute: boolean;
+    }>;
+    timestamp: string;
+  }> {
+    const response = await this.client.get('/system/orchestrator/status');
+    return response.data;
+  }
+
   // ========================================================================
   // ANALYTICS
   // ========================================================================

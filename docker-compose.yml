@@ -193,6 +193,101 @@ services:
     networks:
       - amas-network
 
+  # AMAS v3.0: Ollama for local AI models
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - amas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # AMAS v3.0: AgenticSeek for autonomous web browsing
+  agenticseek:
+    build:
+      context: ./agenticseek
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_URL=http://ollama:11434
+      - BROWSER_HEADLESS=true
+      - MAX_RETRIES=3
+      - TIMEOUT_SECONDS=30
+    restart: unless-stopped
+    networks:
+      - amas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # AMAS v3.0: SearxNG for privacy-focused search
+  searxng:
+    image: searxng/searxng:latest
+    ports:
+      - "8888:8080"
+    volumes:
+      - ./searxng:/etc/searxng:ro
+    environment:
+      - SEARXNG_HOSTNAME=localhost
+    restart: unless-stopped
+    networks:
+      - amas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # AMAS v3.0: Tor for dark web access
+  tor:
+    image: osminogin/tor-simple:latest
+    ports:
+      - "9050:9050"  # SOCKS proxy
+      - "9051:9051"  # Control port
+    restart: unless-stopped
+    networks:
+      - amas-network
+    healthcheck:
+      test: ["CMD", "curl", "--socks5", "127.0.0.1:9050", "http://check.torproject.org"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # AMAS v3.0: Robin for dark web OSINT
+  robin:
+    build:
+      context: ./robin
+      dockerfile: Dockerfile
+    ports:
+      - "8002:8000"
+    depends_on:
+      - tor
+      - ollama
+    environment:
+      - TOR_SOCKS=127.0.0.1:9050
+      - TOR_CONTROL=127.0.0.1:9051
+      - OLLAMA_URL=http://ollama:11434
+    restart: unless-stopped
+    networks:
+      - amas-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   postgres_data:
     driver: local
@@ -209,6 +304,8 @@ volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+  ollama_data:
     driver: local
 
 networks:

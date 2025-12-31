@@ -310,37 +310,102 @@ async def startup_event():
         amas_app = AMASApplication(config)
         await amas_app.initialize()
 
-        # 6. Initialize Database, Redis, Neo4j
+        # 6. Initialize Database, Redis, Neo4j (Phase 3: Required in production)
         try:
+            from src.config.settings import get_settings
             from src.database.connection import init_database
             from src.database.redis_cache import init_redis_cache
             from src.cache.redis import init_redis
             from src.graph.neo4j import init_neo4j
             
-            # Initialize Database
+            settings = get_settings()
+            is_production = settings.is_production
+            
+            # Initialize Database (required in production)
             try:
                 await init_database()
                 logger.info("✅ Database connection initialized")
             except Exception as e:
-                logger.warning(f"Database initialization failed (optional in dev): {e}")
+                if is_production:
+                    logger.error(f"Database initialization failed (REQUIRED in production): {e}")
+                    raise  # Fail fast in production
+                else:
+                    logger.warning(f"Database initialization failed (optional in dev): {e}")
             
-            # Initialize Redis (both cache and database redis)
+            # Initialize Redis (required in production)
             try:
                 await init_redis()
                 await init_redis_cache()
                 logger.info("✅ Redis connections initialized")
             except Exception as e:
-                logger.warning(f"Redis initialization failed (optional in dev): {e}")
+                if is_production:
+                    logger.error(f"Redis initialization failed (REQUIRED in production): {e}")
+                    raise  # Fail fast in production
+                else:
+                    logger.warning(f"Redis initialization failed (optional in dev): {e}")
             
-            # Initialize Neo4j
+            # Initialize Neo4j (required in production)
             try:
                 await init_neo4j()
                 logger.info("✅ Neo4j connection initialized")
             except Exception as e:
-                logger.warning(f"Neo4j initialization failed (optional in dev): {e}")
+                if is_production:
+                    logger.error(f"Neo4j initialization failed (REQUIRED in production): {e}")
+                    raise  # Fail fast in production
+                else:
+                    logger.warning(f"Neo4j initialization failed (optional in dev): {e}")
                 
         except Exception as e:
-            logger.warning(f"Service initialization failed (continuing): {e}")
+            from src.config.settings import get_settings
+            settings = get_settings()
+            if settings.is_production:
+                logger.error(f"Service initialization failed (REQUIRED in production): {e}")
+                raise  # Fail fast in production
+            else:
+                logger.warning(f"Service initialization failed (continuing in dev): {e}")
+
+        # 7. Start WebSocket heartbeat (Phase 2 requirement)
+        try:
+            from src.api.websocket import start_websocket_heartbeat
+            await start_websocket_heartbeat()
+            logger.info("✅ WebSocket heartbeat started")
+        except Exception as e:
+            logger.warning(f"WebSocket heartbeat failed to start (continuing): {e}")
+
+        # 8. Initialize Prometheus (Phase 5: Required in production)
+        try:
+            from src.config.settings import get_settings
+            from src.monitoring.prometheus import init_prometheus
+            from src.amas.services.prometheus_metrics_service import get_metrics_service
+            
+            settings = get_settings()
+            is_production = settings.is_production
+            
+            if is_production:
+                # Production: Prometheus is required
+                try:
+                    init_prometheus()
+                    metrics_service = get_metrics_service()
+                    logger.info("✅ Prometheus initialized (required in production)")
+                except Exception as e:
+                    logger.error(f"Prometheus initialization failed (REQUIRED in production): {e}")
+                    raise  # Fail fast in production
+            else:
+                # Development: Prometheus is optional
+                try:
+                    init_prometheus()
+                    metrics_service = get_metrics_service()
+                    logger.info("✅ Prometheus initialized (optional in dev)")
+                except Exception as e:
+                    logger.warning(f"Prometheus initialization failed (optional in dev): {e}")
+        except Exception as e:
+            from src.config.settings import get_settings
+            settings = get_settings()
+            if settings.is_production:
+                logger.error(f"Prometheus setup failed (REQUIRED in production): {e}")
+                raise
+            else:
+                logger.warning(f"Prometheus setup failed (optional in dev): {e}")
 
         logger.info("✅ AMAS Intelligence System initialized successfully")
 
