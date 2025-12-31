@@ -452,6 +452,14 @@ try:
     app.include_router(agents.router, prefix="/api/v1", tags=["agents"])
     logger.info("✅ Agent routes registered at /api/v1")
     
+    # Agent tools configuration routes
+    try:
+        from src.api.routes import agent_tools
+        app.include_router(agent_tools.router, prefix="/api/v1", tags=["agent-tools"])
+        logger.info("✅ Agent tools routes registered at /api/v1")
+    except ImportError as e:
+        logger.warning(f"Agent tools routes not available: {e}")
+    
     # Analytics routes
     app.include_router(analytics.router, prefix="/api/v1", tags=["analytics"])
     logger.info("✅ Analytics routes registered at /api/v1")

@@ -375,6 +375,158 @@ class APIService {
     return response.data;
   }
 
+  // ========================================================================
+  // AGENT TOOLS CONFIGURATION
+  // ========================================================================
+
+  async getAgentTools(agentId: string): Promise<{
+    agent_id: string;
+    tools: Array<{
+      tool_name: string;
+      description: string;
+      category: string;
+      enabled: boolean;
+      requires_auth: boolean;
+      requires_api_key: boolean;
+      api_key_configured: boolean;
+      config: Record<string, any>;
+      execution_mode: string;
+      cost_tier: string;
+      avg_execution_time: number;
+    }>;
+    total: number;
+    enabled: number;
+  }> {
+    const url = `/agents/${agentId}/tools`;
+    console.log('[API] getAgentTools - URL:', url, 'agentId:', agentId);
+    console.log('[API] getAgentTools - Full URL will be:', this.client.defaults.baseURL + url);
+    
+    try {
+      const response = await this.client.get(url);
+      console.log('[API] getAgentTools - Response status:', response.status);
+      console.log('[API] getAgentTools - Response data:', response.data);
+      console.log('[API] getAgentTools - Response headers:', response.headers);
+      return response.data;
+    } catch (error: any) {
+      console.error('[API] getAgentTools - ERROR:', error);
+      console.error('[API] getAgentTools - Error response:', error.response);
+      console.error('[API] getAgentTools - Error message:', error.message);
+      console.error('[API] getAgentTools - Error config:', error.config);
+      throw error;
+    }
+  }
+
+  async getToolStatus(agentId: string, toolName: string): Promise<{
+    tool_name: string;
+    status: string;
+    last_checked: string;
+    error_message?: string;
+    requires_auth: boolean;
+    requires_api_key: boolean;
+    api_key_configured: boolean;
+    service_url?: string;
+    service_available: boolean;
+  }> {
+    const response = await this.client.get(`/agents/${agentId}/tools/${toolName}/status`);
+    return response.data;
+  }
+
+  async getAllToolsStatus(agentId: string): Promise<{
+    agent_id: string;
+    tools: Array<{
+      tool_name: string;
+      status: string;
+      last_checked: string;
+      error_message?: string;
+      requires_auth: boolean;
+      requires_api_key: boolean;
+      api_key_configured: boolean;
+      service_url?: string;
+      service_available: boolean;
+    }>;
+    total: number;
+    available: number;
+    needs_config: number;
+    unavailable: number;
+  }> {
+    try {
+      const response = await this.client.get(`/agents/${agentId}/tools/status`);
+      console.log('[API] getAllToolsStatus response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('[API] getAllToolsStatus error:', error);
+      // Return empty response on error
+      return {
+        agent_id: agentId,
+        tools: [],
+        total: 0,
+        available: 0,
+        needs_config: 0,
+        unavailable: 0,
+      };
+    }
+  }
+
+  async updateToolConfig(
+    agentId: string,
+    toolName: string,
+    config: {
+      enabled: boolean;
+      config?: Record<string, any>;
+      api_key?: string;
+    }
+  ): Promise<{
+    agent_id: string;
+    tool_name: string;
+    config: Record<string, any>;
+    message: string;
+  }> {
+    const response = await this.client.put(`/agents/${agentId}/tools/${toolName}/config`, {
+      tool_name: toolName,
+      enabled: config.enabled,
+      config: config.config || {},
+      api_key: config.api_key,
+    });
+    return response.data;
+  }
+
+  async updateAgentToolsConfig(
+    agentId: string,
+    config: {
+      tools: Array<{
+        tool_name: string;
+        enabled: boolean;
+        config?: Record<string, any>;
+        api_key?: string;
+      }>;
+      tool_strategy?: string;
+      max_tools?: number;
+      use_ai_synthesis?: boolean;
+    }
+  ): Promise<{
+    agent_id: string;
+    message: string;
+    tools_configured: number;
+  }> {
+    const response = await this.client.put(`/agents/${agentId}/tools/config`, {
+      agent_id: agentId,
+      ...config,
+    });
+    return response.data;
+  }
+
+  async testTool(agentId: string, toolName: string): Promise<{
+    tool_name: string;
+    success: boolean;
+    message: string;
+    result?: any;
+    error?: string;
+    tested_at: string;
+  }> {
+    const response = await this.client.post(`/agents/${agentId}/tools/${toolName}/test`);
+    return response.data;
+  }
+
   async getAgent(agentId: string): Promise<Agent> {
     const response = await this.client.get(`/agents/${agentId}`);
     return response.data;

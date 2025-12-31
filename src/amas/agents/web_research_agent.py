@@ -215,25 +215,32 @@ Query: {query}"""
         depth: str,
         max_results: int
     ) -> Dict[str, Any]:
-        """Research using AI (fallback when AgenticSeek unavailable)"""
-        # Use base agent execute method with research parameters
+        """Research using AI with multi-tool orchestration"""
+        # Use base agent execute method with multi-tool orchestration enabled
         result = await self.execute(
             task_id=f"research_{query[:20]}",
             target=query,
             parameters={
                 "query": query,
                 "depth": depth,
-                "max_results": max_results
+                "max_results": max_results,
+                "use_multi_tool": True,  # Enable multi-tool orchestration
+                "tool_strategy": "comprehensive",  # Use multiple tools for comprehensive research
+                "max_tools": 5  # Use up to 5 tools
             }
         )
+        
+        # Extract results (may include aggregated multi-tool results)
+        result_data = result.get("result", {})
         
         return {
             "success": result.get("success", False),
             "query": query,
-            "findings": result.get("result", {}).get("findings", []),
-            "sources": result.get("result", {}).get("sources", []),
-            "analysis": result.get("result", {}).get("analysis", ""),
-            "confidence": result.get("result", {}).get("confidence", 0.7),
-            "method": "ai_fallback"
+            "findings": result_data.get("findings", []),
+            "sources": result_data.get("sources", []),
+            "analysis": result_data.get("analysis", result_data.get("synthesis", "")),
+            "confidence": result_data.get("confidence", 0.7),
+            "method": "multi_tool_ai",
+            "tools_used": result.get("result", {}).get("tool_results", [])
         }
 

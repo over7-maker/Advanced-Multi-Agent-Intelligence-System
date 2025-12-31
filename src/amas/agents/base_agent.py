@@ -154,10 +154,36 @@ class BaseAgent(ABC):
             # STEP 3: Parse response
             parsed_result = await self._parse_response(ai_response.content)
             
-            # STEP 4: Execute tools if needed
-            if self.tools and parsed_result.get("requires_tools"):
+            # STEP 4: Execute tools if needed (multi-tool orchestration enabled by default)
+            # Check if tools should be used (explicit flag or if agent has tools registered)
+            should_use_tools = (
+                parsed_result.get("requires_tools", False) or
+                (self.tools and parameters.get("use_multi_tool", True))
+            )
+            
+            if should_use_tools:
+                # Enhance parsed_result with task context for multi-tool orchestration
+                parsed_result["task_type"] = self.type
+                parsed_result["description"] = target
+                parsed_result["use_multi_tool"] = parameters.get("use_multi_tool", True)
+                parsed_result["tool_strategy"] = parameters.get("tool_strategy", "comprehensive")
+                parsed_result["max_tools"] = parameters.get("max_tools", 5)
+                parsed_result["requires_tools"] = True  # Ensure tools are executed
+                
                 tool_results = await self._execute_tools(parsed_result)
                 parsed_result["tool_results"] = tool_results
+                
+                # If multi-tool orchestration was used, merge aggregated results
+                if tool_results and any(r.get("metadata", {}).get("multi_tool") for r in tool_results):
+                    aggregated = next(
+                        (r for r in tool_results if r.get("tool") == "aggregated"),
+                        None
+                    )
+                    if aggregated and aggregated.get("result"):
+                        # Merge aggregated findings into parsed_result
+                        parsed_result.update(aggregated["result"].get("primary_findings", {}))
+                        if aggregated["result"].get("synthesis"):
+                            parsed_result["synthesis"] = aggregated["result"]["synthesis"]
             
             execution_duration = time.time() - execution_start
             
@@ -536,8 +562,22 @@ Respond in JSON format:
         """
         Select appropriate tools for the task
         
-        Override in subclasses for agent-specific tool selection logic
+        Enhanced with multi-tool orchestration support.
+        Override in subclasses for agent-specific tool selection logic.
         """
+        # Check if multi-tool orchestration is enabled
+        use_multi_tool = task_context.get("use_multi_tool", True)
+        
+        if not use_multi_tool:
+            # Fallback to legacy tool selection
+            return self._select_tools_legacy(task_context)
+        
+        # Multi-tool selection will be handled by _execute_tools_multi_tool
+        # Return empty list here - tools will be selected intelligently during execution
+        return []
+    
+    def _select_tools_legacy(self, task_context: Dict[str, Any]) -> List[AgentTool]:
+        """Legacy tool selection for backward compatibility"""
         selected_tools = []
         
         # First, check agent's own tools
@@ -637,10 +677,100 @@ Respond in JSON format:
         """
         Execute tools if agent has them
         
-        Enhanced version with tool registry support
+        Enhanced with multi-tool orchestration support
         """
+        # Check if multi-tool orchestration is enabled
+        use_multi_tool = parsed_result.get("use_multi_tool", True)
+        task_type = parsed_result.get("task_type", self.type)
+        task_description = parsed_result.get("description", parsed_result.get("target", ""))
+        
+        if use_multi_tool:
+            # Use multi-tool orchestration
+            return await self._execute_tools_multi_tool(
+                task_type=task_type,
+                task_description=task_description,
+                parameters=parsed_result
+            )
+        
+        # Legacy single-tool execution
+        return await self._execute_tools_legacy(parsed_result)
+    
+    async def _execute_tools_multi_tool(
+        self,
+        task_type: str,
+        task_description: str,
+        parameters: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """Execute tools using multi-tool orchestration"""
+        try:
+            from src.amas.agents.tools.multi_tool_orchestrator import get_multi_tool_orchestrator
+            
+            orchestrator = get_multi_tool_orchestrator()
+            
+            # Execute multi-tool task
+            result = await orchestrator.execute_multi_tool_task(
+                task_type=task_type,
+                task_description=task_description or parameters.get("target", ""),
+                parameters=parameters,
+                agent_type=self.type,
+                strategy=parameters.get("tool_strategy", "comprehensive"),
+                max_tools=parameters.get("max_tools", 5),
+                use_ai_synthesis=parameters.get("use_ai_synthesis", True)
+            )
+            
+            # Convert to legacy format for compatibility
+            tool_results = []
+            
+            # Add individual tool results
+            for tool_name in result.get("tools_executed", []):
+                tool_results.append({
+                    "tool": tool_name,
+                    "success": tool_name in result.get("tools_successful", []),
+                    "result": result.get("supporting_evidence", {}).get(tool_name),
+                    "confidence": result.get("confidence_scores", {}).get(tool_name, 0.5),
+                    "metadata": {
+                        "multi_tool": True,
+                        "aggregated": False
+                    }
+                })
+            
+            # Add aggregated result if available
+            if result.get("primary_findings") or result.get("synthesis"):
+                tool_results.append({
+                    "tool": "aggregated",
+                    "success": result.get("success", False),
+                    "result": {
+                        "primary_findings": result.get("primary_findings", {}),
+                        "synthesis": result.get("synthesis"),
+                        "confidence_scores": result.get("confidence_scores", {}),
+                        "conflicts": result.get("conflicts", []),
+                        "tools_used": result.get("tools_successful", [])
+                    },
+                    "metadata": {
+                        "multi_tool": True,
+                        "aggregated": True,
+                        **result.get("metadata", {})
+                    }
+                })
+            
+            # If no tools were executed, return empty list (not an error)
+            if not tool_results:
+                logger.info("No tools were selected/executed for this task")
+            
+            return tool_results
+        
+        except ImportError as e:
+            logger.warning(f"Multi-tool orchestrator not available: {e}, falling back to legacy execution")
+            return await self._execute_tools_legacy(parameters)
+        except Exception as e:
+            logger.error(f"Multi-tool execution failed: {e}", exc_info=True)
+            # Don't fail completely - return empty results
+            return []
+    
+    async def _execute_tools_legacy(self, parsed_result: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Legacy tool execution for backward compatibility"""
         # Select tools based on task context
-        selected_tools = self._select_tools(parsed_result)
+        selected_tools = self._select_tools_legacy(parsed_result)
         
         if not selected_tools:
             # Fallback to old behavior for backward compatibility

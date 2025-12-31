@@ -23,12 +23,15 @@ import React, { useEffect, useState } from 'react';
 import { Agent, apiService } from '../../services/api';
 import { websocketService } from '../../services/websocket';
 import { AIProvidersPanel } from './AIProvidersPanel';
+import { AgentToolConfiguration } from './AgentToolConfiguration';
+import { ToolStatusIndicator } from './ToolStatusIndicator';
 
 export const AgentList: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
   const [agents, setAgents] = useState<Agent[]>([]);
   const [loading, setLoading] = useState(true);
   const [managingAgent, setManagingAgent] = useState<string | null>(null);
+  const [configuringAgent, setConfiguringAgent] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAgents = async () => {
@@ -125,7 +128,9 @@ export const AgentList: React.FC = () => {
           ) : (
             <Grid container spacing={3}>
               {(agents || []).map((agent) => (
-                <Grid item xs={12} sm={6} md={4} key={agent.agent_id}>
+                <>
+                  {/* @ts-ignore Material-UI v7 Grid type issue - item prop not recognized */}
+                  <Grid item xs={12} sm={6} md={4} key={agent.agent_id}>
                   <Card>
                     <CardContent>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
@@ -254,17 +259,33 @@ export const AgentList: React.FC = () => {
                           variant="outlined"
                           size="small"
                           startIcon={<SettingsIcon />}
-                          onClick={() => {
-                            // TODO: Open configuration dialog
-                            alert(`Configure agent: ${agent.name}\n\nThis feature will allow you to:\n- Update agent configuration\n- Modify capabilities\n- Adjust performance settings`);
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('[AgentList] ========== CONFIGURE BUTTON CLICKED ==========');
+                            console.log('[AgentList] Agent ID:', agent.agent_id);
+                            console.log('[AgentList] Agent Name:', agent.name);
+                            console.log('[AgentList] Current configuringAgent state:', configuringAgent);
+                            console.log('[AgentList] Setting configuringAgent to:', agent.agent_id);
+                            
+                            // FORCE STATE UPDATE
+                            setConfiguringAgent(agent.agent_id);
+                            
+                            // VERIFY STATE WAS SET
+                            setTimeout(() => {
+                              console.log('[AgentList] State after update (checking):', agent.agent_id);
+                            }, 100);
+                            
+                            console.log('[AgentList] ============================================');
                           }}
                         >
-                          Configure
+                          Configure Tools
                         </Button>
                       </Box>
                     </CardContent>
                   </Card>
                 </Grid>
+                </>
               ))}
             </Grid>
           )}
@@ -272,6 +293,31 @@ export const AgentList: React.FC = () => {
       )}
 
       {activeTab === 1 && <AIProvidersPanel />}
+
+      {/* Tool Configuration Dialog */}
+      {configuringAgent ? (
+        <>
+          {(() => {
+            const agentName = agents.find(a => a.agent_id === configuringAgent)?.name || 'Unknown';
+            console.log('[AgentList] ========== RENDERING AgentToolConfiguration ==========');
+            console.log('[AgentList] configuringAgent:', configuringAgent);
+            console.log('[AgentList] Agent name:', agentName);
+            console.log('[AgentList] Will render AgentToolConfiguration component NOW');
+            console.log('[AgentList] ======================================================');
+            return null;
+          })()}
+          <AgentToolConfiguration
+            key={`config-${configuringAgent}-${Date.now()}`}
+            agentId={configuringAgent}
+            agentName={agents.find(a => a.agent_id === configuringAgent)?.name || 'Unknown'}
+            open={true}
+            onClose={() => {
+              console.log('[AgentList] Closing configuration dialog');
+              setConfiguringAgent(null);
+            }}
+          />
+        </>
+      ) : null}
     </Box>
   );
 };
