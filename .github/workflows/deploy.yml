@@ -31,7 +31,7 @@ jobs:
           POSTGRES_PASSWORD: test_password
         ports:
           - 5432:5432
-        options: >-
+        options: >
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
@@ -41,7 +41,7 @@ jobs:
         image: redis:7-alpine
         ports:
           - 6379:6379
-        options: >-
+        options: >
           --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
@@ -112,7 +112,7 @@ jobs:
           echo "✅ package-lock.json found"
       
       - name: Cache node modules
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ./frontend/node_modules
           key: ${{ runner.os }}-npm-cache-${{ hashFiles('./frontend/package-lock.json') }}
@@ -151,7 +151,7 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Download frontend build
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: frontend-build
           path: frontend/build
