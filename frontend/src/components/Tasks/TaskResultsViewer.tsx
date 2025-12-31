@@ -48,10 +48,10 @@ export const TaskResultsViewer: React.FC<TaskResultsViewerProps> = ({ result, ta
     );
   }
 
-  // Extract agent results
-  const agentResults = result.agent_results || {};
-  const securityExpertResult = agentResults.security_expert;
-  const intelligenceGatheringResult = agentResults.intelligence_gathering;
+  // Extract agent results - support multiple formats
+  const agentResults = result.agent_results || result.output?.agent_results || {};
+  const securityExpertResult = agentResults.security_expert || agentResults.security_expert_agent;
+  const intelligenceGatheringResult = agentResults.intelligence_gathering || agentResults.intelligence_gathering_agent;
 
   // Parse security scan results
   const parseSecurityData = (data: any) => {
@@ -84,7 +84,26 @@ export const TaskResultsViewer: React.FC<TaskResultsViewerProps> = ({ result, ta
   };
 
   const securityData = securityExpertResult ? parseSecurityData(securityExpertResult) : null;
-  const intelData = intelligenceGatheringResult?.output?.intelligence_report || null;
+  const intelData = intelligenceGatheringResult?.output?.intelligence_report || 
+                    intelligenceGatheringResult?.intelligence_report ||
+                    intelligenceGatheringResult?.output ||
+                    null;
+  
+  // Check if we have any results at all
+  const hasAnyResults = securityData || intelData || Object.keys(agentResults).length > 0;
+  
+  // If no results but we have error info, show it
+  if (!hasAnyResults && result.error) {
+    return (
+      <Alert severity="warning">
+        <Typography variant="body2" fontWeight="bold">Task Execution Error</Typography>
+        <Typography variant="body2" sx={{ mt: 1 }}>{result.error}</Typography>
+        {result.summary && (
+          <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>{result.summary}</Typography>
+        )}
+      </Alert>
+    );
+  }
 
   const getSeverityColor = (severity: string): 'error' | 'warning' | 'info' | 'success' => {
     switch (severity?.toLowerCase()) {
@@ -201,35 +220,35 @@ export const TaskResultsViewer: React.FC<TaskResultsViewerProps> = ({ result, ta
                     <TableBody>
                       {securityData.vulnerabilities.map((vuln: any, idx: number) => (
                         <TableRow key={idx}>
-                          <TableCell>{vuln.id || `VULN-${idx + 1}`}</TableCell>
+                          <TableCell>{typeof vuln.id === 'string' ? vuln.id : (vuln.id ? JSON.stringify(vuln.id) : `VULN-${idx + 1}`)}</TableCell>
                           <TableCell>
                             <Chip
-                              label={vuln.severity || 'Unknown'}
-                              color={getSeverityColor(vuln.severity)}
+                              label={typeof vuln.severity === 'string' ? vuln.severity : (vuln.severity ? JSON.stringify(vuln.severity) : 'Unknown')}
+                              color={getSeverityColor(typeof vuln.severity === 'string' ? vuln.severity : 'Unknown')}
                               size="small"
-                              icon={getSeverityIcon(vuln.severity)}
+                              icon={getSeverityIcon(typeof vuln.severity === 'string' ? vuln.severity : 'Unknown')}
                             />
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2" fontWeight="medium">
-                              {vuln.title || 'Untitled Vulnerability'}
+                              {typeof vuln.title === 'string' ? vuln.title : (vuln.title ? JSON.stringify(vuln.title) : 'Untitled Vulnerability')}
                             </Typography>
                             {vuln.description && (
                               <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
-                                {vuln.description}
+                                {typeof vuln.description === 'string' ? vuln.description : JSON.stringify(vuln.description)}
                               </Typography>
                             )}
                           </TableCell>
                           <TableCell>
                             <Chip
-                              label={vuln.cvss_score?.toFixed(1) || 'N/A'}
+                              label={typeof vuln.cvss_score === 'number' ? vuln.cvss_score.toFixed(1) : 'N/A'}
                               size="small"
-                              color={vuln.cvss_score >= 7 ? 'error' : vuln.cvss_score >= 4 ? 'warning' : 'info'}
+                              color={typeof vuln.cvss_score === 'number' && vuln.cvss_score >= 7 ? 'error' : (typeof vuln.cvss_score === 'number' && vuln.cvss_score >= 4 ? 'warning' : 'info')}
                             />
                           </TableCell>
                           <TableCell>
                             <Typography variant="caption" sx={{ wordBreak: 'break-all' }}>
-                              {vuln.location || 'N/A'}
+                              {typeof vuln.location === 'string' ? vuln.location : (vuln.location ? JSON.stringify(vuln.location) : 'N/A')}
                             </Typography>
                           </TableCell>
                         </TableRow>
@@ -242,7 +261,9 @@ export const TaskResultsViewer: React.FC<TaskResultsViewerProps> = ({ result, ta
                     <Accordion key={idx} sx={{ mt: 1 }}>
                       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
                         <Typography variant="body2" fontWeight="medium">
-                          {vuln.title || vuln.id} - {vuln.severity}
+                          {(typeof vuln.title === 'string' ? vuln.title : (vuln.title ? JSON.stringify(vuln.title) : '')) || 
+                           (typeof vuln.id === 'string' ? vuln.id : (vuln.id ? JSON.stringify(vuln.id) : ''))} - 
+                          {typeof vuln.severity === 'string' ? vuln.severity : (vuln.severity ? JSON.stringify(vuln.severity) : 'Unknown')}
                         </Typography>
                       </AccordionSummary>
                       <AccordionDetails>
@@ -250,20 +271,24 @@ export const TaskResultsViewer: React.FC<TaskResultsViewerProps> = ({ result, ta
                           {vuln.description && (
                             <Box sx={{ mb: 2 }}>
                               <Typography variant="subtitle2" gutterBottom>Description</Typography>
-                              <Typography variant="body2">{vuln.description}</Typography>
+                              <Typography variant="body2">
+                                {typeof vuln.description === 'string' ? vuln.description : JSON.stringify(vuln.description)}
+                              </Typography>
                             </Box>
                           )}
                           {vuln.cwe && (
                             <Box sx={{ mb: 2 }}>
                               <Typography variant="subtitle2" gutterBottom>CWE</Typography>
-                              <Chip label={vuln.cwe} size="small" />
+                              <Chip label={typeof vuln.cwe === 'string' ? vuln.cwe : JSON.stringify(vuln.cwe)} size="small" />
                             </Box>
                           )}
                           {vuln.remediation && (
                             <Box>
                               <Typography variant="subtitle2" gutterBottom>Remediation</Typography>
                               <Alert severity="info">
-                                <Typography variant="body2">{vuln.remediation}</Typography>
+                                <Typography variant="body2">
+                                  {typeof vuln.remediation === 'string' ? vuln.remediation : JSON.stringify(vuln.remediation)}
+                                </Typography>
                               </Alert>
                             </Box>
                           )}
@@ -306,12 +331,12 @@ export const TaskResultsViewer: React.FC<TaskResultsViewerProps> = ({ result, ta
                       <Grid item xs={12}>
                         <Typography variant="subtitle2" gutterBottom>Issues Found</Typography>
                         <List dense>
-                          {securityData.ssl_analysis.issues.map((issue: string, idx: number) => (
+                          {securityData.ssl_analysis.issues.map((issue: any, idx: number) => (
                             <ListItem key={idx}>
                               <ListItemIcon>
                                 <WarningIcon color="warning" fontSize="small" />
                               </ListItemIcon>
-                              <ListItemText primary={issue} />
+                              <ListItemText primary={typeof issue === 'string' ? issue : JSON.stringify(issue)} />
                             </ListItem>
                           ))}
                         </List>
@@ -361,12 +386,12 @@ export const TaskResultsViewer: React.FC<TaskResultsViewerProps> = ({ result, ta
                       <Grid item xs={12}>
                         <Typography variant="subtitle2" gutterBottom>Issues</Typography>
                         <List dense>
-                          {securityData.security_headers.issues.map((issue: string, idx: number) => (
+                          {securityData.security_headers.issues.map((issue: any, idx: number) => (
                             <ListItem key={idx}>
                               <ListItemIcon>
                                 <WarningIcon color="warning" fontSize="small" />
                               </ListItemIcon>
-                              <ListItemText primary={issue} />
+                              <ListItemText primary={typeof issue === 'string' ? issue : JSON.stringify(issue)} />
                             </ListItem>
                           ))}
                         </List>
@@ -444,12 +469,12 @@ export const TaskResultsViewer: React.FC<TaskResultsViewerProps> = ({ result, ta
                 </AccordionSummary>
                 <AccordionDetails>
                   <List>
-                    {securityData.recommendations.map((rec: string, idx: number) => (
+                    {securityData.recommendations.map((rec: any, idx: number) => (
                       <ListItem key={idx}>
                         <ListItemIcon>
                           <CheckCircleIcon color="primary" fontSize="small" />
                         </ListItemIcon>
-                        <ListItemText primary={rec} />
+                        <ListItemText primary={typeof rec === 'string' ? rec : JSON.stringify(rec)} />
                       </ListItem>
                     ))}
                   </List>

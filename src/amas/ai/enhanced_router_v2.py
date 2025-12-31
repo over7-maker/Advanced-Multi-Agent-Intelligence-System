@@ -305,8 +305,10 @@ PROVIDER_CONFIGS = {
     "ollama": ProviderConfig(
         name="Ollama",
         api_key_env="OLLAMA_API_KEY",  # Not required, but checked
-        model="deepseek-r1:8b",  # Default model, can be overridden
-        base_url="http://localhost:11434/v1",
+        # Use a commonly available local model - try llama3.2 first, fallback to llama3.1:8b
+        # These are the most commonly installed Ollama models
+        model=os.getenv("OLLAMA_MODEL", "llama3.2"),  # Default to llama3.2, can be overridden
+        base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
         provider_type="ollama",
         priority=100,  # Lowest priority - fallback only
     ),
@@ -389,20 +391,21 @@ def get_available_providers() -> List[str]:
         else:
             config.enabled = False
     
-    # If no providers available, add Ollama as fallback
-    if not available:
-        logger.warning("No API keys found. Checking Ollama as fallback provider.")
-        # Check if Ollama is available
-        try:
-            import httpx
-            response = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
-            if response.status_code == 200:
+    # Always check Ollama as local fallback (even if other providers are available)
+    try:
+        import httpx
+        response = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
+        if response.status_code == 200:
+            data = response.json()
+            models = [model.get("name", "") for model in data.get("models", [])]
+            if models:
                 ollama_config = PROVIDER_CONFIGS["ollama"]
                 ollama_config.enabled = True
-                available.append("ollama")
-                logger.info("✅ Ollama detected and added as fallback provider")
-        except Exception as e:
-            logger.debug(f"Ollama not available: {e}")
+                if "ollama" not in available:
+                    available.append("ollama")
+                logger.info(f"✅ Ollama detected with {len(models)} models: {', '.join(models[:3])}")
+    except Exception as e:
+        logger.debug(f"Ollama not available: {e}")
     
     return sorted(available, key=lambda p: PROVIDER_CONFIGS.get(p, ProviderConfig(name=p, api_key_env="", model="", priority=999)).priority)
 
@@ -847,16 +850,78 @@ async def call_ollama_provider(
     session: aiohttp.ClientSession,
     **kwargs
 ) -> Dict[str, Any]:
-    """Call Ollama provider (local, no API key required)."""
-    # Ollama uses /api/chat endpoint (not OpenAI-compatible /v1/chat/completions)
-    # Try OpenAI-compatible endpoint first, fallback to native Ollama API
-    url = "http://localhost:11434/v1/chat/completions"
+    """
+    Call Ollama provider with automatic model fallback.
+    
+    Tries models in order:
+    1. Config model (from OLLAMA_MODEL env or default)
+    2. llama3.2 (most common)
+    3. llama3.1:8b
+    4. mistral
+    5. qwen2.5:7b
+    """
+    base_url = config.base_url or "http://localhost:11434"
+    base_url_clean = base_url.replace('/v1', '').rstrip('/')
+    if not base_url_clean.startswith('http'):
+        base_url_clean = f"http://{base_url_clean}"
+    
+    # First, try to get list of available models from Ollama
+    available_models = []
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=2.0) as client:
+            response = await client.get(f"{base_url_clean}/api/tags")
+            if response.status_code == 200:
+                data = response.json()
+                available_models = [model.get("name", "") for model in data.get("models", [])]
+                if available_models:
+                    logger.info(f"✅ Found {len(available_models)} Ollama models: {', '.join(available_models[:5])}")
+    except Exception as e:
+        logger.debug(f"Could not fetch Ollama models list: {e}")
+    
+    # If we have available models, use ONLY those models (don't try non-existent models)
+    if available_models:
+        # Prioritize configured model if it's available
+        models_to_try = []
+        if config.model in available_models:
+            models_to_try.append(config.model)
+        
+        # Add remaining available models
+        for model in available_models:
+            if model not in models_to_try:
+                models_to_try.append(model)
+        
+        models_to_try = models_to_try[:10]  # Limit to first 10
+        logger.info(f"✅ Using {len(models_to_try)} available Ollama models: {', '.join(models_to_try)}")
+    else:
+        # No available models list, use fallback order (but these will likely fail)
+        fallback_models = [
+            config.model,  # Try configured model first
+            "llama3.2",
+            "llama3.1:8b",
+            "mistral",
+            "qwen2.5:7b",
+            "llama3.1",
+            "llama3",
+        ]
+        seen = set()
+        models_to_try = []
+        for model in fallback_models:
+            if model not in seen:
+                seen.add(model)
+                models_to_try.append(model)
+        logger.warning(f"⚠️ No Ollama models list available, trying fallback models: {', '.join(models_to_try)}")
+    
+    # Ollama uses /api/chat endpoint (native API is more reliable)
+    # Try native API first, then OpenAI-compatible endpoint as fallback
+    native_url = f"{base_url_clean}/api/chat"
+    openai_url = f"{base_url}/v1/chat/completions"
+    
     headers = {
         "Content-Type": "application/json",
     }
     
     # Convert messages format for Ollama
-    # Ollama expects: [{"role": "user", "content": "..."}, ...]
     ollama_messages = []
     for msg in messages:
         if msg["role"] in ["user", "assistant", "system"]:
@@ -865,60 +930,100 @@ async def call_ollama_provider(
                 "content": msg["content"]
             })
     
-    body = {
-        "model": config.model,
-        "messages": ollama_messages,
-        "max_tokens": kwargs.get("max_tokens", 2000),
-        "temperature": kwargs.get("temperature", 0.7),
-    }
+    last_error = None
     
-    try:
-        async with session.post(url, headers=headers, json=body, timeout=aiohttp.ClientTimeout(total=45)) as resp:
-            if resp.status >= 400:
-                # Try native Ollama API as fallback
-                error_text = await resp.text()
-                logger.debug(f"Ollama OpenAI-compatible endpoint failed: {error_text}, trying native API")
-                
-                # Try native Ollama /api/chat endpoint
-                native_url = "http://localhost:11434/api/chat"
-                # Convert to Ollama native format
-                prompt_text = "\n".join([msg["content"] for msg in messages if msg["role"] == "user"])
-                native_body = {
-                    "model": config.model,
-                    "messages": ollama_messages,
-                    "stream": False,
-                }
-                
-                async with session.post(native_url, headers=headers, json=native_body, timeout=aiohttp.ClientTimeout(total=45)) as native_resp:
-                    if native_resp.status >= 400:
-                        error_text = await native_resp.text()
-                        raise Exception(f"Ollama {native_resp.status}: {error_text}")
-                    
+    # Try each model in order - use native API first (more reliable)
+    for model_name in models_to_try:
+        try:
+            # Native Ollama API format
+            native_body = {
+                "model": model_name,
+                "messages": ollama_messages,
+                "stream": False,
+            }
+            
+            logger.debug(f"Trying Ollama model '{model_name}' via native API")
+            
+            # Try native Ollama /api/chat endpoint first (most reliable)
+            async with session.post(native_url, headers=headers, json=native_body, timeout=aiohttp.ClientTimeout(total=60)) as native_resp:
+                if native_resp.status == 200:
                     data = await native_resp.json()
-                    content = data.get("message", {}).get("content", "") if isinstance(data.get("message"), dict) else data.get("response", "")
+                    # Handle different response formats
+                    if isinstance(data.get("message"), dict):
+                        content = data["message"].get("content", "")
+                    elif isinstance(data.get("response"), str):
+                        content = data["response"]
+                    else:
+                        content = str(data)
                     
+                    tokens_used = data.get("eval_count", 0) + data.get("prompt_eval_count", 0)
+                    
+                    logger.info(f"✅ Ollama model '{model_name}' succeeded (native API)")
                     return {
                         "provider": provider_id,
                         "content": content,
                         "success": True,
-                        "model": config.model,
-                        "tokens_used": data.get("eval_count", 0) + data.get("prompt_eval_count", 0),
+                        "model": model_name,
+                        "tokens_used": tokens_used,
                     }
-            
-            data = await resp.json()
-            content = data["choices"][0]["message"]["content"]
-            usage = data.get("usage", {})
-            
-            return {
-                "provider": provider_id,
-                "content": content,
-                "success": True,
-                "model": config.model,
-                "tokens_used": usage.get("total_tokens", 0),
-            }
-    except Exception as e:
-        logger.error(f"Ollama provider call failed: {e}")
-        raise
+                
+                if native_resp.status == 404:
+                    error_text = await native_resp.text()
+                    logger.debug(f"Model '{model_name}' not found (native API): {error_text}")
+                    last_error = f"Model '{model_name}' not found"
+                    continue
+                
+                # If native API fails, try OpenAI-compatible endpoint
+                error_text = await native_resp.text()
+                logger.debug(f"Ollama native API failed for '{model_name}': {error_text}, trying OpenAI-compatible endpoint")
+                
+                # Try OpenAI-compatible endpoint as fallback
+                openai_body = {
+                    "model": model_name,
+                    "messages": ollama_messages,
+                    "max_tokens": kwargs.get("max_tokens", 2000),
+                    "temperature": kwargs.get("temperature", 0.7),
+                }
+                
+                async with session.post(openai_url, headers=headers, json=openai_body, timeout=aiohttp.ClientTimeout(total=60)) as resp:
+                    if resp.status == 200:
+                        data = await resp.json()
+                        content = data["choices"][0]["message"]["content"]
+                        usage = data.get("usage", {})
+                        
+                        logger.info(f"✅ Ollama model '{model_name}' succeeded (OpenAI-compatible)")
+                        return {
+                            "provider": provider_id,
+                            "content": content,
+                            "success": True,
+                            "model": model_name,
+                            "tokens_used": usage.get("total_tokens", 0),
+                        }
+                    
+                    if resp.status == 404:
+                        error_text = await resp.text()
+                        logger.debug(f"Model '{model_name}' not found (OpenAI-compatible): {error_text}")
+                        last_error = f"Model '{model_name}' not found"
+                        continue
+                    
+                    # Other error - try next model
+                    error_text = await resp.text()
+                    logger.debug(f"Ollama OpenAI-compatible endpoint failed for '{model_name}': {error_text}")
+                    last_error = f"Ollama {resp.status}: {error_text}"
+                    continue
+                    
+        except Exception as e:
+            logger.debug(f"Exception trying model '{model_name}': {e}")
+            last_error = str(e)
+            continue
+    
+    # All models failed
+    if available_models:
+        error_msg = f"Ollama: All {len(models_to_try)} models failed. Available models: {', '.join(available_models[:5])}. Last error: {last_error or 'Unknown error'}"
+    else:
+        error_msg = f"Ollama: All {len(models_to_try)} models failed. No models found in Ollama. Please install a model using 'ollama pull llama3.2' or similar. Last error: {last_error or 'No models available'}"
+    
+    raise Exception(error_msg)
 
 
 async def _try_providers(
@@ -939,8 +1044,8 @@ async def _try_providers(
                 config = ProviderConfig(
                     name="Ollama",
                     api_key_env="",
-                    model="deepseek-r1:8b",
-                    base_url="http://localhost:11434/v1",
+                    model=os.getenv("OLLAMA_MODEL", "llama3.2"),
+                    base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
                     provider_type="ollama",
                     priority=100,
                 )

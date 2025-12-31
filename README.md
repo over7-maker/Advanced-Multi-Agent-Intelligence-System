@@ -264,6 +264,17 @@ kubectl scale deployment amas-backend --replicas=5 -n amas
 - ✅ Load balancing
 - ✅ Token budget management
 
+### Complete Documentation (Enhanced)
+- **[ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md)** - Complete system architecture, data flow, integration patterns
+- **[COMPONENTS_COMPLETE.md](docs/COMPONENTS_COMPLETE.md)** - All components, agents, services, integrations with capabilities
+- **[CAPABILITIES_COMPLETE.md](docs/CAPABILITIES_COMPLETE.md)** - System capabilities, usage examples, best practices
+- **[TESTING_DASHBOARD_COMPLETE.md](docs/TESTING_DASHBOARD_COMPLETE.md)** - Comprehensive testing dashboard implementation and usage
+
+### Quick Start
+1. **Setup Environment**: See [ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md#deployment-architecture)
+2. **Create First Task**: See [CAPABILITIES_COMPLETE.md](docs/CAPABILITIES_COMPLETE.md#usage-examples)
+3. **Understand Components**: See [COMPONENTS_COMPLETE.md](docs/COMPONENTS_COMPLETE.md)
+
 ---
 
 ## 📡 100+ Integrations (Comprehensive)

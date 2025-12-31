@@ -3,6 +3,7 @@ Authentication API routes for AMAS
 """
 
 import logging
+import os
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -106,11 +107,43 @@ async def logout(
 
 @router.get("/me", response_model=Dict[str, Any], tags=["authentication"])
 async def get_current_user_info(
-    current_user: User = Depends(get_current_user),
+    request: Request,
+    current_user: Optional[User] = Depends(get_current_user_optional),
 ) -> Dict[str, Any]:
     """
     Get current user information
+    In development mode, returns a default user if not authenticated.
     """
+    import os
+    
+    # Log authentication attempt for debugging
+    auth_header = request.headers.get("Authorization", "")
+    logger.debug(f"/me endpoint called - has_auth_header: {bool(auth_header)}, has_user: {bool(current_user)}")
+    
+    # In development mode, return default user if not authenticated
+    env = os.getenv("ENVIRONMENT", "development").lower()
+    if not current_user and env in ["development", "dev", "test"]:
+        logger.info("Development mode: returning default user")
+        return {
+            "id": "dev-user",
+            "username": "developer",
+            "email": "dev@example.com",
+            "full_name": "Developer",
+            "roles": ["user"],
+            "permissions": ["read", "write"],
+            "is_active": True,
+            "is_verified": True,
+            "created_at": "2024-01-01T00:00:00Z",
+            "last_login": None,
+        }
+    
+    if not current_user:
+        logger.warning(f"/me endpoint: No current user - auth_header present: {bool(auth_header)}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated"
+        )
+    
     return {
         "id": current_user.id,
         "username": current_user.username,

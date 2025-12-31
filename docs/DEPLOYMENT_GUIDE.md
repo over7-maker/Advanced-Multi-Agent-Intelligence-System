@@ -1,247 +1,566 @@
-# 🚀 Enhanced AI Orchestrator - Deployment Guide
+# AMAS Deployment Guide
 
-## 📋 **QUICK START**
+## Table of Contents
 
-### **1. Configure API Keys**
-Add these secrets to your GitHub repository settings:
+1. [Prerequisites](#prerequisites)
+2. [Development Deployment](#development-deployment)
+3. [Staging Deployment](#staging-deployment)
+4. [Production Deployment](#production-deployment)
+5. [Kubernetes Deployment](#kubernetes-deployment)
+6. [Docker Compose Deployment](#docker-compose-deployment)
+7. [Post-Deployment Verification](#post-deployment-verification)
+8. [Troubleshooting](#troubleshooting)
 
-```
-DEEPSEEK_API_KEY=your_deepseek_key
-CLAUDE_API_KEY=your_claude_key
-GPT4_API_KEY=your_gpt4_key
-GLM_API_KEY=your_glm_key
-GROK_API_KEY=your_grok_key
-KIMI_API_KEY=your_kimi_key
-QWEN_API_KEY=your_qwen_key
-GEMINI_API_KEY=your_gemini_key
-GPTOSS_API_KEY=your_gptoss_key
-```
+## Prerequisites
 
-### **2. Enable the Enhanced Workflow**
-The new workflow `enhanced-ai-orchestrator.yml` is ready to use. It will:
-- Run automatically every 4 hours
-- Trigger on push to main/develop branches
-- Run on pull request events
-- Support manual triggering with custom parameters
+### Required Software
 
-### **3. Test the System**
-1. Go to **Actions** tab in your GitHub repository
-2. Find **"Enhanced AI Orchestrator - Multi-Layer Intelligence System"**
-3. Click **"Run workflow"**
-4. Select focus area (e.g., "docker_fixes")
-5. Set urgency level (e.g., "high")
-6. Enable auto-apply fixes
-7. Click **"Run workflow"**
+- **Docker** 20.10+ and **Docker Compose** 2.0+
+- **Python** 3.11+
+- **Node.js** 18+ and **npm** 9+
+- **PostgreSQL** 15+ (if not using Docker)
+- **Redis** 7+ (if not using Docker)
+- **Neo4j** 5+ (if not using Docker)
 
-## 🔧 **SYSTEM COMPONENTS**
+### Required Accounts
 
-### **Layer 1: Detection & Analysis**
-- ✅ **Enhanced Code Quality Inspector** - Analyzes code quality and suggests fixes
-- ✅ **Enhanced Security Scanner** - Detects security vulnerabilities
-- ✅ **Enhanced Docker Health Monitor** - Analyzes Docker configurations
-- ✅ **Enhanced Dependency Auditor** - Checks package vulnerabilities
+- GitHub account (for CI/CD)
+- Container registry access (GHCR, Docker Hub, etc.)
+- Domain name (for production)
+- SSL certificate (Let's Encrypt recommended)
 
-### **Layer 2: Intelligence & Decision**
-- ✅ **Enhanced Conflict Resolution Specialist** - Resolves merge conflicts intelligently
-- ✅ **Enhanced Code Improvement Advisor** - Suggests code improvements
-- ✅ **Enhanced Performance Optimizer** - Optimizes system performance
+### Required Secrets
 
-### **Layer 3: Execution & Fix**
-- ✅ **Enhanced Automated Fixer** - Applies fixes automatically
-- ✅ **Enhanced Quality Validator** - Validates fixes before deployment
-- ✅ **Enhanced Deployment Manager** - Manages deployments safely
+- Database passwords
+- Redis password
+- Neo4j password
+- JWT secret key
+- API keys for 16 AI providers
+- Integration tokens (GitHub, Slack, etc.)
 
-### **Layer 4: Orchestration & Management**
-- ✅ **Enhanced Master Orchestrator** - Coordinates all agents
-- ✅ **Enhanced Decision Engine** - Makes intelligent decisions
-- ✅ **Enhanced Progress Tracker** - Monitors system performance
-- ✅ **Enhanced Learning System** - Improves over time
+## Development Deployment
 
-## 🎯 **USAGE SCENARIOS**
+### 1. Clone Repository
 
-### **Scenario 1: Fix Docker Issues**
-```yaml
-# Manual trigger with focus on Docker
-Focus Area: docker_fixes
-Urgency Level: critical
-Auto Apply Fixes: true
+```bash
+git clone https://github.com/your-org/amas.git
+cd amas
 ```
 
-### **Scenario 2: Resolve Merge Conflicts**
-```yaml
-# When conflicts are detected
-Focus Area: conflict_resolution
-Urgency Level: high
-Auto Apply Fixes: true
+### 2. Set Up Environment
+
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env with your configuration
+nano .env
 ```
 
-### **Scenario 3: Code Quality Improvement**
-```yaml
-# Regular code quality checks
-Focus Area: code_quality
-Urgency Level: normal
-Auto Apply Fixes: false  # Review first
+### 3. Start Databases
+
+```bash
+# Windows
+scripts\start_databases.bat
+
+# Linux/Mac
+./scripts/start_databases.sh
 ```
 
-### **Scenario 4: Security Enhancement**
-```yaml
-# Security-focused analysis
-Focus Area: security_enhancement
-Urgency Level: high
-Auto Apply Fixes: true
+### 4. Start Backend
+
+```bash
+# Windows
+set ENVIRONMENT=development
+python -m uvicorn src.amas.api.main:app --host 0.0.0.0 --port 8000 --reload
+
+# Linux/Mac
+export ENVIRONMENT=development
+python -m uvicorn src.amas.api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-## 📊 **MONITORING & RESULTS**
+### 5. Start Frontend
 
-### **Workflow Results**
-- **Layer 1 Results**: `layer1_analysis_results.json`
-- **Layer 2 Results**: `conflict_resolution_results.json`
-- **Layer 3 Results**: `automated_fix_results.json`
-- **Layer 4 Results**: `master_orchestration_results.json`
-
-### **Comprehensive Reports**
-- **Enhanced AI Orchestrator Report**: `enhanced_ai_orchestrator_report.md`
-- **Security Scan Results**: `security_scan_results.json`
-- **Dependency Audit Results**: `dependency_audit_results.json`
-
-### **Performance Metrics**
-- **Overall Efficiency**: 85-95%
-- **Agent Utilization**: 90%+
-- **Error Rate**: <5%
-- **Success Rate**: 95%+
-
-## 🔄 **WORKFLOW INTEGRATION**
-
-### **Existing Workflows**
-Your 31 existing workflows will continue to work alongside the new system:
-- The Enhanced AI Orchestrator coordinates with existing workflows
-- No conflicts or redundancies
-- Intelligent routing ensures optimal performance
-
-### **New Capabilities**
-- **Intelligent Conflict Resolution**: Automatic merge conflict handling
-- **Automated Code Fixes**: Context-aware automated fixing
-- **Docker Issue Resolution**: Comprehensive container analysis and fixes
-- **Multi-Layer Validation**: 4-layer quality assurance system
-
-## 🛠️ **TROUBLESHOOTING**
-
-### **Common Issues**
-
-#### **1. API Key Errors**
-```
-Error: Failed to initialize DeepSeek agent
-Solution: Check API key configuration in GitHub secrets
+```bash
+cd frontend
+npm install
+npm run dev
 ```
 
-#### **2. Docker Not Found**
-```
-Error: Docker not found in PATH
-Solution: Install Docker or the system will analyze Dockerfiles without Docker
-```
+### 6. Verify Deployment
 
-#### **3. Permission Errors**
-```
-Error: Permission denied
-Solution: Ensure GITHUB_TOKEN has necessary permissions
-```
+- Backend: http://localhost:8000/health
+- Frontend: http://localhost:5173
+- API Docs: http://localhost:8000/docs
 
-### **Debug Mode**
-Enable debug mode by setting environment variable:
-```yaml
-env:
-  DEBUG_MODE: "true"
+## Staging Deployment
+
+### 1. Build Docker Images
+
+```bash
+docker build -t amas-backend:staging .
+cd frontend
+docker build -t amas-frontend:staging -f Dockerfile .
 ```
 
-## 📈 **PERFORMANCE OPTIMIZATION**
+### 2. Start Services
 
-### **Resource Management**
-- **CPU Usage**: Optimized for GitHub Actions runners
-- **Memory Usage**: Efficient memory management across all layers
-- **Network Usage**: Intelligent API call optimization
-- **Time Limits**: 30-minute workflow timeout with intelligent task prioritization
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
 
-### **AI Model Selection**
-- **Priority Order**: DeepSeek → Claude → GPT-4 → GLM → Grok → Kimi → Qwen → Gemini → GPT-OSS
-- **Fallback Mechanism**: Automatic switching on failures
-- **Performance Tracking**: Real-time monitoring of model performance
+### 3. Run Migrations
 
-## 🎓 **LEARNING & IMPROVEMENT**
+```bash
+docker-compose exec amas-backend alembic upgrade head
+```
 
-### **Continuous Learning**
-- **Pattern Recognition**: System learns from successful fixes
-- **Performance Optimization**: Adapts based on workflow efficiency
-- **Error Analysis**: Improves based on failure patterns
-- **Team Workflow Integration**: Learns from team practices
+### 4. Verify Deployment
 
-### **Customization**
-- **Agent Specialization**: Customize agents for specific domains
-- **Workflow Triggers**: Adjust triggering conditions
-- **Fix Strategies**: Modify automated fix approaches
-- **Validation Rules**: Customize quality assurance criteria
+```bash
+# Check all services
+docker-compose ps
 
-## 🚨 **EMERGENCY PROCEDURES**
+# Check logs
+docker-compose logs -f amas-backend
 
-### **Rollback Plan**
-If issues occur:
-1. **Disable Auto-Apply**: Set `auto_apply_fixes: false`
-2. **Manual Review**: Review all suggested fixes before applying
-3. **Selective Execution**: Run specific layers only
-4. **Emergency Stop**: Disable the workflow if needed
+# Test health endpoint
+curl http://localhost:8000/health
+```
 
-### **Recovery Steps**
-1. **Check Logs**: Review workflow execution logs
-2. **Validate Fixes**: Ensure fixes don't break functionality
-3. **Rollback Changes**: Use provided rollback commands
-4. **Re-run Workflow**: Execute with different parameters
+## Production Deployment
 
-## 📞 **SUPPORT & MAINTENANCE**
+### Option 1: Docker Compose
 
-### **System Health Monitoring**
-- **Daily Reports**: Automatic daily system health reports
-- **Performance Metrics**: Real-time performance tracking
-- **Error Alerts**: Immediate notification of critical issues
-- **Success Tracking**: Monitor improvement over time
+#### 1. Prepare Production Environment
 
-### **Maintenance Schedule**
-- **Weekly**: Performance optimization review
-- **Monthly**: Agent specialization updates
-- **Quarterly**: System architecture improvements
-- **As Needed**: Emergency fixes and updates
+```bash
+# Create production .env file
+cp .env.example .env.production
 
-## 🎉 **SUCCESS METRICS**
+# Set production values
+export ENVIRONMENT=production
+export SECRET_KEY=$(openssl rand -hex 32)
+export DB_PASSWORD=$(openssl rand -hex 16)
+export REDIS_PASSWORD=$(openssl rand -hex 16)
+export NEO4J_PASSWORD=$(openssl rand -hex 16)
+```
 
-### **Expected Improvements**
-- **Docker Issues**: 95%+ automatic resolution
-- **Merge Conflicts**: 90%+ intelligent resolution
-- **Code Quality**: 85%+ automated improvements
-- **Security Issues**: 98%+ vulnerability detection
-- **Workflow Efficiency**: 50%+ time savings
+#### 2. Build Production Images
 
-### **Long-term Benefits**
-- **Reduced Manual Work**: 80%+ automation
-- **Improved Quality**: Continuous quality improvement
-- **Faster Development**: Streamlined development process
-- **Better Security**: Proactive security management
-- **Team Productivity**: Enhanced team collaboration
+```bash
+docker build -t amas-backend:latest .
+cd frontend
+npm run build:prod
+```
 
----
+#### 3. Start Production Stack
 
-## 🚀 **READY TO DEPLOY!**
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
 
-Your Enhanced AI Orchestrator - Multi-Layer Intelligence System is now ready for deployment. This revolutionary system will transform your development workflow with:
+#### 4. Configure Nginx
 
-- **14 Specialized AI Agents** working across 4 intelligent layers
-- **9 AI Providers** with intelligent fallback mechanisms
-- **Automated Conflict Resolution** for seamless development
-- **Intelligent Code Fixes** that maintain quality and safety
-- **Comprehensive Docker Issue Resolution** for your critical problems
-- **Multi-Layer Validation** ensuring system stability
-- **Learning Capabilities** that improve performance over time
+```bash
+# Copy nginx config
+cp nginx/nginx.conf.example nginx/nginx.conf
 
-**Start by running the workflow manually to test the system, then enable automatic execution for continuous improvement!**
+# Update domain name
+sed -i 's/your-domain.com/amas.example.com/g' nginx/nginx.conf
 
----
+# Restart nginx
+docker-compose restart nginx
+```
 
-*Generated by Enhanced AI Orchestrator - Multi-Layer Intelligence System*  
-*Powered by 14 AI Agents with 9 AI Models and Intelligent Fallback*
+### Option 2: Kubernetes
+
+#### 1. Prepare Kubernetes Cluster
+
+```bash
+# Create namespace
+kubectl create namespace amas-production
+
+# Create secrets
+kubectl create secret generic amas-secrets \
+  --from-literal=DB_PASSWORD=your_password \
+  --from-literal=SECRET_KEY=your_secret_key \
+  --from-literal=REDIS_PASSWORD=your_redis_password \
+  --from-literal=NEO4J_PASSWORD=your_neo4j_password \
+  -n amas-production
+```
+
+#### 2. Apply Kubernetes Manifests
+
+```bash
+# Apply all manifests
+kubectl apply -f k8s/deployment-production.yaml
+kubectl apply -f k8s/service-production.yaml
+kubectl apply -f k8s/ingress-production.yaml
+kubectl apply -f k8s/configmap-production.yaml
+kubectl apply -f k8s/hpa-production.yaml
+```
+
+#### 3. Verify Deployment
+
+```bash
+# Check pods
+kubectl get pods -n amas-production
+
+# Check services
+kubectl get svc -n amas-production
+
+# Check ingress
+kubectl get ingress -n amas-production
+
+# Check logs
+kubectl logs -f deployment/amas-backend -n amas-production
+```
+
+#### 4. Set Up SSL/TLS
+
+```bash
+# Install cert-manager (if not already installed)
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml
+
+# Create ClusterIssuer
+kubectl apply -f k8s/cert-manager-issuer.yaml
+
+# SSL will be automatically provisioned by cert-manager
+```
+
+## Kubernetes Deployment
+
+### Complete Production Setup
+
+1. **Create Namespace**
+   ```bash
+   kubectl create namespace amas-production
+   ```
+
+2. **Create Secrets**
+   ```bash
+   kubectl create secret generic amas-secrets \
+     --from-file=secrets.yaml \
+     -n amas-production
+   ```
+
+3. **Apply ConfigMap**
+   ```bash
+   kubectl apply -f k8s/configmap-production.yaml
+   ```
+
+4. **Deploy Application**
+   ```bash
+   kubectl apply -f k8s/deployment-production.yaml
+   ```
+
+5. **Create Services**
+   ```bash
+   kubectl apply -f k8s/service-production.yaml
+   ```
+
+6. **Set Up Ingress**
+   ```bash
+   kubectl apply -f k8s/ingress-production.yaml
+   ```
+
+7. **Configure HPA**
+   ```bash
+   kubectl apply -f k8s/hpa-production.yaml
+   ```
+
+### Rolling Updates
+
+```bash
+# Update image
+kubectl set image deployment/amas-backend \
+  amas-backend=your-registry/amas-backend:new-version \
+  -n amas-production
+
+# Monitor rollout
+kubectl rollout status deployment/amas-backend -n amas-production
+
+# Rollback if needed
+kubectl rollout undo deployment/amas-backend -n amas-production
+```
+
+## Docker Compose Deployment
+
+### Production Stack
+
+The production Docker Compose stack includes 15 services:
+
+1. **amas-backend** - Main application
+2. **nginx** - Reverse proxy
+3. **postgres** - Primary database
+4. **redis** - Cache layer
+5. **neo4j** - Graph database
+6. **prometheus** - Metrics collection
+7. **grafana** - Dashboards
+8. **jaeger** - Distributed tracing
+9. **alertmanager** - Alert management
+10. **node-exporter** - System metrics
+11. **cadvisor** - Container metrics
+12. **postgres-exporter** - Database metrics
+13. **redis-exporter** - Cache metrics
+14. **loki** - Log aggregation
+15. **promtail** - Log shipper
+
+### Start Production Stack
+
+```bash
+# Start all services
+docker-compose -f docker-compose.prod.yml up -d
+
+# Check status
+docker-compose -f docker-compose.prod.yml ps
+
+# View logs
+docker-compose -f docker-compose.prod.yml logs -f
+```
+
+### Stop Production Stack
+
+```bash
+# Stop all services
+docker-compose -f docker-compose.prod.yml down
+
+# Stop and remove volumes (CAUTION: deletes data)
+docker-compose -f docker-compose.prod.yml down -v
+```
+
+## Post-Deployment Verification
+
+### 1. Health Checks
+
+```bash
+# Backend health
+curl http://localhost:8000/health
+
+# Readiness check
+curl http://localhost:8000/health/ready
+
+# Liveness check
+curl http://localhost:8000/health/live
+```
+
+### 2. Database Connectivity
+
+```bash
+# PostgreSQL
+docker-compose exec postgres psql -U amas -d amas -c "SELECT 1"
+
+# Redis
+docker-compose exec redis redis-cli ping
+
+# Neo4j
+docker-compose exec neo4j cypher-shell -u neo4j -p password "RETURN 1"
+```
+
+### 3. API Endpoints
+
+```bash
+# Test API
+curl http://localhost:8000/api/v1/health
+
+# Test authentication
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test","password":"test"}'
+```
+
+### 4. Monitoring
+
+```bash
+# Prometheus
+curl http://localhost:9090/-/healthy
+
+# Grafana
+curl http://localhost:3001/api/health
+
+# Jaeger
+curl http://localhost:16686/
+```
+
+### 5. Create Test Task
+
+```bash
+# Get token
+TOKEN=$(curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"test","password":"test"}' | jq -r '.access_token')
+
+# Create task
+curl -X POST http://localhost:8000/api/v1/tasks \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "Test Task",
+    "task_type": "security_scan",
+    "target": "example.com",
+    "priority": 5
+  }'
+```
+
+## Troubleshooting
+
+### Common Issues
+
+#### 1. Database Connection Failed
+
+```bash
+# Check database status
+docker-compose ps postgres
+
+# Check logs
+docker-compose logs postgres
+
+# Verify connection string
+echo $DATABASE_URL
+```
+
+#### 2. Redis Connection Failed
+
+```bash
+# Check Redis status
+docker-compose ps redis
+
+# Test connection
+docker-compose exec redis redis-cli ping
+```
+
+#### 3. Port Already in Use
+
+```bash
+# Find process using port
+# Windows
+netstat -ano | findstr :8000
+
+# Linux/Mac
+lsof -i :8000
+
+# Kill process
+kill -9 <PID>
+```
+
+#### 4. Docker Network Issues
+
+```bash
+# Remove conflicting networks
+docker network prune
+
+# Recreate network
+docker-compose down
+docker-compose up -d
+```
+
+#### 5. Kubernetes Pods Not Starting
+
+```bash
+# Check pod status
+kubectl describe pod <pod-name> -n amas-production
+
+# Check logs
+kubectl logs <pod-name> -n amas-production
+
+# Check events
+kubectl get events -n amas-production --sort-by='.lastTimestamp'
+```
+
+### Logs
+
+#### Docker Compose
+
+```bash
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f amas-backend
+
+# Last 100 lines
+docker-compose logs --tail=100 amas-backend
+```
+
+#### Kubernetes
+
+```bash
+# Pod logs
+kubectl logs -f deployment/amas-backend -n amas-production
+
+# Previous container logs
+kubectl logs -f deployment/amas-backend -n amas-production --previous
+
+# All pods
+kubectl logs -f -l app=amas-backend -n amas-production
+```
+
+### Performance Issues
+
+1. **Check resource usage**
+   ```bash
+   # Docker
+   docker stats
+   
+   # Kubernetes
+   kubectl top pods -n amas-production
+   ```
+
+2. **Check database performance**
+   ```bash
+   # PostgreSQL
+   docker-compose exec postgres psql -U amas -d amas -c "SELECT * FROM pg_stat_activity;"
+   ```
+
+3. **Check cache hit rate**
+   ```bash
+   # Redis
+   docker-compose exec redis redis-cli INFO stats | grep keyspace
+   ```
+
+## Backup and Recovery
+
+### Database Backups
+
+```bash
+# PostgreSQL backup
+docker-compose exec postgres pg_dump -U amas amas > backup_$(date +%Y%m%d).sql
+
+# Restore
+docker-compose exec -T postgres psql -U amas amas < backup_20240101.sql
+```
+
+### Neo4j Backups
+
+```bash
+# Neo4j backup
+docker-compose exec neo4j neo4j-admin database backup neo4j --backup-dir=/backups
+```
+
+### Automated Backups
+
+Set up cron job or Kubernetes CronJob for automated backups.
+
+## Security Checklist
+
+- [ ] All secrets stored in secure vault (Kubernetes secrets, external secrets)
+- [ ] SSL/TLS enabled for all external endpoints
+- [ ] Rate limiting configured
+- [ ] Security headers configured (CSP, HSTS, etc.)
+- [ ] Database access restricted to application network
+- [ ] Redis password enabled
+- [ ] Neo4j authentication enabled
+- [ ] API keys rotated regularly
+- [ ] Audit logging enabled
+- [ ] Monitoring and alerting configured
+
+## Next Steps
+
+1. Configure monitoring dashboards
+2. Set up alerting rules
+3. Configure backup schedules
+4. Set up CI/CD pipeline
+5. Configure load balancing
+6. Set up auto-scaling
+7. Configure disaster recovery procedures

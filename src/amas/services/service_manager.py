@@ -86,14 +86,27 @@ class ServiceManager:
             logger.info("Vector service initialized")
 
             # Initialize Knowledge Graph service
+            # Get Neo4j settings from config or use defaults that match docker-compose.yml
+            try:
+                from src.config.settings import get_settings
+                settings = get_settings()
+                neo4j_uri = self.config.get("graph_service_url") or settings.neo4j.uri
+                neo4j_user = self.config.get("neo4j_username") or settings.neo4j.user
+                neo4j_password = self.config.get("neo4j_password") or settings.neo4j.password
+                neo4j_database = self.config.get("neo4j_database") or "neo4j"
+            except Exception:
+                # Fallback to config or defaults
+                neo4j_uri = self.config.get("graph_service_url", "bolt://localhost:7687")
+                neo4j_user = self.config.get("neo4j_username", "neo4j")
+                neo4j_password = self.config.get("neo4j_password", "amas_password")  # Fixed: was "amas123"
+                neo4j_database = self.config.get("neo4j_database", "neo4j")
+            
             self.knowledge_graph_service = KnowledgeGraphService(
                 {
-                    "graph_service_url": self.config.get(
-                        "graph_service_url", "bolt://localhost:7687"
-                    ),
-                    "username": self.config.get("neo4j_username", "neo4j"),
-                    "password": self.config.get("neo4j_password", "amas123"),
-                    "database": self.config.get("neo4j_database", "neo4j"),
+                    "graph_service_url": neo4j_uri,
+                    "username": neo4j_user,
+                    "password": neo4j_password,
+                    "database": neo4j_database,
                 }
             )
             await self.knowledge_graph_service.initialize()
@@ -153,14 +166,30 @@ class ServiceManager:
     async def _initialize_knowledge_graph_service(self) -> None:
         """Initialize Knowledge Graph service."""
         try:
+            # Get Neo4j settings from config or use defaults that match docker-compose.yml
+            neo4j_config = self.config.get("neo4j", {})
+            
+            # Try to get from settings first, then from config, then use defaults
+            try:
+                from src.config.settings import get_settings
+                settings = get_settings()
+                neo4j_uri = neo4j_config.get("uri") or settings.neo4j.uri
+                neo4j_user = neo4j_config.get("user") or settings.neo4j.user
+                neo4j_password = neo4j_config.get("password") or settings.neo4j.password
+                neo4j_database = neo4j_config.get("database") or "neo4j"
+            except Exception:
+                # Fallback to config or defaults
+                neo4j_uri = neo4j_config.get("uri", "bolt://localhost:7687")
+                neo4j_user = neo4j_config.get("user", "neo4j")
+                neo4j_password = neo4j_config.get("password", "amas_password")  # Fixed: was "amas123"
+                neo4j_database = neo4j_config.get("database", "neo4j")
+            
             self.knowledge_graph_service = KnowledgeGraphService(
                 {
-                    "graph_service_url": self.config.get("neo4j", {}).get(
-                        "uri", "bolt://localhost:7687"
-                    ),
-                    "username": self.config.get("neo4j", {}).get("user", "neo4j"),
-                    "password": self.config.get("neo4j", {}).get("password", "amas123"),
-                    "database": self.config.get("neo4j", {}).get("database", "neo4j"),
+                    "graph_service_url": neo4j_uri,
+                    "username": neo4j_user,
+                    "password": neo4j_password,
+                    "database": neo4j_database,
                 }
             )
             await self.knowledge_graph_service.initialize()
@@ -169,7 +198,7 @@ class ServiceManager:
             error_msg = f"Knowledge Graph service initialization failed: {e}"
             logger.error(error_msg)
             self._initialization_errors.append(error_msg)
-            raise
+            # Don't raise - allow app to continue without knowledge graph
 
     async def _initialize_database_service(self) -> None:
         """Initialize Database service."""

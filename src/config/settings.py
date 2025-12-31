@@ -3,9 +3,10 @@ AMAS Configuration Management
 Production-ready configuration with pydantic-settings
 """
 
+import os
 from typing import List, Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,7 +26,31 @@ class DatabaseSettings(BaseSettings):
     pool_pre_ping: bool = Field(default=True, description="Verify connections before using them")
     echo: bool = Field(default=False)
 
-    model_config = SettingsConfigDict(env_prefix="DB_")
+    model_config = SettingsConfigDict(
+        env_prefix="DB_", 
+        env_file=".env", 
+        env_file_encoding="utf-8",
+        extra="ignore"  # Ignore extra environment variables
+    )
+    
+    @model_validator(mode="after")
+    def check_database_url(self):
+        """Override URL if DATABASE_URL env var is set"""
+        if os.getenv("DATABASE_URL"):
+            db_url = os.getenv("DATABASE_URL").strip()
+            # Strip trailing spaces from database name in URL
+            # Format: postgresql://user:password@host:port/database
+            if "/" in db_url:
+                parts = db_url.rsplit("/", 1)
+                if len(parts) == 2:
+                    base_url = parts[0]
+                    db_name = parts[1].strip()  # Remove trailing spaces from database name
+                    self.url = f"{base_url}/{db_name}"
+                else:
+                    self.url = db_url
+            else:
+                self.url = db_url
+        return self
 
 
 class RedisSettings(BaseSettings):
@@ -38,7 +63,75 @@ class RedisSettings(BaseSettings):
     db: int = Field(default=0)
     max_connections: int = Field(default=20)
 
-    model_config = SettingsConfigDict(env_prefix="REDIS_")
+    model_config = SettingsConfigDict(
+        env_prefix="REDIS_", 
+        env_file=".env", 
+        env_file_encoding="utf-8",
+        extra="ignore"  # Ignore extra environment variables
+    )
+    
+    @model_validator(mode="after")
+    def check_redis_url(self):
+        """Override URL if REDIS_URL env var is set, and add password if needed"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        env_redis_url = os.getenv("REDIS_URL")
+        env_redis_password = os.getenv("REDIS_PASSWORD")
+        
+        logger.debug(f"check_redis_url: REDIS_URL env var: {env_redis_url[:50] if env_redis_url else 'None'}...")
+        logger.debug(f"check_redis_url: REDIS_PASSWORD env var: {'***' if env_redis_password else 'None'}")
+        logger.debug(f"check_redis_url: Current self.url: {self.url}")
+        logger.debug(f"check_redis_url: Current self.password: {'***' if self.password else 'None'}")
+        
+        # Override URL if env var is set
+        if env_redis_url:
+            self.url = env_redis_url
+            logger.info(f"Redis URL set from env var: {self.url[:30]}...")
+        
+        # Use password from env var if available, otherwise use self.password
+        password_to_use = env_redis_password or self.password
+        
+        # Check if password is set but not in URL
+        if password_to_use and self.url and self.url.startswith("redis://"):
+            # Check if URL already has password (format: redis://:password@host:port/db)
+            # URL has password if it contains @ and : after redis://
+            url_parts = self.url.split("://", 1)
+            if len(url_parts) == 2:
+                after_protocol = url_parts[1]
+                url_has_password = "@" in after_protocol and ":" in after_protocol.split("@")[0]
+            else:
+                url_has_password = False
+            
+            logger.debug(f"check_redis_url: URL has password: {url_has_password}")
+            
+            if not url_has_password:
+                # Add password to URL
+                try:
+                    # Parse URL to extract host:port/db
+                    # Format: redis://host:port/db or redis://host:port
+                    url_without_protocol = self.url.replace("redis://", "")
+                    
+                    # Split by / to get host:port and db
+                    if "/" in url_without_protocol:
+                        parts = url_without_protocol.split("/", 1)
+                        host_port = parts[0]  # host:port
+                        db_part = parts[1] if len(parts) > 1 else "0"
+                    else:
+                        host_port = url_without_protocol
+                        db_part = "0"
+                    
+                    # Construct new URL with password
+                    self.url = f"redis://:{password_to_use}@{host_port}/{db_part}"
+                    # Also update self.password for consistency
+                    if not self.password:
+                        self.password = password_to_use
+                    logger.info(f"Added password to Redis URL: redis://:***@{host_port}/{db_part}")
+                except Exception as e:
+                    logger.warning(f"Failed to add password to Redis URL: {e}")
+        
+        logger.debug(f"check_redis_url: Final self.url: {self.url}")
+        return self
 
 
 class Neo4jSettings(BaseSettings):
@@ -49,7 +142,18 @@ class Neo4jSettings(BaseSettings):
     password: str = Field(default="amas_password")
     max_connections: int = Field(default=50)
 
-    model_config = SettingsConfigDict(env_prefix="NEO4J_")
+    model_config = SettingsConfigDict(
+        env_prefix="NEO4J_",
+        extra="ignore"  # Ignore extra environment variables
+    )
+    
+    @model_validator(mode="after")
+    def strip_neo4j_settings(self):
+        """Strip whitespace from Neo4j settings"""
+        self.uri = self.uri.strip() if self.uri else self.uri
+        self.user = self.user.strip() if self.user else self.user
+        self.password = self.password.strip() if self.password else self.password
+        return self
 
 
 class SecuritySettings(BaseModel):
@@ -77,7 +181,10 @@ class SecuritySettings(BaseModel):
             return [origin.strip() for origin in v.split(",")]
         return v
 
-    model_config = SettingsConfigDict(env_prefix="SECURITY_")
+    model_config = SettingsConfigDict(
+        env_prefix="SECURITY_",
+        extra="ignore"  # Ignore extra environment variables
+    )
 
 
 class AISettings(BaseSettings):
@@ -128,7 +235,10 @@ class AISettings(BaseSettings):
     max_tokens: int = Field(default=4000)
     temperature: float = Field(default=0.7)
 
-    model_config = SettingsConfigDict(env_prefix="AI_")
+    model_config = SettingsConfigDict(
+        env_prefix="AI_",
+        extra="ignore"  # Ignore extra environment variables
+    )
 
 
 class IntegrationSettings(BaseSettings):
@@ -166,7 +276,10 @@ class IntegrationSettings(BaseSettings):
     salesforce_client_id: Optional[str] = Field(default=None)
     salesforce_client_secret: Optional[str] = Field(default=None)
 
-    model_config = SettingsConfigDict(env_prefix="INTEGRATION_")
+    model_config = SettingsConfigDict(
+        env_prefix="INTEGRATION_",
+        extra="ignore"  # Ignore extra environment variables
+    )
 
 
 class MonitoringSettings(BaseSettings):
@@ -186,7 +299,10 @@ class MonitoringSettings(BaseSettings):
     log_max_size: str = Field(default="100MB")
     log_backup_count: int = Field(default=5)
 
-    model_config = SettingsConfigDict(env_prefix="MONITORING_")
+    model_config = SettingsConfigDict(
+        env_prefix="MONITORING_",
+        extra="ignore"  # Ignore extra environment variables
+    )
 
 
 class PerformanceSettings(BaseSettings):
@@ -210,7 +326,10 @@ class PerformanceSettings(BaseSettings):
     agent_timeout: int = Field(default=300)
     agent_memory_limit: int = Field(default=1000)
 
-    model_config = SettingsConfigDict(env_prefix="PERFORMANCE_")
+    model_config = SettingsConfigDict(
+        env_prefix="PERFORMANCE_",
+        extra="ignore"  # Ignore extra environment variables
+    )
 
 
 class FeatureFlags(BaseSettings):
@@ -222,7 +341,10 @@ class FeatureFlags(BaseSettings):
     enable_metrics_collection: bool = Field(default=True)
     enable_health_checks: bool = Field(default=True)
 
-    model_config = SettingsConfigDict(env_prefix="FEATURE_")
+    model_config = SettingsConfigDict(
+        env_prefix="FEATURE_",
+        extra="ignore"  # Ignore extra environment variables
+    )
 
 
 class Settings(BaseSettings):
@@ -249,6 +371,8 @@ class Settings(BaseSettings):
     @field_validator("environment")
     @classmethod
     def validate_environment(cls, v):
+        # Strip whitespace to handle trailing spaces from environment variables
+        v = v.strip() if isinstance(v, str) else v
         allowed = ["development", "testing", "staging", "production"]
         if v not in allowed:
             raise ValueError(f"Environment must be one of {allowed}")

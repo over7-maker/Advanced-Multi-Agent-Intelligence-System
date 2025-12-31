@@ -1,0 +1,84 @@
+# Production Kubernetes Services for AMAS
+
+# AMAS Backend Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: amas-backend-service
+  namespace: amas-production
+  labels:
+    app: amas-backend
+    component: backend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: amas-backend
+  sessionAffinity: ClientIP
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+
+---
+# PostgreSQL Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  namespace: amas-production
+  labels:
+    app: postgres
+    component: database
+spec:
+  clusterIP: None
+  ports:
+  - port: 5432
+    targetPort: 5432
+    name: postgres
+  selector:
+    app: postgres
+
+---
+# Redis Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: amas-production
+  labels:
+    app: redis
+    component: cache
+spec:
+  ports:
+  - port: 6379
+    targetPort: 6379
+    name: redis
+  selector:
+    app: redis
+
+---
+# Neo4j Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: neo4j-service
+  namespace: amas-production
+  labels:
+    app: neo4j
+    component: graph-database
+spec:
+  clusterIP: None
+  ports:
+  - port: 7474
+    targetPort: 7474
+    name: http
+  - port: 7687
+    targetPort: 7687
+    name: bolt
+  selector:
+    app: neo4j
+

@@ -155,23 +155,51 @@ class APIService {
       },
     });
 
-    // Request interceptor - add auth token
+    // Request interceptor - add auth token and logging
     this.client.interceptors.request.use(
       (config) => {
         if (this.accessToken) {
           config.headers.Authorization = `Bearer ${this.accessToken}`;
         }
+        // Log API request
+        if (import.meta.env.DEV) {
+          console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`, {
+            params: config.params,
+            data: config.data,
+            timestamp: new Date().toISOString()
+          });
+        }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => {
+        console.error('[API] Request error:', error);
+        return Promise.reject(error);
+      }
     );
 
-    // Response interceptor - handle errors
+    // Response interceptor - handle errors and logging
     this.client.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        // Log successful API response
+        if (import.meta.env.DEV) {
+          console.log(`[API] ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`, {
+            data: response.data,
+            timestamp: new Date().toISOString()
+          });
+        }
+        return response;
+      },
       async (error: AxiosError) => {
+        // Log API error
+        console.error(`[API] ${error.config?.method?.toUpperCase()} ${error.config?.url} - ${error.response?.status || 'ERROR'}`, {
+          error: error.message,
+          response: error.response?.data,
+          timestamp: new Date().toISOString()
+        });
+        
         if (error.response?.status === 401) {
           // Token expired - redirect to login
+          console.warn('[API] Authentication failed - redirecting to login');
           this.clearToken();
           if (typeof window !== 'undefined') {
             window.location.href = '/login';
@@ -238,12 +266,16 @@ class APIService {
     limit?: number;
     offset?: number;
   }): Promise<{ tasks: Task[]; total: number }> {
+    console.log('[API] Listing tasks', { params, timestamp: new Date().toISOString() });
     const response = await this.client.get('/tasks', { params });
+    console.log('[API] Tasks listed', { count: response.data.tasks?.length || 0, total: response.data.total, timestamp: new Date().toISOString() });
     return response.data;
   }
 
   async getTask(taskId: string): Promise<Task> {
+    console.log('[API] Getting task', { taskId, timestamp: new Date().toISOString() });
     const response = await this.client.get(`/tasks/${taskId}`);
+    console.log('[API] Task retrieved', { taskId, status: response.data.status, hasResult: !!response.data.result, timestamp: new Date().toISOString() });
     return response.data;
   }
 
@@ -255,7 +287,9 @@ class APIService {
     parameters?: Record<string, any>;
     priority?: number;
   }): Promise<Task> {
+    console.log('[API] Creating task', { task_type: taskData.task_type, target: taskData.target, timestamp: new Date().toISOString() });
     const response = await this.client.post('/tasks', taskData);
+    console.log('[API] Task created', { taskId: response.data.id || response.data.task_id, status: response.data.status, timestamp: new Date().toISOString() });
     return response.data;
   }
 

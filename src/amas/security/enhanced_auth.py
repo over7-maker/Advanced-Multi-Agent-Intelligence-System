@@ -791,22 +791,40 @@ async def get_current_user(
     """Get current authenticated user from JWT token"""
     auth_manager = get_auth_manager()
 
-    token_data = await auth_manager.decode_token(credentials.credentials)
-    if not token_data:
+    try:
+        token_data = await auth_manager.decode_token(credentials.credentials)
+        if not token_data:
+            logger.warning("Failed to decode token in get_current_user")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        user = await auth_manager.get_user_by_id(token_data.sub)
+        if not user:
+            logger.warning(f"User not found for ID: {token_data.sub}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+            )
+        
+        if not user.is_active:
+            logger.warning(f"User {user.username} is inactive")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User account is inactive",
+            )
+
+        return user
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_current_user: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Authentication failed",
         )
-
-    user = await auth_manager.get_user_by_id(token_data.sub)
-    if not user or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or inactive",
-        )
-
-    return user
 
 
 async def get_current_user_optional(

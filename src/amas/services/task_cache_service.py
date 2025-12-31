@@ -158,22 +158,32 @@ class TaskCacheService:
                 logger.warning("Database not available for task update")
                 return None
             
-            # Build update query
+            # Build update query - use id instead of task_id
+            # Since task_id is stored in description as JSON, we need to find the task by searching description
+            # OR we can update by id if we have it, but for now, let's search in description
             set_clauses = []
-            values = {"task_id": task_id}
-            param_index = 1
+            values = {}
             
+            # Only update columns that exist in the schema: title, description, status, priority, updated_at
+            allowed_columns = {"title", "description", "status", "priority"}
             for key, value in update_data.items():
-                set_clauses.append(f"{key} = :{key}")
-                values[key] = value
+                if key in allowed_columns:
+                    set_clauses.append(f"{key} = :{key}")
+                    values[key] = value
             
-            # Execute update
+            if not set_clauses:
+                logger.warning(f"No valid columns to update for task {task_id}")
+                return None
+            
+            # Search for task by task_id in description (where we store metadata)
+            # Format: [METADATA:{"task_id": "...", ...}]
             query = f"""
             UPDATE tasks 
             SET {', '.join(set_clauses)}, updated_at = CURRENT_TIMESTAMP
-            WHERE task_id = :task_id
+            WHERE description LIKE :task_id_pattern
             RETURNING *
             """
+            values["task_id_pattern"] = f"%task_id\":\"{task_id}\"%"
             
             async with async_session() as session:
                 result = await session.execute(text(query), values)

@@ -2,12 +2,14 @@
 Knowledge Graph Service Implementation for AMAS
 """
 
+import asyncio
 import logging
 from datetime import datetime
 from typing import Any, Dict, Optional
 
 try:
     from neo4j import AsyncGraphDatabase
+    from neo4j.exceptions import ServiceUnavailable, AuthError
 
     NEO4J_AVAILABLE = True
 except ImportError:
@@ -15,6 +17,11 @@ except ImportError:
     logging.warning("Neo4j driver not available")
 
 logger = logging.getLogger(__name__)
+
+# Retry configuration
+MAX_RETRIES = 3
+INITIAL_DELAY = 3  # seconds
+MAX_DELAY = 30  # seconds
 
 
 class KnowledgeGraphService:
@@ -24,32 +31,116 @@ class KnowledgeGraphService:
         self.config = config
         self.uri = config.get("graph_service_url", "bolt://localhost:7687")
         self.username = config.get("username", "neo4j")
-        self.password = config.get("password", "amas123")
+        # Fixed: Use "amas_password" to match docker-compose.yml and src/graph/neo4j.py
+        self.password = config.get("password", "amas_password")
         self.database = config.get("database", "neo4j")
         self.driver = None
 
     async def initialize(self):
-        """Initialize the knowledge graph service"""
-        try:
-            if NEO4J_AVAILABLE:
+        """Initialize the knowledge graph service with retry logic"""
+        if not NEO4J_AVAILABLE:
+            logger.warning("Neo4j driver not available, using fallback mode")
+            return
+
+        # Wait a bit before first connection attempt to avoid rate limiting
+        await asyncio.sleep(INITIAL_DELAY)
+
+        last_error = None
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                # Close existing driver if any
+                if self.driver:
+                    try:
+                        await self.driver.close()
+                    except Exception:
+                        pass
+                    self.driver = None
+
+                logger.info(f"Attempting to connect to Neo4j Knowledge Graph (attempt {attempt}/{MAX_RETRIES})...")
+
                 # Create driver
                 self.driver = AsyncGraphDatabase.driver(
                     self.uri, auth=(self.username, self.password)
                 )
 
-                # Test connection
-                await self.health_check()
+                # Test connection with timeout
+                async with self.driver.session(database=self.database) as session:
+                    await asyncio.wait_for(
+                        session.run("RETURN 1"),
+                        timeout=10.0
+                    )
 
                 # Initialize schema
                 await self._initialize_schema()
 
                 logger.info("Knowledge graph service initialized successfully")
-            else:
-                logger.warning("Neo4j driver not available, using fallback mode")
+                return
 
-        except Exception as e:
-            logger.error(f"Failed to initialize knowledge graph service: {e}")
-            raise
+            except (ServiceUnavailable, AuthError) as e:
+                last_error = e
+                error_message = str(e)
+                
+                # Check if it's a rate limit error
+                if 'AuthenticationRateLimit' in error_message or 'rate limit' in error_message.lower():
+                    if attempt < MAX_RETRIES:
+                        delay = min(INITIAL_DELAY * (2 ** (attempt - 1)), MAX_DELAY)
+                        logger.warning(
+                            f"Neo4j authentication rate limit hit. "
+                            f"Waiting {delay}s before retry (attempt {attempt}/{MAX_RETRIES})..."
+                        )
+                        await asyncio.sleep(delay)
+                        continue
+                    else:
+                        logger.error(
+                            f"Neo4j authentication rate limit persists after {MAX_RETRIES} attempts. "
+                            f"Please restart Neo4j container or wait a few minutes."
+                        )
+                else:
+                    logger.warning(f"Neo4j authentication failed: {error_message}")
+                    break
+
+            except asyncio.TimeoutError:
+                last_error = Exception("Connection timeout")
+                if attempt < MAX_RETRIES:
+                    delay = min(INITIAL_DELAY * (2 ** (attempt - 1)), MAX_DELAY)
+                    logger.warning(
+                        f"Neo4j connection timeout. "
+                        f"Retrying in {delay}s (attempt {attempt}/{MAX_RETRIES})..."
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+
+            except Exception as e:
+                last_error = e
+                error_message = str(e)
+                logger.warning(f"Knowledge graph connection attempt {attempt} failed: {error_message}")
+                
+                if attempt < MAX_RETRIES:
+                    delay = min(INITIAL_DELAY * (2 ** (attempt - 1)), MAX_DELAY)
+                    logger.info(f"Retrying in {delay}s...")
+                    await asyncio.sleep(delay)
+                    continue
+                else:
+                    break
+
+        # All retries failed
+        logger.warning(
+            f"Knowledge graph service initialization failed after {MAX_RETRIES} attempts: {last_error}"
+        )
+        logger.warning(
+            "Knowledge graph service is optional - application will continue without it. "
+            "To fix: restart Neo4j container or check credentials."
+        )
+        
+        # Clean up failed driver
+        if self.driver:
+            try:
+                await self.driver.close()
+            except Exception:
+                pass
+            self.driver = None
+        
+        # Don't raise - allow app to continue without knowledge graph
 
     async def _initialize_schema(self):
         """Initialize knowledge graph schema"""
@@ -370,4 +461,10 @@ class KnowledgeGraphService:
     async def close(self):
         """Close the knowledge graph service"""
         if self.driver:
-            await self.driver.close()
+            try:
+                await self.driver.close()
+                logger.info("Knowledge graph service closed")
+            except Exception as e:
+                logger.debug(f"Error closing knowledge graph service (non-critical): {e}")
+            finally:
+                self.driver = None

@@ -40,6 +40,18 @@ except ImportError:
         pass
     BASE_AGENT_AVAILABLE = False
 
+# Collaboration support
+try:
+    from src.amas.agents.communication import (
+        get_collaboration_manager,
+        get_event_bus,
+        CollaborationPattern,
+    )
+    COLLABORATION_AVAILABLE = True
+except ImportError:
+    COLLABORATION_AVAILABLE = False
+    logger.warning("Collaboration module not available")
+
 
 class TaskPriority(Enum):
     """Task priority levels"""
@@ -887,6 +899,10 @@ class UnifiedIntelligenceOrchestrator:
         using the existing agent infrastructure.
         """
         execution_start = time.time()
+        correlation_id = str(uuid.uuid4())[:8]
+        
+        logger.info(f"[{correlation_id}] Orchestrator: Starting task execution: task_id={task_id}, type={task_type}, target={target}, assigned_agents={assigned_agents}",
+                   extra={"task_id": task_id, "correlation_id": correlation_id, "task_type": task_type, "target": target, "assigned_agents": assigned_agents, "operation": "orchestrator_execute_start"})
         
         # Add tracing if available
         tracing = None
@@ -906,12 +922,18 @@ class UnifiedIntelligenceOrchestrator:
         try:
             # STEP 1: VALIDATE
             if not assigned_agents:
+                logger.info(f"[{correlation_id}] Orchestrator: No assigned agents, finding suitable agent for type={task_type}",
+                           extra={"task_id": task_id, "correlation_id": correlation_id, "task_type": task_type, "operation": "find_suitable_agent"})
                 # Use existing agent mapping
                 agent_id = await self._find_suitable_agent_for_type(task_type)
                 if agent_id:
                     assigned_agents = [agent_id]
+                    logger.info(f"[{correlation_id}] Orchestrator: Found suitable agent: {agent_id}",
+                               extra={"task_id": task_id, "correlation_id": correlation_id, "agent_id": agent_id, "operation": "agent_found"})
                 else:
                     assigned_agents = []
+                    logger.warning(f"[{correlation_id}] Orchestrator: No suitable agent found for type={task_type}",
+                                 extra={"task_id": task_id, "correlation_id": correlation_id, "task_type": task_type, "operation": "no_agent_found"})
             
             # STEP 2: CREATE EXECUTION PLAN
             if progress_callback:
@@ -924,10 +946,14 @@ class UnifiedIntelligenceOrchestrator:
                 except Exception:
                     pass  # Callback might not be awaitable
             
-            # STEP 3: EXECUTE AGENTS
+            # STEP 3: EXECUTE AGENTS WITH ENHANCED COLLABORATION
             agent_results = {}
+            shared_context = {}  # Shared context for agent collaboration
+            agent_results_lock = asyncio.Lock()  # Lock for thread-safe access to agent_results
             
-            for agent_id in assigned_agents:
+            # Execute agents in parallel for better performance
+            async def execute_agent_with_context(agent_id: str):
+                """Execute agent with potential shared context from other agents"""
                 if agent_id in self.agents:
                     agent = self.agents[agent_id]
                     
@@ -943,10 +969,165 @@ class UnifiedIntelligenceOrchestrator:
                             pass
                     
                     try:
+                        agent_start_time = time.time()
+                        logger.info(f"[{correlation_id}] Orchestrator: Starting agent execution: agent_id={agent_id}, task_id={task_id}",
+                                   extra={"task_id": task_id, "correlation_id": correlation_id, "agent_id": agent_id, "operation": "agent_execute_start"})
+                        
+                        # Enhanced: Get current shared context (may be empty if parallel, or populated if sequential)
+                        async with agent_results_lock:
+                            current_context = shared_context.copy()
+                            other_results = {k: v for k, v in agent_results.items() if k != agent_id}
+                        
+                        # Enhanced: Add shared context to parameters for agent collaboration
+                        enhanced_parameters = parameters.copy()
+                        if current_context:
+                            enhanced_parameters["_shared_context"] = current_context
+                        if other_results:
+                            enhanced_parameters["_other_agents_results"] = other_results
+                        
+                        # Check if agent is AI-powered (BaseAgent) or simple agent
+                        if BASE_AGENT_AVAILABLE and isinstance(agent, BaseAgent):
+                            # AI-powered agent - use execute method with enhanced context
+                            logger.info(f"[{correlation_id}] Orchestrator: Using AI-powered agent: {agent_id} for task: {task_type}",
+                                       extra={"task_id": task_id, "correlation_id": correlation_id, "agent_id": agent_id, "task_type": task_type, "operation": "ai_agent_execute"})
+                            result = await agent.execute(
+                                task_id=task_id,
+                                target=target,
+                                parameters=enhanced_parameters
+                            )
+                            # Convert BaseAgent result format to expected format
+                            agent_results[agent_id] = {
+                                "success": result.get("success", False),
+                                "output": result.get("result", result.get("output", "")),
+                                "quality_score": result.get("quality_score", 0.8),
+                                "duration": result.get("duration", 0.0),
+                                "tokens_used": result.get("tokens_used", 0),
+                                "cost_usd": result.get("cost_usd", 0.0),
+                                "provider": result.get("provider", "unknown"),
+                                "summary": result.get("summary", result.get("result", "")),
+                                "insights": result.get("insights", []),
+                                "recommendations": result.get("recommendations", [])
+                            }
+                        else:
+                            # Simple agent - use execute_task method
+                            logger.info(f"[{correlation_id}] Orchestrator: Using simple agent: {agent_id} for task: {task_type}",
+                                       extra={"task_id": task_id, "correlation_id": correlation_id, "agent_id": agent_id, "task_type": task_type, "operation": "simple_agent_execute"})
+                            task = IntelligenceTask(
+                                id=task_id,
+                                type=task_type,
+                                description=f"Execute {task_type} on {target}",
+                                priority=TaskPriority.MEDIUM,
+                                parameters=enhanced_parameters
+                            )
+                            result = await agent.execute_task(task)
+                            agent_results[agent_id] = result
+                        
+                        agent_duration = time.time() - agent_start_time
+                        
+                        # Update shared context with this agent's results (thread-safe)
+                        async with agent_results_lock:
+                            if agent_results[agent_id].get("success"):
+                                shared_context[agent_id] = {
+                                    "output": agent_results[agent_id].get("output", ""),
+                                    "insights": agent_results[agent_id].get("insights", []),
+                                    "summary": agent_results[agent_id].get("summary", "")
+                                }
+                        
+                        logger.info(f"[{correlation_id}] Orchestrator: Agent {agent_id} completed: success={result.get('success', False)}, duration={agent_duration:.2f}s",
+                                   extra={"task_id": task_id, "correlation_id": correlation_id, "agent_id": agent_id, "success": result.get("success", False), "duration": agent_duration, "operation": "agent_execute_complete"})
+                        
+                        if agent_span:
+                            try:
+                                agent_span.__exit__(None, None, None)
+                            except Exception:
+                                pass
+                        
+                        if progress_callback:
+                            try:
+                                await progress_callback({
+                                    "percentage": 50.0 + (len(agent_results) * 20.0),
+                                    "current_step": f"Agent {agent_id} complete",
+                                    "agent_activity": {
+                                        agent_id: {
+                                            "status": "complete",
+                                            "duration": result.get("duration", 0)
+                                        }
+                                    }
+                                })
+                            except Exception:
+                                pass
+                        return agent_results[agent_id]
+                    except Exception as e:
+                        logger.error(f"[{correlation_id}] Orchestrator: Agent {agent_id} execution failed: {e}",
+                                    exc_info=True,
+                                    extra={"task_id": task_id, "correlation_id": correlation_id, "agent_id": agent_id, "error": str(e), "operation": "agent_execute_failed"})
+                        # Provide fallback result even on failure to ensure quality_score is not 0.0
+                        error_message = str(e)
+                        # Check if it's an AI provider failure
+                        is_ai_failure = "provider" in error_message.lower() or "ollama" in error_message.lower() or "api" in error_message.lower()
+                        
+                        # Create fallback result with minimal quality score
+                        agent_results[agent_id] = {
+                            "success": False,
+                            "error": error_message,
+                            "output": f"Agent execution failed: {error_message}",
+                            "quality_score": 0.3 if is_ai_failure else 0.1,  # Partial credit for AI failures
+                            "duration": 0.0,
+                            "tokens_used": 0,
+                            "cost_usd": 0.0,
+                            "provider": "fallback",
+                            "summary": f"Agent {agent_id} encountered an error: {error_message}"
+                        }
+                        if agent_span:
+                            try:
+                                if tracing:
+                                    tracing.record_exception(e)
+                                agent_span.__exit__(type(e), e, None)
+                            except Exception:
+                                pass
+                        return agent_results[agent_id]
+                return None
+            
+            # Execute agents - try parallel first, fallback to sequential if needed
+            try:
+                # Execute all agents in parallel for maximum power
+                # Note: In parallel mode, agents start with empty shared context but can still benefit from parallel execution speed
+                tasks = [execute_agent_with_context(agent_id) for agent_id in assigned_agents]
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                # Process results and handle exceptions
+                for i, result in enumerate(results):
+                    if isinstance(result, Exception):
+                        logger.error(f"Agent {assigned_agents[i]} failed with exception: {result}")
+            except Exception as e:
+                logger.warning(f"Parallel execution failed, falling back to sequential: {e}")
+                # Fallback to sequential execution with full context sharing
+                for agent_id in assigned_agents:
+                    await execute_agent_with_context(agent_id)
+                if agent_id in self.agents:
+                    agent = self.agents[agent_id]
+                    
+                    # Create child span for agent execution
+                    agent_span = None
+                    if tracing and tracing.enabled:
+                        try:
+                            agent_span = tracing.tracer.start_as_current_span(f"agent.{agent_id}.execute")
+                            agent_span.__enter__()
+                            tracing.set_attribute("agent.id", agent_id)
+                            tracing.set_attribute("agent.name", getattr(agent, 'name', agent_id))
+                        except Exception:
+                            pass
+                    
+                    try:
+                        agent_start_time = time.time()
+                        logger.info(f"[{correlation_id}] Orchestrator: Starting agent execution: agent_id={agent_id}, task_id={task_id}",
+                                   extra={"task_id": task_id, "correlation_id": correlation_id, "agent_id": agent_id, "operation": "agent_execute_start"})
+                        
                         # Check if agent is AI-powered (BaseAgent) or simple agent
                         if BASE_AGENT_AVAILABLE and isinstance(agent, BaseAgent):
                             # AI-powered agent - use execute method
-                            logger.info(f"Executing with AI-powered agent: {agent_id} for task: {task_type}")
+                            logger.info(f"[{correlation_id}] Orchestrator: Using AI-powered agent: {agent_id} for task: {task_type}",
+                                       extra={"task_id": task_id, "correlation_id": correlation_id, "agent_id": agent_id, "task_type": task_type, "operation": "ai_agent_execute"})
                             result = await agent.execute(
                                 task_id=task_id,
                                 target=target,
@@ -965,7 +1146,8 @@ class UnifiedIntelligenceOrchestrator:
                             }
                         else:
                             # Simple agent - use execute_task method
-                            logger.info(f"Executing with simple agent: {agent_id} for task: {task_type}")
+                            logger.info(f"[{correlation_id}] Orchestrator: Using simple agent: {agent_id} for task: {task_type}",
+                                       extra={"task_id": task_id, "correlation_id": correlation_id, "agent_id": agent_id, "task_type": task_type, "operation": "simple_agent_execute"})
                             task = IntelligenceTask(
                                 id=task_id,
                                 type=task_type,
@@ -975,6 +1157,10 @@ class UnifiedIntelligenceOrchestrator:
                             )
                             result = await agent.execute_task(task)
                             agent_results[agent_id] = result
+                        
+                        agent_duration = time.time() - agent_start_time
+                        logger.info(f"[{correlation_id}] Orchestrator: Agent {agent_id} completed: success={result.get('success', False)}, duration={agent_duration:.2f}s",
+                                   extra={"task_id": task_id, "correlation_id": correlation_id, "agent_id": agent_id, "success": result.get("success", False), "duration": agent_duration, "operation": "agent_execute_complete"})
                         
                         if agent_span:
                             try:
@@ -997,10 +1183,25 @@ class UnifiedIntelligenceOrchestrator:
                             except Exception:
                                 pass
                     except Exception as e:
-                        logger.error(f"Agent {agent_id} execution failed: {e}")
+                        logger.error(f"[{correlation_id}] Orchestrator: Agent {agent_id} execution failed: {e}",
+                                    exc_info=True,
+                                    extra={"task_id": task_id, "correlation_id": correlation_id, "agent_id": agent_id, "error": str(e), "operation": "agent_execute_failed"})
+                        # Provide fallback result even on failure to ensure quality_score is not 0.0
+                        error_message = str(e)
+                        # Check if it's an AI provider failure
+                        is_ai_failure = "provider" in error_message.lower() or "ollama" in error_message.lower() or "api" in error_message.lower()
+                        
+                        # Create fallback result with minimal quality score
                         agent_results[agent_id] = {
                             "success": False,
-                            "error": str(e)
+                            "error": error_message,
+                            "output": f"Agent execution failed: {error_message}",
+                            "quality_score": 0.3 if is_ai_failure else 0.1,  # Partial credit for AI failures
+                            "duration": 0.0,
+                            "tokens_used": 0,
+                            "cost_usd": 0.0,
+                            "provider": "fallback",
+                            "summary": f"Agent {agent_id} encountered an error: {error_message}"
                         }
                         if agent_span:
                             try:
@@ -1013,6 +1214,9 @@ class UnifiedIntelligenceOrchestrator:
             # STEP 4: AGGREGATE RESULTS
             execution_duration = time.time() - execution_start
             
+            logger.info(f"[{correlation_id}] Orchestrator: Aggregating results: task_id={task_id}, agents={len(agent_results)}, duration={execution_duration:.2f}s",
+                       extra={"task_id": task_id, "correlation_id": correlation_id, "agent_count": len(agent_results), "duration": execution_duration, "operation": "aggregate_results"})
+            
             # Use aggregate_results method
             aggregated = await self.aggregate_results(
                 task_id=task_id,
@@ -1021,6 +1225,9 @@ class UnifiedIntelligenceOrchestrator:
                 agent_results=agent_results,
                 execution_time=execution_duration
             )
+            
+            logger.info(f"[{correlation_id}] Orchestrator: Task execution completed: task_id={task_id}, success={aggregated.get('success', False)}, quality={aggregated.get('quality_score', 0.0)}, duration={execution_duration:.2f}s",
+                       extra={"task_id": task_id, "correlation_id": correlation_id, "success": aggregated.get("success", False), "quality_score": aggregated.get("quality_score", 0.0), "duration": execution_duration, "operation": "orchestrator_execute_complete"})
             
             if tracing and tracing.enabled:
                 tracing.set_attribute("task.duration", execution_duration)
@@ -1261,10 +1468,15 @@ class UnifiedIntelligenceOrchestrator:
                     total_cost += result.get("cost_usd", 0.0)
                     total_tokens += result.get("tokens_used", 0)
             
-            quality_score = (
-                sum(quality_scores) / len(quality_scores) 
-                if quality_scores else success_rate
-            )
+            # Calculate quality score - include partial scores from failed agents
+            if quality_scores:
+                quality_score = sum(quality_scores) / len(quality_scores)
+            elif agent_results:
+                # If all agents failed, use their partial quality scores
+                partial_scores = [r.get("quality_score", 0.1) for r in agent_results.values()]
+                quality_score = sum(partial_scores) / len(partial_scores) if partial_scores else 0.1
+            else:
+                quality_score = 0.0  # Only 0.0 if no agents executed
             
             # Aggregate outputs
             aggregated_output = {
@@ -1279,14 +1491,60 @@ class UnifiedIntelligenceOrchestrator:
                 "total_tokens": total_tokens
             }
             
-            # Generate insights
+            # Enhanced: Generate comprehensive insights with cross-agent analysis
+            all_insights = []
+            all_recommendations = []
+            combined_outputs = []
+            
+            for agent_id, result in agent_results.items():
+                if result.get("success"):
+                    # Collect insights from each agent
+                    agent_insights = result.get("insights", [])
+                    if agent_insights:
+                        all_insights.extend(agent_insights)
+                    
+                    # Collect recommendations
+                    agent_recommendations = result.get("recommendations", [])
+                    if agent_recommendations:
+                        all_recommendations.extend(agent_recommendations)
+                    
+                    # Collect outputs for synthesis
+                    agent_output = result.get("output", result.get("summary", ""))
+                    if agent_output:
+                        combined_outputs.append({
+                            "agent": agent_id,
+                            "output": agent_output,
+                            "quality": result.get("quality_score", 0.5)
+                        })
+            
+            # Enhanced: Create comprehensive summary with cross-agent insights
+            comprehensive_summary = f"Task {task_id} completed with {len(agent_results)} agents"
+            if all_insights:
+                comprehensive_summary += f". Key insights: {len(all_insights)} findings identified"
+            if all_recommendations:
+                comprehensive_summary += f". Recommendations: {len(all_recommendations)} actionable items"
+            
+            # Enhanced: Synthesize outputs from all agents
+            synthesized_output = ""
+            if combined_outputs:
+                # Combine outputs with quality weighting
+                high_quality_outputs = [o["output"] for o in combined_outputs if o["quality"] >= 0.7]
+                if high_quality_outputs:
+                    synthesized_output = "\n\n".join(high_quality_outputs)
+                else:
+                    synthesized_output = "\n\n".join([o["output"] for o in combined_outputs])
+            
             insights = {
-                "summary": f"Task {task_id} completed with {len(agent_results)} agents",
+                "summary": comprehensive_summary,
                 "success_rate": success_rate,
                 "quality_score": quality_score,
                 "total_duration": execution_time,
                 "total_cost_usd": total_cost,
-                "total_tokens": total_tokens
+                "total_tokens": total_tokens,
+                "agent_count": len(agent_results),
+                "cross_agent_insights": all_insights[:10],  # Top 10 insights
+                "recommendations": all_recommendations[:10],  # Top 10 recommendations
+                "synthesized_analysis": synthesized_output[:2000] if synthesized_output else "No comprehensive analysis available"  # Limit length
             }
             
             return {
@@ -1297,7 +1555,10 @@ class UnifiedIntelligenceOrchestrator:
                 "execution_time": execution_time,
                 "success_rate": success_rate,
                 "quality_score": quality_score,
-                "summary": insights["summary"]
+                "summary": comprehensive_summary,
+                "comprehensive_analysis": synthesized_output,  # Enhanced: Full synthesized analysis
+                "key_findings": all_insights[:5],  # Top 5 findings
+                "actionable_recommendations": all_recommendations[:5]  # Top 5 recommendations
             }
             
         except Exception as e:

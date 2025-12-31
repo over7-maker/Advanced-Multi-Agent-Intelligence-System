@@ -33,9 +33,25 @@ async def init_database():
     try:
         settings = get_settings()
 
+        # Ensure URL uses async driver (asyncpg or psycopg)
+        # Strip whitespace to handle trailing spaces from environment variables
+        db_url = settings.database.url.strip()
+        if db_url.startswith("postgresql://"):
+            # Replace with asyncpg driver (faster) or psycopg (more compatible)
+            try:
+                import asyncpg
+                db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+            except ImportError:
+                try:
+                    import psycopg
+                    db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+                except ImportError:
+                    logger.warning("No async PostgreSQL driver found. Install 'asyncpg' or 'psycopg[binary]'")
+                    raise
+
         # Create async engine
         engine = create_async_engine(
-            settings.database.url,
+            db_url,
             echo=settings.database.echo,
             pool_size=settings.database.pool_size,
             max_overflow=settings.database.max_overflow,
@@ -50,7 +66,8 @@ async def init_database():
 
     except Exception as e:
         # Database is optional in development - don't raise, just log
-        logger.debug(f"Database not available (expected in dev): {e}")
+        logger.warning(f"Database initialization failed: {e}")
+        logger.warning(f"Database URL was: {settings.database.url if 'settings' in locals() else 'N/A'}")
         # Don't raise - allow app to continue without database
 
 
@@ -72,8 +89,8 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
         except Exception:
             await session.rollback()
             raise
-        finally:
-            await session.close()
+        # Note: async with context manager handles session.close() automatically
+        # No need for explicit close() call
 
 
 async def is_connected() -> bool:
@@ -87,7 +104,8 @@ async def is_connected() -> bool:
         return True
 
     except Exception as e:
-        logger.error(f"Database connection check failed: {e}")
+        # Log at debug level to reduce noise - database might not be available in dev
+        logger.debug(f"Database connection check failed (expected in dev): {e}")
         return False
 
 
@@ -112,23 +130,35 @@ async def health_check() -> Dict[str, Any]:
             result = await session.execute(text("SELECT 1"))
             result.scalar()
             
-            # Get pool stats
+            # Get pool stats (works for both PostgreSQL and SQLite)
             pool_obj = engine.pool
-            pool_size = getattr(pool_obj, 'size', lambda: 0)()
-            pool_checked_in = getattr(pool_obj, 'checkedin', lambda: 0)()
-            pool_checked_out = getattr(pool_obj, 'checkedout', lambda: 0)()
-            pool_overflow = getattr(pool_obj, 'overflow', lambda: 0)()
+            try:
+                pool_size = getattr(pool_obj, 'size', lambda: 0)()
+                pool_checked_in = getattr(pool_obj, 'checkedin', lambda: 0)()
+                pool_checked_out = getattr(pool_obj, 'checkedout', lambda: 0)()
+                pool_overflow = getattr(pool_obj, 'overflow', lambda: 0)()
+            except Exception:
+                # SQLite doesn't have pool stats - use defaults
+                pool_size = 1
+                pool_checked_in = 0
+                pool_checked_out = 1
+                pool_overflow = 0
             
-            # Get database stats
-            db_stats_result = await session.execute(text("""
-                SELECT 
-                    count(*) as total_connections,
-                    count(*) FILTER (WHERE state = 'active') as active_connections,
-                    count(*) FILTER (WHERE state = 'idle') as idle_connections
-                FROM pg_stat_activity
-                WHERE datname = current_database()
-            """))
-            db_stats = db_stats_result.fetchone()
+            # Get database stats (PostgreSQL only)
+            db_stats = None
+            try:
+                db_stats_result = await session.execute(text("""
+                    SELECT 
+                        count(*) as total_connections,
+                        count(*) FILTER (WHERE state = 'active') as active_connections,
+                        count(*) FILTER (WHERE state = 'idle') as idle_connections
+                    FROM pg_stat_activity
+                    WHERE datname = current_database()
+                """))
+                db_stats = db_stats_result.fetchone()
+            except Exception:
+                # SQLite or other databases - skip PostgreSQL-specific stats
+                pass
         
         latency_ms = (datetime.now() - start_time).total_seconds() * 1000
         
@@ -143,14 +173,14 @@ async def health_check() -> Dict[str, Any]:
                 "max_overflow": getattr(pool_obj, '_max_overflow', getattr(pool_obj, 'max_overflow', 0))
             },
             "database": {
-                "total_connections": db_stats[0] if db_stats else 0,
-                "active_connections": db_stats[1] if db_stats else 0,
-                "idle_connections": db_stats[2] if db_stats else 0
+                "total_connections": db_stats[0] if db_stats else None,
+                "active_connections": db_stats[1] if db_stats else None,
+                "idle_connections": db_stats[2] if db_stats else None
             }
         }
     
     except Exception as e:
-        logger.error(f"Database health check failed: {e}")
+        logger.error(f"Database health check failed: {e}", exc_info=True)
         return {
             "status": "unhealthy",
             "error": str(e)

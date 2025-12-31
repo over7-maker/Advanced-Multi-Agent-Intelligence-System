@@ -1021,14 +1021,34 @@ class PrometheusMetricsService:
             table=table
         ).observe(duration)
         
-        # Backward compatibility
-        self.metrics["database_queries_total"].labels(
-            database="postgres", operation=operation, status=status
-        ).inc()
-
-        self.metrics["database_query_duration_seconds"].labels(
-            database="postgres", operation=operation
-        ).observe(duration)
+        # Backward compatibility - use correct label names
+        # database_queries_total is aliased to amas_db_queries_total which has labels ["operation", "table", "status"]
+        # So we use the same labels, not "database"
+        try:
+            # Try to use the aliased metric with correct labels
+            if "database_queries_total" in self.metrics:
+                # If it's the same as amas_db_queries_total, skip to avoid duplicate
+                pass
+            else:
+                # If it's a separate metric, use it with correct labels
+                self.metrics["database_queries_total"].labels(
+                    operation=operation,
+                    table=table,
+                    status=status
+                ).inc()
+        except (KeyError, ValueError):
+            # Metric doesn't exist or labels don't match - skip backward compatibility
+            pass
+        
+        try:
+            if "database_query_duration_seconds" in self.metrics:
+                self.metrics["database_query_duration_seconds"].labels(
+                    operation=operation,
+                    table=table
+                ).observe(duration)
+        except (KeyError, ValueError):
+            # Metric doesn't exist or labels don't match - skip backward compatibility
+            pass
     
     def record_database_query(
         self, database: str, operation: str, status: str, duration: float

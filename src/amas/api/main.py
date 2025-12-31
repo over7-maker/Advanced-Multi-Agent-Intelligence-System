@@ -51,13 +51,20 @@ app = FastAPI(
 auth_manager: Optional[SecureAuthenticationManager] = None
 security_headers_middleware: Optional[SecurityHeadersMiddleware] = None
 
-# Add CORS middleware
+# Add CORS middleware - must be first to handle preflight requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:4173",
+        "http://localhost:5173",
+        "http://127.0.0.1:4173",
+        "http://127.0.0.1:5173",
+    ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=3600,
 )
 
 # Security headers middleware wrapper (will be initialized in startup)
@@ -90,6 +97,7 @@ app.add_middleware(
         "/openapi.json",
         "/metrics",
         "/api/v1/landing",  # Landing page endpoints are public
+        "/api/v1/testing",  # Testing endpoints (optional auth)
     ]
 )
 
@@ -302,6 +310,38 @@ async def startup_event():
         amas_app = AMASApplication(config)
         await amas_app.initialize()
 
+        # 6. Initialize Database, Redis, Neo4j
+        try:
+            from src.database.connection import init_database
+            from src.database.redis_cache import init_redis_cache
+            from src.cache.redis import init_redis
+            from src.graph.neo4j import init_neo4j
+            
+            # Initialize Database
+            try:
+                await init_database()
+                logger.info("✅ Database connection initialized")
+            except Exception as e:
+                logger.warning(f"Database initialization failed (optional in dev): {e}")
+            
+            # Initialize Redis (both cache and database redis)
+            try:
+                await init_redis()
+                await init_redis_cache()
+                logger.info("✅ Redis connections initialized")
+            except Exception as e:
+                logger.warning(f"Redis initialization failed (optional in dev): {e}")
+            
+            # Initialize Neo4j
+            try:
+                await init_neo4j()
+                logger.info("✅ Neo4j connection initialized")
+            except Exception as e:
+                logger.warning(f"Neo4j initialization failed (optional in dev): {e}")
+                
+        except Exception as e:
+            logger.warning(f"Service initialization failed (continuing): {e}")
+
         logger.info("✅ AMAS Intelligence System initialized successfully")
 
     except Exception as e:
@@ -322,6 +362,7 @@ try:
         predictions,
         system,
         tasks,
+        testing,
         users,
         workflows,
     )
@@ -357,6 +398,10 @@ try:
     # Workflow routes
     app.include_router(workflows.router, prefix="/api/v1", tags=["workflows"])
     logger.info("✅ Workflow routes registered at /api/v1")
+    
+    # Testing routes (router already has prefix="/api/v1/testing")
+    app.include_router(testing.router, tags=["testing"])
+    logger.info("✅ Testing routes registered at /api/v1/testing")
     
     # User management routes
     app.include_router(users.router, prefix="/api/v1", tags=["users"])

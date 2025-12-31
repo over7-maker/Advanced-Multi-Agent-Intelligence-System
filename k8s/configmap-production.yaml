@@ -1,0 +1,55 @@
+# Production ConfigMap for AMAS
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: amas-config
+  namespace: amas-production
+  labels:
+    app: amas-backend
+    component: configuration
+data:
+  # Environment
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  JSON_LOGS: "true"
+  
+  # Python Configuration
+  PYTHONPATH: "/app"
+  PYTHONUNBUFFERED: "1"
+  PYTHONDONTWRITEBYTECODE: "1"
+  
+  # Database Connection Pooling
+  SQLALCHEMY_POOL_SIZE: "20"
+  SQLALCHEMY_MAX_OVERFLOW: "40"
+  SQLALCHEMY_POOL_TIMEOUT: "30"
+  SQLALCHEMY_POOL_RECYCLE: "1800"
+  SQLALCHEMY_POOL_PRE_PING: "true"
+  
+  # Uvicorn Workers
+  UVICORN_WORKERS: "4"
+  UVICORN_GRACEFUL_TIMEOUT: "30"
+  UVICORN_TIMEOUT_KEEP_ALIVE: "5"
+  
+  # Orchestration System
+  ORCHESTRATION_ENABLED: "true"
+  
+  # Monitoring
+  PROMETHEUS_ENABLED: "true"
+  JAEGER_ENDPOINT: "jaeger-collector:6831"
+  
+  # Feature Flags
+  ENABLE_ML_PREDICTIONS: "true"
+  ENABLE_AGENT_COLLABORATION: "true"
+  ENABLE_REAL_TIME_UPDATES: "true"
+  
+  # Performance Tuning
+  MAX_CONCURRENT_TASKS: "100"
+  TASK_TIMEOUT_SECONDS: "300"
+  CACHE_TTL_SECONDS: "300"
+  
+  # Database URLs (will be overridden by env vars from secrets)
+  DATABASE_URL: "postgresql://amas:${DB_PASSWORD}@postgres-service:5432/amas"
+  REDIS_URL: "redis://:${REDIS_PASSWORD}@redis-service:6379/0"
+  NEO4J_URI: "bolt://neo4j-service:7687"
+

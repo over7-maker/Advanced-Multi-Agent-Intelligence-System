@@ -1,0 +1,130 @@
+# Production Kubernetes Ingress for AMAS
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amas-ingress
+  namespace: amas-production
+  labels:
+    app: amas
+    component: ingress
+  annotations:
+    # SSL/TLS Configuration
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    
+    # Rate Limiting
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
+    nginx.ingress.kubernetes.io/limit-connections: "50"
+    
+    # Proxy Configuration
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "60"
+    
+    # Security Headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains";
+    
+    # CORS (if needed)
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+    
+    # WebSocket Support
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - amas.your-domain.com
+    secretName: amas-tls-secret
+  rules:
+  - host: amas.your-domain.com
+    http:
+      paths:
+      # API Routes
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: amas-backend-service
+            port:
+              number: 8000
+      # WebSocket
+      - path: /ws
+        pathType: Prefix
+        backend:
+          service:
+            name: amas-backend-service
+            port:
+              number: 8000
+      # Frontend
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: amas-frontend-service
+            port:
+              number: 80
+
+---
+# Internal Ingress for Monitoring (Restricted Access)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: amas-internal-ingress
+  namespace: amas-production
+  labels:
+    app: amas
+    component: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    # Restrict to internal IP ranges
+    nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,192.168.0.0/16,172.16.0.0/12"
+    nginx.ingress.kubernetes.io/auth-type: basic
+    nginx.ingress.kubernetes.io/auth-secret: prometheus-auth
+    nginx.ingress.kubernetes.io/auth-realm: "Monitoring Access"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - amas-internal.your-domain.com
+    secretName: amas-tls-secret
+  rules:
+  - host: amas-internal.your-domain.com
+    http:
+      paths:
+      # Prometheus Metrics
+      - path: /metrics
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus-service
+            port:
+              number: 9090
+      # Grafana Dashboard
+      - path: /grafana
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana-service
+            port:
+              number: 3000
+      # Jaeger Tracing
+      - path: /jaeger
+        pathType: Prefix
+        backend:
+          service:
+            name: jaeger-query-service
+            port:
+              number: 16686
+
