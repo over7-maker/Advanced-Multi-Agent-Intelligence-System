@@ -1,0 +1,189 @@
+# ============================================================================
+# DATABASE CONFIGURATION
+# ============================================================================
+
+# PostgreSQL Connection
+DATABASE_URL=postgresql://postgres:amas_password@postgres:5432/amas
+DATABASE_POOL_SIZE=10
+DATABASE_MAX_OVERFLOW=20
+
+# ============================================================================
+# CACHE CONFIGURATION
+# ============================================================================
+
+# Redis Connection
+REDIS_URL=redis://:amas_redis_password@redis:6379/0
+REDIS_CACHE_TTL=3600
+
+# ============================================================================
+# GRAPH DATABASE CONFIGURATION
+# ============================================================================
+
+# Neo4j Connection
+NEO4J_URI=bolt://neo4j:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=amas_password
+
+# ============================================================================
+# SECURITY
+# ============================================================================
+
+# Secret Key for JWT and CSRF
+SECRET_KEY=your-super-secret-key-change-in-production
+
+# JWT Configuration
+JWT_ALGORITHM=HS256
+JWT_EXPIRATION_HOURS=24
+JWT_REFRESH_EXPIRATION_DAYS=7
+
+# CORS Configuration
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8000,http://localhost:80,http://yourdomain.com,http://yourdomain.com:ui
+ALLOWED_METHODS=GET,POST,PUT,DELETE,PATCH,OPTIONS
+ALLOWED_HEADERS=Content-Type,Authorization
+
+# ============================================================================
+# APPLICATION CONFIGURATION
+# ============================================================================
+
+# Environment
+ENVIRONMENT=development
+# Options: development, staging, production
+
+# Logging
+LOG_LEVEL=INFO
+# Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+LOG_FILE=/app/logs/app.log
+LOG_FORMAT=json
+
+# ============================================================================
+# FRONTEND CONFIGURATION
+# ============================================================================
+
+# API URL for Frontend
+VITE_API_URL=http://localhost:8000/api/v1
+# Production: https://yourdomain.com/api/v1
+
+# Frontend Port
+FRONTEND_PORT=3000
+
+# ============================================================================
+# BACKEND CONFIGURATION
+# ============================================================================
+
+# Backend Port
+BACKEND_PORT=8000
+
+# API Documentation
+API_DOCS_ENABLED=true
+API_DOCS_URL=/docs
+API_REDOC_URL=/redoc
+
+# ============================================================================
+# AI PROVIDER CONFIGURATION
+# ============================================================================
+
+# OpenAI
+OPENAI_API_KEY=your-openai-api-key
+OPENAI_MODEL=gpt-4
+OPENAI_MAX_TOKENS=4096
+
+# Anthropic Claude
+ANTHROPIC_API_KEY=your-anthropic-api-key
+ANTHROPIC_MODEL=claude-3-opus
+
+# Ollama (Local)
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=mistral
+
+# ============================================================================
+# MONITORING & OBSERVABILITY
+# ============================================================================
+
+# Prometheus
+PROMETHEUS_ENABLED=true
+PROMETHEUS_PORT=9090
+
+# Grafana
+GRAFANA_ENABLED=true
+GRAFANA_PORT=3001
+GRAFANA_ADMIN_PASSWORD=amas_grafana_password
+
+# ============================================================================
+# EMAIL CONFIGURATION
+# ============================================================================
+
+# SMTP for feedback emails
+SMTP_SERVER=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM_EMAIL=noreply@yourdomain.com
+SMTP_FROM_NAME=AMAS System
+
+# ============================================================================
+# FEATURE FLAGS
+# ============================================================================
+
+# Landing Page
+FEATURE_LANDING_PAGE=true
+FEATURE_DARK_MODE=true
+FEATURE_FEEDBACK_FORM=true
+FEATURE_DEMO_SANDBOX=true
+
+# Core Features
+FEATURE_TASK_EXECUTION=true
+FEATURE_AGENT_MANAGEMENT=true
+FEATURE_WORKFLOW_BUILDER=true
+FEATURE_INTEGRATIONS=true
+FEATURE_ANALYTICS=true
+FEATURE_PREDICTIONS=true
+
+# ============================================================================
+# DOCKER CONFIGURATION
+# ============================================================================
+
+# Docker Network
+DOCKER_NETWORK=amas-network
+DOCKER_SUBNET=172.20.0.0/16
+
+# ============================================================================
+# DEVELOPMENT CONFIGURATION
+# ============================================================================
+
+# Debug Mode
+DEBUG=false
+
+# Reload on code changes
+RELOAD=true
+
+# Database migrations
+ALEMBIC_ENABLED=true
+
+# ============================================================================
+# PRODUCTION CONFIGURATION
+# ============================================================================
+
+# HTTPS/SSL
+HTTPS_ENABLED=true
+SSL_CERT_FILE=/app/config/ssl/cert.pem
+SSL_KEY_FILE=/app/config/ssl/key.pem
+
+# Domain
+PRIMARY_DOMAIN=yourdomain.com
+FRONTEND_DOMAIN=yourdomain.com/ui
+
+# Rate Limiting
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_REQUESTS=100
+RATE_LIMIT_WINDOW_SECONDS=60
+
+# ============================================================================
+# BACKUP & DISASTER RECOVERY
+# ============================================================================
+
+# Database Backups
+BACKUP_ENABLED=true
+BACKUP_SCHEDULE=0 2 * * *  # 2 AM daily
+BACKUP_RETENTION_DAYS=30
+BACKUP_STORAGE_PATH=/app/backups

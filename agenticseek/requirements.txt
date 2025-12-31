@@ -1,0 +1,8 @@
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+selenium==4.15.2
+beautifulsoup4==4.12.2
+aiohttp==3.9.1
+playwright==1.40.0
+httpx==0.25.2
+
