@@ -165,6 +165,9 @@ pip install -r requirements.txt
 # Start development stack
 docker-compose up -d
 
+# Run tests (see TESTING_SETUP_DOCUMENTATION.md for details)
+pytest tests/ -v
+
 # Run application
 python -m amas.main
 ```
@@ -209,6 +212,7 @@ docker-compose -f docker-compose.prod.yml up -d
 
 ### Deployment & Operations
 - **[DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md)** - Kubernetes and Docker deployment procedures
+- **[TESTING_SETUP_DOCUMENTATION.md](TESTING_SETUP_DOCUMENTATION.md)** - Test setup, import paths, running tests locally and in CI/CD
 - **[TROUBLESHOOTING_GUIDE.md](docs/TROUBLESHOOTING_GUIDE.md)** - Common issues and solutions
 - **[SECURITY.md](SECURITY.md)** - Security features and best practices
 
@@ -308,6 +312,7 @@ See [.env.example](.env.example) for all available options.
 - ✅ Security: Enterprise-grade (100%)
 - ✅ Monitoring: Full observability stack (100%)
 - ✅ Documentation: 4 major guides (100%)
+- ✅ Testing: Comprehensive test suite with import path fixes (100%)
 
 ---
 
@@ -366,6 +371,7 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 - ✅ Production Kubernetes deployment
 - ✅ Complete API documentation
 - ✅ Enterprise security features
+- ✅ Comprehensive test suite with import path fixes
 
 ### Future (v1.1.0+)
 - [ ] Multi-tenancy support
@@ -399,6 +405,7 @@ This project is licensed under the MIT License - see [LICENSE](LICENSE) file for
 For questions or issues:
 
 - 📖 Check [documentation](docs/)
+- 🧪 See [testing setup guide](TESTING_SETUP_DOCUMENTATION.md) for test configuration and troubleshooting
 - 🐛 Report bugs on [GitHub Issues](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues)
 - 💬 Start a [discussion](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/discussions)
 - 🔒 Report security issues to [SECURITY.md](SECURITY.md)
