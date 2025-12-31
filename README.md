@@ -232,38 +232,6 @@ kubectl scale deployment amas-backend --replicas=5 -n amas
 
 ---
 
-## 🔌 16 AI Providers
-
-Support for all major AI providers and models:
-
-### Complete Documentation (NEW)
-- **[ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md)** - Complete system architecture, data flow, integration patterns
-- **[COMPONENTS_COMPLETE.md](docs/COMPONENTS_COMPLETE.md)** - All components, agents, services, integrations with capabilities
-- **[CAPABILITIES_COMPLETE.md](docs/CAPABILITIES_COMPLETE.md)** - System capabilities, usage examples, best practices
-- **[TESTING_DASHBOARD_COMPLETE.md](docs/TESTING_DASHBOARD_COMPLETE.md)** - Comprehensive testing dashboard implementation and usage
-
-### Additional Documentation
-- Full technical reference: `docs/architecture.md`
-- Integration setup: `docs/integrations.md`
-- Self-improvement engine: `docs/self-improvement.md`
-- Deployment and security: `docs/deployment.md`, `SECURITY.md`
-- Roadmap and docs for maintainers: `docs/roadmap.md`, `TODO.md`, `CONTRIBUTING.md`
-```
-OpenAI (GPT-4, GPT-3.5-turbo, o1)
-Anthropic (Claude 3 Opus, Sonnet, Haiku)
-Google (Gemini, PaLM, Vertex AI)
-Meta (Llama 2, Llama 3, Code Llama)
-Mistral AI (Large, Medium, Small)
-Groq (High-speed inference)
-Together AI (Open-source models)
-Replicate (Community models)
-Cohere (Enterprise NLP)
-Perplexity AI (Real-time search)
-DeepSeek (Chinese LLMs)
-Aleph Alpha (Multilingual models)
-Local Models (LLaMA, Mistral via Ollama/vLLM)
-Custom Models (Bring Your Own)
-```
 ## 🔌 16 AI Providers (Intelligent Routing)
 
 ### Tier 1: Ultra-Fast Inference
@@ -295,6 +263,12 @@ Custom Models (Bring Your Own)
 - ✅ Health checks (30s intervals)
 - ✅ Load balancing
 - ✅ Token budget management
+
+### Complete Documentation (Enhanced)
+- **[ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md)** - Complete system architecture, data flow, integration patterns
+- **[COMPONENTS_COMPLETE.md](docs/COMPONENTS_COMPLETE.md)** - All components, agents, services, integrations with capabilities
+- **[CAPABILITIES_COMPLETE.md](docs/CAPABILITIES_COMPLETE.md)** - System capabilities, usage examples, best practices
+- **[TESTING_DASHBOARD_COMPLETE.md](docs/TESTING_DASHBOARD_COMPLETE.md)** - Comprehensive testing dashboard implementation and usage
 
 ### Quick Start
 1. **Setup Environment**: See [ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md#deployment-architecture)
