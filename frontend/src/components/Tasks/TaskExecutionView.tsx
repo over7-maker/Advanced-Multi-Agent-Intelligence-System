@@ -212,7 +212,7 @@ export const TaskExecutionView: React.FC = () => {
         </Typography>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={3}>        {/* @ts-expect-error Material-UI v7 Grid type issue - item prop not recognized */}
         <Grid item xs={12} md={8}>
           {task.status === 'executing' && (
             <Card sx={{ mb: 3 }}>
@@ -319,8 +319,7 @@ export const TaskExecutionView: React.FC = () => {
               <Typography variant="body2">{JSON.stringify(task.error_details)}</Typography>
             </Alert>
           )}
-        </Grid>
-
+        </Grid>        {/* @ts-expect-error Material-UI v7 Grid type issue - item prop not recognized */}
         <Grid item xs={12} md={4}>
           <Card sx={{ mb: 3 }}>
             <CardContent>

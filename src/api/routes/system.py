@@ -113,3 +113,45 @@ async def get_system_health() -> Dict[str, Any]:
             detail=f"Failed to get system health: {str(e)}"
         )
 
+
+@router.get("/orchestrator/status")
+async def get_orchestrator_status() -> Dict[str, Any]:
+    """
+    Get orchestrator status (Phase 1.1 requirement)
+    
+    Returns:
+    - Orchestrator health status
+    - Active agents count
+    - Active tasks count
+    - Total tasks processed
+    - Agent details
+    - Metrics
+    """
+    try:
+        from src.amas.core.unified_intelligence_orchestrator import get_unified_orchestrator
+        
+        orchestrator = get_unified_orchestrator()
+        
+        # Get system status from orchestrator
+        system_status = await orchestrator.get_system_status()
+        
+        # Get health check for detailed agent info
+        health_check = await orchestrator.health_check()
+        
+        # Combine status and health data
+        return {
+            "orchestrator_status": system_status.get("orchestrator_status", "active"),
+            "active_agents": system_status.get("active_agents", 0),
+            "active_tasks": system_status.get("active_tasks", 0),
+            "total_tasks": system_status.get("total_tasks", 0),
+            "metrics": system_status.get("metrics", {}),
+            "agent_health": health_check.get("agents", {}),
+            "timestamp": system_status.get("timestamp", datetime.now().isoformat()),
+        }
+    except Exception as e:
+        logger.error(f"Failed to get orchestrator status: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to get orchestrator status: {str(e)}"
+        )
+

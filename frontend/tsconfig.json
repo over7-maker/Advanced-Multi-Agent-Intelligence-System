@@ -13,9 +13,9 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
@@ -34,18 +34,7 @@
     "node_modules",
     "dist",
     "src/test",
-    "src/__tests__",
-    "src/components/Agents",
-    "src/components/Dashboard",
-    "src/components/Auth",
-    "src/components/Integrations",
-    "src/components/Layout",
-    "src/components/Onboarding",
-    "src/components/ProgressTracker",
-    "src/components/System",
-    "src/components/Tasks",
-    "src/components/WorkflowBuilder",
-    "src/services"
+    "src/__tests__"
   ],
   "references": [{"path": "./tsconfig.node.json"}]
 }

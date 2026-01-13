@@ -262,16 +262,23 @@ class PyPIPackageTool(AgentTool):
     async def execute(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Get PyPI package information"""
         package_name = params.get("package_name")
+        if not package_name:
+            return {
+                "success": False,
+                "error": "package_name parameter is required"
+            }
+        
         version = params.get("version")
         
         try:
+            # PyPI JSON API endpoint
             if version:
                 url = f"{self.base_url}/{package_name}/{version}/json"
             else:
                 url = f"{self.base_url}/{package_name}/json"
             
             async with aiohttp.ClientSession() as session:
-                async with session.get(url) as response:
+                async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as response:
                     if response.status == 200:
                         data = await response.json()
                         info = data.get("info", {})
@@ -285,9 +292,15 @@ class PyPIPackageTool(AgentTool):
                                 "requires_dist": info.get("requires_dist", []),
                                 "author": info.get("author"),
                                 "home_page": info.get("home_page"),
-                                "project_urls": info.get("project_urls", {})
+                                "project_urls": info.get("project_urls", {}),
+                                "releases": list(data.get("releases", {}).keys())[:10]  # Latest 10 versions
                             },
-                            "metadata": {"package": package_name, "version": version}
+                            "metadata": {"package": package_name, "version": version or "latest"}
+                        }
+                    elif response.status == 404:
+                        return {
+                            "success": False,
+                            "error": f"Package '{package_name}' not found on PyPI"
                         }
                     else:
                         return {
@@ -295,6 +308,12 @@ class PyPIPackageTool(AgentTool):
                             "error": f"PyPI API returned status {response.status}"
                         }
         
+        except aiohttp.ClientError as e:
+            logger.error(f"PyPI API network error: {e}")
+            return {
+                "success": False,
+                "error": f"Network error connecting to PyPI: {str(e)}"
+            }
         except Exception as e:
             logger.error(f"PyPI API error: {e}", exc_info=True)
             return {
