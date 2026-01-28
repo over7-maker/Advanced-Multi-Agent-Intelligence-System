@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# BACKEND API HEALTH CHECK SCRIPT v3.1 FIXED
+# BACKEND API HEALTH CHECK SCRIPT v3.2 FIXED
 # Run this to identify why API calls are timing out or failing
 # Works with hybrid L4 redirector and Backend API v3 FIXED
 ################################################################################
@@ -15,19 +15,24 @@ NC='\033[0m'
 
 clear
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║    BACKEND API HEALTH CHECK v3.1 - HYBRID L4 DIAGNOSTICS      ║${NC}"
+echo -e "${BLUE}║    BACKEND API HEALTH CHECK v3.2 - HYBRID L4 DIAGNOSTICS      ║${NC}"
 echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
+
+# Initialize counters
+critical=0
+warning=0
 
 # TEST 1: Check if redirector is timing out
 echo -e "${YELLOW}[TEST 1] Check Current API Timeout Rate${NC}"
 echo "───────────────────────────────────────────────────────────────"
-timeout_count=$(tail -100 /var/log/redirector/hybrid_l4_final.log 2>/dev/null | grep -c "API timeout" || echo "0")
-if [[ $timeout_count -gt 50 ]]; then
+timeout_count=$(tail -100 /var/log/redirector/hybrid_l4_final.log 2>/dev/null | grep -c "API timeout" || true)
+
+if [ "$timeout_count" -gt 50 ]; then
     echo -e "${RED}✗ CRITICAL: High timeout rate detected ($timeout_count in last 100 lines)${NC}"
     echo "   This means Backend API is NOT responding!"
     critical=1
-elif [[ $timeout_count -gt 0 ]]; then
+elif [ "$timeout_count" -gt 0 ]; then
     echo -e "${YELLOW}⚠ WARNING: Some timeouts detected ($timeout_count in last 100 lines)${NC}"
     warning=1
 else
@@ -41,16 +46,16 @@ echo "────────────────────────�
 echo "Attempting: curl http://194.182.64.133:6921/health"
 api_response=$(timeout 5 curl -s -w "\nHTTP_CODE:%{http_code}" http://194.182.64.133:6921/health 2>&1 || echo "TIMEOUT")
 
-if [[ $api_response == *"HTTP_CODE:200"* ]]; then
+if echo "$api_response" | grep -q "HTTP_CODE:200"; then
     echo -e "${GREEN}✓ PASS: Backend API is reachable and responding (200 OK)${NC}"
     echo "   Response: $(echo "$api_response" | head -1 | cut -c1-80)"
-elif [[ $api_response == *"HTTP_CODE:401"* ]]; then
+elif echo "$api_response" | grep -q "HTTP_CODE:401"; then
     echo -e "${GREEN}✓ PASS: Backend API is reachable (401 expected)${NC}"
-elif [[ $api_response == *"Connection refused"* ]]; then
+elif echo "$api_response" | grep -q "Connection refused"; then
     echo -e "${RED}✗ FAIL: LocalToNet tunnel is NOT accepting connections${NC}"
     echo "   Backend API is probably not listening on :5814"
     critical=1
-elif [[ $api_response == *"TIMEOUT"* ]]; then
+elif [ "$api_response" = "TIMEOUT" ]; then
     echo -e "${RED}✗ FAIL: Backend API timed out (5 second timeout)${NC}"
     echo "   Backend is slow or completely unresponsive"
     critical=1
@@ -63,8 +68,8 @@ echo ""
 # TEST 3: Check if data streams are flowing
 echo -e "${YELLOW}[TEST 3] Check Data Stream Flow to Backend${NC}"
 echo "───────────────────────────────────────────────────────────────"
-recent_records=$(tail -50 /var/log/redirector/hybrid_l4_final.log 2>/dev/null | grep -c "Stream" || echo "0")
-if [[ $recent_records -gt 0 ]]; then
+recent_records=$(tail -50 /var/log/redirector/hybrid_l4_final.log 2>/dev/null | grep -c "Stream" || true)
+if [ "$recent_records" -gt 0 ]; then
     echo -e "${GREEN}✓ PASS: Data streams are flowing ($recent_records stream messages in last 50 lines)${NC}"
 else
     echo -e "${RED}✗ FAIL: No data streams detected${NC}"
@@ -79,10 +84,10 @@ echo "────────────────────────�
 echo "Querying: GET http://194.182.64.133:6921/status"
 db_response=$(timeout 5 curl -s http://194.182.64.133:6921/status 2>&1 || echo "ERROR")
 
-if [[ $db_response == *"database"* ]] && [[ $db_response == *"connected"* ]]; then
+if echo "$db_response" | grep -q "database" && echo "$db_response" | grep -q "connected"; then
     echo -e "${GREEN}✓ PASS: Backend database is connected${NC}"
     echo "   Response: $db_response"
-elif [[ $db_response == *"error"* ]] || [[ $db_response == *"ERROR"* ]]; then
+elif echo "$db_response" | grep -q -i "error"; then
     echo -e "${RED}✗ FAIL: Database connection error${NC}"
     echo "   Response: $db_response"
     critical=1
@@ -108,7 +113,7 @@ echo "  2. cd C:\\Users\\Administrator\\API_monitoring_system"
 echo "  3. python backend_api_v3_final_working.py"
 echo ""
 
-# TEST 6: LocalToNet tunnel status
+# TEST 6: Check LocalToNet tunnel status
 echo -e "${YELLOW}[TEST 6] LocalToNet Tunnel Status${NC}"
 echo "───────────────────────────────────────────────────────────────"
 echo "Your LocalToNet tunnel should show:"
@@ -126,7 +131,7 @@ echo ""
 echo -e "${YELLOW}[TEST 7] Recommended Actions${NC}"
 echo "───────────────────────────────────────────────────────────────"
 
-if [[ $critical -eq 1 ]]; then
+if [ $critical -eq 1 ]; then
     echo -e "${RED}CRITICAL ISSUES FOUND! Follow these steps:${NC}"
     echo ""
     echo "1. SSH to Windows backend (192.168.88.16)"
@@ -163,10 +168,10 @@ echo "  # Watch timeout count decrease"
 echo "  watch -n 2 'tail -50 /var/log/redirector/hybrid_l4_final.log | grep -c \"API timeout\"'"
 echo ""
 echo "  # Monitor stream flow"
-echo "  tail -f /var/log/redirector/hybrid_l4_final.log | grep 'Stream\|POST'"
+echo "  tail -f /var/log/redirector/hybrid_l4_final.log | grep 'Stream\\|POST'"
 echo ""
 echo "  # Check database row count growth"
-echo "  psql -h 127.0.0.1 -U redirector -d redirector_db -c \"SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename; SELECT COUNT(*) FROM web_p_8041;\""
+echo "  psql -h 127.0.0.1 -U redirector -d redirector_db -c \"SELECT COUNT(*) FROM web_p_8041;\""
 echo ""
 
 # SUMMARY
@@ -175,7 +180,7 @@ echo -e "${BLUE}║                         SUMMARY                             
 echo -e "${BLUE}╚════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-if [[ $critical -eq 1 ]]; then
+if [ $critical -eq 1 ]; then
     echo -e "${RED}⚠️  SYSTEM STATUS: CRITICAL - BACKEND API NOT RESPONDING${NC}"
     echo ""
     echo "Your redirector is timing out because:"
@@ -191,7 +196,7 @@ if [[ $critical -eq 1 ]]; then
     echo ""
     echo "Fix: Check Windows backend and restart Backend API service"
     echo ""
-elif [[ $warning -eq 1 ]]; then
+elif [ $warning -eq 1 ]; then
     echo -e "${YELLOW}⚠️  SYSTEM STATUS: DEGRADED - SOME ISSUES DETECTED${NC}"
     echo ""
     echo "System is partially working but experiencing issues"
@@ -209,5 +214,11 @@ fi
 echo ""
 echo -e "${BLUE}═══════════════════════════════════════════════════════════════${NC}"
 echo ""
-echo "Last 10 log entries:"
-tail -10 /var/log/redirector/hybrid_l4_final.log 2>/dev/null || echo "Log file not found"
+
+if [ -f /var/log/redirector/hybrid_l4_final.log ]; then
+    echo "Last 10 log entries:"
+    tail -10 /var/log/redirector/hybrid_l4_final.log
+else
+    echo "Log file not found: /var/log/redirector/hybrid_l4_final.log"
+fi
+echo ""
