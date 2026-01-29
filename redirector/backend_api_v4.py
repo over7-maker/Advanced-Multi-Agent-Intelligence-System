@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 """
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║                    BACKEND API v4 - PRODUCTION BUILD                      ║
@@ -33,9 +34,11 @@ Data Streams:
 Author: AMAS Team
 Version: 4.0.0
 Last Updated: 2026-01-29
+
 """
 
 import os
+import sys
 import json
 import logging
 import asyncio
@@ -51,6 +54,26 @@ from fastapi.responses import JSONResponse
 import psycopg
 from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel, Field
+
+# ═══════════════════════════════════════════════════════════════════════════
+# WINDOWS ENCODING FIX (CRITICAL FOR CONSOLE LOGGING)
+# ═══════════════════════════════════════════════════════════════════════════
+
+if sys.platform == "win32":
+    # Force UTF-8 for stderr/stdout on Windows
+    import io
+    import codecs
+    
+    # Reconfigure stderr to use UTF-8 with error handling
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    
+    # Use ASCII fallback for logging to avoid UnicodeEncodeError
+    USE_UNICODE = False
+else:
+    USE_UNICODE = True
 
 # ═══════════════════════════════════════════════════════════════════════════
 # CONFIGURATION
@@ -80,16 +103,52 @@ LOG_DIR = os.getenv("LOG_DIR", "./logs")
 os.makedirs(LOG_DIR, exist_ok=True)
 
 # ═══════════════════════════════════════════════════════════════════════════
-# LOGGING SETUP
+# LOGGING SETUP (with ASCII fallback for Windows)
 # ═══════════════════════════════════════════════════════════════════════════
+
+class WindowsUnicodeFormatter(logging.Formatter):
+    """Custom formatter that strips Unicode characters on Windows."""
+    
+    def format(self, record):
+        msg = super().format(record)
+        if sys.platform == "win32" and not USE_UNICODE:
+            # Replace Unicode characters with ASCII equivalents
+            replacements = {
+                '✅': '[OK]',
+                '❌': '[FAIL]',
+                '🚀': '[START]',
+                '🛑': '[STOP]',
+                '╔': '+',
+                '═': '=',
+                '╗': '+',
+                '║': '|',
+                '╚': '+',
+                '╝': '+',
+                '✨': '*',
+                '📊': '[STATS]',
+                '⚠️': '[WARN]',
+                '🔒': '[LOCK]',
+                '🔓': '[UNLOCK]',
+            }
+            for unicode_char, ascii_char in replacements.items():
+                msg = msg.replace(unicode_char, ascii_char)
+        return msg
+
+
+# Configure logging
+handler_stream = logging.StreamHandler()
+handler_stream.setFormatter(WindowsUnicodeFormatter(
+    "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+))
+
+handler_file = logging.FileHandler(f"{LOG_DIR}/backend_api_v4.log")
+handler_file.setFormatter(WindowsUnicodeFormatter(
+    "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+))
 
 logging.basicConfig(
     level=LOG_LEVEL,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[
-        logging.StreamHandler(),
-        logging.FileHandler(f"{LOG_DIR}/backend_api_v4.log"),
-    ],
+    handlers=[handler_stream, handler_file],
 )
 logger = logging.getLogger(__name__)
 
@@ -122,7 +181,7 @@ async def init_db_pool() -> AsyncConnectionPool:
     async with db_pool.connection() as conn:
         result = await conn.execute("SELECT version();")
         version = await result.fetchone()
-        logger.info(f"✅ Connected to PostgreSQL: {version[0]}")
+        logger.info(f"[OK] Connected to PostgreSQL: {version[0]}")
     
     return db_pool
 
@@ -132,7 +191,7 @@ async def close_db_pool() -> None:
     global db_pool
     if db_pool:
         await db_pool.close()
-        logger.info("🛑 PostgreSQL connection pool closed")
+        logger.info("[STOP] PostgreSQL connection pool closed")
 
 
 async def get_db_connection():
@@ -158,7 +217,7 @@ async def verify_token(authorization: Optional[str] = Header(None)) -> bool:
     
     token = parts[1]
     if token != API_TOKEN:
-        logger.warning(f"❌ Invalid token attempt: {token[:20]}...")
+        logger.warning(f"[FAIL] Invalid token attempt: {token[:20]}...")
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token")
     
     return True
@@ -262,11 +321,11 @@ class StreamData(BaseModel):
 async def lifespan(app: FastAPI):
     """FastAPI lifespan: startup and shutdown."""
     # Startup
-    logger.info("🚀 Backend API v4 starting...")
+    logger.info("[START] Backend API v4 starting...")
     await init_db_pool()
     yield
     # Shutdown
-    logger.info("🛑 Backend API v4 shutting down...")
+    logger.info("[STOP] Backend API v4 shutting down...")
     await close_db_pool()
 
 
@@ -303,7 +362,7 @@ async def health_check(conn = Depends(get_db_connection)):
             "version": "4.0.0",
         }
     except Exception as e:
-        logger.error(f"❌ Health check failed: {e}")
+        logger.error(f"[FAIL] Health check failed: {e}")
         return JSONResponse(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             content={
@@ -337,7 +396,7 @@ async def database_health(conn = Depends(get_db_connection)):
             },
         }
     except Exception as e:
-        logger.error(f"❌ Database health check failed: {e}")
+        logger.error(f"[FAIL] Database health check failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -502,7 +561,7 @@ async def ingest_stream(
                 )
                 count += 1
         
-        logger.info(f"✅ STREAM [{stream_type.upper()}]: Ingested {count} records")
+        logger.info(f"[OK] STREAM [{stream_type.upper()}]: Ingested {count} records")
         
         return {
             "status": "success",
@@ -512,7 +571,7 @@ async def ingest_stream(
         }
     
     except Exception as e:
-        logger.error(f"❌ Stream ingestion failed: {e}")
+        logger.error(f"[FAIL] Stream ingestion failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -584,7 +643,7 @@ async def query_stats(
         }
     
     except Exception as e:
-        logger.error(f"❌ Query failed: {e}")
+        logger.error(f"[FAIL] Query failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -628,7 +687,7 @@ async def query_performance(
         }
     
     except Exception as e:
-        logger.error(f"❌ Performance query failed: {e}")
+        logger.error(f"[FAIL] Performance query failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -644,10 +703,10 @@ async def maintenance_vacuum(
     """Run database VACUUM operation."""
     try:
         await conn.execute("VACUUM ANALYZE;")
-        logger.info("✅ Database VACUUM completed")
+        logger.info("[OK] Database VACUUM completed")
         return {"status": "success", "operation": "VACUUM ANALYZE"}
     except Exception as e:
-        logger.error(f"❌ VACUUM failed: {e}")
+        logger.error(f"[FAIL] VACUUM failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -679,7 +738,7 @@ async def maintenance_purge(
             total_deleted += deleted
             logger.info(f"  - {table}: {deleted} rows deleted")
         
-        logger.info(f"✅ Purged {total_deleted} old records (>{days} days)")
+        logger.info(f"[OK] Purged {total_deleted} old records (>{days} days)")
         
         return {
             "status": "success",
@@ -689,7 +748,7 @@ async def maintenance_purge(
         }
     
     except Exception as e:
-        logger.error(f"❌ Purge failed: {e}")
+        logger.error(f"[FAIL] Purge failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -720,10 +779,11 @@ async def root():
 # ═══════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
-    logger.info("╔══════════════════════════════════════════════════════════════╗")
-    logger.info("║         Backend API v4 - Enterprise Edition                  ║")
-    logger.info("║                 Starting Server...                           ║")
-    logger.info("╚══════════════════════════════════════════════════════════════╝")
+    banner_line = "=================================================================="
+    logger.info(banner_line)
+    logger.info("Backend API v4 - Enterprise Edition")
+    logger.info("Starting Server...")
+    logger.info(banner_line)
     
     uvicorn.run(
         "backend_api_v4:app",
