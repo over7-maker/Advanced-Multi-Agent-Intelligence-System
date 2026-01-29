@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
+
 """
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║                    BACKEND API v4 - PRODUCTION BUILD                      ║
 ║              Enterprise Data Ingestion & Analytics Platform               ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
+
 
 Purpose:
   - Ingest 8 concurrent data streams from VPS Redirector v4.1.6
@@ -13,6 +15,7 @@ Purpose:
   - Real-time metrics and performance analysis
   - Health monitoring and error tracking
 
+
 Architecture:
   - Async FastAPI framework
   - Connection pooling with psycopg3
@@ -20,6 +23,7 @@ Architecture:
   - Rate limiting & request throttling
   - Comprehensive error handling
   - Structured logging
+
 
 Data Streams:
   1. Web connections (ports 8041, 8047, 8057)
@@ -31,11 +35,14 @@ Data Streams:
   7. Worker resource usage
   8. Port health status
 
+
 Author: AMAS Team
 Version: 4.0.0
 Last Updated: 2026-01-29
 
+
 """
+
 
 import os
 import sys
@@ -47,6 +54,7 @@ import hashlib
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List, Any
 from contextlib import asynccontextmanager
+
 
 # ═══════════════════════════════════════════════════════════════════════════
 # CRITICAL FIX: Windows + Psycopg3 Event Loop Compatibility
@@ -146,7 +154,6 @@ class WindowsUnicodeFormatter(logging.Formatter):
                 msg = msg.replace(unicode_char, ascii_char)
         return msg
 
-
 # Configure logging
 handler_stream = logging.StreamHandler()
 handler_stream.setFormatter(WindowsUnicodeFormatter(
@@ -169,7 +176,6 @@ logger = logging.getLogger(__name__)
 # ═══════════════════════════════════════════════════════════════════════════
 
 db_pool: Optional[AsyncConnectionPool] = None
-
 
 async def init_db_pool() -> AsyncConnectionPool:
     """Initialize PostgreSQL connection pool."""
@@ -197,7 +203,6 @@ async def init_db_pool() -> AsyncConnectionPool:
     
     return db_pool
 
-
 async def close_db_pool() -> None:
     """Close database connection pool."""
     global db_pool
@@ -205,14 +210,12 @@ async def close_db_pool() -> None:
         await db_pool.close()
         logger.info("[STOP] PostgreSQL connection pool closed")
 
-
 async def get_db_connection():
     """Get database connection from pool."""
     if not db_pool:
         raise RuntimeError("Database pool not initialized")
     async with db_pool.connection() as conn:
         yield conn
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # SECURITY & AUTHENTICATION
@@ -234,7 +237,6 @@ async def verify_token(authorization: Optional[str] = Header(None)) -> bool:
     
     return True
 
-
 # ═══════════════════════════════════════════════════════════════════════════
 # DATA MODELS (Pydantic)
 # ═══════════════════════════════════════════════════════════════════════════
@@ -250,7 +252,6 @@ class WebConnectionData(BaseModel):
     duration_ms: int = Field(default=0, ge=0)
     worker_id: Optional[str] = None
 
-
 class L2NConnectionData(BaseModel):
     """L2N connection stream data."""
     timestamp: datetime = Field(default_factory=datetime.utcnow)
@@ -263,7 +264,6 @@ class L2NConnectionData(BaseModel):
     latency_ms: int = Field(default=0, ge=0)
     worker_id: Optional[str] = None
 
-
 class ErrorData(BaseModel):
     """Error event data."""
     timestamp: datetime = Field(default_factory=datetime.utcnow)
@@ -272,7 +272,6 @@ class ErrorData(BaseModel):
     client_ip: Optional[str] = None
     backend_ip: Optional[str] = None
     error_message: str
-
 
 class PerformanceMetrics(BaseModel):
     """Performance metrics data."""
@@ -285,7 +284,6 @@ class PerformanceMetrics(BaseModel):
     max_ms: int
     worker_id: Optional[str] = None
 
-
 class ThroughputStats(BaseModel):
     """Throughput statistics data."""
     timestamp: datetime = Field(default_factory=datetime.utcnow)
@@ -293,7 +291,6 @@ class ThroughputStats(BaseModel):
     bytes_per_sec: int
     connections_per_sec: int
     worker_id: Optional[str] = None
-
 
 class WorkerStats(BaseModel):
     """Worker resource usage data."""
@@ -307,7 +304,6 @@ class WorkerStats(BaseModel):
     cpu_percent: float = Field(ge=0.0, le=100.0)
     memory_mb: float = Field(ge=0.0)
 
-
 class PortHealth(BaseModel):
     """Port health status data."""
     timestamp: datetime = Field(default_factory=datetime.utcnow)
@@ -317,13 +313,11 @@ class PortHealth(BaseModel):
     udp_status: Optional[str] = None
     uptime_sec: int = Field(ge=0)
 
-
 class StreamData(BaseModel):
     """Batch stream data submission."""
     stream_type: str  # "web", "l2n", "error", "metrics", "throughput", "worker", "health"
     data: List[Dict[str, Any]]
     worker_id: Optional[str] = None
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # FASTAPI APPLICATION
@@ -339,7 +333,6 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("[STOP] Backend API v4 shutting down...")
     await close_db_pool()
-
 
 app = FastAPI(
     title="Backend API v4",
@@ -385,7 +378,6 @@ async def health_check(conn = Depends(get_db_connection)):
             },
         )
 
-
 @app.get("/health/database")
 async def database_health(conn = Depends(get_db_connection)):
     """Detailed database health check."""
@@ -411,9 +403,83 @@ async def database_health(conn = Depends(get_db_connection)):
         logger.error(f"[FAIL] Database health check failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+# ═══════════════════════════════════════════════════════════════════════════
+# QUICK INGESTION ENDPOINTS (Direct port-based routes)
+# ═══════════════════════════════════════════════════════════════════════════
+
+@app.post("/api/v1/web/{port}")
+async def ingest_web_quick(
+    port: int,
+    data: List[Dict[str, Any]],
+    conn = Depends(get_db_connection),
+):
+    """Quick web ingestion endpoint by port."""
+    try:
+        table = f"web_p_{port}"
+        count = 0
+        for item in data:
+            await conn.execute(
+                f"""
+                INSERT INTO {table} 
+                (timestamp, client_ip, client_port, bytes_in, bytes_out, duration_ms, worker_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    item.get("timestamp", datetime.utcnow()),
+                    item.get("client_ip"),
+                    item.get("client_port"),
+                    item.get("bytes_in", 0),
+                    item.get("bytes_out", 0),
+                    item.get("duration_ms", 0),
+                    item.get("worker_id"),
+                ),
+            )
+            count += 1
+        
+        logger.info(f"[OK] WEB [{port}]: Ingested {count} records")
+        return {"status": "success", "port": port, "records": count}
+    except Exception as e:
+        logger.error(f"[FAIL] Web ingestion failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/v1/l2n/{port}")
+async def ingest_l2n_quick(
+    port: int,
+    data: List[Dict[str, Any]],
+    conn = Depends(get_db_connection),
+):
+    """Quick L2N ingestion endpoint by port."""
+    try:
+        table = f"l2n_p_{port}"
+        count = 0
+        for item in data:
+            await conn.execute(
+                f"""
+                INSERT INTO {table}
+                (timestamp, backend_ip, backend_port, bytes_in, bytes_out, duration_ms, latency_ms, worker_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    item.get("timestamp", datetime.utcnow()),
+                    item.get("backend_ip"),
+                    item.get("backend_port"),
+                    item.get("bytes_in", 0),
+                    item.get("bytes_out", 0),
+                    item.get("duration_ms", 0),
+                    item.get("latency_ms", 0),
+                    item.get("worker_id"),
+                ),
+            )
+            count += 1
+        
+        logger.info(f"[OK] L2N [{port}]: Ingested {count} records")
+        return {"status": "success", "port": port, "records": count}
+    except Exception as e:
+        logger.error(f"[FAIL] L2N ingestion failed: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ═══════════════════════════════════════════════════════════════════════════
-# DATA INGESTION ENDPOINTS
+# DATA INGESTION ENDPOINTS (Batch processing)
 # ═══════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/v1/stream/ingest")
@@ -422,7 +488,7 @@ async def ingest_stream(
     _: bool = Depends(verify_token),
     conn = Depends(get_db_connection),
 ):
-    """Ingest batch data from streams."""
+    """Ingest batch data from streams with authentication."""
     try:
         stream_type = data.stream_type.lower()
         count = 0
@@ -472,109 +538,7 @@ async def ingest_stream(
                 )
                 count += 1
         
-        elif stream_type == "error":
-            for item in data.data:
-                error_type = item.get("error_type", "unknown")
-                table = "web_errors" if "web" in error_type.lower() else "l2n_errors"
-                await conn.execute(
-                    f"""
-                    INSERT INTO {table}
-                    (timestamp, port, error_type, client_ip, backend_ip, error_message)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                    """,
-                    (
-                        item.get("timestamp", datetime.utcnow()),
-                        item.get("port", 8041),
-                        error_type,
-                        item.get("client_ip"),
-                        item.get("backend_ip"),
-                        item.get("error_message", ""),
-                    ),
-                )
-                count += 1
-        
-        elif stream_type == "metrics":
-            for item in data.data:
-                await conn.execute(
-                    """
-                    INSERT INTO performance_metrics
-                    (timestamp, port, p50_ms, p95_ms, p99_ms, min_ms, max_ms, worker_id)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    """,
-                    (
-                        item.get("timestamp", datetime.utcnow()),
-                        item.get("port"),
-                        item.get("p50_ms"),
-                        item.get("p95_ms"),
-                        item.get("p99_ms"),
-                        item.get("min_ms"),
-                        item.get("max_ms"),
-                        item.get("worker_id"),
-                    ),
-                )
-                count += 1
-        
-        elif stream_type == "throughput":
-            for item in data.data:
-                await conn.execute(
-                    """
-                    INSERT INTO throughput_stats
-                    (timestamp, port, bytes_per_sec, connections_per_sec, worker_id)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (
-                        item.get("timestamp", datetime.utcnow()),
-                        item.get("port"),
-                        item.get("bytes_per_sec"),
-                        item.get("connections_per_sec"),
-                        item.get("worker_id"),
-                    ),
-                )
-                count += 1
-        
-        elif stream_type == "worker":
-            for item in data.data:
-                await conn.execute(
-                    """
-                    INSERT INTO worker_stats
-                    (timestamp, worker_id, active_tcp, total_tcp, bytes_in, bytes_out, uptime_sec, cpu_percent, memory_mb)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """,
-                    (
-                        item.get("timestamp", datetime.utcnow()),
-                        item.get("worker_id"),
-                        item.get("active_tcp"),
-                        item.get("total_tcp"),
-                        item.get("bytes_in"),
-                        item.get("bytes_out"),
-                        item.get("uptime_sec"),
-                        item.get("cpu_percent"),
-                        item.get("memory_mb"),
-                    ),
-                )
-                count += 1
-        
-        elif stream_type == "health":
-            for item in data.data:
-                await conn.execute(
-                    """
-                    INSERT INTO port_health
-                    (timestamp, port, tcp_status, tcp_latency_ms, udp_status, uptime_sec)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                    """,
-                    (
-                        item.get("timestamp", datetime.utcnow()),
-                        item.get("port"),
-                        item.get("tcp_status"),
-                        item.get("tcp_latency_ms"),
-                        item.get("udp_status"),
-                        item.get("uptime_sec"),
-                    ),
-                )
-                count += 1
-        
         logger.info(f"[OK] STREAM [{stream_type.upper()}]: Ingested {count} records")
-        
         return {
             "status": "success",
             "stream_type": stream_type,
@@ -585,7 +549,6 @@ async def ingest_stream(
     except Exception as e:
         logger.error(f"[FAIL] Stream ingestion failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # QUERY ENDPOINTS
@@ -658,7 +621,6 @@ async def query_stats(
         logger.error(f"[FAIL] Query failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 @app.get("/api/v1/query/performance")
 async def query_performance(
     hours: int = 1,
@@ -702,7 +664,6 @@ async def query_performance(
         logger.error(f"[FAIL] Performance query failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # ═══════════════════════════════════════════════════════════════════════════
 # MAINTENANCE ENDPOINTS
 # ═══════════════════════════════════════════════════════════════════════════
@@ -720,7 +681,6 @@ async def maintenance_vacuum(
     except Exception as e:
         logger.error(f"[FAIL] VACUUM failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.delete("/api/v1/maintenance/purge")
 async def maintenance_purge(
@@ -763,7 +723,6 @@ async def maintenance_purge(
         logger.error(f"[FAIL] Purge failed: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-
 # ═══════════════════════════════════════════════════════════════════════════
 # ROOT ENDPOINT
 # ═══════════════════════════════════════════════════════════════════════════
@@ -778,13 +737,14 @@ async def root():
         "timestamp": datetime.utcnow().isoformat(),
         "endpoints": {
             "health": "/health",
-            "ingest": "/api/v1/stream/ingest",
+            "ingest_web": "/api/v1/web/{port}",
+            "ingest_l2n": "/api/v1/l2n/{port}",
+            "batch_ingest": "/api/v1/stream/ingest",
             "stats": "/api/v1/query/stats",
             "performance": "/api/v1/query/performance",
             "docs": "/docs",
         },
     }
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # MAIN ENTRY POINT
