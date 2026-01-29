@@ -10,37 +10,38 @@ Usage:
 Environment Variables (optional):
     API_HOST=0.0.0.0
     API_PORT=5814
-    API_WORKERS=1
     LOG_LEVEL=INFO
 """
 
 import sys
 import os
 import asyncio
+import selectors
 
 
-# ═══════════════════════════════════════════════════════════════════════════
-# CRITICAL: Set Windows Event Loop BEFORE any async imports or uvicorn start
-# ═══════════════════════════════════════════════════════════════════════════
-
-if sys.platform == "win32":
-    print("[INIT] Windows detected - Setting SelectorEventLoop...")
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-    print("[INIT] SelectorEventLoop policy set successfully")
-
-
-# ═══════════════════════════════════════════════════════════════════════════
-# NOW SAFE to import uvicorn
-# ═══════════════════════════════════════════════════════════════════════════
-
-import uvicorn
+def get_event_loop_factory():
+    """
+    Returns the correct event loop factory for the platform.
+    On Windows: SelectorEventLoop (compatible with psycopg3)
+    On Unix: Default event loop
+    """
+    if sys.platform == "win32":
+        print("[INIT] Windows detected - Using SelectorEventLoop factory...")
+        return lambda: asyncio.SelectorEventLoop(selectors.SelectSelector())
+    else:
+        print("[INIT] Unix detected - Using default event loop...")
+        return None
 
 
-if __name__ == "__main__":
+async def main():
+    """
+    Main entry point - runs uvicorn server.
+    """
+    import uvicorn
+    
     # Configuration from environment or defaults
     api_host = os.getenv("API_HOST", "0.0.0.0")
     api_port = int(os.getenv("API_PORT", "5814"))
-    api_workers = int(os.getenv("API_WORKERS", "1"))
     log_level = os.getenv("LOG_LEVEL", "info").lower()
     
     print("\n" + "="*70)
@@ -48,19 +49,36 @@ if __name__ == "__main__":
     print("="*70)
     print(f"Host: {api_host}")
     print(f"Port: {api_port}")
-    print(f"Workers: {api_workers}")
     print(f"Log Level: {log_level}")
     print(f"Platform: {sys.platform}")
     if sys.platform == "win32":
         print(f"Event Loop: SelectorEventLoop (Windows compatible)")
     print("="*70 + "\n")
     
-    # Run uvicorn
-    uvicorn.run(
+    # Create and run server
+    config = uvicorn.Config(
         "redirector.backend_api_v4:app",
         host=api_host,
         port=api_port,
-        workers=api_workers,
+        workers=1,
         reload=False,
         log_level=log_level,
     )
+    
+    server = uvicorn.Server(config)
+    await server.serve()
+
+
+if __name__ == "__main__":
+    # Get the correct event loop factory
+    loop_factory = get_event_loop_factory()
+    
+    # Run with the correct event loop
+    if loop_factory:
+        # Windows: use SelectorEventLoop
+        print("[INIT] SelectorEventLoop factory set successfully\n")
+        asyncio.run(main(), loop_factory=loop_factory)
+    else:
+        # Unix: use default
+        print("[INIT] Using default event loop\n")
+        asyncio.run(main())
