@@ -6,25 +6,23 @@
 ║              8-Stream Enterprise Data Ingestion Platform                  ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
 
-Released: 2026-01-29
+Released: 2026-01-29 07:24 UTC+3
 Compatibility: L4 Redirector v4.1.6 Emergency Hotfix
 
-CRITICAL UPDATES:
-  ✅ Added 4 missing endpoints (Performance, Throughput, Workers, Events)
-  ✅ Fixed Pydantic models: extra="allow" for v4.1.6 compatibility
-  ✅ Updated L2NError schema to accept 5 extra fields
-  ✅ Database schema expanded for 8 data streams
-  ✅ Production-ready: handles all v4.1.6 request formats
+CRITICAL FIX:
+  ✅ Accepts BOTH single objects AND lists from redirector
+  ✅ Union[Dict, List[Dict]] for flexible validation
+  ✅ No more 422 errors from v4.1.6
 
-Data Streams Supported:
-  1. /api/v1/web/{port} - Client connection metrics
-  2. /api/v1/l2n/{port} - Backend tunnel metrics
-  3. /api/v1/errors/l2n/{port} - Connection errors (FIXED)
-  4. /api/v1/performance/{port} - Latency percentiles (NEW)
-  5. /api/v1/throughput/{port} - Real-time throughput (NEW)
-  6. /api/v1/workers/status - Worker health & resources (NEW)
-  7. /api/v1/health/{port} - Port availability (UPDATED)
-  8. /api/v1/events/{port} - Connection lifecycle events (NEW)
+Data Streams: 8
+  1. /api/v1/web/{port} - Client connections
+  2. /api/v1/l2n/{port} - Backend tunnels
+  3. /api/v1/errors/l2n/{port} - Connection errors
+  4. /api/v1/performance/{port} - Latency metrics (NEW)
+  5. /api/v1/throughput/{port} - Throughput stats (NEW)
+  6. /api/v1/workers/status - Worker health (NEW)
+  7. /api/v1/health/{port} - Port health (UPDATED)
+  8. /api/v1/events/{port} - Lifecycle events (NEW)
 
 """
 
@@ -34,12 +32,12 @@ import json
 import logging
 import asyncio
 from datetime import datetime, timedelta
-from typing import Optional, Dict, List, Any
+from typing import Optional, Dict, List, Any, Union
 from contextlib import asynccontextmanager
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # CRITICAL FIX: Windows + Psycopg3 Event Loop Compatibility
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
@@ -51,9 +49,9 @@ import psycopg
 from psycopg_pool import AsyncConnectionPool
 from pydantic import BaseModel, Field, ConfigDict
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # WINDOWS ENCODING FIX
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 if sys.platform == "win32":
     if hasattr(sys.stderr, 'reconfigure'):
         sys.stderr.reconfigure(encoding='utf-8', errors='replace')
@@ -63,9 +61,9 @@ if sys.platform == "win32":
 else:
     USE_UNICODE = True
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # CONFIGURATION
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 API_HOST = os.getenv("API_HOST", "0.0.0.0")
 API_PORT = int(os.getenv("API_PORT", "5814"))
 API_WORKERS = int(os.getenv("API_WORKERS", "4"))
@@ -83,9 +81,9 @@ LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 LOG_DIR = os.getenv("LOG_DIR", "./logs")
 os.makedirs(LOG_DIR, exist_ok=True)
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # LOGGING
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 class WindowsUnicodeFormatter(logging.Formatter):
     def format(self, record):
         msg = super().format(record)
@@ -106,9 +104,9 @@ handler_file.setFormatter(WindowsUnicodeFormatter("%(asctime)s [%(levelname)s] %
 logging.basicConfig(level=LOG_LEVEL, handlers=[handler_stream, handler_file])
 logger = logging.getLogger(__name__)
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # DATABASE CONNECTION POOL
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 db_pool: Optional[AsyncConnectionPool] = None
 
 async def init_db_pool() -> AsyncConnectionPool:
@@ -133,9 +131,9 @@ async def get_db_connection():
     async with db_pool.connection() as conn:
         yield conn
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # SECURITY
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 async def verify_token(authorization: Optional[str] = Header(None)) -> bool:
     if not authorization:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing token")
@@ -147,9 +145,9 @@ async def verify_token(authorization: Optional[str] = Header(None)) -> bool:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid token")
     return True
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # PYDANTIC MODELS - ALL WITH extra="allow" FOR v4.1.6 COMPATIBILITY
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 
 class L2NError(BaseModel):
     """L2N Error stream - FIXED: accepts all v4.1.6 fields"""
@@ -211,9 +209,9 @@ class EventData(BaseModel):
     count: Optional[int] = None
     model_config = ConfigDict(extra="allow")
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # FASTAPI APP
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -238,9 +236,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # HEALTH CHECKS
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 
 @app.get("/health")
 async def health_check(conn = Depends(get_db_connection)):
@@ -260,20 +258,23 @@ async def health_check(conn = Depends(get_db_connection)):
             content={"status": "unhealthy", "error": str(e)},
         )
 
-# ═══════════════════════════════════════════════════════════════════════════
-# STREAM 1: WEB CONNECTIONS
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
+# STREAM 1: WEB CONNECTIONS - ACCEPTS SINGLE DICT OR LIST
+# ══════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/v1/web/{port}")
 async def ingest_web(
     port: int,
-    data: List[Dict[str, Any]],
+    data: Union[Dict[str, Any], List[Dict[str, Any]]],
     _: bool = Depends(verify_token),
     conn = Depends(get_db_connection),
 ):
     try:
+        # Normalize to list
+        items = [data] if isinstance(data, dict) else data
         table = f"web_p_{port}"
-        for item in data:
+        
+        for item in items:
             await conn.execute(
                 f"""INSERT INTO {table} (timestamp, client_ip, client_port, bytes_in, bytes_out, duration_ms, worker_id)
                    VALUES (%s, %s, %s, %s, %s, %s, %s)""",
@@ -287,26 +288,29 @@ async def ingest_web(
                     item.get("worker_id"),
                 ),
             )
-        logger.info(f"[OK] Web[{port}]: {len(data)} records")
-        return {"status": "success", "port": port, "records": len(data)}
+        logger.info(f"[OK] Web[{port}]: {len(items)} records")
+        return {"status": "success", "port": port, "records": len(items)}
     except Exception as e:
         logger.error(f"[FAIL] Web ingestion: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ═══════════════════════════════════════════════════════════════════════════
-# STREAM 2: L2N CONNECTIONS
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
+# STREAM 2: L2N CONNECTIONS - ACCEPTS SINGLE DICT OR LIST
+# ══════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/v1/l2n/{port}")
 async def ingest_l2n(
     port: int,
-    data: List[Dict[str, Any]],
+    data: Union[Dict[str, Any], List[Dict[str, Any]]],
     _: bool = Depends(verify_token),
     conn = Depends(get_db_connection),
 ):
     try:
+        # Normalize to list
+        items = [data] if isinstance(data, dict) else data
         table = f"l2n_p_{port}"
-        for item in data:
+        
+        for item in items:
             await conn.execute(
                 f"""INSERT INTO {table} (timestamp, backend_ip, backend_port, bytes_in, bytes_out, duration_ms, latency_ms, worker_id)
                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)""",
@@ -321,15 +325,15 @@ async def ingest_l2n(
                     item.get("worker_id"),
                 ),
             )
-        logger.info(f"[OK] L2N[{port}]: {len(data)} records")
-        return {"status": "success", "port": port, "records": len(data)}
+        logger.info(f"[OK] L2N[{port}]: {len(items)} records")
+        return {"status": "success", "port": port, "records": len(items)}
     except Exception as e:
         logger.error(f"[FAIL] L2N ingestion: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # STREAM 3: L2N ERRORS (FIXED - ACCEPTS ALL FIELDS)
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/v1/errors/l2n/{port}")
 async def ingest_l2n_error(
@@ -360,9 +364,9 @@ async def ingest_l2n_error(
         logger.error(f"[FAIL] L2N Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # STREAM 4: PERFORMANCE METRICS (NEW)
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/v1/performance/{port}")
 async def ingest_performance(
@@ -392,9 +396,9 @@ async def ingest_performance(
         logger.error(f"[FAIL] Performance: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # STREAM 5: THROUGHPUT STATISTICS (NEW)
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/v1/throughput/{port}")
 async def ingest_throughput(
@@ -423,9 +427,9 @@ async def ingest_throughput(
         logger.error(f"[FAIL] Throughput: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # STREAM 6: WORKER STATUS (NEW)
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/v1/workers/status")
 async def ingest_worker_status(
@@ -450,9 +454,9 @@ async def ingest_worker_status(
         logger.error(f"[FAIL] Worker status: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # STREAM 7: PORT HEALTH (UPDATED)
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/v1/health/{port}")
 async def ingest_health(
@@ -480,9 +484,9 @@ async def ingest_health(
         logger.error(f"[FAIL] Health: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # STREAM 8: CONNECTION EVENTS (NEW)
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 
 @app.post("/api/v1/events/{port}")
 async def ingest_events(
@@ -509,9 +513,9 @@ async def ingest_events(
         logger.error(f"[FAIL] Events: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # ROOT & QUERY ENDPOINTS
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 
 @app.get("/")
 async def root():
@@ -522,6 +526,7 @@ async def root():
         "timestamp": datetime.utcnow().isoformat(),
         "streams": 8,
         "compatibility": "L4 Redirector v4.1.6",
+        "accepts": "Both single objects and lists",
     }
 
 @app.get("/api/v1/query/stats")
@@ -554,13 +559,14 @@ async def query_stats(
         logger.error(f"[FAIL] Query: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 # MAIN
-# ═══════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════
 
 if __name__ == "__main__":
     logger.info("="*70)
     logger.info("Backend API v4.1.6 Compatible - 8-Stream Platform")
+    logger.info("CRITICAL FIX: Accepts both single objects and lists")
     logger.info(f"Listening: {API_HOST}:{API_PORT}")
     logger.info(f"Database: {DB_HOST}:{DB_PORT}/{DB_NAME}")
     logger.info("="*70)
