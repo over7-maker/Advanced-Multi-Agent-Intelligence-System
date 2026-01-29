@@ -42,10 +42,22 @@ import sys
 import json
 import logging
 import asyncio
+import selectors
 import hashlib
 from datetime import datetime, timedelta
 from typing import Optional, Dict, List, Any
 from contextlib import asynccontextmanager
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CRITICAL FIX: Windows + Psycopg3 Event Loop Compatibility
+# ═══════════════════════════════════════════════════════════════════════════
+# 
+# Windows uses ProactorEventLoop by default (IOCP-based, faster)
+# Psycopg3 requires SelectorEventLoop (select-based, compatible with PostgreSQL)
+# This must be set BEFORE any async code or psycopg3 imports
+#
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 import uvicorn
 from fastapi import FastAPI, Depends, HTTPException, Header, status
@@ -64,7 +76,7 @@ if sys.platform == "win32":
     import io
     import codecs
     
-    # Reconfigure stderr to use UTF-8 with error handling
+    # Reconfigure stderr/stdout to use UTF-8 with error handling
     if hasattr(sys.stderr, 'reconfigure'):
         sys.stderr.reconfigure(encoding='utf-8', errors='replace')
     if hasattr(sys.stdout, 'reconfigure'):
