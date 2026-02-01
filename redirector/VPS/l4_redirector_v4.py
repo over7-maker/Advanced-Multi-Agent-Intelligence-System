@@ -11,7 +11,7 @@ import signal
 import os
 from loguru import logger
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 
 # ==================== CONFIGURATION ====================
 BACKEND_API_TOKEN = os.getenv("BACKEND_API_TOKEN", "")
@@ -72,7 +72,7 @@ async def push_to_backend(client_ip: str, client_port: int, frontend_port: int, 
         "frontend_port": frontend_port,
         "backend_host": backend_host,
         "backend_port": backend_port,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
     headers = {
@@ -185,7 +185,7 @@ async def http_status_handler(request):
 
     response = {
         "status": "ok",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "global": {
             "total_connections": stats["total_connections"],
             "backend_pushes": stats["backend_pushes"],
