@@ -34,6 +34,7 @@ from aiohttp import web
 import asyncpg
 from asyncpg.pool import Pool
 import json
+from datetime import datetime, timezone
 
 # ════════════════════════════════════════════════════════════════════════════
 # CONFIGURATION FROM ENVIRONMENT
@@ -413,7 +414,7 @@ async def handle_connection_metadata(request):
         client_port = data.get('client_port', 0)
         backend_host = data.get('backend_host', '')
         backend_port = data.get('backend_port', 0)
-        timestamp = data.get('timestamp', datetime.utcnow().isoformat())
+        timestamp = data.get('timestamp', datetime.now(timezone.utc).isoformat())
         
         # Insert into database
         if db_pool:
