@@ -21,7 +21,8 @@ LOCALTONET_PORT = int(os.getenv("LOCALTONET_PORT", 1))
 PORT_MAP_STR = os.getenv("PORT_MAP", "{}")
 PORT_MAP = json.loads(PORT_MAP_STR)
 
-BACKEND_API_URL = f"http://{LOCALTONET_IP}:{LOCALTONET_PORT}/api/push"
+# ✅ CRITICAL FIX: Changed from /api/push to /connections
+BACKEND_API_URL = f"http://{LOCALTONET_IP}:{LOCALTONET_PORT}/connections"
 HTTP_MONITOR_PORT = 9090
 
 logger.info("=" * 100)
