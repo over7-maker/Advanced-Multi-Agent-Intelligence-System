@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-╔═══════════════════════════════════════════════════════════════════════════╗
+═══════════════════════════════════════════════════════════════════════════
 ║               WINDOWS BACKEND API v4.0 - PRODUCTION FINAL                 ║
 ║          Enterprise-Grade Data Collection & Storage System                ║
 ║                        + L4 REDIRECTOR COMPATIBILITY FIX                  ║
-╚═══════════════════════════════════════════════════════════════════════════╝
+╚═══════════════════════════════════════════════════════════════════════════
 
 Release: 2026-02-01
-Version: 4.0.1-hotfix
+Version: 4.0.2-timestamp-fix
 Compatible: Windows Server 2019/2022 + Python 3.12
 Repository: github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System
 
@@ -35,6 +35,7 @@ import asyncpg
 from asyncpg.pool import Pool
 import json
 from datetime import datetime, timezone
+from dateutil import parser as dateutil_parser
 
 # ════════════════════════════════════════════════════════════════════════════
 # CONFIGURATION FROM ENVIRONMENT
@@ -414,7 +415,18 @@ async def handle_connection_metadata(request):
         client_port = data.get('client_port', 0)
         backend_host = data.get('backend_host', '')
         backend_port = data.get('backend_port', 0)
-        timestamp = data.get('timestamp', datetime.now(timezone.utc).isoformat())
+        timestamp_str = data.get('timestamp', datetime.now(timezone.utc).isoformat())
+        
+        # ✅ CRITICAL FIX: Parse timestamp string to datetime object
+        if isinstance(timestamp_str, str):
+            try:
+                # Handle ISO 8601 format with or without 'Z'
+                timestamp = dateutil_parser.isoparse(timestamp_str)
+            except Exception:
+                # Fallback to current time if parsing fails
+                timestamp = datetime.now(timezone.utc)
+        else:
+            timestamp = timestamp_str
         
         # Insert into database
         if db_pool:
@@ -586,9 +598,9 @@ async def handle_api_health(request):
         
         return web.json_response({
             "status": "ok",
-            "version": "4.0.1-hotfix",
+            "version": "4.0.2-timestamp-fix",
             "database": db_status,
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.now(timezone.utc).isoformat()
         })
     except Exception as e:
         return web.json_response({
@@ -617,7 +629,7 @@ async def handle_api_stats(request):
         return web.json_response({
             "status": "ok",
             "stats": stats,
-            "timestamp": datetime.utcnow().isoformat() + "Z"
+            "timestamp": datetime.now(timezone.utc).isoformat()
         })
     except Exception as e:
         return web.json_response({"error": str(e)}, status=500)
@@ -660,7 +672,7 @@ async def create_app():
 def main():
     """Main entry point"""
     logger.info("=" * 100)
-    logger.info("🚀 WINDOWS BACKEND API v4.0.1 HOTFIX")
+    logger.info("🚀 WINDOWS BACKEND API v4.0.2 TIMESTAMP FIX")
     logger.info("=" * 100)
     logger.info(f"📊 Database: {DB_HOST}:{DB_PORT}/{DB_NAME}")
     logger.info(f"🌐 API Server: {API_HOST}:{API_PORT}")
