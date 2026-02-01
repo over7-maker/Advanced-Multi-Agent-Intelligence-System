@@ -1,14 +1,22 @@
 [Unit]
-Description=L4 Redirector v4.0 - Production Final Edition
+Description=L4 Redirector v4.0 - Production Layer 4 TCP Traffic Redirector
 Documentation=https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System
+Documentation=file:///usr/local/share/doc/l4-redirector/README.md
 After=network-online.target
 Wants=network-online.target
 
+# Ensure network is fully ready before starting
+Requires=network-online.target
+
 [Service]
 Type=simple
+
+# Service runs as root for raw socket access and port binding
+# TODO: Consider creating dedicated user if only high ports are used
 User=root
 Group=root
 
+# Restart policy for production resilience
 Restart=always
 RestartSec=10
 StartLimitBurst=5
@@ -20,21 +28,155 @@ EnvironmentFile=/etc/l4-redirector/config.env
 # Execute the redirector
 ExecStart=/usr/bin/python3 /usr/local/bin/l4_redirector_v4.py
 
-# Security hardening
+# ==================== SECURITY HARDENING ====================
+
+# Prevent privilege escalation
 NoNewPrivileges=true
+
+# Isolate temporary directories
 PrivateTmp=true
+
+# File system protection
 ProtectSystem=strict
 ProtectHome=true
+ReadOnlyPaths=/etc /usr
 ReadWritePaths=/var/log/redirector
 
-# Resource limits
+# Kernel protection
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+
+# Process isolation
+ProtectProc=invisible
+ProcSubset=pid
+
+# Restrict address families to IPv4 and IPv6 only
+RestrictAddressFamilies=AF_INET AF_INET6
+
+# System call filtering
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources @obsolete @debug @mount @swap @reboot @module @raw-io
+
+# Prevent access to special file systems
+PrivateDevices=true
+ProtectClock=true
+
+# Restrict namespace usage
+RestrictNamespaces=true
+
+# Lock memory settings
+LockPersonality=true
+
+# Restrict realtime scheduling
+RestrictRealtime=true
+
+# Prevent SUID/SGID
+RestrictSUIDSGID=true
+
+# Remove IPC access
+PrivateIPC=true
+
+# Ambient capabilities (empty = no ambient capabilities)
+AmbientCapabilities=
+
+# Capability bounding set (minimal required capabilities)
+# CAP_NET_BIND_SERVICE: Required for binding to ports < 1024
+# CAP_NET_ADMIN: Required for advanced networking features
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_NET_ADMIN
+
+# Drop all capabilities except those explicitly required
+SecureBits=noroot noroot-locked
+
+# ==================== RESOURCE LIMITS ====================
+
+# File descriptor limits (critical for high connection count)
 LimitNOFILE=1048576
+
+# Process/thread limits
 LimitNPROC=65536
 
-# Logging
+# Memory limits (optional - adjust based on expected load)
+# Uncomment and adjust if you want to enforce memory limits
+# MemoryMax=2G
+# MemoryHigh=1.5G
+
+# CPU limits (optional - adjust based on server resources)
+# Uncomment if you want to limit CPU usage
+# CPUQuota=80%
+
+# Task limits
+TasksMax=8192
+
+# ==================== LOGGING ====================
+
+# Send output to systemd journal
 StandardOutput=journal
 StandardError=journal
+
+# Syslog identifier for easy log filtering
 SyslogIdentifier=l4-redirector-v4
+
+# Log level priority
+SyslogLevel=info
+
+# ==================== MONITORING & HEALTH ====================
+
+# Watchdog timeout (optional - requires application support)
+# WatchdogSec=30
+
+# Notification of service readiness (optional)
+# Uncomment if implementing sd_notify in Python code
+# Type=notify
+# NotifyAccess=main
 
 [Install]
 WantedBy=multi-user.target
+
+# ==================== DOCUMENTATION NOTES ====================
+#
+# This systemd unit file implements comprehensive security hardening
+# following systemd best practices and industry standards.
+#
+# Security Features:
+#   - File system isolation and read-only mounts
+#   - System call filtering to prevent dangerous operations
+#   - Namespace restrictions
+#   - Minimal capability set
+#   - Protection against privilege escalation
+#   - Kernel protection features
+#   - Device isolation
+#
+# Resource Management:
+#   - High file descriptor limits for handling many connections
+#   - Process limits to prevent fork bombs
+#   - Optional memory and CPU quotas
+#
+# Reliability:
+#   - Automatic restart on failure
+#   - Rate-limited restart to prevent restart loops
+#   - Dependencies on network availability
+#
+# Logging:
+#   - Structured logging via systemd journal
+#   - Easy log filtering with syslog identifier
+#
+# To verify security settings:
+#   systemd-analyze security l4-redirector-v4.service
+#
+# To check service dependencies:
+#   systemctl list-dependencies l4-redirector-v4.service
+#
+# To view service logs:
+#   journalctl -u l4-redirector-v4 -f
+#
+# To test configuration:
+#   systemd-analyze verify l4-redirector-v4.service
+#
+# References:
+#   - systemd.service(5) man page
+#   - systemd.exec(5) man page
+#   - systemd.resource-control(5) man page
+#   - https://www.freedesktop.org/software/systemd/man/systemd.exec.html
+#
