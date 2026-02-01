@@ -3,15 +3,17 @@
 ╔═══════════════════════════════════════════════════════════════════════════╗
 ║               WINDOWS BACKEND API v4.0 - PRODUCTION FINAL                 ║
 ║          Enterprise-Grade Data Collection & Storage System                ║
+║                        + L4 REDIRECTOR COMPATIBILITY FIX                  ║
 ╚═══════════════════════════════════════════════════════════════════════════╝
 
-Release: 2026-01-31
-Version: 4.0.0-final
+Release: 2026-02-01
+Version: 4.0.1-hotfix
 Compatible: Windows Server 2019/2022 + Python 3.12
 Repository: github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System
 
 FEATURES:
   ✅ 8 data stream endpoints (web, l2n, errors, performance, throughput, workers, health, events)
+  ✅ NEW: /connections endpoint for L4 Redirector compatibility
   ✅ PostgreSQL connection pooling (pgbouncer-compatible)
   ✅ Token authentication (timing attack protection)
   ✅ Batch insert optimization (100x faster)
@@ -397,6 +399,57 @@ async def auth_middleware(request, handler):
 # HTTP API - DATA STREAM ENDPOINTS
 # ════════════════════════════════════════════════════════════════════════════
 
+async def handle_connection_metadata(request):
+    """
+    NEW: Handle connection metadata from L4 Redirector
+    Accepts connection info and stores in web_connections table
+    """
+    try:
+        data = await request.json()
+        
+        # Extract fields from L4 redirector format
+        port = data.get('frontend_port', 0)
+        client_ip = data.get('client_ip', 'unknown')
+        client_port = data.get('client_port', 0)
+        backend_host = data.get('backend_host', '')
+        backend_port = data.get('backend_port', 0)
+        timestamp = data.get('timestamp', datetime.utcnow().isoformat())
+        
+        # Insert into database
+        if db_pool:
+            query = """
+                INSERT INTO web_connections 
+                (timestamp, port, client_ip, client_port, bytes_in, bytes_out, 
+                 duration_ms, worker_id, connection_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            """
+            
+            async with db_pool.acquire() as conn:
+                await conn.execute(
+                    query,
+                    timestamp,
+                    port,
+                    client_ip,
+                    client_port,
+                    0,  # bytes_in (will be updated later)
+                    0,  # bytes_out (will be updated later)
+                    0,  # duration_ms (will be calculated later)
+                    'l4-redirector',  # worker_id
+                    f"{client_ip}:{client_port}"  # connection_id
+                )
+            
+            logger.debug(f"💾 Connection metadata stored: {client_ip}:{client_port} → {backend_host}:{backend_port}")
+        
+        return web.json_response({
+            "status": "success",
+            "port": port,
+            "client": f"{client_ip}:{client_port}"
+        }, status=201)
+        
+    except Exception as e:
+        logger.error(f"❌ /connections error: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
 async def handle_web_connections(request):
     """Stream 1: Web connections (batched)"""
     try:
@@ -532,7 +585,7 @@ async def handle_api_health(request):
         
         return web.json_response({
             "status": "ok",
-            "version": "4.0.0-final",
+            "version": "4.0.1-hotfix",
             "database": db_status,
             "timestamp": datetime.utcnow().isoformat() + "Z"
         })
@@ -576,6 +629,9 @@ async def create_app():
     """Create aiohttp application"""
     app = web.Application(middlewares=[auth_middleware])
     
+    # NEW: L4 Redirector compatibility endpoint
+    app.router.add_post('/connections', handle_connection_metadata)
+    
     # Data stream endpoints (8 streams)
     app.router.add_post('/api/v1/web/{port}', handle_web_connections)
     app.router.add_post('/api/v1/l2n/{port}', handle_l2n_tunnels)
@@ -603,11 +659,11 @@ async def create_app():
 def main():
     """Main entry point"""
     logger.info("=" * 100)
-    logger.info("🚀 WINDOWS BACKEND API v4.0 PRODUCTION FINAL")
+    logger.info("🚀 WINDOWS BACKEND API v4.0.1 HOTFIX")
     logger.info("=" * 100)
     logger.info(f"📊 Database: {DB_HOST}:{DB_PORT}/{DB_NAME}")
     logger.info(f"🌐 API Server: {API_HOST}:{API_PORT}")
-    logger.info(f"✅ 8 data stream endpoints configured")
+    logger.info(f"✅ 8 data stream endpoints + /connections (L4 Redirector)")
     logger.info("=" * 100)
     
     # Create and run application
