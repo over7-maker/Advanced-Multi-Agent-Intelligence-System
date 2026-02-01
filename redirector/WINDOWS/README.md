@@ -1,11 +1,28 @@
-# Windows Backend API v4.0 - Production Final Edition
+# Windows Backend API v4.0.2 - Timestamp Fix + L4 Redirector Compatibility
 
 **Enterprise-Grade Data Collection & Storage System for L4 Redirector**
 
-[![Version](https://img.shields.io/badge/version-4.0.0--final-blue.svg)](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System)
+🔥 **v4.0.2-timestamp-fix (2026-02-01)** - Critical L4 Redirector compatibility update
+
+[![Version](https://img.shields.io/badge/version-4.0.2--timestamp--fix-blue.svg)](https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System)
 [![Python](https://img.shields.io/badge/python-3.12+-green.svg)](https://www.python.org/)
 [![PostgreSQL](https://img.shields.io/badge/postgresql-14+-blue.svg)](https://www.postgresql.org/)
 [![License](https://img.shields.io/badge/license-MIT-orange.svg)](LICENSE)
+
+## 🚨 v4.0.2-timestamp-fix Critical Update
+
+**What's New (2026-02-01):**
+
+✅ **NEW** `/connections` endpoint - Direct L4 Redirector compatibility  
+✅ **Timestamp parsing fix** - Handles ISO 8601 format from VPS  
+✅ **Database compatibility** - Works with web_connections table  
+✅ **Non-blocking inserts** - Improved performance
+
+**Required for:** VPS L4 Redirector v4.0.1-hotfix compatibility
+
+**Migration:** No database changes needed if using v4 schema. Just update Python code and restart service.
+
+---
 
 ## 🎯 Overview
 
@@ -15,6 +32,7 @@ Production-ready backend API for collecting, storing, and analyzing data from th
 
 ### 🚀 Core Capabilities
 - **8 Data Stream Endpoints** - Real-time ingestion from L4 Redirector
+- **L4 Redirector Compatibility** - Direct `/connections` endpoint (v4.0.2+)
 - **PostgreSQL Connection Pooling** - Efficient database connections (10-50 pool)
 - **Batch Insert Optimization** - 100x faster than individual inserts
 - **Token Authentication** - Timing-attack resistant security
@@ -26,7 +44,8 @@ Production-ready backend API for collecting, storing, and analyzing data from th
 
 | Stream | Endpoint | Purpose |
 |--------|----------|---------|  
-| 1 | `/api/v1/web/{port}` | Web connection tracking |
+| **NEW** | `/connections` | L4 Redirector connection metadata (v4.0.2+) |
+| 1 | `/api/v1/web/{port}` | Web connection tracking (batch) |
 | 2 | `/api/v1/l2n/{port}` | LocalToNet tunnel metrics |
 | 3 | `/api/v1/errors/l2n/{port}` | Connection error logging |
 | 4 | `/api/v1/performance/{port}` | Latency percentiles (P50/P95/P99) |
@@ -68,7 +87,7 @@ cd Advanced-Multi-Agent-Intelligence-System/redirector/WINDOWS
 1. **Install Prerequisites**
 ```powershell
 # Install Python packages
-pip install aiohttp asyncpg python-dotenv
+pip install aiohttp asyncpg python-dotenv python-dateutil
 
 # Verify PostgreSQL
 psql --version
@@ -133,7 +152,7 @@ nssm start BackendAPIv4
 curl http://localhost:6921/health
 
 # Expected response:
-# {"status":"ok","version":"4.0.0-final","database":"connected",...}
+# {"status":"ok","version":"4.0.2-timestamp-fix","database":"connected",...}
 ```
 
 ### Test Authentication
@@ -287,7 +306,57 @@ All data stream endpoints require Bearer token authentication:
 Authorization: Bearer YOUR_API_TOKEN
 ```
 
-### Example Request
+### NEW: /connections Endpoint (v4.0.2+)
+
+**Purpose:** Accept connection metadata directly from L4 Redirector v4.0.1-hotfix
+
+**Endpoint:** `POST /connections`
+
+**Authentication:** Required (Bearer token)
+
+**Request Body:**
+```json
+{
+  "client_ip": "1.2.3.4",
+  "client_port": 12345,
+  "frontend_port": 8041,
+  "backend_host": "192.168.1.100",
+  "backend_port": 1429,
+  "timestamp": "2026-02-01T18:00:00Z"
+}
+```
+
+**Response:**
+```json
+{
+  "status": "success",
+  "port": 8041,
+  "client": "1.2.3.4:12345"
+}
+```
+
+**PowerShell Example:**
+```powershell
+$TOKEN = (Get-Content config.env | Where-Object {$_ -match "API_TOKEN"}).Split("=")[1]
+
+$body = @{
+    client_ip = "1.2.3.4"
+    client_port = 12345
+    frontend_port = 8041
+    backend_host = "192.168.1.100"
+    backend_port = 1429
+    timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://localhost:6921/connections" `
+                  -Method POST `
+                  -Headers @{Authorization="Bearer $TOKEN"; "Content-Type"="application/json"} `
+                  -Body $body
+```
+
+**Database:** Inserts into `web_connections` table with `connection_id = "{client_ip}:{client_port}"`
+
+### Example Request (Legacy Endpoints)
 ```powershell
 $headers = @{
     "Authorization" = "Bearer $API_TOKEN"
@@ -320,16 +389,40 @@ Invoke-RestMethod -Uri "http://localhost:6921/api/v1/web/8041" `
 
 ## 🔄 Integration with L4 Redirector
 
+**CRITICAL:** VPS L4 Redirector v4.0.1-hotfix uses `/connections` endpoint
+
 On your Ubuntu VPS, configure L4 Redirector:
 
 ```bash
 # Edit /etc/l4-redirector/config.env
-BACKEND_API_URL=http://YOUR_WINDOWS_IP:6921
 BACKEND_API_TOKEN=your_64_char_token
-
-# Restart redirector
-sudo systemctl restart l4-redirector
+LOCALTONET_IP=YOUR_WINDOWS_IP
+LOCALTONET_PORT=6921
 ```
+
+VPS L4 Redirector automatically sends to:
+```
+http://YOUR_WINDOWS_IP:6921/connections
+```
+
+### Verify from VPS
+
+**Test /connections endpoint:**
+```bash
+curl -X POST http://YOUR_WINDOWS_IP:6921/connections \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "client_ip": "test",
+    "client_port": 1,
+    "frontend_port": 8041,
+    "backend_host": "test",
+    "backend_port": 1,
+    "timestamp": "'$(date -u +%Y-%m-%dT%H:%M:%SZ)'"
+  }'
+```
+
+**Expected:** `{"status": "success", "port": 8041, "client": "test:1"}`
 
 ## 📁 File Structure
 
@@ -366,18 +459,27 @@ MIT License - see [LICENSE](LICENSE) file for details
 
 ## 📝 Changelog
 
+### v4.0.2-timestamp-fix (2026-02-01)
+🔥 **NEW:** `/connections` endpoint - L4 Redirector v4 compatibility  
+🔥 **Timestamp parsing fix** - ISO 8601 format with timezone handling  
+✅ `dateutil.parser` integration for robust timestamp parsing  
+✅ `connection_id` field population (client_ip:client_port)  
+✅ Compatible with VPS L4 Redirector v4.0.1-hotfix  
+✅ Resolves HTTP 404 errors from VPS
+
 ### v4.0.0-final (2026-01-31)
-- ✅ Production-ready release
-- ✅ 8 data stream endpoints
-- ✅ Batch insert optimization
-- ✅ Connection pooling
-- ✅ Comprehensive error handling
-- ✅ Windows Service support
-- ✅ Automated installation
+✅ Production-ready release  
+✅ 8 data stream endpoints  
+✅ Batch insert optimization  
+✅ Connection pooling  
+✅ Comprehensive error handling  
+✅ Windows Service support  
+✅ Automated installation
 
 ---
 
-**Version:** 4.0.0-final  
-**Release Date:** January 31, 2026  
+**Version:** 4.0.2-timestamp-fix  
+**Release Date:** February 01, 2026  
 **Status:** Production Ready  
-**Compatibility:** Works with L4 Redirector v4.0+
+**Compatibility:** VPS L4 Redirector v4.0.1-hotfix (Required)  
+**Critical Fix:** /connections endpoint + timestamp parsing
