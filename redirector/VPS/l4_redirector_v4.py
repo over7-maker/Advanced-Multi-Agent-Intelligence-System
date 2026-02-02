@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-L4 Redirector v4.0 - Production Layer 4 TCP Traffic Redirector
+L4 Redirector v4.1 - Production Layer 4 TCP Traffic Redirector
 
 This module implements a high-performance, production-ready Layer 4 TCP traffic
 redirector with the following features:
@@ -11,6 +11,7 @@ redirector with the following features:
 - Multi-process architecture utilizing all CPU cores
 - Circuit breaker pattern for backend resilience
 - Comprehensive logging and error handling
+- Intelligent log filtering to reduce noise from normal operations
 
 Architecture:
     Client → VPS (This Service) → Backend Server
@@ -18,7 +19,7 @@ Architecture:
                Backend API (Metrics)
 
 Author: Advanced Multi-Agent Intelligence System Project
-Version: 4.0.0-final
+Version: 4.1.0
 Python: 3.12+
 Platform: Ubuntu 24.04 LTS
 
@@ -38,10 +39,17 @@ Environment Variables:
     LOCALTONET_IP (str): IP address of LocalToNet/WireGuard gateway
     LOCALTONET_PORT (int): Port of LocalToNet/WireGuard gateway
     PORT_MAP (str): JSON string mapping frontend ports to backend [host, port]
+    LOG_LEVEL (str): Optional logging level (DEBUG, INFO, WARNING, ERROR)
 
 References:
     - Project: https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System
     - Documentation: See README.md and DEPLOYMENT_GUIDE.md in this directory
+
+Changelog v4.1:
+    - Reduced log noise from normal connection resets
+    - Improved error differentiation (normal vs abnormal)
+    - Added connection lifecycle tracking
+    - Enhanced visibility of actual errors while suppressing noise
 """
 
 import asyncio
@@ -62,6 +70,19 @@ IPAddress = str
 BackendInfo = Tuple[IPAddress, PortNumber]
 PortMapping = Dict[str, BackendInfo]
 StatsDict = Dict[str, Any]
+
+# ==================== LOGGING CONFIGURATION ====================
+# Configure loguru to reduce noise from normal operations
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+
+# Remove default handler and add custom one with better formatting
+logger.remove()
+logger.add(
+    sys.stderr,
+    format="<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | <level>{level: <8}</level> | <cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>",
+    level=LOG_LEVEL,
+    colorize=True
+)
 
 # ==================== CONFIGURATION ====================
 # Load configuration from environment variables with validation
@@ -85,11 +106,12 @@ HTTP_MONITOR_PORT: PortNumber = 9090
 
 # ==================== STARTUP BANNER ====================
 logger.info("=" * 100)
-logger.info("🚀 L4 REDIRECTOR v4.0 PRODUCTION FINAL")
+logger.info("🚀 L4 REDIRECTOR v4.1 PRODUCTION")
 logger.info("=" * 100)
 logger.info(f"📡 Backend API: {BACKEND_API_URL}")
 logger.info(f"🔧 Listening Ports: {tuple(PORT_MAP.keys())}")
 logger.info(f"🎯 HTTP Monitor: :{HTTP_MONITOR_PORT}")
+logger.info(f"📝 Log Level: {LOG_LEVEL}")
 logger.info("=" * 100)
 
 # ==================== CONFIGURATION VALIDATION ====================
@@ -156,12 +178,18 @@ validate_configuration()
 # ==================== GLOBAL STATS ====================
 stats: StatsDict = {
     "total_connections": 0,
+    "active_connections": 0,
     "backend_pushes": 0,
     "backend_push_failures": 0,
+    "normal_disconnects": 0,
+    "abnormal_disconnects": 0,
     "by_port": defaultdict(lambda: {
         "connections": 0,
+        "active": 0,
         "bytes_sent": 0,
-        "bytes_received": 0
+        "bytes_received": 0,
+        "normal_disconnects": 0,
+        "abnormal_disconnects": 0
     })
 }
 
@@ -236,7 +264,9 @@ async def push_to_backend(
     """
     # Increment stats immediately to ensure accuracy
     stats["total_connections"] += 1
+    stats["active_connections"] += 1
     stats["by_port"][str(frontend_port)]["connections"] += 1
+    stats["by_port"][str(frontend_port)]["active"] += 1
 
     payload: Dict[str, Any] = {
         "client_ip": client_ip,
@@ -290,7 +320,7 @@ async def forward_data(
     writer: asyncio.StreamWriter,
     direction: str,
     frontend_port: PortNumber
-) -> None:
+) -> Tuple[bool, Optional[Exception]]:
     """
     Forward data bidirectionally between client and backend.
     
@@ -303,6 +333,11 @@ async def forward_data(
         direction: Direction identifier ("client_to_backend" or "backend_to_client")
         frontend_port: Frontend port number for statistics tracking
         
+    Returns:
+        Tuple of (normal_close: bool, exception: Optional[Exception])
+        - normal_close: True if connection closed normally
+        - exception: The exception if abnormal close occurred
+        
     Side Effects:
         - Transfers data between streams
         - Updates byte transfer statistics
@@ -312,14 +347,15 @@ async def forward_data(
         8192 bytes per read operation (optimal for most network conditions)
         
     Note:
-        Exceptions are caught and logged at debug level to avoid noise
-        from normal connection terminations.
+        Returns information about how the connection closed to allow
+        the caller to differentiate between normal and abnormal terminations.
     """
     try:
         while True:
             data: bytes = await reader.read(8192)
             if not data:
-                break
+                # Clean EOF - normal close
+                return (True, None)
 
             writer.write(data)
             await writer.drain()
@@ -331,16 +367,22 @@ async def forward_data(
                 stats["by_port"][str(frontend_port)]["bytes_received"] += len(data)
 
     except (ConnectionResetError, BrokenPipeError) as e:
-        # Normal connection termination - log at debug level
-        logger.debug(f"Connection closed ({direction}): {type(e).__name__}")
+        # Normal abrupt termination - client/server closed without proper shutdown
+        # This is EXPECTED behavior in production networks
+        return (True, e)
     except Exception as e:
-        logger.debug(f"Forward error ({direction}): {type(e).__name__}: {e}")
+        # Unexpected error - this is abnormal and should be logged
+        return (False, e)
     finally:
         try:
             writer.close()
             await writer.wait_closed()
-        except Exception as e:
-            logger.debug(f"Error closing writer ({direction}): {e}")
+        except (ConnectionResetError, BrokenPipeError):
+            # Normal - other side already closed
+            pass
+        except Exception:
+            # Unexpected but not critical
+            pass
 
 async def handle_client(
     client_reader: asyncio.StreamReader,
@@ -377,7 +419,7 @@ async def handle_client(
         - Creates backend connection
         - Spawns background task for API push
         - Updates statistics
-        - Logs connection events
+        - Logs connection events (filtered for noise reduction)
     """
     client_addr: Optional[Tuple[str, int]] = client_writer.get_extra_info('peername')
     client_ip: IPAddress = client_addr[0] if client_addr else "unknown"
@@ -401,6 +443,7 @@ async def handle_client(
 
     backend_reader: Optional[asyncio.StreamReader] = None
     backend_writer: Optional[asyncio.StreamWriter] = None
+    was_normal_close: bool = False
 
     try:
         # Connect to backend with timeout
@@ -409,8 +452,8 @@ async def handle_client(
             timeout=10
         )
 
-        # Bidirectional forwarding
-        await asyncio.gather(
+        # Bidirectional forwarding with enhanced error tracking
+        results = await asyncio.gather(
             forward_data(
                 client_reader,
                 backend_writer,
@@ -423,29 +466,68 @@ async def handle_client(
                 "backend_to_client",
                 frontend_port
             ),
-            return_exceptions=True
+            return_exceptions=False  # Let exceptions propagate to our handler
         )
+        
+        # Check if both directions closed normally
+        client_to_backend_normal, client_to_backend_exc = results[0]
+        backend_to_client_normal, backend_to_client_exc = results[1]
+        
+        # If either direction had a normal close, consider it normal
+        was_normal_close = client_to_backend_normal or backend_to_client_normal
+        
+        # Only log abnormal closures at WARNING level
+        if not was_normal_close:
+            if client_to_backend_exc:
+                logger.warning(
+                    f"[{frontend_port}] Abnormal close (client→backend): "
+                    f"{type(client_to_backend_exc).__name__}: {client_to_backend_exc}"
+                )
+            if backend_to_client_exc:
+                logger.warning(
+                    f"[{frontend_port}] Abnormal close (backend→client): "
+                    f"{type(backend_to_client_exc).__name__}: {backend_to_client_exc}"
+                )
 
     except asyncio.TimeoutError:
+        was_normal_close = False
         logger.warning(
             f"[{frontend_port}] Backend connection timeout: "
             f"{backend_host}:{backend_port}"
         )
     except OSError as e:
+        was_normal_close = False
         logger.warning(
             f"[{frontend_port}] OS error connecting to backend: {e}"
         )
     except Exception as e:
+        was_normal_close = False
         logger.warning(
             f"[{frontend_port}] Connection error: {type(e).__name__}: {e}"
         )
     finally:
+        # Update statistics based on close type
+        if was_normal_close:
+            stats["normal_disconnects"] += 1
+            stats["by_port"][str(frontend_port)]["normal_disconnects"] += 1
+        else:
+            stats["abnormal_disconnects"] += 1
+            stats["by_port"][str(frontend_port)]["abnormal_disconnects"] += 1
+        
+        # Decrement active connection count
+        stats["active_connections"] -= 1
+        stats["by_port"][str(frontend_port)]["active"] -= 1
+        
         # Clean up client connection
         try:
             client_writer.close()
             await client_writer.wait_closed()
-        except Exception as e:
-            logger.debug(f"Error closing client connection: {e}")
+        except (ConnectionResetError, BrokenPipeError):
+            # Normal - connection already closed
+            pass
+        except Exception:
+            # Not critical
+            pass
 
 # ==================== TCP WORKERS ====================
 async def tcp_worker(
@@ -523,14 +605,20 @@ async def http_status_handler(request: aiohttp.web.Request) -> aiohttp.web.Respo
             "timestamp": "ISO-8601 timestamp",
             "global": {
                 "total_connections": int,
+                "active_connections": int,
                 "backend_pushes": int,
-                "backend_push_failures": int
+                "backend_push_failures": int,
+                "normal_disconnects": int,
+                "abnormal_disconnects": int
             },
             "by_port": {
                 "<port>": {
                     "connections": int,
+                    "active": int,
                     "bytes_sent": int,
-                    "bytes_received": int
+                    "bytes_received": int,
+                    "normal_disconnects": int,
+                    "abnormal_disconnects": int
                 }
             }
         }
@@ -558,8 +646,11 @@ async def http_status_handler(request: aiohttp.web.Request) -> aiohttp.web.Respo
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "global": {
             "total_connections": stats["total_connections"],
+            "active_connections": stats["active_connections"],
             "backend_pushes": stats["backend_pushes"],
-            "backend_push_failures": stats["backend_push_failures"]
+            "backend_push_failures": stats["backend_push_failures"],
+            "normal_disconnects": stats["normal_disconnects"],
+            "abnormal_disconnects": stats["abnormal_disconnects"]
         },
         "by_port": dict(stats["by_port"])
     }
