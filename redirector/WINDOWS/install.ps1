@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-    Windows Backend API v4.0 - Automated Installation Script
+    Windows Backend API v4.0.2 - Automated Installation Script
 .DESCRIPTION
     Complete installation and configuration for Windows Server 2019/2022
 .NOTES
-    Version: 4.0.0-final
-    Date: 2026-01-31
+    Version: 4.0.2-timestamp-fix
+    Date: 2026-02-01
     Run as Administrator
 #>
 
@@ -29,12 +29,12 @@ function Write-Fail { Write-Host "❌ $args" -ForegroundColor Red }
 
 Write-Host "`n" -NoNewline
 Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "  WINDOWS BACKEND API v4.0 - PRODUCTION INSTALLATION" -ForegroundColor Cyan
+Write-Host "  WINDOWS BACKEND API v4.0.2-timestamp-fix INSTALLER" -ForegroundColor Cyan
 Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
 Write-Host "`n"
 
 # Step 1: Validate prerequisites
-Write-Info "Checking prerequisites..."
+Write-Info "[1/10] Checking prerequisites..."
 
 # Check Python
 try {
@@ -60,7 +60,7 @@ try {
 }
 
 # Step 2: Create directories
-Write-Info "Creating directory structure..."
+Write-Info "[2/10] Creating directory structure..."
 @($InstallPath, $LogPath) | ForEach-Object {
     if (-not (Test-Path $_)) {
         New-Item -Path $_ -ItemType Directory -Force | Out-Null
@@ -69,13 +69,14 @@ Write-Info "Creating directory structure..."
 }
 
 # Step 3: Install Python dependencies
-Write-Info "Installing Python packages..."
-$packages = @("aiohttp", "asyncpg", "python-dotenv")
+Write-Info "[3/10] Installing Python packages..."
+$packages = @("aiohttp", "asyncpg", "python-dotenv", "python-dateutil")
 pip install --upgrade pip | Out-Null
 pip install $packages | Out-Null
 Write-Info "Packages installed: $($packages -join ', ')"
 
 # Step 4: Generate secure credentials if not provided
+Write-Info "[4/10] Generating secure credentials..."
 if (-not $DBPassword) {
     $DBPassword = -join ((48..57) + (65..90) + (97..122) | Get-Random -Count 32 | ForEach-Object {[char]$_})
     Write-Warn "Generated DB Password: $DBPassword"
@@ -87,9 +88,9 @@ if (-not $APIToken) {
 }
 
 # Step 5: Create config.env
-Write-Info "Creating configuration file..."
+Write-Info "[5/10] Creating configuration file..."
 $configContent = @"
-# Windows Backend API v4.0 Configuration
+# Windows Backend API v4.0.2 Configuration
 # Generated: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
 
 # Database Configuration
@@ -109,7 +110,7 @@ $configContent | Out-File -FilePath "$InstallPath\config.env" -Encoding UTF8
 Write-Info "Config file created: $InstallPath\config.env"
 
 # Step 6: Database setup
-Write-Info "Setting up PostgreSQL database..."
+Write-Info "[6/10] Setting up PostgreSQL database..."
 
 $env:PGPASSWORD = "postgres_admin_password"
 $dbCommands = @"
@@ -126,15 +127,35 @@ try {
 }
 
 # Step 7: Load schema
+Write-Info "[7/10] Loading database schema..."
 if (Test-Path "$InstallPath\database_schema.sql") {
-    Write-Info "Loading database schema..."
     $env:PGPASSWORD = $DBPassword
     psql -U redirector_user -d redirector_db -h localhost -f "$InstallPath\database_schema.sql" 2>&1 | Out-Null
     Write-Info "Schema loaded successfully"
 }
 
-# Step 8: Install as Windows Service using NSSM
-Write-Info "Installing Windows Service..."
+# Step 8: Verify backend_api_v4.py version
+Write-Info "[8/10] Verifying backend_api_v4.py version..."
+if (Test-Path "$InstallPath\backend_api_v4.py") {
+    $apiContent = Get-Content "$InstallPath\backend_api_v4.py" -Raw
+    if ($apiContent -match 'Version:\s*(\S+)') {
+        $detectedVersion = $Matches[1]
+        Write-Host "   Detected version: $detectedVersion" -ForegroundColor Cyan
+        if ($detectedVersion -notmatch '4\.0\.2') {
+            Write-Warn "Expected v4.0.2-timestamp-fix, found $detectedVersion"
+            Write-Warn "This may cause compatibility issues with VPS L4 Redirector v4.0.1-hotfix"
+        } else {
+            Write-Info "Correct version for VPS L4 Redirector v4.0.1-hotfix compatibility"
+        }
+    } else {
+        Write-Warn "Could not detect version from backend_api_v4.py"
+    }
+} else {
+    Write-Warn "backend_api_v4.py not found at $InstallPath"
+}
+
+# Step 9: Install as Windows Service using NSSM
+Write-Info "[9/10] Installing Windows Service..."
 
 # Check if NSSM is installed
 if (-not (Get-Command nssm -ErrorAction SilentlyContinue)) {
@@ -157,15 +178,15 @@ if (-not (Get-Command nssm -ErrorAction SilentlyContinue)) {
     nssm install BackendAPIv4 "$pythonExe" "$InstallPath\backend_api_v4.py" | Out-Null
     nssm set BackendAPIv4 AppDirectory $InstallPath | Out-Null
     nssm set BackendAPIv4 AppEnvironmentExtra "env_file=$InstallPath\config.env" | Out-Null
-    nssm set BackendAPIv4 DisplayName "Backend API v4.0" | Out-Null
-    nssm set BackendAPIv4 Description "Enterprise Data Collection API for L4 Redirector" | Out-Null
+    nssm set BackendAPIv4 DisplayName "Backend API v4.0.2" | Out-Null
+    nssm set BackendAPIv4 Description "Enterprise Data Collection API for L4 Redirector v4.0.2-timestamp-fix" | Out-Null
     nssm set BackendAPIv4 Start SERVICE_AUTO_START | Out-Null
     
     Write-Info "Service installed successfully"
 }
 
-# Step 9: Firewall rule
-Write-Info "Configuring Windows Firewall..."
+# Step 10: Firewall rule
+Write-Info "[10/10] Configuring Windows Firewall..."
 $firewallRule = Get-NetFirewallRule -DisplayName "Backend API v4.0" -ErrorAction SilentlyContinue
 if (-not $firewallRule) {
     New-NetFirewallRule -DisplayName "Backend API v4.0" `
@@ -179,7 +200,7 @@ if (-not $firewallRule) {
     Write-Info "Firewall rule already exists"
 }
 
-# Step 10: Summary
+# Summary
 Write-Host "`n"
 Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
 Write-Host "  INSTALLATION COMPLETE" -ForegroundColor Green
@@ -195,6 +216,9 @@ Write-Host "redirector_db (localhost:5432)" -ForegroundColor Yellow
 Write-Host "🌐 API Endpoint: " -NoNewline
 Write-Host "http://localhost:6921" -ForegroundColor Yellow
 
+Write-Host "🔥 Version: " -NoNewline
+Write-Host "v4.0.2-timestamp-fix" -ForegroundColor Yellow
+
 Write-Host "`n🔐 IMPORTANT - Save these credentials:" -ForegroundColor Red
 Write-Host "  DB Password: " -NoNewline
 Write-Host $DBPassword -ForegroundColor Yellow
@@ -205,6 +229,13 @@ Write-Host "`n✅ Next steps:" -ForegroundColor Green
 Write-Host "  1. Test health: curl http://localhost:6921/health"
 Write-Host "  2. Start service: nssm start BackendAPIv4"
 Write-Host "  3. Check logs: Get-Content $LogPath\backend_api_v4.log -Tail 50 -Wait"
-Write-Host "  4. Configure VPS L4 Redirector with this API token"
+Write-Host "  4. Test /connections: .\test_api.ps1"
+Write-Host "  5. Configure VPS L4 Redirector v4.0.1-hotfix with this API token"
+
+Write-Host "`n🔗 VPS Integration:" -ForegroundColor Cyan
+Write-Host "  Edit /etc/l4-redirector/config.env on VPS:"
+Write-Host "    BACKEND_API_TOKEN=$APIToken" -ForegroundColor Gray
+Write-Host "    LOCALTONET_IP=YOUR_WINDOWS_IP" -ForegroundColor Gray
+Write-Host "    LOCALTONET_PORT=6921" -ForegroundColor Gray
 
 Write-Host "`n"
