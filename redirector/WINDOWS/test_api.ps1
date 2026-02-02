@@ -1,11 +1,11 @@
 <#
 .SYNOPSIS
-    Backend API v4.0 - Comprehensive Test Suite
+    Backend API v4.0.2 - Comprehensive Test Suite
 .DESCRIPTION
-    Tests all 8 data stream endpoints and monitoring endpoints
+    Tests all 9 endpoints including NEW /connections endpoint for L4 Redirector compatibility
 .NOTES
-    Version: 4.0.0-final
-    Date: 2026-01-31
+    Version: 4.0.2-timestamp-fix
+    Date: 2026-02-01
 #>
 
 param(
@@ -64,18 +64,36 @@ function Test-Endpoint {
 }
 
 Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "  BACKEND API v4.0 - COMPREHENSIVE TEST SUITE" -ForegroundColor Cyan
+Write-Host "  BACKEND API v4.0.2 - COMPREHENSIVE TEST SUITE" -ForegroundColor Cyan
 Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
 
-$results = @()
+$testsPassed = 0
+$testsFailed = 0
 
 # Test 1: Health Check (no auth)
-$results += Test-Endpoint -Name "Health Check" -URL "$BaseURL/health" -RequireAuth $false
+Write-Host "`n═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+Write-Host "TEST 1: Health Check (No Authentication)" -ForegroundColor Yellow
+Write-Host "═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+if (Test-Endpoint -Name "Health Check" -URL "$BaseURL/health" -RequireAuth $false) {
+    $testsPassed++
+} else {
+    $testsFailed++
+}
 
 # Test 2: Stats (no auth)
-$results += Test-Endpoint -Name "Statistics" -URL "$BaseURL/stats" -RequireAuth $false
+Write-Host "`n═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+Write-Host "TEST 2: Statistics (No Authentication)" -ForegroundColor Yellow
+Write-Host "═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+if (Test-Endpoint -Name "Statistics" -URL "$BaseURL/stats" -RequireAuth $false) {
+    $testsPassed++
+} else {
+    $testsFailed++
+}
 
 # Test 3: Web Connections (Stream 1)
+Write-Host "`n═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+Write-Host "TEST 3: Web Connections (Stream 1)" -ForegroundColor Yellow
+Write-Host "═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
 $webData = @(
     @{
         timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
@@ -88,12 +106,16 @@ $webData = @(
         connection_id = "test_conn_1"
     }
 )
-$results += Test-Endpoint -Name "Web Connections (Stream 1)" `
-                          -URL "$BaseURL/api/v1/web/8041" `
-                          -Method "POST" `
-                          -Body $webData
+if (Test-Endpoint -Name "Web Connections" -URL "$BaseURL/api/v1/web/8041" -Method "POST" -Body $webData) {
+    $testsPassed++
+} else {
+    $testsFailed++
+}
 
 # Test 4: L2N Tunnels (Stream 2)
+Write-Host "`n═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+Write-Host "TEST 4: L2N Tunnels (Stream 2)" -ForegroundColor Yellow
+Write-Host "═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
 $l2nData = @(
     @{
         timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
@@ -107,12 +129,16 @@ $l2nData = @(
         bytes_transferred = 5120
     }
 )
-$results += Test-Endpoint -Name "L2N Tunnels (Stream 2)" `
-                          -URL "$BaseURL/api/v1/l2n/8041" `
-                          -Method "POST" `
-                          -Body $l2nData
+if (Test-Endpoint -Name "L2N Tunnels" -URL "$BaseURL/api/v1/l2n/8041" -Method "POST" -Body $l2nData) {
+    $testsPassed++
+} else {
+    $testsFailed++
+}
 
 # Test 5: Connection Errors (Stream 3)
+Write-Host "`n═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+Write-Host "TEST 5: Connection Errors (Stream 3)" -ForegroundColor Yellow
+Write-Host "═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
 $errorData = @{
     timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     error_type = "connection_timeout"
@@ -123,12 +149,16 @@ $errorData = @{
     error_message = "Connection timeout after 30s"
     worker_id = "test_worker"
 }
-$results += Test-Endpoint -Name "Connection Errors (Stream 3)" `
-                          -URL "$BaseURL/api/v1/errors/l2n/8041" `
-                          -Method "POST" `
-                          -Body $errorData
+if (Test-Endpoint -Name "Connection Errors" -URL "$BaseURL/api/v1/errors/l2n/8041" -Method "POST" -Body $errorData) {
+    $testsPassed++
+} else {
+    $testsFailed++
+}
 
 # Test 6: Performance Metrics (Stream 4)
+Write-Host "`n═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+Write-Host "TEST 6: Performance Metrics (Stream 4)" -ForegroundColor Yellow
+Write-Host "═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
 $perfData = @{
     timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     p50 = 25
@@ -138,12 +168,16 @@ $perfData = @{
     max = 500
     sample_count = 1000
 }
-$results += Test-Endpoint -Name "Performance Metrics (Stream 4)" `
-                          -URL "$BaseURL/api/v1/performance/8041" `
-                          -Method "POST" `
-                          -Body $perfData
+if (Test-Endpoint -Name "Performance Metrics" -URL "$BaseURL/api/v1/performance/8041" -Method "POST" -Body $perfData) {
+    $testsPassed++
+} else {
+    $testsFailed++
+}
 
 # Test 7: Throughput Stats (Stream 5)
+Write-Host "`n═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+Write-Host "TEST 7: Throughput Stats (Stream 5)" -ForegroundColor Yellow
+Write-Host "═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
 $throughputData = @{
     timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     bytes_per_sec = 1048576
@@ -152,12 +186,16 @@ $throughputData = @{
     total_bytes_out = 2147483648
     total_connections = 10000
 }
-$results += Test-Endpoint -Name "Throughput Stats (Stream 5)" `
-                          -URL "$BaseURL/api/v1/throughput/8041" `
-                          -Method "POST" `
-                          -Body $throughputData
+if (Test-Endpoint -Name "Throughput Stats" -URL "$BaseURL/api/v1/throughput/8041" -Method "POST" -Body $throughputData) {
+    $testsPassed++
+} else {
+    $testsFailed++
+}
 
 # Test 8: Worker Health (Stream 6)
+Write-Host "`n═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+Write-Host "TEST 8: Worker Health (Stream 6)" -ForegroundColor Yellow
+Write-Host "═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
 $workerData = @{
     timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     workers = @{
@@ -166,12 +204,52 @@ $workerData = @{
     }
     worker_count = 2
 }
-$results += Test-Endpoint -Name "Worker Health (Stream 6)" `
-                          -URL "$BaseURL/api/v1/workers/status" `
-                          -Method "POST" `
-                          -Body $workerData
+if (Test-Endpoint -Name "Worker Health" -URL "$BaseURL/api/v1/workers/status" -Method "POST" -Body $workerData) {
+    $testsPassed++
+} else {
+    $testsFailed++
+}
 
-# Test 9: Port Health (Stream 7)
+# ═══════════════════════════════════════════════════════════════════════════
+# TEST 9: /connections Endpoint (v4.0.2+)
+# ═══════════════════════════════════════════════════════════════════════════
+Write-Host "`n═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+Write-Host "TEST 9: /connections Endpoint (L4 Redirector compatibility v4.0.2+)" -ForegroundColor Yellow
+Write-Host "═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+
+$connectionBody = @{
+    client_ip = "192.168.1.50"
+    client_port = 54321
+    frontend_port = 8041
+    backend_host = "192.168.1.100"
+    backend_port = 1429
+    timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
+} | ConvertTo-Json
+
+try {
+    $response = Invoke-RestMethod -Uri "$BaseURL/connections" `
+                                  -Method POST `
+                                  -Headers @{Authorization="Bearer $API_TOKEN"; "Content-Type"="application/json"} `
+                                  -Body $connectionBody `
+                                  -ErrorAction Stop
+    
+    if ($response.status -eq "success" -and $response.port -eq 8041) {
+        Write-Host "✅ PASS: /connections endpoint working" -ForegroundColor Green
+        Write-Host "   Response: $($response | ConvertTo-Json -Compress)" -ForegroundColor DarkGray
+        $testsPassed++
+    } else {
+        Write-Host "❌ FAIL: Unexpected response from /connections" -ForegroundColor Red
+        $testsFailed++
+    }
+} catch {
+    Write-Host "❌ FAIL: /connections endpoint error: $($_.Exception.Message)" -ForegroundColor Red
+    $testsFailed++
+}
+
+# Test 10: Port Health (Stream 7) - renumbered
+Write-Host "`n═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+Write-Host "TEST 10: Port Health (Stream 7)" -ForegroundColor Yellow
+Write-Host "═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
 $healthData = @{
     timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     tcp_status = "UP"
@@ -179,12 +257,16 @@ $healthData = @{
     udp_status = "DOWN"
     uptime_sec = 86400
 }
-$results += Test-Endpoint -Name "Port Health (Stream 7)" `
-                          -URL "$BaseURL/api/v1/health/8041" `
-                          -Method "POST" `
-                          -Body $healthData
+if (Test-Endpoint -Name "Port Health" -URL "$BaseURL/api/v1/health/8041" -Method "POST" -Body $healthData) {
+    $testsPassed++
+} else {
+    $testsFailed++
+}
 
-# Test 10: Lifecycle Events (Stream 8)
+# Test 11: Lifecycle Events (Stream 8) - renumbered
+Write-Host "`n═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
+Write-Host "TEST 11: Lifecycle Events (Stream 8)" -ForegroundColor Yellow
+Write-Host "═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Yellow
 $eventsData = @{
     timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
     events = @(
@@ -193,25 +275,21 @@ $eventsData = @{
     )
     count = 2
 }
-$results += Test-Endpoint -Name "Lifecycle Events (Stream 8)" `
-                          -URL "$BaseURL/api/v1/events/8041" `
-                          -Method "POST" `
-                          -Body $eventsData
+if (Test-Endpoint -Name "Lifecycle Events" -URL "$BaseURL/api/v1/events/8041" -Method "POST" -Body $eventsData) {
+    $testsPassed++
+} else {
+    $testsFailed++
+}
 
 # Summary
-Write-Host "`n"
-Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
-Write-Host "  TEST SUMMARY" -ForegroundColor Cyan
-Write-Host "═══════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "`n═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "TEST SUMMARY" -ForegroundColor Cyan
+Write-Host "═══════════════════════════════════════════════════════════════════════════" -ForegroundColor Cyan
+Write-Host "Total Tests: 11 (including /connections endpoint)" -ForegroundColor White
+Write-Host "`n✅ Passed: $testsPassed" -ForegroundColor Green
+Write-Host "❌ Failed: $testsFailed" -ForegroundColor Red
 
-$passed = ($results | Where-Object { $_ -eq $true }).Count
-$failed = ($results | Where-Object { $_ -eq $false }).Count
-
-Write-Host "`n✅ Passed: $passed" -ForegroundColor Green
-Write-Host "❌ Failed: $failed" -ForegroundColor Red
-Write-Host "📊 Total: $($results.Count)" -ForegroundColor Yellow
-
-if ($failed -eq 0) {
+if ($testsFailed -eq 0) {
     Write-Host "`n🎉 ALL TESTS PASSED!" -ForegroundColor Green
 } else {
     Write-Host "`n⚠️  SOME TESTS FAILED - Check logs for details" -ForegroundColor Yellow
