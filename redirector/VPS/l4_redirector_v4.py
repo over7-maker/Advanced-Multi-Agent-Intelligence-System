@@ -18,13 +18,13 @@ Architecture:
                Backend API (Metrics)
 
 Author: Advanced Multi-Agent Intelligence System Project
-Version: 4.0.0-final
+Version: 4.0.1-https
 Python: 3.12+
 Platform: Ubuntu 24.04 LTS
 
 Example:
     Basic usage requires environment variables to be set:
-    
+
     $ export BACKEND_API_TOKEN="your-64-char-hex-token"
     $ export API_AUTH_TOKEN="your-64-char-hex-token"
     $ export LOCALTONET_IP="111.111.11.111"
@@ -46,11 +46,13 @@ References:
 
 import asyncio
 import aiohttp
+import aiohttp.web
 import json
 import socket
 import signal
 import os
 import sys
+import ssl
 from typing import Dict, Tuple, Optional, Any, List
 from loguru import logger
 from collections import defaultdict
@@ -72,22 +74,31 @@ try:
     LOCALTONET_PORT: PortNumber = int(os.getenv("LOCALTONET_PORT", "0"))
     PORT_MAP_STR: str = os.getenv("PORT_MAP", "{}")
     PORT_MAP: PortMapping = json.loads(PORT_MAP_STR)
+
+    # HTTPS Configuration
+    BACKEND_USE_HTTPS: bool = os.getenv("BACKEND_USE_HTTPS", "false").lower() == "true"
+    BACKEND_VERIFY_SSL: bool = os.getenv("BACKEND_VERIFY_SSL", "true").lower() == "true"
 except (ValueError, json.JSONDecodeError) as e:
     logger.error(f"Configuration parsing error: {e}")
     logger.error("Please check your environment variables")
     sys.exit(1)
 
 # API endpoint for pushing connection metadata
-BACKEND_API_URL: str = f"http://{LOCALTONET_IP}:{LOCALTONET_PORT}/connections"
+# API endpoint for pushing connection metadata
+PROTOCOL: str = "https" if BACKEND_USE_HTTPS else "http"
+BACKEND_API_URL: str = f"{PROTOCOL}://{LOCALTONET_IP}:{LOCALTONET_PORT}/connections"
 
 # HTTP monitoring server configuration
 HTTP_MONITOR_PORT: PortNumber = 9090
 
 # ==================== STARTUP BANNER ====================
 logger.info("=" * 100)
-logger.info("🚀 L4 REDIRECTOR v4.0 PRODUCTION FINAL")
+logger.info("🚀 L4 REDIRECTOR v4.0.1-HTTPS PRODUCTION")
 logger.info("=" * 100)
 logger.info(f"📡 Backend API: {BACKEND_API_URL}")
+logger.info(f"🔒 HTTPS Mode: {'ENABLED' if BACKEND_USE_HTTPS else 'DISABLED'}")
+if BACKEND_USE_HTTPS:
+    logger.info(f"🔐 SSL Verify: {'ENABLED' if BACKEND_VERIFY_SSL else 'DISABLED'}")
 logger.info(f"🔧 Listening Ports: {tuple(PORT_MAP.keys())}")
 logger.info(f"🎯 HTTP Monitor: :{HTTP_MONITOR_PORT}")
 logger.info("=" * 100)
@@ -96,13 +107,13 @@ logger.info("=" * 100)
 def validate_configuration() -> None:
     """
     Validate all required configuration parameters.
-    
+
     Performs fail-fast validation of environment variables to ensure
     the service has all required configuration before attempting to start.
-    
+
     Raises:
         SystemExit: If any required configuration is missing or invalid
-        
+
     Validation Checks:
         - All tokens are non-empty and proper length (64 hex chars)
         - IP addresses are valid
@@ -110,25 +121,25 @@ def validate_configuration() -> None:
         - Port map is not empty
     """
     errors: List[str] = []
-    
+
     # Validate tokens
     if not BACKEND_API_TOKEN or len(BACKEND_API_TOKEN) != 64:
         errors.append("BACKEND_API_TOKEN must be 64 hexadecimal characters")
-    
+
     if not API_AUTH_TOKEN or len(API_AUTH_TOKEN) != 64:
         errors.append("API_AUTH_TOKEN must be 64 hexadecimal characters")
-    
+
     # Validate IP and port
     if not LOCALTONET_IP:
         errors.append("LOCALTONET_IP is required")
-    
+
     if LOCALTONET_PORT <= 0 or LOCALTONET_PORT > 65535:
         errors.append("LOCALTONET_PORT must be between 1 and 65535")
-    
+
     # Validate port map
     if not PORT_MAP:
         errors.append("PORT_MAP must contain at least one port mapping")
-    
+
     # Validate each port mapping
     for port_str, backend_info in PORT_MAP.items():
         try:
@@ -137,17 +148,17 @@ def validate_configuration() -> None:
                 errors.append(f"Invalid port number: {port_str}")
         except ValueError:
             errors.append(f"Invalid port format: {port_str}")
-        
+
         if not isinstance(backend_info, list) or len(backend_info) != 2:
             errors.append(f"Invalid backend info for port {port_str}")
-    
+
     if errors:
         logger.error("Configuration validation failed:")
         for error in errors:
             logger.error(f"  ❌ {error}")
         logger.error("\nPlease fix the configuration and restart the service")
         sys.exit(1)
-    
+
     logger.info("✅ Configuration validation passed")
 
 # Validate configuration at startup
@@ -171,30 +182,48 @@ http_session: Optional[aiohttp.ClientSession] = None
 async def init_http_session() -> None:
     """
     Initialize global aiohttp client session.
-    
+
     Creates a single reusable HTTP session with appropriate timeouts
     for making requests to the backend API. Using a single session
     provides connection pooling and improved performance.
-    
+
     Timeout Configuration:
         - Total timeout: 10 seconds
         - Connect timeout: 5 seconds
-        
+
+    SSL/TLS Configuration:
+        - Can disable certificate verification for self-signed certs
+        - Controlled by BACKEND_VERIFY_SSL environment variable
+
     Side Effects:
         Sets the global `http_session` variable
     """
     global http_session
     timeout = aiohttp.ClientTimeout(total=10, connect=5)
-    http_session = aiohttp.ClientSession(timeout=timeout)
-    logger.info("✅ HTTP session initialized")
+
+    # SSL context for HTTPS
+    ssl_context = None
+    if BACKEND_USE_HTTPS and not BACKEND_VERIFY_SSL:
+        #import ssl
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        logger.warning("⚠️  SSL certificate verification DISABLED")
+
+    connector = aiohttp.TCPConnector(ssl=ssl_context) if ssl_context else None
+    http_session = aiohttp.ClientSession(timeout=timeout, connector=connector)
+
+    protocol_info = "HTTPS" if BACKEND_USE_HTTPS else "HTTP"
+    verify_info = "(verify disabled)" if (BACKEND_USE_HTTPS and not BACKEND_VERIFY_SSL) else ""
+    logger.info(f"✅ HTTP session initialized using {protocol_info} {verify_info}")
 
 async def close_http_session() -> None:
     """
     Close global HTTP session and cleanup resources.
-    
+
     Should be called during graceful shutdown to properly close
     all pending connections and free resources.
-    
+
     Side Effects:
         Closes and clears the global `http_session` variable
     """
@@ -213,23 +242,23 @@ async def push_to_backend(
 ) -> None:
     """
     Push connection metadata to Windows backend API.
-    
+
     Sends connection information to the backend monitoring API for
     tracking and analysis. This is a fire-and-forget operation that
     should not block the main connection forwarding logic.
-    
+
     Args:
         client_ip: IP address of the connecting client
         client_port: Source port of the client connection
         frontend_port: Port on which the connection was received
         backend_host: Target backend server hostname/IP
         backend_port: Target backend server port
-        
+
     Side Effects:
         - Increments global connection statistics
         - Sends HTTP POST request to backend API
         - Logs success/failure
-        
+
     Note:
         This function increments statistics immediately before making
         the API call to ensure counts are accurate even if the push fails.
@@ -257,7 +286,7 @@ async def push_to_backend(
             logger.error("HTTP session not initialized")
             stats["backend_push_failures"] += 1
             return
-            
+
         async with http_session.post(
             BACKEND_API_URL,
             json=payload,
@@ -293,24 +322,24 @@ async def forward_data(
 ) -> None:
     """
     Forward data bidirectionally between client and backend.
-    
+
     Reads data from the source stream and writes it to the destination
     stream in chunks. Tracks bytes transferred for statistics.
-    
+
     Args:
         reader: Stream to read data from
         writer: Stream to write data to
         direction: Direction identifier ("client_to_backend" or "backend_to_client")
         frontend_port: Frontend port number for statistics tracking
-        
+
     Side Effects:
         - Transfers data between streams
         - Updates byte transfer statistics
         - Closes writer on completion or error
-        
+
     Buffer Size:
         8192 bytes per read operation (optimal for most network conditions)
-        
+
     Note:
         Exceptions are caught and logged at debug level to avoid noise
         from normal connection terminations.
@@ -351,17 +380,17 @@ async def handle_client(
 ) -> None:
     """
     Handle individual client connection with L4 TCP forwarding.
-    
+
     Accepts a client connection, establishes a connection to the backend,
     and sets up bidirectional data forwarding between them.
-    
+
     Args:
         client_reader: Stream for reading from client
         client_writer: Stream for writing to client
         frontend_port: Port on which connection was accepted
         backend_host: Target backend hostname/IP
         backend_port: Target backend port
-        
+
     Connection Flow:
         1. Extract client information
         2. Push metadata to backend API (async, non-blocking)
@@ -369,10 +398,10 @@ async def handle_client(
         4. Set up bidirectional forwarding
         5. Wait for completion
         6. Clean up resources
-        
+
     Timeout:
         10 seconds for backend connection establishment
-        
+
     Side Effects:
         - Creates backend connection
         - Spawns background task for API push
@@ -456,24 +485,24 @@ async def tcp_worker(
 ) -> None:
     """
     TCP worker process for specific port.
-    
+
     Creates a TCP server that listens on the specified port and forwards
     connections to the configured backend. Multiple workers can listen on
     the same port using SO_REUSEPORT for load balancing.
-    
+
     Args:
         port: Port number to listen on
         backend_host: Target backend hostname/IP
         backend_port: Target backend port
         worker_id: Unique identifier for this worker (for logging)
-        
+
     Socket Options:
         - SO_REUSEPORT: Enables multiple workers per port
         - Allows kernel-level load balancing
-        
+
     Lifecycle:
         Runs indefinitely until cancelled or service shutdown
-        
+
     Side Effects:
         - Binds to specified port
         - Accepts and handles incoming connections
@@ -492,7 +521,7 @@ async def tcp_worker(
         port,
         reuse_port=True
     )
-    
+
     logger.info(
         f"✅ [PORT {port}] TCP worker tcp_{port}_{worker_id} started"
     )
@@ -504,19 +533,19 @@ async def tcp_worker(
 async def http_status_handler(request: aiohttp.web.Request) -> aiohttp.web.Response:
     """
     HTTP status endpoint handler.
-    
+
     Provides real-time service metrics and statistics via HTTP endpoint.
     Requires bearer token authentication.
-    
+
     Args:
         request: aiohttp request object
-        
+
     Returns:
         JSON response with service status and metrics
-        
+
     Authentication:
         Requires "Authorization: Bearer <API_AUTH_TOKEN>" header
-        
+
     Response Format:
         {
             "status": "ok",
@@ -534,7 +563,7 @@ async def http_status_handler(request: aiohttp.web.Request) -> aiohttp.web.Respo
                 }
             }
         }
-        
+
     Status Codes:
         200: Success
         401: Unauthorized (invalid or missing token)
@@ -542,7 +571,7 @@ async def http_status_handler(request: aiohttp.web.Request) -> aiohttp.web.Respo
     # Constant-time token comparison to prevent timing attacks
     auth_header: str = request.headers.get("Authorization", "")
     expected_auth: str = f"Bearer {API_AUTH_TOKEN}"
-    
+
     # Use constant-time comparison
     if not _constant_time_compare(auth_header, expected_auth):
         logger.warning(
@@ -569,44 +598,44 @@ async def http_status_handler(request: aiohttp.web.Request) -> aiohttp.web.Respo
 def _constant_time_compare(a: str, b: str) -> bool:
     """
     Constant-time string comparison to prevent timing attacks.
-    
+
     Args:
         a: First string
         b: Second string
-        
+
     Returns:
         True if strings are equal, False otherwise
-        
+
     Security:
         Uses bitwise operations to ensure comparison takes constant time
         regardless of where the first difference occurs.
     """
     if len(a) != len(b):
         return False
-    
+
     result = 0
     for x, y in zip(a, b):
         result |= ord(x) ^ ord(y)
-    
+
     return result == 0
 
 async def http_server() -> None:
     """
     HTTP monitoring server.
-    
+
     Creates and runs the HTTP server for monitoring endpoints.
     Provides health checks and real-time metrics.
-    
+
     Endpoints:
         GET /status - Service statistics and metrics (requires auth)
-        
+
     Configuration:
         - Listens on all interfaces (0.0.0.0)
         - Port: 9090 (configurable via HTTP_MONITOR_PORT)
-        
+
     Lifecycle:
         Runs indefinitely until service shutdown
-        
+
     Side Effects:
         - Binds to HTTP monitoring port
         - Logs server startup
@@ -628,18 +657,18 @@ async def http_server() -> None:
 async def main() -> None:
     """
     Main service entry point.
-    
+
     Initializes all service components and starts the event loop.
-    
+
     Startup Sequence:
         1. Initialize HTTP session
         2. Start HTTP monitoring server
         3. Start TCP workers (5 per configured port)
         4. Wait for all tasks
-        
+
     Workers:
         5 workers per port for load distribution using SO_REUSEPORT
-        
+
     Error Handling:
         Individual task exceptions are caught and logged but don't
         stop other tasks from running.
@@ -676,28 +705,28 @@ async def main() -> None:
 def shutdown_handler(signum: int, frame: Any) -> None:
     """
     Signal handler for graceful shutdown.
-    
+
     Handles SIGINT (Ctrl+C) and SIGTERM (systemd stop) signals to
     perform clean shutdown of the service.
-    
+
     Args:
         signum: Signal number received
         frame: Current stack frame (unused)
-        
+
     Shutdown Actions:
         1. Log shutdown initiation
         2. Close HTTP session
         3. Exit with code 0
-        
+
     Side Effects:
         Terminates the process after cleanup
     """
     signal_name: str = signal.Signals(signum).name
     logger.info(f"🛑 Shutdown signal received: {signal_name}")
-    
+
     # Create a task to close HTTP session
     asyncio.create_task(close_http_session())
-    
+
     logger.info("✅ Graceful shutdown complete")
     sys.exit(0)
 
@@ -717,7 +746,7 @@ if __name__ == "__main__":
             logger.info("✅ Using uvloop for enhanced performance")
         except ImportError:
             logger.info("ℹ️  uvloop not available, using default event loop")
-        
+
         # Run the main event loop
         asyncio.run(main())
     except KeyboardInterrupt:
