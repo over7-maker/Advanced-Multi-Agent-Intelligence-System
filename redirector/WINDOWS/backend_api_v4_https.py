@@ -6,7 +6,7 @@
 ║                        + L4 REDIRECTOR COMPATIBILITY FIX                  ║
 ╚═══════════════════════════════════════════════════════════════════════════
 
-Release: 2026-02-02
+Release: 2026-02-04
 Version: 4.0.3-https-enabled
 Compatible: Windows Server 2019/2022 + Python 3.12
 Repository: github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System
@@ -227,6 +227,240 @@ async def close_db_pool():
 # [TRUNCATED FOR SPACE - USE ORIGINAL FUNCTIONS]
 
 # ════════════════════════════════════════════════════════════════════════════
+# DATABASE OPERATIONS - BATCH INSERTS
+# ════════════════════════════════════════════════════════════════════════════
+
+async def batch_insert_web_connections(data: List[Dict[str, Any]], port: int):
+    """Batch insert web connections (Stream 1)"""
+    if not data or not db_pool:
+        return
+    
+    query = """
+        INSERT INTO web_connections 
+        (timestamp, port, client_ip, client_port, bytes_in, bytes_out, 
+         duration_ms, worker_id, connection_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    """
+    
+    try:
+        async with db_pool.acquire() as conn:
+            await conn.executemany(
+                query,
+                [
+                    (
+                        item.get('timestamp'),
+                        port,
+                        item.get('client_ip'),
+                        item.get('client_port'),
+                        item.get('bytes_in', 0),
+                        item.get('bytes_out', 0),
+                        item.get('duration_ms', 0),
+                        item.get('worker_id'),
+                        item.get('connection_id')
+                    )
+                    for item in data
+                ]
+            )
+        logger.debug(f"💾 Inserted {len(data)} web connections (port {port})")
+    except Exception as e:
+        logger.error(f"❌ Batch insert web_connections failed: {e}")
+
+async def batch_insert_l2n_tunnels(data: List[Dict[str, Any]], port: int):
+    """Batch insert L2N tunnels (Stream 2)"""
+    if not data or not db_pool:
+        return
+    
+    query = """
+        INSERT INTO l2n_tunnels
+        (timestamp, port, backend_ip, backend_port, duration_ms, latency_ms,
+         worker_id, tunnel_status, localtonet_gateway, bytes_transferred)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    """
+    
+    try:
+        async with db_pool.acquire() as conn:
+            await conn.executemany(
+                query,
+                [
+                    (
+                        item.get('timestamp'),
+                        port,
+                        item.get('backend_ip'),
+                        item.get('backend_port'),
+                        item.get('duration_ms', 0),
+                        item.get('latency_ms', 0),
+                        item.get('worker_id'),
+                        item.get('tunnel_status'),
+                        item.get('localtonet_gateway'),
+                        item.get('bytes_transferred', 0)
+                    )
+                    for item in data
+                ]
+            )
+        logger.debug(f"💾 Inserted {len(data)} L2N tunnels (port {port})")
+    except Exception as e:
+        logger.error(f"❌ Batch insert l2n_tunnels failed: {e}")
+
+async def insert_error_event(data: Dict[str, Any], port: int):
+    """Insert error event (Stream 3)"""
+    if not db_pool:
+        return
+    
+    query = """
+        INSERT INTO connection_errors
+        (timestamp, port, error_type, backend_ip, backend_port,
+         client_ip, client_port, error_message, worker_id)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    """
+    
+    try:
+        async with db_pool.acquire() as conn:
+            await conn.execute(
+                query,
+                data.get('timestamp'),
+                port,
+                data.get('error_type'),
+                data.get('backend_ip'),
+                data.get('backend_port'),
+                data.get('client_ip'),
+                data.get('client_port'),
+                data.get('error_message'),
+                data.get('worker_id')
+            )
+        logger.debug(f"💾 Inserted error event (port {port})")
+    except Exception as e:
+        logger.error(f"❌ Insert connection_errors failed: {e}")
+
+async def insert_performance_metrics(data: Dict[str, Any], port: int):
+    """Insert performance metrics (Stream 4)"""
+    if not db_pool:
+        return
+    
+    query = """
+        INSERT INTO performance_metrics
+        (timestamp, port, p50, p95, p99, min_latency, max_latency, sample_count)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    """
+    
+    try:
+        async with db_pool.acquire() as conn:
+            await conn.execute(
+                query,
+                data.get('timestamp'),
+                port,
+                data.get('p50'),
+                data.get('p95'),
+                data.get('p99'),
+                data.get('min'),
+                data.get('max'),
+                data.get('sample_count')
+            )
+        logger.debug(f"💾 Inserted performance metrics (port {port})")
+    except Exception as e:
+        logger.error(f"❌ Insert performance_metrics failed: {e}")
+
+async def insert_throughput_stats(data: Dict[str, Any], port: int):
+    """Insert throughput statistics (Stream 5)"""
+    if not db_pool:
+        return
+    
+    query = """
+        INSERT INTO throughput_stats
+        (timestamp, port, bytes_per_sec, connections_per_sec,
+         total_bytes_in, total_bytes_out, total_connections)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+    """
+    
+    try:
+        async with db_pool.acquire() as conn:
+            await conn.execute(
+                query,
+                data.get('timestamp'),
+                port,
+                data.get('bytes_per_sec'),
+                data.get('connections_per_sec'),
+                data.get('total_bytes_in'),
+                data.get('total_bytes_out'),
+                data.get('total_connections')
+            )
+        logger.debug(f"💾 Inserted throughput stats (port {port})")
+    except Exception as e:
+        logger.error(f"❌ Insert throughput_stats failed: {e}")
+
+async def insert_worker_status(data: Dict[str, Any]):
+    """Insert worker status (Stream 6)"""
+    if not db_pool:
+        return
+    
+    query = """
+        INSERT INTO worker_health
+        (timestamp, worker_data, worker_count)
+        VALUES ($1, $2, $3)
+    """
+    
+    try:
+        async with db_pool.acquire() as conn:
+            await conn.execute(
+                query,
+                data.get('timestamp'),
+                json.dumps(data.get('workers', {})),
+                data.get('worker_count')
+            )
+        logger.debug(f"💾 Inserted worker status")
+    except Exception as e:
+        logger.error(f"❌ Insert worker_health failed: {e}")
+
+async def insert_health_check(data: Dict[str, Any], port: int):
+    """Insert health check (Stream 7)"""
+    if not db_pool:
+        return
+    
+    query = """
+        INSERT INTO port_health
+        (timestamp, port, tcp_status, tcp_latency_ms, udp_status, uptime_sec)
+        VALUES ($1, $2, $3, $4, $5, $6)
+    """
+    
+    try:
+        async with db_pool.acquire() as conn:
+            await conn.execute(
+                query,
+                data.get('timestamp'),
+                port,
+                data.get('tcp_status'),
+                data.get('tcp_latency_ms'),
+                data.get('udp_status'),
+                data.get('uptime_sec')
+            )
+        logger.debug(f"💾 Inserted health check (port {port})")
+    except Exception as e:
+        logger.error(f"❌ Insert port_health failed: {e}")
+
+async def insert_lifecycle_events(data: Dict[str, Any], port: int):
+    """Insert lifecycle events (Stream 8)"""
+    if not db_pool:
+        return
+    
+    query = """
+        INSERT INTO lifecycle_events
+        (timestamp, port, events, event_count)
+        VALUES ($1, $2, $3, $4)
+    """
+    
+    try:
+        async with db_pool.acquire() as conn:
+            await conn.execute(
+                query,
+                data.get('timestamp'),
+                port,
+                json.dumps(data.get('events', [])),
+                data.get('count')
+            )
+        logger.debug(f"💾 Inserted lifecycle events (port {port})")
+    except Exception as e:
+        logger.error(f"❌ Insert lifecycle_events failed: {e}")
+
+# ════════════════════════════════════════════════════════════════════════════
 # HTTP API - SECURITY MIDDLEWARE
 # ════════════════════════════════════════════════════════════════════════════
 
@@ -269,6 +503,245 @@ async def auth_middleware(request, handler):
 # Copy all handler functions from backend_api_v4.py here...
 # (handle_connection_metadata, handle_web_connections, handle_l2n_tunnels, etc.)
 # [TRUNCATED FOR SPACE - USE ORIGINAL FUNCTIONS]
+
+# ════════════════════════════════════════════════════════════════════════════
+# HTTP API - DATA STREAM ENDPOINTS
+# ════════════════════════════════════════════════════════════════════════════
+
+async def handle_connection_metadata(request):
+    """
+    NEW: Handle connection metadata from L4 Redirector
+    Accepts connection info and stores in web_connections table
+    """
+    try:
+        data = await request.json()
+        
+        # Extract fields from L4 redirector format
+        port = data.get('frontend_port', 0)
+        client_ip = data.get('client_ip', 'unknown')
+        client_port = data.get('client_port', 0)
+        backend_host = data.get('backend_host', '')
+        backend_port = data.get('backend_port', 0)
+        timestamp_str = data.get('timestamp', datetime.now(timezone.utc).isoformat())
+        
+        # ✅ CRITICAL FIX: Parse timestamp string to datetime object
+        if isinstance(timestamp_str, str):
+            try:
+                # Handle ISO 8601 format with or without 'Z'
+                timestamp = dateutil_parser.isoparse(timestamp_str)
+            except Exception:
+                # Fallback to current time if parsing fails
+                timestamp = datetime.now(timezone.utc)
+        else:
+            timestamp = timestamp_str
+        
+        # Insert into database
+        if db_pool:
+            query = """
+                INSERT INTO web_connections 
+                (timestamp, port, client_ip, client_port, bytes_in, bytes_out, 
+                 duration_ms, worker_id, connection_id)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            """
+            
+            async with db_pool.acquire() as conn:
+                await conn.execute(
+                    query,
+                    timestamp,
+                    port,
+                    client_ip,
+                    client_port,
+                    0,  # bytes_in (will be updated later)
+                    0,  # bytes_out (will be updated later)
+                    0,  # duration_ms (will be calculated later)
+                    'l4-redirector',  # worker_id
+                    f"{client_ip}:{client_port}"  # connection_id
+                )
+            
+            logger.debug(f"💾 Connection metadata stored: {client_ip}:{client_port} → {backend_host}:{backend_port}")
+        
+        return web.json_response({
+            "status": "success",
+            "port": port,
+            "client": f"{client_ip}:{client_port}"
+        }, status=201)
+        
+    except Exception as e:
+        logger.error(f"❌ /connections error: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_web_connections(request):
+    """Stream 1: Web connections (batched)"""
+    try:
+        port = int(request.match_info['port'])
+        data = await request.json()
+        
+        # Handle both single dict and list of dicts
+        if isinstance(data, dict):
+            data = [data]
+        
+        await batch_insert_web_connections(data, port)
+        
+        return web.json_response({
+            "status": "success",
+            "inserted": len(data),
+            "port": port
+        })
+    except Exception as e:
+        logger.error(f"❌ /api/v1/web/{port} error: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_l2n_tunnels(request):
+    """Stream 2: L2N tunnels (batched)"""
+    try:
+        port = int(request.match_info['port'])
+        data = await request.json()
+        
+        if isinstance(data, dict):
+            data = [data]
+        
+        await batch_insert_l2n_tunnels(data, port)
+        
+        return web.json_response({
+            "status": "success",
+            "inserted": len(data),
+            "port": port
+        })
+    except Exception as e:
+        logger.error(f"❌ /api/v1/l2n/{port} error: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_errors(request):
+    """Stream 3: Connection errors"""
+    try:
+        port = int(request.match_info['port'])
+        data = await request.json()
+        
+        await insert_error_event(data, port)
+        
+        return web.json_response({"status": "success", "port": port})
+    except Exception as e:
+        logger.error(f"❌ /api/v1/errors/l2n/{port} error: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_performance(request):
+    """Stream 4: Performance metrics"""
+    try:
+        port = int(request.match_info['port'])
+        data = await request.json()
+        
+        await insert_performance_metrics(data, port)
+        
+        return web.json_response({"status": "success", "port": port})
+    except Exception as e:
+        logger.error(f"❌ /api/v1/performance/{port} error: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_throughput(request):
+    """Stream 5: Throughput statistics"""
+    try:
+        port = int(request.match_info['port'])
+        data = await request.json()
+        
+        await insert_throughput_stats(data, port)
+        
+        return web.json_response({"status": "success", "port": port})
+    except Exception as e:
+        logger.error(f"❌ /api/v1/throughput/{port} error: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_workers(request):
+    """Stream 6: Worker health"""
+    try:
+        data = await request.json()
+        
+        await insert_worker_status(data)
+        
+        return web.json_response({"status": "success"})
+    except Exception as e:
+        logger.error(f"❌ /api/v1/workers/status error: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_health(request):
+    """Stream 7: Port health checks"""
+    try:
+        port = int(request.match_info['port'])
+        data = await request.json()
+        
+        await insert_health_check(data, port)
+        
+        return web.json_response({"status": "success", "port": port})
+    except Exception as e:
+        logger.error(f"❌ /api/v1/health/{port} error: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+async def handle_events(request):
+    """Stream 8: Lifecycle events"""
+    try:
+        port = int(request.match_info['port'])
+        data = await request.json()
+        
+        await insert_lifecycle_events(data, port)
+        
+        return web.json_response({"status": "success", "port": port})
+    except Exception as e:
+        logger.error(f"❌ /api/v1/events/{port} error: {e}")
+        return web.json_response({"error": str(e)}, status=500)
+
+
+# ════════════════════════════════════════════════════════════════════════════
+# HTTP API - MONITORING ENDPOINTS
+# ════════════════════════════════════════════════════════════════════════════
+
+async def handle_api_health(request):
+    """API health check endpoint"""
+    try:
+        # Test database connection
+        if db_pool:
+            async with db_pool.acquire() as conn:
+                await conn.fetchval('SELECT 1')
+            db_status = "connected"
+        else:
+            db_status = "disconnected"
+        
+        return web.json_response({
+            "status": "ok",
+            "version": "4.0.2-timestamp-fix",
+            "database": db_status,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+    except Exception as e:
+        return web.json_response({
+            "status": "error",
+            "error": str(e)
+        }, status=500)
+
+async def handle_api_stats(request):
+    """API statistics endpoint"""
+    try:
+        stats = {}
+        
+        if db_pool:
+            async with db_pool.acquire() as conn:
+                # Get connection counts
+                stats['web_connections'] = await conn.fetchval(
+                    'SELECT COUNT(*) FROM web_connections'
+                )
+                stats['l2n_tunnels'] = await conn.fetchval(
+                    'SELECT COUNT(*) FROM l2n_tunnels'
+                )
+                stats['errors'] = await conn.fetchval(
+                    'SELECT COUNT(*) FROM connection_errors'
+                )
+        
+        return web.json_response({
+            "status": "ok",
+            "stats": stats,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        })
+    except Exception as e:
+        return web.json_response({"error": str(e)}, status=500)
+
 
 # ════════════════════════════════════════════════════════════════════════════
 # APPLICATION SETUP
@@ -344,8 +817,3 @@ def main():
 if __name__ == '__main__':
     main()
 
-# Note: Due to character limits, this file references the original backend_api_v4.py
-# for database insert functions and endpoint handlers. In production:
-# 1. Copy all insert functions from backend_api_v4.py (lines ~150-450)
-# 2. Copy all handler functions from backend_api_v4.py (lines ~500-750)
-# 3. Ensure all imports and dependencies are included
