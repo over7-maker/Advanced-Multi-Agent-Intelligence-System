@@ -62,19 +62,24 @@ class AgentTool(ABC):
 
 class ToolRegistry:
     """
-    Registry for managing all available tools
+    Registry for managing all available tools with category support
     """
     
     def __init__(self):
         self.tools: Dict[str, AgentTool] = {}
         self.logger = logging.getLogger(f"{__name__}.ToolRegistry")
     
-    def register(self, tool: AgentTool):
-        """Register a tool"""
+    def register(self, tool: AgentTool, category: Optional[str] = None):
+        """Register a tool with optional category"""
         if tool.name in self.tools:
             self.logger.warning(f"Tool {tool.name} already registered, overwriting")
         self.tools[tool.name] = tool
-        self.logger.info(f"Registered tool: {tool.name}")
+        
+        # Set category attribute if provided
+        if category:
+            tool.category = category
+        
+        self.logger.info(f"Registered tool: {tool.name}" + (f" (category: {category})" if category else ""))
     
     def get(self, name: str) -> Optional[AgentTool]:
         """Get a tool by name"""
@@ -85,11 +90,24 @@ class ToolRegistry:
         return list(self.tools.keys())
     
     def get_tools_by_category(self, category: str) -> List[AgentTool]:
-        """Get tools by category (if tools have category attribute)"""
-        return [
-            tool for tool in self.tools.values()
-            if hasattr(tool, 'category') and tool.category == category
-        ]
+        """Get tools by category"""
+        from .tool_categories import ToolCategory, get_tools_by_category as get_tools_by_cat
+        
+        # Try to get from tool_categories first
+        try:
+            cat_enum = ToolCategory(category)
+            tool_names = get_tools_by_cat(cat_enum)
+            return [self.tools[name] for name in tool_names if name in self.tools]
+        except (ValueError, KeyError):
+            # Fallback to attribute-based lookup
+            return [
+                tool for tool in self.tools.values()
+                if hasattr(tool, 'category') and tool.category == category
+            ]
+    
+    def get_all_tools(self) -> List[AgentTool]:
+        """Get all registered tools"""
+        return list(self.tools.values())
 
 
 # Global tool registry instance
@@ -104,17 +122,31 @@ def get_tool_registry() -> ToolRegistry:
     return _global_registry
 
 
-def register_tool(tool: AgentTool):
-    """Register a tool in the global registry"""
+def register_tool(tool: AgentTool, category: Optional[str] = None):
+    """Register a tool in the global registry with optional category"""
     registry = get_tool_registry()
-    registry.register(tool)
+    registry.register(tool, category)
 
 
 __all__ = [
     'AgentTool',
     'ToolRegistry',
     'get_tool_registry',
-    'register_tool'
+    'register_tool',
+    # Multi-tool orchestration
+    'ToolCategory',
+    'ExecutionMode',
+    'ToolMetadata',
+    'IntelligentToolSelector',
+    'MultiToolExecutor',
+    'ResultAggregator',
+    'MultiToolOrchestrator',
+    'ToolPerformanceTracker',
+    'get_intelligent_tool_selector',
+    'get_multi_tool_executor',
+    'get_result_aggregator',
+    'get_multi_tool_orchestrator',
+    'get_tool_performance_tracker',
 ]
 
 # Auto-import and register tools
@@ -122,4 +154,15 @@ try:
     from . import register_tools  # noqa: F401
 except ImportError:
     pass  # Tools will be registered when imported
+
+# Import multi-tool components (lazy import to avoid circular dependencies)
+try:
+    from .tool_categories import ToolCategory, ExecutionMode, ToolMetadata  # noqa: F401
+    from .intelligent_tool_selector import IntelligentToolSelector, get_intelligent_tool_selector  # noqa: F401
+    from .multi_tool_executor import MultiToolExecutor, get_multi_tool_executor  # noqa: F401
+    from .result_aggregator import ResultAggregator, get_result_aggregator  # noqa: F401
+    from .multi_tool_orchestrator import MultiToolOrchestrator, get_multi_tool_orchestrator  # noqa: F401
+    from .tool_performance_tracker import ToolPerformanceTracker, get_tool_performance_tracker  # noqa: F401
+except ImportError:
+    pass  # Components will be imported when needed
 
