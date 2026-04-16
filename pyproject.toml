@@ -131,6 +131,7 @@ extend-exclude = [
     "nginx/logs",
     "frontend/test-results",
     ".pytest_basetemp",
+    "tests/validation",
     "system-prompts-and-models-of-ai-tools-main",
     "ultimate_16_api_fallback_manager.py",
     "ultimate_fallback_manager_test.txt",
@@ -141,6 +142,7 @@ extend-exclude = [
     "verify_integration.py",
     "verify_setup.py",
     "working_test.py",
+    "tests/unit/test_tools_comprehensive.py",
 ]
 
 [project.scripts]
