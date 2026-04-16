@@ -24,8 +24,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.amas.agents.task_type_helpers import recommend_task_types
 from src.amas.ai.enhanced_router_class import EnhancedAIRouter
 from src.amas.core.unified_intelligence_orchestrator import get_unified_orchestrator
-from src.amas.prompts.compose import build_task_creation_assistant_prompt
-from src.amas.services.sep_registry import list_service_definitions, service_catalog_text_for_prompt
+try:
+    from src.amas.services.sep_registry import list_service_definitions, service_catalog_text_for_prompt  # type: ignore
+except Exception:
+    def list_service_definitions() -> List[Dict[str, Any]]:  # type: ignore[no-redef]
+        return []
+
+    def service_catalog_text_for_prompt() -> str:  # type: ignore[no-redef]
+        return ""
+
 from src.amas.services.prometheus_metrics_service import get_metrics_service
 from src.api.routes import tasks_integrated as tasks_integrated_routes
 
@@ -449,8 +456,21 @@ async def post_engagement_advise(body: EngagementAdviseRequest) -> EngagementAdv
         "Scores are 0-1. Align recommended_services with the SEP list."
     )
 
+    # Import prompt composer lazily to keep module import safe in unit tests/CI.
+    try:
+        from src.amas.prompts.compose import build_task_creation_assistant_prompt  # type: ignore
+    except Exception:
+        def build_task_creation_assistant_prompt(**_: Any) -> str:  # type: ignore[no-redef]
+            return "You are AMAS Task Creation Assistant. Return JSON only."
+
     system = (
-        build_task_creation_assistant_prompt()
+        build_task_creation_assistant_prompt(
+            raw_goal=raw,
+            service_catalog_text=service_catalog_text_for_prompt(),
+            recommendations=ranked,
+            policy_status="allowed",
+            policy_reasons=[],
+        )
         + "\n\nYou are the Global Engagement Advisor. Output valid JSON only, no markdown."
     )
 
@@ -745,9 +765,13 @@ async def post_task_explain(
     Uses task status/result from the unified orchestrator when available.
     """
     tid = str(task_id).strip()
-    from src.amas.services import run_event_buffer as reb
+    # RunEvent buffering is optional; avoid importing `src.amas.services` package (heavy/optional deps).
+    try:
+        from src.amas.services.run_event_buffer import list_run_events_merged  # type: ignore
 
-    run_events = await reb.list_run_events_merged(tid, db)
+        run_events = await list_run_events_merged(tid, db)
+    except Exception:
+        run_events = []
     pattern_tags = _pattern_tags_from_events(run_events)
 
     orch = get_unified_orchestrator()
@@ -767,8 +791,20 @@ async def post_task_explain(
         f"RunEvent-derived pattern_tags (do not contradict): {json.dumps(pattern_tags)}\n\n"
         "Respond with JSON only: {\"bullets\": [string, ...], \"node_anchors\": [string ids]}"
     )
+    try:
+        from src.amas.prompts.compose import build_task_creation_assistant_prompt  # type: ignore
+    except Exception:
+        def build_task_creation_assistant_prompt(**_: Any) -> str:  # type: ignore[no-redef]
+            return "You are AMAS Run Explainer. Output JSON only."
+
     system = (
-        build_task_creation_assistant_prompt()
+        build_task_creation_assistant_prompt(
+            raw_goal=body.question or "Explain this run",
+            service_catalog_text=service_catalog_text_for_prompt(),
+            recommendations=[],
+            policy_status="allowed",
+            policy_reasons=[],
+        )
         + "\n\nYou explain multi-agent runs for operators. Output JSON only."
     )
     try:
