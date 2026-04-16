@@ -196,4 +196,82 @@ The AMAS system is now **100% complete** and ready for production deployment wit
 **Security Level**: 🔒 **ENTERPRISE-GRADE**  
 **Quality Level**: ⭐ **EXCELLENT**
 
-*The AMAS system represents a breakthrough in multi-agent AI intelligence systems, ready for enterprise deployment and real-world intelligence operations.*
+Run from the repository root. **PowerShell has no `export`** (that is bash/zsh); set variables with `$env:NAME = "value"`.
+
+**Windows (PowerShell)** — copy this block:
+
+```powershell
+$env:PYTHONPATH = "src"
+$env:AMAS_LOCAL_ONLY = "1"
+python -m pytest tests/unit/ -q --tb=short --strict-markers
+python -m pytest tests/unit/ -m smoke -q --tb=short --strict-markers
+python -m pytest tests/integration/test_tasks_integrated_integration.py -q --tb=short
+```
+
+**Linux / macOS (bash)**:
+
+```bash
+export PYTHONPATH=src
+export AMAS_LOCAL_ONLY=1
+python -m pytest tests/unit/ -q --tb=short --strict-markers
+python -m pytest tests/unit/ -m smoke -q --tb=short --strict-markers
+python -m pytest tests/integration/test_tasks_integrated_integration.py -q --tb=short
+```
+
+The last command is the optional mocked integration job (matches CI).
+
+**Frontend (optional, matches integration CI):** from `frontend/`, `npm ci && npm run build && npm run typecheck && npm run test:components && npm run e2e:interactive && npm run e2e:a11y`.
+
+**Strict gate workflow:** [`.github/workflows/release-candidate-gate.yml`](../../.github/workflows/release-candidate-gate.yml) (tags `v*` or manual `workflow_dispatch`).
+
+**Optional Postgres + Alembic lane (matches [`integration-real-db.yml`](../../.github/workflows/integration-real-db.yml)):** requires a reachable `DATABASE_URL` and `alembic upgrade head`, then `pytest tests/real_db -m real_db`. Run on PRs touching DB/migrations or before a major release.
+
+**No-go** if these fail on the commit you intend to ship.
+
+---
+
+## 2. Environment and security (minimum bar)
+
+Configure via secrets manager or env files **never committed**. Cross-check [`.env.example`](../../.env.example).
+
+| Item | Production expectation |
+|------|-------------------------|
+| `ENVIRONMENT` | `production` |
+| `DEBUG` | `false` |
+| `RELOAD` | `false` |
+| `SECRET_KEY` | Strong random value (not example placeholder) |
+| `AMAS_JWT_SECRET` | Strong random value (do not use application defaults) |
+| `AMAS_ENCRYPTION_KEY` | Strong 32+ character secret (do not use application defaults) |
+| `DATABASE_URL` / DB passwords | Strong, unique, TLS to Postgres where possible |
+| `REDIS_URL`, `NEO4J_PASSWORD` | Strong, unique |
+| `AMAS_REQUIRE_AUTH` | `true` once `SecureAuthenticationManager` initializes successfully from [`config/security_config.yaml`](../../config/security_config.yaml) (or equivalent). If auth init fails, production must **not** fall back to mock users. |
+| `AMAS_ALLOW_DEMO_API` | `false` in real production. When `ENVIRONMENT` is `production` / `staging` / `prod`, endpoints that are not backed by persistent storage (see [`src/api/production_guard.py`](../../src/api/production_guard.py)) return **501** unless this is explicitly `true` (demos only). Prefer [`tasks_integrated`](../../src/api/routes/tasks_integrated.py) and auth-backed user routes. |
+| `ALLOWED_ORIGINS` / CORS | Comma-separated list; [`src/amas/api/main.py`](../../src/amas/api/main.py) `_cors_allow_origins()` applies it to FastAPI `CORSMiddleware` (defaults to local dev ports if unset) |
+| `API_DOCS_ENABLED` | Consider `false` for public internet unless docs are intentional |
+| Webhook secrets | `GITHUB_WEBHOOK_SECRET`, `SLACK_SIGNING_SECRET` set if those routes are used |
+| `AMAS_EXPOSE_AI_DEBUG` | `false` unless you explicitly want provider debug on system routes |
+
+Auth behavior is implemented in [`src/amas/api/main.py`](../../src/amas/api/main.py) (`verify_auth`): production-like environments without an auth manager are rejected unless `ENVIRONMENT` is a dev-style value; `AMAS_REQUIRE_AUTH` forces failure if the manager is missing.
+
+**App lifecycle:** startup and shutdown use FastAPI `lifespan` (not deprecated `on_event`). Shutdown flushes the audit logger via `try_get_audit_logger()` then calls `AMASApplication.shutdown()`.
+
+---
+
+## 3. What “production ready” means for this repository
+
+- **Ready to deploy** means: tests above pass, secrets and auth are correctly configured, databases and Redis/Neo4j match your compose or k8s manifests, and you accept the **Partial** / **Scaffold** rows in [`CAPABILITY_MATRIX.md`](../CAPABILITY_MATRIX.md) (optional subsystems, scaffold services, critic hook stub, etc.).
+- **Not claimed**: full end-to-end UI automation in default CI, every service under `src/amas/services/` wired to the API, or compliance certifications.
+
+---
+
+## 4. Post-deploy smoke
+
+- Health: call your deployed `/health` or documented health route.
+- Metrics: `GET /api/v1/system/metrics` and confirm `metrics_available` matches whether `prometheus_client` is installed.
+- Create a minimal authenticated task (if applicable) using the same auth you configured in production.
+
+---
+
+## 5. Historical note
+
+Older versions of this file asserted completion percentages and feature lists that did not match `src/`. Use **CAPABILITY_MATRIX**, **GAP_AUDIT**, and the checklists in section 1–4 as the authoritative go-live path.

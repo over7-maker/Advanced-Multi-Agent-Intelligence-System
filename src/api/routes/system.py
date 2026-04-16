@@ -92,6 +92,121 @@ async def get_system_metrics() -> Dict[str, Any]:
         )
 
 
+@router.get("/ai-providers")
+async def get_ai_provider_debug() -> Dict[str, Any]:
+    """
+    Local debugging: router health and stats (Ollama latency, last success/failure).
+    Disabled unless AMAS_EXPOSE_AI_DEBUG=true or development environment.
+    """
+    env = (os.getenv("ENVIRONMENT") or "development").strip().lower()
+    if not os.getenv("AMAS_EXPOSE_AI_DEBUG", "").strip().lower() in (
+        "1",
+        "true",
+        "yes",
+        "on",
+    ) and env not in ("development", "dev", "local", "test"):
+        raise HTTPException(status_code=404, detail="Not found")
+    try:
+        from src.amas.ai.enhanced_router_class import get_ai_router
+
+        router = get_ai_router()
+        health = await router.get_provider_health()
+        stats = await router.get_provider_stats()
+        return {
+            "providers_health": [
+                {
+                    "provider": h.provider,
+                    "is_healthy": h.is_healthy,
+                    "response_time_ms": h.response_time_ms,
+                    "last_success": h.last_success,
+                    "last_failure": h.last_failure,
+                    "consecutive_failures": h.consecutive_failures,
+                    "success_rate_24h": h.success_rate_24h,
+                }
+                for h in health
+            ],
+            "providers_stats": stats,
+            "timestamp": datetime.now().isoformat(),
+        }
+    except Exception as e:
+        logger.error("ai-providers debug failed: %s", e, exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/topology-hotspots")
+async def get_topology_hotspots(
+    db: Optional[AsyncSession] = Depends(_optional_db_session),
+) -> Dict[str, Any]:
+    """
+    F7-2 / FE-09: lightweight hotspots from real orchestrator queue depth + Postgres task counts.
+    `summary` always carries drill-down-friendly counts when Postgres is reachable.
+    Empty `hotspots` with available=false when nothing stands out.
+    """
+    hotspots: List[Dict[str, Any]] = []
+    queue_depth: Optional[int] = None
+    try:
+        from src.amas.core.unified_intelligence_orchestrator import get_unified_orchestrator
+
+        q = int(get_unified_orchestrator().get_internal_queue_depth() or 0)
+        queue_depth = q
+        if q >= 3:
+            hotspots.append(
+                {
+                    "id": "orchestrator_queue",
+                    "severity": "warn",
+                    "detail": f"queue_depth={q}",
+                    "source": "orchestrator",
+                }
+            )
+        elif q > 0:
+            hotspots.append(
+                {
+                    "id": "orchestrator_queue",
+                    "severity": "info",
+                    "detail": f"queue_depth={q}",
+                    "source": "orchestrator",
+                }
+            )
+    except Exception as e:
+        logger.debug("topology-hotspots queue: %s", e)
+
+    counts = await _task_counts_from_db(db)
+    if counts:
+        if counts["failed_tasks"] > 0:
+            hotspots.append(
+                {
+                    "id": "task_failures",
+                    "severity": "warn" if counts["failed_tasks"] > 5 else "info",
+                    "detail": f"failed_tasks={counts['failed_tasks']}",
+                    "source": "postgres",
+                }
+            )
+        if counts["active_tasks"] > 20:
+            hotspots.append(
+                {
+                    "id": "high_active_tasks",
+                    "severity": "warn",
+                    "detail": f"active_tasks={counts['active_tasks']}",
+                    "source": "postgres",
+                }
+            )
+
+    hotspots.extend(await _recent_failed_task_hotspots(db))
+
+    summary: Dict[str, Any] = {
+        "orchestrator_queue_depth": queue_depth,
+        "postgres_task_counts": counts,
+        "postgres_counts_available": counts is not None,
+    }
+
+    return {
+        "schema_version": "topology.v2",
+        "available": len(hotspots) > 0,
+        "hotspots": hotspots,
+        "summary": summary,
+    }
+
+
 @router.get("/health")
 async def get_system_health() -> Dict[str, Any]:
     """

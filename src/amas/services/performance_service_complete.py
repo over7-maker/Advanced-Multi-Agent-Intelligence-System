@@ -1,4 +1,7 @@
 """
+SCAFFOLD / NON-CANONICAL (R0-2 duplicate pair): not imported from `src/api/` routes.
+Canonical performance path: `performance_service.py`. Safe to remove once no callers remain.
+
 Complete Performance Optimization Service for AMAS Intelligence System - Phase 3
 Provides performance optimization, caching, load balancing, and resource management
 """

@@ -6,6 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:components": "vitest run src/components/__tests__/componentSmoke.test.tsx",
+    "e2e:smoke": "playwright test --project=chromium",
+    "e2e:a11y": "playwright test e2e/a11y-command-center.spec.ts --project=chromium",
+    "e2e:interactive": "playwright test e2e/command-center-interactive.spec.ts --project=chromium",
+    "verify:frontend": "npm run build && npm run test:components && npm run e2e:smoke",
     "lint": "eslint .",
     "preview": "vite preview"
   },

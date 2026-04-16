@@ -1,0 +1,79 @@
+version: "3.8"
+
+# CI-focused full-stack E2E stack:
+# - Boots real API + backing stores so frontend Playwright can run against a live backend (no proxy ECONNREFUSED).
+# - Keep this minimal and deterministic; do not require vendor keys.
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: amas_e2e
+      POSTGRES_PASSWORD: amas_e2e_password
+      POSTGRES_DB: amas_e2e
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U amas_e2e -d amas_e2e"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  neo4j:
+    image: neo4j:5-community
+    environment:
+      NEO4J_AUTH: neo4j/amas_e2e_password
+      NEO4J_PLUGINS: '["apoc"]'
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7474"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  amas-api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      target: development
+    ports:
+      - "8000:8000"
+    environment:
+      AMAS_LOCAL_ONLY: "1"
+      AMAS_ALLOW_CLOUD: "0"
+      ENVIRONMENT: "test"
+      DATABASE_URL: postgresql://amas_e2e:amas_e2e_password@postgres:5432/amas_e2e
+      REDIS_URL: redis://redis:6379/0
+      AMAS_NEO4J_URI: bolt://neo4j:7687
+      AMAS_NEO4J_USERNAME: neo4j
+      AMAS_NEO4J_PASSWORD: amas_e2e_password
+      ALLOWED_ORIGINS: http://127.0.0.1:3000,http://localhost:3000
+      AMAS_REQUIRE_AUTH: "0"
+      AMAS_DEV_MOCK_AUTH: "1"
+      AMAS_ALLOW_DEMO_API: "1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      neo4j:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+    command: ["python", "-m", "uvicorn", "src.amas.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+

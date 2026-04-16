@@ -1,4 +1,7 @@
 """
+SCAFFOLD / NON-CANONICAL (R0-2 duplicate pair): not imported from `src/api/` routes.
+Canonical monitoring path: `monitoring_service.py`. Safe to remove once no callers remain.
+
 Complete Real-time Monitoring Service for AMAS Intelligence System - Phase 3
 Provides comprehensive system monitoring, alerting, and performance optimization
 """

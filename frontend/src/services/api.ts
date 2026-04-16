@@ -57,6 +57,220 @@ export interface RecommendedAgent {
   reason: string;
 }
 
+/** Global Engagement Advisor — request `source` for analytics only (see docs/next-generation-muli-agent-ai/TECH-GEA-AND-OFFICER.md). */
+export type EngagementAdviseSource =
+  | 'engage_page'
+  | 'create_task'
+  | 'mission_console'
+  | 'workflow_builder'
+  | 'palette';
+
+export interface EngagementAdviseRequest {
+  raw_goal: string;
+  source?: EngagementAdviseSource;
+  context?: Record<string, unknown>;
+}
+
+export interface EngagementRecommendedService {
+  service_id: string;
+  score?: number;
+  rationale?: string;
+}
+
+export interface EngagementAdviseResponse {
+  schema_version?: string;
+  improved_brief?: string;
+  recommended_services?: EngagementRecommendedService[];
+  joined_engagement?: {
+    mode: 'sequential' | 'parallel';
+    steps: Array<{ service_id: string; depends_on?: string[] }>;
+  };
+  suggested_task_template_patch?: Record<string, unknown>;
+  warnings?: string[];
+  officer_checklist?: string[];
+  orchestrator_agents_hint?: string[];
+  /** F9-4: real checkpoint ids only; empty until orchestrator emits them */
+  checkpoint_ids?: string[];
+  [key: string]: unknown;
+}
+
+export interface JoinedEngagementCreateRequest {
+  improved_brief: string;
+  joined_engagement: {
+    mode?: string;
+    steps: Array<{ service_id: string; depends_on?: string[] }>;
+  };
+  source?: EngagementAdviseSource;
+  context?: Record<string, unknown>;
+  priority?: number;
+}
+
+export interface JoinedEngagementCreateResponse {
+  schema_version?: string;
+  joined_id: string;
+  mode: string;
+  created_tasks: Array<{
+    task_id: string;
+    title: string;
+    service_id: string;
+    depends_on_task_ids?: string[];
+    status?: string;
+  }>;
+  warnings?: string[];
+}
+
+/** SEP row shape is backend-defined; keep index signature for forward compatibility. */
+export interface ServiceDefinitionSummary {
+  service_id: string;
+  title?: string;
+  description?: string;
+  [key: string]: unknown;
+}
+
+export interface AgentServiceReverseIndex {
+  schema_version?: string;
+  agent_id: string;
+  services: Array<{
+    service_id: string;
+    title?: string;
+    roles: string[];
+  }>;
+}
+
+export interface OperatorProbeResponse {
+  schema_version?: string;
+  checks: Array<{
+    target: string;
+    url: string;
+    status: string;
+    detail?: string;
+    /** BE-10 / probes.v2 */
+    configured?: boolean;
+    ok?: boolean | null;
+    latency_ms?: number | null;
+    error_code?: string | null;
+  }>;
+}
+
+export interface TopologyHotspotsResponse {
+  schema_version?: string;
+  available: boolean;
+  hotspots: Array<{
+    id: string;
+    severity: string;
+    detail: string;
+    source: string;
+    task_id?: string;
+    run_id?: string;
+    timestamp?: string;
+    count?: number;
+    category?: string;
+  }>;
+  /** FE-09 drill-down: queue depth + Postgres task counts when DB is reachable */
+  summary?: {
+    orchestrator_queue_depth: number | null;
+    postgres_task_counts: {
+      active_tasks: number;
+      total_tasks: number;
+      completed_tasks: number;
+      failed_tasks: number;
+    } | null;
+    postgres_counts_available: boolean;
+  };
+}
+
+export interface SandboxTelemetryResponse {
+  schema_version?: string;
+  task_id: string;
+  available: boolean;
+  sandbox_event_count: number;
+  tool_event_count: number;
+  source: string;
+  /** v2: RunEvent-derived breakdown and recent rows */
+  event_type_counts?: Record<string, number>;
+  first_event_iso?: string | null;
+  last_event_iso?: string | null;
+  recent_sandbox_tool_events?: Array<{
+    timestamp: string;
+    event_type: string;
+    summary: string;
+  }>;
+}
+
+export interface TaskCreationSuggestion {
+  title: string;
+  reason: string;
+  confidence: number;
+  risk_level: string;
+  evidence: string[];
+  alternatives: string[];
+}
+
+export interface TaskCreationSuggestionsResponse {
+  task_type: string;
+  mode: 'off' | 'shadow' | 'assist' | 'default_on';
+  recommended_parameters: Record<string, any>;
+  required_fields: string[];
+  risk_warnings: string[];
+  suggestions: TaskCreationSuggestion[];
+  automation_actions: Array<{
+    action_id: string;
+    idempotency_key: string;
+    safe_to_apply: boolean;
+  }>;
+  policy_status: 'allowed' | 'blocked';
+  policy_reasons: string[];
+  confidence: number;
+}
+
+export interface TaskFitCheckResponse {
+  decision_id: string;
+  policy_version: string;
+  fit_score: number;
+  severity: 'low' | 'medium' | 'high';
+  selected_task_type: string;
+  inferred_task_type: string;
+  reasons: string[];
+  recommendations: Array<{ task_type: string; confidence: number; reason: string }>;
+  enforcement: 'allow' | 'warn' | 'block';
+}
+
+export interface TaskTypeAgentRecommendationResponse {
+  selected_task_type: string;
+  top_task_types: Array<{ task_type: string; confidence: number; reason: string }>;
+  recommended_agents: Array<{
+    agent_id: string;
+    agent_name: string;
+    recommendation_confidence: number;
+    reason: string;
+  }>;
+  dry_run_plan: Record<string, any>;
+}
+
+export interface TaskAssistantRefineResponse {
+  mode: 'off' | 'shadow' | 'assist' | 'default_on';
+  selected_task_type: string;
+  inferred_task_type: string;
+  fit_score: number;
+  severity: 'low' | 'medium' | 'high';
+  recommendations: Array<{ task_type: string; confidence: number; reason: string }>;
+  recommended_agents: Array<{
+    agent_id: string;
+    agent_name: string;
+    recommendation_confidence: number;
+    reason: string;
+  }>;
+  suggested_parameters: Record<string, any>;
+  suggestions: TaskCreationSuggestion[];
+  explainability: Record<string, any>;
+  /** Plain-language narrative for the UI */
+  assistant_message?: string;
+  quick_prompts?: string[];
+  suggested_title?: string;
+  suggested_description?: string;
+  suggested_target?: string;
+}
+
 export interface Agent {
   id: string;
   agent_id: string;

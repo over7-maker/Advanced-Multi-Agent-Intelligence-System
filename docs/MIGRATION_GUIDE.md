@@ -6,7 +6,14 @@ This guide helps you migrate from the previous AMAS system to the new, fully imp
 
 ## 🎯 What's New
 
-### ✅ **100% Implementation Complete**
+### ✅ Implementation status (truthful)
+
+This guide describes the migration path and the major architectural changes. For what is **Complete / Partial / Deferred / Planned** in the current tree, use:
+
+- [`docs/CAPABILITY_MATRIX.md`](CAPABILITY_MATRIX.md)
+- [`docs/GAP_AUDIT.md`](GAP_AUDIT.md)
+
+### Highlights
 - **Unified Orchestrator**: Single, consolidated control plane
 - **Real Agent Implementations**: Functional OSINT and Forensics agents
 - **Minimal Configuration**: Simplified setup (3-4 API keys vs 15+)

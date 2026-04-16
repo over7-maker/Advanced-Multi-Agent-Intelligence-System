@@ -1,0 +1,78 @@
+name: E2E (full-stack compose)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  fullstack-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      AMAS_LOCAL_ONLY: "1"
+      PYTHONPATH: ${{ github.workspace }}
+      PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install backend dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt 2>/dev/null || true
+          pip install -r requirements-dev.txt 2>/dev/null || \
+            pip install pytest pytest-asyncio httpx fastapi pydantic pydantic-settings sqlalchemy asyncpg alembic psycopg2-binary
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+        working-directory: frontend
+
+      - name: Boot full-stack services (compose)
+        run: docker compose -f docker-compose.e2e.fullstack.yml up -d --build
+
+      - name: Wait for API health
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8000/health >/dev/null; then
+              echo "API healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "API did not become healthy in time"
+          docker compose -f docker-compose.e2e.fullstack.yml ps
+          docker compose -f docker-compose.e2e.fullstack.yml logs --no-color --tail=200
+          exit 1
+
+      - name: Apply Alembic migrations (inside API container)
+        run: docker compose -f docker-compose.e2e.fullstack.yml exec -T amas-api alembic upgrade head
+
+      - name: Run Playwright interactive E2E against live backend
+        run: npm run e2e:interactive
+        working-directory: frontend
+
+      - name: Run Playwright a11y sweep against live backend
+        run: npm run e2e:a11y
+        working-directory: frontend
+
+      - name: Tear down compose stack
+        if: always()
+        run: docker compose -f docker-compose.e2e.fullstack.yml down -v
+
