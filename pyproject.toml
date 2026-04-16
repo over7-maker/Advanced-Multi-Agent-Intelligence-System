@@ -118,6 +118,27 @@ monitoring = [
 [project.urls]
 Homepage = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System"
 Documentation = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/docs"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [
+    ".cursor",
+    "frontend",
+    "nginx/logs",
+    "frontend/test-results",
+    ".pytest_basetemp",
+    "system-prompts-and-models-of-ai-tools-main",
+    "ultimate_16_api_fallback_manager.py",
+    "ultimate_fallback_manager_test.txt",
+    "universal_ai_workflow_integration.py",
+    "update_workflows_for_advanced_api_manager.py",
+    "validate_environment.py",
+    "verify_all_components.py",
+    "verify_integration.py",
+    "verify_setup.py",
+    "working_test.py",
+]
 Repository = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System"
 Issues = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues"
 Changelog = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/blob/main/CHANGELOG.md"

@@ -1,7 +1,6 @@
 """
 Kubernetes manifest validation tests.
 """
-import pytest
 from pathlib import Path
 
 from tests.fixtures.production_fixtures import k8s_manifest_path

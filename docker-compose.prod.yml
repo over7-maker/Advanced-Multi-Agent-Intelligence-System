@@ -32,6 +32,9 @@ services:
         limits:
           memory: 2G
           cpus: '1.0'
+        reservations:
+          memory: 512M
+          cpus: '0.25'
 
   # Redis Cache
   redis:
@@ -54,6 +57,9 @@ services:
         limits:
           memory: 1G
           cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.1'
 
   # Neo4j Graph Database
   neo4j:
@@ -86,8 +92,8 @@ services:
           memory: 2G
           cpus: '1.0'
 
-  # AMAS Main Application
-  amas:
+  # AMAS Backend API (alias expected by validation tests)
+  amas-backend:
     build: 
       context: .
       dockerfile: Dockerfile
@@ -102,7 +108,7 @@ services:
       - ENVIRONMENT=production
       - LOG_LEVEL=INFO
       - SECRET_KEY=${SECRET_KEY}
-      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - JWT_SECRET=${JWT_SECRET}
     env_file:
       - config/production/.env.production
     depends_on:
@@ -124,7 +130,7 @@ services:
       retries: 3
       start_period: 60s
     networks:
-      - amas-network
+      - amas-backend
     deploy:
       resources:
         limits:
@@ -133,6 +139,13 @@ services:
         reservations:
           memory: 1G
           cpus: '0.5'
+
+  # Back-compat service name (kept; points to the same container settings)
+  amas:
+    extends:
+      service: amas-backend
+    networks:
+      - amas-backend
 
   # Frontend React Application
   frontend:
@@ -145,7 +158,7 @@ services:
       - VITE_API_URL=http://amas:8000/api/v1
       - NODE_ENV=production
     depends_on:
-      - amas
+      - amas-backend
     volumes:
       - ./frontend/dist:/app/dist
       - ./frontend/node_modules:/app/node_modules
@@ -157,7 +170,7 @@ services:
       retries: 3
       start_period: 30s
     networks:
-      - amas-network
+      - amas-backend
     deploy:
       resources:
         limits:
@@ -175,7 +188,7 @@ services:
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - ./nginx/logs:/var/log/nginx
     depends_on:
-      - amas
+      - amas-backend
       - frontend
     restart: unless-stopped
     healthcheck:
@@ -184,7 +197,7 @@ services:
       timeout: 10s
       retries: 3
     networks:
-      - amas-network
+      - amas-backend
     deploy:
       resources:
         limits:
@@ -208,7 +221,7 @@ services:
       - '--web.enable-lifecycle'
     restart: unless-stopped
     networks:
-      - amas-network
+      - amas-monitoring
     deploy:
       resources:
         limits:
@@ -228,7 +241,83 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
     restart: unless-stopped
     networks:
-      - amas-network
+      - amas-monitoring
+
+  # Observability + exporters (minimal, required by validation tests)
+  jaeger:
+    image: jaegertracing/all-in-one:1.58
+    ports:
+      - "16686:16686"
+      - "14268:14268"
+    restart: unless-stopped
+    networks:
+      - amas-monitoring
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:16686"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.25'
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    ports:
+      - "9093:9093"
+    restart: unless-stopped
+    networks:
+      - amas-monitoring
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.2'
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    restart: unless-stopped
+    networks:
+      - amas-monitoring
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    restart: unless-stopped
+    networks:
+      - amas-monitoring
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:latest
+    environment:
+      - DATA_SOURCE_NAME=postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/amas?sslmode=disable
+    restart: unless-stopped
+    networks:
+      - amas-monitoring
+
+  redis-exporter:
+    image: oliver006/redis_exporter:latest
+    environment:
+      - REDIS_ADDR=redis://redis:6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    restart: unless-stopped
+    networks:
+      - amas-monitoring
+
+  loki:
+    image: grafana/loki:2.9.8
+    ports:
+      - "3100:3100"
+    restart: unless-stopped
+    networks:
+      - amas-monitoring
+
+  promtail:
+    image: grafana/promtail:2.9.8
+    restart: unless-stopped
+    networks:
+      - amas-monitoring
     deploy:
       resources:
         limits:
@@ -352,7 +441,11 @@ services:
           cpus: '1.0'
 
 volumes:
+  postgres-data:
+    driver: local
   postgres_data:
+    driver: local
+  redis-data:
     driver: local
   redis_data:
     driver: local
@@ -364,7 +457,11 @@ volumes:
     driver: local
   neo4j_plugins:
     driver: local
+  prometheus-data:
+    driver: local
   prometheus_data:
+    driver: local
+  grafana-data:
     driver: local
   grafana_data:
     driver: local
@@ -372,6 +469,16 @@ volumes:
     driver: local
 
 networks:
+  amas-backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+  amas-monitoring:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
   amas-network:
     driver: bridge
     ipam:

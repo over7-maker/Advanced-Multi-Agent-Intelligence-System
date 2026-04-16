@@ -1,7 +1,6 @@
 """
 Docker Compose validation tests.
 """
-import pytest
 from pathlib import Path
 
 from tests.fixtures.production_fixtures import docker_compose_path
