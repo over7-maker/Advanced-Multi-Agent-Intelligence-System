@@ -118,6 +118,9 @@ monitoring = [
 [project.urls]
 Homepage = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System"
 Documentation = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/docs"
+Repository = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System"
+Issues = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues"
+Changelog = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/blob/main/CHANGELOG.md"
 
 [tool.ruff]
 line-length = 100
@@ -139,9 +142,6 @@ extend-exclude = [
     "verify_setup.py",
     "working_test.py",
 ]
-Repository = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System"
-Issues = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues"
-Changelog = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/blob/main/CHANGELOG.md"
 
 [project.scripts]
 amas = "amas.cli:main"
