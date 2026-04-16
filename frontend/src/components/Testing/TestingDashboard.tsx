@@ -6,18 +6,12 @@ import {
   Box,
   Container,
   Typography,
-  Alert,
-  CircularProgress,
 } from '@mui/material';
 import {
   ExpandMore as ExpandMoreIcon,
   BugReport as BugReportIcon,
   Psychology as PsychologyIcon,
-  Storage as StorageIcon,
-  Cached as CachedIcon,
   SettingsEthernet as SettingsEthernetIcon,
-  IntegrationInstructions as IntegrationInstructionsIcon,
-  AutoAwesome as AutoAwesomeIcon,
   HealthAndSafety as HealthAndSafetyIcon,
 } from '@mui/icons-material';
 import React, { useState } from 'react';
@@ -36,7 +30,7 @@ export const TestingDashboard: React.FC = () => {
   const [expandedSection, setExpandedSection] = useState<string | false>('core-components');
 
   const handleAccordionChange = (panel: string) => (
-    event: React.SyntheticEvent,
+    _event: React.SyntheticEvent,
     isExpanded: boolean
   ) => {
     setExpandedSection(isExpanded ? panel : false);

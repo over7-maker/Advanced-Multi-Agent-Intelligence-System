@@ -26,10 +26,13 @@ db_dumps/
 .env.*.local
 .env.production
 .env.production.local
+config/production/.env.production
+config/production/docker-compose.env
 .secrets/
 secrets.yml
 secrets.yaml
 secrets.json
+secrets.json.encrypted
 *.pem
 *.key
 *.key.pub

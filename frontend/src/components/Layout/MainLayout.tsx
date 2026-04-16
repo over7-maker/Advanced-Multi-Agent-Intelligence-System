@@ -134,6 +134,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             edge="start"
             onClick={() => setDrawerOpen(!drawerOpen)}
             sx={{ mr: 2 }}
+            aria-label="Toggle navigation drawer"
+            title="Toggle navigation drawer"
           >
             <MenuIcon />
           </IconButton>

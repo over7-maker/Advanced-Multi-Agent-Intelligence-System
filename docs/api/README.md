@@ -5,11 +5,16 @@
 
 ## Overview
 
-The Advanced Multi-Agent Intelligence System (AMAS) provides a comprehensive RESTful API for interacting with the multi-agent platform. This API enables programmatic access to all AMAS features including agent orchestration, task management, monitoring, AI provider integration, and revolutionary **AI Agentic Workflows**.
+The Advanced Multi-Agent Intelligence System (AMAS) provides a comprehensive RESTful API for interacting with the multi-agent platform. This API enables programmatic access to AMAS features including agent orchestration, task management, monitoring, AI provider integration, and the operator program surfaces.
 
-**✅ 100% Implementation Verified** - All critical improvements from the project audit have been implemented and verified.
+**Truthfulness note:** “complete” is defined by **docs ↔ code ↔ CI alignment**, not by implementing every planned idea. Canonical status lives in [`docs/CAPABILITY_MATRIX.md`](../CAPABILITY_MATRIX.md) (with deep mismatch notes in [`docs/GAP_AUDIT.md`](../GAP_AUDIT.md)).
 
-**🚀 AI Agentic Workflows API** - Access the revolutionary 4-layer AI agent architecture and 16 AI providers through comprehensive API endpoints.
+**AI Agentic Workflows API** — access the orchestrator + agent architecture and AI providers through API endpoints (provider availability depends on env and `AMAS_LOCAL_ONLY` / `AMAS_ALLOW_CLOUD`).
+
+### Operator program (probes.v2)
+
+- **`GET /api/v1/probes`** — n8n/MCP health checks (**probes.v2**): [OPERATOR_PROBES.md](OPERATOR_PROBES.md). OpenAPI: `/docs` → **operator** tag (Pydantic `OperatorProbesResponseV2`).
+- **F9-5 n8n outbound JSON** (schema-only until outbound triggers ship): [N8N_OUTBOUND_F9-5.md](N8N_OUTBOUND_F9-5.md), [`schemas/n8n_webhook_payload.schema.json`](../../schemas/n8n_webhook_payload.schema.json).
 
 ### Phase 4 API Notes (PR #189)
 - Security/auth internals enhanced; API surface remains compatible

@@ -167,70 +167,14 @@ class TestExecuteTaskFullFlow:
 
 
 class TestTaskLifecycle:
-    """Test complete task lifecycle"""
-    
-    @pytest.mark.asyncio
-    @pytest.mark.integration
-    async def test_task_lifecycle(self):
-        """Test complete task lifecycle: create -> execute -> get"""
-        # This is a comprehensive test that would require full stack setup
-        # For now, we'll test the flow conceptually
-        pass
+    """Integration contract: module exports remain stable (CAP-03)."""
 
+    def test_tasks_integrated_core_exports(self):
+        from src.api.routes import tasks_integrated as ti
 
-class TestConcurrentTasks:
-    """Test concurrent task operations"""
-    
-    @pytest.mark.asyncio
-    @pytest.mark.integration
-    async def test_concurrent_tasks(self):
-        """Test concurrent task operations"""
-        # This would test concurrent task creation and execution
-        pass
-
-
-class TestDatabasePersistence:
-    """Test database persistence integration"""
-    
-    @pytest.mark.asyncio
-    @pytest.mark.integration
-    async def test_database_persistence(self):
-        """Test task persistence to database"""
-        # This would test actual database operations
-        pass
-
-
-class TestCacheIntegration:
-    """Test cache integration"""
-    
-    @pytest.mark.asyncio
-    @pytest.mark.integration
-    async def test_cache_integration(self):
-        """Test cache service integration"""
-        # This would test cache service integration
-        pass
-
-
-class TestWebSocketIntegration:
-    """Test WebSocket integration"""
-    
-    @pytest.mark.asyncio
-    @pytest.mark.integration
-    async def test_websocket_integration(self):
-        """Test WebSocket event broadcasting"""
-        # This would test WebSocket integration
-        pass
-
-
-class TestMLPredictionIntegration:
-    """Test ML prediction integration"""
-    
-    @pytest.mark.asyncio
-    @pytest.mark.integration
-    async def test_ml_prediction_integration(self):
-        """Test ML prediction integration"""
-        # This would test ML prediction service integration
-        pass
+        assert callable(ti.create_task)
+        assert callable(ti.get_task)
+        assert callable(ti.list_tasks)
 
 
 if __name__ == "__main__":

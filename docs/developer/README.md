@@ -6,7 +6,7 @@
 
 Welcome to the AMAS Developer Guide! This comprehensive documentation will help you understand the system architecture, contribute to the project, and extend AMAS capabilities. Whether you're fixing bugs, adding features, building custom agents, or working with the revolutionary **AI Agentic Workflows**, this guide has you covered.
 
-**✅ 100% Implementation Verified** - All critical improvements from the project audit have been implemented and verified.
+**Truthfulness note:** treat “complete” as **docs ↔ code ↔ CI alignment**. Canonical status lives in [`docs/CAPABILITY_MATRIX.md`](../CAPABILITY_MATRIX.md) (deep mismatches / tiers in [`docs/GAP_AUDIT.md`](../GAP_AUDIT.md)); some modules remain intentionally **Deferred / Scaffold / Planned**.
 
 **🚀 AI Agentic Workflows** - Learn about the revolutionary 4-layer AI agent architecture, 16 AI providers, and advanced workflow automation capabilities.
 

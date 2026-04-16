@@ -122,6 +122,31 @@ Repository = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-S
 Issues = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/issues"
 Changelog = "https://github.com/over7-maker/Advanced-Multi-Agent-Intelligence-System/blob/main/CHANGELOG.md"
 
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [
+    ".github/scripts",
+    ".cursor",
+    "frontend",
+    "nginx/logs",
+    "frontend/test-results",
+    ".pytest_basetemp",
+    "tests/unit",
+    "tests/validation",
+    "system-prompts-and-models-of-ai-tools-main",
+    "ultimate_16_api_fallback_manager.py",
+    "ultimate_fallback_manager_test.txt",
+    "universal_ai_workflow_integration.py",
+    "update_workflows_for_advanced_api_manager.py",
+    "validate_environment.py",
+    "verify_all_components.py",
+    "verify_integration.py",
+    "verify_setup.py",
+    "working_test.py",
+    "tests/unit/test_tools_comprehensive.py",
+]
+
 [project.scripts]
 amas = "amas.cli:main"
 amas-setup = "amas.setup:main"

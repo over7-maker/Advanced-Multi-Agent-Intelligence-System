@@ -4,7 +4,7 @@ Tests PART 6: Monitoring & Observability - OpenTelemetry Tracing
 """
 
 import pytest
-from unittest.mock import MagicMock, patch, Mock
+from unittest.mock import MagicMock, patch
 
 from src.amas.services.tracing_service import TracingService, init_tracing, get_tracing_service
 

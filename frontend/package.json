@@ -6,6 +6,13 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
+    "test": "vitest run",
+    "test:components": "vitest run src/components/__tests__/componentSmoke.test.tsx",
+    "e2e:smoke": "npx playwright test --project=chromium",
+    "e2e:a11y": "npx playwright test e2e/a11y-command-center.spec.ts --project=chromium",
+    "e2e:interactive": "npx playwright test e2e/command-center-interactive.spec.ts --project=chromium",
+    "verify:frontend": "npm run build && npm run test:components && npm run e2e:smoke",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -25,6 +32,7 @@
     "react-router-dom": "^7.11.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.54.2",
     "@types/node": "^20.10.0",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",

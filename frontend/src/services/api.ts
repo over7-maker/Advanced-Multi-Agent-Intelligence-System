@@ -57,6 +57,220 @@ export interface RecommendedAgent {
   reason: string;
 }
 
+/** Global Engagement Advisor — request `source` for analytics only (see docs/next-generation-muli-agent-ai/TECH-GEA-AND-OFFICER.md). */
+export type EngagementAdviseSource =
+  | 'engage_page'
+  | 'create_task'
+  | 'mission_console'
+  | 'workflow_builder'
+  | 'palette';
+
+export interface EngagementAdviseRequest {
+  raw_goal: string;
+  source?: EngagementAdviseSource;
+  context?: Record<string, unknown>;
+}
+
+export interface EngagementRecommendedService {
+  service_id: string;
+  score?: number;
+  rationale?: string;
+}
+
+export interface EngagementAdviseResponse {
+  schema_version?: string;
+  improved_brief?: string;
+  recommended_services?: EngagementRecommendedService[];
+  joined_engagement?: {
+    mode: 'sequential' | 'parallel';
+    steps: Array<{ service_id: string; depends_on?: string[] }>;
+  };
+  suggested_task_template_patch?: Record<string, unknown>;
+  warnings?: string[];
+  officer_checklist?: string[];
+  orchestrator_agents_hint?: string[];
+  /** F9-4: real checkpoint ids only; empty until orchestrator emits them */
+  checkpoint_ids?: string[];
+  [key: string]: unknown;
+}
+
+export interface JoinedEngagementCreateRequest {
+  improved_brief: string;
+  joined_engagement: {
+    mode?: string;
+    steps: Array<{ service_id: string; depends_on?: string[] }>;
+  };
+  source?: EngagementAdviseSource;
+  context?: Record<string, unknown>;
+  priority?: number;
+}
+
+export interface JoinedEngagementCreateResponse {
+  schema_version?: string;
+  joined_id: string;
+  mode: string;
+  created_tasks: Array<{
+    task_id: string;
+    title: string;
+    service_id: string;
+    depends_on_task_ids?: string[];
+    status?: string;
+  }>;
+  warnings?: string[];
+}
+
+/** SEP row shape is backend-defined; keep index signature for forward compatibility. */
+export interface ServiceDefinitionSummary {
+  service_id: string;
+  title?: string;
+  description?: string;
+  [key: string]: unknown;
+}
+
+export interface AgentServiceReverseIndex {
+  schema_version?: string;
+  agent_id: string;
+  services: Array<{
+    service_id: string;
+    title?: string;
+    roles: string[];
+  }>;
+}
+
+export interface OperatorProbeResponse {
+  schema_version?: string;
+  checks: Array<{
+    target: string;
+    url: string;
+    status: string;
+    detail?: string;
+    /** BE-10 / probes.v2 */
+    configured?: boolean;
+    ok?: boolean | null;
+    latency_ms?: number | null;
+    error_code?: string | null;
+  }>;
+}
+
+export interface TopologyHotspotsResponse {
+  schema_version?: string;
+  available: boolean;
+  hotspots: Array<{
+    id: string;
+    severity: string;
+    detail: string;
+    source: string;
+    task_id?: string;
+    run_id?: string;
+    timestamp?: string;
+    count?: number;
+    category?: string;
+  }>;
+  /** FE-09 drill-down: queue depth + Postgres task counts when DB is reachable */
+  summary?: {
+    orchestrator_queue_depth: number | null;
+    postgres_task_counts: {
+      active_tasks: number;
+      total_tasks: number;
+      completed_tasks: number;
+      failed_tasks: number;
+    } | null;
+    postgres_counts_available: boolean;
+  };
+}
+
+export interface SandboxTelemetryResponse {
+  schema_version?: string;
+  task_id: string;
+  available: boolean;
+  sandbox_event_count: number;
+  tool_event_count: number;
+  source: string;
+  /** v2: RunEvent-derived breakdown and recent rows */
+  event_type_counts?: Record<string, number>;
+  first_event_iso?: string | null;
+  last_event_iso?: string | null;
+  recent_sandbox_tool_events?: Array<{
+    timestamp: string;
+    event_type: string;
+    summary: string;
+  }>;
+}
+
+export interface TaskCreationSuggestion {
+  title: string;
+  reason: string;
+  confidence: number;
+  risk_level: string;
+  evidence: string[];
+  alternatives: string[];
+}
+
+export interface TaskCreationSuggestionsResponse {
+  task_type: string;
+  mode: 'off' | 'shadow' | 'assist' | 'default_on';
+  recommended_parameters: Record<string, any>;
+  required_fields: string[];
+  risk_warnings: string[];
+  suggestions: TaskCreationSuggestion[];
+  automation_actions: Array<{
+    action_id: string;
+    idempotency_key: string;
+    safe_to_apply: boolean;
+  }>;
+  policy_status: 'allowed' | 'blocked';
+  policy_reasons: string[];
+  confidence: number;
+}
+
+export interface TaskFitCheckResponse {
+  decision_id: string;
+  policy_version: string;
+  fit_score: number;
+  severity: 'low' | 'medium' | 'high';
+  selected_task_type: string;
+  inferred_task_type: string;
+  reasons: string[];
+  recommendations: Array<{ task_type: string; confidence: number; reason: string }>;
+  enforcement: 'allow' | 'warn' | 'block';
+}
+
+export interface TaskTypeAgentRecommendationResponse {
+  selected_task_type: string;
+  top_task_types: Array<{ task_type: string; confidence: number; reason: string }>;
+  recommended_agents: Array<{
+    agent_id: string;
+    agent_name: string;
+    recommendation_confidence: number;
+    reason: string;
+  }>;
+  dry_run_plan: Record<string, any>;
+}
+
+export interface TaskAssistantRefineResponse {
+  mode: 'off' | 'shadow' | 'assist' | 'default_on';
+  selected_task_type: string;
+  inferred_task_type: string;
+  fit_score: number;
+  severity: 'low' | 'medium' | 'high';
+  recommendations: Array<{ task_type: string; confidence: number; reason: string }>;
+  recommended_agents: Array<{
+    agent_id: string;
+    agent_name: string;
+    recommendation_confidence: number;
+    reason: string;
+  }>;
+  suggested_parameters: Record<string, any>;
+  suggestions: TaskCreationSuggestion[];
+  explainability: Record<string, any>;
+  /** Plain-language narrative for the UI */
+  assistant_message?: string;
+  quick_prompts?: string[];
+  suggested_title?: string;
+  suggested_description?: string;
+  suggested_target?: string;
+}
+
 export interface Agent {
   id: string;
   agent_id: string;
@@ -375,6 +589,158 @@ class APIService {
     return response.data;
   }
 
+  // ========================================================================
+  // AGENT TOOLS CONFIGURATION
+  // ========================================================================
+
+  async getAgentTools(agentId: string): Promise<{
+    agent_id: string;
+    tools: Array<{
+      tool_name: string;
+      description: string;
+      category: string;
+      enabled: boolean;
+      requires_auth: boolean;
+      requires_api_key: boolean;
+      api_key_configured: boolean;
+      config: Record<string, any>;
+      execution_mode: string;
+      cost_tier: string;
+      avg_execution_time: number;
+    }>;
+    total: number;
+    enabled: number;
+  }> {
+    const url = `/agents/${agentId}/tools`;
+    console.log('[API] getAgentTools - URL:', url, 'agentId:', agentId);
+    console.log('[API] getAgentTools - Full URL will be:', this.client.defaults.baseURL + url);
+    
+    try {
+      const response = await this.client.get(url);
+      console.log('[API] getAgentTools - Response status:', response.status);
+      console.log('[API] getAgentTools - Response data:', response.data);
+      console.log('[API] getAgentTools - Response headers:', response.headers);
+      return response.data;
+    } catch (error: any) {
+      console.error('[API] getAgentTools - ERROR:', error);
+      console.error('[API] getAgentTools - Error response:', error.response);
+      console.error('[API] getAgentTools - Error message:', error.message);
+      console.error('[API] getAgentTools - Error config:', error.config);
+      throw error;
+    }
+  }
+
+  async getToolStatus(agentId: string, toolName: string): Promise<{
+    tool_name: string;
+    status: string;
+    last_checked: string;
+    error_message?: string;
+    requires_auth: boolean;
+    requires_api_key: boolean;
+    api_key_configured: boolean;
+    service_url?: string;
+    service_available: boolean;
+  }> {
+    const response = await this.client.get(`/agents/${agentId}/tools/${toolName}/status`);
+    return response.data;
+  }
+
+  async getAllToolsStatus(agentId: string): Promise<{
+    agent_id: string;
+    tools: Array<{
+      tool_name: string;
+      status: string;
+      last_checked: string;
+      error_message?: string;
+      requires_auth: boolean;
+      requires_api_key: boolean;
+      api_key_configured: boolean;
+      service_url?: string;
+      service_available: boolean;
+    }>;
+    total: number;
+    available: number;
+    needs_config: number;
+    unavailable: number;
+  }> {
+    try {
+      const response = await this.client.get(`/agents/${agentId}/tools/status`);
+      console.log('[API] getAllToolsStatus response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('[API] getAllToolsStatus error:', error);
+      // Return empty response on error
+      return {
+        agent_id: agentId,
+        tools: [],
+        total: 0,
+        available: 0,
+        needs_config: 0,
+        unavailable: 0,
+      };
+    }
+  }
+
+  async updateToolConfig(
+    agentId: string,
+    toolName: string,
+    config: {
+      enabled: boolean;
+      config?: Record<string, any>;
+      api_key?: string;
+    }
+  ): Promise<{
+    agent_id: string;
+    tool_name: string;
+    config: Record<string, any>;
+    message: string;
+  }> {
+    const response = await this.client.put(`/agents/${agentId}/tools/${toolName}/config`, {
+      tool_name: toolName,
+      enabled: config.enabled,
+      config: config.config || {},
+      api_key: config.api_key,
+    });
+    return response.data;
+  }
+
+  async updateAgentToolsConfig(
+    agentId: string,
+    config: {
+      tools: Array<{
+        tool_name: string;
+        enabled: boolean;
+        config?: Record<string, any>;
+        api_key?: string;
+      }>;
+      tool_strategy?: string;
+      max_tools?: number;
+      use_ai_synthesis?: boolean;
+    }
+  ): Promise<{
+    agent_id: string;
+    message: string;
+    tools_configured: number;
+  }> {
+    const response = await this.client.put(`/agents/${agentId}/tools/config`, {
+      agent_id: agentId,
+      ...config,
+    });
+    return response.data;
+  }
+
+  async testTool(agentId: string, toolName: string): Promise<{
+    tool_name: string;
+    success: boolean;
+    message: string;
+    result?: any;
+    error?: string;
+    tested_at: string;
+  }> {
+    const response = await this.client.post(`/agents/${agentId}/tools/${toolName}/test`);
+    return response.data;
+  }
+
   async getAgent(agentId: string): Promise<Agent> {
     const response = await this.client.get(`/agents/${agentId}`);
     return response.data;
@@ -484,6 +850,31 @@ class APIService {
     timestamp: string;
   }> {
     const response = await this.client.get('/system/health');
+    return response.data;
+  }
+
+  async getOrchestratorStatus(): Promise<{
+    orchestrator_status: string;
+    active_agents: number;
+    active_tasks: number;
+    total_tasks: number;
+    metrics: {
+      tasks_processed: number;
+      tasks_completed: number;
+      tasks_failed: number;
+      average_task_time: number;
+      active_agents: number;
+      active_tasks: number;
+    };
+    agent_health: Record<string, {
+      name: string;
+      status: string;
+      circuit_breaker_state: string;
+      can_execute: boolean;
+    }>;
+    timestamp: string;
+  }> {
+    const response = await this.client.get('/system/orchestrator/status');
     return response.data;
   }
 

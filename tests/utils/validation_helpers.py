@@ -367,7 +367,7 @@ class MarkdownValidator:
             
             # Check for balanced markdown links
             link_pattern = r'\[([^\]]+)\]\(([^\)]+)\)'
-            links = re.findall(link_pattern, content)
+            _links = re.findall(link_pattern, content)
             
             # Basic validation passed
             return True, None

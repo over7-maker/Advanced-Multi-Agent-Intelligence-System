@@ -1,7 +1,6 @@
 """
 Nginx configuration validation tests.
 """
-import pytest
 from pathlib import Path
 
 from tests.fixtures.production_fixtures import nginx_config_path

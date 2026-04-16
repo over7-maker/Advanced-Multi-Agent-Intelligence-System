@@ -1,0 +1,12 @@
+{
+  "ollama": {
+    "available": true,
+    "base_url": "http://localhost:11434/v1",
+    "models": [
+      "deepseek-r1:8b",
+      "qwen3:4b",
+      "mistral:latest"
+    ],
+    "preferred_model": "deepseek-r1:8b"
+  }
+}

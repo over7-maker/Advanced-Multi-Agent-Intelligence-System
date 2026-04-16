@@ -52,6 +52,15 @@ except ImportError:
     COLLABORATION_AVAILABLE = False
     logger.warning("Collaboration module not available")
 
+# WebSocket support (Phase 2 requirement)
+try:
+    from src.api.websocket import websocket_manager
+    WEBSOCKET_AVAILABLE = True
+except ImportError:
+    WEBSOCKET_AVAILABLE = False
+    logger.warning("WebSocket module not available")
+    websocket_manager = None
+
 
 class TaskPriority(Enum):
     """Task priority levels"""
@@ -827,6 +836,37 @@ class UnifiedIntelligenceOrchestrator:
             ai_agents_count += 1
             logger.info("Initialized IntegrationAgent (AI-powered)")
             
+            # AMAS v3.0 Agents (Phase 4)
+            try:
+                # 13. Web Research Agent (AgenticSeek)
+                from src.amas.agents.web_research_agent import WebResearchAgent
+                web_research_agent = WebResearchAgent()
+                self.agents["web_research"] = web_research_agent
+                ai_agents_count += 1
+                logger.info("Initialized WebResearchAgent (AMAS v3.0 - AgenticSeek)")
+            except Exception as e:
+                logger.warning(f"Failed to initialize WebResearchAgent: {e}")
+            
+            try:
+                # 14. Search Federation Agent (8-engine search)
+                from src.amas.agents.search_federation_agent import SearchFederationAgent
+                search_federation_agent = SearchFederationAgent()
+                self.agents["search_federation"] = search_federation_agent
+                ai_agents_count += 1
+                logger.info("Initialized SearchFederationAgent (AMAS v3.0 - 8-engine search)")
+            except Exception as e:
+                logger.warning(f"Failed to initialize SearchFederationAgent: {e}")
+            
+            try:
+                # 15. Dark Web Agent (Robin)
+                from src.amas.agents.dark_web_agent import DarkWebAgent
+                dark_web_agent = DarkWebAgent()
+                self.agents["dark_web"] = dark_web_agent
+                ai_agents_count += 1
+                logger.info("Initialized DarkWebAgent (AMAS v3.0 - Robin)")
+            except Exception as e:
+                logger.warning(f"Failed to initialize DarkWebAgent: {e}")
+            
             # Keep the simple agents as fallback for basic operations
             osint_agent = RealOSINTAgent("osint_001")
             self.agents["osint_001"] = osint_agent
@@ -946,6 +986,21 @@ class UnifiedIntelligenceOrchestrator:
                 except Exception:
                     pass  # Callback might not be awaitable
             
+            # Broadcast task execution started via WebSocket (Phase 2 requirement)
+            if WEBSOCKET_AVAILABLE and websocket_manager:
+                try:
+                    await websocket_manager.send_to_task_subscribers(task_id, {
+                        "event": "task_execution_started",
+                        "data": {
+                            "task_id": task_id,
+                            "task_type": task_type,
+                            "target": target,
+                            "assigned_agents": assigned_agents
+                        }
+                    })
+                except Exception as e:
+                    logger.warning(f"Failed to broadcast task execution started: {e}")
+            
             # STEP 3: EXECUTE AGENTS WITH ENHANCED COLLABORATION
             agent_results = {}
             shared_context = {}  # Shared context for agent collaboration
@@ -972,6 +1027,21 @@ class UnifiedIntelligenceOrchestrator:
                         agent_start_time = time.time()
                         logger.info(f"[{correlation_id}] Orchestrator: Starting agent execution: agent_id={agent_id}, task_id={task_id}",
                                    extra={"task_id": task_id, "correlation_id": correlation_id, "agent_id": agent_id, "operation": "agent_execute_start"})
+                        
+                        # Broadcast agent started via WebSocket (Phase 2 requirement)
+                        if WEBSOCKET_AVAILABLE and websocket_manager:
+                            try:
+                                await websocket_manager.send_to_task_subscribers(task_id, {
+                                    "event": "agent_started",
+                                    "data": {
+                                        "task_id": task_id,
+                                        "agent_id": agent_id,
+                                        "agent_name": getattr(agent, 'name', agent_id),
+                                        "task_type": task_type
+                                    }
+                                })
+                            except Exception as e:
+                                logger.warning(f"Failed to broadcast agent started: {e}")
                         
                         # Enhanced: Get current shared context (may be empty if parallel, or populated if sequential)
                         async with agent_results_lock:
@@ -1035,6 +1105,23 @@ class UnifiedIntelligenceOrchestrator:
                         
                         logger.info(f"[{correlation_id}] Orchestrator: Agent {agent_id} completed: success={result.get('success', False)}, duration={agent_duration:.2f}s",
                                    extra={"task_id": task_id, "correlation_id": correlation_id, "agent_id": agent_id, "success": result.get("success", False), "duration": agent_duration, "operation": "agent_execute_complete"})
+                        
+                        # Broadcast agent completion via WebSocket (Phase 2 requirement)
+                        if WEBSOCKET_AVAILABLE and websocket_manager:
+                            try:
+                                await websocket_manager.send_to_task_subscribers(task_id, {
+                                    "event": "agent_completed",
+                                    "data": {
+                                        "task_id": task_id,
+                                        "agent_id": agent_id,
+                                        "agent_name": getattr(agent, 'name', agent_id),
+                                        "success": result.get("success", False),
+                                        "duration": agent_duration,
+                                        "quality_score": result.get("quality_score", 0.0)
+                                    }
+                                })
+                            except Exception as e:
+                                logger.warning(f"Failed to broadcast agent completion: {e}")
                         
                         if agent_span:
                             try:
@@ -1229,6 +1316,25 @@ class UnifiedIntelligenceOrchestrator:
             logger.info(f"[{correlation_id}] Orchestrator: Task execution completed: task_id={task_id}, success={aggregated.get('success', False)}, quality={aggregated.get('quality_score', 0.0)}, duration={execution_duration:.2f}s",
                        extra={"task_id": task_id, "correlation_id": correlation_id, "success": aggregated.get("success", False), "quality_score": aggregated.get("quality_score", 0.0), "duration": execution_duration, "operation": "orchestrator_execute_complete"})
             
+            # Broadcast task completion via WebSocket (Phase 2 requirement)
+            if WEBSOCKET_AVAILABLE and websocket_manager:
+                try:
+                    await websocket_manager.send_to_task_subscribers(task_id, {
+                        "event": "task_completed" if aggregated.get("success", False) else "task_failed",
+                        "data": {
+                            "task_id": task_id,
+                            "task_type": task_type,
+                            "target": target,
+                            "success": aggregated.get("success", False),
+                            "quality_score": aggregated.get("quality_score", 0.0),
+                            "duration": execution_duration,
+                            "agents_used": assigned_agents,
+                            "agent_results": {k: {"success": v.get("success", False), "duration": v.get("duration", 0.0)} for k, v in agent_results.items()}
+                        }
+                    })
+                except Exception as e:
+                    logger.warning(f"Failed to broadcast task completion: {e}")
+            
             if tracing and tracing.enabled:
                 tracing.set_attribute("task.duration", execution_duration)
                 tracing.set_attribute("task.success", aggregated.get("success", False))
@@ -1244,6 +1350,21 @@ class UnifiedIntelligenceOrchestrator:
                     })
                 except Exception:
                     pass
+            
+            # Broadcast task progress via WebSocket (Phase 2 requirement)
+            if WEBSOCKET_AVAILABLE and websocket_manager:
+                try:
+                    await websocket_manager.send_to_task_subscribers(task_id, {
+                        "event": "task_progress",
+                        "data": {
+                            "task_id": task_id,
+                            "percentage": 90.0,
+                            "current_step": "Results aggregated",
+                            "agent_activity": {k: {"status": "complete" if v.get("success") else "failed", "duration": v.get("duration", 0.0)} for k, v in agent_results.items()}
+                        }
+                    })
+                except Exception as e:
+                    logger.warning(f"Failed to broadcast task progress: {e}")
             
             if progress_callback:
                 try:
@@ -1651,6 +1772,25 @@ class UnifiedIntelligenceOrchestrator:
             "integration": "integration_agent",
             "platform_integration": "integration_agent",
             "connector": "integration_agent",
+            
+            # AMAS v3.0: Web Research tasks -> Web Research Agent (AgenticSeek)
+            "web_research": "web_research",
+            "autonomous_browsing": "web_research",
+            "agentic_research": "web_research",
+            "web_investigation": "web_research",
+            
+            # AMAS v3.0: Search tasks -> Search Federation Agent (8-engine)
+            "search": "search_federation",
+            "federated_search": "search_federation",
+            "multi_engine_search": "search_federation",
+            "web_search": "search_federation",
+            
+            # AMAS v3.0: Dark Web tasks -> Dark Web Agent (Robin)
+            "dark_web": "dark_web",
+            "dark_web_investigation": "dark_web",
+            "tor_investigation": "dark_web",
+            "onion_research": "dark_web",
+            "threat_intelligence_dark": "dark_web",
             
             # Forensics tasks -> Forensics Agent (fallback)
             "forensics": "forensics_001",

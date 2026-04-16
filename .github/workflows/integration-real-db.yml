@@ -1,0 +1,51 @@
+# Job B: optional real Postgres (no app import); complements mocked integration-tests.yml
+name: Integration (real Postgres)
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+
+jobs:
+  real-db:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: amas_password
+          POSTGRES_DB: amas
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d amas"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres:amas_password@127.0.0.1:5432/amas
+      PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt 2>/dev/null || true
+          pip install -r requirements-dev.txt 2>/dev/null || pip install pytest pytest-asyncio sqlalchemy asyncpg alembic psycopg2-binary httpx
+
+      - name: Apply Alembic migrations
+        run: alembic upgrade head
+        env:
+          DATABASE_URL: ${{ env.DATABASE_URL }}
+
+      - name: Run real_db-marked tests
+        run: pytest tests/real_db -m real_db -q --tb=short

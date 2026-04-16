@@ -1,5 +1,5 @@
 // frontend/src/services/testing.ts - Testing API Service
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import { AxiosError, AxiosInstance } from 'axios';
 import { apiService } from './api';
 
 // ============================================================================
@@ -95,7 +95,7 @@ class TestingService {
     } catch (error) {
       console.error('[Testing] Failed to list agents:', error);
       const axiosError = error as AxiosError;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to list agents');
+      throw new Error((axiosError.response?.data as any)?.detail || 'Failed to list agents');
     }
   }
 
@@ -112,7 +112,7 @@ class TestingService {
     } catch (error) {
       console.error(`[Testing] Agent test failed:`, error);
       const axiosError = error as AxiosError;
-      throw new Error(axiosError.response?.data?.detail || `Failed to test agent ${agentId}`);
+      throw new Error((axiosError.response?.data as any)?.detail || `Failed to test agent ${agentId}`);
     }
   }
 
@@ -129,7 +129,7 @@ class TestingService {
     } catch (error) {
       console.error('[Testing] Failed to list providers:', error);
       const axiosError = error as AxiosError;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to list providers');
+      throw new Error((axiosError.response?.data as any)?.detail || 'Failed to list providers');
     }
   }
 
@@ -146,7 +146,7 @@ class TestingService {
     } catch (error) {
       console.error(`[Testing] Provider test failed:`, error);
       const axiosError = error as AxiosError;
-      throw new Error(axiosError.response?.data?.detail || `Failed to test provider ${provider}`);
+      throw new Error((axiosError.response?.data as any)?.detail || `Failed to test provider ${provider}`);
     }
   }
 
@@ -163,7 +163,7 @@ class TestingService {
     } catch (error) {
       console.error('[Testing] Database status test failed:', error);
       const axiosError = error as AxiosError;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to test database status');
+      throw new Error((axiosError.response?.data as any)?.detail || 'Failed to test database status');
     }
   }
 
@@ -180,7 +180,7 @@ class TestingService {
     } catch (error) {
       console.error('[Testing] Database query test failed:', error);
       const axiosError = error as AxiosError;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to test database query');
+      throw new Error((axiosError.response?.data as any)?.detail || 'Failed to test database query');
     }
   }
 
@@ -197,7 +197,7 @@ class TestingService {
     } catch (error) {
       console.error('[Testing] Cache status test failed:', error);
       const axiosError = error as AxiosError;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to test cache status');
+      throw new Error((axiosError.response?.data as any)?.detail || 'Failed to test cache status');
     }
   }
 
@@ -214,7 +214,7 @@ class TestingService {
     } catch (error) {
       console.error('[Testing] WebSocket status test failed:', error);
       const axiosError = error as AxiosError;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to test WebSocket status');
+      throw new Error((axiosError.response?.data as any)?.detail || 'Failed to test WebSocket status');
     }
   }
 
@@ -233,7 +233,7 @@ class TestingService {
     } catch (error) {
       console.error(`[Testing] Integration test failed:`, error);
       const axiosError = error as AxiosError;
-      throw new Error(axiosError.response?.data?.detail || `Failed to test integration ${platform}`);
+      throw new Error((axiosError.response?.data as any)?.detail || `Failed to test integration ${platform}`);
     }
   }
 
@@ -257,7 +257,7 @@ class TestingService {
     } catch (error) {
       console.error(`[Testing] ML prediction test failed:`, error);
       const axiosError = error as AxiosError;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to test ML prediction');
+      throw new Error((axiosError.response?.data as any)?.detail || 'Failed to test ML prediction');
     }
   }
 
@@ -274,7 +274,7 @@ class TestingService {
     } catch (error) {
       console.error('[Testing] Neo4j status test failed:', error);
       const axiosError = error as AxiosError;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to test Neo4j status');
+      throw new Error((axiosError.response?.data as any)?.detail || 'Failed to test Neo4j status');
     }
   }
 
@@ -291,7 +291,7 @@ class TestingService {
     } catch (error) {
       console.error('[Testing] System health test failed:', error);
       const axiosError = error as AxiosError;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to test system health');
+      throw new Error((axiosError.response?.data as any)?.detail || 'Failed to test system health');
     }
   }
 }
